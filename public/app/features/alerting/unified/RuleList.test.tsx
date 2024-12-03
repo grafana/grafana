@@ -120,7 +120,7 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byText(/new alert rule/i),
+  newRuleButton: byRole('link', { name: 'New alert rule' }),
   exportButton: byText(/export rules/i),
   editGroupModal: {
     dialog: byRole('dialog'),

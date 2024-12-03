@@ -65,6 +65,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     operationName: css({
       margin: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      flexBasis: '50%',
+      flexGrow: 0,
+      flexShrink: 0,
     }),
     debugInfo: css({
       label: 'debugInfo',
@@ -344,7 +350,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={styles.operationName}>{operationName}</h2>
+        <h2 className={styles.operationName} title={operationName}>
+          {operationName}
+        </h2>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
@@ -17,17 +19,23 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
+  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.75,
+      initialSize: 0.8,
+      collapsed: isCollapsed,
       paneOptions: {
         collapseBelowPixels: 250,
         snapOpenToPixels: 400,
       },
     });
+
+  useEffect(() => {
+    setIsCollapsed(splitterState.collapsed);
+  }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
     <>
@@ -223,7 +231,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
-      padding: theme.spacing(2, 0, 2, 2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

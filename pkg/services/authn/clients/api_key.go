@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,6 +24,8 @@ var (
 	errAPIKeyExpired     = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
 	errAPIKeyRevoked     = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 	errAPIKeyOrgMismatch = errutil.Unauthorized("api-key.organization-mismatch", errutil.WithPublicMessage("API key does not belong to the requested organization"))
+
+	errAPIKeyInvalidType = errutil.BadRequest("api-key.invalid-type-id")
 )
 
 var (
@@ -157,7 +158,7 @@ func (s *APIKey) IdentityType() claims.IdentityType {
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
-		return nil, identity.ErrInvalidTypedID.Errorf("got unexpected type: %s", typ)
+		return nil, errAPIKeyInvalidType.Errorf("got unexpected type: %s", typ)
 	}
 
 	apiKeyID, err := strconv.ParseInt(id, 10, 64)
@@ -177,7 +178,7 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.Id
 	}
 
 	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, identity.ErrInvalidTypedID.Errorf("api key belongs to service account")
+		return nil, errAPIKeyInvalidType.Errorf("api key belongs to service account")
 	}
 
 	return newAPIKeyIdentity(key), nil

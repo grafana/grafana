@@ -25,6 +25,7 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	UID              string
 }
 
 type TestApiKey struct {

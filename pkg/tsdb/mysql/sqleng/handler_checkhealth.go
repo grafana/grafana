@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -14,8 +17,8 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 	err := e.db.Ping()
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err, e.log)
-		if req.PluginContext.User.Role == "Admin" {
-			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
+			return ErrToHealthCheckResult(err)
 		}
 		var driverErr *mysql.MySQLError
 		if errors.As(err, &driverErr) {
@@ -26,7 +29,41 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
-func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
+// ErrToHealthCheckResult converts error into user friendly health check message
+// This should be called with non nil error. If the err parameter is empty, we will send Internal Server Error
+func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
+	if err == nil {
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "Internal Server Error"}, nil
+	}
+	res := &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}
+	details := map[string]string{}
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		res.Message = "Network error: Failed to connect to the server"
+		if opErr != nil && opErr.Err != nil {
+			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
+		}
+		details["verboseMessage"] = err.Error()
+		details["errorDetailsLink"] = "https://grafana.com/docs/grafana/latest/datasources/mysql/#configure-the-data-source"
+	}
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		res.Message = "Database error: Failed to connect to the MySQL server"
+		if driverErr != nil && driverErr.Number > 0 {
+			res.Message += fmt.Sprintf(". MySQL error number: %d", driverErr.Number)
+		}
+		details["verboseMessage"] = err.Error()
+		details["errorDetailsLink"] = "https://dev.mysql.com/doc/mysql-errors/8.4/en/"
+	}
+	detailBytes, marshalErr := json.Marshal(details)
+	if marshalErr != nil {
+		return res, nil
+	}
+	res.JSONDetails = detailBytes
+	return res, nil
+}
+
+func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),
 		"config_user_length":                len(dsInfo.User),
