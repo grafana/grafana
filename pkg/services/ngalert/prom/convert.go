@@ -102,6 +102,7 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 		return nil, fmt.Errorf("failed to parse interval '%s': %w", promGroup.Interval, err)
 	}
 
+	uniqueNames := map[string]int{}
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
 	for i, rule := range promGroup.Rules {
 		gr, err := p.convertRule(orgID, datasourceUID, namespaceUID, promGroup.Name, rule)
@@ -110,6 +111,20 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 		}
 		gr.RuleGroupIndex = i + 1
 		gr.IntervalSeconds = int64(duration.Seconds())
+
+		// In Grafana rule titles must be unique within the namespace.
+		// We can't guarantee this on the conversion level. We don't know how many other
+		// rules are already in the namespace, so this is the best we can do right now.
+		//
+		// TODO: move to the saving method and check for duplicates there,
+		// adding a suffix to the title if needed.
+		//
+		if _, exists := uniqueNames[gr.Title]; !exists {
+			uniqueNames[gr.Title]++
+		} else {
+			gr.Title = fmt.Sprintf("%s (%d)", rule.Alert, i)
+		}
+
 		rules = append(rules, gr)
 	}
 

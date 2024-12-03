@@ -143,6 +143,38 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 	}
 }
 
+func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
+	converter := NewConverter(Config{})
+
+	promGroup := PrometheusRuleGroup{
+		Name:     "test-group-1",
+		Interval: "10s",
+		Rules: []PrometheusRule{
+			{
+				Alert: "alert",
+				Expr:  "up",
+			},
+			{
+				Alert: "alert",
+				Expr:  "up",
+			},
+			{
+				Alert: "alert",
+				Expr:  "up",
+			},
+		},
+	}
+
+	group, err := converter.PrometheusRulesToGrafana(1, "namespaceUID", promGroup)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "test-group-1", group.Title)
+	assert.Len(t, group.Rules, 3)
+	assert.Equal(t, "alert", group.Rules[0].Title)
+	assert.Equal(t, "alert (1)", group.Rules[1].Title)
+	assert.Equal(t, "alert (2)", group.Rules[2].Title)
+}
+
 func TestGrafanaRulesToPrometheus(t *testing.T) {
 	t.Run("basic alert rule group success", func(t *testing.T) {
 		converter := NewConverter(Config{})
