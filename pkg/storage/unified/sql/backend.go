@@ -121,6 +121,38 @@ func (b *backend) Stop(_ context.Context) error {
 	return nil
 }
 
+// GetResourceStats implements Backend.
+func (b *backend) GetResourceStats(ctx context.Context, minCount int) ([]resource.ResourceStats, error) {
+	_, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	defer span.End()
+
+	req := &sqlStatsRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		MinCount:    minCount, // not used in query... yet?
+	}
+
+	res := make([]resource.ResourceStats, 0, 100)
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStats, req)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			row := resource.ResourceStats{}
+			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.Count, &row.ResourceVersion)
+			if err != nil {
+				return err
+			}
+			if row.Count > int64(minCount) {
+				res = append(res, row)
+			}
+		}
+		return err
+	})
+
+	return res, err
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
@@ -135,35 +167,6 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	default:
 		return 0, fmt.Errorf("unsupported event type")
 	}
-}
-
-// Namespaces returns the list of unique namespaces in storage.
-func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
-	var namespaces []string
-
-	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
-		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			_ = rows.Close()
-		}()
-
-		for rows.Next() {
-			var ns string
-			err = rows.Scan(&ns)
-			if err != nil {
-				return err
-			}
-			namespaces = append(namespaces, ns)
-		}
-
-		return nil
-	})
-
-	return namespaces, err
 }
 
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
