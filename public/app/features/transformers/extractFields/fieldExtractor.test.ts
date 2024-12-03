@@ -151,4 +151,21 @@ describe('Extract fields from text', () => {
       }
     `);
   });
+
+  it('splits by regexp with multiple groups', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.RegExp);
+    const opts: ExtractFieldsOptions = {
+      regExp: '/(?<Metrics>Metrics)?(?<Logs>Logs)?(?<Traces>Traces)?(?<Profiles>Profiles)/',
+    };
+    const parse = extractor.getParser(opts);
+    const out = parse('Metrics, Logs, Traces, Profiles');
+
+    expect(out).toMatchInlineSnapshot(`
+      {
+        "Metrics": "Metrics",
+        "Logs": "Logs",
+        "Profiles": "Profiles",
+      }
+    `);
+  });
 });
