@@ -16,9 +16,10 @@
 
     /* Linting */
     "strict": true,
-    // "noUnusedLocals": true, // Standard vite config but disabled because of typecheck errors
-    // "noUnusedParameters": true, // Standard vite config but disabled because typecheck errors
-    // "noFallthroughCasesInSwitch": true, // Standard vite config but disabled because of typecheck errors
+    // Standard vite config but disabled because of typecheck errors
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
 
     "baseUrl": "public/",
     "outDir": "public/dist",
@@ -26,8 +27,6 @@
     "allowJs": true,
     "useUnknownInCatchVariables": true,
     "incremental": true,
-    "isolatedModules": true,
-    "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]

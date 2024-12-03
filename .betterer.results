@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -1150,6 +1150,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`contextSrv\`)", "5"],
       [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
+    ],
+    "public/app/core/internationalization/constants.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`LocaleFileLoader\`)", "0"]
     ],
     "public/app/core/navigation/GrafanaRouteError.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -7869,6 +7872,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/ui/src/themes/_variables.dark.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/ui/src/themes/_variables.light.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
       [0, 0, 0, "\'@grafana/ui/src/themes/_variables.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
+    ],
+    "vite.config.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ]
   }`
 };

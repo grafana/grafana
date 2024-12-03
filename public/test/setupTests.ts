@@ -7,7 +7,7 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import getEnvConfig from '../../scripts/webpack/env-util';
+import getEnvConfig from '../../scripts/webpack/env-util.cjs';
 
 import { matchers } from './matchers';
 
