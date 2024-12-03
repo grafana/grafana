@@ -245,6 +245,7 @@
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
+      "loading": "Loading...",
       "view": "View"
     },
     "contact-points": {
@@ -328,6 +329,14 @@
     "mute-timings": {
       "save": "Save mute timing",
       "saving": "Saving mute timing"
+    },
+    "notification-preview": {
+      "alertmanager": "Alertmanager:",
+      "error": "Could not load routing preview for {{alertmanager}}",
+      "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "preview-routing": "Preview routing",
+      "title": "Alert instance routing preview",
+      "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
     },
     "policies": {
       "default-policy": {
@@ -3220,9 +3229,7 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
-      "data-source": "Data source: ",
-      "date-created": "Date created: ",
-      "metric": "Metric:"
+      "date-created": "Date created: "
     },
     "home": {
       "learn-more": "Learn more",
@@ -3329,6 +3336,12 @@
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
+    },
+    "unknown-table": {
+      "loading": "Loading...",
+      "no-unknowns": "No renamed or missing variables found.",
+      "renamed-or-missing-variables": "Renamed or missing variables",
+      "variable": "Variable"
     }
   }
 }

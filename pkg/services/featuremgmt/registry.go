@@ -1687,6 +1687,13 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true, // changes the API routing
 		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 

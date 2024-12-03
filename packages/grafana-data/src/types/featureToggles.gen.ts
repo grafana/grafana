@@ -244,4 +244,5 @@ export interface FeatureToggles {
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
   useV2DashboardsAPI?: boolean;
+  feedbackButton?: boolean;
 }

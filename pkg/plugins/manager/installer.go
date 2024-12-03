@@ -51,12 +51,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 	}
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	compatOpts, err := RepoCompatOpts(opts)
-	if err != nil {
-		return err
-	}
-
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	if ok, _ := m.installing.Load(pluginID); ok != nil {
 		return nil
 	}
@@ -65,7 +60,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		m.installing.Delete(pluginID)
 	}()
 
-	archive, err := m.install(ctx, pluginID, version, compatOpts)
+	archive, err := m.install(ctx, pluginID, version, opts)
 	if err != nil {
 		return err
 	}
@@ -93,8 +88,12 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
+func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
+	compatOpts, err := RepoCompatOpts(opts)
+	if err != nil {
+		return nil, err
+	}
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 			return nil, plugins.ErrInstallCorePlugin
@@ -105,46 +104,21 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 				PluginID: plugin.ID,
 			}
 		}
-
-		// get plugin update information to confirm if target update is possible
-		pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
-		if err != nil {
-			return nil, err
-		}
-
-		m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
-
-		// if existing plugin version is the same as the target update version
-		if pluginArchiveInfo.Version == plugin.Info.Version {
-			return nil, plugins.DuplicateError{
-				PluginID: plugin.ID,
-			}
-		}
-
-		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
-			return nil, fmt.Errorf("could not determine update options for %s", pluginID)
-		}
-
-		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
-		if err != nil {
-			return nil, err
-		}
-
-		if pluginArchiveInfo.URL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
-			if err != nil {
-				return nil, err
-			}
+		if opts.URL() != "" {
+			pluginArchive, err = m.updateFromURL(ctx, plugin, opts.URL(), compatOpts)
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
-			if err != nil {
-				return nil, err
-			}
+			pluginArchive, err = m.updateFromCatalog(ctx, plugin, version, compatOpts)
+		}
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		var err error
-		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		if opts.URL() != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, opts.URL(), compatOpts)
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +130,62 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		return nil, err
 	}
 
+	// Check that the extracted plugin archive has the expected ID and version
+	// but avoid a hard error for backwards compatibility with older plugins
+	// and because in the case of an update, the previous version has been already uninstalled
+	if extractedArchive.ID != pluginID {
+		m.log.Error("Installed plugin ID mismatch", "expected", pluginID, "got", extractedArchive.ID)
+	}
+	if version != "" && extractedArchive.Version != version {
+		m.log.Error("Installed plugin version mismatch", "expected", version, "got", extractedArchive.Version)
+	}
+
 	return extractedArchive, nil
+}
+
+func (m *PluginInstaller) updateFromURL(ctx context.Context, plugin *plugins.Plugin, url string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
+	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "url", url)
+
+	// remove existing installation of plugin
+	err := m.Remove(ctx, plugin.ID, plugin.Info.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
+}
+
+func (m *PluginInstaller) updateFromCatalog(ctx context.Context, plugin *plugins.Plugin, version string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
+	// get plugin update information to confirm if target update is possible
+	pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, plugin.ID, version, compatOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
+
+	// if existing plugin version is the same as the target update version
+	if pluginArchiveInfo.Version == plugin.Info.Version {
+		return nil, plugins.DuplicateError{
+			PluginID: plugin.ID,
+		}
+	}
+
+	if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
+		return nil, fmt.Errorf("could not determine update options for %s", plugin.ID)
+	}
+
+	// remove existing installation of plugin
+	err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	if pluginArchiveInfo.URL != "" {
+		return m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
+	} else {
+		return m.pluginRepo.GetPluginArchive(ctx, plugin.ID, pluginArchiveInfo.Version, compatOpts)
+	}
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
@@ -197,7 +226,7 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID, pluginVersion st
 	return p, true
 }
 
-func RepoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
+func RepoCompatOpts(opts plugins.AddOpts) (repo.CompatOpts, error) {
 	os := opts.OS()
 	arch := opts.Arch()
 	if len(os) == 0 || len(arch) == 0 {
