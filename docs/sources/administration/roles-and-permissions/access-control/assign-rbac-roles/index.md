@@ -93,7 +93,7 @@ In both cases, the assignment applies only to the user, team or service account 
 1. Select a role within an organization that you want to assign to the user.
 1. Click **Save**.
 
-## Assign fixed or custom roles using the HTTP api
+## Assign fixed or custom roles using the HTTP API
 
 This section describes how to:
 
@@ -118,13 +118,13 @@ This section describes how to:
 
 **To assign a fixed role to a user or service account:**
 
-Refer to the [RBAC http api for user role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-user-role-assignment).
+Refer to the [RBAC HTTP API for user role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-user-role-assignment).
 
 The service account ID can be used in place of the user ID.
 
 **To assign a fixed role to a team:**
 
-Refer to the [RBAC http api for team role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-team-role-assignment).
+Refer to the [RBAC HTTP API for team role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-team-role-assignment).
 
 ## Assign fixed or custom roles to a team using provisioning
 
