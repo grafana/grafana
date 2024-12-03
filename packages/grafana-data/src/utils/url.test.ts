@@ -25,7 +25,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
   it("should encode the following special characters [!'()*]", () => {
     const url = urlUtil.toUrlParams({
@@ -61,7 +61,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
 });
 
