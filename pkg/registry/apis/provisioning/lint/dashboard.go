@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/dashboard-linter/lint"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type DashboardLinterFactory struct{}
