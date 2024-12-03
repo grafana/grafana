@@ -55,7 +55,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Regi
 	}
 
 	if reg != nil {
-		err := reg.Register(NewBleveMetrics(opts.Root, b))
+		err := reg.Register(resource.NewIndexMetrics(opts.Root, b))
 		if err != nil {
 			b.log.Warn("failed to register metrics", "error", err)
 		}
@@ -110,10 +110,10 @@ func (b *BleveBackend) BuildIndex(ctx context.Context,
 		if err == nil {
 			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
-		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err
@@ -147,6 +147,19 @@ func (b *BleveBackend) BuildIndex(ctx context.Context,
 
 	b.cache[key] = idx
 	return idx, nil
+}
+
+// TotalDocs returns the total number of documents across all indices
+func (b *BleveBackend) TotalDocs() int64 {
+	var totalDocs int64
+	for _, v := range b.cache {
+		c, err := v.index.DocCount()
+		if err != nil {
+			continue
+		}
+		totalDocs += int64(c)
+	}
+	return totalDocs
 }
 
 type bleveIndex struct {

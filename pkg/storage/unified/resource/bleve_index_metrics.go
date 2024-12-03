@@ -1,4 +1,4 @@
-package search
+package resource
 
 import (
 	"os"
@@ -17,7 +17,7 @@ var (
 
 type BleveIndexMetrics struct {
 	IndexDir string
-	Backend  *BleveBackend
+	Backend  SearchBackend
 
 	// metrics
 	IndexLatency      *prometheus.HistogramVec
@@ -30,7 +30,7 @@ type BleveIndexMetrics struct {
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
-func NewBleveMetrics(indexDir string, bleveBackend *BleveBackend) *BleveIndexMetrics {
+func NewIndexMetrics(indexDir string, bleveBackend SearchBackend) *BleveIndexMetrics {
 	onceIndex.Do(func() {
 		IndexMetrics = &BleveIndexMetrics{
 			IndexDir: indexDir,
@@ -93,7 +93,7 @@ func (s *BleveIndexMetrics) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// collect index docs
-	s.IndexedDocs.Set(s.getTotalDocCount())
+	s.IndexedDocs.Set(float64(s.Backend.TotalDocs()))
 	s.IndexedDocs.Collect(ch)
 }
 
@@ -104,19 +104,6 @@ func (s *BleveIndexMetrics) Describe(ch chan<- *prometheus.Desc) {
 	s.IndexedKinds.Describe(ch)
 	s.IndexCreationTime.Describe(ch)
 	s.IndexTenants.Describe(ch)
-}
-
-// getTotalDocCount returns the total number of documents in the index
-func (s *BleveIndexMetrics) getTotalDocCount() float64 {
-	var totalDocs float64
-	for _, v := range s.Backend.cache {
-		c, err := v.index.DocCount()
-		if err != nil {
-			continue
-		}
-		totalDocs += float64(c)
-	}
-	return totalDocs
 }
 
 // getTotalIndexSize returns the total size of all file-based indices.

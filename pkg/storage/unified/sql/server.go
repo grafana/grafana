@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -64,6 +65,11 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			}, tracer, reg),
 			Resources:     docs,
 			WorkerThreads: cfg.IndexWorkers,
+		}
+
+		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
+		if err != nil {
+			slog.Warn("Failed to register indexer metrics", "error", err)
 		}
 	}
 
