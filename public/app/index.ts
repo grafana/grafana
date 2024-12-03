@@ -2,7 +2,7 @@ import 'vite/modulepreload-polyfill';
 import './core/trustedTypePolicies';
 import './jquery';
 
-// TODO: Vite should have __wepack_public_path support. Not looked into it yet.
+// TODO: Vite does this differently...
 // declare let __webpack_public_path__: string;
 // declare let __webpack_nonce__: string;
 
@@ -26,7 +26,7 @@ import app from './app';
 
 const prepareInit = async () => {
   if (process.env.frontend_dev_mock_api) {
-    return import('test/mock-api/worker').then((workerModule) => {
+    return import('../test/mock-api/worker').then((workerModule) => {
       workerModule.default.start({ onUnhandledRequest: 'bypass' });
     });
   }
