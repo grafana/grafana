@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
-    "@rspack/cli": "^1.0.0",
+    "@rspack/cli": "^1.1.5",
     "@types/lodash": "4.17.7",
     "@types/node": "22.10.2",
     "@types/prismjs": "1.26.4",
