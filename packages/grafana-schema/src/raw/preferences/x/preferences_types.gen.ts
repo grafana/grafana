@@ -29,6 +29,38 @@ export const defaultNavbarPreference: Partial<NavbarPreference> = {
   bookmarkUrls: [],
 };
 
+export interface CustomCommand {
+  /**
+   * Category for grouping commands
+   */
+  category?: string;
+  /**
+   * Unique identifier for the command
+   */
+  id: string;
+  /**
+   * Keywords associated with the command
+   */
+  keywords?: Array<string>;
+  /**
+   * Optional path associated with the command
+   */
+  path?: string;
+  /**
+   * Keyboard shortcuts for the command
+   */
+  shortcut?: Array<string>;
+  /**
+   * Human-readable title of the command
+   */
+  title: string;
+}
+
+export const defaultCustomCommand: Partial<CustomCommand> = {
+  keywords: [],
+  shortcut: [],
+};
+
 /**
  * Spec defines user, team or org Grafana preferences
  * swagger:model Preferences
@@ -38,6 +70,10 @@ export interface Preferences {
    * Cookie preferences
    */
   cookiePreferences?: CookiePreferences;
+  /**
+   * Custom commands for commands palette
+   */
+  customCommands?: Array<CustomCommand>;
   /**
    * UID for the home dashboard
    */
@@ -68,3 +104,7 @@ export interface Preferences {
    */
   weekStart?: string;
 }
+
+export const defaultPreferences: Partial<Preferences> = {
+  customCommands: [],
+};

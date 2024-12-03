@@ -126,11 +126,16 @@ export type {
   Preferences,
   QueryHistoryPreference,
   CookiePreferences,
-  NavbarPreference
+  NavbarPreference,
+  CustomCommand
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated enums and default consts from preferences kind.
-export { defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';
+export {
+  defaultPreferences,
+  defaultNavbarPreference,
+  defaultCustomCommand
+} from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';

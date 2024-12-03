@@ -68,6 +68,7 @@ type SavePreferenceCommand struct {
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands    []CustomCommand         `json:"customCommands,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -84,6 +85,7 @@ type PatchPreferenceCommand struct {
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands    []CustomCommand         `json:"customCommands,omitempty"`
 }
 
 type PreferenceJSONData struct {
@@ -91,6 +93,7 @@ type PreferenceJSONData struct {
 	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
 	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
 	Navbar            NavbarPreference       `json:"navbar"`
+	CustomCommands    []CustomCommand        `json:"customCommands"`
 }
 
 type QueryHistoryPreference struct {
@@ -141,3 +144,12 @@ func (p Preference) TableName() string { return "preferences" }
 // swagger:model
 // Enum: analytics,performance,functional
 type CookieType string
+
+type CustomCommand struct {
+	ID       string   `json:"id"`
+	Title    string   `json:"title"`
+	Path     *string  `json:"path,omitempty"`
+	Shortcut []string `json:"shortcut,omitempty"`
+	Keywords []string `json:"keywords,omitempty"`
+	Category *string  `json:"category,omitempty"`
+}

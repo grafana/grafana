@@ -35,6 +35,9 @@ lineage: schemas: [{
 
 			// Navigation preferences
 			navbar?: #NavbarPreference
+
+			// Custom commands for commands palette
+			customCommands?: [...#CustomCommand]
 		} @cuetsy(kind="interface")
 
 		#QueryHistoryPreference: {
@@ -50,6 +53,26 @@ lineage: schemas: [{
 
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
+		} @cuetsy(kind="interface")
+
+		#CustomCommand: {
+			// Unique identifier for the command
+			id: string
+
+			// Human-readable title of the command
+			title: string
+
+			// Optional path associated with the command
+			path?: string
+
+			// Keyboard shortcuts for the command
+			shortcut?: [...string]
+
+			// Keywords associated with the command
+			keywords?: [...string]
+
+			// Category for grouping commands
+			category?: string
 		} @cuetsy(kind="interface")
 	}
 }]

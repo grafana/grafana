@@ -5,7 +5,10 @@ import * as React from 'react';
 import { FeatureState, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import {
+  CustomCommand,
+  Preferences as UserPreferencesDTO,
+} from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 import {
   Button,
   Field,
@@ -113,7 +116,26 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     if (confirmationResult) {
       const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
+      const mockedCommands: CustomCommand[] = [
+        {
+          id: 'go/all-alert-groups',
+          title: 'All alert groups',
+          path: '/a/grafana-irm-app/alert-groups',
+          shortcut: ['/', 'a'],
+          keywords: ['oncall', 'irm'],
+          category: 'IRM',
+        },
+      ];
+      await this.service.update({
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        queryHistory,
+        navbar,
+        customCommands: mockedCommands,
+      });
       window.location.reload();
     }
   };

@@ -13,12 +13,13 @@ type UpdatePrefsCmd struct {
 	HomeDashboardID  int64   `json:"homeDashboardId"`
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// Enum: utc,browser
-	Timezone     string                       `json:"timezone"`
-	WeekStart    string                       `json:"weekStart"`
-	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
-	Language     string                       `json:"language"`
-	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
-	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
+	Timezone       string                       `json:"timezone"`
+	WeekStart      string                       `json:"weekStart"`
+	QueryHistory   *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Language       string                       `json:"language"`
+	Cookies        []pref.CookieType            `json:"cookies,omitempty"`
+	Navbar         *pref.NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands []pref.CustomCommand         `json:"customCommands,omitempty"`
 }
 
 // swagger:model
@@ -36,4 +37,5 @@ type PatchPrefsCmd struct {
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands   []pref.CustomCommand         `json:"customCommands,omitempty"`
 }

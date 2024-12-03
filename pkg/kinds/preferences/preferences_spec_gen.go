@@ -16,6 +16,27 @@ type CookiePreferences struct {
 	Performance map[string]any `json:"performance,omitempty"`
 }
 
+// CustomCommand defines model for CustomCommand.
+type CustomCommand struct {
+	// Category for grouping commands
+	Category *string `json:"category,omitempty"`
+
+	// Unique identifier for the command
+	Id string `json:"id"`
+
+	// Keywords associated with the command
+	Keywords []string `json:"keywords,omitempty"`
+
+	// Optional path associated with the command
+	Path *string `json:"path,omitempty"`
+
+	// Keyboard shortcuts for the command
+	Shortcut []string `json:"shortcut,omitempty"`
+
+	// Human-readable title of the command
+	Title string `json:"title"`
+}
+
 // NavbarPreference defines model for NavbarPreference.
 type NavbarPreference struct {
 	BookmarkUrls []string `json:"bookmarkUrls"`
@@ -31,6 +52,9 @@ type QueryHistoryPreference struct {
 // swagger:model Preferences
 type Spec struct {
 	CookiePreferences *CookiePreferences `json:"cookiePreferences,omitempty"`
+
+	// Custom commands for commands palette
+	CustomCommands []CustomCommand `json:"customCommands,omitempty"`
 
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`

@@ -236,7 +236,8 @@ func (s *Service) GetDefaults() *pref.Preference {
 		WeekStart:       s.defaults.WeekStart,
 		HomeDashboardID: 0,
 		JSONData: &pref.PreferenceJSONData{
-			Language: s.defaults.JSONData.Language,
+			Language:       s.defaults.JSONData.Language,
+			CustomCommands: s.defaults.JSONData.CustomCommands,
 		},
 	}
 }

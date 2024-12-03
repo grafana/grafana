@@ -47,6 +47,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
+		CustomCommands:    dtoCmd.CustomCommands,
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -110,6 +111,11 @@ func GetPreferencesFor(ctx context.Context,
 			}
 		}
 	}
+
+	// TODO: fix it
+	// if preference.JSONData.CustomCommands != nil {
+	// 	dto.CustomCommands = preference.JSONData.CustomCommands
+	// }
 
 	return response.JSON(http.StatusOK, &dto)
 }
