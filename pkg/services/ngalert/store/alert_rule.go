@@ -621,7 +621,7 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 
 // GetOrCreateNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	f, err := st.GetNamespaceByUID(ctx, uid, orgID, user)
+	f, _ := st.GetNamespaceByUID(ctx, uid, orgID, user)
 	if f != nil {
 		return f, nil
 	}
