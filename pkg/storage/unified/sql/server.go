@@ -65,6 +65,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			}, tracer, reg),
 			Resources:     docs,
 			WorkerThreads: 5, // from cfg?
+			InitMinCount:  1,
 		}
 	}
 

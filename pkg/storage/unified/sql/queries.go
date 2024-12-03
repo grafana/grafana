@@ -31,6 +31,7 @@ var (
 	sqlResourceInsert          = mustTemplate("resource_insert.sql")
 	sqlResourceUpdate          = mustTemplate("resource_update.sql")
 	sqlResourceRead            = mustTemplate("resource_read.sql")
+	sqlResourceStats           = mustTemplate("resource_stats.sql")
 	sqlResourceList            = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList     = mustTemplate("resource_history_list.sql")
 	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
@@ -68,6 +69,15 @@ type sqlResourceRequest struct {
 }
 
 func (r sqlResourceRequest) Validate() error {
+	return nil // TODO
+}
+
+type sqlStatsRequest struct {
+	sqltemplate.SQLTemplate
+	MinCount int
+}
+
+func (r sqlStatsRequest) Validate() error {
 	return nil // TODO
 }
 
