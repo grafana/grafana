@@ -1,8 +1,6 @@
 package v0alpha1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -280,8 +278,8 @@ type Author struct {
 }
 
 type HistoryItem struct {
-	Ref       string    `json:"ref"`
-	Message   string    `json:"message"`
-	Authors   []Author  `json:"authors"`
-	CreatedAt time.Time `json:"date"`
+	Ref       string   `json:"ref"`
+	Message   string   `json:"message"`
+	Authors   []Author `json:"authors"`
+	CreatedAt int64    `json:"createdAt"`
 }

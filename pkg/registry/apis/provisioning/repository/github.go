@@ -304,7 +304,7 @@ func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, pat
 			Ref:       commit.Ref,
 			Message:   commit.Message,
 			Authors:   authors,
-			CreatedAt: commit.CreatedAt,
+			CreatedAt: commit.CreatedAt.UnixNano(),
 		})
 	}
 

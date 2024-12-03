@@ -139,7 +139,6 @@ func (in *HistoryItem) DeepCopyInto(out *HistoryItem) {
 		*out = make([]Author, len(*in))
 		copy(*out, *in)
 	}
-	in.CreatedAt.DeepCopyInto(&out.CreatedAt)
 	return
 }
 

@@ -333,14 +333,15 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref common.ReferenceCallb
 							},
 						},
 					},
-					"date": {
+					"createdAt": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
-				Required: []string{"ref", "message", "authors", "date"},
+				Required: []string{"ref", "message", "authors", "createdAt"},
 			},
 		},
 		Dependencies: []string{
