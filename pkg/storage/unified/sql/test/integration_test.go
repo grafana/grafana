@@ -101,7 +101,8 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		stats, err := backend.GetResourceStats(ctx, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
-		require.Equal(t, 3, stats[0].Count)
+		require.Equal(t, int64(3), stats[0].Count)
+		require.Equal(t, rv3, stats[0].ResourceVersion)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {

@@ -225,7 +225,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "query",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MinCount:    int64(10), // Not yet used in query (only response filter)
+						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
 			},

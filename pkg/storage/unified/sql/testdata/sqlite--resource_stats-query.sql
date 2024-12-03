@@ -3,12 +3,10 @@ SELECT
   "group",
   "resource",
   COUNT(*),
-  "resource_version"
+  MAX("resource_version")
 FROM "resource"
 GROUP BY 
   "namespace",
   "group",
   "resource"
-ORDER BY
-  "resource_version" desc
 ;
