@@ -377,6 +377,10 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
+		if len(ruleGroup.Rules) == 0 {
+			continue
+		}
+
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 	}
 
