@@ -233,7 +233,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   private _addingFilterWithoutReportingInteraction = false;
-  private datasourceHelper = new MetricDatasourceHelper(this);
+  datasourceHelper = new MetricDatasourceHelper(this);
 
   public getMetricMetadata(metric?: string) {
     return this.datasourceHelper.getMetricMetadata(metric);
