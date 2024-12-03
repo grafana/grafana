@@ -49,7 +49,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
 
@@ -64,6 +63,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			folderRoute.Post("/", handler.createFolder)
 			folderRoute.Get("/", handler.getFolders)
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Put("/", handler.updateFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
 			})
@@ -71,15 +71,9 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 			folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 				folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-			})
-		}
-		// Only adding support for some routes with the k8s handler for now. Include the rest here.
-		if false {
-			handler := newFolderK8sHandler(hs)
-			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Put("/:uid", handler.updateFolder)
 			})
 		}
 	})
@@ -969,7 +963,7 @@ func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Fol
 		UpdatedBy: updater,
 		Updated:   fold.Updated,
 		// #TODO version doesn't seem to be used--confirm or set it properly
-		Version:       1,
+		Version:       fold.Version,
 		AccessControl: acMetadata,
 		ParentUID:     fold.ParentUID,
 	}, nil
