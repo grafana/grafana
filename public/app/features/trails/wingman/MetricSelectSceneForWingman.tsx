@@ -50,6 +50,7 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
+import { AnomaliesScene } from './display/AnomaliesScene';
 import { renderAsRedMetricsDisplay } from './display/redMetrics';
 import { getPreviewPanelFor } from './previewPanel';
 
@@ -443,9 +444,8 @@ export class MetricSelectSceneForWingman
         this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'anomalies':
-        console.log('animalies will be rendered');
-        children.push(...renderAsRedMetricsDisplay());
-        this.state.body.setState({ children, autoRows: rowTemplate });
+        console.log('anomalies will be rendered');
+        this.state.body.setState({ children: [new AnomaliesScene({})], autoRows: rowTemplate });
         break;
       case 'default':
       default:
@@ -483,6 +483,10 @@ export class MetricSelectSceneForWingman
     //   default:
     //     break;
     // }
+
+    if (displayAs !== 'default') {
+      return;
+    }
 
     const metricsList = this.sortedPreviewMetrics();
 
