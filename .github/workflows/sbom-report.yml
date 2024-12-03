@@ -2,7 +2,9 @@ name: syft-sbom-ci
 
 on:
   release:
-    types: [created]
+    types: [ created ]
+  workflow_dispatch:
+
 
 jobs:
   syft-sbom:
@@ -12,9 +14,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-        
-    - name: Anchore SBOM Action
-      uses: anchore/sbom-action@v0.14.2
-      with:
-         artifact-name: ${{ github.event.repository.name }}-spdx.json
 
+    - name: Anchore SBOM Action
+      uses: anchore/sbom-action@v0.17.8
+      with:
+        artifact-name: ${{ github.event.repository.name }}-sbom.spdx
