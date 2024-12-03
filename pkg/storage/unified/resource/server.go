@@ -95,7 +95,14 @@ type StorageBackend interface {
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
-	Namespaces(ctx context.Context) ([]string, error)
+	GetResourceStats(ctx context.Context, minCount int64) ([]ResourceStats, error)
+}
+
+type ResourceStats struct {
+	NamespacedResource
+
+	Count           int64
+	ResourceVersion int64
 }
 
 // This interface is not exposed to end users directly
