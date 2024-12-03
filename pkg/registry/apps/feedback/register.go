@@ -19,6 +19,10 @@ func RegisterApp(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 ) *FeedbackAppProvider {
+	if !features.IsEnabledGlobally(featuremgmt.FlagFeedbackButton) {
+		return nil
+	}
+
 	provider := &FeedbackAppProvider{}
 
 	appCfg := &runner.AppBuilderConfig{
