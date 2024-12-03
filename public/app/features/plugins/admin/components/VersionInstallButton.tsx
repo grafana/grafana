@@ -20,6 +20,7 @@ interface Props {
   latestCompatibleVersion?: string;
   installedVersion?: string;
   disabled: boolean;
+  tooltip?: string;
   onConfirmInstallation: () => void;
 }
 
@@ -29,6 +30,7 @@ export const VersionInstallButton = ({
   latestCompatibleVersion,
   installedVersion,
   disabled,
+  tooltip,
   onConfirmInstallation,
 }: Props) => {
   const install = useInstall();
@@ -119,6 +121,8 @@ export const VersionInstallButton = ({
         onClick={onInstallClick}
         className={styles.button}
         hidden={hidden}
+        tooltip={tooltip}
+        tooltipPlacement="bottom-start"
       >
         {label} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(label)}
       </Button>
