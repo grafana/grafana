@@ -74,7 +74,6 @@ type Client interface {
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
 	// BranchExists checks if a branch exists in the repository.
 	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
-	// BranchCommits returns the commits in a branch.
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
