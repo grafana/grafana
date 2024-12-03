@@ -24,12 +24,16 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       name: link.title,
       target: link.path,
       perform: () => link.onClick && link.onClick(),
-      shortcut: extractKeyboardShortcuts(link.description),
+      ...extractExtraSettings(link.description),
     }));
   }, [links]);
 }
 
-function extractKeyboardShortcuts(input: string) {
-  const match = input.match(/^\[shortcut:([^\]]+)\]/);
-  return match ? match[1].split(',') : undefined;
+function extractExtraSettings(input: string): Record<'shortcut' | 'keywords', string[]> {
+  const match = input.match(/(?:\[shortcut:(?<shortcut>[^\]]+)\])?\s?(?:\[keywords:(?<keywords>[^\]]+)\])?/);
+  const [shortcut, keywords] = Object.values(match?.groups ?? {}).map((x) => x?.split(','));
+  return {
+    ...(shortcut && {shortcut}),
+    ...(keywords && {keywords}),
+  };
 }
