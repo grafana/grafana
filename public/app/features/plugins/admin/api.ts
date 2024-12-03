@@ -94,6 +94,7 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
       createdAt: v.createdAt,
       isCompatible: v.isCompatible,
       grafanaDependency: v.grafanaDependency,
+      angularDetected: v.angularDetected,
     }));
   } catch (error) {
     if (isFetchError(error)) {

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { satisfies } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -22,8 +21,6 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
 
   const [isInstalling, setIsInstalling] = useState(false);
-
-  const grafanaVersion = config.buildInfo.version;
 
   useEffect(() => {
     setIsInstalling(false);
@@ -49,10 +46,17 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
       </thead>
       <tbody>
         {versions.map((version) => {
+          let tooltip: string | undefined = undefined;
           const isInstalledVersion = installedVersion === version.version;
-          const versionIsIncompatible = version.grafanaDependency
-            ? !satisfies(grafanaVersion, version.grafanaDependency, { includePrerelease: true })
-            : false;
+          const canInstall = version.angularDetected ? config.angularSupportEnabled : true;
+
+          if (!canInstall) {
+            tooltip = 'This plugin version is AngularJS type which is not supported';
+          }
+
+          if (!version.isCompatible) {
+            tooltip = 'This plugin version is not compatible with the current Grafana version';
+          }
 
           return (
             <tr key={version.version}>
@@ -73,7 +77,8 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                   latestCompatibleVersion={latestCompatibleVersion?.version}
                   installedVersion={installedVersion}
                   onConfirmInstallation={onInstallClick}
-                  disabled={isInstalledVersion || isInstalling || versionIsIncompatible}
+                  disabled={isInstalledVersion || isInstalling || !canInstall || !version.isCompatible || !canInstall}
+                  tooltip={tooltip}
                 />
               </td>
 
