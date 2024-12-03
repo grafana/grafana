@@ -9,7 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
-import { CommandPalette2 } from 'app/features/command-palette-2';
+import { CommandPalette2Entrypoint as CommandPalette2 } from 'app/features/command-palette-2';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
