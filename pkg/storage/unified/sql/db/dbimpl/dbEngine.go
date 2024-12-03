@@ -25,6 +25,10 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
 	}
+	sslMode := getter.String("ssl_mode")
+	if sslMode == "true" || sslMode == "skip-verify" {
+		config.Params["tls"] = "preferred"
+	}
 	tls := getter.String("tls")
 	if tls != "" {
 		config.Params["tls"] = tls
