@@ -1671,6 +1671,44 @@
         "x-raw-request": "true"
       }
     },
+    "/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}": {
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Deletes a rule group in Prometheus format.",
+        "operationId": "RouteDeleteGrafanaPrometheusRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "rule group was deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/ruler/{DatasourceUID}/api/v1/rules": {
       "get": {
         "description": "List rule groups",

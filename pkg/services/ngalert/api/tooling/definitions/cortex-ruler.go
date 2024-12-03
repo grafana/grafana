@@ -90,6 +90,17 @@ import (
 //     Extensions:
 //       x-raw-request: true
 
+// swagger:route DELETE /ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group} ruler RouteDeleteGrafanaPrometheusRuleGroup
+//
+// Deletes a rule group in Prometheus format.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       204: The rule group was deleted successfully.
+//       403: ForbiddenError
+
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
@@ -670,4 +681,12 @@ type PostablePrometheusRule struct {
 	Labels        map[string]string `yaml:"labels" json:"labels"`
 	Annotations   map[string]string `yaml:"annotations" json:"annotations"`
 	Record        string            `yaml:"record" json:"record"`
+}
+
+// swagger:parameters RouteDeleteGrafanaPrometheusRuleGroup
+type RouteDeleteGrafanaPrometheusRuleGroupParams struct {
+	// in: path
+	Namespace string
+	// in: path
+	Group string
 }

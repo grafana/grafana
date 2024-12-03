@@ -20,6 +20,7 @@ import (
 )
 
 type RulerApi interface {
+	RouteDeleteGrafanaPrometheusRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteDeleteGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
@@ -38,6 +39,12 @@ type RulerApi interface {
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
 }
 
+func (f *RulerApiHandler) RouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupParam := web.Params(ctx.Req)[":Group"]
+	return f.handleRouteDeleteGrafanaPrometheusRuleGroup(ctx, namespaceParam, groupParam)
+}
 func (f *RulerApiHandler) RouteDeleteGrafanaRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
@@ -141,6 +148,18 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Delete(
+			toMacaronPath("/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}",
+				api.Hooks.Wrap(srv.RouteDeleteGrafanaPrometheusRuleGroup),
+				m,
+			),
+		)
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
