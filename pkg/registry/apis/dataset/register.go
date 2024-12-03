@@ -93,7 +93,7 @@ func (b *DatasetAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 	}
 
 	storage[resourceInfo.StoragePath()] = store
-	storage[resourceInfo.StoragePath("frames")] = &framesConnector{
+	storage[resourceInfo.StoragePath("data")] = &framesConnector{
 		getter:       store,
 		blobStore:    b.blobStore,
 		largeObjects: largeObjects,
