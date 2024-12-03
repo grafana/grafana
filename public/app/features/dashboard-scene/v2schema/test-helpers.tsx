@@ -57,7 +57,7 @@ export function validateVariable<
   }
 }
 
-export function validateVizPanel(vizPanel: VizPanel, scene: DashboardScene, dash: DashboardV2Spec) {
+export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   expect(vizPanel.state.title).toBe(dash.elements['test-panel-uid'].spec.title);
   expect(vizPanel.state.description).toBe(dash.elements['test-panel-uid'].spec.description);
   expect(vizPanel.state.pluginId).toBe(dash.elements['test-panel-uid'].spec.vizConfig.kind);
