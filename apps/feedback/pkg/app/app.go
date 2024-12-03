@@ -6,7 +6,9 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	apis "github.com/grafana/grafana/apps/feedback/pkg/apis"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
@@ -49,4 +51,14 @@ func New(cfg app.Config) (app.App, error) {
 	// Validate the capabilities against the provided manifest to make sure there isn't a mismatch
 	err = a.ValidateManifest(cfg.ManifestData)
 	return a, err
+}
+
+func GetKinds() map[schema.GroupVersion][]resource.Kind {
+	gv := schema.GroupVersion{
+		Group:   feedbackv0alpha1.FeedbackKind().Group(),
+		Version: feedbackv0alpha1.FeedbackKind().Version(),
+	}
+	return map[schema.GroupVersion][]resource.Kind{
+		gv: {feedbackv0alpha1.FeedbackKind()},
+	}
 }
