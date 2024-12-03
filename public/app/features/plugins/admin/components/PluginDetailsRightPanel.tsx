@@ -1,3 +1,6 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { Stack, Text, LinkButton, Box, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -5,8 +8,6 @@ import { formatDate } from 'app/core/internationalization/dates';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
 
 type Props = {
   info: PageInfoItem[];
