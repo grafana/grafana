@@ -1,0 +1,10 @@
+apiVersion: dataset.grafana.app/v0alpha1
+kind: Dataset
+metadata:
+  generateName: x # anything is ok here... except yes or true -- they become boolean!
+spec:
+  title: Name of the dataset
+  description: A description from here
+  frames:
+  - aaa: xxx
+  - bbb: yyy

@@ -1,8 +1,6 @@
 package dataset
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,28 +14,34 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ builder.APIGroupBuilder = (*DatasetAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type DatasetAPIBuilder struct{}
-
-func NewDatasetAPIBuilder() *DatasetAPIBuilder {
-	return &DatasetAPIBuilder{}
+type DatasetAPIBuilder struct {
+	blobStore resource.BlobStoreClient
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) (*DatasetAPIBuilder, error) {
+func NewDatasetAPIBuilder(blobStore resource.BlobStoreClient) *DatasetAPIBuilder {
+	return &DatasetAPIBuilder{blobStore}
+}
+
+func RegisterAPIService(features featuremgmt.FeatureToggles,
+	apiregistration builder.APIRegistrar,
+	unified resource.ResourceClient,
+) (*DatasetAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		return nil, fmt.Errorf("dataset requires flag: unifiedStorageBigObjectsSupport")
+		unified = nil
 	}
 
-	builder := NewDatasetAPIBuilder()
-	apiregistration.RegisterAPI(NewDatasetAPIBuilder())
+	builder := NewDatasetAPIBuilder(unified)
+	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
 
@@ -71,9 +75,13 @@ func (b *DatasetAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 	resourceInfo := dataset.DatasetResourceInfo
 	storage := map[string]rest.Storage{}
 
-	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
-		LargeObjectSupport: NewDatasetLargeObjectSupport(opts.Scheme),
-	})
+	var largeObjects apistore.LargeObjectSupport
+	if b.blobStore != nil {
+		largeObjects = NewDatasetLargeObjectSupport(opts.Scheme)
+		opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+			LargeObjectSupport: largeObjects,
+		})
+	}
 
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -82,7 +90,9 @@ func (b *DatasetAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 
 	storage[resourceInfo.StoragePath()] = store
 	storage[resourceInfo.StoragePath("frames")] = &framesConnector{
-		getter: store,
+		getter:       store,
+		blobStore:    b.blobStore,
+		largeObjects: largeObjects,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dataset.VERSION] = storage
