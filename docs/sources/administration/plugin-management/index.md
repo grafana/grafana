@@ -245,7 +245,7 @@ To enable backend communication between plugins:
    For example, to allow access to all plugins that have a backend:
 
    ```
-   actions_allow_post_url=/api/plugins/grafana-special-app
+   actions_allow_post_url=/api/plugins/*
    ```
 
    Or, to access to the backend of only one plugin:
