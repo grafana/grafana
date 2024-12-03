@@ -127,7 +127,7 @@ CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) fo
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-You can incorporate any labels returned by the query into the template. For example, the following template includes information about the environment and region where the alert ocurred.
+You can incorporate any labels returned by the query into the template. For instance, the following template includes information about the environment and region where the alert occurred.
 
 ```
 Alert triggered in {{ $labels.environment }} on {{ $labels.region }} region.
