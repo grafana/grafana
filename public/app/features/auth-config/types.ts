@@ -1,6 +1,5 @@
 import { ReactElement } from 'react';
-import { Validate } from 'react-hook-form';
-import { UseFormSetValue } from 'react-hook-form/dist/types/form';
+import { Validate, UseFormSetValue } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
