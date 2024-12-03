@@ -49,15 +49,14 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 							Format:  "",
 						},
 					},
-					"AvatarURL": {
+					"avatarURL": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"name", "AvatarURL"},
+				Required: []string{"name"},
 			},
 		},
 	}
@@ -376,7 +375,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"files": {
+					"items": {
 						SchemaProps: spec.SchemaProps{
 							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
 							Type:        []string{"array"},

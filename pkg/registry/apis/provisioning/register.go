@@ -570,15 +570,12 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	if sub != nil {
 		sub.Get.Description = "Get the history of the repository"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
-		// TODO: Check response
-		// TODO: check / or no slash
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/history/{path}"]
 	if sub != nil {
 		sub.Get.Description = "Get the history of a path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
-		// TODO: Check response
 	}
 
 	// Show a special list command

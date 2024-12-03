@@ -269,12 +269,12 @@ type HistoryList struct {
 
 	// should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
-	Items []HistoryItem `json:"files,omitempty"`
+	Items []HistoryItem `json:"items,omitempty"`
 }
 
 type Author struct {
 	Name      string `json:"name"`
-	AvatarURL string `json: "avatarURL,omitempty"`
+	AvatarURL string `json:"avatarURL,omitempty"`
 }
 
 type HistoryItem struct {
