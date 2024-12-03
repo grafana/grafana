@@ -59,7 +59,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     const { onWingmanOptionChanged } = model;
     const initialData = useWingmanOptionGroup();
     return (
-      <div className={styles.vertialLine}>
+      <div className={styles.verticalLine}>
         <div className={styles.title}>11241 Metrics</div>
         {initialData.map((group, groupIdx) => (
           <div key={group.title}>
@@ -83,7 +83,8 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
 
 export function getStyles(theme: GrafanaTheme2) {
   return {
-    vertialLine: css({
+    verticalLine: css({
+      marginLeft: '16px', // not currently working
       borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       height: '540px',
     }),
