@@ -3,7 +3,7 @@ import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
@@ -12,6 +12,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
 import { useEditPaneCollapsed } from './shared';
+import { useDropAndPaste } from './useDropAndPaste';
 
 interface Props {
   dashboard: DashboardScene;
@@ -22,16 +23,25 @@ interface Props {
 
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const { getRootProps, isDragActive, onPaste } = useDropAndPaste();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, isDragActive);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
       <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
+        <div className={styles.canvasWrappperOld} onPaste={onPaste}>
           <NavToolbarActions dashboard={dashboard} />
           <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
+          <div {...getRootProps({ className: styles.body })}>
+            {body}
+            <div className={styles.dropOverlay}>
+              <div className={styles.dropHint}>
+                <Icon name="upload" size="xxxl"></Icon>
+                <h3>Create tables from spreadsheets</h3>
+              </div>
+            </div>
+          </div>
         </div>
       </NativeScrollbar>
     );
@@ -95,7 +105,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, isDragActive: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -149,6 +159,25 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         background: theme.colors.background.canvas,
         top: headerHeight,
       },
+    }),
+    dropZone: css({ height: '100%' }),
+    dropOverlay: css({
+      backgroundColor: isDragActive ? theme.colors.action.hover : 'inherit',
+      border: isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0,
+      position: 'absolute',
+      display: isDragActive ? 'flex' : 'none',
+      zIndex: theme.zIndex.modal,
+      top: 0,
+      left: 0,
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    dropHint: css({
+      alignItems: 'center',
+      display: 'flex',
+      flexDirection: 'column',
     }),
   };
 }
