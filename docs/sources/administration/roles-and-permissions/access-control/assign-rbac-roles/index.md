@@ -56,7 +56,6 @@ This section describes how to:
 
 In both cases, the assignment applies only to the user, team or service account within the affected organization, and no other organizations. For example, if you grant the user the **Data source editor** role in the **Main** organization, then the user can edit data sources in the **Main** organization, but not in other organizations.
 
-<br/>
 
 **Before you begin:**
 
@@ -71,7 +70,6 @@ In both cases, the assignment applies only to the user, team or service account 
   - Your Grafana user can also assign fixed role if it has either the `fixed:roles:writer` fixed role assigned to the same organization to which you are assigning RBAC to a user, or a custom role with `users.roles:add` and `users.roles:remove` permissions.
   - Your own user account must have the roles you are granting. For example, if you would like to grant the `fixed:users:writer` role to a team, you must have that role yourself.
 
-<br/>
 
 **To assign a fixed role to a user, team or service account:**
 
@@ -99,7 +97,6 @@ This section describes how to:
 
 - Assign a fixed role to a user, team or service account as an organization administrator.
 
-<br/>
 
 **Before you begin:**
 
@@ -114,7 +111,6 @@ This section describes how to:
   - Your Grafana user can also assign fixed role if it has either the `fixed:roles:writer` fixed role assigned to the same organization to which you are assigning RBAC to a user, or a custom role with `users.roles:add` and `users.roles:remove` permissions.
   - Your own user account must have the roles you are granting. For example, if you would like to grant the `fixed:users:writer` role to a team, you must have that role yourself.
 
-<br/>
 
 **To assign a fixed role to a user or service account:**
 
