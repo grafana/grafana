@@ -3,8 +3,8 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -247,9 +247,12 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	obj := a.GetObject()
 
-	fObj := obj.(*v0alpha1.Folder)
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
 
-	if strings.TrimSpace(fObj.Spec.Title) == "" {
+	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
 
