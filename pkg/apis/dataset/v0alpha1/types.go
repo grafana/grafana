@@ -2,8 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -26,7 +24,7 @@ type Spec struct {
 
 	// TODO: replace with a typed version (same by query results)
 	// When large, this will be removed
-	Frames []common.Unstructured `json:"frames,omitempty"`
+	Data []DataFrame `json:"data,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

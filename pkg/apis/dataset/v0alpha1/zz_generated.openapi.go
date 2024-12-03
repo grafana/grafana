@@ -14,6 +14,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.DataFrame":   DataFrame{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.Dataset":     schema_pkg_apis_dataset_v0alpha1_Dataset(ref),
 		"github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.DatasetList": schema_pkg_apis_dataset_v0alpha1_DatasetList(ref),
 		"github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.FrameInfo":   schema_pkg_apis_dataset_v0alpha1_FrameInfo(ref),
@@ -188,14 +189,14 @@ func schema_pkg_apis_dataset_v0alpha1_Spec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
-					"frames": {
+					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This will be removed when the payload is large",
+							Description: "When large, this will be removed",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.DataFrame"),
 									},
 								},
 							},
@@ -206,6 +207,6 @@ func schema_pkg_apis_dataset_v0alpha1_Spec(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.FrameInfo"},
+			"github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.DataFrame", "github.com/grafana/grafana/pkg/apis/dataset/v0alpha1.FrameInfo"},
 	}
 }
