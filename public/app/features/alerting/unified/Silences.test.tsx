@@ -65,7 +65,6 @@ const ui = {
   notExpiredTable: byTestId('not-expired-table'),
   expiredTable: byTestId('expired-table'),
   expiredCaret: byText(/expired silences \(/i),
-  silencesTags: byLabelText(/tags/i),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('link', { name: /add silence/i }),
@@ -119,8 +118,6 @@ beforeEach(() => {
     AccessControlAction.AlertingInstancesExternalWrite,
   ]);
 });
-
-afterEach(() => jest.resetAllMocks());
 
 describe('Silences', () => {
   it(

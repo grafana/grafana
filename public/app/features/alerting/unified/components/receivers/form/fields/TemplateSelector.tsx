@@ -54,7 +54,7 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={`Edit ${option.label.toLowerCase()} using existing templates.`}
+        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
         onClick={onClick}
         variant="secondary"
         size="sm"
@@ -129,10 +129,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select existing template',
-      ariaLabel: 'Select existing template',
+      label: 'Select notification template',
+      ariaLabel: 'Select notification template',
       value: 'Existing',
-      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
+      description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
     {
       label: `Enter custom ${option.label.toLowerCase()}`,
@@ -195,8 +195,8 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
                 data-testid="existing-templates-selector"
-                placeholder="Choose template"
-                aria-label="Choose template"
+                placeholder="Choose notification template"
+                aria-label="Choose notification template"
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
                 }}
@@ -205,7 +205,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected template to clipboard. You can use it in the custom tab."
+                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
                 onClick={() =>
                   copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
                 }

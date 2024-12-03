@@ -1,41 +1,35 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { AutoEditor } from './AutoEditor';
-import { ManualEditor } from './ManualEditor';
-import { XYChartPanel } from './XYChartPanel';
+import { SeriesEditor } from './SeriesEditor';
+import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
-import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { xyChartMigrationHandler } from './migrations';
+import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
+  // .setPanelChangeHandler(xyChartChangeHandler)
+  .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
     builder
       .addRadio({
-        path: 'seriesMapping',
+        path: 'mapping',
         name: 'Series mapping',
         defaultValue: 'auto',
         settings: {
           options: [
-            { value: 'auto', label: 'Table', description: 'Plot values within a single table result' },
-            { value: 'manual', label: 'Manual', description: 'Construct values from any result' },
+            { value: 'auto', label: 'Auto' },
+            { value: 'manual', label: 'Manual' },
           ],
         },
-      })
-      .addCustomEditor({
-        id: 'xyPlotConfig',
-        path: 'dims',
-        name: '',
-        editor: AutoEditor,
-        showIf: (cfg) => cfg.seriesMapping === 'auto',
       })
       .addCustomEditor({
         id: 'series',
         path: 'series',
         name: '',
-        defaultValue: [],
-        editor: ManualEditor,
-        showIf: (cfg) => cfg.seriesMapping === 'manual',
+        editor: SeriesEditor,
+        defaultValue: [{}],
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);

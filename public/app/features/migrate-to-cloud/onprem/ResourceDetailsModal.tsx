@@ -23,6 +23,11 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.datasource-invalid-url',
         'There is a data source which has an invalid URL. Provide a valid URL and try again.'
       );
+    case 'DATASOURCE_ALREADY_MANAGED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.datasource-already-managed',
+        'Data source is already provisioned and managed by Grafana in the cloud instance. If this is a different resource, set another UID and try again.'
+      );
     case 'FOLDER_NAME_CONFLICT':
       return t(
         'migrate-to-cloud.resource-details.error-messages.folder-name-conflict',

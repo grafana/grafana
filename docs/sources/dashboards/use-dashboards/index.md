@@ -71,6 +71,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#export-dashboards
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/#export-dashboards
+  add-ad-hoc-filters:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+  shared-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
 ---
 
 # Use dashboards
@@ -85,19 +95,18 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlight all dashboard features.
 
-![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-no-toggle-annotated-11.3.png)
+![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-annotated-v11.3-2.png)
 
-1. **Grafana home** - Click **Home** in the breadcrumb to go to the home page configured in the Grafana instance.
 1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
 1. **Dashboard title** - You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+1. **Kiosk mode** - Click to display the dashboard on a large screen such as a TV or a kiosk. Kiosk mode hides the main menu, navbar, and dashboard controls. Learn more about kiosk mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/). Press `Esc` to leave kiosk mode.
 1. **Mark as favorite** - Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
-1. **Public label** - When you share a dashboard externally, it's marked with the **Public** label.
+1. **Public label** - When you [share a dashboard externally](ref:shared-dashboards), it's marked with the **Public** label.
 1. **Dashboard insights** - Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
 1. **Edit** - Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
 1. **Export** - Access [dashboard exporting](ref:export-dashboards) options.
 1. **Share dashboard** - Access several [dashboard sharing](ref:sharing) options.
-1. **Kiosk mode** - Click to display the dashboard on a large screen such as a TV or a kiosk. Kiosk mode hides elements such as navigation menus. Learn more about kiosk mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/). Press `Enter` to leave kiosk mode.
-1. **Variables** - Use [variables](ref:variables) to create more interactive and dynamic dashboards.
+1. **Variables** - Use [variables](ref:variables), including ad hoc filters, to create more interactive and dynamic dashboards.
 1. **Dashboard links** - Link to other dashboards, panels, and external websites. Learn more about [dashboard links](ref:dashboard-links).
 1. **Current dashboard time range and time picker** - Click to select [relative time range](#relative-time-range) options and set custom [absolute time ranges](#absolute-time-range).
    - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
@@ -272,3 +281,33 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 ### Control the time range using a URL
 
 {{< docs/shared lookup="dashboards/time-range-URLs.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Filter dashboard data
+
+Once you've [added an ad hoc filter](ref:add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
+
+To filter dashboard data, follow these steps:
+
+1. On the dashboard, click in the filter field.
+1. Select a label, operator, and value.
+
+   To add multiple values for one label, choose one of the multi-select operators, **One of** (`=|`) or **Not one of** (`!=|`). These operators only appear if the filter data source supports it.
+
+1. Repeat this process as needed until you have all the filters you need.
+
+   ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+
+### Edit or delete filters
+
+To edit or delete filters, follow these steps:
+
+1. On the dashboard, click anywhere on the filter you want to change.
+1. Do one of the following:
+
+   - To edit the operator or value of a filter, click anywhere on the filter and update it.
+
+     ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+
+   - To change the filter label, you must delete the filter and create a new one.
+   - To delete a filter, click the **X** next to it.

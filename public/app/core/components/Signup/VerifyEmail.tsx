@@ -5,6 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans } from 'app/core/internationalization';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 interface EmailDTO {
@@ -35,10 +36,14 @@ export const VerifyEmail = () => {
   if (emailSent) {
     return (
       <div>
-        <p>An email with a verification link has been sent to the email address. You should receive it shortly.</p>
+        <p>
+          <Trans i18nKey="sign-up.verify.info">
+            An email with a verification link has been sent to the email address. You should receive it shortly.
+          </Trans>
+        </p>
         <Container margin="md" />
         <LinkButton variant="primary" href={getConfig().appSubUrl + '/signup'}>
-          Complete Signup
+          <Trans i18nKey="sign-up.verify.complete-button">Complete signup</Trans>
         </LinkButton>
       </div>
     );
@@ -46,7 +51,9 @@ export const VerifyEmail = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Legend>Verify Email</Legend>
+      <Legend>
+        <Trans i18nKey="sign-up.verify.header">Verify email</Trans>
+      </Legend>
       <Field
         label="Email"
         description="Enter your email address to get a verification link sent to you"
@@ -66,9 +73,11 @@ export const VerifyEmail = () => {
         />
       </Field>
       <Stack>
-        <Button type="submit">Send verification email</Button>
+        <Button type="submit">
+          <Trans i18nKey="sign-up.verify.send-button">Send verification email</Trans>
+        </Button>
         <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-          Back to login
+          <Trans i18nKey="sign-up.verify.back-button">Back to login</Trans>
         </LinkButton>
       </Stack>
     </form>

@@ -9,10 +9,6 @@ import (
 type DB struct {
 }
 
-func (db *DB) TablesList(rawSQL string) ([]string, error) {
-	return nil, errors.New("not implemented")
-}
-
 func (db *DB) RunCommands(commands []string) (string, error) {
 	return "", errors.New("not implemented")
 }

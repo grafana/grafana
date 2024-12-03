@@ -21,12 +21,12 @@ import (
 )
 
 type FakePluginInstaller struct {
-	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error
 	// Remove removes a plugin from the store.
 	RemoveFunc func(ctx context.Context, pluginID, version string) error
 }
 
-func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	if i.AddFunc != nil {
 		return i.AddFunc(ctx, pluginID, version, opts)
 	}
@@ -125,6 +125,10 @@ func (pc *FakePluginClient) IsDecommissioned() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.decommissioned
+}
+
+func (pc *FakePluginClient) Target() backendplugin.Target {
+	return "test-target"
 }
 
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
@@ -645,4 +649,8 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
 }

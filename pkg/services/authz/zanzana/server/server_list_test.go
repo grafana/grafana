@@ -8,22 +8,21 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 func testList(t *testing.T, server *Server) {
 	newList := func(subject, group, resource string) *authzextv1.ListRequest {
 		return &authzextv1.ListRequest{
-			// FIXME: namespace should map to store
-			// Namespace: storeID,
-			Verb:     utils.VerbList,
-			Subject:  subject,
-			Group:    group,
-			Resource: resource,
+			Namespace: namespace,
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
 		}
 	}
 
-	t.Run("user:1 should list resource:dashboards.grafana.app/dashboards/1", func(t *testing.T) {
+	t.Run("user:1 should list resource:dashboard.grafana.app/dashboards/1", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:1", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 1)
@@ -39,7 +38,7 @@ func testList(t *testing.T, server *Server) {
 		assert.Len(t, res.GetFolders(), 0)
 	})
 
-	t.Run("user:3 should be able to list resource:dashboards.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
+	t.Run("user:3 should be able to list resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:3", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 
@@ -48,16 +47,24 @@ func testList(t *testing.T, server *Server) {
 		assert.Equal(t, res.GetItems()[0], "1")
 	})
 
-	t.Run("user:4 should be able to list all dashboards.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
+	t.Run("user:4 should be able to list all dashboard.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:4", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)
 		assert.Len(t, res.GetFolders(), 2)
-		assert.Equal(t, res.GetFolders()[0], "1")
-		assert.Equal(t, res.GetFolders()[1], "3")
+
+		first := res.GetFolders()[0]
+		second := res.GetFolders()[1]
+
+		if first == "3" {
+			first, second = second, first
+		}
+
+		assert.Equal(t, first, "1")
+		assert.Equal(t, second, "3")
 	})
 
-	t.Run("user:5 should be get list all dashboards.grafana.app/dashboards in folder 1 with set relation", func(t *testing.T) {
+	t.Run("user:5 should be get list all dashboard.grafana.app/dashboards in folder 1 with set relation", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:5", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)

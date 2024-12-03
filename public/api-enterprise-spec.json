@@ -1170,145 +1170,6 @@
         }
       }
     },
-    "/groupsync/mappings": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "List group mappings. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMappings",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Create a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "createGroupMapping",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/groupMappingRequestBody"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/mappings/{mapping_uid}": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Get a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Delete a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "deleteGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/licensing/check": {
       "get": {
         "tags": [
@@ -2119,13 +1980,14 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Get a report.",
         "operationId": "getReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2157,13 +2019,14 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Update a report.",
         "operationId": "updateReport",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -2203,13 +2066,14 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2716,6 +2580,9 @@
           "format": "int64"
         },
         "message": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -4077,6 +3944,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4101,6 +3971,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -4628,6 +4501,21 @@
         }
       }
     },
+    "EmailSchema": {
+      "description": "Implementation of SCIM specification email schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2",
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "EnumFieldConfig": {
       "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
       "type": "object",
@@ -5143,6 +5031,35 @@
         }
       }
     },
+    "GetUsersBody": {
+      "type": "object",
+      "properties": {
+        "Resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserSchema"
+          }
+        },
+        "itemsPerPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalResults": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "Group": {
       "type": "object",
       "properties": {
@@ -5160,24 +5077,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "GroupMapping": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "orgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "variant": {
-          "type": "string"
         }
       }
     },
@@ -5698,6 +5597,29 @@
         }
       }
     },
+    "MetaSchema": {
+      "description": "Implementation of SCIM specification meta schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-3.1",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -5774,6 +5696,7 @@
           "enum": [
             "DATASOURCE_NAME_CONFLICT",
             "DATASOURCE_INVALID_URL",
+            "DATASOURCE_ALREADY_MANAGED",
             "FOLDER_NAME_CONFLICT",
             "DASHBOARD_ALREADY_MANAGED",
             "LIBRARY_ELEMENT_NAME_CONFLICT",
@@ -5878,6 +5801,24 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "NameSchema": {
+      "description": "Implementation of SCIM specification name schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
+      "type": "object",
+      "properties": {
+        "familyName": {
+          "type": "string"
+        },
+        "formatted": {
+          "type": "string"
+        },
+        "givenName": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
         }
       }
     },
@@ -6030,6 +5971,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -6988,6 +6932,9 @@
         "branding": {
           "$ref": "#/definitions/ReportBrandingOptions"
         },
+        "embeddedImageTheme": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -6995,6 +6942,9 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfTheme": {
+          "type": "string"
         },
         "userId": {
           "type": "integer",
@@ -7099,6 +7049,9 @@
           "type": "string"
         },
         "hidden": {
+          "type": "boolean"
+        },
+        "mapped": {
           "type": "boolean"
         },
         "name": {
@@ -7421,6 +7374,10 @@
           "type": "integer",
           "format": "int64",
           "example": 0
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         }
       }
     },
@@ -7486,6 +7443,10 @@
         "tokens": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         },
         "updatedAt": {
           "type": "string",
@@ -7799,6 +7760,9 @@
           }
         },
         "teamId": {
+          "type": "string"
+        },
+        "teamUid": {
           "type": "string"
         }
       }
@@ -8591,6 +8555,9 @@
         "login": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -8681,6 +8648,45 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "UserSchema": {
+      "description": "Implementation of SCIM specification user schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailSchema"
+          }
+        },
+        "externalId": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/definitions/MetaSchema"
+        },
+        "name": {
+          "$ref": "#/definitions/NameSchema"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "userName": {
+          "type": "string"
         }
       }
     },
@@ -8829,17 +8835,6 @@
         }
       }
     },
-    "getGroupMappings": {
-      "type": "object",
-      "properties": {
-        "mappings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GroupMapping"
-          }
-        }
-      }
-    },
     "getGroupsResponse": {
       "type": "object",
       "properties": {
@@ -8852,20 +8847,6 @@
         "total": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "groupMappingRequestBody": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "mapping": {
-          "type": "object"
-        },
-        "variant": {
-          "type": "string"
         }
       }
     },
@@ -8963,6 +8944,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -8971,6 +8955,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -9568,18 +9555,6 @@
         }
       }
     },
-    "getGroupMappingResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/GroupMapping"
-      }
-    },
-    "getGroupMappingsResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/getGroupMappings"
-      }
-    },
     "getGroupRolesResponse": {
       "description": "",
       "schema": {
@@ -9916,6 +9891,12 @@
         "items": {
           "$ref": "#/definitions/TeamDTO"
         }
+      }
+    },
+    "getUsers": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GetUsersBody"
       }
     },
     "goneError": {

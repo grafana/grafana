@@ -35,6 +35,10 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
+{{% admonition type="note" %}}
+The license only automatically updates once per day. To immediately update the terms for a license, use the Grafana UI to renew your license token.
+{{% /admonition %}}
+
 ### license_validation_type
 
 When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
@@ -169,6 +173,10 @@ Name of the TrueType font file with italic style.
 ### max_retries_per_panel
 
 Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+
+### allowed_domains
+
+Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 
 ## [auditing]
 

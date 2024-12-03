@@ -1,7 +1,18 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
-import { TemplateSrv } from '@grafana/runtime';
-import { SqlDatasource, DB, SQLQuery, SQLSelectableValue, formatSQL } from '@grafana/sql';
+import { TemplateSrv, config } from '@grafana/runtime';
+import {
+  COMMON_FNS,
+  DB,
+  FuncParameter,
+  MACRO_FUNCTIONS,
+  SQLQuery,
+  SQLSelectableValue,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
@@ -70,7 +81,9 @@ export class PostgresDatasource extends SqlDatasource {
       // if no table-name, we are not able to query for fields
       return [];
     }
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(table), { refId: 'columns' });
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(table), {
+      refId: `columns-${uuidv4()}`,
+    });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];
@@ -79,6 +92,20 @@ export class PostgresDatasource extends SqlDatasource {
     }
     return result;
   }
+
+  getFunctions = (): ReturnType<DB['functions']> => {
+    if (config.featureToggles.sqlQuerybuilderFunctionParameters) {
+      const columnParam: FuncParameter = {
+        name: 'Column',
+        required: true,
+        options: (query) => this.fetchFields(query),
+      };
+
+      return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
+    } else {
+      return COMMON_FNS;
+    }
+  };
 
   getDB(): DB {
     if (this.db !== undefined) {
@@ -100,6 +127,7 @@ export class PostgresDatasource extends SqlDatasource {
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
       dsID: () => this.id,
       toRawSql,
+      functions: () => this.getFunctions(),
       lookup: async () => {
         const tables = await this.fetchTables();
         return tables.map((t) => ({ name: t, completion: t }));

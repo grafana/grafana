@@ -675,7 +675,7 @@ func TestMode1_UpdateOnLegacyStorage(t *testing.T) {
 
 			dw := NewDualWriter(Mode3, ls, us, p, kind)
 
-			err := dw.(*DualWriterMode3).updateOnLegacyStorage(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			err := dw.(*DualWriterMode3).updateOnLegacyStorageMode3(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 			assert.NoError(t, err)
 		})
 	}

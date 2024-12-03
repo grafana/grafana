@@ -1,31 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import {
-  dateTime,
-  PluginContextType,
-  PluginExtensionPoints,
-  PluginLoadingStrategy,
-  PluginType,
-  usePluginContext,
-} from '@grafana/data';
+import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
-import { createLogMock } from './logs/testUtils';
 import {
   deepFreeze,
   handleErrorsInFn,
   getReadOnlyProxy,
   createOpenModalFunction,
   wrapWithPluginContext,
-  isAddedLinkMetaInfoMissing,
-  isAddedComponentMetaInfoMissing,
-  isExposedComponentMetaInfoMissing,
-  isExposedComponentDependencyMissing,
-  isExtensionPointMetaInfoMissing,
+  getExtensionPointPluginDependencies,
+  getExposedComponentPluginDependencies,
+  getAppPluginConfigs,
+  getAppPluginIdFromExposedComponentId,
+  getAppPluginDependencies,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -462,11 +454,9 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('isAddedLinkMetaInfoMissing()', () => {
+  describe('getAppPluginConfigs()', () => {
     const originalApps = config.apps;
-    const pluginId = 'myorg-extensions-app';
-    const appPluginConfig = {
-      id: pluginId,
+    const genereicAppPluginConfig = {
       path: '',
       version: '',
       preload: false,
@@ -489,96 +479,62 @@ describe('Plugin Extensions / Utils', () => {
         extensionPoints: [],
       },
     };
-    const extensionConfig = {
-      targets: [PluginExtensionPoints.DashboardPanelMenu],
-      title: 'Link title',
-      description: 'Link description',
-    };
-
-    beforeEach(() => {
-      config.apps = {
-        [pluginId]: appPluginConfig,
-      };
-    });
 
     afterEach(() => {
       config.apps = originalApps;
     });
 
-    it('should return FALSE if the meta-info in the plugin.json is correct', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
-
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(false);
-      expect(log.warning).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return TRUE and log a warning if the app config is not found', () => {
-      const log = createLogMock();
-      delete config.apps[pluginId];
-
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
-    });
-
-    it('should return TRUE and log a warning if the link has no meta-info in the plugin.json', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedLinks = [];
-
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
-    });
-
-    it('should return TRUE and log a warning if the "targets" do not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
-
-      const returnValue = isAddedLinkMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          targets: [PluginExtensionPoints.DashboardPanelMenu, PluginExtensionPoints.ExploreToolbarAction],
+    test('should return the app plugin configs based on the provided plugin ids', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
         },
-        log
-      );
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
 
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
+      expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
+        config.apps['myorg-first-app'],
+        config.apps['myorg-third-app'],
+      ]);
     });
 
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
-
-      const returnValue = isAddedLinkMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          description: 'Link description UPDATED',
+    test('should simply ignore the app plugin ids that do not belong to a config', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
         },
-        log
-      );
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
 
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
+      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
     });
   });
 
-  describe('isAddedComponentMetaInfoMissing()', () => {
+  describe('getAppPluginIdFromExposedComponentId()', () => {
+    test('should return the app plugin id from an extension point id', () => {
+      expect(getAppPluginIdFromExposedComponentId('myorg-extensions-app/component/v1')).toBe('myorg-extensions-app');
+    });
+  });
+
+  describe('getExtensionPointPluginDependencies()', () => {
     const originalApps = config.apps;
-    const pluginId = 'myorg-extensions-app';
-    const appPluginConfig = {
-      id: pluginId,
+    const genereicAppPluginConfig = {
       path: '',
       version: '',
       preload: false,
@@ -601,340 +557,416 @@ describe('Plugin Extensions / Utils', () => {
         extensionPoints: [],
       },
     };
-    const extensionConfig = {
-      targets: [PluginExtensionPoints.DashboardPanelMenu],
-      title: 'Component title',
-      description: 'Component description',
-      component: () => <div>Component content</div>,
-    };
-
-    beforeEach(() => {
-      config.apps = {
-        [pluginId]: appPluginConfig,
-      };
-    });
 
     afterEach(() => {
       config.apps = originalApps;
     });
 
-    it('should return FALSE if the meta-info in the plugin.json is correct', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
+    test('should return the app plugin ids that register extensions to a link extension point', () => {
+      const extensionPointId = 'myorg-first-app/link/v1';
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(false);
-      expect(log.warning).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return TRUE and log a warning if the app config is not found', () => {
-      const log = createLogMock();
-      delete config.apps[pluginId];
-
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
-    });
-
-    it('should return TRUE and log a warning if the Component has no meta-info in the plugin.json', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedComponents = [];
-
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
-    });
-
-    it('should return TRUE and log a warning if the "targets" do not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
-
-      const returnValue = isAddedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          targets: [PluginExtensionPoints.ExploreToolbarAction],
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
-    });
-
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
-
-      const returnValue = isAddedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          description: 'UPDATED',
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
-    });
-  });
-
-  describe('isExposedComponentMetaInfoMissing()', () => {
-    const originalApps = config.apps;
-    const pluginId = 'myorg-extensions-app';
-    const appPluginConfig = {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    };
-    const exposedComponentConfig = {
-      id: `${pluginId}/component/v1`,
-      title: 'Exposed component',
-      description: 'Exposed component description',
-      component: () => <div>Component content</div>,
-    };
-
-    beforeEach(() => {
       config.apps = {
-        [pluginId]: appPluginConfig,
-      };
-    });
-
-    afterEach(() => {
-      config.apps = originalApps;
-    });
-
-    it('should return FALSE if the meta-info in the plugin.json is correct', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
-
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
-
-      expect(returnValue).toBe(false);
-      expect(log.warning).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return TRUE and log a warning if the app config is not found', () => {
-      const log = createLogMock();
-      delete config.apps[pluginId];
-
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
-    });
-
-    it('should return TRUE and log a warning if the exposed component has no meta-info in the plugin.json', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.exposedComponents = [];
-
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
-    });
-
-    it('should return TRUE and log a warning if the title does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
-
-      const returnValue = isExposedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...exposedComponentConfig,
-          title: 'UPDATED',
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
         },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"title" doesn\'t match');
-    });
-
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
-
-      const returnValue = isExposedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...exposedComponentConfig,
-          description: 'UPDATED',
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
-    });
-  });
-
-  describe('isExposedComponentDependencyMissing()', () => {
-    let pluginContext: PluginContextType;
-    const pluginId = 'myorg-extensions-app';
-    const exposedComponentId = `${pluginId}/component/v1`;
-
-    beforeEach(() => {
-      pluginContext = {
-        meta: {
-          id: pluginId,
-          name: 'Extensions App',
-          type: PluginType.app,
-          module: '',
-          baseUrl: '',
-          info: {
-            author: {
-              name: 'MyOrg',
-            },
-            description: 'App for testing extensions',
-            links: [],
-            logos: {
-              large: '',
-              small: '',
-            },
-            screenshots: [],
-            updated: '2023-10-26T18:25:01Z',
-            version: '1.0.0',
-          },
-          dependencies: {
-            grafanaVersion: '8.0.0',
-            plugins: [],
-            extensions: {
-              exposedComponents: [],
-            },
-          },
-        },
-      };
-    });
-
-    it('should return FALSE if the meta-info in the plugin.json is correct', () => {
-      const log = createLogMock();
-      pluginContext.meta.dependencies?.extensions.exposedComponents.push(exposedComponentId);
-
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
-
-      expect(returnValue).toBe(false);
-      expect(log.warning).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return TRUE and log a warning if the dependencies are missing', () => {
-      const log = createLogMock();
-      delete pluginContext.meta.dependencies;
-
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
-    });
-
-    it('should return TRUE and log a warning if the exposed component id is not specified in the list of dependencies', () => {
-      const log = createLogMock();
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
-    });
-  });
-
-  describe('isExtensionPointMetaInfoMissing()', () => {
-    let pluginContext: PluginContextType;
-    const pluginId = 'myorg-extensions-app';
-    const extensionPointId = `${pluginId}/extension-point/v1`;
-    const extensionPointConfig = {
-      id: extensionPointId,
-      title: 'Extension point title',
-      description: 'Extension point description',
-    };
-
-    beforeEach(() => {
-      pluginContext = {
-        meta: {
-          id: pluginId,
-          name: 'Extensions App',
-          type: PluginType.app,
-          module: '',
-          baseUrl: '',
-          info: {
-            author: {
-              name: 'MyOrg',
-            },
-            description: 'App for testing extensions',
-            links: [],
-            logos: {
-              large: '',
-              small: '',
-            },
-            screenshots: [],
-            updated: '2023-10-26T18:25:01Z',
-            version: '1.0.0',
-          },
+        // This plugin is registering a link extension to the extension point
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
           extensions: {
-            addedLinks: [],
+            addedLinks: [
+              {
+                targets: [extensionPointId],
+                title: 'Link title',
+              },
+            ],
             addedComponents: [],
             exposedComponents: [],
             extensionPoints: [],
           },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app']);
+    });
+
+    test('should return the app plugin ids that register extensions to a component extension point', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        // This plugin is registering a component extension to the extension point
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [
+              {
+                targets: [extensionPointId],
+                title: 'Component title',
+              },
+            ],
+            exposedComponents: [],
+            extensionPoints: [],
+          },
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-third-app']);
+    });
+
+    test('should return an empty array if there are no apps that that extend the extension point', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      // None of the apps are extending the extension point
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual([]);
+    });
+
+    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        // This plugin is registering a component extension to the extension point.
+        // It is also depending on the 'myorg-fourth-app' plugin.
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [
+              {
+                targets: [extensionPointId],
+                title: 'Component title',
+              },
+            ],
+            exposedComponents: [],
+            extensionPoints: [],
+          },
           dependencies: {
-            grafanaVersion: '8.0.0',
-            plugins: [],
+            ...genereicAppPluginConfig.dependencies,
             extensions: {
-              exposedComponents: [],
+              exposedComponents: ['myorg-fourth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+        // This plugin exposes a component, but is also depending on the 'myorg-fifth-app'.
+        'myorg-fourth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fourth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fourth-app/component/v1',
+                title: 'Exposed component',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fifth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-fifth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fifth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fifth-app/component/v1',
+                title: 'Exposed component',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+        'myorg-sixth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-sixth-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
+    });
+  });
+
+  describe('getExposedComponentPluginDependencies()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
+      const exposedComponentId = 'myorg-second-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: exposedComponentId,
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app']);
+    });
+
+    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
+      const exposedComponentId = 'myorg-second-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: exposedComponentId,
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fourth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+        'myorg-fourth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fourth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fourth-app/component/v1',
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fifth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-fifth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fifth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fifth-app/component/v1',
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+      };
+
+      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
+    });
+  });
+
+  describe('getAppPluginDependencies()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should not end up in an infinite loop if there are circular dependencies', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-third-app/link/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-second-app/link/v1'],
             },
           },
         },
       };
+
+      const appPluginIds = getAppPluginDependencies('myorg-second-app');
+
+      expect(appPluginIds).toEqual(['myorg-third-app']);
     });
 
-    it('should return FALSE if the meta-info in the plugin.json is correct', () => {
-      const log = createLogMock();
-      pluginContext.meta.extensions?.extensionPoints.push(extensionPointConfig);
+    test('should not end up in an infinite loop if a plugin depends on itself', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              // Not a valid scenario!
+              // (As this is sometimes happening out in the wild, we thought it's better to also cover it with a test-case.)
+              exposedComponents: ['myorg-second-app/link/v1'],
+            },
+          },
+        },
+      };
 
-      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, log);
+      const appPluginIds = getAppPluginDependencies('myorg-second-app');
 
-      expect(returnValue).toBe(false);
-      expect(log.warning).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return TRUE and log a warning if the extension point id is not recorded in the plugin.json', () => {
-      const log = createLogMock();
-      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, log);
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Extension point "${extensionPointId}"`);
+      expect(appPluginIds).toEqual([]);
     });
   });
 });

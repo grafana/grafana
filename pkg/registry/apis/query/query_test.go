@@ -26,7 +26,7 @@ func TestQueryRestConnectHandler(t *testing.T) {
 		},
 		tracer: tracing.InitializeTracerForTest(),
 		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest()),
+			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
 		log: log.New("test"),
 	}
 	qr := newQueryREST(b)
@@ -56,9 +56,12 @@ func TestQueryRestConnectHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/some-path", bytes.NewReader(body.Raw))
 	req.Header.Set(models.FromAlertHeaderName, "true")
 	req.Header.Set(models.CacheSkipHeaderName, "true")
+	req.Header.Set("X-Rule-Name", "name-1")
 	req.Header.Set("X-Rule-Uid", "abc")
 	req.Header.Set("X-Rule-Folder", "folder-1")
 	req.Header.Set("X-Rule-Source", "grafana-ruler")
+	req.Header.Set("X-Rule-Type", "type-1")
+	req.Header.Set("X-Rule-Version", "version-1")
 	req.Header.Set("X-Grafana-Org-Id", "1")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("some-unexpected-header", "some-value")
@@ -67,9 +70,12 @@ func TestQueryRestConnectHandler(t *testing.T) {
 	require.Equal(t, map[string]string{
 		models.FromAlertHeaderName: "true",
 		models.CacheSkipHeaderName: "true",
+		"X-Rule-Name":              "name-1",
 		"X-Rule-Uid":               "abc",
 		"X-Rule-Folder":            "folder-1",
 		"X-Rule-Source":            "grafana-ruler",
+		"X-Rule-Type":              "type-1",
+		"X-Rule-Version":           "version-1",
 		"X-Grafana-Org-Id":         "1",
 	}, *b.client.(mockClient).lastCalledWithHeaders)
 }

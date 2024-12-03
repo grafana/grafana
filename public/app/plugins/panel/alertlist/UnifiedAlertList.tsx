@@ -11,8 +11,8 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  CustomScrollbar,
   LoadingPlaceholder,
+  ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -219,40 +219,38 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      <div className={styles.container}>
-        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        {havePreviousResults && (
-          <section>
-            {props.options.viewMode === ViewMode.Stat && (
-              <BigValue
-                width={props.width}
-                height={props.height}
-                graphMode={BigValueGraphMode.None}
-                textMode={BigValueTextMode.Auto}
-                justifyMode={BigValueJustifyMode.Auto}
-                theme={config.theme2}
-                value={{ text: `${rules.length}`, numeric: rules.length }}
-              />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
-              <GroupedModeView rules={rules} options={parsedOptions} />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
-              <UngroupedModeView
-                rules={rules}
-                options={parsedOptions}
-                handleInstancesLimit={handleInstancesLimit}
-                limitInstances={limitInstances}
-                hideViewRuleLinkText={hideViewRuleLinkText}
-              />
-            )}
-          </section>
-        )}
-        {/* loading moved here to avoid twitching  */}
-        {renderLoading && <LoadingPlaceholder text="Loading..." />}
-      </div>
-    </CustomScrollbar>
+    <ScrollContainer minHeight="100%">
+      {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+      {havePreviousResults && (
+        <section>
+          {props.options.viewMode === ViewMode.Stat && (
+            <BigValue
+              width={props.width}
+              height={props.height}
+              graphMode={BigValueGraphMode.None}
+              textMode={BigValueTextMode.Auto}
+              justifyMode={BigValueJustifyMode.Auto}
+              theme={config.theme2}
+              value={{ text: `${rules.length}`, numeric: rules.length }}
+            />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+            <GroupedModeView rules={rules} options={parsedOptions} />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+            <UngroupedModeView
+              rules={rules}
+              options={parsedOptions}
+              handleInstancesLimit={handleInstancesLimit}
+              limitInstances={limitInstances}
+              hideViewRuleLinkText={hideViewRuleLinkText}
+            />
+          )}
+        </section>
+      )}
+      {/* loading moved here to avoid twitching  */}
+      {renderLoading && <LoadingPlaceholder text="Loading..." />}
+    </ScrollContainer>
   );
 }
 
@@ -355,10 +353,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.25, 0),
     lineHeight: theme.typography.body.lineHeight,
     marginBottom: 0,
-  }),
-  container: css({
-    overflowY: 'auto',
-    height: '100%',
   }),
   alertRuleList: css({
     display: 'flex',

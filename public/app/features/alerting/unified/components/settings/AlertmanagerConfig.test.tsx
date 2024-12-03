@@ -1,9 +1,8 @@
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -37,8 +36,6 @@ const ui = {
   resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   cancelButton: byRole('button', { name: /Cancel/ }),
-  configInput: byTestId(selectors.components.CodeEditor.container),
-  readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Alerting Settings', () => {

@@ -1,19 +1,35 @@
 import { PureComponent } from 'react';
 
-import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 
-import { LoginDTO } from './types';
+import { LoginDTO, AuthNRedirectDTO } from './types';
 
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;
+};
+
+const showPasswordlessConfirmation = () => {
+  const queryValues = locationService.getSearch();
+  return !!queryValues.get('code');
 };
 
 export interface FormModel {
   user: string;
   password: string;
   email: string;
+}
+
+export interface PasswordlessFormModel {
+  email: string;
+}
+
+export interface PasswordlessConfirmationFormModel {
+  code: string;
+  confirmationCode: string;
+  username?: string;
+  name?: string;
 }
 
 interface Props {
@@ -25,6 +41,9 @@ interface Props {
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
+    passwordlessStart: (data: PasswordlessFormModel) => void;
+    passwordlessConfirm: (data: PasswordlessConfirmationFormModel) => void;
+    showPasswordlessConfirmation: boolean;
     disableLoginForm: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
@@ -111,6 +130,49 @@ export class LoginCtrl extends PureComponent<Props, State> {
       });
   };
 
+  passwordlessStart = (formModel: PasswordlessFormModel) => {
+    this.setState({
+      loginErrorMessage: undefined,
+      isLoggingIn: true,
+    });
+
+    getBackendSrv()
+      .post<AuthNRedirectDTO>('/api/login/passwordless/start', formModel, { showErrorAlert: false })
+      .then((result) => {
+        window.location.assign(result.URL);
+        return;
+      })
+      .catch((err) => {
+        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
+        this.setState({
+          isLoggingIn: false,
+          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
+        });
+      });
+  };
+
+  passwordlessConfirm = (formModel: PasswordlessConfirmationFormModel) => {
+    this.setState({
+      loginErrorMessage: undefined,
+      isLoggingIn: true,
+    });
+
+    getBackendSrv()
+      .post<LoginDTO>('/api/login/passwordless/authenticate', formModel, { showErrorAlert: false })
+      .then((result) => {
+        this.result = result;
+        this.toGrafana();
+        return;
+      })
+      .catch((err) => {
+        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
+        this.setState({
+          isLoggingIn: false,
+          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
+        });
+      });
+  };
+
   changeView = (showDefaultPasswordWarning: boolean) => {
     this.setState({
       isChangingPassword: true,
@@ -138,7 +200,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   render() {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning, loginErrorMessage } = this.state;
-    const { login, toGrafana, changePassword } = this;
+    const { login, toGrafana, changePassword, passwordlessStart, passwordlessConfirm } = this;
     const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
     return (
@@ -150,6 +212,9 @@ export class LoginCtrl extends PureComponent<Props, State> {
           disableLoginForm,
           disableUserSignUp,
           login,
+          passwordlessStart,
+          passwordlessConfirm,
+          showPasswordlessConfirmation: showPasswordlessConfirmation(),
           isLoggingIn,
           changePassword,
           skipPasswordChange: toGrafana,

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -13,7 +12,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+type dualWriteContextKey struct{}
+
+func IsDualWriteUpdate(ctx context.Context) bool {
+	return ctx.Value(dualWriteContextKey{}) == true
+}
 
 type DualWriterMode2 struct {
 	Storage Storage
@@ -26,7 +33,9 @@ type DualWriterMode2 struct {
 const mode2Str = "2"
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
-// Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+// Mode 2 represents writing to LegacyStorage first, then to Storage
+// When reading, values from storage will be returned if they exist
+// otherwise the value from legacy will be used
 func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
@@ -127,9 +136,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 
 	if objStorage != nil {
-		if err := updateRVOnLegacyObj(objStorage, objLegacy); err != nil {
-			log.WithValues("storageObject", objStorage, "legacyObject", objLegacy).Error(err, "could not update resource version")
-		}
+		return objStorage, err
 	}
 
 	return objLegacy, err
@@ -287,6 +294,10 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	// The incoming RV is not stable -- it may be from legacy or storage!
+	// This sets a flag in the context and our apistore is more lenient when it exists
+	ctx = context.WithValue(ctx, dualWriteContextKey{}, true)
+
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -311,26 +322,10 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	if objFromStorage != nil {
-		if err := updateRVOnLegacyObj(objFromStorage, objFromLegacy); err != nil {
-			log.WithValues("storageObject", objFromStorage, "legacyObject", objFromLegacy).Error(err, "could not update resource version")
-		}
+		return objFromStorage, created, err
 	}
 
 	return objFromLegacy, created, err
-}
-
-func updateRVOnLegacyObj(storageObj runtime.Object, legacyObj runtime.Object) error {
-	storageAccessor, err := utils.MetaAccessor(storageObj)
-	if err != nil {
-		return err
-	}
-	legacyAccessor, err := utils.MetaAccessor(legacyObj)
-	if err != nil {
-		return err
-	}
-
-	legacyAccessor.SetResourceVersion(storageAccessor.GetResourceVersion())
-	return nil
 }
 
 func (d *DualWriterMode2) Destroy() {

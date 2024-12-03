@@ -28,7 +28,11 @@ func TestMain(m *testing.M) {
 }
 
 // Service Account should not create an org on its own
-func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
+func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	_, store := setupTestDatabase(t)
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
@@ -67,7 +71,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -98,7 +105,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -133,7 +143,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -156,7 +169,11 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	})
 }
 
-func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
+func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	_, store := setupTestDatabase(t)
 	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
@@ -176,7 +193,10 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, serviceAccountName, saDTO.Name)
 	assert.Equal(t, 0, int(saDTO.Tokens))
 
-	retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+	retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: serviceAccountOrgId,
+		ID:    saDTO.Id,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, serviceAccountName, retrieved.Name)
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -188,7 +208,10 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, saDTO.Role, string(org.RoleNone))
 }
 
-func TestStore_DeleteServiceAccount(t *testing.T) {
+func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc        string
 		user        tests.TestUser
@@ -237,16 +260,26 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
-func TestStore_RetrieveServiceAccount(t *testing.T) {
+func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
-		desc        string
-		user        tests.TestUser
-		expectedErr error
+		desc          string
+		user          tests.TestUser
+		retrieveByUID bool
+		expectedErr   error
 	}{
 		{
 			desc:        "service accounts should exist and get retrieved",
 			user:        tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			expectedErr: nil,
+		},
+		{
+			desc:          "service accounts should be able to be retrieved with uid",
+			user:          tests.TestUser{Login: "test1@admin", IsServiceAccount: true},
+			expectedErr:   nil,
+			retrieveByUID: true,
 		},
 		{
 			desc:        "service accounts is false should not retrieve user",
@@ -257,42 +290,119 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
+			var dto *serviceaccounts.ServiceAccountProfileDTO
+			var err error
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
+			if c.retrieveByUID {
+				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+					OrgID: user.OrgID,
+					UID:   user.UID,
+				})
+			} else {
+				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+					OrgID: user.OrgID,
+					ID:    user.ID,
+				})
+			}
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, c.user.Login, dto.Login)
 				require.Len(t, dto.Teams, 0)
+				if c.retrieveByUID {
+					require.Equal(t, user.UID, dto.UID)
+				}
 			}
 		})
 	}
 }
 
-func TestStore_MigrateApiKeys(t *testing.T) {
+func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
-		desc        string
-		key         tests.TestApiKey
-		expectedErr error
+		desc            string
+		serviceAccounts []user.CreateUserCommand
+		key             tests.TestApiKey
+		expectedLogin   string
+		expectedErr     error
 	}{
 		{
-			desc:        "api key should be migrated to service account token",
-			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
-			expectedErr: nil,
+			desc:            "api key should be migrated to service account token",
+			serviceAccounts: []user.CreateUserCommand{},
+			key:             tests.TestApiKey{Name: "test1", Role: org.RoleEditor, OrgId: 1},
+			expectedLogin:   "sa-autogen-1-test1",
+			expectedErr:     nil,
+		},
+		{
+			desc: "api key should be migrated to service account token on second attempt",
+			serviceAccounts: []user.CreateUserCommand{
+				{Login: "sa-autogen-1-test2"},
+			},
+			key:           tests.TestApiKey{Name: "test2", Role: org.RoleEditor, OrgId: 1},
+			expectedLogin: "sa-autogen-1-test2-001",
+			expectedErr:   nil,
+		},
+		{
+			desc: "api key should be migrated to service account token on last attempt (the 10th)",
+			serviceAccounts: []user.CreateUserCommand{
+				{Login: "sa-autogen-1-test3"},
+				{Login: "sa-autogen-1-test3-001"},
+				{Login: "sa-autogen-1-test3-002"},
+				{Login: "sa-autogen-1-test3-003"},
+				{Login: "sa-autogen-1-test3-004"},
+				{Login: "sa-autogen-1-test3-005"},
+				{Login: "sa-autogen-1-test3-006"},
+				{Login: "sa-autogen-1-test3-007"},
+				{Login: "sa-autogen-1-test3-008"},
+				{Login: "sa-autogen-1-test3-009"},
+			},
+			key:           tests.TestApiKey{Name: "test3", Role: org.RoleEditor, OrgId: 1},
+			expectedLogin: "sa-autogen-1-test3-010",
+			expectedErr:   nil,
+		},
+		{
+			desc: "api key should not be migrated to service account token because all attempts failed",
+			serviceAccounts: []user.CreateUserCommand{
+				{Login: "sa-autogen-1-test4"},
+				{Login: "sa-autogen-1-test4-001"},
+				{Login: "sa-autogen-1-test4-002"},
+				{Login: "sa-autogen-1-test4-003"},
+				{Login: "sa-autogen-1-test4-004"},
+				{Login: "sa-autogen-1-test4-005"},
+				{Login: "sa-autogen-1-test4-006"},
+				{Login: "sa-autogen-1-test4-007"},
+				{Login: "sa-autogen-1-test4-008"},
+				{Login: "sa-autogen-1-test4-009"},
+				{Login: "sa-autogen-1-test4-010"},
+			},
+			key:         tests.TestApiKey{Name: "test4", Role: org.RoleEditor, OrgId: 1},
+			expectedErr: serviceaccounts.ErrServiceAccountAlreadyExists,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
+
 			store.cfg.AutoAssignOrg = true
 			store.cfg.AutoAssignOrgId = 1
 			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
+
 			key := tests.SetupApiKey(t, db, store.cfg, c.key)
+
+			for _, sa := range c.serviceAccounts {
+				sa.IsServiceAccount = true
+				sa.OrgID = key.OrgID
+				_, err := store.userService.CreateServiceAccount(context.Background(), &sa)
+				require.NoError(t, err)
+			}
+
 			err = store.MigrateApiKey(context.Background(), key.OrgID, key.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
@@ -301,7 +411,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 
 				q := serviceaccounts.SearchOrgServiceAccountsQuery{
 					OrgID: key.OrgID,
-					Query: "",
+					Query: c.expectedLogin,
 					Page:  1,
 					Limit: 50,
 					SignedInUser: &user.SignedInUser{
@@ -319,6 +429,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 				require.Equal(t, int64(1), serviceAccounts.TotalCount)
 				saMigrated := serviceAccounts.ServiceAccounts[0]
 				require.Equal(t, string(key.Role), saMigrated.Role)
+				require.Equal(t, c.expectedLogin, saMigrated.Login)
 
 				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
 					OrgID:            &key.OrgID,
@@ -331,7 +442,10 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	}
 }
 
-func TestStore_MigrateAllApiKeys(t *testing.T) {
+func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc                    string
 		keys                    []tests.TestApiKey
@@ -448,42 +562,91 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		})
 	}
 }
-func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
-	initUsers := []tests.TestUser{
-		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-1-satest-1", IsServiceAccount: true},
-		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
-		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-1-satest-3", IsServiceAccount: true},
-		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-1-satest-4", IsServiceAccount: true},
-		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-5", IsServiceAccount: true},
-		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-6", IsServiceAccount: true},
-		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-7", IsServiceAccount: true},
-		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-8", IsServiceAccount: true},
+func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
+
+	initUsers := []tests.TestUser{
+		{Name: "extsvc-test-1", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-1", IsServiceAccount: true},
+		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
+		{Name: "extsvc-test-3", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-3", IsServiceAccount: true},
+		{Name: "extsvc-test-4", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-4", IsServiceAccount: true},
+		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-1-extsvc-test-5", IsServiceAccount: true},
+		{Name: "satest-6", Role: string(org.RoleViewer), Login: "sa-1-satest-6", IsServiceAccount: true},
+		{Name: "satest-7", Role: string(org.RoleEditor), Login: "sa-1-satest-7", IsServiceAccount: true},
+		{Name: "satest-8", Role: string(org.RoleAdmin), Login: "sa-1-satest-8", IsServiceAccount: true},
+	}
+
+	users, orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
+
+	apiKeys := []tests.TestApiKey{
+		{Name: "sa-01-apikey-01", OrgId: orgID, Key: "key01", IsExpired: false, ServiceAccountID: &users[0].ID},
+		{Name: "sa-01-apikey-02", OrgId: orgID, Key: "key02", IsExpired: false, ServiceAccountID: &users[0].ID},
+		{Name: "sa-01-apikey-03", OrgId: orgID, Key: "key03", IsExpired: false, ServiceAccountID: &users[0].ID},
+		{Name: "sa-02-apikey-01", OrgId: orgID, Key: "key04", IsExpired: false, ServiceAccountID: &users[2].ID},
+		{Name: "sa-02-apikey-02", OrgId: orgID, Key: "key05", IsExpired: false, ServiceAccountID: &users[2].ID},
+		{Name: "sa-03-apikey-01", OrgId: orgID, Key: "key06", IsExpired: false, ServiceAccountID: &users[3].ID},
+	}
+
+	tests.SetupApiKeys(t, db, store.cfg, apiKeys)
 
 	userWithPerm := &user.SignedInUser{
 		OrgID:       orgID,
 		Permissions: map[int64]map[string][]string{orgID: {serviceaccounts.ActionRead: {serviceaccounts.ScopeAll}}},
 	}
 
+	expectedServiceAccount := func(i int, tokens int64) *serviceaccounts.ServiceAccountDTO {
+		return &serviceaccounts.ServiceAccountDTO{
+			Id: users[i].ID, UID: users[i].UID, Name: users[i].Name, Login: users[i].Login, OrgId: orgID, Role: "None", Tokens: tokens,
+		}
+	}
+
 	tt := []struct {
-		desc          string
-		query         *serviceaccounts.SearchOrgServiceAccountsQuery
-		expectedTotal int64 // Value of the result.TotalCount
-		expectedCount int   // Length of the result.ServiceAccounts slice
-		expectedErr   error
+		desc                    string
+		query                   *serviceaccounts.SearchOrgServiceAccountsQuery
+		expectedTotal           int64 // Value of the result.TotalCount
+		expectedServiceAccounts []*serviceaccounts.ServiceAccountDTO
+		expectedErr             error
 	}{
 		{
-			desc: "should list all service accounts",
+			desc: "should list all service accounts with tokens count",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterIncludeAll,
+				CountTokens:  true,
+			},
+			expectedTotal: 7,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(0, 3),
+				expectedServiceAccount(2, 2),
+				expectedServiceAccount(3, 1),
+				expectedServiceAccount(4, 0),
+				expectedServiceAccount(5, 0),
+				expectedServiceAccount(6, 0),
+				expectedServiceAccount(7, 0),
+			},
+		},
+		{
+			desc: "should list all service accounts with no tokens count",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},
 			expectedTotal: 7,
-			expectedCount: 7,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(0, 0),
+				expectedServiceAccount(2, 0),
+				expectedServiceAccount(3, 0),
+				expectedServiceAccount(4, 0),
+				expectedServiceAccount(5, 0),
+				expectedServiceAccount(6, 0),
+				expectedServiceAccount(7, 0),
+			},
 		},
 		{
 			desc: "should list no service accounts without permissions",
@@ -495,8 +658,8 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				},
 				Filter: serviceaccounts.FilterIncludeAll,
 			},
-			expectedTotal: 0,
-			expectedCount: 0,
+			expectedTotal:           0,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{},
 		},
 		{
 			desc: "should list one service accounts with restricted permissions",
@@ -512,7 +675,10 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				Filter: serviceaccounts.FilterIncludeAll,
 			},
 			expectedTotal: 2,
-			expectedCount: 2,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(0, 0),
+				expectedServiceAccount(6, 0),
+			},
 		},
 		{
 			desc: "should list only external service accounts",
@@ -520,9 +686,15 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				OrgID:        orgID,
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterOnlyExternal,
+				CountTokens:  true,
 			},
 			expectedTotal: 4,
-			expectedCount: 4,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(0, 3),
+				expectedServiceAccount(2, 2),
+				expectedServiceAccount(3, 1),
+				expectedServiceAccount(4, 0),
+			},
 		},
 		{
 			desc: "should return service accounts with sa-1-satest login",
@@ -531,9 +703,14 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				Query:        "sa-1-satest",
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
+				CountTokens:  true,
 			},
 			expectedTotal: 3,
-			expectedCount: 3,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(5, 0),
+				expectedServiceAccount(6, 0),
+				expectedServiceAccount(7, 0),
+			},
 		},
 		{
 			desc: "should only count service accounts",
@@ -543,8 +720,8 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				Filter:       serviceaccounts.FilterIncludeAll,
 				CountOnly:    true,
 			},
-			expectedTotal: 7,
-			expectedCount: 0,
+			expectedTotal:           7,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{},
 		},
 		{
 			desc: "should paginate result",
@@ -556,7 +733,9 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 				Filter:       serviceaccounts.FilterIncludeAll,
 			},
 			expectedTotal: 7,
-			expectedCount: 1,
+			expectedServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				expectedServiceAccount(7, 0),
+			},
 		},
 	}
 	for _, tc := range tt {
@@ -570,12 +749,19 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			}
 
 			require.Equal(t, tc.expectedTotal, got.TotalCount)
-			require.Len(t, got.ServiceAccounts, tc.expectedCount)
+			require.Len(t, got.ServiceAccounts, len(tc.expectedServiceAccounts))
+			for i, sa := range got.ServiceAccounts {
+				require.EqualValues(t, tc.expectedServiceAccounts[i], sa)
+			}
 		})
 	}
 }
 
-func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+func TestIntegrationServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	ctx := context.Background()
 
 	initUsers := []tests.TestUser{
@@ -585,12 +771,12 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	}
 
 	db, store := setupTestDatabase(t)
-	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
+	_, orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	fetchStates := func() map[int64]bool {
-		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)
+		sa1, err := store.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: 1})
 		require.NoError(t, err)
-		sa2, err := store.RetrieveServiceAccount(ctx, orgID, 2)
+		sa2, err := store.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: 2})
 		require.NoError(t, err)
 		user, err := store.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: 3})
 		require.NoError(t, err)

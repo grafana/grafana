@@ -193,14 +193,16 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 	return serviceAccount, nil
 }
 
-func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	if err := validOrgID(orgID); err != nil {
+func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := validOrgID(query.OrgID); err != nil {
 		return nil, err
 	}
-	if err := validServiceAccountID(serviceAccountID); err != nil {
-		return nil, err
+	if err := validServiceAccountID(query.ID); err != nil {
+		if err := validServiceAccountUID(query.UID); err != nil {
+			return nil, fmt.Errorf("invalid service account ID %d and UID %s has been specified", query.ID, query.UID)
+		}
 	}
-	return sa.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+	return sa.store.RetrieveServiceAccount(ctx, query)
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
@@ -303,12 +305,21 @@ func validOrgID(orgID int64) error {
 	}
 	return nil
 }
+
 func validServiceAccountID(serviceaccountID int64) error {
 	if serviceaccountID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account ID 0 has been specified")
 	}
 	return nil
 }
+
+func validServiceAccountUID(saUID string) error {
+	if saUID == "" {
+		return serviceaccounts.ErrServiceAccountInvalidID.Errorf("invalid service account UID has been specified")
+	}
+	return nil
+}
+
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")
