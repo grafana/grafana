@@ -1,8 +1,11 @@
 package prom
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -138,4 +141,73 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGrafanaRulesToPrometheus(t *testing.T) {
+	t.Run("basic alert rule group success", func(t *testing.T) {
+		converter := NewConverter(Config{})
+		rg := models.AlertRuleGroup{
+			Title:    "my-group",
+			Interval: 60,
+			Rules: []models.AlertRule{
+				{
+					OrgID:        1,
+					NamespaceUID: "my-namespace",
+					Title:        "my-rule1",
+					Data: []models.AlertQuery{
+						{
+							RefID:         "A",
+							QueryType:     "something idk",
+							DatasourceUID: "some ds",
+							Model: serializeMap(t, map[string]interface{}{
+								"datasource": map[string]interface{}{
+									"type": "prometheus",
+									"uid":  "some ds",
+								},
+								"editorMode":    "code",
+								"expr":          "vector(1)",
+								"instant":       true,
+								"range":         false,
+								"intervalMs":    1000,
+								"legendFormat":  "__auto",
+								"maxDataPoints": 43200,
+								"refId":         "A",
+							}),
+						},
+					},
+					Condition:       "A",
+					NoDataState:     models.Alerting,
+					ExecErrState:    models.AlertingErrState,
+					Annotations:     map[string]string{"ann1": "val1"},
+					Labels:          map[string]string{"lbl1": "val1"},
+					IsPaused:        false,
+					For:             time.Duration(5) * time.Minute,
+					RuleGroup:       "my-group",
+					IntervalSeconds: 60,
+				},
+			},
+		}
+
+		conv, err := converter.GrafanaRulesToPrometheus(&rg)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "my-group", conv.Name)
+		assert.Equal(t, "1m", conv.Interval)
+		assert.Len(t, conv.Rules, 1)
+		assert.Equal(t, "my-rule1", conv.Rules[0].Alert)
+		assert.Equal(t, "", conv.Rules[0].Record)
+		assert.Equal(t, "vector(1)", conv.Rules[0].Expr)
+		assert.Equal(t, "5m", conv.Rules[0].For)
+		assert.Equal(t, "", conv.Rules[0].KeepFiringFor)
+		assert.Equal(t, rg.Rules[0].Labels, conv.Rules[0].Labels)
+		assert.Equal(t, rg.Rules[0].Annotations, conv.Rules[0].Annotations)
+	})
+}
+
+func serializeMap(t *testing.T, m map[string]interface{}) json.RawMessage {
+	t.Helper()
+
+	b, err := json.Marshal(m)
+	assert.NoError(t, err)
+	return json.RawMessage(b)
 }

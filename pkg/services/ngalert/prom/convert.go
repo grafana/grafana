@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	prommodel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -79,6 +79,15 @@ func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, g
 	return grafanaGroup, nil
 }
 
+func (p *Converter) GrafanaRulesToPrometheus(group *models.AlertRuleGroup) (PrometheusRuleGroup, error) {
+	prometheusGroup, err := p.convertRuleGroupToPrometheus(group)
+	if err != nil {
+		return PrometheusRuleGroup{}, fmt.Errorf("failed to convert rule group '%s': %w", group.Title, err)
+	}
+
+	return prometheusGroup, nil
+}
+
 func validatePrometheusRule(rule PrometheusRule) error {
 	if rule.KeepFiringFor != "" {
 		return fmt.Errorf("keep_firing_for is not supported")
@@ -112,6 +121,23 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 	}
 
 	return result, nil
+}
+
+func (p *Converter) convertRuleGroupToPrometheus(group *models.AlertRuleGroup) (PrometheusRuleGroup, error) {
+	rules := make([]PrometheusRule, 0, len(group.Rules))
+	for _, rule := range group.Rules {
+		conv, err := convertRuleToPrometheus(rule)
+		if err != nil {
+			return PrometheusRuleGroup{}, err
+		}
+		rules = append(rules, conv)
+	}
+
+	return PrometheusRuleGroup{
+		Name:     group.Title,
+		Interval: getPromDurationString(time.Duration(group.Interval) * time.Second),
+		Rules:    rules,
+	}, nil
 }
 
 func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group string, rule PrometheusRule) (models.AlertRule, error) {
@@ -165,15 +191,77 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 	return result, nil
 }
 
+func convertRuleToPrometheus(rule models.AlertRule) (PrometheusRule, error) {
+	alert := ""
+	record := ""
+	switch rule.Type() {
+	case models.RuleTypeAlerting:
+		alert = rule.Title
+	case models.RuleTypeRecording:
+		record = rule.Record.Metric
+	}
+
+	// We "cheat" by finding the first prometheus node and returning its expression without analyzing anything else.
+	expr := ""
+	for _, aq := range rule.Data {
+		nodeExpr, err := tryExtractPromExpr(aq)
+		if err != nil {
+			return PrometheusRule{}, fmt.Errorf("failed to convert rule '%s': %w", rule.Title, err)
+		}
+		if nodeExpr != "" {
+			expr = nodeExpr
+		}
+	}
+	if expr == "" {
+		return PrometheusRule{}, fmt.Errorf("failed to convert rule '%s': no node found with a valid prometheus query", rule.Title)
+	}
+
+	return PrometheusRule{
+		Alert:         alert,
+		Record:        record,
+		Expr:          expr,
+		For:           getPromDurationString(rule.For),
+		KeepFiringFor: "",
+		Labels:        rule.Labels,
+		Annotations:   rule.Annotations,
+	}, nil
+}
+
+func tryExtractPromExpr(aq models.AlertQuery) (string, error) {
+	type datasource struct {
+		Type string `json:"type"`
+		UID  string `json:"uid"`
+	}
+	type queryModel struct {
+		Datasource datasource `json:"datasource"`
+		Expr       string     `json:"expr"`
+	}
+
+	var node queryModel
+	err := json.Unmarshal(aq.Model, &node)
+	if err != nil {
+		return "", fmt.Errorf("query deserialization failed: %w", err)
+	}
+	if node.Datasource.Type == "prometheus" {
+		return node.Expr, nil
+	}
+	return "", nil
+}
+
 func parseDurationOrDefault(durationStr string, defaultVal time.Duration) (time.Duration, error) {
 	if durationStr == "" {
 		return defaultVal, nil
 	}
-	duration, err := gtime.ParseDuration(durationStr)
+
+	duration, err := prommodel.ParseDuration(durationStr)
 	if err != nil {
 		return 0, err
 	}
-	return duration, nil
+	return time.Duration(duration), nil
+}
+
+func getPromDurationString(dur time.Duration) string {
+	return prommodel.Duration(dur).String()
 }
 
 func createAlertQueryNode(datasourceUID, expr string, fromTimeRange time.Duration) (models.AlertQuery, error) {
