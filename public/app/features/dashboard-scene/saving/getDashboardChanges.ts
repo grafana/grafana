@@ -30,6 +30,7 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
+// TODO[schema v2]
 export function getRawDashboardV2Changes(
   initial: DashboardV2Spec,
   changed: DashboardV2Spec,
