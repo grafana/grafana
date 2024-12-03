@@ -14,6 +14,7 @@ import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsRightPanel } from '../components/PluginDetailsRightPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
@@ -45,7 +46,12 @@ export function PluginDetailsPage({
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
-  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page') as PluginTabIds);
+  const isNarrowScreen = useMediaQuery('(max-width: 600px)');
+  const { navModel, activePageId } = usePluginDetailsTabs(
+    plugin,
+    queryParams.get('page') as PluginTabIds,
+    isNarrowScreen
+  );
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
@@ -93,10 +99,18 @@ export function PluginDetailsPage({
             <PluginDetailsSignature plugin={plugin} className={styles.alert} />
             <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
             <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
-            <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
+            <PluginDetailsBody
+              queryParams={Object.fromEntries(queryParams)}
+              plugin={plugin}
+              pageId={activePageId}
+              info={info}
+              showRightPanelInBody={isNarrowScreen}
+            />
           </TabContent>
         </Page.Contents>
-        {config.featureToggles.pluginsDetailsRightPanel && <PluginDetailsRightPanel info={info} plugin={plugin} />}
+        {!isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel && (
+          <PluginDetailsRightPanel info={info} plugin={plugin} />
+        )}
       </Stack>
     </Page>
   );

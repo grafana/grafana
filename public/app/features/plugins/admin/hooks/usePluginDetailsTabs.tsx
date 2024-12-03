@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
@@ -16,13 +16,23 @@ type ReturnType = {
   activePageId: PluginTabIds | string;
 };
 
-export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabIds): ReturnType => {
+export const usePluginDetailsTabs = (
+  plugin?: CatalogPlugin,
+  pageId?: PluginTabIds,
+  isNarrowScreen?: boolean
+): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
   const { pathname } = useLocation();
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
 
-  const currentPageId = pageId || defaultTab;
+  const [currentPageId, setCurrentPageId] = useState(pageId || defaultTab);
+
+  useEffect(() => {
+    if (!isNarrowScreen && currentPageId === PluginTabIds.RIGHTPANEL) {
+      setCurrentPageId(defaultTab);
+    }
+  }, [isNarrowScreen, currentPageId, defaultTab]);
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
@@ -33,6 +43,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         icon: 'history',
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.VERSIONS),
       });
     }
     if (isPublished && plugin?.details?.changelog) {
@@ -42,6 +53,18 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         icon: 'rocket',
         url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
         active: PluginTabIds.CHANGELOG === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.CHANGELOG),
+      });
+    }
+
+    if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
+      navModelChildren.push({
+        text: PluginTabLabels.RIGHTPANEL,
+        id: PluginTabIds.RIGHTPANEL,
+        icon: 'info-circle',
+        url: `${pathname}?page=${PluginTabIds.RIGHTPANEL}`,
+        active: PluginTabIds.RIGHTPANEL === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.RIGHTPANEL),
       });
     }
 
@@ -57,6 +80,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         id: PluginTabIds.IAM,
         url: `${pathname}?page=${PluginTabIds.IAM}`,
         active: PluginTabIds.IAM === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.IAM),
       });
     }
 
@@ -70,6 +94,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         id: PluginTabIds.USAGE,
         url: `${pathname}?page=${PluginTabIds.USAGE}`,
         active: PluginTabIds.USAGE === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.USAGE),
       });
     }
 
@@ -85,6 +110,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
           id: PluginTabIds.CONFIG,
           url: `${pathname}?page=${PluginTabIds.CONFIG}`,
           active: PluginTabIds.CONFIG === currentPageId,
+          onClick: () => setCurrentPageId(PluginTabIds.CONFIG),
         });
       }
 
@@ -96,6 +122,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
             id: configPage.id,
             url: `${pathname}?page=${configPage.id}`,
             active: configPage.id === currentPageId,
+            onClick: () => setCurrentPageId(configPage.id),
           });
         }
       }
@@ -107,12 +134,13 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
           id: PluginTabIds.DASHBOARDS,
           url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
           active: PluginTabIds.DASHBOARDS === currentPageId,
+          onClick: () => setCurrentPageId(PluginTabIds.DASHBOARDS),
         });
       }
     }
 
     return navModelChildren;
-  }, [plugin, pluginConfig, pathname, isPublished, currentPageId]);
+  }, [plugin, pluginConfig, pathname, isPublished, currentPageId, isNarrowScreen]);
 
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',
@@ -124,6 +152,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         id: PluginTabIds.OVERVIEW,
         url: `${pathname}?page=${PluginTabIds.OVERVIEW}`,
         active: PluginTabIds.OVERVIEW === currentPageId,
+        onClick: () => setCurrentPageId(PluginTabIds.OVERVIEW),
       },
       ...navModelChildren,
     ],
