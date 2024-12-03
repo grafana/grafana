@@ -32,98 +32,98 @@ export type WingmanOptionGroup = {
 // Non-available options should be shown grayed out
 export const useWingmanOptionGroup = (): WingmanOptionGroup[] => {
   return useMemo(
-      () => [
-        {
-          id: 'wm_display_view',
-          title: 'Display view',
-          options: [
-            {
-              id: 'default',
-              label: 'Default',
-              description: 'Option 1',
-              enabled: true,
-              available: true,
-              isDefault: true,
-            },
-            {id: 'red_metrics', label: 'RED Metrics', description: 'Option 2', enabled: false, available: true},
-            {id: 'anomalies', label: 'Anomalies', description: 'Option 3', enabled: false, available: true},
-          ],
-        },
-        {
-          id: 'wm_group_by',
-          title: 'Group by',
-          options: [
-            {
-              id: 'none',
-              label: 'None',
-              description: 'Option 1',
-              enabled: true,
-              available: true,
-              isDefault: true,
-            },
-            {id: 'alerts', label: 'Alerts', description: 'Option 2', enabled: false, available: false},
-            {id: 'dashboards', label: 'Dashboards', description: 'Option 3', enabled: false, available: false},
-            {
-              id: 'metric_name',
-              label: 'Metric name',
-              description: 'Option 3',
-              enabled: false,
-              available: false,
-            },
-            {id: 'services', label: 'Services', description: 'Option 3', enabled: false, available: false},
-          ],
-        },
-        {
-          id: 'wm_sort_by',
-          title: 'Sort by',
-          options: [
-            {
-              id: 'alphabetical_az',
-              label: 'Alphabetical (A-Z)',
-              description: 'Option 1',
-              enabled: true,
-              available: true,
-              isDefault: true,
-            },
-            {
-              id: 'alphabetical_za',
-              label: 'Alphabetical (Z-A)',
-              description: 'Option 2',
-              enabled: false,
-              available: false,
-            },
-            {
-              id: 'org_most_queried',
-              label: 'Org - most queried',
-              description: 'Option 3',
-              enabled: false,
-              available: false,
-            },
-            {
-              id: 'org_most_recent',
-              label: 'Org - most recent',
-              description: 'Option 3',
-              enabled: false,
-              available: false,
-            },
-            {
-              id: 'team_most_queried',
-              label: 'Team - most queried',
-              description: 'Option 3',
-              enabled: false,
-              available: false,
-            },
-            {
-              id: 'team_most_recent',
-              label: 'Team - most recent',
-              description: 'Option 3',
-              enabled: false,
-              available: false,
-            },
-          ],
-        },
-      ],
-      []
+    () => [
+      {
+        id: 'wm_display_view',
+        title: 'Display view',
+        options: [
+          {
+            id: 'default',
+            label: 'Default',
+            description: 'Option 1',
+            enabled: true,
+            available: true,
+            isDefault: true,
+          },
+          { id: 'red_metrics', label: 'RED Metrics', description: 'Option 2', enabled: false, available: true },
+          { id: 'anomalies', label: 'Anomalies', description: 'Option 3', enabled: false, available: true },
+        ],
+      },
+      {
+        id: 'wm_group_by',
+        title: 'Group by',
+        options: [
+          {
+            id: 'none',
+            label: 'None',
+            description: 'Option 1',
+            enabled: true,
+            available: true,
+            isDefault: true,
+          },
+          { id: 'alerts', label: 'Alerts', description: 'Option 2', enabled: false, available: false },
+          { id: 'dashboards', label: 'Dashboards', description: 'Option 3', enabled: false, available: false },
+          {
+            id: 'metric_name',
+            label: 'Metric name',
+            description: 'Option 3',
+            enabled: false,
+            available: false,
+          },
+          { id: 'services', label: 'Services', description: 'Option 3', enabled: false, available: false },
+        ],
+      },
+      {
+        id: 'wm_sort_by',
+        title: 'Sort by',
+        options: [
+          {
+            id: 'alphabetical_az',
+            label: 'Alphabetical (A-Z)',
+            description: 'Option 1',
+            enabled: true,
+            available: true,
+            isDefault: true,
+          },
+          {
+            id: 'alphabetical_za',
+            label: 'Alphabetical (Z-A)',
+            description: 'Option 2',
+            enabled: false,
+            available: false,
+          },
+          {
+            id: 'org_most_queried',
+            label: 'Org - most queried',
+            description: 'Option 3',
+            enabled: false,
+            available: false,
+          },
+          {
+            id: 'org_most_recent',
+            label: 'Org - most recent',
+            description: 'Option 3',
+            enabled: false,
+            available: false,
+          },
+          {
+            id: 'team_most_queried',
+            label: 'Team - most queried',
+            description: 'Option 3',
+            enabled: false,
+            available: false,
+          },
+          {
+            id: 'team_most_recent',
+            label: 'Team - most recent',
+            description: 'Option 3',
+            enabled: false,
+            available: false,
+          },
+        ],
+      },
+    ],
+    []
   );
 };
 
