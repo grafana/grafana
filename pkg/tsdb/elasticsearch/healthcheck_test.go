@@ -16,7 +16,7 @@ import (
 )
 
 func Test_Healthcheck_OK(t *testing.T) {
-	service := GetMockService(true)
+	service := GetMockService(http.StatusOK, "200 OK")
 	res, _ := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{},
 		Headers:       nil,
@@ -26,7 +26,7 @@ func Test_Healthcheck_OK(t *testing.T) {
 }
 
 func Test_Healthcheck_Timeout(t *testing.T) {
-	service := GetMockService(false)
+	service := GetMockService(http.StatusRequestTimeout, "408 Request Timeout")
 	res, _ := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{},
 		Headers:       nil,
@@ -35,13 +35,24 @@ func Test_Healthcheck_Timeout(t *testing.T) {
 	assert.Equal(t, "Elasticsearch data source is not healthy", res.Message)
 }
 
+func Test_Healthcheck_Error(t *testing.T) {
+	service := GetMockService(http.StatusBadGateway, "502 Bad Gateway")
+	res, _ := service.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{},
+		Headers:       nil,
+	})
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Elasticsearch data source is not healthy. Status: 502 Bad Gateway", res.Message)
+}
+
 type FakeRoundTripper struct {
-	isDsHealthy bool
+	statusCode int
+	status     string
 }
 
 func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var res *http.Response
-	if fakeRoundTripper.isDsHealthy {
+	if fakeRoundTripper.statusCode == http.StatusOK {
 		res = &http.Response{
 			StatusCode: http.StatusOK,
 			Status:     "200 OK",
@@ -49,8 +60,8 @@ func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Re
 		}
 	} else {
 		res = &http.Response{
-			StatusCode: http.StatusRequestTimeout,
-			Status:     "408 Request Timeout",
+			StatusCode: fakeRoundTripper.statusCode,
+			Status:     fakeRoundTripper.status,
 			Body:       io.NopCloser(bytes.NewBufferString("{\"status\":\"red\"}")),
 		}
 	}
@@ -58,12 +69,13 @@ func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Re
 }
 
 type FakeInstanceManager struct {
-	isDsHealthy bool
+	statusCode int
+	status     string
 }
 
 func (fakeInstanceManager *FakeInstanceManager) Get(tx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	httpClient, _ := httpclient.New(httpclient.Options{})
-	httpClient.Transport = &FakeRoundTripper{isDsHealthy: fakeInstanceManager.isDsHealthy}
+	httpClient.Transport = &FakeRoundTripper{statusCode: fakeInstanceManager.statusCode, status: fakeInstanceManager.status}
 
 	return es.DatasourceInfo{
 		HTTPClient: httpClient,
@@ -74,9 +86,9 @@ func (*FakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ ins
 	return nil
 }
 
-func GetMockService(isDsHealthy bool) *Service {
+func GetMockService(statusCode int, status string) *Service {
 	return &Service{
-		im:     &FakeInstanceManager{isDsHealthy: isDsHealthy},
+		im:     &FakeInstanceManager{statusCode: statusCode, status: status},
 		logger: log.New(),
 	}
 }
