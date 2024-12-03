@@ -107,6 +107,7 @@ type RepositoryContent interface {
 
 type CommitAuthor struct {
 	Name      string
+	Username  string
 	AvatarURL string
 }
 

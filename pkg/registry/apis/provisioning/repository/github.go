@@ -289,6 +289,7 @@ func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, pat
 		if commit.Author != nil {
 			authors = append(authors, provisioning.Author{
 				Name:      commit.Author.Name,
+				Username:  commit.Author.Username,
 				AvatarURL: commit.Author.AvatarURL,
 			})
 		}
@@ -296,6 +297,7 @@ func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, pat
 		if commit.Committer != nil && commit.Author != nil && commit.Author.Name != commit.Committer.Name {
 			authors = append(authors, provisioning.Author{
 				Name:      commit.Committer.Name,
+				Username:  commit.Committer.Username,
 				AvatarURL: commit.Committer.AvatarURL,
 			})
 		}

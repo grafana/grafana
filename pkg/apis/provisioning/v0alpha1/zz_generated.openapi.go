@@ -49,6 +49,13 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 							Format:  "",
 						},
 					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"avatarURL": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -56,7 +63,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"name"},
+				Required: []string{"name", "username"},
 			},
 		},
 	}

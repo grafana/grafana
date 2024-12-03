@@ -212,6 +212,7 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 		if c.GetCommit().GetAuthor() != nil {
 			author = &CommitAuthor{
 				Name:      c.GetCommit().GetAuthor().GetName(),
+				Username:  c.GetAuthor().GetLogin(),
 				AvatarURL: c.GetAuthor().GetAvatarURL(),
 			}
 
@@ -222,6 +223,7 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 		if c.GetCommitter() != nil {
 			committer = &CommitAuthor{
 				Name:      c.GetCommit().GetCommitter().GetName(),
+				Username:  c.GetCommitter().GetLogin(),
 				AvatarURL: c.GetCommitter().GetAvatarURL(),
 			}
 		}

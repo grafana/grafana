@@ -274,6 +274,7 @@ type HistoryList struct {
 
 type Author struct {
 	Name      string `json:"name"`
+	Username  string `json:"username"`
 	AvatarURL string `json:"avatarURL,omitempty"`
 }
 
