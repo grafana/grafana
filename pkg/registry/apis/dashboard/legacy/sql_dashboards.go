@@ -382,10 +382,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 
 	var userID int64
-	idClaims := user.GetIdentity()
-	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
 		var err error
-		userID, err = identity.UserIdentifier(idClaims.Subject())
+		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
 			return nil, false, err
 		}
