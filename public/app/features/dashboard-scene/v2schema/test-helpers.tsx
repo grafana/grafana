@@ -64,6 +64,7 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
   expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
   expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
+  expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
 
   expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
   const dataTransformer = vizPanel.state.$data as SceneDataTransformer;

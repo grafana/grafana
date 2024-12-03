@@ -208,9 +208,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanel = vizPanels[0];
     validateVizPanel(vizPanel, dash);
 
-    // FIXME: Fix the key incompatibility since panel is not numeric anymore
-    expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
-
     // FIXME: Tests for layout
   });
 
