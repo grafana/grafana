@@ -304,7 +304,9 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	for _, rule := range q {
-		rule.UID = util.GenerateShortUID()
+		if rule.UID == "" {
+			rule.UID = util.GenerateShortUID()
+		}
 		ids = append(ids, models.AlertRuleKeyWithId{
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
