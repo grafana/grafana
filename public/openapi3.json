@@ -22694,6 +22694,32 @@
         ]
       }
     },
+    "/scim/users/:id": {
+      "get": {
+        "operationId": "getUser",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets user by id.",
+        "tags": [
+          "user"
+        ]
+      }
+    },
     "/search": {
       "get": {
         "operationId": "search",
