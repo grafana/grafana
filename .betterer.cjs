@@ -1,7 +1,7 @@
 // @ts-check
-import { BettererFileTest } from '@betterer/betterer';
-import { ESLint } from 'eslint';
-import { promises as fs } from 'fs';
+const { BettererFileTest } = require('@betterer/betterer');
+const fs = require('fs/promises');
+const { ESLint } = require('eslint');
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -13,7 +13,7 @@ const eslintPathsToIgnore = [
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
-export default {
+module.exports = {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
@@ -82,7 +82,7 @@ function countEslintErrors() {
     }
 
     const runner = new ESLint({
-      overrideConfigFile: './.betterer.eslint.config.js',
+      overrideConfigFile: './.betterer.eslint.config.cjs',
       warnIgnored: false,
     });
 
