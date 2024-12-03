@@ -23,7 +23,7 @@ type IndexViewData struct {
 	NewGrafanaVersion                   string
 	AppName                             string
 	AppNameBodyClass                    string
-	FrontendDevServer                   string
+	FrontendDevServer                   bool
 	FavIcon                             template.URL
 	AppleTouchIcon                      template.URL
 	AppTitle                            string

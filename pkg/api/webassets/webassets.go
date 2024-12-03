@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -24,6 +25,15 @@ type ManifestInfo struct {
 	Dark    *EntryPointInfo `json:"dark,omitempty"`
 	Light   *EntryPointInfo `json:"light,omitempty"`
 	Swagger *EntryPointInfo `json:"swagger,omitempty"`
+}
+
+// ViteManifestEntry represents a single entry in the Vite manifest.
+type ViteManifestEntry struct {
+	File           string   `json:"file"`
+	Imports        []string `json:"imports"`
+	IsDynamicEntry bool     `json:"isDynamicEntry"`
+	IsEntry        bool     `json:"isEntry"`
+	Src            string   `json:"src"`
 }
 
 type EntryPointInfo struct {
@@ -43,23 +53,23 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	ret := entryPointAssetsCache
 	entryPointAssetsCacheMu.RUnlock()
 
-	if cfg.Env == setting.Dev && cfg.FrontendDevServer != "" {
-		// TODO: Hardcoded right now just to get vite dev env working.
-		// see https://vitejs.dev/guide/backend-integration.html
-		// Not sure we can rely on env config === dev alone as it's used in prod envs.
+	// see https://vitejs.dev/guide/backend-integration.html
+	if cfg.Env == setting.Dev && cfg.FrontendDevServer {
+		devServerHost := "http://localhost:5173"
+
 		viteDev := &dtos.EntryPointAssets{
 			JSFiles: []dtos.EntryPointAsset{
 				{
-					FilePath:  fmt.Sprintf("%s/@vite/client", cfg.FrontendDevServer),
+					FilePath:  fmt.Sprintf("%s/@vite/client", devServerHost),
 					Integrity: "",
 				},
 				{
-					FilePath:  fmt.Sprintf("%s/app/index.ts", cfg.FrontendDevServer),
+					FilePath:  fmt.Sprintf("%s/app/index.ts", devServerHost),
 					Integrity: "",
 				},
 			},
-			Dark:  fmt.Sprintf("%s/sass/grafana.dark.scss", cfg.FrontendDevServer),
-			Light: fmt.Sprintf("%s/sass/grafana.light.scss", cfg.FrontendDevServer),
+			Dark:  fmt.Sprintf("%s/sass/grafana.dark.scss", devServerHost),
+			Light: fmt.Sprintf("%s/sass/grafana.light.scss", devServerHost),
 		}
 
 		return viteDev, nil
@@ -124,134 +134,91 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	return dto, err
 }
 
-// ViteManifestEntry represents a single entry in the Vite manifest.
-type ViteManifestEntry struct {
-	File           string   `json:"file"`
-	Imports        []string `json:"imports"`
-	IsDynamicEntry bool     `json:"isDynamicEntry"`
-	IsEntry        bool     `json:"isEntry"`
-	Src            string   `json:"src"`
-}
-
 func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
-	manifest := map[string]ManifestInfo{}
+	manifest := map[string]ViteManifestEntry{}
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
 	// TODO: This is a temporary hack to get the entrypoints for the vite frontend loading.
-	// var entryPointJSAssets []dtos.EntryPointAsset
-	// var darkCSS, lightCSS string
+	var entryPointJSAssets []dtos.EntryPointAsset
+	var darkCSS, lightCSS string
 
-	// for _, entry := range manifest {
-	// 	if entry.IsEntry {
-	// 		asset := dtos.EntryPointAsset{
-	// 			FilePath: entry.File,
-	// 			// Not sure what should happen with integrity here
-	// 			Integrity: "",
-	// 		}
-	// 		entryPointJSAssets = append(entryPointJSAssets, asset)
-
-	// 		if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
-	// 			darkCSS = entry.File
-	// 		}
-	// 		if entry.Src == "sass/grafana.light.scss" && entry.IsEntry {
-	// 			lightCSS = entry.File
-	// 		}
-	// 	}
-	// }
-
-	integrity := make(map[string]string, 100)
-	for _, v := range manifest {
-		if v.Integrity != "" && v.FilePath != "" {
-			integrity[v.FilePath] = v.Integrity
+	for _, entry := range manifest {
+		if entry.IsEntry {
+			asset := dtos.EntryPointAsset{
+				FilePath: entry.File,
+				// Not sure what should happen with integrity here
+				Integrity: "",
+			}
+			if strings.HasSuffix(entry.File, ".js") {
+				entryPointJSAssets = append(entryPointJSAssets, asset)
+			}
+			if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
+				darkCSS = entry.File
+			}
+			if entry.Src == "sass/grafana.light.scss" && entry.IsEntry {
+				lightCSS = entry.File
+			}
 		}
 	}
 
-	entryPoints, ok := manifest["entrypoints"]
-	if !ok {
-		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
-	}
-
-	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
-	}
-	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
-	}
-	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry, try running `yarn build`")
-	}
-	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
-	}
-
-	rsp := &dtos.EntryPointAssets{
-		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
-		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
-		Dark:            entryPoints.Dark.Assets.CSS[0],
-		Light:           entryPoints.Light.Assets.CSS[0],
-		Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
-		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
-	}
-
-	for _, entry := range entryPoints.App.Assets.JS {
-		rsp.JSFiles = append(rsp.JSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	for _, entry := range entryPoints.App.Assets.CSS {
-		rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	for _, entry := range entryPoints.Swagger.Assets.JS {
-		rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	for _, entry := range entryPoints.Swagger.Assets.CSS {
-		rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
-		})
-	}
-	return rsp, nil
-	// do some error handling shizzle here.
-
-	// return &dtos.EntryPointAssets{
-	// 	JSFiles: entryPointJSAssets,
-	// 	Dark:    darkCSS,
-	// 	Light:   lightCSS,
-	// }, nil
-	// var entryPointJSAssets []dtos.EntryPointAsset
-	// var darkCSS, lightCSS string
-
-	// for _, entry := range manifest {
-	// 	if entry.IsEntry {
-	// 		if filepath.Ext(entry.File) != ".css" {
-	// 			asset := dtos.EntryPointAsset{
-	// 				FilePath: entry.File,
-	// 				// Not sure what should happen with integrity here
-	// 				Integrity: "",
-	// 			}
-	// 			entryPointJSAssets = append(entryPointJSAssets, asset)
-	// 		}
-	// 		if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
-	// 			darkCSS = entry.File
-	// 		}
-	// 		if entry.Src == "sass/grafana.light.scss" && entry.IsEntry {
-	// 			lightCSS = entry.File
-	// 		}
+	// integrity := make(map[string]string, 100)
+	// for _, v := range manifest {
+	// 	if v.Integrity != "" && v.FilePath != "" {
+	// 		integrity[v.FilePath] = v.Integrity
 	// 	}
 	// }
 
-	// return &dtos.EntryPointAssets{
-	// 	JSFiles: entryPointJSAssets,
-	// 	Dark:    darkCSS,
-	// 	Light:   lightCSS,
-	// }, nil
+	// entryPoints, ok := manifest["entrypoints"]
+	// if !ok {
+	// 	return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
+	// }
+
+	// if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
+	// 	return nil, fmt.Errorf("missing app entry, try running `yarn build`")
+	// }
+	// if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
+	// 	return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
+	// }
+	// if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
+	// 	return nil, fmt.Errorf("missing light entry, try running `yarn build`")
+	// }
+	// if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
+	// 	return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
+	// }
+
+	rsp := &dtos.EntryPointAssets{
+		JSFiles: entryPointJSAssets,
+		Dark:    darkCSS,
+		Light:   lightCSS,
+		// Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
+		// SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
+	}
+
+	// for _, entry := range entryPoints.App.Assets.JS {
+	// 	rsp.JSFiles = append(rsp.JSFiles, dtos.EntryPointAsset{
+	// 		FilePath:  entry,
+	// 		Integrity: integrity[entry],
+	// 	})
+	// }
+	// for _, entry := range entryPoints.App.Assets.CSS {
+	// 	rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
+	// 		FilePath:  entry,
+	// 		Integrity: integrity[entry],
+	// 	})
+	// }
+	// for _, entry := range entryPoints.Swagger.Assets.JS {
+	// 	rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
+	// 		FilePath:  entry,
+	// 		Integrity: integrity[entry],
+	// 	})
+	// }
+	// for _, entry := range entryPoints.Swagger.Assets.CSS {
+	// 	rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
+	// 		FilePath:  entry,
+	// 		Integrity: integrity[entry],
+	// 	})
+	// }
+	return rsp, nil
 }
