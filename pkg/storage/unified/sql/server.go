@@ -65,6 +65,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			}, tracer, reg),
 			Resources:     docs,
 			WorkerThreads: cfg.IndexWorkers,
+			InitMinCount:  1,
 		}
 
 		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
