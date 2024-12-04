@@ -642,7 +642,7 @@ func TestValidateQueries(t *testing.T) {
 	})
 }
 
-func TestRoutePostNameRulesPrometheusConfig(t *testing.T) {
+func TestRoutePostGrafanaRuleGroupPrometheusConfig(t *testing.T) {
 	t.Run("valid request saves Prometheus rules as Grafana rules", func(t *testing.T) {
 		orgID := rand.Int63()
 		promNamespace := "test-namespace"
@@ -669,7 +669,7 @@ func TestRoutePostNameRulesPrometheusConfig(t *testing.T) {
 		permissions := createPermissionsToImportPrometheusRules(orgID)
 		req := createRequestContextWithPerms(orgID, permissions, nil)
 
-		response := service.RoutePostNameRulesPrometheusConfig(req, ruleGroup, promNamespace, "")
+		response := service.RoutePostGrafanaRuleGroupPrometheusConfig(req, ruleGroup, promNamespace, "")
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{

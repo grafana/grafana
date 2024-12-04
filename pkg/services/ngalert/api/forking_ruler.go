@@ -126,7 +126,7 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
-func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		return errorToResponse(err)
@@ -140,7 +140,7 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 		return errorToResponse(err)
 	}
 
-	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
+	return f.GrafanaRuler.RoutePostGrafanaRuleGroupPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
 }
 
 func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {

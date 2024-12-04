@@ -731,7 +731,7 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, promNamespace, datasourceUID string) response.Response {
+func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, title, datasourceUID string) response.Response {
 	logger := srv.log.FromContext(c.Req.Context())
 
 	namespaceUID, err := generateNamespaceUID(promNamespace)

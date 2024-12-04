@@ -1670,7 +1670,7 @@
           "ruler"
         ],
         "summary": "Creates or updates a rule group in Prometheus format.",
-        "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
+        "operationId": "RoutePostGrafanaRuleGroupPrometheusConfig",
         "parameters": [
           {
             "type": "string",

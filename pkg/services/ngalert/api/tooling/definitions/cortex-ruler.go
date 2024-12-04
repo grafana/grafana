@@ -97,7 +97,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
+// swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostGrafanaRuleGroupPrometheusConfig
 //
 // Creates or updates a rule group in Prometheus format.
 //
@@ -682,8 +682,8 @@ type UpdateRuleGroupResponse struct {
 	Deleted []string `json:"deleted,omitempty"`
 }
 
-// swagger:parameters RoutePostNameGrafanaRulesPrometheusConfig
-type RoutePostNameGrafanaRulesPrometheusConfigParams struct {
+// swagger:parameters RoutePostGrafanaRuleGroupPrometheusConfig
+type RoutePostGrafanaRuleGroupPrometheusConfigParams struct {
 	// in: path
 	Namespace string
 	// in: header
