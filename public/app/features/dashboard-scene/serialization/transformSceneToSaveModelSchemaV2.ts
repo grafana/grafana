@@ -38,6 +38,7 @@ import {
   AnnotationQueryKind,
   defaultAnnotationPanelFilter,
   defaultAnnotationQuerySpec,
+  DataLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -245,10 +246,10 @@ function getElements(state: DashboardSceneState) {
   return elements;
 }
 
-function getPanelLinks(panel: VizPanel): DashboardLink[] {
+function getPanelLinks(panel: VizPanel): DataLink[] {
   const vizLinks = dashboardSceneGraph.getPanelLinks(panel);
   if (vizLinks) {
-    return (vizLinks.state.rawLinks as DashboardLink[]) ?? [];
+    return (vizLinks.state.rawLinks as DataLink[]) ?? [];
   }
   return [];
 }
