@@ -1,3 +1,4 @@
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -90,6 +91,18 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
       },
       dashboard: dash.spec,
     };
+
+    if (dash.metadata.annotations?.[AnnoKeyFolder]) {
+      try {
+        const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
+        result.meta.folderTitle = folder.title;
+        result.meta.folderUrl = folder.url;
+        result.meta.folderUid = folder.uid;
+        result.meta.folderId = folder.id;
+      } catch (e) {
+        console.error('Failed to load a folder', e);
+      }
+    }
 
     return result;
   }

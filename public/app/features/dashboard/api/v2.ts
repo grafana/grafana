@@ -1,7 +1,14 @@
 import { UrlQueryMap } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ResourceClient } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderId,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  ResourceClient,
+} from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { SaveDashboardResponseDTO } from 'app/types';
 
@@ -24,8 +31,20 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-    // For dev purposes only now, the conversion should happen in the API. This is just to stub v2 api responses.
-    return ResponseTransformers.transformV1ToV2(dashboard);
+    // For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
+    const result = ResponseTransformers.transformV1ToV2(dashboard);
+    if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
+      try {
+        const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
+        result.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
+        result.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
+        result.metadata.annotations[AnnoKeyFolderId] = folder.id;
+      } catch (e) {
+        console.error('Failed to load a folder', e);
+      }
+    }
+
+    return result;
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
