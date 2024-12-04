@@ -599,6 +599,13 @@ func RedactedValue(key, value string) string {
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
 		"GF_ENTITY_API_DB_PASS",
+		"ID_FORWARDING_TOKEN$",
+		"AUTHENTICATION_TOKEN$",
+		"AUTH_TOKEN$",
+		"RENDERER_TOKEN$",
+		"API_TOKEN$",
+		"WEBHOOK_TOKEN$",
+		"INSTALL_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
