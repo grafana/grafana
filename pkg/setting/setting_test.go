@@ -529,8 +529,8 @@ func TestRedactedValue(t *testing.T) {
 			expected: "",
 		},
 		{
-			desc:     "token",
-			key:      "token",
+			desc:     "authentication_token",
+			key:      "my_authentication_token",
 			value:    "test",
 			expected: RedactedPassword,
 		},
