@@ -4082,6 +4082,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@html2canvas/html2canvas@npm:^1.6.3":
+  version: 1.6.3
+  resolution: "@html2canvas/html2canvas@npm:1.6.3"
+  dependencies:
+    css-line-break: "npm:^2.1.0"
+    text-segmentation: "npm:^1.0.3"
+  checksum: 10/ae317fc1a3220746d0b86f20dffa9d27961ceeac2e6b0355170f6cd22db69574c59373757e6e267a4dffb39143eba4dc3567506d07efb8562ea2a969f06fb71e
+  languageName: node
+  linkType: hard
+
 "@humanfs/core@npm:^0.19.1":
   version: 0.19.1
   resolution: "@humanfs/core@npm:0.19.1"
@@ -17213,6 +17223,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:17.0.0"
+    "@html2canvas/html2canvas": "npm:^1.6.3"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.17"
     "@lezer/common": "npm:1.2.3"

@@ -280,6 +280,7 @@
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@hello-pangea/dnd": "17.0.0",
+    "@html2canvas/html2canvas": "^1.6.3",
     "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.17",
     "@lezer/common": "1.2.3",
