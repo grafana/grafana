@@ -33,7 +33,7 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
 
     // For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
     const result = ResponseTransformers.transformV1ToV2(dashboard);
-
+    
     if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
       try {
         const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
