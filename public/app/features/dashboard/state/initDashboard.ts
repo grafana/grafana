@@ -138,7 +138,13 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return await buildNewDashboardSaveModel(args.urlFolderUid);
+        const dash = await buildNewDashboardSaveModel(args.urlFolderUid);
+
+        if (isDashboardResource(dash)) {
+          throw new Error('v2 schema not supported');
+        }
+
+        return dash;
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };
