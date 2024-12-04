@@ -23,6 +23,13 @@ export default defineConfig(({ command }) => ({
     assetsDir: 'public/build',
     minify: shouldMinify,
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ['import', 'global-builtin', 'legacy-js-api'],
+      },
+    },
+  },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
     host: '0.0.0.0',
