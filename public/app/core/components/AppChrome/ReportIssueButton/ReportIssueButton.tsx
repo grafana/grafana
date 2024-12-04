@@ -66,8 +66,6 @@ export const ReportIssueButton = ({}: Props) => {
 
 /* 
   TODO:
-  - get the actual message from the form
-  - fix the styling of the top bar
   - put this behind a feature flag
   - screenshot should be behind a button
   - see if we can get annotations to work

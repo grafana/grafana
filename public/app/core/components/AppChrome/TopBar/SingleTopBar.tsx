@@ -114,7 +114,8 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(440px, 1fr)',
+      // gridTemplateColumns: '2fr minmax(440px, 1fr)',
+      gridTemplateColumns: '2fr minmax(500px, 1fr)', // TODO based on feature toggle
       display: 'grid',
 
       justifyContent: 'flex-start',
