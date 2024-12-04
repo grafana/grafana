@@ -2,12 +2,9 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -22,7 +19,7 @@ import (
 // This only works for github right now
 type webhookConnector struct {
 	client         auth.BackgroundIdentityService
-	getter         RepoGetter
+	getter         Getter
 	logger         *slog.Logger
 	resourceClient *resources.ClientFactory
 }
@@ -69,21 +66,14 @@ func (c *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := c.getter.GetRepository(identity.WithRequester(ctx, id), name)
+	hook, err := c.getter.GetWebhook(identity.WithRequester(ctx, id), name)
 	if err != nil {
 		return nil, err
 	}
 
-	webhook := repo.Webhook(ctx, c.logger, responder)
-	if webhook == nil {
-		return nil, &errors.StatusError{
-			ErrStatus: v1.Status{
-				Message: fmt.Sprintf("webhook is not implemented for: %s", repo.Config().Spec.Type),
-				Code:    http.StatusNotImplemented,
-			},
-		}
-	}
-	return webhook, nil
+	logger := c.logger.With("namespace", namespace, "name", name)
+
+	return hook.Handle(ctx, logger, responder), nil
 }
 
 var (

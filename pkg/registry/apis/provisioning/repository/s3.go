@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -106,12 +105,6 @@ func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path st
 			Code:    http.StatusNotImplemented,
 		},
 	}
-}
-
-// Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
-	// webhooks are not supported with local
-	return nil
 }
 
 func (r *s3Repository) AfterCreate(ctx context.Context, logger *slog.Logger) error {

@@ -4,11 +4,9 @@ import (
 	"context"
 	"io/fs"
 	"log/slog"
-	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -93,28 +91,8 @@ type Repository interface {
 	// History of changes for a path
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
 
-	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error
 	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
 	AfterDelete(ctx context.Context, logger *slog.Logger) error
-}
-
-// FileReplicator is an interface for replicating files
-type FileReplicator interface {
-	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
-	Replicate(ctx context.Context, fileInfo *FileInfo) error
-	Delete(ctx context.Context, fileInfo *FileInfo) error
-}
-
-// FileReplicatorFactory is an interface for creating FileReplicators
-type FileReplicatorFactory interface {
-	New() (FileReplicator, error)
-}
-
-// PreviewRenderer is an interface for rendering a preview of a file
-type PreviewRenderer interface {
-	IsAvailable(ctx context.Context) bool
-	RenderDashboardPreview(ctx context.Context, repo Repository, path string, ref string) (string, error)
 }

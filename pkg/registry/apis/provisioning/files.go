@@ -21,7 +21,7 @@ import (
 )
 
 type filesConnector struct {
-	getter RepoGetter
+	getter Getter
 	client *resources.ClientFactory
 	logger *slog.Logger
 }

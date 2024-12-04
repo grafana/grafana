@@ -25,7 +25,7 @@ import (
 )
 
 type exportConnector struct {
-	repoGetter RepoGetter
+	repoGetter Getter
 	client     *resources.ClientFactory
 	logger     *slog.Logger
 }

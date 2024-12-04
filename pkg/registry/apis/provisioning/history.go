@@ -14,7 +14,7 @@ import (
 )
 
 type historySubresource struct {
-	repoGetter RepoGetter
+	repoGetter Getter
 	logger     *slog.Logger
 }
 
