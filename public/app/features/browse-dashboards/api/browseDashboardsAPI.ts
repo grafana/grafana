@@ -309,11 +309,8 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = await baseQuery({
-            url: `/dashboards/uid/${dashboardUID}`,
-            method: 'DELETE',
-            showSuccessAlert: false,
-          });
+          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+
           // @ts-expect-error
           const name = response?.data?.title;
 
