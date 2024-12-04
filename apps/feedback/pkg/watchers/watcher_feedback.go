@@ -1,27 +1,37 @@
 package watchers
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ operator.ResourceWatcher = &FeedbackWatcher{}
 
 type FeedbackWatcher struct {
 	feedbackStore *resource.TypedStore[*v0alpha1.Feedback]
+	cfg           *setting.Cfg
 }
 
-func NewFeedbackWatcher(feedbackStore *resource.TypedStore[*v0alpha1.Feedback]) (*FeedbackWatcher, error) {
+func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*v0alpha1.Feedback]) (*FeedbackWatcher, error) {
 	return &FeedbackWatcher{
 		feedbackStore: feedbackStore,
+		cfg:           cfg,
 	}, nil
 }
 
@@ -35,14 +45,84 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind)
 	}
 
-	object.Spec.ScreenshotUrl = "http://test.com"
-	object.Spec.Screenshot = nil
-	if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
-		return fmt.Errorf("updating screenshot url: %w", err)
+	// upload to github
+	section := s.cfg.SectionWithEnvOverrides("feedback_button")
+	if section.Key("upload_to_github").MustBool(false) &&
+		object.Spec.ScreenshotUrl == "" { // So we don't spam when there are errors... obviously should figure out something better
+		token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
+		imageUuid := uuid.NewString()
+		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s.png", owner, repo, imageUuid)
+		d, err := json.Marshal(struct {
+			Message string `json:"message"`
+			Content string `json:"content"`
+		}{
+			Message: fmt.Sprintf("unique commit message for image %s.png", imageUuid),
+			Content: base64.StdEncoding.EncodeToString(object.Spec.Screenshot),
+		})
+		if err != nil {
+			return fmt.Errorf("marshalling payload: %w", err)
+		}
+
+		r, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(d))
+		if err != nil {
+			return fmt.Errorf("creating request: %w", err)
+		}
+		r.Header.Add("Accept", "application/vnd.github+json")
+		r.Header.Add("X-GitHub-Api-Version", "2022-11-28")
+		r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		githubUrl := makeUploadRequest(r)
+		object.Spec.ScreenshotUrl = githubUrl
+
+		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
+			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
+				rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
+		}
 	}
 
+	fmt.Println("thingy thingy")
 	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
+}
+
+// TODO this is hideous, refactor or just replace with something actually good
+func makeUploadRequest(req *http.Request) (githubUrl string) {
+	defer func() {
+		// return explicit value so we know there was an error and don't spam
+		if githubUrl == "" {
+			githubUrl = "ERROR"
+		}
+	}()
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+
+	// We should never return errors for this since it can spam github
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			klog.ErrorS(err, "failed to close response body")
+		}
+	}()
+	if err != nil {
+		klog.ErrorS(err, "making request")
+	}
+	if resp.StatusCode >= 400 {
+		klog.ErrorS(fmt.Errorf("received status code %d", resp.StatusCode), "error status code")
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		klog.ErrorS(err, "reading request")
+	}
+
+	responseObj := &struct {
+		Content struct {
+			Url string `json:"html_url"` // this field with ?raw=true attached lets us embed in the issue
+		} `json:"content"`
+	}{}
+	if err := json.Unmarshal(body, responseObj); err != nil {
+		klog.ErrorS(err, "unmarshaling response")
+	}
+	return responseObj.Content.Url
 }
 
 // Update handles update events for feedback.Feedback resources.

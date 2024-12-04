@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -14,9 +15,19 @@ import (
 	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
+type FeedbackConfig struct {
+	GrafanaCfg *setting.Cfg
+}
+
 func New(cfg app.Config) (app.App, error) {
+	feedbackCfg, ok := cfg.SpecificConfig.(FeedbackConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected %s but received %s", reflect.TypeOf(FeedbackConfig{}).String(), reflect.TypeOf(feedbackCfg).String()) // not sure if necessarily
+	}
+
 	// blind copy pasta
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
 
@@ -25,7 +36,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	feedbackWatcher, err := watchers.NewFeedbackWatcher(feedbackStore)
+	feedbackWatcher, err := watchers.NewFeedbackWatcher(feedbackCfg.GrafanaCfg, feedbackStore)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FeedbackWatcher: %w", err)
 	}
