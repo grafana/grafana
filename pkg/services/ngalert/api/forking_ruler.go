@@ -142,6 +142,10 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
 }
 
+func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
+}
+
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {
 	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {

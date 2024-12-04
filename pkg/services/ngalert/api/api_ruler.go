@@ -787,6 +787,77 @@ func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContex
 	return response.JSON(http.StatusAccepted, changes)
 }
 
+func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqContext) response.Response {
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+	}
+
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User has no access to any namespaces")
+		return response.YAML(http.StatusOK, map[string]interface{}{})
+	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for k := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, k)
+	}
+
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromQuery(c.Req.URL.Query())
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
+	configs, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
+		User:          c.SignedInUser,
+		NamespaceUIDs: namespaceUIDs,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
+	})
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	promConverter := prom.NewConverter(prom.Config{})
+	/**/
+
+	result := map[string][]prom.PrometheusRuleGroup{}
+	for groupKey, rules := range configs {
+		folder, ok := namespaceMap[groupKey.NamespaceUID]
+		if !ok {
+			id, _ := c.SignedInUser.GetInternalID()
+			userNamespace := c.SignedInUser.GetIdentityType()
+			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
+			continue
+		}
+		deref := make([]ngmodels.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			deref = append(deref, *rule)
+		}
+		if len(deref) == 0 {
+			return ErrResp(http.StatusNotFound, errors.New("rule group was empty or not found"), "")
+		}
+		grp := &ngmodels.AlertRuleGroup{
+			Title:     groupKey.RuleGroup,
+			FolderUID: groupKey.NamespaceUID,
+			Interval:  deref[0].IntervalSeconds,
+			Rules:     deref,
+		}
+		prg, err := promConverter.GrafanaRulesToPrometheus(grp)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+
+		result[folder.Fullpath] = append(result[folder.Fullpath], prg)
+		//result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+	}
+	return response.YAML(http.StatusOK, result)
+}
+
 func generateNamespaceUID(namespace string) (string, error) {
 	hasher := fnv.New64a()
 	_, err := hasher.Write([]byte(namespace))

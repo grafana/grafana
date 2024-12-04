@@ -73,6 +73,18 @@ import (
 //       403: ForbiddenError
 //
 
+// swagger:route GET /ruler/grafana/prometheus/config/v1/rules ruler RouteGetGrafanaRulesPrometheusConfig
+//
+// Gets all rules in prometheus format.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: NamespaceConfigResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
 //
 // Creates or updates a rule group in Prometheus format.
