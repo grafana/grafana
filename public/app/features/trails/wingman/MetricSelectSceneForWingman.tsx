@@ -194,6 +194,9 @@ export class MetricSelectSceneForWingman
       if (newState.metricNames !== prevState.metricNames) {
         this.onMetricNamesChanged();
       }
+      if (newState.wm_display_view !== prevState.wm_display_view) {
+        this.buildLayout();
+      }
     });
 
     this._subs.add(
