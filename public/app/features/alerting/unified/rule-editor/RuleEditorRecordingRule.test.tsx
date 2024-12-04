@@ -7,14 +7,14 @@ import { byText } from 'testing-library-selector';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 
-import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
-import { grantUserPermissions } from './mocks';
-import { GROUP_3, NAMESPACE_2 } from './mocks/mimirRulerApi';
-import { mimirDataSource } from './mocks/server/configure';
-import { MIMIR_DATASOURCE_UID } from './mocks/server/constants';
-import { captureRequests, serializeRequests } from './mocks/server/events';
+import { RecordingRuleEditorProps } from '../components/rule-editor/RecordingRuleEditor';
+import { grantUserPermissions } from '../mocks';
+import { GROUP_3, NAMESPACE_2 } from '../mocks/mimirRulerApi';
+import { mimirDataSource } from '../mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
+import { captureRequests, serializeRequests } from '../mocks/server/events';
 
-jest.mock('./components/rule-editor/RecordingRuleEditor', () => ({
+jest.mock('../components/rule-editor/RecordingRuleEditor', () => ({
   RecordingRuleEditor: ({ queries, onChangeQuery }: Pick<RecordingRuleEditorProps, 'queries' | 'onChangeQuery'>) => {
     const onChange = (expr: string) => {
       const query = queries[0];

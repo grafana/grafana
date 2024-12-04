@@ -7,12 +7,12 @@ import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import RuleEditor from 'app/features/alerting/unified/rule-editor/RuleEditor';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { buildInfoResponse } from 'app/features/alerting/unified/testSetup/featureDiscovery';

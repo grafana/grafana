@@ -1,12 +1,12 @@
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
-import { AlertWarning } from './AlertWarning';
-import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
-import { useRuleWithLocation } from './hooks/useCombinedRule';
-import { useIsRuleEditable } from './hooks/useIsRuleEditable';
-import { stringifyErrorLike } from './utils/misc';
-import * as ruleId from './utils/rule-id';
+import { AlertWarning } from '../AlertWarning';
+import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
+import { useRuleWithLocation } from '../hooks/useCombinedRule';
+import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
+import { stringifyErrorLike } from '../utils/misc';
+import * as ruleId from '../utils/rule-id';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;

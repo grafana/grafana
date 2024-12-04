@@ -5,14 +5,15 @@ import { NavModelItem } from '@grafana/data';
 import { withErrorBoundary } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
-import { AlertWarning } from './AlertWarning';
+import { AlertWarning } from '../AlertWarning';
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
+import { useURLSearchParams } from '../hooks/useURLSearchParams';
+import { useRulesAccess } from '../utils/accessControlHooks';
+import * as ruleId from '../utils/rule-id';
+
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
-import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { useRulesAccess } from './utils/accessControlHooks';
-import * as ruleId from './utils/rule-id';
 
 type RuleEditorPathParams = {
   id?: string;

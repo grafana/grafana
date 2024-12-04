@@ -6,13 +6,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { discoverFeaturesByUid } from './api/buildInfo';
-import { fetchRulerRulesGroup } from './api/ruler';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { setupMswServer } from './mockApi';
-import { grantUserPermissions, mockDataSource } from './mocks';
-import { setupDataSources } from './testSetup/datasources';
-import { DataSourceType, GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { discoverFeaturesByUid } from '../api/buildInfo';
+import { fetchRulerRulesGroup } from '../api/ruler';
+import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { setupMswServer } from '../mockApi';
+import { grantUserPermissions, mockDataSource } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
+import { DataSourceType, GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name

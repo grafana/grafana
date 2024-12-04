@@ -8,10 +8,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 
-import { grantUserPermissions, mockDataSource } from './mocks';
-import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
-import { setupDataSources } from './testSetup/datasources';
-import { buildInfoResponse } from './testSetup/featureDiscovery';
+import { grantUserPermissions, mockDataSource } from '../mocks';
+import { grafanaRulerGroup } from '../mocks/grafanaRulerApi';
+import { setupDataSources } from '../testSetup/datasources';
+import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
