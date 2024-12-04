@@ -67,7 +67,11 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			klog.ErrorS(err, "failed to close response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
@@ -119,7 +123,11 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			klog.ErrorS(err, "failed to close response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
