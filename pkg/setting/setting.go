@@ -532,6 +532,7 @@ type Cfg struct {
 	IndexWorkers       int
 	IndexMaxBatchSize  int
 	IndexFileThreshold int
+	IndexMinCount      int
 }
 
 type UnifiedStorageConfig struct {
