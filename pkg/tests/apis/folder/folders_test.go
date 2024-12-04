@@ -1263,59 +1263,104 @@ func TestK8sFolderCreateFullResponse(t *testing.T) {
 
 	input := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 
-	t.Run("k8s folder create response should match expected response", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
+	k8sFlags := []string{
+		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagNestedFolders,
+		featuremgmt.FlagKubernetesFolders,
+	}
+	legacyFlags := []string{
+		featuremgmt.FlagNestedFolders,
+	}
+
+	type testCase struct {
+		description  string
+		mode         grafanarest.DualWriterMode
+		featureFlags []string
+	}
+	tcs := []testCase{
+		{
+			description:  "legacy folder create response should match expected response",
+			featureFlags: legacyFlags,
+		},
+		{
+			description:  "(mode 0) k8s folder create response should match expected response",
+			mode:         grafanarest.Mode0,
+			featureFlags: k8sFlags,
+		},
+		{
+			description:  "(mode 1) k8s folder create response should match expected response",
+			mode:         grafanarest.Mode1,
+			featureFlags: k8sFlags,
+		},
+		{
+			description:  "(mode 2) k8s folder create response should match expected response",
+			mode:         grafanarest.Mode2,
+			featureFlags: k8sFlags,
+		},
+		// TODO: fix folder creation in mode 3 and 4
+		// {
+		// 	description:  "(mode 3) k8s folder create response should match expected response",
+		// 	mode:         grafanarest.Mode3,
+		// 	featureFlags: k8sFlags,
+		// },
+		// {
+		// 	description:  "(mode 4) k8s folder create response should match expected response",
+		// 	mode:         grafanarest.Mode4,
+		// 	featureFlags: k8sFlags,
+		// },
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: tc.mode,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
+				EnableFeatureToggles: tc.featureFlags,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Editor,
+				GVR:  gvr,
+			})
+			var f fdtos.Folder
+			create := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(input),
+			}, &f)
+			require.NotEmpty(t, create.Response)
+			require.Equal(t, http.StatusOK, create.Response.StatusCode)
+
+			var newDate time.Time
+			expectedRes := fdtos.Folder{
+				ID:        1,
+				UID:       "uid",
+				OrgID:     0,
+				Title:     "Folder",
+				URL:       "/dashboards/f/uid/folder",
+				HasACL:    false,
+				CanSave:   false,
+				CanEdit:   false,
+				CanAdmin:  false,
+				CanDelete: false,
+				CreatedBy: "editor-1",
+				UpdatedBy: "editor-1",
+				Version:   1,
+				Created:   newDate,
+				Updated:   newDate,
+			}
+
+			// For now, we're not checking the creation and update dates to make the comparison easier.
+			create.Result.Created = newDate
+			create.Result.Updated = newDate
+			require.Equal(t, expectedRes, *create.Result)
 		})
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
-			GVR:  gvr,
-		})
-		var f fdtos.Folder
-		create := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/folders",
-			Body:   []byte(input),
-		}, &f)
-		require.NotEmpty(t, create.Response)
-		require.Equal(t, http.StatusOK, create.Response.StatusCode)
-
-		var newDate time.Time
-		expectedRes := fdtos.Folder{
-			ID:        1,
-			UID:       "uid",
-			OrgID:     0,
-			Title:     "Folder",
-			URL:       "/dashboards/f/uid/folder",
-			HasACL:    false,
-			CanSave:   false,
-			CanEdit:   false,
-			CanAdmin:  false,
-			CanDelete: false,
-			CreatedBy: "editor-1",
-			UpdatedBy: "editor-1",
-			Version:   1,
-			Created:   newDate,
-			Updated:   newDate,
-		}
-
-		// For now, we're not checking the creation and update dates to make the comparison easier.
-		create.Result.Created = newDate
-		create.Result.Updated = newDate
-		require.Equal(t, expectedRes, *create.Result)
-	})
+	}
 }
