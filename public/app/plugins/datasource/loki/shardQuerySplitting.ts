@@ -68,6 +68,7 @@ function splitQueriesByStreamShard(
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
     const { shards, cycle } = groups[group];
+    const useTimeSplitting = cycle && shards && shards[cycle].timeSplit;
     let retrying = false;
 
     if (subquerySubscription != null) {
@@ -162,7 +163,7 @@ function splitQueriesByStreamShard(
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
     const queryRunner =
-      shardsToQuery.length > 0 ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
+      shardsToQuery.length > 0 || !useTimeSplitting ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
     subquerySubscription = queryRunner(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
@@ -388,7 +389,7 @@ function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
 
   for (const group of groups) {
     const { text, suffix } = getValueFormat('bytes')(group.size, 1);
-    debug(`${group.shards} ${text}${suffix}`);
+    debug(`${group.shards}  ${text}${suffix} (time split: ${group.timeSplit})`);
   }
 
   return groups;
