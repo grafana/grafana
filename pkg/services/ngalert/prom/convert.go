@@ -120,7 +120,7 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 		// adding a suffix to the title if needed.
 		//
 		uniqueNames[gr.Title]++
-		if val, _ := uniqueNames[gr.Title]; val > 1 {
+		if val := uniqueNames[gr.Title]; val > 1 {
 			gr.Title = fmt.Sprintf("%s (%d)", gr.Title, val)
 		}
 
