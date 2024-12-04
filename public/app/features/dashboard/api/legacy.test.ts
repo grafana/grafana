@@ -1,4 +1,5 @@
 import { DashboardDTO } from 'app/types';
+
 import { LegacyDashboardAPI } from './legacy';
 
 const mockDashboardDto: DashboardDTO = {
