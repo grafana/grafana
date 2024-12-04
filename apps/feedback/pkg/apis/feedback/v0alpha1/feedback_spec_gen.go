@@ -4,10 +4,11 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type FeedbackSpec struct {
-	Message       string  `json:"message"`
-	Screenshot    []byte  `json:"screenshot,omitempty"`
-	ImageType     *string `json:"imageType,omitempty"`
-	ScreenshotUrl *string `json:"screenshotUrl,omitempty"`
+	Message        string         `json:"message"`
+	Screenshot     []byte         `json:"screenshot,omitempty"`
+	ImageType      *string        `json:"imageType,omitempty"`
+	ScreenshotUrl  *string        `json:"screenshotUrl,omitempty"`
+	DiagnosticData map[string]any `json:"diagnosticData,omitempty"`
 }
 
 // NewFeedbackSpec creates a new FeedbackSpec object.

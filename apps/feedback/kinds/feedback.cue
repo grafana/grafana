@@ -21,6 +21,7 @@ externalName: {
 					screenshot?:    bytes
 					imageType?:     string
 					screenshotUrl?: string
+					diagnosticData?: {...}
 				}
 			}
 		}
