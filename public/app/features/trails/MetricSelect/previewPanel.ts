@@ -1,6 +1,6 @@
 import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { SceneCSSGridItem, SceneObject, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
+import { SceneCSSGridItem, SceneObject, SceneObjectState, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
@@ -11,7 +11,16 @@ import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
+type HeaderActions = Array<SceneObject<SceneObjectState>>;
+
+export function getPreviewPanelFor(
+  metric: string,
+  index: number,
+  currentFilterCount: number,
+  description?: string,
+  headerActions?: HeaderActions,
+  datasource: { uid: string } = trailDS
+) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
@@ -19,8 +28,9 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
     .setHeaderActions([
-      new SelectMetricAction({ metric, title: 'Select' }),
+      ...(headerActions ?? []),
       new AddToExplorationButton({ labelName: metric }),
+      new SelectMetricAction({ metric, title: 'Select' }),
     ])
     .build();
 
@@ -43,7 +53,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
     }),
     $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
-      datasource: trailDS,
+      datasource,
       maxDataPoints: MDP_METRIC_PREVIEW,
       queries,
     }),

@@ -274,6 +274,7 @@
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
     "@grafana/scenes": "5.28.1",
+    "@grafana/scenes-ml": "^0.4.0",
     "@grafana/scenes-react": "5.28.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",

@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -8,10 +9,18 @@ import {
   sceneGraph,
   SceneCSSGridLayout,
 } from '@grafana/scenes';
-import type { Dashboard, Panel } from '@grafana/schema';
+import { SceneChangepointDetector } from '@grafana/scenes-ml';
+import type { Dashboard, DataSourceRef } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 
 import { getPreviewPanelFor } from '../../MetricSelect/previewPanel';
-import { VAR_DATASOURCE_EXPR } from '../../shared';
+
+const changepointDetector = new SceneChangepointDetector({
+  enabled: false,
+  onChangepointDetected: (changepoint) => {
+    console.log('Changepoint detected:', JSON.stringify(changepoint, null, 2));
+  },
+});
 
 /**
  * Extracts all metric names from a PromQL expression
@@ -44,25 +53,37 @@ function extractMetricNames(promqlExpression: string): string[] {
 }
 
 interface AnomaliesSceneState extends SceneObjectState {
-  anomalies: string[];
+  dashboardPanelMetrics: DashboardPanelMetrics;
   body: SceneCSSGridLayout;
+  loading: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+}
+
+interface MetricWithMeta {
+  metric: string;
+  datasource: { uid: string };
+  dashboard: { uid: string; title: string };
+}
+
+interface DashboardPanelMetrics {
+  byDashboard: { [key: string]: MetricWithMeta[] };
 }
 
 const ANOMALIES_GRID_KEY = 'anomalies_grid';
 
 export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
-  private metrics: string[] = [];
-
   constructor(state: Partial<AnomaliesSceneState>) {
     super({
-      anomalies: [],
+      dashboardPanelMetrics: {
+        byDashboard: {},
+      },
       body: new SceneCSSGridLayout({
         key: ANOMALIES_GRID_KEY,
         children: [],
-        autoRows: '200px',
-        templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        autoRows: '175px',
+        templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
         isLazy: true,
       }),
+      loading: 'idle',
       ...state,
     });
 
@@ -70,53 +91,99 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   }
 
   _onActivate() {
+    this.setState({ loading: 'pending' });
+    // Get all metrics used in dashboards that query Prometheus data sources
     getBackendSrv()
       .get<DashboardSearchItem[]>('/api/search', {
         type: 'dash-db',
         limit: 1000,
-        sort: 'name-asc',
       })
       .then((dashboards) => {
-        const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
         Promise.all(
           dashboards.map(({ uid }) => getBackendSrv().get<{ dashboard: Dashboard }>(`/api/dashboards/uid/${uid}`))
         ).then((dashboards) => {
-          const exprs = dashboards
-            .flatMap(({ dashboard }) => {
-              if (!dashboard.panels?.length) {
-                return;
+          const newMetrics: {
+            byDashboard: { [key: string]: MetricWithMeta[] };
+            metricNames: Set<string>;
+          } = {
+            byDashboard: {},
+            metricNames: new Set(),
+          };
+
+          for (const { dashboard } of dashboards) {
+            if (!dashboard.panels?.length || !dashboard.uid) {
+              continue;
+            }
+            const metricsInDashboard: MetricWithMeta[] = [];
+
+            for (const panel of dashboard.panels) {
+              if (
+                !isPrometheusDataSource(panel.datasource) ||
+                !('targets' in panel) ||
+                !panel.targets?.length ||
+                typeof panel.datasource?.uid !== 'string'
+              ) {
+                continue;
               }
 
-              const panels = dashboard.panels.filter((panel: Panel) => panel.datasource?.uid === datasourceUid);
+              const metricsInPanel: string[] = [];
+              for (const target of panel.targets) {
+                const expr = (target.expr as string) ?? '';
+                const metrics = extractMetricNames(expr);
+                metrics.forEach((metric) => metricsInPanel.push(metric));
+              }
 
-              return panels.map((panel: Panel) => {
-                const expr = (panel.targets?.[0].expr as string) ?? '';
-
-                return expr;
+              metricsInPanel.forEach((metric) => {
+                newMetrics.metricNames.add(metric);
+                metricsInDashboard.push({
+                  metric,
+                  datasource: { uid: panel.datasource!.uid! },
+                  dashboard: { uid: dashboard.uid!, title: dashboard.title! },
+                });
               });
-            })
-            .filter((expr) => isString(expr));
-          this.metrics = Array.from(new Set(exprs.flatMap((expr) => extractMetricNames(expr))));
-          this.setState({ anomalies: this.metrics });
+            }
 
-          if (this.state.anomalies.length) {
+            newMetrics.byDashboard[dashboard.uid!] = metricsInDashboard;
+          }
+
+          this.setState({
+            dashboardPanelMetrics: {
+              byDashboard: newMetrics.byDashboard,
+            },
+          });
+
+          if (Object.keys(this.state.dashboardPanelMetrics.byDashboard).length) {
             sceneGraph.findByKeyAndType(this, ANOMALIES_GRID_KEY, SceneCSSGridLayout).setState({
-              children: this.state.anomalies.map((anomaly, idx) => getPreviewPanelFor(anomaly, idx, 0)),
+              children: Object.values(this.state.dashboardPanelMetrics.byDashboard)
+                .flat()
+                .map(({ metric, datasource: { uid } }, idx) =>
+                  getPreviewPanelFor(metric, idx, 0, undefined, [changepointDetector.clone()], { uid })
+                ),
             });
           }
+
+          this.setState({ loading: 'fulfilled' });
         });
+      })
+      .catch(() => {
+        this.setState({ loading: 'rejected' });
       });
   }
 
   public static Component = ({ model }: SceneComponentProps<AnomaliesScene>) => {
-    const { anomalies, body } = model.useState();
+    const { dashboardPanelMetrics, body, loading } = model.useState();
+    const styles = useStyles2(getStyles);
 
-    if (!anomalies.length) {
-      return <div>No anomalies found</div>;
+    if (loading === 'pending') {
+      return <div>Loading...</div>;
+    }
+
+    if (!Object.keys(dashboardPanelMetrics.byDashboard).length) {
+      return <div>No metrics found</div>;
     }
 
     return (
-      <div>
+      <div className={styles.outliers}>
         <body.Component model={body} />
       </div>
     );
@@ -134,6 +201,17 @@ interface DashboardSearchItem {
   isStarred: boolean;
 }
 
-function isString(value: unknown): value is string {
-  return typeof value === 'string';
+function getStyles() {
+  return {
+    // eslint-disable-next-line @emotion/syntax-preference
+    outliers: css`
+      button[aria-label='Enable changepoint detection'] > div > label {
+        place-content: center;
+      }
+    `,
+  };
+}
+
+function isPrometheusDataSource(input: unknown): input is Required<Pick<DataSourceRef, 'type' | 'uid'>> {
+  return typeof input === 'object' && input !== null && 'type' in input && input.type === 'prometheus';
 }

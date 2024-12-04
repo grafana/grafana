@@ -1607,7 +1607,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bsull/augurs@npm:^0.6.0":
+"@bsull/augurs-prophet-wasmstan@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bsull/augurs-prophet-wasmstan@npm:0.2.0"
+  dependencies:
+    "@bytecodealliance/preview2-shim": "npm:^0.17.0"
+  checksum: 10/bc133a3776ad1c36be39e79e23c63cc43645602df33e030cbfcbf5161a64b110b1c527a9cf5bf4b31d8a878c25a7baddc5f2bedaeb83ecb3a50744ca52c42e11
+  languageName: node
+  linkType: hard
+
+"@bsull/augurs@npm:0.6.0, @bsull/augurs@npm:^0.6.0":
   version: 0.6.0
   resolution: "@bsull/augurs@npm:0.6.0"
   checksum: 10/0ba2ea0432f7d4c44ccec4d112e672f8d5d977407be42ff5995e1d6641b4b0238f97b9cdf13bc1fc066559bbd54e6fb00ad1f418014823a6c22af619e7a29c6a
@@ -1639,6 +1648,13 @@ __metadata:
     "@types/tough-cookie": "npm:^4.0.5"
     tough-cookie: "npm:^4.1.4"
   checksum: 10/4f24a820f02c08c3ca0ff21272317357152093f76f9c8cc182517f61fa426ae53dadc4d68a3d6da5078e8d73f0ff8c0907a9f994c0be756162ba9c7358533e57
+  languageName: node
+  linkType: hard
+
+"@bytecodealliance/preview2-shim@npm:^0.17.0":
+  version: 0.17.1
+  resolution: "@bytecodealliance/preview2-shim@npm:0.17.1"
+  checksum: 10/66d3f105fc1acca772f473f3a9ad01e799dcee7170c021f15bd73e45f733b983d5a13c697a9246ab7c0c2cb077549560445fe8dd9f051305c498506305c09ad2
   languageName: node
   linkType: hard
 
@@ -3767,6 +3783,25 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"@grafana/scenes-ml@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/scenes-ml@npm:0.4.0"
+  dependencies:
+    "@bsull/augurs": "npm:0.6.0"
+    "@bsull/augurs-prophet-wasmstan": "npm:0.2.0"
+    date-fns: "npm:^3.6.0"
+  peerDependencies:
+    "@grafana/data": ^10.0.3
+    "@grafana/runtime": ^10.0.3
+    "@grafana/scenes": ">=4.26.1"
+    "@grafana/schema": ^10.0.3
+    "@grafana/ui": ^10.0.3
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10/2de8f93b2514d3fa9ad32aa018e55ab128af8c8c9039168fc280155b706b46fa28cc16366d0d614787456056a1549fc26558c7ed23fa6cf72edfda1cb131c547
+  languageName: node
+  linkType: hard
 
 "@grafana/scenes-react@npm:5.28.1":
   version: 5.28.1
@@ -13964,7 +13999,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:3.6.0":
+"date-fns@npm:3.6.0, date-fns@npm:^3.6.0":
   version: 3.6.0
   resolution: "date-fns@npm:3.6.0"
   checksum: 10/cac35c58926a3b5d577082ff2b253612ec1c79eb6754fddef46b6a8e826501ea2cb346ecbd211205f1ba382ddd1f9d8c3f00bf433ad63cc3063454d294e3a6b8
@@ -17207,6 +17242,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
     "@grafana/scenes": "npm:5.28.1"
+    "@grafana/scenes-ml": "npm:^0.4.0"
     "@grafana/scenes-react": "npm:5.28.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"

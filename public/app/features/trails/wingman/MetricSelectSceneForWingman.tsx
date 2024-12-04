@@ -448,8 +448,13 @@ export class MetricSelectSceneForWingman
         return;
       case 'anomalies':
         console.log('anomalies will be rendered');
-        this.state.body.setState({ children: [new AnomaliesScene({})], autoRows: rowTemplate });
-        return;
+        // TODO: Undo this temporary hack of a grid inside a grid
+        this.state.body.setState({
+          children: [new AnomaliesScene({})],
+          autoRows: rowTemplate,
+          templateColumns: undefined,
+        });
+        break;
       case 'default':
       default:
       // default display no action needed.
