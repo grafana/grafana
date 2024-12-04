@@ -157,7 +157,7 @@ const (
 
 	// PrometheusStyleRuleLabel indicates that this rule is imported from Prometheus and should be treated as such.
 	// For example, different evaluation semantics is used, etc.
-	PrometheusStyleRuleLabel = "__grafana_prometheus_style_rule__"
+	PrometheusStyleRuleLabel = "grafana_prometheus_style_rule"
 )
 
 const (
