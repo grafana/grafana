@@ -98,8 +98,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagQueryService,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
