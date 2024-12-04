@@ -23,7 +23,6 @@ export function usePluginHooks<Signature>({
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
   const deps = getExtensionPointPluginDependencies(extensionPointId);
-  console.log(`deps: ${JSON.stringify(deps)}`);
   const { isLoading: isLoadingAppPlugins } = useLoadPlugins(deps);
 
   return useMemo(() => {

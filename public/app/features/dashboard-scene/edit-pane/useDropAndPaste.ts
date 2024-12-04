@@ -3,14 +3,22 @@ import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 import { ClipboardEvent, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Observable } from 'rxjs';
+import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
 export interface FileImportResult {
   dataFrames: DataFrame[];
   file: File;
 }
 
-export function useDropAndPaste() {
-  const { hooks } = usePluginHooks<(data: File | string) => Observable<FileImportResult>>({
+export function useDropAndPaste(dashboard: DashboardScene) {
+  const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Observable<FileImportResult>>({
+    extensionPointId: 'dashboard/grid',
+    limitPerPlugin: 1,
+  });
+  const { hooks: pasteHooks } = usePluginHooks<(data: File | string) => VizPanel | null>({
     extensionPointId: 'dashboard/dragndrop',
     limitPerPlugin: 1,
   });
@@ -21,16 +29,15 @@ export function useDropAndPaste() {
         return;
       }
 
-      for (const hook of hooks) {
+      for (const hook of fileHooks) {
         const result = hook(file);
         result.subscribe((x) => console.log(x));
       }
 
       //alert(`Importing file: ${file.name}`);
     },
-    [hooks]
+    [fileHooks]
   );
-  console.log(`found ${hooks.length} hooks`);
 
   const onPaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>) => {
@@ -45,8 +52,20 @@ export function useDropAndPaste() {
       if (clipboardData.types.includes('text/plain')) {
         // Handle plaintext paste
         const text = clipboardData.getData('text/plain');
-        for (const hook of hooks) {
-          hook(text);
+        for (const hook of pasteHooks) {
+          const result = hook(text);
+          console.log(typeof result);
+          if (result != null) {
+            // need to construct new panel here to comply with instanceof
+            const panel = new VizPanel({
+              ...result.state,
+              titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+              menu: new VizPanelMenu({
+                $behaviors: [panelMenuBehavior],
+              }),
+            });
+            dashboard.addPanel(panel);
+          }
         }
         return;
       }
@@ -54,7 +73,7 @@ export function useDropAndPaste() {
       if (clipboardData.types.includes('text/html')) {
         // Handle HTML paste
         const html = clipboardData.getData('text/html');
-        for (const hook of hooks) {
+        for (const hook of pasteHooks) {
           hook(html);
         }
       }
