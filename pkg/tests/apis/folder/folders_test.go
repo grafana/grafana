@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	fdtos "github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -1328,7 +1327,7 @@ func TestK8sFolderCreateFullResponse(t *testing.T) {
 				User: helper.Org1.Editor,
 				GVR:  gvr,
 			})
-			var f fdtos.Folder
+			var f dtos.Folder
 			create := apis.DoRequest(helper, apis.RequestParams{
 				User:   client.Args.User,
 				Method: http.MethodPost,
@@ -1339,7 +1338,7 @@ func TestK8sFolderCreateFullResponse(t *testing.T) {
 			require.Equal(t, http.StatusOK, create.Response.StatusCode)
 
 			var newDate time.Time
-			expectedRes := fdtos.Folder{
+			expectedRes := dtos.Folder{
 				ID:        1,
 				UID:       "uid",
 				OrgID:     0,
