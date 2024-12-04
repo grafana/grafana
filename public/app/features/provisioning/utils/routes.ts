@@ -36,6 +36,18 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: PROVISIONING_URL + '/:name/file/*',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FileStatusPage"*/ 'app/features/provisioning/FileStatusPage')
+      ),
+    },
+    {
+      path: PROVISIONING_URL + '/:name/history/*',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/FileHistoryPage')
+      ),
+    },
+    {
       path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,

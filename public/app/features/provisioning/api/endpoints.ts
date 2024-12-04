@@ -11,6 +11,7 @@ import {
   FileOperationArg,
   GetFileArg,
   ListFilesApiResponse,
+  HistoryListResponse,
 } from './types';
 
 const BASE_PATH = '/repositories';
@@ -70,6 +71,12 @@ const injectedRtkApi = api.injectEndpoints({
     listRepositoryFiles: build.query<ListFilesApiResponse, { name: string; ref?: string }>({
       query: ({ name, ref }) => ({
         url: `${BASE_PATH}/${name}/files/`,
+        params: { ref },
+      }),
+    }),
+    listRepositoryFileHistory: build.query<HistoryListResponse, { name: string; path: string; ref?: string }>({
+      query: ({ name, ref, path }) => ({
+        url: `${BASE_PATH}/${name}/history/${path}`,
         params: { ref },
       }),
     }),
@@ -158,6 +165,7 @@ export const {
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useListRepositoryFilesQuery,
+  useListRepositoryFileHistoryQuery,
   useUpdateRepositoryFilesMutation,
   useCreateRepositoryFilesMutation,
   useDeleteRepositoryFilesMutation,

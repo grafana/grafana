@@ -70,6 +70,10 @@ function FilesTable({ name }: FilesTableProps) {
         id: 'path',
         header: 'Path',
         sortType: 'string',
+        cell: ({ row: { original } }: Cell<'path'>) => {
+          const { path } = original;
+          return <a href={`${PROVISIONING_URL}/${name}/file/${path}`}>{path}</a>;
+        },
       },
       {
         id: 'size',
@@ -90,14 +94,11 @@ function FilesTable({ name }: FilesTableProps) {
         header: '',
         cell: ({ row: { original } }: Cell<'path'>) => {
           const { path } = original;
-          // TODO Check if the file is a valid resource
-          if (!path.endsWith('.json') && !path.endsWith('.yaml')) {
-            return null;
-          }
           return (
-            <LinkButton target={'_blank'} href={`/admin/provisioning/${name}/dashboard/preview/${path}`}>
-              Preview
-            </LinkButton>
+            <Stack>
+              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
+            </Stack>
           );
         },
       },
@@ -117,12 +118,7 @@ function FilesTable({ name }: FilesTableProps) {
     <Stack grow={1} direction={'column'} gap={2}>
       <Text element={'h3'}>Repository files</Text>
       <Stack gap={2}>
-        <FilterInput
-          placeholder="Search by login, email, or name"
-          autoFocus={true}
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
+        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
       <InteractiveTable
         columns={columns}
