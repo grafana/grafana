@@ -852,13 +852,14 @@ func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqCont
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
-		result[folder.UID] = append(result[folder.UID], prg)
+		result[folder.Fullpath] = append(result[folder.Fullpath], prg)
 		//result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 	return response.YAML(http.StatusOK, result)
 }
 
-func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespaceUID, ruleGroup string) response.Response {
+func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, promNamespace, ruleGroup string) response.Response {
+	namespaceUID, err := generateNamespaceUID(promNamespace)
 	namespace, err := srv.store.GetNamespaceByUID(ctx.Req.Context(), namespaceUID, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
 		// If there is no such folder, GetNamespaceByUID returns ErrFolderAccessDenied.
