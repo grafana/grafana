@@ -70,7 +70,7 @@ func (c *importConnector) Connect(
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
-	parser := resources.NewParser(ns, dynamicClient, kinds)
+	parser := resources.NewParser(cfg, dynamicClient, kinds)
 	replicator := resources.NewReplicator(dynamicClient, parser, repo.Config().Spec.Folder)
 
 	// TODO: We need some way to filter what we import.
@@ -104,7 +104,7 @@ func (c *importConnector) Connect(
 			info.Hash = entry.Hash
 			info.Modified = nil // modified?
 
-			if err := replicator.Replicate(r.Context(), repo.Config(), info); err != nil {
+			if err := replicator.Replicate(r.Context(), info); err != nil {
 				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 					logger.InfoContext(ctx, "file does not contain a resource")
 					continue

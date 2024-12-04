@@ -98,19 +98,19 @@ spec:
 		info.Data, err = os.ReadFile(filepath.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := NewParser("some-namespace", &DynamicClient{}, &StaticKindsLookup{})
-
-		// try to validate (and lint)
-		validate := true
-
 		cfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
 		}
 
+		parser := NewParser(cfg, &DynamicClient{}, &StaticKindsLookup{})
+
+		// try to validate (and lint)
+		validate := true
+
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), slog.Default(), cfg, info, validate)
+		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)

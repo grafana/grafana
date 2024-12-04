@@ -27,16 +27,16 @@ var ErrNamespaceMismatch = errors.New("the file namespace does not match target 
 
 type FileParser struct {
 	// client helper (for this namespace?)
-	client    *DynamicClient
-	kinds     KindsLookup
-	namespace string
+	client     *DynamicClient
+	kinds      KindsLookup
+	repository *provisioning.Repository
 }
 
-func NewParser(namespace string, client *DynamicClient, kinds KindsLookup) *FileParser {
+func NewParser(repository *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *FileParser {
 	return &FileParser{
-		client:    client,
-		kinds:     kinds,
-		namespace: namespace,
+		repository: repository,
+		client:     client,
+		kinds:      kinds,
 	}
 }
 
@@ -76,7 +76,7 @@ type ParsedFile struct {
 	Errors []error
 }
 
-func (p *FileParser) Parse(ctx context.Context, logger *slog.Logger, cfg *provisioning.Repository, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
+func (p *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
 	parsed = &ParsedFile{
 		Info: info,
 	}
@@ -98,13 +98,13 @@ func (p *FileParser) Parse(ctx context.Context, logger *slog.Logger, cfg *provis
 	obj := parsed.Obj
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != p.namespace {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != p.repository.GetNamespace() {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
 
-	obj.SetNamespace(p.namespace)
+	obj.SetNamespace(p.repository.GetNamespace())
 	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.GetName(),
+		Name:      p.repository.GetName(),
 		Path:      joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,

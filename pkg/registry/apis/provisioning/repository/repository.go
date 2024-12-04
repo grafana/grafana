@@ -94,7 +94,7 @@ type Repository interface {
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
 
 	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc
+	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error
 	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
@@ -103,9 +103,9 @@ type Repository interface {
 
 // FileReplicator is an interface for replicating files
 type FileReplicator interface {
-	Validate(ctx context.Context, cfg *provisioning.Repository, fileInfo *FileInfo) (bool, error)
-	Replicate(ctx context.Context, cfg *provisioning.Repository, fileInfo *FileInfo) error
-	Delete(ctx context.Context, cfg *provisioning.Repository, fileInfo *FileInfo) error
+	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
+	Replicate(ctx context.Context, fileInfo *FileInfo) error
+	Delete(ctx context.Context, fileInfo *FileInfo) error
 }
 
 // FileReplicatorFactory is an interface for creating FileReplicators

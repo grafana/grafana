@@ -104,7 +104,7 @@ func (r *unknownRepository) History(ctx context.Context, logger *slog.Logger, pa
 }
 
 // Webhook implements provisioning.Repository.
-func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
+func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }

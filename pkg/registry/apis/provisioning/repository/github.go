@@ -31,6 +31,7 @@ type githubRepository struct {
 	baseURL       *url.URL
 	linterFactory lint.LinterFactory
 	renderer      PreviewRenderer
+	replicator    FileReplicator
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -42,6 +43,7 @@ func NewGitHub(
 	baseURL *url.URL,
 	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
+	replicator FileReplicator,
 ) *githubRepository {
 	return &githubRepository{
 		config:        config,
@@ -50,6 +52,7 @@ func NewGitHub(
 		baseURL:       baseURL,
 		linterFactory: linterFactory,
 		renderer:      renderer,
+		replicator:    replicator,
 	}
 }
 
@@ -382,7 +385,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 }
 
 // Webhook implements provisioning.Repository.
-func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
+func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		// We don't want GitHub's request to cause a cancellation for us, but we also want the request context's data (primarily for logging).
 		// This means we will just ignore when GH closes their connection to us. If we respond in time, fantastic. Otherwise, we'll still do the work.
@@ -407,7 +410,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 
 		switch event := event.(type) {
 		case *github.PushEvent:
-			if err := r.onPushEvent(ctx, logger, event, replicator); err != nil {
+			if err := r.onPushEvent(ctx, logger, event); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -417,7 +420,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 				Code:    http.StatusOK,
 			})
 		case *github.PullRequestEvent:
-			if err := r.onPullRequestEvent(ctx, logger, event, replicator); err != nil {
+			if err := r.onPullRequestEvent(ctx, logger, event); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -436,7 +439,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 	}
 }
 
-func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, replicator FileReplicator) error {
+func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent) error {
 	logger = logger.With("ref", event.GetRef())
 
 	if event.GetRepo() == nil {
@@ -469,7 +472,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 				continue
 			}
 
-			if err := replicator.Replicate(ctx, r.Config(), fileInfo); err != nil {
+			if err := r.replicator.Replicate(ctx, fileInfo); err != nil {
 				// TODO: handle the case where the file does not contain a resource
 				// after resolving the import cycles
 				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
@@ -492,7 +495,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 				continue
 			}
 
-			if err := replicator.Replicate(ctx, r.Config(), fileInfo); err != nil {
+			if err := r.replicator.Replicate(ctx, fileInfo); err != nil {
 				// TODO: handle the case where the file does not contain a resource
 				// after resolving the import cycles
 				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
@@ -516,7 +519,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 				continue
 			}
 
-			if err := replicator.Delete(ctx, r.Config(), fileInfo); err != nil {
+			if err := r.replicator.Delete(ctx, fileInfo); err != nil {
 				// TODO: handle the case where the file does not contain a resource
 				// after resolving the import cycles
 				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
@@ -551,7 +554,7 @@ type changedResource struct {
 
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
-func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, replicator FileReplicator) error {
+func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent) error {
 	action := event.GetAction()
 	logger = logger.With("pull_request", event.GetNumber(), "action", action, "nnumber", event.GetNumber())
 	logger.InfoContext(
@@ -641,7 +644,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		}
 
 		// TODO: how does this validation works vs linting?
-		ok, err := replicator.Validate(ctx, r.Config(), f)
+		ok, err := r.replicator.Validate(ctx, f)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to validate file", "error", err)
 			continue

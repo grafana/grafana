@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,8 +44,8 @@ func NewReplicator(client *DynamicClient, parser *FileParser, parentFolder strin
 
 // Replicate creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Replicator) Replicate(ctx context.Context, cfg *provisioning.Repository, fileInfo *repository.FileInfo) error {
-	file, err := r.parseResource(ctx, cfg, fileInfo)
+func (r *Replicator) Replicate(ctx context.Context, fileInfo *repository.FileInfo) error {
+	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
 	}
@@ -124,8 +123,8 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *Replicator) Delete(ctx context.Context, cfg *provisioning.Repository, fileInfo *repository.FileInfo) error {
-	file, err := r.parseResource(ctx, cfg, fileInfo)
+func (r *Replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) error {
+	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
 	}
@@ -151,8 +150,8 @@ func (r *Replicator) Delete(ctx context.Context, cfg *provisioning.Repository, f
 	return nil
 }
 
-func (r *Replicator) Validate(ctx context.Context, cfg *provisioning.Repository, fileInfo *repository.FileInfo) (bool, error) {
-	if _, err := r.parseResource(ctx, cfg, fileInfo); err != nil {
+func (r *Replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo) (bool, error) {
+	if _, err := r.parseResource(ctx, fileInfo); err != nil {
 		if errors.Is(err, ErrUnableToReadResourceBytes) {
 			return false, nil
 		}
@@ -162,8 +161,8 @@ func (r *Replicator) Validate(ctx context.Context, cfg *provisioning.Repository,
 	return true, nil
 }
 
-func (r *Replicator) parseResource(ctx context.Context, cfg *provisioning.Repository, fileInfo *repository.FileInfo) (*ParsedFile, error) {
-	file, err := r.parser.Parse(ctx, r.logger, cfg, fileInfo, true)
+func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedFile, error) {
+	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
 	}

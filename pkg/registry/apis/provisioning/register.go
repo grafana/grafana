@@ -233,11 +233,13 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 		return nil, fmt.Errorf("expected repository configuration")
 	}
 
+	namespace := r.GetNamespace()
+
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
+		baseURL, err := url.Parse(b.urlProvider(namespace))
 		if err != nil {
 			return nil, fmt.Errorf("invalid base URL: %w", err)
 		}
@@ -248,8 +250,16 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 			r.Spec.GitHub.WebhookURL = strings.ReplaceAll(r.Spec.GitHub.WebhookURL, resourceNamePlaceholder, r.GetName())
 		}
 
+		dynamicClient, kinds, err := b.client.New(namespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+
+		parser := resources.NewParser(r, dynamicClient, kinds)
+		replicator := resources.NewReplicator(dynamicClient, parser, r.Spec.Folder)
 		linterFactory := lint.NewDashboardLinterFactory()
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer), nil
+
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer, replicator), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:

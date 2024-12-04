@@ -153,7 +153,7 @@ func (s *filesConnector) getParser(repo repository.Repository) (*resources.FileP
 	if err != nil {
 		return nil, err
 	}
-	return resources.NewParser(ns, client, kinds), nil
+	return resources.NewParser(repo.Config(), client, kinds), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
@@ -167,7 +167,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
-	parsed, err := parser.Parse(ctx, logger, repo.Config(), info, true)
+	parsed, err := parser.Parse(ctx, logger, info, true)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -214,7 +214,7 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		return nil, err
 	}
 
-	parsed, err := parser.Parse(ctx, logger, repo.Config(), info, true)
+	parsed, err := parser.Parse(ctx, logger, info, true)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")

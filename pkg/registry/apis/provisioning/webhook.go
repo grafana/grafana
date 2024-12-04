@@ -74,15 +74,7 @@ func (c *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	dynamicClient, kinds, err := c.resourceClient.New(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
-	}
-
-	parser := resources.NewParser(namespace, dynamicClient, kinds)
-	replicator := resources.NewReplicator(dynamicClient, parser, repo.Config().Spec.Folder)
-
-	webhook := repo.Webhook(ctx, c.logger, responder, replicator)
+	webhook := repo.Webhook(ctx, c.logger, responder)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{
