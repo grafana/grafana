@@ -151,6 +151,9 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 	if query.Step != nil {
 		q.Set("step", *query.Step)
 	}
+	if query.Exemplars != nil {
+		q.Set("exemplars", strconv.FormatInt(*query.Exemplars, 10))
+	}
 
 	searchUrl.RawQuery = q.Encode()
 
