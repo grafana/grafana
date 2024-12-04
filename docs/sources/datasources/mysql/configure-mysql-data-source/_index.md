@@ -176,28 +176,12 @@ This value must be formatted as a number followed by a valid time identifier:
 
 You can override this setting in a dashboard panel under its data source options.
 
-<!-- ### Database User Permissions (Important!)
-
-The database user you specify when you add the data source should only be granted SELECT permissions on
-the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
-could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
-
-Example:
-
-```sql
- CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
- GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
-```
-
-You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables. -->
-
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
-### Provisioning examples
+### MySQL provisioning examples
 
 **Basic provisioning:**
 
@@ -219,7 +203,7 @@ datasources:
       password: ${GRAFANA_MYSQL_PASSWORD}
 ```
 
-##### Using TLS verification
+**Using TLS verification:**
 
 ```yaml
 apiVersion: 1
@@ -242,7 +226,7 @@ datasources:
       tlsCACert: ${GRAFANA_TLS_CA_CERT}
 ```
 
-##### Use TLS and Skip Certificate Verification
+**Use TLS and skip certificate verification:**
 
 ```yaml
 apiVersion: 1
