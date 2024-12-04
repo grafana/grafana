@@ -84,7 +84,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	return nil
 }
 
-// TODO this is hideous, refactor or just replace with something actually good
 func makeUploadRequest(req *http.Request) (githubUrl string) {
 	defer func() {
 		// return explicit value so we know there was an error and don't spam
