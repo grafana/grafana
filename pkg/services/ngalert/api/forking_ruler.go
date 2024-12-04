@@ -9,6 +9,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -144,6 +145,12 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 
 func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
+}
+
+func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Group"]
+	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
 }
 
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {
