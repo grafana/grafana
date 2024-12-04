@@ -92,18 +92,6 @@ export class DashboardLoaderSrv {
 
       promise = getDashboardAPI()
         .getDashboardDTO(uid, params)
-        .then((result) => {
-          if (isDashboardResource(result)) {
-            // TODO[schema]: handle v2
-            throw new Error('v2 schema folder dashboard not found not implemented');
-          } else {
-            if (result.meta.isFolder) {
-              appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-              throw new Error('Dashboard not found');
-            }
-          }
-          return result;
-        })
         .catch(() => {
           const dash = this._dashboardLoadFailed('Not found', true);
           dash.dashboard.uid = '';

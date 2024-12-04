@@ -1,5 +1,6 @@
-import { UrlQueryMap } from '@grafana/data';
+import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
@@ -27,6 +28,13 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
-    return await getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, params);
+    const result = await getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, params);
+
+    if (result.meta.isFolder) {
+      appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
+      throw new Error('Dashboard not found');
+    }
+
+    return result;
   }
 }
