@@ -15,7 +15,6 @@ import (
 func UpdatePreferencesFor(ctx context.Context,
 	dashboardService dashboards.DashboardService, preferenceService pref.Service,
 	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
-
 	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
