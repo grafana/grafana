@@ -1,5 +1,5 @@
 import { trim } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
@@ -28,6 +28,15 @@ export interface Props {
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, queryStats }) => {
     const [splitDurationValid, setSplitDurationValid] = useState(true);
+
+    useEffect(() => {
+      if (query.step && !isValidGrafanaDuration(`${query.step}`) && parseInt(query.step, 10)) {
+        onChange({
+          ...query,
+          step: `${parseInt(query.step, 10)}s`,
+        });
+      }
+    }, [onChange, query]);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -92,10 +101,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     const isValidStep = useMemo(() => {
-      if (!query.step || isValidGrafanaDuration(query.step) || !isNaN(Number(query.step))) {
+      if (!query.step) {
         return true;
       }
-      return false;
+      return typeof query.step === 'string' && isValidGrafanaDuration(query.step) && !isNaN(parseInt(query.step, 10));
     }, [query.step]);
 
     return (
@@ -151,7 +160,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                   className="width-6"
                   placeholder={'auto'}
                   type="string"
-                  defaultValue={query.step ?? ''}
+                  value={query.step ?? ''}
                   onCommitChange={onStepChange}
                 />
               </EditorField>
