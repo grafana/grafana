@@ -1706,6 +1706,36 @@
           }
         },
         "x-raw-request": "true"
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Deletes all rule groups in the given namespace.",
+        "operationId": "RouteDeleteGrafanaPrometheusNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "rule groups in the namespace were deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
       }
     },
     "/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}": {

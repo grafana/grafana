@@ -164,3 +164,7 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
 	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
 }
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusNamespace(ctx *contextmodel.ReqContext, fullpath string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, "")
+}

@@ -23,7 +23,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Grafana Paths
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
 		http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}",
-		http.MethodDelete + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}":
+		http.MethodDelete + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}",
+		http.MethodDelete + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
