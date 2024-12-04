@@ -173,9 +173,20 @@ describe('LokiQueryBuilderOptions', () => {
     await userEvent.clear(screen.getByDisplayValue('4s'));
     expect(screen.queryByDisplayValue('4s')).not.toBeInTheDocument();
   });
+
+  it('should transform non duration numbers to duration', async () => {
+    const onChange = jest.fn();
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4' }, onChange);
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(onChange).toHaveBeenCalledWith({
+      refId: 'A',
+      expr: 'rate({foo="bar"}[5m]',
+      step: '4s',
+    });
+  });
 });
 
-function setup(queryOverrides: Partial<LokiQuery> = {}) {
+function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn()) {
   const props = {
     query: {
       refId: 'A',
@@ -183,7 +194,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),
-    onChange: jest.fn(),
+    onChange,
     maxLines: 20,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
   };
