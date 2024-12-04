@@ -159,6 +159,10 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 				Expr:  "up",
 			},
 			{
+				Alert: "another alert",
+				Expr:  "up",
+			},
+			{
 				Alert: "alert",
 				Expr:  "up",
 			},
@@ -169,10 +173,11 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "test-group-1", group.Title)
-	assert.Len(t, group.Rules, 3)
+	assert.Len(t, group.Rules, 4)
 	assert.Equal(t, "alert", group.Rules[0].Title)
-	assert.Equal(t, "alert (1)", group.Rules[1].Title)
-	assert.Equal(t, "alert (2)", group.Rules[2].Title)
+	assert.Equal(t, "alert (2)", group.Rules[1].Title)
+	assert.Equal(t, "another alert", group.Rules[2].Title)
+	assert.Equal(t, "alert (3)", group.Rules[3].Title)
 }
 
 func TestGrafanaRulesToPrometheus(t *testing.T) {

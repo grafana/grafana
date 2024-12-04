@@ -119,10 +119,9 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 		// TODO: move to the saving method and check for duplicates there,
 		// adding a suffix to the title if needed.
 		//
-		if _, exists := uniqueNames[gr.Title]; !exists {
-			uniqueNames[gr.Title]++
-		} else {
-			gr.Title = fmt.Sprintf("%s (%d)", rule.Alert, i)
+		uniqueNames[gr.Title]++
+		if val, _ := uniqueNames[gr.Title]; val > 1 {
+			gr.Title = fmt.Sprintf("%s (%d)", gr.Title, val)
 		}
 
 		rules = append(rules, gr)
