@@ -71,6 +71,19 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 
 Grafana ships with the MySQL data source so there is no need to add a plugin.
 
+{{< admonition type="note" >}}
+When adding a data source, the database user you specify should have only SELECT permissions on the database and tables you wish to query. Grafana does not validate the safety of queries, meaning they can include any SQL statement, such as USE otherdb; or DROP TABLE user;, which would be executed. To mitigate this risk, we strongly recommend creating a dedicated MySQL user with restricted permissions.
+{{< /admonition >}}
+
+Example:
+
+```sql
+ CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
+ GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
+```
+
+You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
+
 ## Add the MySQL data source
 
 To add the MySQL data source complete the following steps:
@@ -115,7 +128,7 @@ The following are additional MySQL settings.
 **MySQL options:**
 
 - **Session Timezone** - Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).
-- **Min time interval** - Defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set to `1m` if your data is written every minute.
+- **Min time interval** - Defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
 
 **Connection limits:**
 
@@ -163,7 +176,7 @@ This value must be formatted as a number followed by a valid time identifier:
 
 You can override this setting in a dashboard panel under its data source options.
 
-### Database User Permissions (Important!)
+<!-- ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
@@ -177,14 +190,14 @@ Example:
  GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
 ```
 
-You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
+You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables. -->
 
-### Provision the data source
+## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
-#### Provisioning examples
+### Provisioning examples
 
 **Basic provisioning:**
 
