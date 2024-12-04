@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"testing"
 
@@ -18,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	fdtos "github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -1252,4 +1254,68 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestK8sFolderCreateFullResponse(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	input := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+
+	t.Run("k8s folder create response should match expected response", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		})
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvr,
+		})
+		var f fdtos.Folder
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(input),
+		}, &f)
+		require.NotEmpty(t, create.Response)
+		require.Equal(t, http.StatusOK, create.Response.StatusCode)
+
+		var newDate time.Time
+		expectedRes := fdtos.Folder{
+			ID:        1,
+			UID:       "uid",
+			OrgID:     0,
+			Title:     "Folder",
+			URL:       "/dashboards/f/uid/folder",
+			HasACL:    false,
+			CanSave:   false,
+			CanEdit:   false,
+			CanAdmin:  false,
+			CanDelete: false,
+			CreatedBy: "editor-1",
+			UpdatedBy: "editor-1",
+			Version:   1,
+			Created:   newDate,
+			Updated:   newDate,
+		}
+
+		// For now, we're not checking the creation and update dates to make the comparison easier.
+		create.Result.Created = newDate
+		create.Result.Updated = newDate
+		require.Equal(t, expectedRes, *create.Result)
+	})
 }
