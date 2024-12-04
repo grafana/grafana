@@ -793,6 +793,7 @@ func (c Condition) withMetadata(key, value string) Condition {
 		Metadata:  meta,
 		Condition: c.Condition,
 		Data:      c.Data,
+		Semantics: c.Semantics,
 	}
 }
 
