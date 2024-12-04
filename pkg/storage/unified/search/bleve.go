@@ -11,7 +11,6 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -21,7 +20,7 @@ import (
 
 const tracingPrexfixBleve = "unified_search.bleve."
 
-var _ resource.SearchBackend = &BleveBackend{}
+var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
 type BleveOptions struct {
@@ -36,7 +35,7 @@ type BleveOptions struct {
 	BatchSize int
 }
 
-type BleveBackend struct {
+type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
 	opts   BleveOptions
@@ -46,26 +45,19 @@ type BleveBackend struct {
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *BleveBackend {
-	b := &BleveBackend{
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) *bleveBackend {
+	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
 	}
 
-	if reg != nil {
-		err := reg.Register(NewIndexMetrics(opts.Root, b))
-		if err != nil {
-			b.log.Warn("failed to register metrics", "error", err)
-		}
-	}
-
 	return b
 }
 
 // This will return nil if the key does not exist
-func (b *BleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
 	b.cacheMu.RLock()
 	defer b.cacheMu.RUnlock()
 
@@ -77,7 +69,7 @@ func (b *BleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 }
 
 // Build an index from scratch
-func (b *BleveBackend) BuildIndex(ctx context.Context,
+func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
 	// When the size is known, it will be passed along here
@@ -150,7 +142,7 @@ func (b *BleveBackend) BuildIndex(ctx context.Context,
 }
 
 // TotalDocs returns the total number of documents across all indices
-func (b *BleveBackend) TotalDocs() int64 {
+func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	for _, v := range b.cache {
 		c, err := v.index.DocCount()
