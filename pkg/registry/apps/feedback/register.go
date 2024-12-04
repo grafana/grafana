@@ -28,6 +28,9 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: feedbackv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     feedbackapp.GetKinds(),
+		CustomConfig: feedbackapp.FeedbackConfig{
+			GrafanaCfg: cfg,
+		},
 	}
 
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, feedbackapp.New)

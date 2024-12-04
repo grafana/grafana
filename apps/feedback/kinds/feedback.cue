@@ -18,6 +18,8 @@ externalName: {
 			schema: {
 				spec: {
 					message: string
+					screenshot: bytes
+					screenshotUrl: string
 				}
 			}
 		}
