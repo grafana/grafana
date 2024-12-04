@@ -93,13 +93,16 @@ func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew
 	}
 
 	// Create issue in Github
-	issue := githubClient.Issue{
-		Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
-		Body:   fmt.Sprintf("![Screenshot](%s?raw=true)", object.Spec.ScreenshotUrl),
-		Labels: []string{"P2"}, // TODO: make configurable out of objec spec?
-	}
-	if err := s.gitClient.CreateIssue(issue); err != nil {
-		return err
+	if object.Spec.ScreenshotUrl != nil {
+		screenshotURL := *object.Spec.ScreenshotUrl
+		issue := githubClient.Issue{
+			Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
+			Body:   fmt.Sprintf("![Screenshot](%s?raw=true)", screenshotURL),
+			Labels: []string{"P2"}, // TODO: make configurable out of objec spec?
+		}
+		if err := s.gitClient.CreateIssue(issue); err != nil {
+			return err
+		}
 	}
 
 	logging.FromContext(ctx).Debug("Updated resource", "name", oldObject.GetStaticMetadata().Identifier().Name)
