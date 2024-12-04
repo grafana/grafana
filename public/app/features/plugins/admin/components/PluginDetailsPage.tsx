@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
+import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -14,7 +15,6 @@ import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsRightPanel } from '../components/PluginDetailsRightPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
-import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
@@ -46,7 +46,7 @@ export function PluginDetailsPage({
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
-  const isNarrowScreen = useMediaQuery('(max-width: 600px)');
+  const isNarrowScreen = useMedia('(max-width: 600px)');
   const { navModel, activePageId } = usePluginDetailsTabs(
     plugin,
     queryParams.get('page') as PluginTabIds,

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
@@ -26,13 +26,19 @@ export const usePluginDetailsTabs = (
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
 
-  const [currentPageId, setCurrentPageId] = useState(pageId || defaultTab);
-
-  useEffect(() => {
-    if (!isNarrowScreen && currentPageId === PluginTabIds.RIGHTPANEL) {
-      setCurrentPageId(defaultTab);
+  function getCurrentPageId(
+    pageId: PluginTabIds | undefined,
+    isNarrowScreen: boolean | undefined,
+    defaultTab: string
+  ): PluginTabIds | string {
+    if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
+      return defaultTab;
     }
-  }, [isNarrowScreen, currentPageId, defaultTab]);
+    return pageId || defaultTab;
+  }
+
+  const currentPageId = getCurrentPageId(pageId, isNarrowScreen, defaultTab);
+
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
@@ -43,7 +49,6 @@ export const usePluginDetailsTabs = (
         icon: 'history',
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.VERSIONS),
       });
     }
     if (isPublished && plugin?.details?.changelog) {
@@ -53,18 +58,16 @@ export const usePluginDetailsTabs = (
         icon: 'rocket',
         url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
         active: PluginTabIds.CHANGELOG === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.CHANGELOG),
       });
     }
 
     if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
       navModelChildren.push({
-        text: PluginTabLabels.RIGHTPANEL,
-        id: PluginTabIds.RIGHTPANEL,
+        text: PluginTabLabels.PLUGINDETAILS,
+        id: PluginTabIds.PLUGINDETAILS,
         icon: 'info-circle',
-        url: `${pathname}?page=${PluginTabIds.RIGHTPANEL}`,
-        active: PluginTabIds.RIGHTPANEL === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.RIGHTPANEL),
+        url: `${pathname}?page=${PluginTabIds.PLUGINDETAILS}`,
+        active: PluginTabIds.PLUGINDETAILS === currentPageId,
       });
     }
 
@@ -80,7 +83,6 @@ export const usePluginDetailsTabs = (
         id: PluginTabIds.IAM,
         url: `${pathname}?page=${PluginTabIds.IAM}`,
         active: PluginTabIds.IAM === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.IAM),
       });
     }
 
@@ -94,7 +96,6 @@ export const usePluginDetailsTabs = (
         id: PluginTabIds.USAGE,
         url: `${pathname}?page=${PluginTabIds.USAGE}`,
         active: PluginTabIds.USAGE === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.USAGE),
       });
     }
 
@@ -110,7 +111,6 @@ export const usePluginDetailsTabs = (
           id: PluginTabIds.CONFIG,
           url: `${pathname}?page=${PluginTabIds.CONFIG}`,
           active: PluginTabIds.CONFIG === currentPageId,
-          onClick: () => setCurrentPageId(PluginTabIds.CONFIG),
         });
       }
 
@@ -122,7 +122,6 @@ export const usePluginDetailsTabs = (
             id: configPage.id,
             url: `${pathname}?page=${configPage.id}`,
             active: configPage.id === currentPageId,
-            onClick: () => setCurrentPageId(configPage.id),
           });
         }
       }
@@ -134,7 +133,6 @@ export const usePluginDetailsTabs = (
           id: PluginTabIds.DASHBOARDS,
           url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
           active: PluginTabIds.DASHBOARDS === currentPageId,
-          onClick: () => setCurrentPageId(PluginTabIds.DASHBOARDS),
         });
       }
     }
@@ -152,7 +150,6 @@ export const usePluginDetailsTabs = (
         id: PluginTabIds.OVERVIEW,
         url: `${pathname}?page=${PluginTabIds.OVERVIEW}`,
         active: PluginTabIds.OVERVIEW === currentPageId,
-        onClick: () => setCurrentPageId(PluginTabIds.OVERVIEW),
       },
       ...navModelChildren,
     ],

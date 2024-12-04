@@ -81,7 +81,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showRight
     );
   }
 
-  if (pageId === PluginTabIds.RIGHTPANEL && config.featureToggles.pluginsDetailsRightPanel && showRightPanelInBody) {
+  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showRightPanelInBody) {
     return (
       <div>
         <PluginDetailsRightPanel info={info} plugin={plugin} />
