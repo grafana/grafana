@@ -441,8 +441,8 @@
 /tsconfig.json @grafana/frontend-ops
 /tsconfig.test.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
-/eslint.config.js @grafana/frontend-ops
-/.betterer.eslint.config.js @grafana/frontend-ops
+/eslint.config.cjs @grafana/frontend-ops
+/.betterer.eslint.config.cjs @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
