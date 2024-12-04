@@ -860,6 +860,11 @@ func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqCont
 
 func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespaceUID, ruleGroup string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(ctx.Req.Context(), namespaceUID, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
+	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+		// If there is no such folder, GetNamespaceByUID returns ErrFolderAccessDenied.
+		// We should return 404 in this case, otherwise mimirtool does not work correctly.
+		return response.Empty(http.StatusNotFound)
+	}
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
