@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { useState } from 'react';
 
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton, Button, Stack } from '@grafana/ui';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
@@ -19,6 +20,8 @@ export const ReportIssueButton = ({}: Props) => {
 
       let screenshot = null;
 
+      console.log('CONFIG', config);
+
       const element = document.body; // TODO: choose a different selector?
       if (element) {
         const canvas = await html2canvas(element, { backgroundColor: null });
@@ -29,8 +32,42 @@ export const ReportIssueButton = ({}: Props) => {
         }
       }
 
+      const externallyInstalledPlugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0, enabled: 1 });
+
+      console.log('PLUGINS', externallyInstalledPlugins);
+
       const feedback: Spec = {
         message: 'test sarah test',
+        diagnosticData: {
+          instance: {
+            version: config?.buildInfo?.versionString,
+            edition: config?.licenseInfo?.edition,
+            apps: Object.keys(config?.apps),
+            database: {
+              sqlConnectionLimits: config?.sqlConnectionLimits,
+            },
+            externallyInstalledPlugins: externallyInstalledPlugins.map((plugin: { name: string; info: { version: string; updated: string; }; }) => ({
+              name: plugin.name,
+              version: plugin.info.version,
+              buildDate: plugin.info.updated,
+            })),
+            featureToggles: config?.featureToggles,
+            rbacEnabled: config.rbacEnabled,
+            samlEnabled: config.samlEnabled,
+            imageRendererAvailable: config.rendererAvailable,
+            datasources: Object.values(config?.datasources).map(settings => ({
+              name: settings.meta.name,
+              type: settings.type,
+              ...(settings?.meta?.info?.version && { version: settings?.meta?.info?.version }),
+            })),
+            panels: Object.keys(config.panels),
+          },
+          browser: {
+            userAgent: navigator?.userAgent,
+            cookiesEnabled: navigator?.cookieEnabled,
+            hasTouchScreen: navigator?.maxTouchPoints > 0,
+          },
+        },
         ...(screenshot && { screenshot: screenshot.data, imageType: screenshot.type }),
       };
 
