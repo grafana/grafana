@@ -132,7 +132,11 @@ export function CommandPalette2() {
           </div>
 
           <div className={styles.mainCell} ref={scrollingRef}>
-            <motion.div animate={{ y: activeItemYPos }} className={styles.highlightBg} />
+            <motion.div
+              transition={{ type: 'spring', duration: 0.45, bounce: 0.3 }}
+              animate={{ y: activeItemYPos }}
+              className={styles.highlightBg}
+            />
 
             {filteredItems.map((item, idx) => {
               // const nextItem = filteredItems[idx + 1];
