@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -215,8 +214,8 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}()
 
 	end := time.Now().Unix()
-	if search.IndexMetrics != nil {
-		search.IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	if IndexMetrics != nil {
+		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
 
 	return nil
@@ -261,7 +260,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			return
 		}
 		if evt.Type == WatchEvent_ADDED {
-			search.IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
 		}
 	case WatchEvent_DELETED:
 		err = index.Delete(evt.Key)
@@ -269,7 +268,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			s.log.Warn("error deleting document watch event", "error", err)
 			return
 		}
-		search.IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
 	default:
 		// do nothing
 		s.log.Warn("unknown watch event", "type", evt.Type)
@@ -280,8 +279,8 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	if latencySeconds > 5 {
 		logger.Warn("high index latency", "latency", latencySeconds)
 	}
-	if search.IndexMetrics != nil {
-		search.IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+	if IndexMetrics != nil {
+		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
 	}
 }
 
@@ -361,8 +360,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	if err != nil {
 		s.log.Warn("error getting doc count", "error", err)
 	}
-	if search.IndexMetrics != nil {
-		search.IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
+	if IndexMetrics != nil {
+		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
 	}
 
 	if err != nil {

@@ -68,7 +68,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			InitMinCount:  cfg.IndexMinCount,
 		}
 
-		err = reg.Register(search.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
+		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
 		if err != nil {
 			slog.Warn("Failed to register indexer metrics", "error", err)
 		}

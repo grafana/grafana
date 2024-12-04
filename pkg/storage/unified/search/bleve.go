@@ -102,10 +102,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if err == nil {
 			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
-		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err
