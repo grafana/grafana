@@ -18,10 +18,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
-    [[range $asset := .Assets.CSSFiles]]
-      <link rel="stylesheet" href="[[$asset.FilePath]]" />
-    [[end]]
-
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.Assets.Light]]" />
@@ -357,7 +353,7 @@
     <!-- see pkg/api/webassets/webassets.go -->
     [[ if and .IsDevelopmentEnv .FrontendDevServer ]]
     <script nonce="[[$.Nonce]]" type="module">
-      import RefreshRuntime from '[[ .FrontendDevServer ]]/@react-refresh';
+      import RefreshRuntime from 'http://localhost:5173/@react-refresh';
       RefreshRuntime.injectIntoGlobalHook(window);
       window.$RefreshReg$ = () => {};
       window.$RefreshSig$ = () => (type) => type;
