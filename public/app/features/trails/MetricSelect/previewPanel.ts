@@ -22,19 +22,17 @@ export function getPreviewPanelFor(
   datasource: { uid: string } = trailDS
 ) {
   const autoQuery = getAutoQueriesForMetric(metric);
-
   const queries = autoQuery.preview.queries.map((query) =>
     convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
   );
-
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
     .setHeaderActions([
       ...(headerActions ?? []),
-      new AddToExplorationButton({ labelName: metric }),
       new SelectMetricAction({ metric, title: 'Select' }),
+      new AddToExplorationButton({ labelName: metric }),
     ])
     .setData(
       new SceneQueryRunner({
@@ -59,7 +57,7 @@ export function getPreviewPanelFor(
       variables: getVariablesWithMetricConstant(metric),
     }),
     $behaviors: [hideEmptyPreviews(metric)],
-    body: vizPanel,
+    body: panel,
   });
 }
 

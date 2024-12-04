@@ -13,7 +13,7 @@ import { SceneChangepointDetector } from '@grafana/scenes-ml';
 import type { Dashboard, DataSourceRef } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
-import { getPreviewPanelFor } from '../../MetricSelect/previewPanel';
+import { getPreviewPanelFor } from '../previewPanel';
 
 const changepointDetector = new SceneChangepointDetector({
   enabled: false,
