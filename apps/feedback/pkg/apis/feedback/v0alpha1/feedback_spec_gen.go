@@ -6,6 +6,7 @@ package v0alpha1
 type FeedbackSpec struct {
 	Message       string  `json:"message"`
 	Screenshot    []byte  `json:"screenshot,omitempty"`
+	ImageType     *string `json:"imageType,omitempty"`
 	ScreenshotUrl *string `json:"screenshotUrl,omitempty"`
 }
 

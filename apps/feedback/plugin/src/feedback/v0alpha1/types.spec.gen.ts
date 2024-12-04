@@ -3,6 +3,7 @@
 export interface Spec {
 	message: string;
 	screenshot?: string;
+	imageType?: string;
 	screenshotUrl?: string;
 }
 

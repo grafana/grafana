@@ -19,6 +19,7 @@ externalName: {
 				spec: {
 					message:        string
 					screenshot?:    bytes
+					imageType?:     string
 					screenshotUrl?: string
 				}
 			}

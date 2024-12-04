@@ -5,7 +5,7 @@ import { Menu, Dropdown, ToolbarButton, Button, Stack } from '@grafana/ui';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
-import { canvasToBase64String } from '../../../../features/feedback/screenshot-encode';
+import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
 
 export interface Props {}
 
@@ -17,7 +17,7 @@ export const ReportIssueButton = ({}: Props) => {
       e.preventDefault();
       console.log('hi', e);
 
-      let screenshot = undefined;
+      let screenshot = null;
 
       const element = document.body; // TODO: choose a different selector?
       if (element) {
@@ -25,16 +25,13 @@ export const ReportIssueButton = ({}: Props) => {
 
         const encoded = await canvasToBase64String(canvas);
         if (encoded && typeof encoded === 'string') {
-          screenshot = encoded;
+          screenshot = extractImageTypeAndData(encoded);
         }
       }
 
-      // TODO: we should filter this in the backend!
-      screenshot = screenshot?.replace('data:image/png;base64,', '');
-
       const feedback: Spec = {
         message: 'test sarah test',
-        ...(screenshot && { screenshot }),
+        ...(screenshot && { screenshot: screenshot.data, imageType: screenshot.type }),
       };
 
       const feedbackApi = getFeedbackAPI();
