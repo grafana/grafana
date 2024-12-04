@@ -47,6 +47,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
+		CustomCommands:    dtoCmd.CustomCommands,
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -108,6 +109,21 @@ func GetPreferencesFor(ctx context.Context,
 			dto.QueryHistory = &preferences.QueryHistoryPreference{
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
 			}
+		}
+
+		if preference.JSONData.CustomCommands != nil {
+			commands := make([]preferences.CustomCommand, len(preference.JSONData.CustomCommands))
+			for i, cmd := range preference.JSONData.CustomCommands {
+				commands[i] = preferences.CustomCommand{
+					ID:       cmd.ID,
+					Title:    cmd.Title,
+					Path:     cmd.Path,
+					Shortcut: cmd.Shortcut,
+					Keywords: cmd.Keywords,
+					Category: cmd.Category,
+				}
+			}
+			dto.CustomCommands = commands
 		}
 	}
 
