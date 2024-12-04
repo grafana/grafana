@@ -241,20 +241,38 @@ type DashboardMetricStats struct {
 	MetricStats map[string]int `json:"metric-stats"`
 }
 
-func (hs *HTTPServer) GetDashboardMetricStats(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboardMetricStats")
+func (hs *HTTPServer) GetMetricStats(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "api.GetMetricStats")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	query := dashboards.GetAllDashboardExpressionsQuery{OrgID: c.SignedInUser.GetOrgID(), DSType: "prometheus"}
-	queryResult, err := hs.DashboardService.GetAllExpressionsFromPanels(c.Req.Context(), &query)
+	dashboardQuery := dashboards.GetExtractedExpressionsQuery{OrgID: c.SignedInUser.GetOrgID(), DSType: "prometheus"}
+	dashboardQueryResult, err := hs.DashboardService.GetDashboardMetricStats(c.Req.Context(), &dashboardQuery)
 	if err != nil {
 		c.JsonApiErr(500, "failed to get exprs from dashboards", err)
 		return response.Err(fmt.Errorf("failed to get exprs from dashboards: %v", err))
 	}
 
-	metricCount := make(map[string]int)
-	metricNameDashboard := make(map[string]int64)
+	alertRuleQuery := dashboards.GetExtractedExpressionsQuery{OrgID: c.SignedInUser.GetOrgID(), DSType: "prometheus"}
+	alertRuleQueryResult, err := hs.DashboardService.GetAlertRuleMetricStats(c.Req.Context(), &alertRuleQuery)
+	if err != nil {
+		c.JsonApiErr(500, "failed to get exprs from dashboards", err)
+		return response.Err(fmt.Errorf("failed to get exprs from dashboards: %v", err))
+	}
+
+	metricCount := map[string]map[string]int{
+		"alert_rules": make(map[string]int),
+		"dashboards":  make(map[string]int),
+	}
+
+	countMetricNames(alertRuleQueryResult, metricCount["alert_rules"])
+	countMetricNames(dashboardQueryResult, metricCount["dashboards"])
+
+	return response.JSON(http.StatusOK, metricCount)
+}
+
+func countMetricNames(queryResult []*dashboards.ExtractedExpression, metricCount map[string]int) {
+	uniqueMetricName := make(map[string]int64)
 
 	// Iterate over each expression and extract metrics
 	for _, expression := range queryResult {
@@ -266,15 +284,13 @@ func (hs *HTTPServer) GetDashboardMetricStats(c *contextmodel.ReqContext) respon
 		// Count each metric occurrence only once for each dashboard
 		for _, metric := range metricNames {
 			if metric != "" {
-				if _, processed := metricNameDashboard[metric]; !processed || metricNameDashboard[metric] != expression.ID {
-					metricNameDashboard[metric] = expression.ID
+				if _, processed := uniqueMetricName[metric]; !processed || uniqueMetricName[metric] != expression.ID {
+					uniqueMetricName[metric] = expression.ID
 					metricCount[metric]++
 				}
 			}
 		}
 	}
-
-	return response.JSON(http.StatusOK, metricCount)
 }
 
 // MetricVisitor is a custom Visitor to collect metric names from a PromQL AST

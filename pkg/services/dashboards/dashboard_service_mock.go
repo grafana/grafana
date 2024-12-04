@@ -16,7 +16,12 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
-func (_m *FakeDashboardService) GetAllExpressionsFromPanels(ctx context.Context, query *GetAllDashboardExpressionsQuery) ([]*DashboardExpressions, error) {
+func (_m *FakeDashboardService) GetDashboardMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (_m *FakeDashboardService) GetAlertRuleMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
 	// TODO implement me
 	panic("implement me")
 }

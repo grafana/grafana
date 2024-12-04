@@ -950,11 +950,11 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 	return queryResult, nil
 }
 
-func (d *dashboardStore) GetAllExpressionsFromPanels(ctx context.Context, query *dashboards.GetAllDashboardExpressionsQuery) ([]*dashboards.DashboardExpressions, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardTags")
+func (d *dashboardStore) GetExpressionsFromDashboardPanels(ctx context.Context, query *dashboards.GetExtractedExpressionsQuery) ([]*dashboards.ExtractedExpression, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetExpressionsFromDashboardPanels")
 	defer span.End()
 
-	queryResult := make([]*dashboards.DashboardExpressions, 0)
+	queryResult := make([]*dashboards.ExtractedExpression, 0)
 	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := fmt.Sprintf(`WITH RECURSIVE
 				    panel_targets AS (
@@ -983,6 +983,43 @@ func (d *dashboardStore) GetAllExpressionsFromPanels(ctx context.Context, query 
 	if err != nil {
 		return nil, err
 	}
+
+	return queryResult, nil
+}
+
+func (d *dashboardStore) GetExpressionsFromAlertRules(ctx context.Context, query *dashboards.GetExtractedExpressionsQuery) ([]*dashboards.ExtractedExpression, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetExpressionsFromAlertRules")
+	defer span.End()
+
+	queryResult := make([]*dashboards.ExtractedExpression, 0)
+	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sql := fmt.Sprintf(`WITH RECURSIVE
+				    alert_rule_targets AS (
+				        SELECT
+				            alert_rule.id,
+				            json_extract(rule.value, '$.model.expr') AS expr
+				        FROM
+				            alert_rule,
+				            json_each(alert_rule.data, '$') AS rule  -- Iterate over the array of rules directly
+				        WHERE
+				            json_extract(rule.value, '$.model.datasource.type') = '%s'
+				    )
+				SELECT
+				    id,
+				    expr
+				FROM
+				    alert_rule_targets
+				WHERE
+				    expr IS NOT NULL AND trim(expr) != ''`, query.DSType)
+
+		sess := dbSession.SQL(sql, query.OrgID)
+		err := sess.Find(&queryResult)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return queryResult, nil
 }
 

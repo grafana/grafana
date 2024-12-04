@@ -456,10 +456,12 @@ func (hs *HTTPServer) registerRoutes() {
 		// Folders
 		hs.registerFolderAPI(apiRoute, authorize)
 
+		// Metric Stats
+		apiRoute.Get("/metric-stats", routing.Wrap(hs.GetMetricStats))
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Get("/metric-stats", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboardMetricStats))
 
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.SoftDeleteDashboard))
