@@ -116,7 +116,7 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
     }
 
     return (
-      <div id="ismail simsek">
+      <div>
         <body.Component model={body} />
       </div>
     );
