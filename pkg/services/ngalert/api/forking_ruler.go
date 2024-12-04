@@ -126,7 +126,7 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
-func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		return errorToResponse(err)
@@ -140,7 +140,7 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 		return errorToResponse(err)
 	}
 
-	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
+	return f.GrafanaRuler.RoutePostGrafanaRuleGroupPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
 }
 
 func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
@@ -161,10 +161,6 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 	return f.LotexRuler, nil
 }
 
-func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, namespace, groupName string) response.Response {
-	namespaceUID, err := generateNamespaceUID(namespace)
-	if err != nil {
-		return response.Err(err)
-	}
-	return f.GrafanaRuler.RouteDeleteAlertRules(ctx, namespaceUID, groupName)
+func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
 }

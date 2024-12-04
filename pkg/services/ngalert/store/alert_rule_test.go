@@ -698,6 +698,107 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	})
 }
 
+func TestIntegration_GetNamespaceByFullpath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	uid := uuid.NewString()
+	parentUid := uuid.NewString()
+	title := "folder/title"
+	parentTitle := "parent-title"
+	createFolder(t, store, parentUid, parentTitle, 1, "")
+	createFolder(t, store, uid, title, 1, parentUid)
+
+	fullpath := "parent-title/folder\\/title"
+	actual, err := store.GetNamespaceByFullpath(context.Background(), fullpath, 1, u)
+	require.NoError(t, err)
+	require.Equal(t, title, actual.Title)
+	require.Equal(t, uid, actual.UID)
+	require.Equal(t, fullpath, actual.Fullpath)
+}
+
+func TestIntegration_GetOrCreateNamespaceByTitle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	u := &user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
+		OrgRole:        org.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+
+	setupStore := func(t *testing.T) *DBstore {
+		sqlStore := db.InitTestDB(t)
+		cfg := setting.NewCfg()
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		b := &fakeBus{}
+		logger := log.New("test-dbstore")
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+
+		return store
+	}
+
+	t.Run("should create folder when it does not exist", func(t *testing.T) {
+		store := setupStore(t)
+
+		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), "new folder", 1, u)
+		require.NoError(t, err)
+		require.Equal(t, "new folder", f.Title)
+		require.NotEmpty(t, f.UID)
+
+		folders, err := store.FolderService.GetFolders(
+			context.Background(),
+			folder.GetFoldersQuery{
+				OrgID:        1,
+				WithFullpath: true,
+				SignedInUser: u,
+			},
+		)
+		require.NoError(t, err)
+		require.Len(t, folders, 1)
+	})
+
+	t.Run("should return existing folder when it exists", func(t *testing.T) {
+		store := setupStore(t)
+
+		title := "existing folder"
+		createFolder(t, store, "", title, 1, "")
+		f, err := store.GetOrCreateNamespaceByTitle(context.Background(), title, 1, u)
+		require.NoError(t, err)
+		require.Equal(t, title, f.Title)
+
+		folders, err := store.FolderService.GetFolders(
+			context.Background(),
+			folder.GetFoldersQuery{
+				OrgID:        1,
+				WithFullpath: true,
+				SignedInUser: u,
+			},
+		)
+		require.NoError(t, err)
+		require.Len(t, folders, 1)
+	})
+}
+
 func TestIntegrationInsertAlertRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

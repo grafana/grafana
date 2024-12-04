@@ -6883,7 +6883,7 @@
     "consumes": [
      "application/yaml"
     ],
-    "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
+    "operationId": "RoutePostGrafanaRuleGroupPrometheusConfig",
     "parameters": [
      {
       "in": "path",

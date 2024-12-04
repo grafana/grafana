@@ -35,8 +35,8 @@ type RulerApi interface {
 	RouteGetRulegGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesForExport(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaRuleGroupPrometheusConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
-	RoutePostNameGrafanaRulesPrometheusConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
 }
@@ -117,6 +117,11 @@ func (f *RulerApiHandler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) resp
 func (f *RulerApiHandler) RouteGetRulesForExport(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetRulesForExport(ctx)
 }
+func (f *RulerApiHandler) RoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam)
+}
 func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
@@ -126,11 +131,6 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqC
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
-}
-func (f *RulerApiHandler) RoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
-	// Parse Path Parameters
-	namespaceParam := web.Params(ctx.Req)[":Namespace"]
-	return f.handleRoutePostNameGrafanaRulesPrometheusConfig(ctx, namespaceParam)
 }
 func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -337,6 +337,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			),
 		)
 		group.Post(
+			toMacaronPath("/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}",
+				api.Hooks.Wrap(srv.RoutePostGrafanaRuleGroupPrometheusConfig),
+				m,
+			),
+		)
+		group.Post(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
@@ -345,18 +357,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesConfig),
-				m,
-			),
-		)
-		group.Post(
-			toMacaronPath("/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
-			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
-			api.authorize(http.MethodPost, "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesPrometheusConfig),
 				m,
 			),
 		)

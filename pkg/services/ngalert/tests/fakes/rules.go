@@ -258,36 +258,38 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetOrCreateNamespaceByUID(_ context.Context, uid, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	q := GenericRecordedQuery{
-		Name:   "GetOrCreateNamespaceByUID",
-		Params: []any{orgID, uid, title, user},
-	}
-	defer func() {
-		f.RecordedOps = append(f.RecordedOps, q)
-	}()
-	err := f.Hook(q)
-	if err != nil {
-		return nil, err
-	}
-	folders := f.Folders[orgID]
-	for _, folder := range folders {
-		if folder.UID == uid {
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title {
 			return folder, nil
 		}
 	}
 
 	newFolder := &folder.Folder{
 		ID:       rand.Int63(), // nolint:staticcheck
-		UID:      uid,
+		UID:      util.GenerateShortUID(),
 		Title:    title,
 		Fullpath: "fullpath_" + title,
 	}
 
-	folders = append(folders, newFolder)
-	f.Folders[orgID] = folders
-
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
 	return newFolder, nil
+}
+
+func (f *RuleStore) GetNamespaceByFullpath(ctx context.Context, fullpath string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Fullpath == fullpath {
+			return folder, nil
+		}
+	}
+
+	return nil, fmt.Errorf("namespace with fullpath '%s' not found", fullpath)
 }
 
 func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {

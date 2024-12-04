@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"net/http"
 	"slices"
 	"strings"
@@ -67,6 +66,21 @@ var (
 
 // ignore fields that are not part of the rule definition
 var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
+
+func (srv RulerSrv) RouteDeleteAlertRulesByFullpath(ctx *contextmodel.ReqContext, fullpath string, group string) response.Response {
+	logger := srv.log.FromContext(ctx.Req.Context())
+
+	logger.Debug("Searching for the namespace", "fullpath", fullpath)
+
+	namespace, err := srv.store.GetNamespaceByFullpath(ctx.Req.Context(), fullpath, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
+	if err != nil {
+		return toNamespaceErrorResponse(err)
+	}
+
+	logger.Debug("Found namespace", "namespace", namespace.UID)
+
+	return srv.RouteDeleteAlertRules(ctx, namespace.UID, group)
+}
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
@@ -731,20 +745,14 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, promNamespace, datasourceUID string) response.Response {
+func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, title, datasourceUID string) response.Response {
 	logger := srv.log.FromContext(c.Req.Context())
 
-	namespaceUID, err := generateNamespaceUID(promNamespace)
-	if err != nil {
-		logger.Error("Failed to generate namespace UID", "error", err)
-		return response.Err(err)
-	}
+	srv.log.FromContext(c.Req.Context()).Debug("Getting or creating a new namespace", "title", title)
 
-	srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", promNamespace, "namespace_uid", namespaceUID)
-	namespace, err := srv.store.GetOrCreateNamespaceByUID(
+	namespace, err := srv.store.GetOrCreateNamespaceByTitle(
 		c.Req.Context(),
-		namespaceUID,
-		promNamespace,
+		title,
 		c.SignedInUser.GetOrgID(),
 		c.SignedInUser,
 	)
@@ -852,14 +860,21 @@ func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqCont
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
-		result[folder.UID] = append(result[folder.UID], prg)
+		result[folder.Fullpath] = append(result[folder.Fullpath], prg)
 		//result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 	return response.YAML(http.StatusOK, result)
 }
 
-func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespaceUID, ruleGroup string) response.Response {
-	namespace, err := srv.store.GetNamespaceByUID(ctx.Req.Context(), namespaceUID, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
+func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, fullpath, ruleGroup string) response.Response {
+	logger := srv.log.FromContext(ctx.Req.Context())
+
+	logger.Debug("Searching for the namespace", "fullpath", fullpath)
+
+	namespace, err := srv.store.GetNamespaceByFullpath(ctx.Req.Context(), fullpath, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
+	if err != nil {
+		return toNamespaceErrorResponse(err)
+	}
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
 		// If there is no such folder, GetNamespaceByUID returns ErrFolderAccessDenied.
 		// We should return 404 in this case, otherwise mimirtool does not work correctly.
@@ -868,6 +883,8 @@ func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.R
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
+
+	logger.Debug("Getting rules for the rule group", "rule_group", ruleGroup, "namespace_uid", namespace.UID)
 
 	finalRuleGroup, err := getRulesGroupParam(ctx, ruleGroup)
 	if err != nil {
@@ -898,7 +915,7 @@ func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.R
 	}
 	grp := &ngmodels.AlertRuleGroup{
 		Title:     ruleGroup,
-		FolderUID: namespaceUID,
+		FolderUID: namespace.UID,
 		Interval:  deref[0].IntervalSeconds,
 		Rules:     deref,
 	}
@@ -907,16 +924,6 @@ func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.R
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	return response.YAML(http.StatusAccepted, prg)
-}
-
-func generateNamespaceUID(namespace string) (string, error) {
-	hasher := fnv.New64a()
-	_, err := hasher.Write([]byte(namespace))
-	if err != nil {
-		return "", fmt.Errorf("failed to generate namespace UID: %w", err)
-	}
-
-	return fmt.Sprintf("%016x", hasher.Sum64()), nil
 }
 
 func convertToPrometheusModels(group apimodels.PostablePrometheusRuleGroup) prom.PrometheusRuleGroup {
