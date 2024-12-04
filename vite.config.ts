@@ -143,17 +143,20 @@ angular.module('ng').run(['$templateCache', c => { c.put(path, htmlTemplate) }])
  */
 
 function moveAssets() {
+  const assetsLogger = createLogger(undefined, { prefix: '[assets]' });
   return {
     name: 'move-assets',
     async closeBundle() {
       try {
-        console.log('Moving assets to build folder...');
+        assetsLogger.info('Moving assets to build folder...', { timestamp: true });
         const __dirname = fileURLToPath(new URL('.', import.meta.url));
         const buildPath = resolve(__dirname, 'public/build');
         const buildTmpPath = resolve(__dirname, 'public/build_tmp/public/build');
         await move(buildTmpPath, buildPath, { overwrite: true });
         await remove(resolve(__dirname, 'public/build_tmp'));
       } catch (error) {
+        assetsLogger.error('Failed to move assets', { timestamp: true });
+        assetsLogger.error(error, { timestamp: true });
         console.error('Failed to move assets', error);
       }
     },
