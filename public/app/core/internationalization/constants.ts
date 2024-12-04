@@ -16,6 +16,9 @@ export const PSEUDO_LOCALE = 'pseudo';
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
 
+const importLanguageFile = (languageCode: string) =>
+  import(`../../../locales/${languageCode}/grafana.json`).then((data) => data.default);
+
 export interface LanguageDefinition<Namespace extends string = string> {
   /** IETF language tag for the language e.g. en-US */
   code: string;
@@ -32,7 +35,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: ENGLISH_US,
     name: 'English',
     loader: {
-      grafana: () => import('../../../locales/en-US/grafana.json'),
+      grafana: () => importLanguageFile('en-US'),
     },
   },
 
@@ -40,7 +43,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: FRENCH_FRANCE,
     name: 'Français',
     loader: {
-      grafana: () => import('../../../locales/fr-FR/grafana.json'),
+      grafana: () => importLanguageFile('fr-FR'),
     },
   },
 
@@ -48,7 +51,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: SPANISH_SPAIN,
     name: 'Español',
     loader: {
-      grafana: () => import('../../../locales/es-ES/grafana.json'),
+      grafana: () => importLanguageFile('es-ES'),
     },
   },
 
@@ -56,7 +59,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: GERMAN_GERMANY,
     name: 'Deutsch',
     loader: {
-      grafana: () => import('../../../locales/de-DE/grafana.json'),
+      grafana: () => importLanguageFile('de-DE'),
     },
   },
 
@@ -64,7 +67,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: CHINESE_SIMPLIFIED,
     name: '中文（简体）',
     loader: {
-      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+      grafana: () => importLanguageFile('zh-Hans'),
     },
   },
 
@@ -72,7 +75,7 @@ export const LANGUAGES: LanguageDefinition[] = [
     code: BRAZILIAN_PORTUGUESE,
     name: 'Português Brasileiro',
     loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
+      grafana: () => importLanguageFile('pt-BR'),
     },
   },
 ] satisfies Array<LanguageDefinition<'grafana'>>;
@@ -82,7 +85,7 @@ if (process.env.NODE_ENV === 'development') {
     code: PSEUDO_LOCALE,
     name: 'Pseudo-locale',
     loader: {
-      grafana: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
+      grafana: () => importLanguageFile('pseudo-LOCALE'),
     },
   });
 }

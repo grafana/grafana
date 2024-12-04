@@ -15,6 +15,11 @@ const allWorkspaceDependencies = getAllWorkspaceDependencies();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
+  json: {
+    // Stringify JSON so that we don't lose translation keys with hyphens in them
+    // TODO: Why?! Fix this/work out a better way
+    stringify: true,
+  },
   root: 'public',
   build: {
     // use manifest for backend integration in production
