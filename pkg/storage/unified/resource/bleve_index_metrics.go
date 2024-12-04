@@ -30,11 +30,11 @@ type BleveIndexMetrics struct {
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
-func NewIndexMetrics(indexDir string, bleveBackend SearchBackend) *BleveIndexMetrics {
+func NewIndexMetrics(indexDir string, searchBackend SearchBackend) *BleveIndexMetrics {
 	onceIndex.Do(func() {
 		IndexMetrics = &BleveIndexMetrics{
 			IndexDir: indexDir,
-			Backend:  bleveBackend,
+			Backend:  searchBackend,
 			IndexLatency: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 				Namespace:                       "index_server",
 				Name:                            "index_latency_seconds",
