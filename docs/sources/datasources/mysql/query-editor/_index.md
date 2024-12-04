@@ -58,18 +58,77 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  panel-inspector:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-inspector/
+  logs:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
+    - pattern: /docs/grafana-cloud/
+      destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/  
 ---
 
 # MySQL query editor
 
-The MySQL query builder is available when editing a panel using a MySQL data source.
+Grafana’s query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors]. For general information on querying data sources in Grafana, refer to Query and transform data.
 
-This topic explains querying specific to the MySQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+The MySQL query editor is located on the Explore page. You can also access the MySQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
-You can run the built query by pressing the `Run query` button in the top right corner of the editor.
+<!-- This topic explains querying specific to the MySQL data source.
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data). -->
 
-{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
+<!-- You can run the built query by pressing the `Run query` button in the top right corner of the editor. -->
+
+<!-- {{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}} -->
+
+<!-- {{< figure src="/media/docs/mysql/mysql-query-editor-v11.3.png" class="docs-image--no-shadow" >}} -->
+
+
+{{< figure src="/media/docs/mysql/screenshot-mysql-query-editor.v11.3.png" class="docs-image--no-shadow" >}}  
+
+
+## MySQL query editor components
+
+The MySQL query editor has two modes: **Builder** and **Code**.
+
+Builder mode helps you build a query using a visual interface.
+
+Code mode is for advanced querying. 
+
+
+
 
 ### Format
 
