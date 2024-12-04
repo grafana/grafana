@@ -152,7 +152,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                   className="width-6"
                   placeholder={'auto'}
                   type="string"
-                  defaultValue={query.step ?? ''}
+                  value={query.step ?? ''}
                   onCommitChange={onStepChange}
                 />
               </EditorField>

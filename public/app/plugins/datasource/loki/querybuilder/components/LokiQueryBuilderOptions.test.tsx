@@ -102,13 +102,13 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
   });
 
-  it('does not shows resolution field if resolution is not set', async () => {
+  it('does not show resolution field if resolution is not set', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
   });
 
-  it('does not shows resolution field if resolution is set to default value 1', async () => {
+  it('does not show resolution field if resolution is set to default value 1', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
@@ -137,19 +137,19 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
   });
 
-  it('does not shows error when valid value in step', async () => {
+  it('does not show error when valid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid millisecond value in step', async () => {
+  it('does not show error when valid millisecond value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1ms' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid day value in step', async () => {
+  it('does not show error when valid day value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
@@ -164,6 +164,14 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: '{foo="bar"}', step: '1m' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
+  });
+
+  it('allows to clear step input', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4s' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.getByDisplayValue('4s')).toBeInTheDocument();
+    await userEvent.clear(screen.getByDisplayValue('4s'));
+    expect(screen.queryByDisplayValue('4s')).not.toBeInTheDocument();
   });
 });
 
