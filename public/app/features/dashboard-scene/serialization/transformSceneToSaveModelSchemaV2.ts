@@ -21,7 +21,6 @@ import {
   PanelQueryKind,
   TransformationKind,
   FieldConfigSource,
-  DashboardLink,
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
