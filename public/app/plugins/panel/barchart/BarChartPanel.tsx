@@ -14,6 +14,7 @@ import {
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
+import { getOneClickLinks } from '../status-history/utils';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
@@ -157,6 +158,14 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
+              oneClick={(seriesIdx, dataIdxs) => {
+                const field = vizSeries[0].fields[seriesIdx!];
+                if (field) {
+                  return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                }
+
+                return undefined;
+              }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
                 return (
                   <TimeSeriesTooltip

@@ -16,6 +16,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
+import { getOneClickLinks } from './utils';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
@@ -104,6 +105,14 @@ export const StatusHistoryPanel = ({
                 queryZoom={onChangeTimeRange}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
+                oneClick={(seriesIdx, dataIdxs) => {
+                  const field = alignedFrame.fields[seriesIdx!];
+                  if (field) {
+                    return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                  }
+
+                  return undefined;
+                }}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
