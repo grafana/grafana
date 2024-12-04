@@ -17,7 +17,7 @@ export const ReportIssueButton = ({}: Props) => {
       e.preventDefault();
       console.log('hi', e);
 
-      let screenshot = '';
+      let screenshot = undefined;
 
       const element = document.body; // TODO: choose a different selector?
       if (element) {
@@ -30,12 +30,11 @@ export const ReportIssueButton = ({}: Props) => {
       }
 
       // TODO: we should filter this in the backend!
-      screenshot = screenshot.replace('data:image/png;base64,', '');
+      screenshot = screenshot?.replace('data:image/png;base64,', '');
 
       const feedback: Spec = {
         message: 'test sarah test',
-        screenshot, // ?this should be optional.
-        screenshotUrl: '', // ?this should be optional.
+        ...(screenshot && { screenshot }),
       };
 
       const feedbackApi = getFeedbackAPI();

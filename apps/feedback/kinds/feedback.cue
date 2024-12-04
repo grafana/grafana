@@ -17,9 +17,9 @@ externalName: {
 		"v0alpha1": {
 			schema: {
 				spec: {
-					message: string
-					screenshot: bytes
-					screenshotUrl: string
+					message:        string
+					screenshot?:    bytes
+					screenshotUrl?: string
 				}
 			}
 		}

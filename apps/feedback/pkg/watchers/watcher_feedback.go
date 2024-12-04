@@ -46,8 +46,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 
 	// upload to github
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
-	if section.Key("upload_to_github").MustBool(false) &&
-		object.Spec.ScreenshotUrl == "" { // So we don't spam when there are errors... obviously should figure out something better
+	if section.Key("upload_to_github").MustBool(false) && object.Spec.ScreenshotUrl == nil { // So we don't spam when there are errors... obviously should figure out something better
 		token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
 		imageUuid := uuid.NewString()
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s.png", owner, repo, imageUuid)
@@ -71,7 +70,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
 		githubUrl := makeUploadRequest(r)
-		object.Spec.ScreenshotUrl = githubUrl
+		object.Spec.ScreenshotUrl = &githubUrl
 
 		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
 			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",

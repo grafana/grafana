@@ -2,13 +2,11 @@
 
 export interface Spec {
 	message: string;
-	screenshot: string;
-	screenshotUrl: string;
+	screenshot?: string;
+	screenshotUrl?: string;
 }
 
 export const defaultSpec = (): Spec => ({
 	message: "",
-	screenshot: "",
-	screenshotUrl: "",
 });
 
