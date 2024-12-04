@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 interface Props extends React.HTMLAttributes<HTMLHeadingElement> {
   children: React.ReactNode;
@@ -6,15 +6,16 @@ interface Props extends React.HTMLAttributes<HTMLHeadingElement> {
 
 export const DynamicHeading = ({ children, ...restProps }: Props) => {
   const ref = useRef<HTMLHeadingElement>(null);
-  const headingTag = useRef<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'>('h1');
+  const [headingTag, setHeadingTag] = useState<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'>('h1');
   useLayoutEffect(() => {
     if (ref === null || ref.current === null) {
       return;
     }
+    const tag = getHeadingTag(ref.current);
+    setHeadingTag(tag);
+  }, []);
 
-    headingTag.current = getHeadingTag(ref.current);
-  });
-  const HeadingComponent = headingTag.current;
+  const HeadingComponent = headingTag;
   return (
     <HeadingComponent ref={ref} {...restProps}>
       {children}
@@ -22,16 +23,21 @@ export const DynamicHeading = ({ children, ...restProps }: Props) => {
   );
 };
 
-const getHeadingTag = (el: HTMLHeadingElement): 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' => {
+const getHeadingTag = (element: HTMLHeadingElement): 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' => {
   // Get the closest landmark first, then we will likely get a higher level heading
-  const contextHeadings = el
-    .closest('article, setion, main, aside, nav, header, footer, body')
+  const contextHeadings = element
+    .closest('article, section, main, aside, nav, header, footer, body')
     ?.querySelectorAll('h1, h2, h3, h4, h5, h6');
-  if (!contextHeadings || contextHeadings.length === 0) {
+
+  // On initial render it finds itself
+  if (!contextHeadings || contextHeadings.length <= 1) {
     // Give h1?
     return 'h1';
   }
-  const highestLevel = Math.min(...Array.from(contextHeadings).map((el) => parseInt(el.tagName[1], 10)));
+
+  const contextHeadingsArray = Array.from(contextHeadings).filter((el) => el !== element);
+
+  const highestLevel = Math.min(...contextHeadingsArray.map((el) => parseInt(el.tagName[1], 10)));
 
   const newLevel = Math.min(highestLevel + 1, 6); //TODO use aria roles if 6+?
 
