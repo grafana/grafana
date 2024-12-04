@@ -481,7 +481,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
-		if IsNoData(res) {
+		if IsNoData(res) && c.Semantics == models.EvaluationSemanticsGrafana {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
@@ -693,7 +693,7 @@ func evaluateExecutionResult(execResults ExecutionResults, semantics models.Eval
 		return evalResults
 	}
 
-	if len(execResults.Condition) == 0 {
+	if len(execResults.Condition) == 0 && semantics == models.EvaluationSemanticsGrafana {
 		appendNoData(nil)
 		return evalResults
 	}
@@ -710,7 +710,12 @@ func evaluateExecutionResult(execResults ExecutionResults, semantics models.Eval
 			continue
 		}
 
-		if rowLen == 0 {
+		if rowLen == 0 && semantics == models.EvaluationSemanticsPrometheus {
+			if len(f.Fields) == 0 {
+				continue
+			}
+		}
+		if rowLen == 0 && semantics == models.EvaluationSemanticsGrafana {
 			if len(f.Fields) == 0 {
 				appendNoData(nil)
 				continue
