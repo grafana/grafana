@@ -20,3 +20,4 @@ jobs:
       repo: grafana
       website_directory: content/docs/grafana/latest
       relative_prefix: /docs/grafana/latest/
+      index_file: true
