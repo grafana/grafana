@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
+import { Button, useStyles2, Text, Box, Stack, Icon } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
@@ -80,6 +80,17 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
               </Button>
+              <Box padding={3} borderColor="strong" borderStyle="dashed">
+                <Stack direction="column" alignItems="center" gap={1}>
+                  <Icon name="upload" size="xl" />
+                  <Text element="h6" textAlignment="center" weight="medium">
+                    Paste or drop data
+                  </Text>
+                  <Text color="secondary" variant="bodySmall">
+                    Accepted file types: .json, .csv, .xls, .xlsx, .png, .jpg, .jpeg, .txt
+                  </Text>
+                </Stack>
+              </Box>
             </Stack>
           </Box>
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
