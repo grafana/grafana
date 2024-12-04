@@ -1,10 +1,11 @@
-import { DataFrame } from '@grafana/data';
-import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 import { ClipboardEvent, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Observable } from 'rxjs';
+
+import { DataFrame } from '@grafana/data';
+import { SceneDataTransformer, SceneQueryRunner, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
+
 import { DashboardScene } from '../scene/DashboardScene';
-import { VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
@@ -14,7 +15,7 @@ export interface FileImportResult {
 }
 
 export function useDropAndPaste(dashboard: DashboardScene) {
-  const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Observable<FileImportResult>>({
+  const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<string[]>>({
     extensionPointId: 'dashboard/grid',
     limitPerPlugin: 1,
   });
@@ -24,19 +25,45 @@ export function useDropAndPaste(dashboard: DashboardScene) {
   });
 
   const onImportFile = useCallback(
-    (file?: File) => {
+    async (file?: File) => {
       if (!file) {
         return;
       }
 
       for (const hook of fileHooks) {
-        const result = hook(file);
-        result.subscribe((x) => console.log(x));
+        const result = await hook(file);
+        console.log(result);
+        for (const uid of result) {
+          console.log(uid);
+          const vizPanel = new VizPanel({
+            pluginId: 'table',
+            title: `JSON Data fetched from ${uid}`,
+            menu: new VizPanelMenu({
+              $behaviors: [panelMenuBehavior],
+            }),
+            $data: new SceneDataTransformer({
+              $data: new SceneQueryRunner({
+                queries: [
+                  {
+                    refId: 'A',
+                    type: 'series',
+                    source: 'unistore',
+                    format: 'table',
+                    dataset: uid,
+                  },
+                ],
+                datasource: { uid: 'ee5sgnbe5wum8b', type: 'yesoreyeram-infinity-datasource' },
+              }),
+              transformations: [],
+            }),
+          });
+          dashboard.addPanel(vizPanel);
+        }
       }
 
       //alert(`Importing file: ${file.name}`);
     },
-    [fileHooks]
+    [dashboard, fileHooks]
   );
 
   const onPaste = useCallback(
