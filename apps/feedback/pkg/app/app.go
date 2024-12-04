@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,7 +30,7 @@ func New(cfg app.Config) (app.App, error) {
 	// blind copy pasta
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
 
-	feedbackStore, err := resource.NewTypedStore[*v0alpha1.Feedback](feedbackv0alpha1.FeedbackKind(), clientGenerator)
+	feedbackStore, err := resource.NewTypedStore[*feedbackv0alpha1.Feedback](feedbackv0alpha1.FeedbackKind(), clientGenerator)
 	if err != nil {
 		return nil, err
 	}
