@@ -23,6 +23,10 @@ export function getPreviewPanelFor(
 ) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
+  const queries = autoQuery.preview.queries.map((query) =>
+    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
+  );
+
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
@@ -32,11 +36,14 @@ export function getPreviewPanelFor(
       new AddToExplorationButton({ labelName: metric }),
       new SelectMetricAction({ metric, title: 'Select' }),
     ])
+    .setData(
+      new SceneQueryRunner({
+        datasource,
+        maxDataPoints: MDP_METRIC_PREVIEW,
+        queries,
+      })
+    )
     .build();
-
-  const queries = autoQuery.preview.queries.map((query) =>
-    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
-  );
 
   let panel: SceneObject = vizPanel;
 
@@ -52,12 +59,7 @@ export function getPreviewPanelFor(
       variables: getVariablesWithMetricConstant(metric),
     }),
     $behaviors: [hideEmptyPreviews(metric)],
-    $data: new SceneQueryRunner({
-      datasource,
-      maxDataPoints: MDP_METRIC_PREVIEW,
-      queries,
-    }),
-    body: panel,
+    body: vizPanel,
   });
 }
 
