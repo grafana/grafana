@@ -14,7 +14,7 @@ type Props = {
   plugin: CatalogPlugin;
 };
 
-export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
+export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { info, plugin } = props;
   const styles = useStyles2(getStyles);
   return (
