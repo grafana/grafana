@@ -40,7 +40,7 @@ export function getDashboardAPI(): DashboardAPI<DashboardDTO | DashboardWithAcce
 
   const v = getDashboardsApiVersion();
 
-  console.log('Dashboard API version:', v);
+  // console.log('Dashboard API version:', v);
 
   if (!clients[v]) {
     throw new Error(`Unknown Dashboard API version: ${v}`);
