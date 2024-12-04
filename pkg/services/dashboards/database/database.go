@@ -950,6 +950,42 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 	return queryResult, nil
 }
 
+func (d *dashboardStore) GetAllExpressionsFromPanels(ctx context.Context, query *dashboards.GetAllDashboardExpressionsQuery) ([]*dashboards.DashboardExpressions, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardTags")
+	defer span.End()
+
+	queryResult := make([]*dashboards.DashboardExpressions, 0)
+	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sql := fmt.Sprintf(`WITH RECURSIVE
+				    panel_targets AS (
+				        SELECT
+				            dashboard.id,
+				            json_extract(target.value, '$.expr') AS expr
+				        FROM
+				            dashboard,
+				            json_each(dashboard.data, '$.panels') AS panel,
+				            json_each(panel.value, '$.targets') AS target
+				        WHERE
+				            json_extract(target.value, '$.datasource.type') = '%s'
+				    )
+				SELECT
+				    id,
+				    expr
+				FROM
+				    panel_targets
+				WHERE
+				    expr IS NOT NULL AND trim(expr) != ''`, query.DSType)
+
+		sess := dbSession.SQL(sql, query.OrgID)
+		err := sess.Find(&queryResult)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return queryResult, nil
+}
+
 // CountDashboardsInFolder returns a count of all dashboards associated with the
 // given parent folder ID.
 func (d *dashboardStore) CountDashboardsInFolders(

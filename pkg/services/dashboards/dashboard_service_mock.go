@@ -16,6 +16,11 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
+func (_m *FakeDashboardService) GetAllExpressionsFromPanels(ctx context.Context, query *GetAllDashboardExpressionsQuery) ([]*DashboardExpressions, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
 // BuildSaveDashboardCommand provides a mock function with given fields: ctx, dto, validateProvisionedDashboard
 func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error) {
 	ret := _m.Called(ctx, dto, validateProvisionedDashboard)

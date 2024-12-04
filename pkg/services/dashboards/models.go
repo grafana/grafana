@@ -267,8 +267,18 @@ type DashboardTagCloudItem struct {
 	Count int    `json:"count"`
 }
 
+type DashboardExpressions struct {
+	ID   int64  `xorm:"pk autoincr 'id'"`
+	Expr string `xorm:"expr"`
+}
+
 type GetDashboardTagsQuery struct {
 	OrgID int64
+}
+
+type GetAllDashboardExpressionsQuery struct {
+	OrgID  int64
+	DSType string
 }
 
 type GetDashboardsQuery struct {
