@@ -85,6 +85,18 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
+// swagger:route GET /ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group} ruler RouteGetGrafanaRuleGroupPrometheusConfig
+//
+// Gets a rule group in Prometheus format.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: RuleGroupConfigResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
 //
 // Creates or updates a rule group in Prometheus format.

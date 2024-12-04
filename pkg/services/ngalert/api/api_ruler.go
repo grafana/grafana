@@ -852,10 +852,56 @@ func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqCont
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
-		result[folder.Fullpath] = append(result[folder.Fullpath], prg)
+		result[folder.UID] = append(result[folder.UID], prg)
 		//result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 	return response.YAML(http.StatusOK, result)
+}
+
+func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespaceUID, ruleGroup string) response.Response {
+	namespace, err := srv.store.GetNamespaceByUID(ctx.Req.Context(), namespaceUID, ctx.SignedInUser.GetOrgID(), ctx.SignedInUser)
+	if err != nil {
+		return toNamespaceErrorResponse(err)
+	}
+
+	finalRuleGroup, err := getRulesGroupParam(ctx, ruleGroup)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+
+	rules, err := srv.getAuthorizedRuleGroup(ctx.Req.Context(), ctx, ngmodels.AlertRuleGroupKey{
+		OrgID:        ctx.SignedInUser.GetOrgID(),
+		RuleGroup:    finalRuleGroup,
+		NamespaceUID: namespace.UID,
+	})
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	/*provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.SignedInUser.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
+	}*/
+
+	promConverter := prom.NewConverter(prom.Config{})
+	deref := make([]ngmodels.AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		deref = append(deref, *rule)
+	}
+	if len(deref) == 0 {
+		return ErrResp(http.StatusNotFound, errors.New("rule group was empty or not found"), "")
+	}
+	grp := &ngmodels.AlertRuleGroup{
+		Title:     ruleGroup,
+		FolderUID: namespaceUID,
+		Interval:  deref[0].IntervalSeconds,
+		Rules:     deref,
+	}
+	prg, err := promConverter.GrafanaRulesToPrometheus(grp)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	return response.YAML(http.StatusAccepted, prg)
 }
 
 func generateNamespaceUID(namespace string) (string, error) {
