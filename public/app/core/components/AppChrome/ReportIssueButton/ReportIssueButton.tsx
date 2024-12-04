@@ -1,9 +1,11 @@
+import html2canvas from 'html2canvas';
 import { useState } from 'react';
 
-import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
+import { Menu, Dropdown, ToolbarButton, Button, Stack } from '@grafana/ui';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
+import { canvasToBase64String } from '../../../../features/feedback/screenshot-encode';
 
 export interface Props {}
 
@@ -11,23 +13,46 @@ export const ReportIssueButton = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const MenuActions = () => {
-    const onClick = (e: { preventDefault: () => void }) => {
+    const onClick = async (e: { preventDefault: () => void }) => {
       e.preventDefault();
       console.log('hi', e);
+
+      let screenshot = '';
+
+      const element = document.body; // TODO: choose a different selector?
+      if (element) {
+        const canvas = await html2canvas(element, { backgroundColor: null });
+
+        const encoded = await canvasToBase64String(canvas);
+        if (encoded && typeof encoded === 'string') {
+          screenshot = encoded;
+        }
+      }
+
+      // TODO: we should filter this in the backend!
+      screenshot = screenshot.replace('data:image/png;base64,', '');
+
       const feedback: Spec = {
         message: 'test sarah test',
+        screenshot, // ?this should be optional.
+        screenshotUrl: '', // ?this should be optional.
       };
+
       const feedbackApi = getFeedbackAPI();
-      feedbackApi.createFeedback(feedback);
+      await feedbackApi.createFeedback(feedback);
     };
+
     return (
       <Menu>
-        <p>Report an issue</p>
-        <input placeholder="so what happened?"></input>
-        <button onClick={onClick}>submit</button>
+          <b>Send feedback to Grafana</b>
+          <Stack gap={2} direction={'column'}>
+            <input placeholder="so what happened?"></input>
+            <Button type="submit" onClick={onClick}>Submit feedback</Button>
+          </Stack>
       </Menu>
     );
   };
+
   return (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
