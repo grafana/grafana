@@ -710,7 +710,7 @@ func evaluateExecutionResult(execResults ExecutionResults, semantics models.Eval
 			continue
 		}
 
-		if semantics == models.EvaluationSemanticsPrometheus {
+		if rowLen == 0 && semantics == models.EvaluationSemanticsPrometheus {
 			if len(f.Fields) == 0 {
 				continue
 			}
