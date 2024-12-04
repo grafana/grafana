@@ -36,6 +36,7 @@ import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -413,6 +414,15 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canEdit).toBe(true);
         expect(scene.state.meta.canDelete).toBe(true);
       });
+    });
+  });
+
+  describe('When creating a new dashboard', () => {
+    it('should initialize the DashboardScene in edit mode and dirty', async () => {
+      const rsp = await buildNewDashboardSaveModelV2();
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      expect(scene.state.isEditing).toBe(undefined);
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 });

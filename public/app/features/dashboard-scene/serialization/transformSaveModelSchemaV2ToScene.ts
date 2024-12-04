@@ -141,6 +141,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
+    isNew: dto.access.isNew,
   };
 
   // Ref: DashboardModel.initMeta

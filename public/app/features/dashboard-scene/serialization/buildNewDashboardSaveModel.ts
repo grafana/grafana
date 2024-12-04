@@ -145,9 +145,7 @@ export async function buildNewDashboardSaveModelV2(
     },
   };
 
-  if (variablesList) {
-    data.spec.variables = variablesList;
-  }
+  data.spec.variables = variablesList;
 
   if (urlFolderUid && data.metadata.annotations) {
     data.metadata.annotations[AnnoKeyFolder] = urlFolderUid;
