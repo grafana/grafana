@@ -8,7 +8,6 @@ import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {

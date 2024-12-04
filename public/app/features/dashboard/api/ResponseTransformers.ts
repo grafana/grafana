@@ -7,7 +7,7 @@ import { transformCursorSynctoEnum } from 'app/features/dashboard-scene/serializ
 import { DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV2Spec } from './utils';
+import { isDashboardResource } from './utils';
 
 export function transformV1ToV2(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
