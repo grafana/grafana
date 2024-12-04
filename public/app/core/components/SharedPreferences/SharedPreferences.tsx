@@ -5,10 +5,7 @@ import * as React from 'react';
 import { FeatureState, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import {
-  CustomCommand,
-  Preferences as UserPreferencesDTO,
-} from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 import {
   Button,
   Field,
@@ -116,27 +113,18 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     if (confirmationResult) {
       const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
-      const mockedCommands: CustomCommand[] = [
-        {
-          id: 'go/all-alert-groups',
-          title: 'All alert groups',
-          path: '/a/grafana-irm-app/alert-groups',
-          shortcut: ['/', 'a'],
-          keywords: ['oncall', 'irm'],
-          category: 'IRM',
-        },
-      ];
-      await this.service.patch({
-        // homeDashboardUID,
-        // theme,
-        // timezone,
-        // weekStart,
-        // language,
-        // queryHistory,
-        // navbar,
-        customCommands: mockedCommands,
+      const existingPrefs = await this.service.load();
+      await this.service.update({
+        ...existingPrefs,
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        queryHistory,
+        navbar,
       });
-      // window.location.reload();
+      window.location.reload();
     }
   };
 

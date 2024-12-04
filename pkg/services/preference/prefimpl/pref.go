@@ -294,6 +294,9 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 		}
 		jsonData.CookiePreferences = cookies
 	}
+	if cmd.CustomCommands != nil {
+		jsonData.CustomCommands = cmd.CustomCommands
+	}
 
 	return jsonData, nil
 }

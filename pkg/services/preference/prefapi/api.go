@@ -113,14 +113,20 @@ func GetPreferencesFor(ctx context.Context,
 		}
 
 		if preference.JSONData.CustomCommands != nil {
-			dto.CustomCommands = preference.JSONData.CustomCommands
+			commands := make([]preferences.CustomCommand, len(preference.JSONData.CustomCommands))
+			for i, cmd := range preference.JSONData.CustomCommands {
+				commands[i] = preferences.CustomCommand{
+					ID:       cmd.ID,
+					Title:    cmd.Title,
+					Path:     cmd.Path,
+					Shortcut: cmd.Shortcut,
+					Keywords: cmd.Keywords,
+					Category: cmd.Category,
+				}
+			}
+			dto.CustomCommands = commands
 		}
 	}
-
-	// TODO: fix it
-	// if preference.JSONData.CustomCommands != nil {
-	// 	dto.CustomCommands = preference.JSONData.CustomCommands
-	// }
 
 	return response.JSON(http.StatusOK, &dto)
 }

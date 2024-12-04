@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -86,7 +85,6 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 // 500: internalServerError
 func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
-	hs.log.Info("HEEEEREEEE----------------------------------------put")
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -114,8 +112,6 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
-	hs.log.Info("HEEEEREEEE----------------------------------------patch")
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
@@ -161,15 +157,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
 		CustomCommands:    dtoCmd.CustomCommands,
-	}
-
-	hs.log.Info("HEEEEREEEE----------------------------------------patch")
-
-	customCommandsJSON, err := json.Marshal(patchCmd.CustomCommands)
-	if err != nil {
-		hs.log.Error("Failed to marshal CustomCommands", "error", err)
-	} else {
-		hs.log.Info("PatchCommand.CustomCommands: " + string(customCommandsJSON))
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
