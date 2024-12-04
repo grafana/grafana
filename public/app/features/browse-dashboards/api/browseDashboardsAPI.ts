@@ -263,30 +263,17 @@ export const browseDashboardsAPI = createApi({
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
           const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
-          const options: Partial<{
-            dashboard: Dashboard;
-            folderUid: string;
-            overwrite: boolean;
-            message: string;
-          }> = {
+
+          const options: SaveDashboardCommand = {
             folderUid: destinationUID,
             overwrite: false,
             message: '',
+            dashboard: ResponseTransformers.transformV2ToV1(dashDto).dashboard,
           };
 
-          if (isDashboardResource(dashDto)) {
-            options.dashboard = ResponseTransformers.transformV2ToV1(dashDto).dashboard;
-          } else {
-            options.dashboard = dashDto.dashboard;
-          }
-
-          // TODO[schema]: handle v2, refactor to use
-          await baseQuery({
-            url: `/dashboards/db`,
-            method: 'POST',
-            data: options,
-          });
+          await getDashboardAPI().saveDashboard(options);
         }
+
         return { data: undefined };
       },
       onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
@@ -325,11 +312,8 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = await baseQuery({
-            url: `/dashboards/uid/${dashboardUID}`,
-            method: 'DELETE',
-            showSuccessAlert: false,
-          });
+          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+
           // @ts-expect-error
           const name = response?.data?.title;
 
