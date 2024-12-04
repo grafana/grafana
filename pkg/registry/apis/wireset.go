@@ -10,6 +10,7 @@ import (
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/dataset"
+	"github.com/grafana/grafana/pkg/registry/apis/file"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -38,6 +39,7 @@ var WireSet = wire.NewSet(
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
+	file.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	peakq.RegisterAPIService,

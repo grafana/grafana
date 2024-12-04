@@ -1,0 +1,7 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/file/v0alpha1,Spec,Data
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/file/v0alpha1,Spec,Info
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/file/v0alpha1,FileContents,Contents
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/file/v0alpha1,FileContents,Name
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/file/v0alpha1,FileContents,Type
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/file/v0alpha1,FileData,Contents
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/file/v0alpha1,FileInfo,Name

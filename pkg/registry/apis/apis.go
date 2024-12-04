@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dataset"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
+	"github.com/grafana/grafana/pkg/registry/apis/file"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
@@ -33,6 +34,7 @@ func ProvideRegistryServiceSink(
 	_ *folders.FolderAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
 	_ *dataset.DatasetAPIBuilder,
+	_ *file.FileAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
 	_ *query.QueryAPIBuilder,
