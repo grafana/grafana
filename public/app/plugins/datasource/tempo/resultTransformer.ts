@@ -22,11 +22,10 @@ import {
   TraceSpanReference,
   TraceSpanRow,
 } from '@grafana/data';
-import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { createGraphFrames, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
-import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
