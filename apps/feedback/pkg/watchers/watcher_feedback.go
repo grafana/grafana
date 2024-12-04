@@ -55,7 +55,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		if err != nil {
 			return err
 		}
-
 		object.Spec.ScreenshotUrl = screenshotUrl
 
 		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
