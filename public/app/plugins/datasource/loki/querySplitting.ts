@@ -121,7 +121,14 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       const range = group.partition[requestN - 1];
       const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
       for (const query of targets) {
-        getStats(query, range, datasource);
+        getStats(query, range, datasource)
+          .then(stats => {
+            if (!stats) {
+              return;
+            }
+            const { text, suffix } = getValueFormat('bytes')(stats.bytes, 1);
+            console.log(`Query ${query.expr} will use ${text}${suffix} max`);
+          })
       }
       try {
         if (errorResponse && !isRetriableError(errorResponse)) {
@@ -281,13 +288,14 @@ function querySupportsSplitting(query: LokiQuery) {
   );
 }
 
+const oneDayMs = 24 * 60 * 60 * 1000;
+
 export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
-  const oneDayMs = 24 * 60 * 60 * 1000;
   const directionPartitionedLogQueries = groupBy(logQueries, (query) =>
     query.direction === LokiQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward
   );
@@ -390,6 +398,9 @@ async function adjustRequestsByVolume(requests: LokiGroupedRequest[], datasource
         maxBytes = stats.bytes > maxBytes ? stats.bytes : maxBytes;
       }
       if (maxBytes) {
+        const { text, suffix } = getValueFormat('bytes')(maxBytes, 1);
+        console.log(`Query ${query.expr} will use ${text}${suffix} max`);
+
         const newPartition = adjustPartitionByVolume(group, maxBytes, group.request.targets.indexOf(query));
 
         if (newPartition !== group.partition) {
@@ -407,21 +418,27 @@ async function adjustRequestsByVolume(requests: LokiGroupedRequest[], datasource
 function adjustPartitionByVolume(group: LokiGroupedRequest, bytes: number, queryIndex: number) {
   const gb = Math.pow(2, 30);
   const tb = Math.pow(2, 40);
+  const days = group.partition.length - 1;
+
   if (bytes <= gb) {
     console.log('Less than a gb, skipping');
     return group.partition;
   }
 
-  let newChunkRangeMs = group.chunkRangeMs
+  let newChunkRangeMs = group.chunkRangeMs;
   if (bytes < tb) {
     const gbs = Math.round(bytes / gb) || 1;
-    newChunkRangeMs = group.chunkRangeMs / (gbs);
+    newChunkRangeMs = days >= 1 ? 12 * 60 * 60 * 1000 : Math.round(group.chunkRangeMs / (gbs));
   } else {
     const tbs = Math.round(bytes / tb) || 1;
-    newChunkRangeMs = group.chunkRangeMs / (tbs * 20);
+    newChunkRangeMs = days >= 1 ? 6 * 60 * 60 * 1000 : Math.round(group.chunkRangeMs / (tbs * 10));
   }
-  const minChunkRangeMs = 30 * 60 * 1000;
+  const minChunkRangeMs = 3 * 60 * 60 * 1000;
   newChunkRangeMs = newChunkRangeMs < minChunkRangeMs ? minChunkRangeMs : newChunkRangeMs;
+
+  const { text } = getValueFormat('dtdurationms')(newChunkRangeMs, 1);
+
+  console.log(`New chunk size is ${text}`);
 
   const isLogs = isLogsQuery(group.request.targets[queryIndex].expr);
   if (isLogs) {
@@ -436,8 +453,5 @@ async function getStats(query: LokiQuery, range: TimeRange, datasource: LokiData
   if (!stats) {
     return null;
   }
-  console.log(stats);
-  const { text, suffix } = getValueFormat('bytes')(stats.bytes, 1);
-  console.log(`Query ${query.expr} from ${range.from.toLocaleString()} to ${range.to.toLocaleString()} will use ${text}${suffix}`);
   return stats;
 }
