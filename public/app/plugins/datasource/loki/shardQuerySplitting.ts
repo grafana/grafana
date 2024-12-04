@@ -2,14 +2,22 @@ import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataQueryRequest, LoadingState, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
+import {
+  DataQueryRequest,
+  LoadingState,
+  DataQueryResponse,
+  QueryResultMetaStat,
+  TimeRange,
+  getValueFormat,
+} from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import { getSelectorForShardValues, interpolateShardingSelector, requestSupportsSharding } from './queryUtils';
 import { isRetriableError } from './responseUtils';
-import { LokiQuery } from './types';
+import { LokiQuery, QueryStats } from './types';
+import { LRUCache } from 'lru-cache';
 
 /**
  * Query splitting by stream shards.
@@ -101,6 +109,17 @@ function splitQueriesByStreamShard(
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
+      const targets = interpolateShardingSelector(groups[group].targets, shardsToQuery);
+      for (const query of targets) {
+        getStats(query.expr, request.range, datasource).then((stats) => {
+          if (!stats) {
+            return;
+          }
+          const { text, suffix } = getValueFormat('bytes')(stats.bytes, 1);
+          console.log(`Query ${query.expr} will use ${text}${suffix} max`);
+        });
+      }
+
       try {
         if (errorResponse && !isRetriableError(errorResponse)) {
           return false;
@@ -256,13 +275,34 @@ async function groupTargetsByQueryType(
         streamSelector: selector,
       });
       const shards = values.map((value) => parseInt(value, 10));
+      shards.sort((a, b) => b - a);
+      const weightedShards: WeightedShard[] = [];
+
+      for (const shard of shards) {
+        const interpolated = interpolateShardingSelector([{ expr: selector, refId: `shard_${shard}` }], [shard]);
+        const stats = await getStats(interpolated[0].expr, request.range, datasource);
+        if (!stats) {
+          weightedShards.push({
+            shard,
+            size: -1,
+          });
+          continue;
+        }
+        weightedShards.push({
+          shard,
+          size: stats.bytes,
+        });
+      }
+
       if (shards) {
-        shards.sort((a, b) => b - a);
         debug(`Querying ${selector} with shards ${shards.join(', ')}`);
       }
+
+      const groups = groupShardsByWeight(weightedShards);
+
       groups.push({
         targets: selectorPartition[selector],
-        shards: shards.length ? shards : undefined,
+        shards: groups,
         groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
         cycle: 0,
       });
@@ -350,4 +390,84 @@ function debug(message: string) {
     return;
   }
   console.log(message);
+}
+
+interface WeightedShard {
+  shard: number;
+  size: number;
+}
+
+const statsCache = new LRUCache<string, QueryStats>({ max: 10 });
+async function getStats(expr: string, range: TimeRange, datasource: LokiDatasource) {
+  const key = `${expr}.${range.from.valueOf()}.${range.to.valueOf}.${datasource.uid}`;
+  const cached = statsCache.get(key);
+  if (cached) {
+    return cached;
+  }
+  const stats = await datasource.getStats({ expr, refId: `stats_${Math.random()}` }, range);
+  if (!stats) {
+    return null;
+  }
+  statsCache.set(key, stats);
+  return stats;
+}
+
+interface GroupedWeightedShards {
+  shards: number[];
+  timeSplit: boolean;
+  size: number;
+}
+
+function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
+  const gb = Math.pow(2, 30);
+  const splittingLimit = 100 * gb;
+  if (!shards.every((shard) => shard.size >= 0)) {
+    return [
+      {
+        shards: shards.map((shard) => shard.shard),
+        timeSplit: false,
+        size: -1,
+      },
+    ];
+  }
+  const groups: GroupedWeightedShards[] = [];
+  let currentSize = 0;
+  let group: number[] = [];
+  for (const shard of shards) {
+    if (shard.size > splittingLimit) {
+      groups.push({
+        shards: [shard.shard],
+        timeSplit: true,
+        size: shard.size,
+      });
+    } else if (currentSize + shard.size < splittingLimit) {
+      currentSize += shard.size;
+      group.push(shard.shard);
+    } else {
+      groups.push({
+        shards: group,
+        timeSplit: false,
+        size: currentSize,
+      });
+      group = [shard.shard];
+      currentSize = shard.size;
+    }
+  }
+
+  if (group.length > 0) {
+    groups.push({
+      shards: group,
+      timeSplit: false,
+      size: currentSize,
+    });
+  }
+
+  for (const group of groups) {
+    const { text, suffix } = getValueFormat('bytes')(group.size, 1);
+    console.log(`${group.shards} ${text}${suffix}`);
+  }
+
+  return [];
+
+  return groups;
 }
