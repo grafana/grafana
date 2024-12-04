@@ -77,7 +77,7 @@ export const TimeSeriesTooltip = ({
 
   const field = series.fields[seriesIdx!];
 
-  if ((isPinned && field) || field.config.oneClickMode !== OneClickMode.Off) {
+  if ((isPinned && field) || (field && field.config.oneClickMode !== OneClickMode.Off)) {
     const dataIdx = dataIdxs[seriesIdx!]!;
     const links = getDataLinks(field, dataIdx);
     const actions = getFieldActions(series, field, replaceVariables!, dataIdx);

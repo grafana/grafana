@@ -22,11 +22,13 @@ const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getSt
 
     return (
       <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-        <span>
-          <Icon name="info-circle" size="sm" />
-          One-Click enabled
+        <span className={styles.oneClickWrapper}>
+          <Icon name="info-circle" size="lg" className={styles.infoIcon} />
+          <Trans i18nKey="grafana-ui.viz-tooltip.footer-one-click">One-Click enabled</Trans>
         </span>
-        <span>Click on data point to navigate to {primaryLink.title}</span>
+        <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-navigate">
+          Click on data point to navigate to {{ linkTitle: primaryLink.title }}
+        </Trans>
       </Stack>
     );
   }
@@ -53,13 +55,17 @@ const renderActions = (actions: ActionModel[]) => {
 export const VizTooltipFooter = ({ dataLinks, actions, annotate, oneClickMode }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
 
+  const oneClickEnabled = oneClickMode && oneClickMode !== OneClickMode.Off;
+
   return (
     <div className={styles.wrapper}>
       {dataLinks.length > 0 && (
         <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles, oneClickMode === OneClickMode.Link)}</div>
       )}
-      {actions && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
-      {annotate != null && (
+      {actions && actions.length > 0 && !oneClickEnabled && (
+        <div className={styles.dataLinks}>{renderActions(actions)}</div>
+      )}
+      {annotate != null && !oneClickEnabled && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
@@ -91,5 +97,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       background: 'none',
     },
+  }),
+  oneClickWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  infoIcon: css({
+    color: theme.colors.primary.main,
+    paddingRight: theme.spacing(0.5),
   }),
 });

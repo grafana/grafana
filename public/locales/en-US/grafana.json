@@ -1441,7 +1441,9 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Add annotation"
+      "footer-add-annotation": "Add annotation",
+      "footer-click-to-navigate": "Click on data point to navigate to {{linkTitle}}",
+      "footer-one-click": "One-Click enabled"
     }
   },
   "graph": {
