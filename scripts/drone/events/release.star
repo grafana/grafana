@@ -175,6 +175,7 @@ def publish_artifacts_pipelines(mode):
             trigger = trigger,
             steps = steps,
             environment = {"EDITION": "oss"},
+            volumes = github_app_pipeline_volumes(),
         ),
     ]
 
