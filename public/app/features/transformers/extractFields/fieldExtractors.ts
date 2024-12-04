@@ -135,24 +135,19 @@ const extLabels: FieldExtractor = {
 
 const extCSV: FieldExtractor = {
   id: FieldExtractorID.CSV,
-  name: 'CSV',
-  description: 'Comma seperated values are set to true',
-  getParser: (options) => {
-    return (v: string) => {
-      const df = readCSV(v);
-
-      // Assume that this is just a list of words separated by commas
-      if (!df[0] || !df[0].fields) {
-        console.warn('Could not extract fields from CSV');
+  name: 'Delimiter separated values',
+  description: 'Splits at delimited values, such as commas',
+  getParser: ({ delimiter = ',' }) => {
+    return (raw: string) => {
+      // Try to split delimited values
+      const parts = raw.split(delimiter).map((v) => v.trim());
+      if (parts.length < 1) {
         return undefined;
       }
-
-      const res: Record<string, boolean> = {};
-
-      for (const field of df[0].fields) {
-        res[field.name.trim()] = true;
-      }
-      return res;
+      return parts.reduce((acc: Record<string, boolean>, part: string) => {
+        acc[part] = true;
+        return acc;
+      }, {});
     };
   },
 };
@@ -170,7 +165,7 @@ const extAuto: FieldExtractor = {
       for (const parse of parsers) {
         try {
           const r = parse(v);
-          if (r != null) {
+          if (r != null || r !== undefined) {
             return r;
           }
         } catch {} // ignore errors

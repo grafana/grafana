@@ -13,6 +13,7 @@ export interface JSONPath {
 export interface ExtractFieldsOptions {
   source?: string;
   jsonPaths?: JSONPath[];
+  delimiter?: string;
   regExp?: string;
   format?: FieldExtractorID;
   replace?: boolean;
