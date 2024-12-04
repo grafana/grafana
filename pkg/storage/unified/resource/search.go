@@ -170,7 +170,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, s.initMinSize)
+	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
 	if err != nil {
 		return err
 	}
