@@ -9,15 +9,20 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 )
 
 var _ operator.ResourceWatcher = &FeedbackWatcher{}
 
-type FeedbackWatcher struct{}
+type FeedbackWatcher struct {
+	feedbackStore *resource.TypedStore[*v0alpha1.Feedback]
+}
 
-func NewFeedbackWatcher() (*FeedbackWatcher, error) {
-	return &FeedbackWatcher{}, nil
+func NewFeedbackWatcher(feedbackStore *resource.TypedStore[*v0alpha1.Feedback]) (*FeedbackWatcher, error) {
+	return &FeedbackWatcher{
+		feedbackStore: feedbackStore,
+	}, nil
 }
 
 // Add handles add events for feedback.Feedback resources.
@@ -30,7 +35,12 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind)
 	}
 
-	// TODO
+	object.Spec.ScreenshotUrl = "http://test.com"
+	object.Spec.Screenshot = nil
+	if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
+		return fmt.Errorf("updating screenshot url: %w", err)
+	}
+
 	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
 }

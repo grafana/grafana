@@ -5,17 +5,27 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
 )
 
 func New(cfg app.Config) (app.App, error) {
-	feedbackWatcher, err := watchers.NewFeedbackWatcher()
+	// blind copy pasta
+	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
+
+	feedbackStore, err := resource.NewTypedStore[*v0alpha1.Feedback](feedbackv0alpha1.FeedbackKind(), clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+
+	feedbackWatcher, err := watchers.NewFeedbackWatcher(feedbackStore)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FeedbackWatcher: %w", err)
 	}

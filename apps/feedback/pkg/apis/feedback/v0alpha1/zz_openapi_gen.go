@@ -182,8 +182,15 @@ func schema_pkg_apis_feedback_v0alpha1_FeedbackSpec(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
+					"screenshot": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"message"},
+				Required: []string{"message", "screenshot"},
 			},
 		},
 	}
