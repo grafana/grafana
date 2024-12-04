@@ -109,7 +109,7 @@ func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path st
 }
 
 // Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
+func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }

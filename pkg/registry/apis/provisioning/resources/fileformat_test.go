@@ -77,7 +77,8 @@ spec:
 			"schemaVersion": 7,
 			"panels": [],
 			"tags": []
-		}`)})
+		}`),
+		})
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, classic)
@@ -97,17 +98,19 @@ spec:
 		info.Data, err = os.ReadFile(filepath.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := NewParser(repository.NewUnknown(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
-			},
-		}), &DynamicClient{}, &StaticKindsLookup{})
+		parser := NewParser("some-namespace", &DynamicClient{}, &StaticKindsLookup{})
 
 		// try to validate (and lint)
 		validate := true
 
+		cfg := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test",
+			},
+		}
+
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)
+		parsed, err := parser.Parse(context.Background(), slog.Default(), cfg, info, validate)
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
@@ -119,7 +122,7 @@ spec:
 
 		jj, err := json.MarshalIndent(parsed.Lint, "", "  ")
 		require.NoError(t, err)
-		//fmt.Printf("%s\n", string(jj))
+		// fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
 				"severity": "error",

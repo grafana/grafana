@@ -61,21 +61,28 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (c *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	id, err := s.client.WorkerIdentity(ctx, namespace)
+	id, err := c.client.WorkerIdentity(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.getter.GetRepository(identity.WithRequester(ctx, id), name)
+	repo, err := c.getter.GetRepository(identity.WithRequester(ctx, id), name)
 	if err != nil {
 		return nil, err
 	}
 
-	factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-	webhook := repo.Webhook(ctx, s.logger, responder, factory)
+	dynamicClient, kinds, err := c.resourceClient.New(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	parser := resources.NewParser(namespace, dynamicClient, kinds)
+	replicator := resources.NewReplicator(dynamicClient, parser, repo.Config().Spec.Folder)
+
+	webhook := repo.Webhook(ctx, c.logger, responder, replicator)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{

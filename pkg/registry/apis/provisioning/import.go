@@ -64,18 +64,18 @@ func (c *importConnector) Connect(
 	}
 	cfg := repo.Config()
 	ns := cfg.GetNamespace()
-	replicatorFactory := resources.NewReplicatorFactory(c.client, ns, repo)
+
+	dynamicClient, kinds, err := c.client.New(ns)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	parser := resources.NewParser(ns, dynamicClient, kinds)
+	replicator := resources.NewReplicator(dynamicClient, parser, repo.Config().Spec.Folder)
 
 	// TODO: We need some way to filter what we import.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		replicator, err := replicatorFactory.New()
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to create replicator", "error", err)
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create replicator: %w", err)))
-			return
-		}
-
 		ref := r.URL.Query().Get("ref")
 		logger := logger.With("ref", ref)
 
@@ -104,7 +104,7 @@ func (c *importConnector) Connect(
 			info.Hash = entry.Hash
 			info.Modified = nil // modified?
 
-			if err := replicator.Replicate(r.Context(), info); err != nil {
+			if err := replicator.Replicate(r.Context(), repo.Config(), info); err != nil {
 				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 					logger.InfoContext(ctx, "file does not contain a resource")
 					continue
