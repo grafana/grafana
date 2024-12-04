@@ -2292,7 +2292,7 @@ Enter a comma-separated list of plugin identifiers to avoid loading (including c
 
 Enter a comma-separated list of plugin identifiers to preinstall. These plugins will be installed on startup, using the Grafana catalog as the source. Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
 
-To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. **The plugin will automatically be updated** to the latest version when a new version is available in the Grafana catalog on startup (except for new major versions).
+To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
 
 To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
 
