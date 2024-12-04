@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import { useTour } from '@reactour/tour';
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
@@ -30,11 +31,15 @@ export function AppChromeMenu({}: Props) {
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
 
+  // @PERCONA
+  const { isOpen: isTourOpen } = useTour();
+
   const { overlayProps, underlayProps } = useOverlay(
     {
-      isDismissable: true,
+      isDismissable: !isTourOpen,
       isOpen: true,
       onClose,
+      isKeyboardDismissDisabled: !!isTourOpen,
       shouldCloseOnInteractOutside: (element) => {
         // don't close when clicking on the menu toggle, let the toggle button handle that
         // this prevents some nasty flickering when the menu is open and the toggle button is clicked

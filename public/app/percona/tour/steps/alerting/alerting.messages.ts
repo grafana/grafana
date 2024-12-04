@@ -39,8 +39,8 @@ export const Messages = {
     alert: 'Alert Groups show grouped alerts.',
     grouping: "Group common alerts into a single alert group to ensure that PMM doesn't fire duplicate alerts.",
   },
-  admin: {
-    title: 'Admin',
+  settings: {
+    title: 'Settings',
     configure: 'Use this to configure Alertmanagers in raw JSON format.',
   },
 };

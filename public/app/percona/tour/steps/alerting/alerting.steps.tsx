@@ -79,10 +79,10 @@ export const getAlertingTourSteps = (isAdmin = false): TourStep[] => [
   ...(isAdmin
     ? [
         {
-          selector: '[aria-label="Admin"]',
+          selector: '[aria-label="Settings"]',
           content: (
-            <SidebarStep title={Messages.admin.title}>
-              <p>{Messages.admin.configure}</p>
+            <SidebarStep title={Messages.settings.title}>
+              <p>{Messages.settings.configure}</p>
             </SidebarStep>
           ),
         },

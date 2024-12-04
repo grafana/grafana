@@ -1,6 +1,7 @@
 import { useTour } from '@reactour/tour';
 import { useCallback, useEffect, useMemo } from 'react';
 
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import * as TourActions from 'app/percona/shared/core/reducers/tour';
 import { TourStep, TourType } from 'app/percona/shared/core/reducers/tour';
 import { useAppDispatch } from 'app/store/store';
@@ -14,6 +15,7 @@ const usePerconaTour = () => {
   const { steps, tour } = useSelector(getTour);
   const reactTour = useTour();
   const tourSteps = useMemo(() => (tour ? steps[tour] : []), [tour, steps]);
+  const { chrome } = useGrafana();
 
   useEffect(() => {
     if (reactTour.setSteps) {
@@ -31,6 +33,8 @@ const usePerconaTour = () => {
 
   const startTour = useCallback(
     async (tour: TourType) => {
+      chrome.setMegaMenuOpen(true);
+
       const firstStep = steps[tour][0];
 
       // wait for the first step element to visible
