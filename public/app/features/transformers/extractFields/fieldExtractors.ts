@@ -1,4 +1,4 @@
-import { readCSV, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
+import { Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
 import { ExtractFieldsOptions, FieldExtractorID } from './types';
 
