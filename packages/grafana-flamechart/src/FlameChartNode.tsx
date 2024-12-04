@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getTextColorForBackground, useStyles2, useTheme2 } from '@grafana/ui';
+import { getTextColorForBackground, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { FlameChartContainer, RenderItem } from './types';
 import { formatDuration } from './utils/date';
@@ -31,8 +31,13 @@ function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.Reac
     color: textColor,
   };
 
+  const isError = container.isError(renderItem.operation.entity);
+
+  console.log('isError', isError);
+
   return (
-    <div className={styles.node} style={style}>
+    <div className={cx(styles.node, isError && styles.error)} style={style}>
+      {isError && renderItem.width >= 32 && <Icon className={styles.errorIcon} name="exclamation-circle" />}
       {renderItem.width >= WIDTH_CONTENT_CUTOFF_PX && (
         <>
           <div className={styles.label}>{label}</div>
@@ -51,18 +56,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     lineHeight: theme.spacing(4),
     height: theme.spacing(4),
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
   }),
   label: css({
+    paddingLeft: theme.spacing(1),
     flex: 1,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
   }),
   duration: css({
     fontStyle: 'italic',
+    paddingRight: theme.spacing(1),
+  }),
+  error: css({}),
+  errorIcon: css({
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    marginLeft: theme.spacing(0.5),
+    backgroundColor: theme.colors.error.main,
+    borderRadius: theme.shape.radius.circle,
+    color: 'white',
+    alignSelf: 'center',
   }),
 });

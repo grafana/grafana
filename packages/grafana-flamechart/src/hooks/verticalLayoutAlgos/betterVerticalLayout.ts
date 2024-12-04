@@ -43,13 +43,10 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
       level === 0 ||
       (parent?.operation.children && parent.operation.children.length > 1 && parent.operation.children[0] !== op)
     ) {
-      console.log('considering chid', op, 'of', parent);
       const [fromMs, toMs] = findMaxBoundsLeft(op);
       if (!levelIsTopFree(fromMs, toMs, level)) {
-        console.log('conflict!');
         level = findTopFreeLevel(fromMs, toMs, level + 1) + 1;
       } else {
-        console.log('no conflict');
       }
     }
 

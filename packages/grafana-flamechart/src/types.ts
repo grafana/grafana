@@ -21,6 +21,7 @@ export interface FlameChartContainer<T> {
   getOperationId: (operation: T) => string;
   getOperationName: (operation: T) => string;
   getNodeBackgroundColor: (operation: T, theme: GrafanaTheme2) => string;
+  isError: (operation: T) => boolean;
 }
 
 export interface RenderItem<T> {

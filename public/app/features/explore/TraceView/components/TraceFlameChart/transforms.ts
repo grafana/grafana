@@ -41,5 +41,6 @@ export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<Tr
     getOperationName: (span: TraceSpan) => span.operationName,
     getOperationId: (span: TraceSpan) => span.spanID,
     getNodeBackgroundColor: (span, theme) => getColorByKey(span.process.serviceName, theme),
+    isError: (span) => span.statusCode !== 0,
   };
 }
