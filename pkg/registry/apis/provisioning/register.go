@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -233,8 +234,6 @@ func (b *ProvisioningAPIBuilder) GetWebhook(ctx context.Context, name string) (w
 		return nil, fmt.Errorf("get repository: %w", err)
 	}
 
-	namespace := repo.Config().GetNamespace()
-
 	if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
 		return nil, &apierrors.StatusError{
 			ErrStatus: v1.Status{
@@ -244,6 +243,7 @@ func (b *ProvisioningAPIBuilder) GetWebhook(ctx context.Context, name string) (w
 		}
 	}
 
+	namespace := repo.Config().GetNamespace()
 	dynamicClient, kinds, err := b.client.New(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
@@ -252,11 +252,30 @@ func (b *ProvisioningAPIBuilder) GetWebhook(ctx context.Context, name string) (w
 	parser := resources.NewParser(repo.Config(), dynamicClient, kinds)
 	replicator := resources.NewReplicator(dynamicClient, parser, repo.Config().Spec.Folder)
 
-	linterFactory := lint.NewDashboardLinterFactory()
 	ghClient := b.ghFactory.New(ctx, repo.Config().Spec.GitHub.Token)
 	baseURL, err := url.Parse(b.urlProvider(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse base url: %w", err)
+	}
+
+	// TODO: this linter config should not be part of the github spec only
+	if repo.Config().Spec.GitHub.PullRequestLinter {
+		linterFactory := lint.NewDashboardLinterFactory()
+		// TODO: which logger?
+		cfg, err := repo.Read(ctx, b.logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)
+		switch {
+		case err == nil:
+			b.logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+		case errors.Is(err, github.ErrResourceNotFound):
+			b.logger.InfoContext(ctx, "no linter config found")
+		default:
+		}
+
+		linter, err := linterFactory.NewFromConfig(cfg.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create linter: %w", err)
+		}
+		parser.SetLinter(linter)
 	}
 
 	return webhook.NewGithubWebhook(
@@ -265,7 +284,6 @@ func (b *ProvisioningAPIBuilder) GetWebhook(ctx context.Context, name string) (w
 		ghClient,
 		baseURL,
 		parser,
-		linterFactory,
 		b.renderer,
 	), nil
 }

@@ -16,7 +16,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -147,13 +149,34 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) getParser(repo repository.Repository) (*resources.FileParser, error) {
+func (s *filesConnector) getParser(ctx context.Context, repo repository.Repository) (*resources.FileParser, error) {
 	ns := repo.Config().Namespace
 	client, kinds, err := s.client.New(ns) // As system user
 	if err != nil {
 		return nil, err
 	}
-	return resources.NewParser(repo.Config(), client, kinds), nil
+
+	parser := resources.NewParser(repo.Config(), client, kinds)
+	if repo.Config().Spec.GitHub.PullRequestLinter {
+		linterFactory := lint.NewDashboardLinterFactory()
+		// TODO: which logger?
+		cfg, err := repo.Read(ctx, s.logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)
+		switch {
+		case err == nil:
+			s.logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+		case errors.Is(err, github.ErrResourceNotFound):
+			s.logger.InfoContext(ctx, "no linter config found")
+		default:
+		}
+
+		linter, err := linterFactory.NewFromConfig(cfg.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create linter: %w", err)
+		}
+		parser.SetLinter(linter)
+	}
+
+	return parser, nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
@@ -162,7 +185,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
-	parser, err := s.getParser(repo)
+	parser, err := s.getParser(ctx, repo)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -209,7 +232,7 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		Ref:  ref,
 	}
 
-	parser, err := s.getParser(repo)
+	parser, err := s.getParser(ctx, repo)
 	if err != nil {
 		return nil, err
 	}

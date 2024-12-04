@@ -12,7 +12,6 @@ import (
 	"text/template"
 
 	"github.com/google/go-github/v66/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,12 +35,11 @@ type FileReplicator interface {
 
 type GithubWebhook struct {
 	repository.Repository
-	replicator    FileReplicator
-	gh            pgh.Client
-	baseURL       *url.URL
-	linterFactory lint.LinterFactory
-	parser        *resources.FileParser
-	renderer      PreviewRenderer
+	replicator FileReplicator
+	gh         pgh.Client
+	baseURL    *url.URL
+	parser     *resources.FileParser
+	renderer   PreviewRenderer
 }
 
 func NewGithubWebhook(
@@ -50,16 +48,14 @@ func NewGithubWebhook(
 	gh pgh.Client,
 	baseURL *url.URL,
 	parser *resources.FileParser,
-	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
 ) *GithubWebhook {
 	return &GithubWebhook{
-		Repository:    repo,
-		replicator:    replicator,
-		baseURL:       baseURL,
-		parser:        parser,
-		linterFactory: linterFactory,
-		renderer:      renderer,
+		Repository: repo,
+		replicator: replicator,
+		baseURL:    baseURL,
+		parser:     parser,
+		renderer:   renderer,
 	}
 }
 
@@ -222,7 +218,6 @@ type changedResource struct {
 	CurrentURL           string
 	PreviewURL           string
 	PreviewScreenshotURL string
-	Data                 []byte
 }
 
 // onPullRequestEvent is called when a pull request event is received
@@ -264,6 +259,8 @@ func (r *GithubWebhook) onPullRequestEvent(ctx context.Context, logger *slog.Log
 	}
 
 	changedResources := make([]changedResource, 0)
+	// parsed files are already linted if linter is enabled
+	filesToLint := make([]*resources.ParsedFile, 0)
 
 	baseBranch := event.GetPullRequest().GetBase().GetRef()
 	mainBranch := r.Config().Spec.GitHub.Branch
@@ -317,8 +314,7 @@ func (r *GithubWebhook) onPullRequestEvent(ctx context.Context, logger *slog.Log
 		}
 
 		// TODO: check if that parse is enough
-		// TODO: use parsed file
-		_, err = r.parser.Parse(ctx, logger, f, true)
+		parsed, err := r.parser.Parse(ctx, logger, f, true)
 		if err != nil {
 			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 				logger.InfoContext(ctx, "ignore files as it does not contain a resource")
@@ -329,9 +325,16 @@ func (r *GithubWebhook) onPullRequestEvent(ctx context.Context, logger *slog.Log
 			continue
 		}
 
-		resource.Data = f.Data
+		if len(parsed.Errors) > 0 {
+			logger.ErrorContext(ctx, "failed to parse file", "errors", parsed.Errors)
+			continue
+		}
+
 		logger.InfoContext(ctx, "resource changed")
 		changedResources = append(changedResources, resource)
+		if resource.Type != "dashboard" && resource.Action != "removed" {
+			filesToLint = append(filesToLint, parsed)
+		}
 	}
 
 	if err := r.previewPullRequest(ctx, logger, event.GetNumber(), changedResources); err != nil {
@@ -339,7 +342,7 @@ func (r *GithubWebhook) onPullRequestEvent(ctx context.Context, logger *slog.Log
 	}
 
 	headSha := event.GetPullRequest().GetHead().GetSHA()
-	if err := r.lintPullRequest(ctx, logger, event.GetNumber(), headSha, changedResources); err != nil {
+	if err := r.lintPullRequest(ctx, logger, event.GetNumber(), headSha, filesToLint); err != nil {
 		logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
 	}
 
@@ -356,83 +359,50 @@ Grafana found some linting issues in this dashboard you may want to check:
 // lintPullRequest lints the files changed in the pull request and comments the issues found.
 // The linter is disabled if the configuration does not have PullRequestLinter enabled.
 // The only supported type of file to lint is a dashboard.
-func (r *GithubWebhook) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resources []changedResource) error {
+func (r *GithubWebhook) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, files []*resources.ParsedFile) error {
 	if !r.Config().Spec.GitHub.PullRequestLinter {
 		return nil
 	}
 
 	logger.InfoContext(ctx, "lint pull request")
-
-	// Load linter config
-	cfg, err := r.Read(ctx, logger, r.linterFactory.ConfigPath(), ref)
-	switch {
-	case err == nil:
-		logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
-	case errors.Is(err, pgh.ErrResourceNotFound):
-		logger.InfoContext(ctx, "no linter config found")
-	default:
-		return fmt.Errorf("read linter config: %w", err)
-	}
-
-	linter, err := r.linterFactory.NewFromConfig(cfg.Data)
-	if err != nil {
-		return fmt.Errorf("create linter: %w", err)
-	}
-
 	// Clear all previous comments because we don't know if the files have changed
 	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.Config().Spec.GitHub.Owner, r.Config().Spec.GitHub.Repository, prNumber); err != nil {
 		return fmt.Errorf("clear pull request comments: %w", err)
 	}
 
-	for _, resource := range resources {
-		if resource.Action == "removed" || resource.Type != "dashboard" {
+	for _, resource := range files {
+		issues := resource.Lint
+		if len(issues) == 0 {
 			continue
 		}
 
-		logger := logger.With("file", resource.Path)
-		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, linter); err != nil {
-			logger.ErrorContext(ctx, "failed to lint file", "error", err)
+		logger := logger.With("file", resource.Info.Path)
+
+		// FIXME: we should not be compiling this all the time
+		tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
+		if err != nil {
+			return fmt.Errorf("parse lint comment template: %w", err)
 		}
-	}
 
-	return nil
-}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, issues); err != nil {
+			return fmt.Errorf("execute lint comment template: %w", err)
+		}
 
-// lintPullRequestFile lints a file and comments the issues found.
-func (r *GithubWebhook) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, linter lint.Linter) error {
-	issues, err := linter.Lint(ctx, resource.Data)
-	if err != nil {
-		return fmt.Errorf("lint file: %w", err)
-	}
+		comment := pgh.FileComment{
+			Content:  buf.String(),
+			Path:     resource.Info.Path,
+			Position: 1, // create a top-level comment
+			Ref:      ref,
+		}
 
-	if len(issues) == 0 {
-		return nil
+		// FIXME: comment with Grafana Logo
+		// FIXME: comment author should be written by Grafana and not the user
+		if err := r.gh.CreatePullRequestFileComment(ctx, r.Config().Spec.GitHub.Owner, r.Config().Spec.GitHub.Repository, prNumber, comment); err != nil {
+			return fmt.Errorf("create pull request comment: %w", err)
+		}
+		logger.InfoContext(ctx, "lint comment created", "issues", len(issues))
 	}
-
-	// FIXME: we should not be compiling this all the time
-	tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
-	if err != nil {
-		return fmt.Errorf("parse lint comment template: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, issues); err != nil {
-		return fmt.Errorf("execute lint comment template: %w", err)
-	}
-
-	comment := pgh.FileComment{
-		Content:  buf.String(),
-		Path:     resource.Path,
-		Position: 1, // create a top-level comment
-		Ref:      ref,
-	}
-
-	// FIXME: comment with Grafana Logo
-	// FIXME: comment author should be written by Grafana and not the user
-	if err := r.gh.CreatePullRequestFileComment(ctx, r.Config().Spec.GitHub.Owner, r.Config().Spec.GitHub.Repository, prNumber, comment); err != nil {
-		return fmt.Errorf("create pull request comment: %w", err)
-	}
-	logger.InfoContext(ctx, "lint comment created", "issues", len(issues))
 
 	return nil
 }
