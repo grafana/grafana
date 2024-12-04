@@ -11,6 +11,11 @@ export interface Operation<T> extends TreeNode<Operation<T>> {
   entity: T;
 }
 
+export interface OperationWithLevel<T> extends TreeNode<OperationWithLevel<T>> {
+  level: number;
+  operation: Operation<T>;
+}
+
 export interface FlameChartContainer<T> {
   operations: Array<Operation<T>>;
   getOperationId: (operation: T) => string;

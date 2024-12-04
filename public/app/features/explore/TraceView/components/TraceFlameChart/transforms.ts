@@ -21,11 +21,13 @@ export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<Tr
     if (parentId) {
       const child = id2operation[span.spanID];
       const parent = id2operation[parentId];
-      if (!child.parent) {
-        child.parent = parent;
-      }
-      if (!parent.children.includes(child)) {
-        parent.children.push(child);
+      if (child && parent) {
+        if (!child.parent) {
+          child.parent = parent;
+        }
+        if (!parent.children.includes(child)) {
+          parent.children.push(child);
+        }
       }
     }
   });
