@@ -2,10 +2,11 @@ package sql
 
 import (
 	"context"
+	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
@@ -59,13 +59,18 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Search = resource.SearchOptions{
 			Backend: search.NewBleveBackend(search.BleveOptions{
-				Root:          filepath.Join(cfg.DataPath, "unified-search", "bleve"),
-				FileThreshold: 10,  // fewer than X items will use a memory index
-				BatchSize:     500, // This is the batch size for how many objects to add to the index at once
-			}, tracer, reg),
+				Root:          cfg.IndexPath,
+				FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+				BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
+			}, tracer),
 			Resources:     docs,
-			WorkerThreads: 5, // from cfg?
-			InitMinCount:  1,
+			WorkerThreads: cfg.IndexWorkers,
+			InitMinCount:  cfg.IndexMinCount,
+		}
+
+		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
+		if err != nil {
+			slog.Warn("Failed to register indexer metrics", "error", err)
 		}
 	}
 

@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -44,6 +46,9 @@ type ResourceIndex interface {
 	// Execute an origin query -- access control is not not checked for each item
 	// NOTE: this will likely be used for provisioning, or it will be removed
 	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
+
+	// Get the number of documents in the index
+	DocCount() (int, error)
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -68,6 +73,9 @@ type SearchBackend interface {
 		// The builder will write all documents before returning
 		builder func(index ResourceIndex) (int64, error),
 	) (ResourceIndex, error)
+
+	// Gets the total number of documents across all indexes
+	TotalDocs() int64
 }
 
 const tracingPrexfixSearch = "unified_search."
@@ -165,6 +173,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 func (s *searchSupport) init(ctx context.Context) error {
 	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
 	defer span.End()
+	start := time.Now().Unix()
 
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
@@ -204,11 +213,21 @@ func (s *searchSupport) init(ctx context.Context) error {
 		}
 	}()
 
+	end := time.Now().Unix()
+	if IndexMetrics != nil {
+		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
+
 	return nil
 }
 
 // Async event
 func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
+	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
+		s.log.Info("ignoring watch event", "type", evt.Type)
+		return
+	}
+
 	nsr := NamespacedResource{
 		Namespace: evt.Key.Namespace,
 		Group:     evt.Key.Group,
@@ -233,10 +252,35 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
-	err = index.Write(doc)
-	if err != nil {
-		s.log.Warn("error writing document watch event", "error", err)
-		return
+	switch evt.Type {
+	case WatchEvent_ADDED, WatchEvent_MODIFIED:
+		err = index.Write(doc)
+		if err != nil {
+			s.log.Warn("error writing document watch event", "error", err)
+			return
+		}
+		if evt.Type == WatchEvent_ADDED {
+			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+		}
+	case WatchEvent_DELETED:
+		err = index.Delete(evt.Key)
+		if err != nil {
+			s.log.Warn("error deleting document watch event", "error", err)
+			return
+		}
+		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+	default:
+		// do nothing
+		s.log.Warn("unknown watch event", "type", evt.Type)
+	}
+
+	// record latency from when event was created to when it was indexed
+	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
+	if latencySeconds > 5 {
+		logger.Warn("high index latency", "latency", latencySeconds)
+	}
+	if IndexMetrics != nil {
+		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
 	}
 }
 
@@ -310,6 +354,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		})
 		return rv, err
 	})
+
+	// Record the number of objects indexed for the kind/resource
+	docCount, err := index.DocCount()
+	if err != nil {
+		s.log.Warn("error getting doc count", "error", err)
+	}
+	if IndexMetrics != nil {
+		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
+	}
 
 	if err != nil {
 		return nil, 0, err
