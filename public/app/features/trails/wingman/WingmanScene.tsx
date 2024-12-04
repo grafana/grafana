@@ -84,28 +84,26 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
 export function getStyles(theme: GrafanaTheme2) {
   return {
     verticalLine: css({
-      marginLeft: '16px', // not currently working
       borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       height: '540px',
+      paddingRight: '16px',
     }),
     title: css({
       overflow: 'hidden',
       color: '#FFF',
       textOverflow: 'ellipsis',
-      fontSize: '14px', // should be 12px but making 14px to match the label font size
+      fontSize: '14px',
       fontWeight: 500,
-      lineHeight: '18px' /* 150% */,
+      lineHeight: '18px',
       letterSpacing: '0.018px',
     }),
     label: css({
-      fontSize: '12px', // not being properly applied, currently is 14px
       color: 'theme.colors.text.primary',
       fontWeight: 400,
-      // lineHeight: '18px',
       letterSpacing: '0.018px',
     }),
     horizontalLine: css({
-      width: '154px',
+      width: '200px',
       height: '1px',
       background: theme.colors.border.weak,
       marginTop: '8px',
