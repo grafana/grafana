@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
