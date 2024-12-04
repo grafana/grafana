@@ -23,7 +23,7 @@ hero:
   width: 100
   image: /media/docs/grafana-cloud/infrastructure/grafanalogo.svg
   height: 100
-  description: Query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored.
+  description: 'Query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored.'
 cards:
   title_class: pt-0 lh-1
   items:
@@ -88,4 +88,3 @@ To learn more about these features, refer to [Enterprise features](https://grafa
 
 {{< card-grid key="cards" type="simple" >}}
 
-.
