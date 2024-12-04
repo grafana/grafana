@@ -1,3 +1,12 @@
+<!-- 11.0.9 START -->
+
+# 11.0.9 (2024-12-04)
+
+### Bug fixes
+
+- **Fix:** Do not fetch Orgs if the user is authenticated by apikey/sa or render key [#97265](https://github.com/grafana/grafana/pull/97265), [@mgyongyosi](https://github.com/mgyongyosi)
+
+<!-- 11.0.9 END -->
 <!-- 10.4.14 START -->
 
 # 10.4.14 (2024-12-04)
