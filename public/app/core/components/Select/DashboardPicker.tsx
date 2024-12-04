@@ -57,6 +57,7 @@ export const DashboardPicker = ({
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
       const res = await getDashboardAPI().getDashboardDTO(value);
+
       if (isDashboardResource(res)) {
         // TODO[schema]: handle v2
         throw new Error('v2 schema handling not implemented');

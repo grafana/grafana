@@ -1,9 +1,30 @@
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
+import {
+  AdhocVariableKind,
+  DashboardV2Spec,
+  defaultAdhocVariableSpec,
+  defaultDashboardV2Spec,
+  defaultGroupByVariableSpec,
+  defaultTimeSettingsSpec,
+  GroupByVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
-export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
+export async function buildNewDashboardSaveModel(
+  urlFolderUid?: string
+): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
+  if (config.featureToggles.useV2DashboardsAPI) {
+    return buildNewDashboardSaveModelV2(urlFolderUid);
+  }
+
+  return buildNewDashboardSaveModelV1(urlFolderUid);
+}
+
+async function buildNewDashboardSaveModelV1(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
@@ -58,6 +79,76 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
 
   if (urlFolderUid) {
     data.meta.folderUid = urlFolderUid;
+  }
+
+  return data;
+}
+
+async function buildNewDashboardSaveModelV2(urlFolderUid?: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+  let variablesList = defaultDashboardV2Spec().variables;
+
+  if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+    // Add filter and group by variables if the datasource supports it
+    const defaultDs = await getDatasourceSrv().get();
+
+    if (defaultDs.getTagKeys) {
+      const datasourceRef = {
+        type: defaultDs.meta.id,
+        uid: defaultDs.uid,
+      };
+
+      const filterVariable: AdhocVariableKind = {
+        kind: 'AdhocVariable',
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filter', datasource: datasourceRef },
+      };
+
+      const groupByVariable: GroupByVariableKind = {
+        kind: 'GroupByVariable',
+        spec: {
+          ...defaultGroupByVariableSpec(),
+          datasource: datasourceRef,
+          name: 'Group by',
+        },
+      };
+
+      variablesList = (variablesList || []).concat([filterVariable, groupByVariable]);
+    }
+  }
+
+  const data: DashboardWithAccessInfo<DashboardV2Spec> = {
+    apiVersion: 'v2alpha0',
+    kind: 'DashboardWithAccessInfo',
+    spec: {
+      ...defaultDashboardV2Spec(),
+      title: 'New dashboard',
+      timeSettings: {
+        ...defaultTimeSettingsSpec(),
+        timezone: config.bootData.user?.timezone || defaultTimeSettingsSpec().timezone,
+      },
+    },
+    access: {
+      canStar: false,
+      canShare: false,
+      canDelete: false,
+      // Not sure this should belong here or to metadata.annotations
+      isNew: true,
+    },
+    metadata: {
+      name: '',
+      resourceVersion: '0',
+      creationTimestamp: '0',
+      annotations: {
+        [AnnoKeyFolder]: '',
+      },
+    },
+  };
+
+  if (variablesList) {
+    data.spec.variables = variablesList;
+  }
+
+  if (urlFolderUid && data.metadata.annotations) {
+    data.metadata.annotations[AnnoKeyFolder] = urlFolderUid;
   }
 
   return data;

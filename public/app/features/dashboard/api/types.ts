@@ -26,5 +26,6 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, 'DashboardWithAc
     canStar?: boolean;
     canAdmin?: boolean;
     annotationsPermissions?: AnnotationsPermissions;
+    isNew?: boolean;
   }; // TODO...
 }

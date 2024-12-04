@@ -90,7 +90,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         case DashboardRoutes.New:
           // TODO[schema]: handle v2
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
-
           break;
         case DashboardRoutes.Home:
           rsp = (await getBackendSrv().get('/api/dashboards/home')) as DashboardDTO;

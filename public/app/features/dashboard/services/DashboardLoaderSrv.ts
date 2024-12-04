@@ -95,6 +95,7 @@ export class DashboardLoaderSrv {
         .then((result) => {
           if (isDashboardResource(result)) {
             // TODO[schema]: handle v2
+            throw new Error('v2 schema folder dashboard not found not implemented');
           } else {
             if (result.meta.isFolder) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -115,6 +116,7 @@ export class DashboardLoaderSrv {
     promise.then((result) => {
       if (isDashboardResource(result)) {
         // TODO[schema]: handle v2
+        throw new Error('v2 schema impressions not implemented');
       } else {
         if (result.meta.dashboardNotFound !== true) {
           impressionSrv.addDashboardImpression(result.dashboard.uid);
