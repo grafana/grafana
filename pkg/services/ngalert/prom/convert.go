@@ -180,6 +180,12 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 		title = rule.Alert
 	}
 
+	labels := make(map[string]string, len(rule.Labels)+1)
+	for k, v := range rule.Labels {
+		labels[k] = v
+	}
+	labels[models.PrometheusStyleRuleLabel] = "true"
+
 	result := models.AlertRule{
 		OrgID:        orgID,
 		NamespaceUID: namespaceUID,
@@ -189,10 +195,13 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 		NoDataState:  noDataState,
 		ExecErrState: execErrState,
 		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
+		Labels:       labels,
 		IsPaused:     false,
 		For:          forInterval,
 		RuleGroup:    group,
+		Metadata: models.AlertRuleMetadata{
+			PrometheusStyleRule: true,
+		},
 	}
 
 	if rule.Record != "" {
