@@ -22,7 +22,7 @@ import {
   TraceSpanReference,
   TraceSpanRow,
 } from '@grafana/data';
-import { createGraphFrames, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
@@ -194,7 +194,7 @@ export function transformFromOTLP(
 
   let data = [frame];
   if (nodeGraph) {
-    data.push(...(createGraphFrames(frame) as MutableDataFrame[]));
+    data.push(...(createNodeGraphFrames(frame) as MutableDataFrame[]));
   }
 
   return { data };
@@ -445,7 +445,7 @@ export function transformTrace(
 
   let data = [...response.data];
   if (nodeGraph) {
-    data.push(...createGraphFrames(toDataFrame(frame)));
+    data.push(...createNodeGraphFrames(toDataFrame(frame)));
   }
 
   return {

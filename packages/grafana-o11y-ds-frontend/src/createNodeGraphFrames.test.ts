@@ -1,11 +1,11 @@
 import { createDataFrame, DataFrameView } from '@grafana/data';
 
+import { createNodeGraphFrames } from './createNodeGraphFrames';
 import { bigTraceResponse } from './mocks/traceResponse';
-import { createGraphFrames } from './utils';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {
-    const frames = createGraphFrames(bigTraceResponse);
+    const frames = createNodeGraphFrames(bigTraceResponse);
     expect(frames.length).toBe(2);
     expect(frames[0].length).toBe(30);
     expect(frames[1].length).toBe(29);
@@ -36,7 +36,7 @@ describe('createGraphFrames', () => {
   });
 
   it('handles single span response', async () => {
-    const frames = createGraphFrames(singleSpanResponse);
+    const frames = createNodeGraphFrames(singleSpanResponse);
     expect(frames.length).toBe(2);
     expect(frames[0].length).toBe(1);
 
@@ -52,7 +52,7 @@ describe('createGraphFrames', () => {
   });
 
   it('handles missing spans', async () => {
-    const frames = createGraphFrames(missingSpanResponse);
+    const frames = createNodeGraphFrames(missingSpanResponse);
     expect(frames.length).toBe(2);
     expect(frames[0].length).toBe(2);
     expect(frames[1].length).toBe(0);

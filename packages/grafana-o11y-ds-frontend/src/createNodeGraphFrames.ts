@@ -6,7 +6,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
-export function createGraphFrames(data: DataFrame): DataFrame[] {
+export function createNodeGraphFrames(data: DataFrame): DataFrame[] {
   const { nodes, edges } = convertTraceToGraph(data);
   const [nodesFrame, edgesFrame] = makeFrames();
 
