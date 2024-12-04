@@ -79,7 +79,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		}
 	}
 
-	fmt.Println("thingy thingy")
 	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
 }
