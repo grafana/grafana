@@ -3028,6 +3028,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4076,6 +4078,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  path: /github-app
 ---
 clone:
   retries: 3
@@ -4897,6 +4901,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9ade54c2059751aae400f8b1a7ad1a4699205c49d3e4e349fd8168fad5b0df6b
+hmac: 4b6a6c50d8a0a023875bba4c8b06c4398a9e37b1fc6d2e0f9426745ad1412139
 
 ...
