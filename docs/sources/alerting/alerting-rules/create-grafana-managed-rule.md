@@ -19,11 +19,6 @@ labels:
 title: Configure Grafana-managed alert rules
 weight: 100
 refs:
-  alert-rule-template:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   time-units-and-relative-ranges:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges
@@ -74,11 +69,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   contact-points:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/
@@ -89,11 +79,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
-  link-alert-rules-to-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
@@ -109,11 +94,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
-  provision-alerting-resources:
+  shared-provision-alerting-resources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/
+  shared-alert-rule-template:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
+  shared-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
+  shared-link-alert-rules-to-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
 ---
 
 # Configure Grafana-managed alert rules
@@ -138,11 +138,7 @@ Verify that the data sources you plan to query in the alert rule are [compatible
 
 Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules.
 
-### Provisioning
-
-If you delete an alert resource created in the UI, you can no longer retrieve it.
-
-To backup and manage alert rules, you can [provision alerting resources](ref:provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Default vs Advanced options
 
@@ -154,12 +150,7 @@ Switching from advanced to default may result in queries and expressions that ca
 
 Default and advanced options are enabled by default for Grafana Cloud users and this feature is being rolled out progressively. OSS users can enable them via the [`alertingQueryAndExpressionsStepMode` feature toggle](/setup-grafana/configure-grafana/feature-toggles/).
 
-## Set alert rule name
-
-1. Click **Alerts & IRM** -> **Alert rules** -> **+ New alert rule**.
-1. Enter a name to identify your alert rule.
-
-   This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
+{{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Define query and condition
 
@@ -287,32 +278,4 @@ Complete the following steps to set up notifications.
 
    1. Click **See details** to view alert routing details and an email preview.
 
-## Configure notification message
-
-Use [annotations](ref:annotations) to add information to alert messages that can help respond to the alert.
-
-Annotations are included by default in notification messages, and can use text or [templates](ref:alert-rule-template) to display dynamic data from queries.
-
-Grafana provides several optional annotations.
-
-1. Optional: Add a summary.
-
-   Short summary of what happened and why.
-
-1. Optional: Add a description.
-
-   Description of what the alert rule does.
-
-1. Optional: Add a Runbook URL.
-
-   Webpage where you keep your runbook for the alert
-
-1. Optional: Add a custom annotation.
-
-   Add any additional information that could help address the alert.
-
-1. Optional: **Link dashboard and panel**.
-
-   [Link the alert rule to a panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
-
-1. Click **Save rule**.
+{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
