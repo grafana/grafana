@@ -42,7 +42,7 @@ const getValuePillStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     minWidth: '50px',
 
-    '&:only-child': {
+    '&:first-child:has(+ div)': {
       flexShrink: 1,
     },
   }),

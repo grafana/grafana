@@ -6,7 +6,6 @@ import { useStyles2 } from '../../themes';
 import { measureText } from '../../utils';
 import { Checkbox } from '../Forms/Checkbox';
 import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
@@ -35,13 +34,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return getSelectedItemsFromValue<T>(value, options);
   }, [value, options, isAsync]);
 
-  const multiStyles = useStyles2(getMultiComboboxStyles);
-
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
   const [shownItems, setShownItems] = useState<number>(selectedItems.length);
   const [measureRef, { width }] = useMeasure<HTMLDivElement>();
   const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
+
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
 
   useEffect(() => {
     const maxWidth = width - suffixWidth;
@@ -139,11 +138,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
+  const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
+
   return (
     <div>
       <div className={multiStyles.wrapper} ref={measureRef} onClick={() => setIsOpen(!isOpen)}>
         <span className={multiStyles.pillWrapper}>
-          {selectedItems.slice(0, shownItems).map((item, index) => (
+          {visibleItems.map((item, index) => (
             <ValuePill
               onRemove={() => {
                 removeSelectedItem(item);
@@ -154,10 +155,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               {itemToString(item)}
             </ValuePill>
           ))}
-        </span>
-        <Stack ref={suffixMeasureRef}>
-          {selectedItems.length > shownItems && (
-            <Box display="flex" direction="row" marginLeft={0.5} gap={1}>
+          {selectedItems.length > shownItems && !isOpen && (
+            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={suffixMeasureRef}>
               {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text>...</Text>
               <Tooltip
@@ -174,17 +173,17 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               </Tooltip>
             </Box>
           )}
-        </Stack>
-        <input
-          className={multiStyles.input}
-          {...getInputProps(
-            getDropdownProps({
-              preventKeyAction: isOpen,
-              placeholder: selectedItems.length > 0 ? undefined : placeholder,
-              onFocus: () => setIsOpen(true),
-            })
-          )}
-        />
+          <input
+            className={multiStyles.input}
+            {...getInputProps(
+              getDropdownProps({
+                preventKeyAction: isOpen,
+                placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                onFocus: () => setIsOpen(true),
+              })
+            )}
+          />
+        </span>
       </div>
       <div {...getMenuProps()}>
         <Portal>

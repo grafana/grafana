@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
-export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
+export const getMultiComboboxStyles = (theme: GrafanaTheme2, isOpen: boolean) => {
   const inputStyles = getInputStyles({ theme });
   const focusStyles = getFocusStyles(theme);
 
@@ -38,7 +38,8 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     pillWrapper: css({
       display: 'inline-flex',
-      flexWrap: 'nowrap',
+      flexWrap: isOpen ? 'wrap' : 'nowrap',
+      flexGrow: 1,
       minWidth: '50px',
       gap: theme.spacing(0.5),
     }),
