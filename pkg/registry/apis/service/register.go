@@ -31,7 +31,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 	}
 
 	builder := NewServiceAPIBuilder()
-	apiregistration.RegisterAPI(NewServiceAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
