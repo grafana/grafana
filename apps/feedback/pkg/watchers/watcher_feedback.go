@@ -16,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,11 +23,11 @@ import (
 var _ operator.ResourceWatcher = &FeedbackWatcher{}
 
 type FeedbackWatcher struct {
-	feedbackStore *resource.TypedStore[*v0alpha1.Feedback]
+	feedbackStore *resource.TypedStore[*feedback.Feedback]
 	cfg           *setting.Cfg
 }
 
-func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*v0alpha1.Feedback]) (*FeedbackWatcher, error) {
+func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*feedback.Feedback]) (*FeedbackWatcher, error) {
 	return &FeedbackWatcher{
 		feedbackStore: feedbackStore,
 		cfg:           cfg,

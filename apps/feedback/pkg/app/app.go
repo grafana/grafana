@@ -25,7 +25,7 @@ type FeedbackConfig struct {
 func New(cfg app.Config) (app.App, error) {
 	feedbackCfg, ok := cfg.SpecificConfig.(FeedbackConfig)
 	if !ok {
-		return nil, fmt.Errorf("expected %s but received %s", reflect.TypeOf(FeedbackConfig{}).String(), reflect.TypeOf(feedbackCfg).String()) // not sure if necessarily
+		return nil, fmt.Errorf("expected %s but received %s", reflect.TypeOf(FeedbackConfig{}).String(), reflect.TypeOf(feedbackCfg).String()) // not sure if necessary
 	}
 
 	// blind copy pasta
