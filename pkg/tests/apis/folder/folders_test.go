@@ -405,7 +405,8 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			  "uid": "${uid}"
 			},
 			"spec": {
-			  "title": "Test"
+			  "title": "Test",
+			  "version": 1
 			}
 		  }`
 
