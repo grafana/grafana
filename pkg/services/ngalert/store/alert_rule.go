@@ -619,26 +619,48 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return f[0], nil
 }
 
-// GetOrCreateNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	f, _ := st.GetNamespaceByUID(ctx, uid, orgID, user)
-	if f != nil {
-		return f, nil
-	}
-
-	cmd := &folder.CreateFolderCommand{
-		UID:          uid,
+// GetNamespaceByFullpath gets namespace by its fullpath.
+func (st DBstore) GetNamespaceByFullpath(ctx context.Context, fullpath string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
-		Title:        title,
+		WithFullpath: true,
 		SignedInUser: user,
-	}
-	f, err := st.FolderService.Create(ctx, cmd)
+	})
 	if err != nil {
 		return nil, err
 	}
-	if f == nil {
-		return nil, dashboards.ErrFolderAccessDenied
+
+	for _, folder := range folders {
+		if folder.Fullpath == fullpath {
+			return folder, nil
+		}
 	}
+
+	return nil, dashboards.ErrFolderNotFound
+}
+
+// GetOrCreateNamespaceByTitle gets or creates a namespace by title in the _root_ folder.
+func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	var f *folder.Folder
+	var err error
+
+	f, err = st.GetNamespaceByFullpath(ctx, title, orgID, user)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
+		return nil, err
+	}
+
+	if f == nil {
+		cmd := &folder.CreateFolderCommand{
+			OrgID:        orgID,
+			Title:        title,
+			SignedInUser: user,
+		}
+		f, err = st.FolderService.Create(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return f, nil
 }
 
