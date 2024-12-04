@@ -114,9 +114,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
+	lp := NewLotexProm(proxy, logger)
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
-		NewLotexProm(proxy, logger),
+		lp,
 		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
@@ -135,6 +136,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
+			proxySvc:           *lp,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(

@@ -39,6 +39,7 @@ type RulerApi interface {
 	RoutePostGrafanaRuleGroupPrometheusConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
+	RoutePostRulesGroupConvert(*contextmodel.ReqContext) response.Response
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
 }
 
@@ -148,6 +149,11 @@ func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext)
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostNameRulesConfig(ctx, conf, datasourceUIDParam, namespaceParam)
+}
+func (f *RulerApiHandler) RoutePostRulesGroupConvert(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.handleRoutePostRulesGroupConvert(ctx, datasourceUIDParam)
 }
 func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -387,6 +393,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodPost,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RoutePostNameRulesConfig),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/convert"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/ruler/{DatasourceUID}/api/v1/rules/convert"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ruler/{DatasourceUID}/api/v1/rules/convert",
+				api.Hooks.Wrap(srv.RoutePostRulesGroupConvert),
 				m,
 			),
 		)

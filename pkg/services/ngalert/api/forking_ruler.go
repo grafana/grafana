@@ -102,6 +102,10 @@ func (f *RulerApiHandler) handleRouteGetRuleByUID(ctx *contextmodel.ReqContext, 
 	return f.GrafanaRuler.RouteGetRuleByUID(ctx, ruleUID)
 }
 
+func (f *RulerApiHandler) handleRoutePostRulesGroupConvert(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	return f.GrafanaRuler.RoutePostRulesGroupConvert(ctx, dsUID)
+}
+
 func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, namespace string) response.Response {
 	payloadType := conf.Type()
 	if payloadType != apimodels.GrafanaBackend {
