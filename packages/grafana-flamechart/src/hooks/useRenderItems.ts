@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { FlameChartContainer, RenderContainer, RenderItem } from '../types';
 import { findMaxBounds } from '../utils/operation';
 
-import { poopyVerticalLayout } from './verticalLayoutAlgos/poopyVerticalLayout';
+import { betterVerticalLayout } from './verticalLayoutAlgos/betterVerticalLayout';
 
 const DEFAULT_HEIGHT_PX = 32;
 const DEFAULT_VERTICAL_GAP_PX = 2;
@@ -54,7 +54,7 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
 
   const pxPerMs = containerSize.width / viewDuration;
 
-  const operationList = useMemo(() => poopyVerticalLayout(operations), [operations]);
+  const operationList = useMemo(() => betterVerticalLayout(operations), [operations]);
 
   return useMemo(() => {
     console.log('renderItems', operationList);
