@@ -14,6 +14,7 @@ import * as ruleId from '../utils/rule-id';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
+import { formValuesFromQueryParams, translateRouteParamToRuleType } from './formDefaults';
 
 type RuleEditorPathParams = {
   id?: string;
@@ -45,14 +46,8 @@ const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['ty
 };
 
 const RuleEditor = () => {
-  const [searchParams] = useURLSearchParams();
-  const params = useParams<RuleEditorPathParams>();
-  const { type } = params;
-  const id = ruleId.getRuleIdFromPathname(params);
-  const identifier = ruleId.tryParse(id, true);
-
-  const copyFromId = searchParams.get('copyFrom') ?? undefined;
-  const copyFromIdentifier = ruleId.tryParse(copyFromId);
+  const { identifier, type } = useRuleEditorPathParams();
+  const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
@@ -66,15 +61,15 @@ const RuleEditor = () => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={id} identifier={identifier} id={id} />;
+      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} />;
     }
 
     if (copyFromIdentifier) {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
     // new alert rule
-    return <AlertRuleForm />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier]);
+    return <AlertRuleForm prefill={queryDefaults} />;
+  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
 
   return (
     <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
@@ -84,3 +79,28 @@ const RuleEditor = () => {
 };
 
 export default withErrorBoundary(RuleEditor, { style: 'page' });
+
+function useRuleEditorPathParams() {
+  const params = useParams<RuleEditorPathParams>();
+  const { type } = params;
+  const id = ruleId.getRuleIdFromPathname(params);
+  const identifier = ruleId.tryParse(id, true);
+
+  return { identifier, type };
+}
+
+function useRuleEditorQueryParams() {
+  const { type } = useParams<RuleEditorPathParams>();
+
+  const [searchParams] = useURLSearchParams();
+  const copyFromId = searchParams.get('copyFrom') ?? undefined;
+  const copyFromIdentifier = ruleId.tryParse(copyFromId);
+
+  const ruleType = translateRouteParamToRuleType(type);
+
+  const queryDefaults = searchParams.has('defaults')
+    ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
+    : undefined;
+
+  return { copyFromIdentifier, queryDefaults };
+}

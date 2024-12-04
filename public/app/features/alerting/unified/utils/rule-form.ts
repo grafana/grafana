@@ -1,4 +1,4 @@
-import { clamp, omit } from 'lodash';
+import { clamp } from 'lodash';
 
 import {
   DataQuery,
@@ -41,6 +41,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
+import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
   AlertManagerManualRouting,
   ContactPoint,
@@ -79,6 +80,7 @@ const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unif
 const GROUP_EVALUATION_INTERVAL_LOWER_BOUND = safeParsePrometheusDuration('1m');
 const GROUP_EVALUATION_INTERVAL_UPPER_BOUND = Infinity;
 
+// TODO Try to move to rule-editor/formDefaults.ts
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
@@ -181,26 +183,6 @@ export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefine
     list.push({ key: '', value: '' });
   }
   return list;
-}
-
-//make sure default annotations are always shown in order even if empty
-export function normalizeDefaultAnnotations(annotations: KVObject[]) {
-  const orderedAnnotations = [...annotations];
-  const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
-
-  defaultAnnotationKeys.forEach((defaultAnnotationKey, index) => {
-    const fieldIndex = orderedAnnotations.findIndex((field) => field.key === defaultAnnotationKey);
-
-    if (fieldIndex === -1) {
-      //add the default annotation if abstent
-      const emptyValue = { key: defaultAnnotationKey, value: '' };
-      orderedAnnotations.splice(index, 0, emptyValue);
-    } else if (fieldIndex !== index) {
-      //move it to the correct position if present
-      orderedAnnotations.splice(index, 0, orderedAnnotations.splice(fieldIndex, 1)[0]);
-    }
-  });
-  return orderedAnnotations;
 }
 
 export function getNotificationSettingsForDTO(
@@ -899,21 +881,6 @@ function isPromQuery(model: AlertDataQuery): model is PromQuery {
 
 export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
   return 'expr' in model;
-}
-
-// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
-// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
-// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
-// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
-export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
-  return {
-    ...ruleDefinition,
-    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
-  };
-};
-
-export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
-  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }
 
 export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
