@@ -53,7 +53,6 @@ export function usePluginHooks<Signature>({
         hooks: [],
       };
     }
-
     for (const registryItem of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = registryItem;
 

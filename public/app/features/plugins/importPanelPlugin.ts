@@ -50,7 +50,6 @@ export function getPanelPluginMeta(id: string): PanelPluginMeta {
 
 export async function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
   const plugin = await getPanelPlugin(meta);
-  console.log(`registering hooks for plugin ${meta.id}: ${plugin.addedHooks}`);
   addedHooksRegistry.register({
     pluginId: meta.id,
     configs: plugin.addedHooks || [],

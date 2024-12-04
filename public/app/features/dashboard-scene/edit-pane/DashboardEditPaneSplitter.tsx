@@ -23,7 +23,7 @@ interface Props {
 
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
-  const { getRootProps, isDragActive, onPaste } = useDropAndPaste();
+  const { getRootProps, isDragActive, onPaste } = useDropAndPaste(dashboard);
   const styles = useStyles2(getStyles, headerHeight ?? 0, isDragActive);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 

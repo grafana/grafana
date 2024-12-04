@@ -429,7 +429,10 @@ export const getAppPluginConfigs = (pluginIds: string[] = []) =>
 export const getPluginConfigs = (pluginIds: string[] = []) => {
   const appConfigs = Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
   const panelConfigs = Object.values(config.panels).filter((panel) => pluginIds.includes(panel.id));
-  return [...appConfigs, ...panelConfigs];
+  const dsConfigs = Object.values(config.datasources)
+    .map((ds) => ds.meta)
+    .filter((ds) => pluginIds.includes(ds.id));
+  return [...appConfigs, ...panelConfigs, ...dsConfigs];
 };
 
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
@@ -452,9 +455,12 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
       return [...acc, id, ...getAppPluginDependencies(id)];
     }, []);
   const matchingPanels = Object.values(config.panels)
-    .filter((plugin) => plugin.extensions?.addedHooks?.some((link) => link.targets.includes(extensionPointId)))
+    .filter((plugin) => plugin.extensions?.addedHooks?.some((ext) => ext.targets.includes(extensionPointId)))
     .map((plugin) => plugin.id);
-  return [...matchingApps, ...matchingPanels];
+  const matchingDataSources = Object.values(config.datasources)
+    .filter((plugin) => plugin.meta.extensions?.addedHooks?.some((ext) => ext.targets.includes(extensionPointId)))
+    .map((plugin) => plugin.meta.id);
+  return [...matchingApps, ...matchingPanels, ...matchingDataSources];
 };
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
