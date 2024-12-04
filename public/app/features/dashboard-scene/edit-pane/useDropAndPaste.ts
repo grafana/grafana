@@ -54,17 +54,14 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         const text = clipboardData.getData('text/plain');
         for (const hook of pasteHooks) {
           const result = hook(text);
-          console.log(typeof result);
-          if (result != null) {
-            // need to construct new panel here to comply with instanceof
-            const panel = new VizPanel({
-              ...result.state,
+          if (result instanceof VizPanel) {
+            result.setState({
               titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
               menu: new VizPanelMenu({
                 $behaviors: [panelMenuBehavior],
               }),
             });
-            dashboard.addPanel(panel);
+            dashboard.addPanel(result);
           }
         }
         return;
