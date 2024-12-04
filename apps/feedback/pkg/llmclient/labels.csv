@@ -1,0 +1,31 @@
+Squad,Label
+Alerting,alerting
+BizApps,bizapps
+Dashboards,dashboards
+Data Viz,data-viz
+Grafana App Platform,grafana-app-platform
+Grafana Backend Group,grafana-backend-group
+Grafana Backend Services,grafana-backend-services
+Developer Enablement Squad,dev-enablement-squad
+Operator Experience,operator-experience
+Grafana Frontend Platform,grafana-frontend-platform
+Grafana Release Guild,grafana-release-guild
+Grafana Search and Storage,grafana-search-and-storage
+IAM - Identity,iam-identity
+IAM - Access,iam-access
+Explore Traces & Profiling,explore-traces-and-profiling
+Explore Logs,explore-logs
+Explore Metrics,explore-metrics
+AWS Data Sources,aws-datasources
+Partner Data Sources,partner-datasources
+OSS Big Tent Data Sources,oss-big-tent-datasources
+Enterprise Data Sources,enterprise-datasources
+Data Sources Core Services,datasources-core
+Plugins Catalog,plugins-catalog
+Plugins Platform,plugins-platform
+Product Management,product-mgmt
+Sharing,sharing
+UX,ux
+Docs,docs
+Community Support,community-support
+Dataplane WG,dataplane-wg

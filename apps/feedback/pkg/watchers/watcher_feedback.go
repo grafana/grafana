@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel"
+	"k8s.io/klog/v2"
 
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	githubClient "github.com/grafana/grafana/apps/feedback/pkg/githubclient"
+	"github.com/grafana/grafana/apps/feedback/pkg/llmclient"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,17 +23,23 @@ type FeedbackWatcher struct {
 	feedbackStore *resource.TypedStore[*feedback.Feedback]
 	cfg           *setting.Cfg
 	gitClient     *githubClient.GitHubClient
+	llmClient     *llmclient.LLMClient
 }
 
 func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*feedback.Feedback]) (*FeedbackWatcher, error) {
 	section := cfg.SectionWithEnvOverrides("feedback_button")
 	token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
 	gitClient := githubClient.NewGitHubClient(token, owner, repo)
+	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))}, cfg)
+	if err != nil {
+		klog.ErrorS(err, "failed to initialize llm client in feedback watcher, automated feedback triage will not work")
+	}
 
 	return &FeedbackWatcher{
 		feedbackStore: feedbackStore,
 		cfg:           cfg,
 		gitClient:     gitClient,
+		llmClient:     llmClient,
 	}, nil
 }
 
@@ -72,6 +80,23 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		}
 	}
 
+	// Create issue in Github
+	llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
+	var ssBody string
+	if object.Spec.ScreenshotUrl != nil {
+		ssBody = fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl)
+	} else {
+		ssBody = "no screenshot provided"
+	}
+	issue := githubClient.Issue{
+		Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
+		Body:   ssBody,
+		Labels: llmLabels,
+	}
+	if err := s.gitClient.CreateIssue(issue); err != nil {
+		return err
+	}
+
 	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
 }
@@ -86,24 +111,25 @@ func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew
 			rOld.GetStaticMetadata().Name, rOld.GetStaticMetadata().Namespace, rOld.GetStaticMetadata().Kind)
 	}
 
-	object, ok := rNew.(*feedback.Feedback)
+	_, ok = rNew.(*feedback.Feedback)
 	if !ok {
 		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
 			rNew.GetStaticMetadata().Name, rNew.GetStaticMetadata().Namespace, rNew.GetStaticMetadata().Kind)
 	}
 
-	// Create issue in Github
-	if object.Spec.ScreenshotUrl != nil {
-		screenshotURL := *object.Spec.ScreenshotUrl
-		issue := githubClient.Issue{
-			Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
-			Body:   fmt.Sprintf("![Screenshot](%s?raw=true)", screenshotURL),
-			Labels: []string{"P2"}, // TODO: make configurable out of objec spec?
-		}
-		if err := s.gitClient.CreateIssue(issue); err != nil {
-			return err
-		}
-	}
+	// // Create issue in Github
+	// llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
+	// if object.Spec.ScreenshotUrl != nil {
+	// 	screenshotURL := *object.Spec.ScreenshotUrl
+	// 	issue := githubClient.Issue{
+	// 		Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
+	// 		Body:   fmt.Sprintf("![Screenshot](%s?raw=true)", screenshotURL),
+	// 		Labels: llmLabels,
+	// 	}
+	// 	if err := s.gitClient.CreateIssue(issue); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	logging.FromContext(ctx).Debug("Updated resource", "name", oldObject.GetStaticMetadata().Identifier().Name)
 	return nil
