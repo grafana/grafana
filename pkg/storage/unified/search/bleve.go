@@ -55,7 +55,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Regi
 	}
 
 	if reg != nil {
-		err := reg.Register(resource.NewIndexMetrics(opts.Root, b))
+		err := reg.Register(NewIndexMetrics(opts.Root, b))
 		if err != nil {
 			b.log.Warn("failed to register metrics", "error", err)
 		}
@@ -110,10 +110,10 @@ func (b *BleveBackend) BuildIndex(ctx context.Context,
 		if err == nil {
 			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
-		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
+		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
+		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err

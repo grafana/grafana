@@ -1,4 +1,4 @@
-package resource
+package search
 
 import (
 	"os"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -17,7 +18,7 @@ var (
 
 type BleveIndexMetrics struct {
 	IndexDir string
-	Backend  SearchBackend
+	Backend  resource.SearchBackend
 
 	// metrics
 	IndexLatency      *prometheus.HistogramVec
@@ -30,7 +31,7 @@ type BleveIndexMetrics struct {
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
-func NewIndexMetrics(indexDir string, searchBackend SearchBackend) *BleveIndexMetrics {
+func NewIndexMetrics(indexDir string, searchBackend resource.SearchBackend) *BleveIndexMetrics {
 	onceIndex.Do(func() {
 		IndexMetrics = &BleveIndexMetrics{
 			IndexDir: indexDir,
