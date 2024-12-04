@@ -65,11 +65,6 @@ func ProvideRegisterer() prometheus.Registerer {
 	return legacyregistry.Registerer()
 }
 
-// ProvideGatherer returns a prometheus.Gatherer that is Grafana's custom Gatherer.
-func ProvideGatherer() prometheus.Gatherer {
-	return legacyregistry.DefaultGatherer
-}
-
 // ProvideMultiGatherer returns a prometheus.Gatherer that combines Grafana's custom Gatherer and
 // the prometheus.DefaultGatherer.
 func ProvideMultiGatherer() prometheus.Gatherer {
