@@ -2,29 +2,38 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { Feedback } from '../../../../apps/feedback/plugin/src/feedback/v0alpha1/feedback_object_gen';
+import { Spec as FeedbackSpec } from '../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { ScopedResourceClient } from '../apiserver/client';
 import { ResourceForCreate, ResourceClient } from '../apiserver/types';
 
 class K8sAPI {
-  readonly server: ResourceClient<Feedback>;
+  private readonly server: ResourceClient<FeedbackSpec>;
 
   constructor() {
-    this.server = new ScopedResourceClient<Feedback>({
+    this.server = new ScopedResourceClient<FeedbackSpec>({
       group: 'feedback.grafana.app',
       version: 'v0alpha1',
       resource: 'feedbacks',
     });
   }
 
-  async createFeedback(feedback: ResourceForCreate<Feedback>): Promise<void> {
+  async createFeedback(feedback: FeedbackSpec): Promise<void> {
     await withErrorHandling(async () => {
-      await this.server.create(feedback);
+      const fullFeedback: ResourceForCreate<FeedbackSpec, string> = {
+        metadata: {
+          generateName: 'feedback-', // the prefix. apiserver will generate the trailing random characters.
+        },
+        spec: {
+          ...feedback, 
+        },
+      };
+
+      await this.server.create(fullFeedback);
     });
   }
 }
 
-async function withErrorHandling(apiCall: () => Promise<void>, message = 'Feedback saved') {
+async function withErrorHandling(apiCall: () => Promise<void>, message = 'Your feedback was received. Thank you!') {
   try {
     await apiCall();
     dispatch(notifyApp(createSuccessNotification(message)));

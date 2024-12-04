@@ -89,12 +89,12 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 }
 
 // UploadImage uploads an image in the Github repository
-func (c *GitHubClient) UploadImage(imageUuid string, screenshotData []byte) (string, error) {
+func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screenshotData []byte) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/contents/images/%s.png", c.BaseURL, c.Owner, c.Repo, imageUuid)
 
 	// Build the image commit
 	imageCommit := ImageCommit{
-		Message: fmt.Sprintf("commit message for %s.png", imageUuid),
+		Message: fmt.Sprintf("commit message for %s.%s", imageUuid, *imageType),
 		Content: base64.StdEncoding.EncodeToString(screenshotData),
 	}
 

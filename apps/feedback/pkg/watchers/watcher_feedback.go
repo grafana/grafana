@@ -47,15 +47,24 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 
 	// Upload image to Github
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
-	if section.Key("upload_to_github").MustBool(false) &&
-		object.Spec.ScreenshotUrl == "" { // So we don't spam when there are errors... obviously should figure out something better
+	if section.Key("upload_to_github").MustBool(false) && object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 { // So we don't spam when there are errors... obviously should figure out something better
 		imageUuid := uuid.NewString()
 
-		screenshotUrl, err := s.gitClient.UploadImage(imageUuid, object.Spec.Screenshot)
+		imageType := object.Spec.ImageType
+		if imageType == nil || *imageType == "" {
+			defaultImageType := "png"
+			imageType = &defaultImageType
+		}
+
+		screenshotUrl, err := s.gitClient.UploadImage(imageUuid, imageType, object.Spec.Screenshot)
 		if err != nil {
 			return err
 		}
-		object.Spec.ScreenshotUrl = screenshotUrl
+		object.Spec.ScreenshotUrl = &screenshotUrl
+
+		// Clean it up, since we dont need it anymore
+		object.Spec.Screenshot = nil
+		object.Spec.ImageType = nil
 
 		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
 			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
