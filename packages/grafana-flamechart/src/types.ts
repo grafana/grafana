@@ -31,9 +31,15 @@ export interface RenderItem<T> {
   y: number;
 }
 
+export interface ParallelConnector<T> {
+  parent: RenderItem<T>;
+  child: RenderItem<T>;
+}
+
 export interface RenderContainer<T> {
   fromMs: number;
   toMs: number;
   height: number;
   items: Array<RenderItem<T>>;
+  connectors: Array<ParallelConnector<T>>;
 }

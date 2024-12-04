@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
-import { FlameChartContainer, RenderContainer, RenderItem } from '../types';
+import { FlameChartContainer, ParallelConnector, RenderContainer, RenderItem } from '../types';
 import { findMaxBounds } from '../utils/operation';
+import { mapTree } from '../utils/tree';
 
 import { betterVerticalLayout } from './verticalLayoutAlgos/betterVerticalLayout';
 
@@ -23,6 +24,7 @@ const EMPTY_RENDER_CONTAINER: RenderContainer<any> = {
   toMs: 0,
   height: 0,
   items: [],
+  connectors: [],
 };
 
 export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderContainer<T> {
@@ -32,7 +34,7 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
     verticalGapPx,
     heightPx,
     containerSize,
-    container: { operations },
+    container: { operations, getOperationId },
   } = options;
 
   const [minMs, maxMs] = useMemo(
@@ -54,10 +56,10 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
 
   const pxPerMs = containerSize.width / viewDuration;
 
-  const operationList = useMemo(() => betterVerticalLayout(operations), [operations]);
+  const operationsWithLevel = useMemo(() => betterVerticalLayout(operations), [operations]);
 
   return useMemo(() => {
-    console.log('renderItems', operationList);
+    console.log('renderItems', operationsWithLevel);
 
     if (!(toMs > fromMs) || !containerSize.width || fromMs === 0) {
       return EMPTY_RENDER_CONTAINER;
@@ -65,19 +67,36 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
 
     let maxY = 0;
 
-    const renderItems: Array<RenderItem<T>> = operationList.map((operation) => {
+    const opIdToRenderItem: Record<string, RenderItem<T>> = {};
+
+    const connectors: Array<ParallelConnector<T>> = [];
+
+    const renderItems: Array<RenderItem<T>> = mapTree(operationsWithLevel, (operation) => {
       const x = Math.floor((operation.operation.startMs - fromMs) * pxPerMs);
       const width = Math.max(Math.floor(operation.operation.durationMs * pxPerMs), 2);
       const y = Math.floor(
         operation.level * (heightPx ?? DEFAULT_HEIGHT_PX) + operation.level * (verticalGapPx ?? DEFAULT_VERTICAL_GAP_PX)
       );
       maxY = Math.max(maxY, y);
-      return {
+      const renderItem: RenderItem<T> = {
         operation: operation.operation,
         x,
         y,
         width,
       };
+      opIdToRenderItem[getOperationId(operation.operation.entity)] = renderItem;
+
+      if (operation.parent && operation.level - operation.parent.level > 1) {
+        const renderParent = opIdToRenderItem[getOperationId(operation.parent.operation.entity)];
+        if (renderParent) {
+          connectors.push({
+            parent: renderParent,
+            child: renderItem,
+          });
+        }
+      }
+
+      return renderItem;
     });
 
     return {
@@ -85,6 +104,7 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
       toMs,
       height: maxY + (heightPx ?? DEFAULT_HEIGHT_PX),
       items: renderItems,
+      connectors,
     };
-  }, [fromMs, toMs, operationList, heightPx, verticalGapPx, pxPerMs, containerSize.width]);
+  }, [fromMs, toMs, operationsWithLevel, heightPx, verticalGapPx, getOperationId, pxPerMs, containerSize.width]);
 }

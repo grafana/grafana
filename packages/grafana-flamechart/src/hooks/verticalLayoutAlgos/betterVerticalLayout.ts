@@ -35,7 +35,7 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
     return level;
   }
 
-  function assignLevel(op: Operation<T>, parent?: OperationWithLevel<T>) {
+  function assignLevel(op: Operation<T>, parent?: OperationWithLevel<T>): OperationWithLevel<T> {
     let level = parent ? parent.level + 1 : 0;
 
     // if this is nth-child of the parent, check that we're free to place it and it's first-child-based-subtree
@@ -77,7 +77,5 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
     return operationWithLevel;
   }
 
-  operations.forEach((op) => assignLevel(op));
-
-  return Object.values(level2ops).flat();
+  return operations.map((op) => assignLevel(op));
 }

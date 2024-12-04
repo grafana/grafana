@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { FlameChartNode } from './FlameChartNode';
+import { ParallelGuideline } from './ParallelGuideline';
 import { useRenderItems } from './hooks/useRenderItems';
 import { FlameChartContainer } from './types';
 
@@ -28,6 +29,13 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
     <div ref={sizeRef} style={{ height: `${renderItems.height}px` }} className={styles.container}>
       {renderItems.items.map((item) => (
         <FlameChartNode key={container.getOperationId(item.operation.entity)} container={container} renderItem={item} />
+      ))}
+      {renderItems.connectors.map((connector, index) => (
+        <ParallelGuideline
+          connector={connector}
+          container={container}
+          key={`${container.getOperationId(connector.parent.operation.entity)}-${container.getOperationId(connector.child.operation.entity)}`}
+        />
       ))}
     </div>
   );
