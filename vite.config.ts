@@ -1,14 +1,17 @@
+import { getPackagesSync } from '@manypkg/get-packages';
 import react from '@vitejs/plugin-react-swc';
 import { move, remove } from 'fs-extra';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
+import { defineConfig, splitVendorChunkPlugin, createLogger } from 'vite';
 import EnvironmentPlugin from 'vite-plugin-environment';
 
 const require = createRequire(import.meta.url);
 const shouldMinify = process.env.NO_MINIFY === '1' ? false : 'esbuild';
+
+const allWorkspaceDependencies = getAllWorkspaceDependencies();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
@@ -57,6 +60,7 @@ export default defineConfig(({ command }) => ({
       '@kusto/language-service/bridge.min',
       'jquery',
     ],
+    exclude: [...allWorkspaceDependencies],
   },
   resolve: {
     alias: [
@@ -161,4 +165,36 @@ function moveAssets() {
       }
     },
   };
+}
+
+/**
+ * For a given package, get all deps/dev dependencies that are workspace packages
+ * so we can make sure to not optimise them away in the build
+ */
+function getWorkspaceDependencies(deps: Record<string, string>) {
+  const initial: string[] = [];
+  return Object.entries(deps).reduce((acc, [name, version]) => {
+    if (version.startsWith('workspace:')) {
+      acc.push(name);
+    }
+    return acc;
+  }, initial);
+}
+
+/**
+ * Get a unique list of all workspace dependencies/devDependencies that are linked in to the workspace
+ */
+function getAllWorkspaceDependencies() {
+  const { packages } = getPackagesSync(process.cwd());
+
+  const INITIAL_DEPS: string[] = [];
+  const allDeps = packages.reduce((acc, { packageJson }) => {
+    return [
+      ...acc,
+      ...getWorkspaceDependencies(packageJson.dependencies || {}),
+      ...getWorkspaceDependencies(packageJson.devDependencies || {}),
+    ];
+  }, INITIAL_DEPS);
+
+  return [...new Set(allDeps)];
 }
