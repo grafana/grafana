@@ -12,6 +12,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
+import { UserCommands } from './UserCommands';
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';
 import UserSessions from './UserSessions';
@@ -96,6 +97,10 @@ export function UserProfileEditPage({
       id: GENERAL_SETTINGS_TAB,
       title: t('user-profile.tabs.general', 'General'),
     },
+    {
+      id: 'commands',
+      title: 'Commands',
+    },
     ...Object.keys(groupedExtensionComponents).map((title) => ({
       id: convertExtensionComponentTitleToTabId(title),
       title,
@@ -135,6 +140,7 @@ export function UserProfileEditPage({
         </TabsBar>
         <TabContent>
           {activeTab === GENERAL_SETTINGS_TAB && <UserProfile />}
+          {activeTab === 'commands' && <UserCommands />}
           {Object.entries(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
             const tabId = convertExtensionComponentTitleToTabId(title);
 
