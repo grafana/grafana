@@ -3,12 +3,13 @@
 
 import { css, cx } from '@emotion/css';
 import { motion } from 'motion/react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
 
 import { CommandPaletteDividerItem, CommandPaletteItem } from './types';
+import { useActiveIndex } from './useActiveIndex';
 import { useActiveKeys } from './useActiveKeys';
 import { useNavItems } from './useNavItems';
 import { useRecentDashboards } from './useRecentDashboards';
@@ -58,17 +59,52 @@ export function CommandPalette2() {
       return items;
     }
 
-    return items.filter((item) => {
-      if (item.type === 'divider') {
-        return true;
-      }
+    return (
+      items
+        .filter((item) => {
+          if (item.type === 'divider') {
+            return true;
+          }
 
-      return (
-        item.title.toLowerCase().includes(inputValue.toLowerCase()) ||
-        item.subtitle?.toLowerCase().includes(inputValue.toLowerCase())
-      );
-    });
+          return (
+            item.title.toLowerCase().includes(inputValue.toLowerCase()) ||
+            item.subtitle?.toLowerCase().includes(inputValue.toLowerCase())
+          );
+        })
+        // Filter out consecutive dividers
+        .filter((item, index, all) => {
+          const nextItem = all[index + 1];
+          if (item.type === 'divider' && nextItem?.type === 'divider') {
+            return false;
+          }
+          return true;
+        })
+    );
   }, [inputValue, items]);
+
+  const activeIndex = useActiveIndex(filteredItems);
+  const activeItemYPos = useMemo(() => {
+    const itemsBefore = filteredItems.slice(0, activeIndex);
+    const yPos = itemsBefore.reduce((acc, item) => {
+      return acc + (item.type === 'divider' ? 18.85 : 54);
+    }, 0);
+    return yPos;
+  }, [filteredItems, activeIndex]);
+
+  const scrollingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollingRef.current) {
+      return;
+    }
+
+    const itemsBefore = filteredItems.slice(0, Math.max(activeIndex - 2, 0));
+    const yPos = itemsBefore.reduce((acc, item) => {
+      return acc + (item.type === 'divider' ? 18.85 : 54);
+    }, 0);
+
+    scrollingRef.current.scrollTo({ top: yPos, behavior: 'smooth' });
+  }, [activeItemYPos, activeIndex, filteredItems]);
 
   return (
     <Portal>
@@ -95,12 +131,14 @@ export function CommandPalette2() {
             </div>
           </div>
 
-          <div className={styles.mainCell}>
+          <div className={styles.mainCell} ref={scrollingRef}>
+            <motion.div animate={{ y: activeItemYPos }} className={styles.highlightBg} />
+
             {filteredItems.map((item, idx) => {
-              const nextItem = filteredItems[idx + 1];
-              if (item.type === 'divider' && nextItem?.type === 'divider') {
-                return null;
-              }
+              // const nextItem = filteredItems[idx + 1];
+              // if (item.type === 'divider' && nextItem?.type === 'divider') {
+              //   return null;
+              // }
 
               if (item.type === 'divider') {
                 return (
@@ -112,15 +150,21 @@ export function CommandPalette2() {
               }
 
               return (
-                <div key={idx} className={styles.resultItem}>
-                  <Icon name={item.icon} />
+                <motion.div
+                  key={idx}
+                  className={styles.resultItem}
+                  animate={{ color: idx === activeIndex ? '#FFFFFF' : '#C4C4CB' }}
+                >
+                  <motion.div animate={{ color: idx === activeIndex ? '#FFFFFF' : '#75757D' }}>
+                    <Icon name={item.icon} />
+                  </motion.div>
                   <div>{item.title}</div>
                   {item.parentTitle && (
                     <div>
                       {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
                     </div>
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -211,6 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     mainCell: css({
+      position: 'relative',
       padding: theme.spacing(1, 3),
       gridArea: 'main',
       overflow: 'auto',
@@ -268,6 +313,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2, 0),
       color: '#9898A4',
       fontSize: 14,
+      position: 'relative',
+      zIndex: 2,
     }),
 
     dividerItem: css({
@@ -275,9 +322,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(3),
       alignItems: 'center',
-      color: '#4F4F5D',
+      color: '#75757D',
       fontWeight: 500,
       fontSize: 12,
+      position: 'relative',
+      zIndex: 2,
     }),
 
     dividerDivider: css({
@@ -285,6 +334,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       background: 'rgba(44, 44, 57, 0.40)',
       flex: 1,
+    }),
+
+    highlightBg: css({
+      position: 'absolute',
+      top: 8, // should match padding on result cell
+      height: 54,
+      left: 8,
+      right: 8,
+      background: '#45454d4d',
+      borderRadius: 6,
+      zIndex: 1,
     }),
   };
 };
