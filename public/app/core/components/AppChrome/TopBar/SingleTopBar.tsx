@@ -22,6 +22,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
+import { ReportIssueButton } from '../ReportIssueButton/ReportIssueButton';
 
 export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
 
@@ -72,6 +73,7 @@ export const SingleTopBar = memo(function SingleTopBar({
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
+        <ReportIssueButton />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
