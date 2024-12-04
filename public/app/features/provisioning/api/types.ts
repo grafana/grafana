@@ -1,3 +1,5 @@
+import { AlertVariant } from '@grafana/ui';
+
 import { Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
 
 export type GitHubRepositoryConfig = {
@@ -69,9 +71,16 @@ export type WebhookResponse = {
 };
 
 export type ResourceObjects = {
-  dryRun?: any;
-  file?: any;
-  store?: any;
+  type?: {
+    group?: string;
+    version?: string;
+    kind?: string;
+    resource?: string;
+    classic?: string;
+  };
+  file?: Resource;
+  existing?: Resource;
+  dryRun?: Resource;
 };
 
 export type ResourceWrapper = {
@@ -81,8 +90,15 @@ export type ResourceWrapper = {
   hash?: string;
   path?: string;
   ref?: string;
-  resource: ResourceObjects;
   timestamp?: string;
+  resource: ResourceObjects;
+  lint?: LintResult[];
+};
+
+export type LintResult = {
+  severity: AlertVariant; // mostly true!
+  rule: string;
+  message: string;
 };
 
 export type FileOperationArg = {
@@ -104,4 +120,24 @@ export type ListFilesApiResponse = {
   files?: any[];
   kind?: string;
   metadata?: any;
+};
+
+export type HistoryListResponse = {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: any;
+  items?: HistoryItem[];
+};
+
+export type HistoryItem = {
+  ref: string;
+  message: string;
+  createdAt?: number;
+  authors: AuthorInfo[];
+};
+
+export type AuthorInfo = {
+  name: string;
+  username: string;
+  avatarURL?: string;
 };
