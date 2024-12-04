@@ -43,4 +43,15 @@ describe('DynamicHeading', () => {
     );
     expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument();
   });
+
+  it('should render siblings on the same level', () => {
+    render(
+      <main>
+        <h1>Main heading</h1>
+        <DynamicHeading>heading 1</DynamicHeading>
+        <DynamicHeading>heading 2</DynamicHeading>
+      </main>
+    );
+    expect(screen.getAllByRole('heading', { level: 2 }).length).toBe(2);
+  });
 });
