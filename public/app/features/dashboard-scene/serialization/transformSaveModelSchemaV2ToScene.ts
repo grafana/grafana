@@ -63,7 +63,8 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
@@ -217,13 +218,12 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     titleItems.push(new AngularDeprecation());
   }
 
-  // FIXME: Links in a panel are DashboardLinks not DataLinks
-  // titleItems.push(
-  //   new VizPanelLinks({
-  //     rawLinks: panel.spec.links,
-  //     menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-  //   })
-  // );
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.spec.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 

@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash';
 
 import { config } from '@grafana/runtime';
-import { behaviors, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { behaviors, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { VizPanelLinks } from '../scene/PanelLinks';
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -107,6 +108,10 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
     expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
     expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
+    const titleItems = vizPanel.state.titleItems as SceneObject[];
+    const vizPanelLinks = titleItems[0] as VizPanelLinks;
+    expect(vizPanelLinks.state.rawLinks).toHaveLength(dash.elements['test-panel-uid'].spec.links.length);
+    expect(vizPanelLinks.state.rawLinks).toEqual(dash.elements['test-panel-uid'].spec.links);
 
     // FIXME: There is an error of data being undefined
     // expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
