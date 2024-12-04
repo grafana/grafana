@@ -75,21 +75,22 @@ export const TimeSeriesTooltip = ({
 
   let footer: ReactNode;
 
-  const field = series.fields[seriesIdx!];
-
-  if ((isPinned && field) || (field && field.config.oneClickMode !== OneClickMode.Off)) {
-    const dataIdx = dataIdxs[seriesIdx!]!;
+  if (seriesIdx != null) {
+    const field = series.fields[seriesIdx];
+    const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
     const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
 
-    footer = (
-      <VizTooltipFooter
-        dataLinks={links}
-        actions={actions}
-        annotate={annotate}
-        oneClickMode={field.config.oneClickMode}
-      />
-    );
+    if (isPinned || field.config.oneClickMode !== OneClickMode.Off) {
+      footer = (
+        <VizTooltipFooter
+          dataLinks={links}
+          actions={actions}
+          annotate={annotate}
+          oneClickMode={field.config.oneClickMode}
+        />
+      );
+    }
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
