@@ -269,6 +269,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 			return
 		}
 		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+	default:
+		// do nothing
+		s.log.Warn("unknown watch event", "type", evt.Type)
 	}
 
 	// record latency from when event was created to when it was indexed
