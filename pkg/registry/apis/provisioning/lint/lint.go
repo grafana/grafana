@@ -9,3 +9,9 @@ import (
 type Linter interface {
 	Lint(ctx context.Context, data []byte) ([]provisioning.LintIssue, error)
 }
+
+type LinterFactory interface {
+	ConfigPath() string
+	NewFromConfig(cfg []byte) (Linter, error)
+	New() (Linter, error)
+}

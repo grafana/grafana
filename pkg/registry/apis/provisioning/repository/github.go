@@ -25,12 +25,12 @@ import (
 )
 
 type githubRepository struct {
-	logger   *slog.Logger
-	config   *provisioning.Repository
-	gh       pgh.Client
-	baseURL  *url.URL
-	linter   lint.Linter
-	renderer PreviewRenderer
+	logger        *slog.Logger
+	config        *provisioning.Repository
+	gh            pgh.Client
+	baseURL       *url.URL
+	linterFactory lint.LinterFactory
+	renderer      PreviewRenderer
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -40,16 +40,16 @@ func NewGitHub(
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
 	baseURL *url.URL,
-	linter lint.Linter,
+	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
 ) *githubRepository {
 	return &githubRepository{
-		config:   config,
-		logger:   slog.Default().With("logger", "github-repository"),
-		gh:       factory.New(ctx, config.Spec.GitHub.Token),
-		baseURL:  baseURL,
-		linter:   linter,
-		renderer: renderer,
+		config:        config,
+		logger:        slog.Default().With("logger", "github-repository"),
+		gh:            factory.New(ctx, config.Spec.GitHub.Token),
+		baseURL:       baseURL,
+		linterFactory: linterFactory,
+		renderer:      renderer,
 	}
 }
 
@@ -681,7 +681,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 var lintDashboardIssuesTemplate = `Hey there! 👋
 Grafana found some linting issues in this dashboard you may want to check:
 {{ range .}}
-{{ if eq .Severity 4 }}❌{{ else if eq .Severity 3 }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
+{{ if eq .Severity "error" }}❌{{ else if eq .Severity "warning" }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
 {{- end }}
 `
 
@@ -695,6 +695,22 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 
 	logger.InfoContext(ctx, "lint pull request")
 
+	// Load linter config
+	cfg, err := r.Read(ctx, logger, r.linterFactory.ConfigPath(), ref)
+	switch {
+	case err == nil:
+		logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+	case errors.Is(err, pgh.ErrResourceNotFound):
+		logger.InfoContext(ctx, "no linter config found")
+	default:
+		return fmt.Errorf("read linter config: %w", err)
+	}
+
+	linter, err := r.linterFactory.NewFromConfig(cfg.Data)
+	if err != nil {
+		return fmt.Errorf("create linter: %w", err)
+	}
+
 	// Clear all previous comments because we don't know if the files have changed
 	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber); err != nil {
 		return fmt.Errorf("clear pull request comments: %w", err)
@@ -706,7 +722,7 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 		}
 
 		logger := logger.With("file", resource.Path)
-		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource); err != nil {
+		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, linter); err != nil {
 			logger.ErrorContext(ctx, "failed to lint file", "error", err)
 		}
 	}
@@ -715,8 +731,8 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 }
 
 // lintPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource) error {
-	issues, err := r.linter.Lint(ctx, resource.Data)
+func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, linter lint.Linter) error {
+	issues, err := linter.Lint(ctx, resource.Data)
 	if err != nil {
 		return fmt.Errorf("lint file: %w", err)
 	}

@@ -8,10 +8,35 @@ import (
 
 	"github.com/grafana/dashboard-linter/lint"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"gopkg.in/yaml.v3"
 )
+
+type DashboardLinterFactory struct{}
+
+func NewDashboardLinterFactory() *DashboardLinterFactory {
+	return &DashboardLinterFactory{}
+}
+
+func (f *DashboardLinterFactory) New() (Linter, error) {
+	return &DashboardLinter{rules: lint.NewRuleSet()}, nil
+}
+
+func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {
+	var lintCfg lint.ConfigurationFile
+	if err := yaml.Unmarshal(cfg, &lintCfg); err != nil {
+		return nil, fmt.Errorf("unmarshal linter config: %w", err)
+	}
+
+	return &DashboardLinter{rules: lint.NewRuleSet(), cfg: lintCfg}, nil
+}
+
+func (f *DashboardLinterFactory) ConfigPath() string {
+	return ".dashboard-lint"
+}
 
 type DashboardLinter struct {
 	rules lint.RuleSet
+	cfg   lint.ConfigurationFile
 }
 
 // FIXME: what would be a good place to put all the schema validation?
@@ -39,6 +64,8 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisio
 	if err != nil {
 		return nil, fmt.Errorf("failed to lint dashboard: %v", err)
 	}
+
+	results.Configure(&l.cfg)
 
 	byRule := results.ByRule()
 	rules := make([]string, 0, len(byRule))
