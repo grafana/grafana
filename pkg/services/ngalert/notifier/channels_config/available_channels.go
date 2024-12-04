@@ -1704,7 +1704,6 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Name:        "Grafana On-Call Escalation Chain",
 			Description: "Sends notifications to selected Escalation Chains",
 			Heading:     "Settings",
-			Info:        "Notifications can be configured for any Cisco Webex Teams",
 			Options: []NotifierOption{
 				{
 					Label:        "API URL",
@@ -1722,7 +1721,35 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  "FQZ9G4XHM34P6",
 					PropertyName: "escalation_chain_id",
-					Required:     true,
+				},
+				{
+					Label:        "Slack Channel",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "slack_channel_id",
+					Placeholder:  "",
+				},
+				{
+					Label:        "MS Team Channel",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "ms_teams_channel_id",
+					Placeholder:  "",
+				},
+				{
+					Label:        "Telegram Channel",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "telegram_channel_id",
+					Placeholder:  "",
+				},
+				{
+					Label:        "Team",
+					Description:  "Templated title of the message.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "team_name",
+					Placeholder:  "",
 				},
 				{
 					Label:        "Title",
