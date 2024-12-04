@@ -13,12 +13,14 @@ import {
   FrameGeometrySourceMode,
   EventBus,
 } from '@grafana/data';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
+import { prepareSVG } from '../../style/markers';
 import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -72,30 +74,23 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     };
 
     const style = await getStyleConfigState(config.style);
+    //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
+    const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
 
-    // TODO custom icon options and alignment
-    const newStyle = {
+    // TODO support alignment
+    const vectorStyle = {
       symbol: {
         symbolType: 'image',
         size: ['get', 'size', 'number'],
         color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
         rotation: ['get', 'rotation', 'number'],
         opacity: ['get', 'opacity', 'number'],
-        src: '../../../../../../../public/img/icons/marker/plane.svg',
-      },
-    };
-    const styleTriangle = {
-      symbol: {
-        symbolType: 'triangle',
-        size: ['get', 'size', 'number'],
-        color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
-        rotation: ['get', 'rotation', 'number'],
-        opacity: ['get', 'opacity', 'number'],
+        src,
       },
     };
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
-    const vectorLayer = new WebGLPointsLayer({ source, style: styleTriangle });
+    const vectorLayer = new WebGLPointsLayer({ source, style: vectorStyle });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
     let legend: ReactNode = null;
