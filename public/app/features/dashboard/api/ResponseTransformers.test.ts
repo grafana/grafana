@@ -1,4 +1,4 @@
-import { DashboardCursorSync, DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDTO } from 'app/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
@@ -94,6 +94,20 @@ describe('ResponseTransformers', () => {
   });
 
   describe('v2 transformation', () => {
+    it('should return the same object if it is already a DashboardDTO', () => {
+      const dashboard: DashboardDTO = {
+        dashboard: {
+          schemaVersion: 1,
+          title: 'Dashboard Title',
+          uid: 'dashboard1',
+          version: 1,
+        },
+        meta: {},
+      };
+
+      expect(ResponseTransformers.transformV2ToV1(dashboard)).toBe(dashboard);
+    });
+
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
         apiVersion: 'v2alpha1',
@@ -115,7 +129,7 @@ describe('ResponseTransformers', () => {
           description: 'Dashboard Description',
           tags: ['tag1', 'tag2'],
           schemaVersion: 1,
-          cursorSync: DashboardCursorSync.Off,
+          cursorSync: 'Off',
           preload: true,
           liveNow: false,
           editable: true,

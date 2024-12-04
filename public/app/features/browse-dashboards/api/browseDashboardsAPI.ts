@@ -268,6 +268,7 @@ export const browseDashboardsAPI = createApi({
             folderUid: destinationUID,
             overwrite: false,
             message: '',
+            // TODO[schema v2]: save commmand should accept either v1 or v2
             dashboard: ResponseTransformers.transformV2ToV1(dashDto).dashboard,
           };
 
