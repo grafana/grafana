@@ -136,8 +136,16 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 					expectedFor, _ := parseDurationOrDefault(promRule.For, 0)
 					assert.Equal(t, expectedFor, grafanaRule.For, tc.name)
 				}
-				assert.Equal(t, promRule.Labels, grafanaRule.Labels, tc.name)
+
+				expectedLabels := make(map[string]string, len(promRule.Labels)+1)
+				for k, v := range promRule.Labels {
+					expectedLabels[k] = v
+				}
+				expectedLabels[models.PrometheusStyleRuleLabel] = "true"
+
+				assert.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
 				assert.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
+				assert.True(t, grafanaRule.Metadata.PrometheusStyleRule, tc.name)
 			}
 		})
 	}
