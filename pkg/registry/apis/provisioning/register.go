@@ -264,6 +264,7 @@ func (b *ProvisioningAPIBuilder) GetWebhook(ctx context.Context, name string) (w
 		replicator,
 		ghClient,
 		baseURL,
+		parser,
 		linterFactory,
 		b.renderer,
 	), nil

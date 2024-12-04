@@ -30,7 +30,6 @@ type PreviewRenderer interface {
 
 // FileReplicator is an interface for replicating files
 type FileReplicator interface {
-	Validate(ctx context.Context, fileInfo *repository.FileInfo) (bool, error)
 	Replicate(ctx context.Context, fileInfo *repository.FileInfo) error
 	Delete(ctx context.Context, fileInfo *repository.FileInfo) error
 }
@@ -41,6 +40,7 @@ type GithubWebhook struct {
 	gh            pgh.Client
 	baseURL       *url.URL
 	linterFactory lint.LinterFactory
+	parser        *resources.FileParser
 	renderer      PreviewRenderer
 }
 
@@ -49,6 +49,7 @@ func NewGithubWebhook(
 	replicator FileReplicator,
 	gh pgh.Client,
 	baseURL *url.URL,
+	parser *resources.FileParser,
 	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
 ) *GithubWebhook {
@@ -56,6 +57,7 @@ func NewGithubWebhook(
 		Repository:    repo,
 		replicator:    replicator,
 		baseURL:       baseURL,
+		parser:        parser,
 		linterFactory: linterFactory,
 		renderer:      renderer,
 	}
@@ -314,14 +316,16 @@ func (r *GithubWebhook) onPullRequestEvent(ctx context.Context, logger *slog.Log
 			continue
 		}
 
-		// TODO: how does this validation works vs linting?
-		ok, err := r.replicator.Validate(ctx, f)
+		// TODO: check if that parse is enough
+		// TODO: use parsed file
+		_, err = r.parser.Parse(ctx, logger, f, true)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to validate file", "error", err)
-			continue
-		}
-		if !ok {
-			logger.InfoContext(ctx, "ignore file as it is not a valid resource")
+			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+				logger.InfoContext(ctx, "ignore files as it does not contain a resource")
+				continue
+			}
+
+			logger.ErrorContext(ctx, "failed to parse file", "error", err)
 			continue
 		}
 

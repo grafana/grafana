@@ -65,7 +65,7 @@ func (c *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	// Get the repository with the worker identity (since the request user is likely anonymous)
+	// Get the webhook with the worker identity (since the request user is likely anonymous)
 	hook, err := c.getter.GetWebhook(identity.WithRequester(ctx, id), name)
 	if err != nil {
 		return nil, err

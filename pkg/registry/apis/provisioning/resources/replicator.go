@@ -150,25 +150,10 @@ func (r *Replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 	return nil
 }
 
-func (r *Replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo) (bool, error) {
-	if _, err := r.parseResource(ctx, fileInfo); err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}
-
 func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedFile, error) {
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
-	}
-
-	if file.GVR == nil {
-		return nil, errors.New("parsed file is missing GVR")
 	}
 
 	if file.Client == nil {
