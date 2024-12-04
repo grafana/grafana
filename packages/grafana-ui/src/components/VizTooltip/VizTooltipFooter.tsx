@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
 
-import { Button, DataLinkButton, Stack } from '..';
+import { Button, DataLinkButton, Icon, Stack } from '..';
 import { useStyles2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
@@ -11,11 +11,26 @@ interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
   annotate?: () => void;
+  oneClickMode?: OneClickMode;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
+const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>, oneClickEnabled = false) => {
+  if (oneClickEnabled) {
+    const primaryLink = dataLinks[0];
+
+    return (
+      <Stack direction="column" justifyContent="flex-start" gap={0.5}>
+        <span>
+          <Icon name="info-circle" size="sm" />
+          One-Click enabled
+        </span>
+        <span>Click on data point to navigate to {primaryLink.title}</span>
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" justifyContent="flex-start" gap={0.5}>
       {dataLinks.map((link, i) => (
@@ -35,12 +50,14 @@ const renderActions = (actions: ActionModel[]) => {
   );
 };
 
-export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, actions, annotate, oneClickMode }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
+      {dataLinks.length > 0 && (
+        <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles, oneClickMode === OneClickMode.Link)}</div>
+      )}
       {actions && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
       {annotate != null && (
         <div className={styles.addAnnotations}>
