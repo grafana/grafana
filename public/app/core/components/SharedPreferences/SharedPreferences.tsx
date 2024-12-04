@@ -126,17 +126,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
           category: 'IRM',
         },
       ];
-      await this.service.update({
-        homeDashboardUID,
-        theme,
-        timezone,
-        weekStart,
-        language,
-        queryHistory,
-        navbar,
+      await this.service.patch({
+        // homeDashboardUID,
+        // theme,
+        // timezone,
+        // weekStart,
+        // language,
+        // queryHistory,
+        // navbar,
         customCommands: mockedCommands,
       });
-      window.location.reload();
+      // window.location.reload();
     }
   };
 

@@ -31,13 +31,13 @@ export const defaultNavbarPreference: Partial<NavbarPreference> = {
 
 export interface CustomCommand {
   /**
+   * Unique identifier for the command
+   */
+  ID: string;
+  /**
    * Category for grouping commands
    */
   category?: string;
-  /**
-   * Unique identifier for the command
-   */
-  id: string;
   /**
    * Keywords associated with the command
    */

@@ -18,11 +18,11 @@ type CookiePreferences struct {
 
 // CustomCommand defines model for CustomCommand.
 type CustomCommand struct {
+	// Unique identifier for the command
+	ID string `json:"ID"`
+
 	// Category for grouping commands
 	Category *string `json:"category,omitempty"`
-
-	// Unique identifier for the command
-	Id string `json:"id"`
 
 	// Keywords associated with the command
 	Keywords []string `json:"keywords,omitempty"`

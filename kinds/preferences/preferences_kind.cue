@@ -57,7 +57,7 @@ lineage: schemas: [{
 
 		#CustomCommand: {
 			// Unique identifier for the command
-			id: string
+			ID: string
 
 			// Human-readable title of the command
 			title: string
