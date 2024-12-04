@@ -2288,6 +2288,24 @@ Force download of the public key for verifying plugin signature on startup. The 
 
 Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
 
+### preinstall
+
+Enter a comma-separated list of plugin identifiers to preinstall. These plugins will be installed on startup, using the Grafana catalog as the source. Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
+
+To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
+
+To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
+
+By default, Grafana preinstalls some suggested plugins. Check the default configuration file for the list of plugins.
+
+### preinstall_async
+
+By default, plugins are preinstalled asynchronously, as a background process. This means that Grafana will start up faster, but the plugins may not be available immediately. If you need a plugin to be installed for provisioning, set this option to `false`. This causes Grafana to wait for the plugins to be installed before starting up (and fail if a plugin can't be installed).
+
+### preinstall_disabled
+
+This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
+
 <hr>
 
 ## [live]
