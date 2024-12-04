@@ -197,7 +197,7 @@ func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeade
 
 	var hList = []string{dashboardTitleHeader, panelTitleHeader}
 
-	req.SetHTTPHeader("X-Query-No-Split", "")
+	req.SetHTTPHeader("X-Query-No-Split", "true")
 
 	for _, hName := range hList {
 		hVal := reqCtx.Req.Header.Get(hName)
