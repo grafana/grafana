@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig, splitVendorChunkPlugin, type PluginOption } from 'vite';
+import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import EnvironmentPlugin from 'vite-plugin-environment';
 
 const require = createRequire(import.meta.url);
@@ -44,7 +44,7 @@ export default defineConfig(({ command }) => ({
       NODE_ENV: command === 'build' ? 'production' : 'development',
     }),
     { ...moveAssets(), apply: 'build' },
-    { ...visualizer(), apply: 'build' } as PluginOption,
+    { ...visualizer(), apply: 'build' },
   ],
   optimizeDeps: {
     include: [
