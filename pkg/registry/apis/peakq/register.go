@@ -35,7 +35,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 		return nil // skip registration unless explicitly added (or all experimental are added)
 	}
 	builder := NewPeakQAPIBuilder()
-	apiregistration.RegisterAPI(NewPeakQAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
