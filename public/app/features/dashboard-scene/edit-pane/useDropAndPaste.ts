@@ -1,12 +1,20 @@
+import { DataFrame } from '@grafana/data';
 import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 import { ClipboardEvent, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { Observable } from 'rxjs';
+
+    export interface FileImportResult {
+      dataFrames: DataFrame[];
+      file: File;
+    }
 
 export function useDropAndPaste() {
 
-  const { hooks } = usePluginHooks<(data: File) => null>({
+
+  const { hooks } = usePluginHooks<(data: File) => Observable<FileImportResult>>({
     extensionPointId: 'dashboard/grid',
-    limitPerPlugin: 200,
+    limitPerPlugin: 1,
   });
 
   const onImportFile = useCallback((file?: File) => {
@@ -15,10 +23,11 @@ export function useDropAndPaste() {
     }
 
     for (const hook of hooks) {
-      hook(file);
+      const result = hook(file);
+      result.subscribe((x) => console.log(x));
     }
 
-    alert(`Importing file: ${file.name}`);
+    //alert(`Importing file: ${file.name}`);
   }, [hooks]);
 
 
