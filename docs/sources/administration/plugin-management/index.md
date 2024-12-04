@@ -66,7 +66,7 @@ To prevent users from seeing an app plugin, refer to [these permissions scenario
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}).
+The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 The following access rules apply depending on the user role:
 
@@ -230,11 +230,11 @@ If you're developing a plugin, then you can enable development mode to allow all
 
 ## Integrate plugins
 
-You can configure your Grafana instance to let the frontends of plugins directly communicate locally with the backends of other plugins. By default, you can only communicate with plugin backends remotely.
+You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. By default, you can only communicate with plugin backends remotely.
 
 To enable backend communication between plugins:
 
-1. Set the plugins you want to communicate between. In your configuration file (grafana.ini or custom.ini depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+1. Set the plugins you want to communicate with. In your configuration file (grafana.ini or custom.ini depending on your operating system) remove the semicolon to enable and then set the following configuration option:
 
    ```
    actions_allow_post_url=
@@ -253,6 +253,8 @@ To enable backend communication between plugins:
    ```
    actions_allow_post_url=/api/plugins/grafana-special-app
    ```
+
+   You can use this to, for example, enable a [canvas panel]({{< relref "../../panels-visualizations/visualizations/canvas" >}}) to call an application resource API that is permitted by the `actions_allow_post_url` option.
 
 ## Plugin Frontend Sandbox
 
