@@ -50,9 +50,8 @@ type TemplateData struct {
 	InstanceVersion        string
 	InstanceRunningVersion string
 
-	BrowserName    string
-	BrowserVersion string
-	PageURL        string
+	BrowserName string
+	PageURL     string
 
 	SnapshotURL string
 }

@@ -3,12 +3,20 @@
 {{ .WhatHappenedQuestion }}
 
 **Environment:**
-- Instance: 
-    - Slug: `{{ .InstanceSlug }}`
-    - Version: `{{ .InstanceVersion }}`
-    - Running version: `{{ .InstanceRunningVersion }}`
-- Browser: `{{ .BrowserName }}`
+{{ if .InstanceSlug }}
+- Slug: `{{ .InstanceSlug }}`
+{{ end }}
+{{ if .InstanceVersion }}
+- Version: `{{ .InstanceVersion }}`
+{{ end }}
+{{ if .InstanceRunningVersion }}
+- Running version: `{{ .InstanceRunningVersion }}`
+{{ end }}
+{{ if .BrowserName }}
+- Browser: {{ .BrowserName }}
+{{ end }}
 
+{{ if .Plugins }}
 <details>
 <summary>Datasources</summary>
 
@@ -19,7 +27,9 @@
 {{- end }}
 
 </details>
+{{- end }}
 
+{{ if .Plugins }}
 <details>
 <summary>Plugins</summary>
 
@@ -29,8 +39,9 @@
 | {{ .Name }} | {{ .Version }} | {{ .BuildDate }} |
 {{- end }}
 </details>
+{{- end }}
 
-
+{{ if .FeatureToggles }}
 <details>
 
 <summary>Feature toggles</summary>
@@ -42,7 +53,7 @@
 {{- end }}
 
 </details>
-
+{{- end }}
 
 **Screenshot:**
 {{.SnapshotURL}}

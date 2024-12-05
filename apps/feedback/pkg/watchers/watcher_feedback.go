@@ -237,7 +237,6 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 		InstanceVersion:        diagnostic.Instance.Edition,
 		InstanceRunningVersion: diagnostic.Instance.Version,
 		BrowserName:            diagnostic.Browser.UserAgent,
-		BrowserVersion:         diagnostic.Browser.UserAgent,
 		SnapshotURL:            snapshotURL,
 	}
 
