@@ -3,8 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
@@ -64,7 +63,8 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 		cmp.Reporter(&reporter),
 		cmpopts.EquateEmpty(),
 		cmpopts.IgnoreUnexported(labels.Matcher{}),
-		cmpopts.IgnoreUnexported(func(*http.Request) (*url.URL, error) { return nil, nil }),
+		cmp.Exporter(func(reflect.Type) bool { return true }),
+		//cmpopts.IgnoreUnexported(func(*http.Request) (*url.URL, error) { return nil, nil }),
 		cmp.Transformer("", func(regexp amConfig.Regexp) any {
 			r, _ := regexp.MarshalYAML()
 			return r
