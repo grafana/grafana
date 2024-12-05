@@ -143,9 +143,9 @@ const extDelimiter: FieldExtractor = {
     return (raw: string) => {
       // Try to split delimited values
       const parts = raw.split(splitRegExp);
-      const acc: Record<string, boolean> = {};
+      const acc: Record<string, number> = {};
       for (const part of parts) {
-        acc[part.trim()] = true;
+        acc[part.trim()] = 1;
       }
       return acc;
     };

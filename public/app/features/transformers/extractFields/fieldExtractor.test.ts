@@ -160,9 +160,9 @@ describe('Extract fields from text', () => {
 
       expect(out).toMatchInlineSnapshot(`
         {
-          "a": true,
-          "b": true,
-          "c": true,
+          "a": 1,
+          "b": 1,
+          "c": 1,
         }
       `);
     });
@@ -174,10 +174,10 @@ describe('Extract fields from text', () => {
 
       expect(out).toMatchInlineSnapshot(`
         {
-          "a": true,
-          "b": true,
-          "c": true,
-          "d": true,
+          "a": 1,
+          "b": 1,
+          "c": 1,
+          "d": 1,
         }
       `);
     });
