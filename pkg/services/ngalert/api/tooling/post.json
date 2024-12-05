@@ -4854,6 +4854,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -6437,6 +6438,71 @@
     "tags": [
      "prometheus"
     ]
+   }
+  },
+  "/ruler/grafana/api/prom/rules/{Namespace}": {
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "operationId": "RoutePostGrafanaRuleGroupCortexConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-datasource-uid",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-datasource-type",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-alert-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostablePrometheusRuleGroup"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "UpdateRuleGroupResponse",
+      "schema": {
+       "$ref": "#/definitions/UpdateRuleGroupResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Creates or updates a rule group in Prometheus format.",
+    "tags": [
+     "ruler"
+    ],
+    "x-raw-request": "true"
    }
   },
   "/ruler/grafana/api/v1/export/rules": {

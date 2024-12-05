@@ -126,7 +126,15 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
+func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupCortexConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	return f.postRuleGroupInPromFormat(ctx, namespace)
+}
+
 func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	return f.postRuleGroupInPromFormat(ctx, namespace)
+}
+
+func (f *RulerApiHandler) postRuleGroupInPromFormat(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		return errorToResponse(err)

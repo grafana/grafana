@@ -1221,6 +1221,71 @@
         }
       }
     },
+    "/ruler/grafana/api/prom/rules/{Namespace}": {
+      "post": {
+        "consumes": [
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Creates or updates a rule group in Prometheus format.",
+        "operationId": "RoutePostGrafanaRuleGroupCortexConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-uid",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-type",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-recording-rules-paused",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-alert-rules-paused",
+            "in": "header"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostablePrometheusRuleGroup"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "UpdateRuleGroupResponse",
+            "schema": {
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      }
+    },
     "/ruler/grafana/api/v1/export/rules": {
       "get": {
         "description": "List rules in provisioning format",
@@ -8735,6 +8800,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
