@@ -120,7 +120,7 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	}
 
 	// defaults
-	labels := []string{"type/unknown"}
+	labels := []string{"team/unknown"}
 	title := object.Spec.Message
 	if len(title) > 50 {
 		title = object.Spec.Message[:50] + "..." // truncate
