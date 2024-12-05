@@ -15,7 +15,6 @@ import { DashboardDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
-import { isDashboardResource } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -102,14 +101,8 @@ export class DashboardLoaderSrv {
     }
 
     promise.then((result) => {
-      if (isDashboardResource(result)) {
-        // TODO[schema]: handle v2
-        throw new Error('v2 schema impressions not implemented');
-      } else {
-        if (result.meta.dashboardNotFound !== true) {
-          impressionSrv.addDashboardImpression(result.dashboard.uid);
-        }
-      }
+      impressionSrv.addDashboardImpression(result);
+      
 
       return result;
     });
