@@ -8,6 +8,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
 
+import { tokens, hexToRgba } from './tokens';
 import { CommandPaletteDividerItem, CommandPaletteItem } from './types';
 import { useActiveIndex } from './useActiveIndex';
 import { useActiveKeys } from './useActiveKeys';
@@ -115,19 +116,23 @@ export function CommandPalette2() {
       >
         <motion.div initial={{ y: 20, scale: 0.95 }} animate={{ y: 0, scale: 1 }} className={styles.palette}>
           <div className={styles.inputBarCell}>
-            <Icon name="search" />
+            <div className={styles.searchIcon}>
+              <Icon name="search" size="lg" />
+            </div>
 
             <input
               className={styles.searchInput}
               onChange={(ev) => setInputValue(ev.currentTarget.value)}
               value={inputValue}
               type="text"
-              placeholder="Search for anything..."
+              placeholder="Search for anything or type / for commands..."
             />
 
             <div className={styles.shortcut}>
-              <span className={styles.keyboardKey}>{modKey}</span>
-              <span className={styles.keyboardKey}>K</span>
+              <div className={styles.shortcutKeys}>
+                <span className={styles.keyboardKey}>{modKey}</span>
+                <span className={styles.keyboardKey}>K</span>
+              </div>
             </div>
           </div>
 
@@ -177,22 +182,24 @@ export function CommandPalette2() {
 
           <div className={styles.footerCell}>
             <div className={styles.shortcut}>
-              <AnimatedKeyCap direction={-1} isActive={!!activeKeys.ArrowUp} className={styles.keyboardKey}>
-                <Icon name="arrow-up" />
-              </AnimatedKeyCap>
+              <div className={styles.shortcutKeys}>
+                <AnimatedKeyCap direction={-1} isActive={!!activeKeys.ArrowUp} className={styles.keyboardKey}>
+                  <Icon name="arrow-up" />
+                </AnimatedKeyCap>
 
-              <AnimatedKeyCap direction={1} isActive={!!activeKeys.ArrowDown} className={styles.keyboardKey}>
-                <Icon name="arrow-down" />
-              </AnimatedKeyCap>
-              <span>to navigate</span>
+                <AnimatedKeyCap direction={1} isActive={!!activeKeys.ArrowDown} className={styles.keyboardKey}>
+                  <Icon name="arrow-down" />
+                </AnimatedKeyCap>
+              </div>
+              <span className={styles.shortcutLabel}>to navigate</span>
             </div>
 
             <div className={styles.footerDivider} />
 
             <div className={styles.shortcut}>
               <span className={cx(styles.keyboardKey, styles.keyboardMultiKey)}>esc</span>
-              <span>
-                Close <strong>Launchpad</strong>
+              <span className={styles.shortcutLabel}>
+                Close <strong className={styles.shortcutEmphasis}>Launchpad</strong>
               </span>
             </div>
           </div>
@@ -210,6 +217,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: 0,
       right: 0,
       bottom: 0,
+      letterSpacing: '0',
       // background: 'rgba(255, 255, 255, 0.10)',
       // backdropFilter: 'blur(2px)',
     }),
@@ -244,18 +252,35 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     inputBarCell: css({
-      padding: theme.spacing(3),
+      paddingInline: theme.spacing(3),
       gridArea: 'input',
-      background: 'rgba(0, 0, 0, 0.40)',
+      background: hexToRgba(tokens.colors.black, 0.4),
       display: 'grid',
       gridTemplateColumns: 'auto 1fr auto',
+      alignItems: 'stretch',
       gap: theme.spacing(2),
       backdropFilter: 'blur(2px)',
+      height: 66,
+      borderBottom: `1px solid ${hexToRgba(tokens.colors.grey[800], 0.8)}`,
+    }),
+
+    searchIcon: css({
+      display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      color: tokens.colors.grey[400],
     }),
 
     searchInput: css({
       all: 'unset',
+      height: '100%',
+      fontSize: 16,
+      fontWeight: 400,
+      color: tokens.colors.white,
+      '&::placeholder': {
+        color: tokens.colors.grey[500],
+      },
     }),
 
     mainCell: css({
@@ -275,19 +300,36 @@ const getStyles = (theme: GrafanaTheme2) => {
     footerCell: css({
       padding: theme.spacing(2, 3),
       gridArea: 'footer',
-      background: '#16161E80',
+      background: hexToRgba(tokens.colors.grey[800], 0.3),
       display: 'flex',
       gap: theme.spacing(2),
       backdropFilter: 'blur(2px)',
+      borderTop: `1px solid ${tokens.colors.grey[800]}`,
     }),
 
     footerDivider: css({
       height: '100%',
       width: 1,
-      background: '#20202A',
+      background: tokens.colors.grey[800],
     }),
 
     shortcut: css({
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: 1,
+      gap: 8,
+    }),
+
+    shortcutLabel: css({
+      color: tokens.colors.grey[400],
+    }),
+
+    shortcutEmphasis: css({
+      color: 'white',
+      fontWeight: 500,
+    }),
+
+    shortcutKeys: css({
       display: 'flex',
       gap: 4,
     }),

@@ -13,6 +13,8 @@ export const tokens = {
       900: '#121216',
       950: '#0D0D0F',
     },
+    black: '#000000',
+    white: '#FFFFFF',
   },
 };
 
