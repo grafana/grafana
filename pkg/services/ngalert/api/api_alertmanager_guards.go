@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -58,10 +60,15 @@ func (srv AlertmanagerSrv) k8sApiServiceGuard(currentConfig apimodels.GettableUs
 
 func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	reporter := cmputil.DiffReporter{}
-	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{}), cmp.Transformer("", func(regexp amConfig.Regexp) any {
-		r, _ := regexp.MarshalYAML()
-		return r
-	})}
+	options := []cmp.Option{
+		cmp.Reporter(&reporter),
+		cmpopts.EquateEmpty(),
+		cmpopts.IgnoreUnexported(labels.Matcher{}),
+		cmpopts.IgnoreUnexported(func(*http.Request) (*url.URL, error) { return nil, nil }),
+		cmp.Transformer("", func(regexp amConfig.Regexp) any {
+			r, _ := regexp.MarshalYAML()
+			return r
+		})}
 	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
 	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != apimodels.Provenance(ngmodels.ProvenanceNone) {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
