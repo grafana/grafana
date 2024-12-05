@@ -63,6 +63,7 @@
   },
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
+    "build:stats": "yarn build --env stats --profile --json=compilation-stats.json",
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
