@@ -48,16 +48,25 @@ func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*fe
 func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	ctx, span := otel.GetTracerProvider().Tracer("watcher").Start(ctx, "watcher-add")
 	defer span.End()
+
 	object, ok := rObj.(*feedback.Feedback)
 	if !ok {
-		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
-			rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind)
+		return fmt.Errorf(
+			"provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
+			rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind,
+		)
+	}
+
+	// Skip processing if there's a GitHub issue. The screenshot is optional to the report.
+	if object.Spec.GithubIssueUrl != nil {
+		return nil
 	}
 
 	// Upload image to Github and create issue if needed
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("upload_to_github").MustBool(false) {
-		if object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 { // These conditions stop us from infinite looping since updating here apparently triggers this function call again. TODO: make it not do that
+		// Update the screenshot part if it is present.
+		if object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 {
 			imageUuid := uuid.NewString()
 
 			imageType := object.Spec.ImageType
@@ -77,7 +86,8 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			object.Spec.ImageType = nil
 		}
 
-		if object.Spec.GithubIssueUrl == nil { // See above note
+		// Create a GitHub issue if that is not done yet.
+		if object.Spec.GithubIssueUrl == nil {
 			issueUrl, err := s.createGithubIssue(ctx, object)
 			if err != nil {
 				return err
@@ -87,8 +97,10 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		}
 
 		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
-			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
-				rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
+			return fmt.Errorf(
+				"updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
+				rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err,
+			)
 		}
 	}
 
