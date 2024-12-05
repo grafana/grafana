@@ -102,7 +102,7 @@ func (f *RulerApiHandler) handleRouteGetRuleByUID(ctx *contextmodel.ReqContext, 
 	return f.GrafanaRuler.RouteGetRuleByUID(ctx, ruleUID)
 }
 
-func (f *RulerApiHandler) handleRoutePostRulesGroupConvert(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+func (f *RulerApiHandler) handleRoutePostRulesGroupConvert(ctx *contextmodel.ReqContext, dsUID string, pauseRecordingRules, pauseAlerts bool) response.Response {
 	return f.GrafanaRuler.RoutePostRulesGroupConvert(ctx, dsUID)
 }
 

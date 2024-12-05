@@ -358,17 +358,18 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 }
 
 func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID string) response.Response {
+	pauseRecordingRules := c.QueryBoolWithDefault("pauseRecordingRules", true)
+	pauseAlerts := c.QueryBoolWithDefault("pauseAlerts", true)
+
+	// 1. Fetch rules from datasource
 	_, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
 	}
 
-	// ctx := c.Req.Context()
-	endpoints, err := srv.proxySvc.getEndpoints(c)
-	if err != nil {
-		return errorToResponse(err)
-	}
-	resp := srv.proxySvc.withReq(c, http.MethodGet, withPath(*c.Req.URL, endpoints.rules), nil, jsonExtractor(&apimodels.RuleResponse{}), nil)
+	path := "/config/v1/rules" // TODO: Move this somewhere else
+	promGroups := map[string][]prom.PrometheusRuleGroup{}
+	resp := srv.proxySvc.withReq(c, http.MethodGet, withPath(*c.Req.URL, path), nil, yamlExtractor(&promGroups), nil)
 
 	// 2. Convert Prometheus Rules to GMA
 	var ruleResp apimodels.RuleResponse
@@ -398,7 +399,7 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 		nsMap[rg.File] = namespace.UID
 
 		promGroup := convertAPIToPrometheusModel(rg)
-		promConverter := prom.NewConverter(prom.Config{})
+		promConverter := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
 		grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
 		if err != nil {
 			logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
@@ -415,7 +416,6 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 	}
 
 	var errResponse *response.NormalResponse
-
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		for _, grafanaGroup := range grafanaGroups {
 			groupKey := ngmodels.AlertRuleGroupKey{
@@ -426,12 +426,17 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
 			for _, r := range grafanaGroup.Rules {
+				if r.Record != nil && pauseRecordingRules {
+					r.IsPaused = true
+				} else if pauseAlerts {
+					r.IsPaused = true
+				}
 				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
 					AlertRule: r,
 				})
 			}
 
-			srv.log.FromContext(ctx).Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "rule_count", len(rules))
+			srv.log.FromContext(ctx).Info("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "rule_count", len(rules), "datasource_uid", grafanaGroup.Rules[0].Data[0].DatasourceUID)
 			var gc *apimodels.UpdateRuleGroupResponse
 			gc, errResponse = srv.updateAlertRulesInGroup(ctx, c, groupKey, rules)
 			if errResponse == nil {
@@ -439,6 +444,8 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 				changes.Created = append(changes.Created, gc.Created...)
 				changes.Updated = append(changes.Updated, gc.Updated...)
 				changes.Deleted = append(changes.Deleted, gc.Deleted...)
+			} else {
+				srv.log.FromContext(ctx).Info("Failed to save Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "err", errResponse.Err())
 			}
 		}
 
@@ -462,7 +469,7 @@ func convertAPIToPrometheusModel(group apimodels.RuleGroup) prom.PrometheusRuleG
 			KeepFiringFor: "", // Unsupported
 			Labels:        r.Labels.Map(),
 			Annotations:   r.Annotations.Map(),
-			Record:        "abc", // TODO: What should this be?
+			Record:        "", // Can we ever have a recording rule here?
 		}
 		rules = append(rules, rule)
 	}

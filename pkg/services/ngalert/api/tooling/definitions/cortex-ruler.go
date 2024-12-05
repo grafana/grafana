@@ -267,6 +267,10 @@ import (
 type PathPostRulesGroupConvert struct {
 	// in:path
 	DatasourceUID string
+	// in:query
+	PauseRecordingRules bool
+	// in:query
+	PauseAlerts bool
 }
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport

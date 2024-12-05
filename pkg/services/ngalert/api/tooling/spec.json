@@ -1892,6 +1892,16 @@
             "name": "DatasourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "PauseRecordingRules",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "PauseAlerts",
+            "in": "query"
           }
         ],
         "responses": {
@@ -8564,7 +8574,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",

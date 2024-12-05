@@ -4693,7 +4693,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -7105,6 +7104,16 @@
       "name": "DatasourceUID",
       "required": true,
       "type": "string"
+     },
+     {
+      "in": "query",
+      "name": "PauseRecordingRules",
+      "type": "boolean"
+     },
+     {
+      "in": "query",
+      "name": "PauseAlerts",
+      "type": "boolean"
      }
     ],
     "produces": [
