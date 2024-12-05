@@ -27,8 +27,9 @@ type DiagnosticUnifiedAlerting struct {
 }
 
 type DiagnosticInstance struct {
-	Edition string `json:"edition"`
-	Version string `json:"version"`
+	Edition string  `json:"edition"`
+	Version string  `json:"version"`
+	Slug    *string `json:"slug,omitempty"`
 
 	FeatureToggles []string               `json:"featureToggles"`
 	Datasources    []DiagnosticDatasource `json:"datasources"`
@@ -79,6 +80,9 @@ type TemplateData struct {
 	PageURL     string
 
 	SnapshotURL string
+
+	CanContactReporter bool
+	CanAccessInstance  bool
 }
 
 func BuildConfigList(instanceInfo DiagnosticInstance) []TemplateConfig {
