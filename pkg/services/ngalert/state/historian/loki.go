@@ -39,6 +39,10 @@ const (
 	dfLabels = "labels"
 )
 
+var annotationsToDelete = map[string]struct{}{
+	"_gc_monitor_yaml": {},
+}
+
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
@@ -299,6 +303,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			RuleID:         rule.ID,
 			RuleUID:        rule.UID,
 			InstanceLabels: sanitizedLabels,
+			Annotations:    cleanAnnotations(state.Annotations, annotationsToDelete),
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -361,6 +366,7 @@ type LokiEntry struct {
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`
+	Annotations    map[string]string `json:"annotations"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
@@ -559,4 +565,14 @@ func NewHistorianExportClient(cfg LokiConfig, req client.Requester, metrics *met
 	}
 
 	return NewLokiClient(cfg, req, metrics, logger, tracer)
+}
+
+func cleanAnnotations(annotations map[string]string, annotationsToDelete map[string]struct{}) map[string]string {
+	filtered := make(map[string]string, len(annotations))
+	for k, v := range annotations {
+		if _, shouldDelete := annotationsToDelete[k]; !shouldDelete {
+			filtered[k] = v
+		}
+	}
+	return filtered
 }
