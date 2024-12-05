@@ -55,7 +55,11 @@ func New(cfg app.Config) (app.App, error) {
 				Watcher: feedbackWatcher,
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
-						// modify req.Object if needed
+						switch req.Object.(type) {
+						case *feedbackv0alpha1.Feedback:
+							// do something if needed
+						}
+
 						return &app.MutatingResponse{
 							UpdatedObject: req.Object,
 						}, nil

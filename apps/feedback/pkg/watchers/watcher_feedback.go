@@ -60,7 +60,8 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		)
 	}
 
-	// Skip processing if there's a GitHub issue. The screenshot is optional to the report.
+	// Skip processing if there's a GitHub issue. This means it was already processed but the Add() was retriggered by our update.
+	// That will be fixed at some point, but we need to keep this guardrail in place in the meantime.
 	if object.Spec.GithubIssueUrl != nil {
 		return nil
 	}
@@ -112,8 +113,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 }
 
 func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) (string, error) {
-	// Create issue in Github
-
 	issueBody, err := s.buildIssueBody(object)
 	if err != nil {
 		return "", fmt.Errorf("building issue body: %w", err)
@@ -232,10 +231,6 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	configsList := githubClient.BuildConfigList(diagnostic.Instance)
 
 	// Combine data into TemplateData struct
-	slug := diagnostic.Instance.Slug
-	if slug == nil {
-		slug = new(string)
-	}
 	userEmail := object.Spec.ReporterEmail
 	if userEmail == nil {
 		userEmail = new(string)
@@ -248,7 +243,7 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 		Configs:        configsList,
 
 		WhatHappenedQuestion:   object.Spec.Message,
-		InstanceSlug:           *slug,
+		InstanceSlug:           s.cfg.Slug,
 		InstanceVersion:        diagnostic.Instance.Edition,
 		InstanceRunningVersion: diagnostic.Instance.Version,
 		BrowserName:            diagnostic.Browser.UserAgent,
