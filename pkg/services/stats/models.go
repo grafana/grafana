@@ -122,3 +122,13 @@ type UserStats struct {
 	Editors int64
 	Viewers int64
 }
+
+type GetExtractedExpressionsQuery struct {
+	OrgID  int64
+	DSType string
+}
+
+type ExtractedExpression struct {
+	ID   int64  `xorm:"id"`
+	Expr string `xorm:"expr"`
+}
