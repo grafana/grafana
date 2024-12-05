@@ -36,6 +36,8 @@ type ViteManifestEntry struct {
 	Src            string   `json:"src"`
 }
 
+type Manifest map[string]ViteManifestEntry
+
 type EntryPointInfo struct {
 	Assets struct {
 		JS  []string `json:"js,omitempty"`
@@ -135,13 +137,14 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 }
 
 func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
-	manifest := map[string]ViteManifestEntry{}
+	manifest := Manifest{}
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
 	// TODO: This is a temporary hack to get the entrypoints for the vite frontend loading.
 	var entryPointJSAssets []dtos.EntryPointAsset
+	var preloadJSAssets []dtos.EntryPointAsset
 	var darkCSS, lightCSS string
 
 	for _, entry := range manifest {
@@ -153,6 +156,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 			}
 			if strings.HasSuffix(entry.File, ".js") {
 				entryPointJSAssets = append(entryPointJSAssets, asset)
+				preloadJSAssets = getPreloadChunks(manifest, entry.Src)
 			}
 			if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
 				darkCSS = entry.File
@@ -189,9 +193,11 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	// }
 
 	rsp := &dtos.EntryPointAssets{
-		JSFiles: entryPointJSAssets,
-		Dark:    darkCSS,
-		Light:   lightCSS,
+		JSFiles:        entryPointJSAssets,
+		PreloadJSFiles: preloadJSAssets,
+		Dark:           darkCSS,
+		Light:          lightCSS,
+		// TODO: Need to figure this out. Ideally the swagger assets are built in a separate build process.
 		// Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
 		// SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
 	}
@@ -221,4 +227,42 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	// 	})
 	// }
 	return rsp, nil
+}
+
+// Create a list of all the chunks that need to be preloaded for a given entrypoint.
+func getPreloadChunks(manifest Manifest, name string) []dtos.EntryPointAsset {
+	seen := make(map[string]bool)
+
+	var getImportedChunks func(chunk ViteManifestEntry) []dtos.EntryPointAsset
+
+	getImportedChunks = func(chunk ViteManifestEntry) []dtos.EntryPointAsset {
+		var chunks []dtos.EntryPointAsset
+
+		for _, file := range chunk.Imports {
+			importee, exists := manifest[file]
+			if !exists {
+				continue
+			}
+			if seen[file] {
+				continue
+			}
+			seen[file] = true
+
+			chunks = append(chunks, getImportedChunks(importee)...)
+
+			chunks = append(chunks, dtos.EntryPointAsset{
+				FilePath:  importee.File,
+				Integrity: "",
+			})
+		}
+
+		return chunks
+	}
+
+	entryChunk, exists := manifest[name]
+	if !exists {
+		return nil
+	}
+
+	return getImportedChunks(entryChunk)
 }

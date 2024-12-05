@@ -29,6 +29,13 @@
       performance.mark('frontend_boot_css_time_seconds');
     </script>
 
+    [[range $asset := .Assets.PreloadJSFiles]]
+    <link
+      rel="modulepreload"
+      href="[[$asset.FilePath]]"
+    ></script>
+    [[end]]
+
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
