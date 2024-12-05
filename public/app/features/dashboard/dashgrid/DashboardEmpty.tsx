@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
+import { useCallback, useEffect, useState } from 'react';
+import { lastValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -17,6 +20,8 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
+
+import DashboardTemplateImport from './DashboardTemplateImport';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
@@ -52,10 +57,98 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     }
   };
 
+  // HACKATHON: Implement the following functions
+
+  const [showTemplateImportForm, setShowTemplateImportForm] = useState(false);
+  const [templateDashboards, setTemplateDashboards] = useState([]);
+  const [communityDashboardToImport, setCommunityDashboardToImport] = useState({});
+  const [folder, setFolder] = useState({ uid: '' });
+
+  const getCommunityDashboards = async () => {
+    // fetch dashboards from grafana.com
+    const gnetDashboards = (await lastValueFrom(
+      getBackendSrv()
+        .fetch({
+          url: '/api/gnet/dashboards',
+          method: 'GET',
+          params: {
+            pageSize: 20,
+          },
+        })
+        .pipe(map((res) => res.data))
+    )) as any;
+    setTemplateDashboards(gnetDashboards.items);
+
+    console.log('gnetDashboards', gnetDashboards);
+  };
+
+  useEffect(() => {
+    getCommunityDashboards();
+  }, []);
+
+  const onImportTemplate = useCallback(
+    (gnetUID: string) => {
+      // fetch the dashboard from grafana.com
+
+      getBackendSrv()
+        .get(`/api/gnet/dashboards/${gnetUID}`)
+        .then((dashboard) => {
+          // show the import dashboard form
+          console.log('dashboard from gnet to import', dashboard);
+          setCommunityDashboardToImport(dashboard);
+          setShowTemplateImportForm(true);
+          //set intial folder
+          const searchObj = locationService.getSearchObject();
+
+          const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
+          setFolder(folder);
+        });
+    },
+    [setShowTemplateImportForm]
+  );
+
+  const onImportDashboardTemplate = useCallback((formData: any) => {
+    console.log('formData', formData);
+  }, []);
+
+  const onCancelDashboardTemplate = useCallback(() => {
+    setShowTemplateImportForm(false);
+  }, []);
+
   return (
     <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+          <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+            <Stack direction="column" alignItems="center" gap={1}>
+              <Text element="h3" textAlignment="center" weight="medium">
+                <Trans i18nKey="dashboard.empty.add-panel-header">Community Dashboards</Trans>
+              </Text>
+              {templateDashboards.length > 0 && (
+                //lopp through the gcomDashboards and show them
+                <Box marginBottom={2}>
+                  {templateDashboards.map((gnetDash: { id: string; name: string; description: string }) => {
+                    console.log('gnet dashboard', gnetDash);
+                    return (
+                      <div key={gnetDash.id}>
+                        {gnetDash.name}
+                        <Button onClick={() => onImportTemplate(gnetDash.id)} size="sm">
+                          Import Template
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </Box>
+              )}
+            </Stack>
+            {showTemplateImportForm && (
+              <DashboardTemplateImport
+                dashboard={communityDashboardToImport}
+                onImport={onImportDashboardTemplate}
+                onCancel={onCancelDashboardTemplate}
+              />
+            )}
+          </Box>
           <Box borderColor="strong" borderStyle="dashed" padding={4}>
             <Stack direction="column" alignItems="center" gap={2}>
               <Text element="h1" textAlignment="center" weight="medium">
