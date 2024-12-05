@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -644,6 +645,7 @@ type folderK8sHandler struct {
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
 	userService          user.Service
+	kvstore              *kvstore.NamespacedKVStore
 }
 
 //-----------------------------------------------------------------------------------------
@@ -657,6 +659,7 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
 		userService:          hs.userService,
+		kvstore:              kvstore.WithNamespace(hs.kvStore, 0, "storage.dualwriting"),
 	}
 }
 
@@ -774,7 +777,44 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+
+	ctx := c.Req.Context()
+
+	// TODO: how can we check for alert rules, library panels and SLOs?
+	var folderDependants = map[string]int{
+		folderalpha1.RESOURCEGROUP:               0,
+		"dashboards.dashboard.grafana.app":       0,
+		"slos.slo.grafana.app":                   0,
+		"librarypanels.librarypanel.grafana.app": 0,
+		"alertrules.alertmanager.grafana.app":    0,
+	}
+	var hasDependants bool
+	for k := range folderDependants {
+		item, found, err := fk8s.kvstore.Get(ctx, k)
+		if err != nil {
+			fk8s.writeError(c, err)
+			return
+		}
+		if found {
+			mode, err := strconv.Atoi(item)
+			if err != nil {
+				fk8s.writeError(c, err)
+				return
+			}
+			// if dual writer mode > 2, it means the source of truth is unified store
+			if mode > 2 {
+				// call unified store count
+			} else {
+				// otherwise call legacy store count
+			}
+		}
+	}
+
+	if hasDependants {
+		fk8s.writeError(c, folder.ErrFolderNotEmpty.Errorf("this folder is not empty. Please make sure it does not contain any dashboards, alerts, library panels or SLOs"))
+		return
+	}
+	err := client.Delete(ctx, uid, v1.DeleteOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
