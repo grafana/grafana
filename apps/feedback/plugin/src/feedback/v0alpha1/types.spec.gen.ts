@@ -6,6 +6,7 @@ export interface Spec {
 	imageType?: string;
 	screenshotUrl?: string;
 	githubIssueUrl?: string;
+	diagnosticData?: Record<string, any>;
 }
 
 export const defaultSpec = (): Spec => ({

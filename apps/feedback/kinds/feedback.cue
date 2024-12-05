@@ -22,6 +22,7 @@ externalName: {
 					imageType?:      string
 					screenshotUrl?:  string
 					githubIssueUrl?: string
+					diagnosticData?: {...}
 				}
 			}
 		}

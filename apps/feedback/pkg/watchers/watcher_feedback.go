@@ -111,8 +111,12 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	}
 
 	// defaults
-	var labels = []string{"type/unknown"}
-	var title = object.Spec.Message[:50] + "..." // truncate
+	labels := []string{"type/unknown"}
+
+	title := object.Spec.Message
+	if len(title) > 50 {
+		title = object.Spec.Message[:50] + "..." // truncate
+	}
 
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("query_llm").MustBool(false) {
