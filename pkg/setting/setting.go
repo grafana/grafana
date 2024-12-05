@@ -527,11 +527,12 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage    map[string]UnifiedStorageConfig
-	IndexPath         string
-	IndexWorkers      int
-	IndexMaxBatchSize int
-	IndexListLimit    int
+	UnifiedStorage     map[string]UnifiedStorageConfig
+	IndexPath          string
+	IndexWorkers       int
+	IndexMaxBatchSize  int
+	IndexFileThreshold int
+	IndexMinCount      int
 }
 
 type UnifiedStorageConfig struct {
@@ -599,6 +600,13 @@ func RedactedValue(key, value string) string {
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
 		"GF_ENTITY_API_DB_PASS",
+		"ID_FORWARDING_TOKEN$",
+		"AUTHENTICATION_TOKEN$",
+		"AUTH_TOKEN$",
+		"RENDERER_TOKEN$",
+		"API_TOKEN$",
+		"WEBHOOK_TOKEN$",
+		"INSTALL_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword

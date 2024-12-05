@@ -381,7 +381,7 @@ exports[`better eslint`] = {
     "packages/grafana-e2e-selectors/src/resolver.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-o11y-ds-frontend/src/utils.ts:5381": [
+    "packages/grafana-o11y-ds-frontend/src/createNodeGraphFrames.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-prometheus/src/components/PromQueryField.test.tsx:5381": [
