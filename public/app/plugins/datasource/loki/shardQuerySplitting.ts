@@ -168,8 +168,10 @@ function splitQueriesByStreamShard(
     }
 
     const queryRunner =
-      shardsToQuery.length > 0 && !useTimeSplitting ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
-    subquerySubscription = queryRunner(subRequest).subscribe({
+      shardsToQuery.length > 0 && !useTimeSplitting
+        ? datasource.runQuery.bind(datasource, subRequest)
+        : runSplitQuery.bind(null, datasource, subRequest, true);
+    subquerySubscription = queryRunner().subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
@@ -411,7 +413,7 @@ function addSplittingDurationToTargets(targets: LokiQuery[], bytes: number) {
   const minChunkRangeMs = 3 * 60 * 60 * 1000;
   chunkRangeMs = chunkRangeMs < minChunkRangeMs ? minChunkRangeMs : chunkRangeMs;
 
-  targets.forEach(query => query.splitDuration = `${chunkRangeMs / 1000 / 60 / 60}h`);
+  targets.forEach((query) => (query.splitDuration = `${chunkRangeMs / 1000 / 60 / 60}h`));
   console.log(`${chunkRangeMs / 1000 / 60 / 60}h`);
 
   return targets;
