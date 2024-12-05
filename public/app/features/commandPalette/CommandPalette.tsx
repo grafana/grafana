@@ -95,7 +95,11 @@ export function CommandPalette() {
                 </TabsBar>
                 <TabContent>
                   {activeTab === 'recent' && (
-                    <Results items={['Actions', ...recentActions]} showEmptyState={recentActions.length === 0} />
+                    <RenderKbarResults
+                      filterItems={['Actions', ...recentActions]}
+                      showEmptyState={recentActions.length === 0}
+                      searchResults={searchResults}
+                    />
                   )}
                   {activeTab === 'mine' && (
                     <Results
@@ -128,8 +132,16 @@ interface RenderResultsProps {
   setRecentAction: (id: string) => void;
 }
 
-const RenderKbarResults = ({ isFetchingSearchResults, searchResults, setRecentAction }: RenderResultsProps) => {
+const RenderKbarResults = ({
+  isFetchingSearchResults,
+  searchResults,
+  setRecentAction,
+  filterItems,
+}: RenderResultsProps) => {
   const { results: kbarResults } = useMatches();
+  const filteredResults = filterItems && kbarResults?.length
+    ? kbarResults.filter((result) => filterItems.some((item) => item === result || item.id === result.id))
+    : kbarResults;
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
@@ -142,15 +154,17 @@ const RenderKbarResults = ({ isFetchingSearchResults, searchResults, setRecentAc
     [searchResults]
   );
   const folderResultItems = useMemo(
-    () =>
-      searchResults
+    () => {
+    if(!searchResults) { return [];}
+      return searchResults
         .filter((item) => item.id.startsWith('go/folder'))
-        .map((folder) => new ActionImpl(folder, { store: {} })),
+        .map((folder) => new ActionImpl(folder, { store: {} }))
+    },
     [searchResults]
   );
 
   const items = useMemo(() => {
-    const results = [...kbarResults];
+    const results = [...filteredResults];
     if (folderResultItems.length > 0) {
       results.push(foldersSectionTitle);
       results.push(...folderResultItems);
@@ -160,7 +174,7 @@ const RenderKbarResults = ({ isFetchingSearchResults, searchResults, setRecentAc
       results.push(...dashboardResultItems);
     }
     return results;
-  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [filteredResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
