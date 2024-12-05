@@ -12,5 +12,5 @@ export * from './TraceToLogs/TagMappingInput';
 export * from './TraceToLogs/TraceToLogsSettings';
 export * from './TraceToMetrics/TraceToMetricsSettings';
 export * from './TraceToProfiles/TraceToProfilesSettings';
-export * from './utils';
+export * from './createNodeGraphFrames';
 export * from './combineResponses';
