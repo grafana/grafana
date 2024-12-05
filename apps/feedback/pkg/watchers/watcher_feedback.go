@@ -54,7 +54,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind)
 	}
 
-	// Upload image to Github
+	// Upload image to Github and create issue if needed
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("upload_to_github").MustBool(false) {
 		if object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 { // These conditions stop us from infinite looping since updating here apparently triggers this function call again. TODO: make it not do that
@@ -75,11 +75,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			// Clean it up, since we dont need it anymore
 			object.Spec.Screenshot = nil
 			object.Spec.ImageType = nil
-
-			if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
-				return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
-					rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
-			}
 		}
 
 		if object.Spec.GithubIssueUrl == nil { // See above note
@@ -89,10 +84,11 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 			}
 
 			object.Spec.GithubIssueUrl = &issueUrl
-			if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
-				return fmt.Errorf("updating github issue url (name=%s, namespace=%s, kind=%s): %w",
-					rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
-			}
+		}
+
+		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
+			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
+				rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
 		}
 	}
 
