@@ -133,8 +133,8 @@ const extLabels: FieldExtractor = {
   getParser: (options) => parseKeyValuePairs,
 };
 
-const extCSV: FieldExtractor = {
-  id: FieldExtractorID.CSV,
+const extDelimiter: FieldExtractor = {
+  id: FieldExtractorID.Delimiter,
   name: 'Split by delimiter',
   description: 'Splits at delimited values, such as commas',
   getParser: ({ delimiter = ',' }) => {
@@ -152,7 +152,7 @@ const extCSV: FieldExtractor = {
   },
 };
 
-const fmts = [extJSON, extLabels, extCSV, extRegExp];
+const fmts = [extJSON, extLabels, extDelimiter, extRegExp];
 
 const extAuto: FieldExtractor = {
   id: FieldExtractorID.Auto,

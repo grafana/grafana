@@ -3,7 +3,7 @@ export enum FieldExtractorID {
   KeyValues = 'kvp',
   Auto = 'auto',
   RegExp = 'regexp',
-  CSV = 'csv',
+  Delimiter = 'delimiter',
 }
 
 export interface JSONPath {

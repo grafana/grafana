@@ -152,9 +152,9 @@ describe('Extract fields from text', () => {
     `);
   });
 
-  describe('CSV', () => {
+  describe('Delimiter', () => {
     it('splits by comma', async () => {
-      const extractor = fieldExtractors.get(FieldExtractorID.CSV);
+      const extractor = fieldExtractors.get(FieldExtractorID.Delimiter);
       const parse = extractor.getParser({});
       const out = parse('a,b,c');
 
@@ -167,8 +167,8 @@ describe('Extract fields from text', () => {
       `);
     });
 
-    it("trims whitespace and doesn't split on escaped comma", async () => {
-      const extractor = fieldExtractors.get(FieldExtractorID.CSV);
+    it('trims whitespace', async () => {
+      const extractor = fieldExtractors.get(FieldExtractorID.Delimiter);
       const parse = extractor.getParser({});
       const out = parse(`a, b,c, d`);
 
