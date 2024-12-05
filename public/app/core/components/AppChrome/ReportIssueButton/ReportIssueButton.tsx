@@ -5,6 +5,7 @@ import { Dropdown, ToolbarButton, Button, Stack, Menu } from '@grafana/ui';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
+import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
 import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
 
 export interface Props { }
@@ -39,10 +40,13 @@ const MenuActions = () => {
   const onSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
+    const diagnosticData = await getDiagnosticData();
+
     const feedback: Spec = {
       message: formData.message,
       screenshot: formData.screenshot,
       imageType: formData.imageType,
+      diagnosticData,
     };
 
     const feedbackApi = getFeedbackAPI();
