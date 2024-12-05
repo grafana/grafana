@@ -377,6 +377,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: 12,
       position: 'relative',
       zIndex: 2,
+      paddingBlock: `${theme.spacing(2)} ${theme.spacing(1)}`,
     }),
 
     dividerDivider: css({
