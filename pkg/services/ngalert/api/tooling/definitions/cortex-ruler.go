@@ -699,6 +699,12 @@ type RoutePostGrafanaRuleGroupPrometheusConfigParams struct {
 	Namespace string
 	// in: header
 	DatasourceUID string `json:"x-datasource-uid"`
+	// in: header
+	DatasourceType string `json:"x-datasource-type"`
+	// in: header
+	RecordingRulesPaused bool `json:"x-recording-rules-paused"`
+	// in: header
+	AlertRulesPaused bool `json:"x-alert-rules-paused"`
 	// in:body
 	Body PostablePrometheusRuleGroup
 }

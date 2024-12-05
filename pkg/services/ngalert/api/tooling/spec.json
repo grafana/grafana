@@ -1684,6 +1684,21 @@
             "in": "header"
           },
           {
+            "type": "string",
+            "name": "x-datasource-type",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-recording-rules-paused",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-alert-rules-paused",
+            "in": "header"
+          },
+          {
             "name": "Body",
             "in": "body",
             "schema": {
