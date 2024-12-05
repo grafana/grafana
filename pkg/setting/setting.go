@@ -527,11 +527,12 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage    map[string]UnifiedStorageConfig
-	IndexPath         string
-	IndexWorkers      int
-	IndexMaxBatchSize int
-	IndexListLimit    int
+	UnifiedStorage     map[string]UnifiedStorageConfig
+	IndexPath          string
+	IndexWorkers       int
+	IndexMaxBatchSize  int
+	IndexFileThreshold int
+	IndexMinCount      int
 }
 
 type UnifiedStorageConfig struct {
