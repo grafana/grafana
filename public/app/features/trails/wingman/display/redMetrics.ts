@@ -5,7 +5,6 @@ import { TooltipDisplayMode } from '@grafana/ui';
 import { DataTrail } from '../../DataTrail';
 import { MDP_METRIC_PREVIEW, trailDS } from '../../shared';
 import { getColorByIndex } from '../../utils';
-import { hideEmptyPreviews } from '../hideEmptyPreviews';
 
 /**
  * WIP
@@ -93,7 +92,7 @@ function redPanelItem(query: RedObject, red: 'rate'|'error'|'duration', index: n
   const redQuery = query[red];
   return new SceneCSSGridItem({
     gridColumn: 'span 3',
-    $behaviors: [hideEmptyPreviews('')],
+    // $behaviors: [hideEmptyPreviews('')],
     $data: new SceneQueryRunner({
       datasource: trailDS,
       maxDataPoints: MDP_METRIC_PREVIEW,
