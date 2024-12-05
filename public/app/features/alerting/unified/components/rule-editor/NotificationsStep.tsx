@@ -75,6 +75,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
             setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
             setValue('manualRouting', !isAdvanced);
           },
+          id: 'notifications-step-advanced-switch',
         }
       : undefined;
   const title = isRecordingRuleByType(type)

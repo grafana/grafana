@@ -14,6 +14,7 @@ export interface RuleEditorSectionProps {
     isAdvancedMode: boolean;
     setAdvancedMode: (isAdvanced: boolean) => void;
   };
+  id?: string;
 }
 
 export const RuleEditorSection = ({
@@ -23,6 +24,7 @@ export const RuleEditorSection = ({
   fullWidth = false,
   description,
   switchMode,
+  id,
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
   return (
@@ -37,12 +39,8 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
-                  id="query-and-expressions-advanced-switch"
-                  data-testid={
-                    switchMode.isAdvancedMode
-                      ? 'query-and-expressions-advanced-options'
-                      : 'query-and-expressions-simple-options'
-                  }
+                  id={id}
+                  data-testid={switchMode.isAdvancedMode ? `${id}-advanced-options` : `${id}-basic-options`}
                   value={switchMode.isAdvancedMode}
                   onChange={(event) => {
                     switchMode.setAdvancedMode(event.currentTarget.checked);
