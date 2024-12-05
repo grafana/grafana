@@ -160,7 +160,8 @@ iam-identity,Teams
 iam-identity,Support bundles
 operator-experience,AlertList Core / Native Plugin
 operator-experience,Licensing
-operator-experience,Query and resource caching
+operator-experience,Query caching 
+operator-experience,Resource caching
 operator-experience,Enterprise to Cloud Automated Migration Experience
 oss-big-tent-datasources,Jaeger data source
 oss-big-tent-datasources,Zipkin data source

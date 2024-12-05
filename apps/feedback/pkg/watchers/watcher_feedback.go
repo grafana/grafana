@@ -56,28 +56,36 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 
 	// Upload image to Github
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
-	if section.Key("upload_to_github").MustBool(false) && object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 { // So we don't spam when there are errors... obviously should figure out something better
-		imageUuid := uuid.NewString()
+	if section.Key("upload_to_github").MustBool(false) {
+		if object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 { // These conditions stop us from infinite looping since updating here apparently triggers this function call again. TODO: make it not do that
+			imageUuid := uuid.NewString()
 
-		imageType := object.Spec.ImageType
-		if imageType == nil || *imageType == "" {
-			defaultImageType := "png"
-			imageType = &defaultImageType
+			imageType := object.Spec.ImageType
+			if imageType == nil || *imageType == "" {
+				defaultImageType := "png"
+				imageType = &defaultImageType
+			}
+
+			screenshotUrl, err := s.gitClient.UploadImage(imageUuid, imageType, object.Spec.Screenshot)
+			if err != nil {
+				return err
+			}
+			object.Spec.ScreenshotUrl = &screenshotUrl
+
+			// Clean it up, since we dont need it anymore
+			object.Spec.Screenshot = nil
+			object.Spec.ImageType = nil
+
+			if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
+				return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
+					rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
+			}
 		}
 
-		screenshotUrl, err := s.gitClient.UploadImage(imageUuid, imageType, object.Spec.Screenshot)
-		if err != nil {
-			return err
-		}
-		object.Spec.ScreenshotUrl = &screenshotUrl
-
-		// Clean it up, since we dont need it anymore
-		object.Spec.Screenshot = nil
-		object.Spec.ImageType = nil
-
-		if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
-			return fmt.Errorf("updating screenshot url (name=%s, namespace=%s, kind=%s): %w",
-				rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
+		if object.Spec.GithubIssueUrl == nil { // See above note
+			if err := s.createGithubIssue(ctx, object); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -85,22 +93,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	return nil
 }
 
-// Update handles update events for feedback.Feedback resources.
-func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew resource.Object) error {
-	ctx, span := otel.GetTracerProvider().Tracer("watcher").Start(ctx, "watcher-update")
-	defer span.End()
-	oldObject, ok := rOld.(*feedback.Feedback)
-	if !ok {
-		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
-			rOld.GetStaticMetadata().Name, rOld.GetStaticMetadata().Namespace, rOld.GetStaticMetadata().Kind)
-	}
-
-	object, ok := rNew.(*feedback.Feedback)
-	if !ok {
-		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
-			rNew.GetStaticMetadata().Name, rNew.GetStaticMetadata().Namespace, rNew.GetStaticMetadata().Kind)
-	}
-
+func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) error {
 	// Create issue in Github
 
 	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
@@ -120,12 +113,12 @@ func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew
 
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("query_llm").MustBool(false) {
-		llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
+		llmLabels := s.llmClient.PromptForLabels(ctx, object.Spec.Message)
 		if len(llmLabels) > 0 {
 			labels = llmLabels
 		}
 
-		if t, err := s.llmClient.PromptForShortIssueTitle(object.Spec.Message); err != nil {
+		if t, err := s.llmClient.PromptForShortIssueTitle(ctx, object.Spec.Message); err != nil {
 			klog.ErrorS(err, "error prompting the llm for a short issue title")
 		} else {
 			title = t
@@ -139,6 +132,25 @@ func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew
 	}
 	if err := s.gitClient.CreateIssue(issue); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// Update handles update events for feedback.Feedback resources.
+func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew resource.Object) error {
+	ctx, span := otel.GetTracerProvider().Tracer("watcher").Start(ctx, "watcher-update")
+	defer span.End()
+	oldObject, ok := rOld.(*feedback.Feedback)
+	if !ok {
+		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
+			rOld.GetStaticMetadata().Name, rOld.GetStaticMetadata().Namespace, rOld.GetStaticMetadata().Kind)
+	}
+
+	_, ok = rNew.(*feedback.Feedback)
+	if !ok {
+		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
+			rNew.GetStaticMetadata().Name, rNew.GetStaticMetadata().Namespace, rNew.GetStaticMetadata().Kind)
 	}
 
 	logging.FromContext(ctx).Debug("Updated resource", "name", oldObject.GetStaticMetadata().Identifier().Name)

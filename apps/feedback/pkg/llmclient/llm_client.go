@@ -2,6 +2,7 @@ package llmclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -47,7 +48,7 @@ func readResponsibilities(cfg *setting.Cfg) (map[string]string, error) {
 		return nil, fmt.Errorf("reading csv %s: %w", path, err)
 	}
 
-	// Create a map of team->list of responsibilities
+	// Create a map of feature -> owning team
 	itemMap := make(map[string]string)
 	for _, row := range rows[1:] { // Skip the header row
 		itemMap[row[1]] = row[0]
@@ -56,7 +57,7 @@ func readResponsibilities(cfg *setting.Cfg) (map[string]string, error) {
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *LLMClient) PromptForLabels(userText string) []string {
+func (c *LLMClient) PromptForLabels(ctx context.Context, userText string) []string {
 	path := filepath.Join(c.cfg.HomePath, TEAM_PROMPT_TEMPLATE)
 
 	t, err := template.ParseFiles(path)
@@ -89,7 +90,7 @@ func (c *LLMClient) PromptForLabels(userText string) []string {
 		return nil
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
 	if err != nil {
 		klog.ErrorS(err, "failed to create request")
 		return nil
@@ -142,7 +143,7 @@ func (c *LLMClient) PromptForLabels(userText string) []string {
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *LLMClient) PromptForShortIssueTitle(userText string) (string, error) {
+func (c *LLMClient) PromptForShortIssueTitle(ctx context.Context, userText string) (string, error) {
 	path := filepath.Join(c.cfg.HomePath, ISSUE_NAME_PROMPT_TEMPLATE)
 
 	t, err := template.ParseFiles(path)
@@ -170,7 +171,7 @@ func (c *LLMClient) PromptForShortIssueTitle(userText string) (string, error) {
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
