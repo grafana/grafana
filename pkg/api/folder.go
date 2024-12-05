@@ -807,7 +807,8 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 			}
 			// if not found or mode < 3 call legacy store count
 		} else {
-			
+
+		}
 	}
 
 	if hasDependants {
