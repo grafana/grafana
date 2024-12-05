@@ -17,12 +17,12 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
+import { ReportIssueButton } from '../ReportIssueButton/ReportIssueButton';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { ReportIssueButton } from '../ReportIssueButton/ReportIssueButton';
 
 export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
 
@@ -42,7 +42,8 @@ export const SingleTopBar = memo(function SingleTopBar({
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const styles = useStyles2(getStyles, menuDockedAndOpen);
+  const feedbackEnabled = !!config.featureToggles.feedbackButton;
+  const styles = useStyles2(getStyles, menuDockedAndOpen, feedbackEnabled);
   const navIndex = useSelector((state) => state.navIndex);
 
   const helpNode = cloneDeep(navIndex['help']);
@@ -73,7 +74,7 @@ export const SingleTopBar = memo(function SingleTopBar({
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
-        <ReportIssueButton />
+        {feedbackEnabled && <ReportIssueButton />}
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
@@ -102,7 +103,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   );
 });
 
-const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, feedbackEnabled: boolean) => ({
   layout: css({
     height: TOP_BAR_LEVEL_HEIGHT,
     display: 'flex',
@@ -114,8 +115,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      // gridTemplateColumns: '2fr minmax(440px, 1fr)',
-      gridTemplateColumns: '2fr minmax(500px, 1fr)', // TODO based on feature toggle
+      gridTemplateColumns: feedbackEnabled ? '2fr minmax(500px, 1fr)' : '2fr minmax(440px, 1fr)',
       display: 'grid',
 
       justifyContent: 'flex-start',

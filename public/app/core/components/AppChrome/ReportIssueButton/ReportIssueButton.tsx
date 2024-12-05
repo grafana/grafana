@@ -1,19 +1,26 @@
 import html2canvas from 'html2canvas';
-import { useState } from 'react';
+import { ChangeEvent, MouseEvent, useState } from 'react';
 
-import { Menu, Dropdown, ToolbarButton, Button, Stack } from '@grafana/ui';
+import { Dropdown, ToolbarButton, Button, Stack, Menu } from '@grafana/ui';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
 
-export interface Props {}
+export interface Props { }
 
 const MenuActions = () => {
-  const [formData, setFormData] = useState({ message: '' });
-  const onClick = async (e: { preventDefault: () => void }) => {
+  const [formData, setFormData] = useState({ message: '', screenshot: '', imageType: '' });
+
+  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    let screenshot = null;
+    e.stopPropagation();
+    setFormData({ ...formData, message: e.target.value });
+  };
+
+  const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
 
     const element = document.body; // TODO: choose a different selector?
     if (element) {
@@ -21,38 +28,51 @@ const MenuActions = () => {
 
       const encoded = await canvasToBase64String(canvas);
       if (encoded && typeof encoded === 'string') {
-        screenshot = extractImageTypeAndData(encoded);
+        const screenshot = extractImageTypeAndData(encoded);
+        if (screenshot) {
+          setFormData({ ...formData, screenshot: screenshot.data, imageType: screenshot.type });
+        }
       }
     }
+  };
+
+  const onSubmit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
 
     const feedback: Spec = {
       message: formData.message,
-      ...(screenshot && { screenshot: screenshot.data, imageType: screenshot.type }),
+      screenshot: formData.screenshot,
+      imageType: formData.imageType,
     };
 
     const feedbackApi = getFeedbackAPI();
     await feedbackApi.createFeedback(feedback);
   };
 
+  const stopAutoClose = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   return (
     <Menu>
-      <b>Send feedback to Grafana</b>
+      <div onClick={stopAutoClose}>
+        <b>Send feedback to Grafana</b>
 
-      <Stack gap={2} direction={'column'}>
-        <input
-          value={formData.message}
-          onChange={(e) => setFormData({ message: e.target.value })}
-          placeholder="so what happened?"
-        ></input>
-        <Button type="submit" onClick={onClick}>
-          Submit feedback
-        </Button>
-      </Stack>
+        <Stack gap={2} direction={'column'}>
+          <input onChange={onInputChange} placeholder="so what happened?"></input>
+          <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
+          <Button type="submit" onClick={onSubmit}>
+            Submit feedback
+          </Button>
+        </Stack>
+      </div>
     </Menu>
+
   );
 };
 
-export const ReportIssueButton = ({}: Props) => {
+export const ReportIssueButton = ({ }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -66,7 +86,6 @@ export const ReportIssueButton = ({}: Props) => {
 
 /* 
   TODO:
-  - put this behind a feature flag
-  - screenshot should be behind a button
   - see if we can get annotations to work
+  - make it stylistically pretty
 */
