@@ -7,7 +7,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 export interface DashboardAPI<G> {
   /** Get a dashboard with the access control metadata */
-  getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<G>;
+  getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<DashboardWithAccessInfo<G>>;
   /** Save dashboard */
   saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */

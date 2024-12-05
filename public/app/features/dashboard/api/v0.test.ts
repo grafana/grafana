@@ -1,5 +1,5 @@
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyFolderId, AnnoKeyFolderTitle, AnnoKeyFolderUrl, AnnoKeyIsFolder } from 'app/features/apiserver/types';
 import { DashboardDataDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
@@ -56,10 +56,10 @@ describe('v0 dashboard API', () => {
 
     const api = new K8sDashboardAPI();
     const result = await api.getDashboardDTO('test');
-    expect(result.meta.isFolder).toBe(false);
-    expect(result.meta.folderId).toBe(1);
-    expect(result.meta.folderTitle).toBe('New Folder');
-    expect(result.meta.folderUrl).toBe('/folder/url');
-    expect(result.meta.folderUid).toBe('new-folder');
+    expect(result.metadata.annotations?.[AnnoKeyIsFolder]).toBe(false);
+    expect(result.metadata.annotations?.[AnnoKeyFolderId]).toBe(1);
+    expect(result.metadata.annotations?.[AnnoKeyFolderTitle]).toBe('New Folder');
+    expect(result.metadata.annotations?.[AnnoKeyFolderUrl]).toBe('/folder/url');
+    expect(result.metadata.annotations?.[AnnoKeyFolder]).toBe('new-folder');
   });
 });

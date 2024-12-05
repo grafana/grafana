@@ -38,6 +38,7 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
+export const AnnoKeyRedirectUri = 'grafana.app/redirectUri'; // TODO add to the response
 
 // Identify where values came from
 export const AnnoKeyRepoName = 'grafana.app/repoName';
@@ -46,6 +47,10 @@ export const AnnoKeyRepoHash = 'grafana.app/repoHash';
 export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
+export const AnnoKeyIsFolder = 'grafana.app/isFolder';
+export const AnnoKeyIsSnapshot = 'grafana.app/isSnapshot';
+export const AnnoKeyDashboardNotFound = 'grafana.app/dashboardNotFound';
+export const AnnoKeyIsEmbedded = 'grafana.app/isEmbedded';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -54,6 +59,7 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
+  [AnnoKeyRedirectUri]?: string;
 
   [AnnoKeyRepoName]?: string;
   [AnnoKeyRepoPath]?: string;
@@ -64,11 +70,15 @@ type GrafanaAnnotations = {
 // Annotations provided by the front-end client
 type GrafanaClientAnnotations = {
   [AnnoKeyMessage]?: string;
+  [AnnoKeyIsFolder]?: boolean;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
+  [AnnoKeyIsSnapshot]?: boolean;
+  [AnnoKeyDashboardNotFound]?: boolean;
+  [AnnoKeyIsEmbedded]?: boolean;
 };
 
 export interface Resource<T = object, K = string> extends TypeMeta<K> {

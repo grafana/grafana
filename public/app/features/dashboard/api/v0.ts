@@ -6,15 +6,19 @@ import {
   AnnoKeyMessage,
   AnnoKeyFolder,
   Resource,
+  AnnoKeyIsFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeyFolderId,
 } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
+export class K8sDashboardAPI implements DashboardAPI<DashboardDataDTO> {
   private client: ResourceClient<DashboardDataDTO>;
 
   constructor() {
@@ -79,31 +83,27 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
   }
 
   async getDashboardDTO(uid: string) {
-    const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+  const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
-    const result: DashboardDTO = {
-      meta: {
-        ...dash.access,
-        isNew: false,
-        isFolder: false,
-        uid: dash.metadata.name,
-        k8s: dash.metadata,
-      },
-      dashboard: dash.spec,
+    dash.access.isNew = false;
+    dash.metadata.annotations = {
+      ...dash.metadata.annotations,
+      [AnnoKeyIsFolder]: false,
     };
+
 
     if (dash.metadata.annotations?.[AnnoKeyFolder]) {
       try {
         const folder = await backendSrv.getFolderByUid(dash.metadata.annotations[AnnoKeyFolder]);
-        result.meta.folderTitle = folder.title;
-        result.meta.folderUrl = folder.url;
-        result.meta.folderUid = folder.uid;
-        result.meta.folderId = folder.id;
+        dash.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
+        dash.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
+        dash.metadata.annotations[AnnoKeyFolderId] = folder.id;
+        dash.metadata.annotations[AnnoKeyFolder] = folder.uid;
       } catch (e) {
         console.error('Failed to load a folder', e);
       }
     }
 
-    return result;
+    return dash;
   }
 }
