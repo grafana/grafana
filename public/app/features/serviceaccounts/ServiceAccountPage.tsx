@@ -22,11 +22,6 @@ import {
   updateServiceAccount,
 } from './state/actionsServiceAccountPage';
 
-
-
-
-
-
 interface OwnProps {
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
