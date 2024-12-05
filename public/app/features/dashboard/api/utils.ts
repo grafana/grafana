@@ -36,6 +36,6 @@ export function isDashboardResource(
   return 'kind' in obj && obj.kind === 'DashboardWithAccessInfo';
 }
 
-export function isDashboardV2Spec(obj: any): obj is DashboardV2Spec {
+export function isDashboardV2Spec(obj: object): obj is DashboardV2Spec {
   return 'elements' in obj;
 }
