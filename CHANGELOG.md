@@ -2,6 +2,10 @@
 
 # 11.4.0 (2024-12-05)
 
+### Features and enhancements
+
+- **Cloudwatch:** OpenSearch PPL and SQL support in Logs Insights
+
 <!-- 11.4.0 END -->
 <!-- 11.3.1 START -->
 
