@@ -251,11 +251,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange:
-          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-        uid: oldModel.uid,
-      }),
+      ...(config.featureToggles.scopeFilters
+        ? [
+            new DashboardScopesFacade({
+              reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
+              uid: oldModel.uid,
+            }),
+          ]
+        : []),
       new DashboardReloadBehavior({
         reloadOnParamsChange:
           config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,

@@ -37,7 +37,8 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { getSelectedScopes } from 'app/features/scopes';
+
+import { getScopesService } from '../scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -335,7 +336,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
-      const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange, getSelectedScopes());
+      const deploymentEnvironments = await getDeploymentEnvironments(
+        datasourceUid,
+        timeRange,
+        getScopesService()?.state.value ?? []
+      );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
@@ -485,7 +490,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         // we're also passing the scopes so we get the labels that adhere to the scopes filters
         let values = await datasourceHelper.getTagKeys({
           filters,
-          scopes: getSelectedScopes(),
+          scopes: getScopesService()?.state.value ?? [],
           queries: this.getQueries(),
         });
         values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
@@ -506,7 +511,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const values = await datasourceHelper.getTagValues({
           key: filter.key,
           filters,
-          scopes: getSelectedScopes(),
+          scopes: getScopesService()?.state.value ?? [],
           queries: this.getQueries(),
         });
         return { replace: true, values };

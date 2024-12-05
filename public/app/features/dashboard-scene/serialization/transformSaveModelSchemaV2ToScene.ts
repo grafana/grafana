@@ -150,10 +150,14 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
-      }),
+      ...(config.featureToggles.scopeFilters
+        ? [
+            new DashboardScopesFacade({
+              reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
+              uid: dashboard.id?.toString(),
+            }),
+          ]
+        : []),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
         uid: dashboard.id?.toString(),

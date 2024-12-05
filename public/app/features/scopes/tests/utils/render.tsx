@@ -3,15 +3,13 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { config, ScopesContext, setPluginImportUtils } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
-import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
-import { initialSelectorState } from '../../internal/ScopesSelectorScene';
+import { getScopesService, initializeScopesServices } from '../../services';
 
 import { clearMocks } from './actions';
 
@@ -182,17 +180,18 @@ export function renderDashboard(
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
-  clearMocks();
-  initializeScopes();
+  initializeScopesServices();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
 
   render(
     <KBarProvider>
-      <AppChrome>
-        <scene.Component model={scene} />
-      </AppChrome>
+      <ScopesContext.Provider value={getScopesService()}>
+        <AppChrome>
+          <scene.Component model={scene} />
+        </AppChrome>
+      </ScopesContext.Provider>
     </KBarProvider>
   );
 
@@ -202,7 +201,6 @@ export function renderDashboard(
 export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  scopesSelectorScene?.setState(initialSelectorState);
-  scopesDashboardsScene?.setState(getInitialDashboardsState());
+  clearMocks();
   cleanup();
 }

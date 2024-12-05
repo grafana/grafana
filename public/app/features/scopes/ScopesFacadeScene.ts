@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import {
   SceneObjectBase,
   SceneObjectState,
@@ -8,25 +6,18 @@ import {
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
 
-import { scopesSelectorScene } from './instance';
-import { disableScopes, enableScopes, enterScopesReadOnly, exitScopesReadOnly, getSelectedScopes } from './utils';
+import { getScopesService } from './services';
 
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
   handler?: (facade: ScopesFacade) => void;
-  // The render count is a workaround to force the URL sync manager to update the URL with the latest scopes
-  // Basically it starts at 0, and it is increased with every scopes value update
-  renderCount?: number;
 }
 
 export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements SceneObjectWithUrlSync {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
   public constructor(state: ScopesFacadeState) {
-    super({
-      ...state,
-      renderCount: 0,
-    });
+    super(state);
 
     this.addActivationHandler(this._activationHandler);
   }
@@ -38,23 +29,23 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!values.scopes && !scopesSelectorScene?.state.isEnabled) {
+    if (!values.scopes && !getScopesService()?.state.isEnabled) {
       return;
     }
 
     let scopeNames = values.scopes ?? [];
     scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    scopesSelectorScene?.updateScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
+    getScopesService()?.setNewScopes(scopeNames);
   }
 
   private _activationHandler = () => {
     this.enable();
 
     this._subs.add(
-      scopesSelectorScene?.subscribeToState((newState, prevState) => {
-        if (!newState.isLoadingScopes && (prevState.isLoadingScopes || !isEqual(newState.scopes, prevState.scopes))) {
-          this.setState({ renderCount: (this.state.renderCount ?? 0) + 1 });
+      getScopesService()?.subscribeToState((newState, prevState) => {
+        if (newState.value !== prevState.value) {
+          this.forceRender();
           this.state.handler?.(this);
         }
       })
@@ -66,22 +57,22 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   };
 
   public get value() {
-    return getSelectedScopes();
+    return getScopesService()?.state.value ?? [];
   }
 
   public enable() {
-    enableScopes();
+    getScopesService()?.enable();
   }
 
   public disable() {
-    disableScopes();
+    getScopesService()?.disable();
   }
 
   public enterReadOnly() {
-    enterScopesReadOnly();
+    getScopesService()?.enterReadOnly();
   }
 
   public exitReadOnly() {
-    exitScopesReadOnly();
+    getScopesService()?.exitReadOnly();
   }
 }

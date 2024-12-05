@@ -36,3 +36,4 @@ export { setPluginLinksHook, usePluginLinks } from './pluginExtensions/usePlugin
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';
+export { ScopesContext, type ScopesContextValue, useScopes } from './ScopesContext';

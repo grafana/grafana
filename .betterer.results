@@ -3756,8 +3756,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/scopes/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "1"]
+      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "0"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
