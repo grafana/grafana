@@ -22,7 +22,91 @@ export const handyTestingSchema: DashboardV2Spec = {
     to: 'now',
     weekStart: 'monday',
   },
-  annotations: [],
+  annotations: [
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        builtIn: true,
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
+        datasource: {
+          type: 'prometheus',
+          uid: 'uid',
+        },
+        filter: { ids: [] },
+        enable: true,
+        hide: false,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
+        },
+        enable: true,
+        iconColor: 'red',
+        name: 'Enabled',
+        query: {
+          kind: 'grafana-testdata-datasource',
+          spec: {
+            lines: 4,
+            refId: 'Anno',
+            scenarioId: 'annotations',
+          },
+        },
+        filter: { ids: [] },
+        hide: true,
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
+        },
+        filter: { ids: [] },
+        enable: false,
+        iconColor: 'yellow',
+        name: 'Disabled',
+        query: {
+          kind: 'grafana-testdata-datasource',
+          spec: { lines: 5, refId: 'Anno', scenarioId: 'annotations' },
+        },
+        hide: false,
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
+        },
+        filter: { ids: [] },
+        enable: true,
+        hide: true,
+        iconColor: 'dark-purple',
+        name: 'Hidden',
+        query: {
+          kind: 'grafana-testdata-datasource',
+          spec: {
+            lines: 6,
+            refId: 'Anno',
+            scenarioId: 'annotations',
+          },
+        },
+      },
+    },
+  ],
   elements: {
     'test-panel-uid': {
       kind: 'Panel',
