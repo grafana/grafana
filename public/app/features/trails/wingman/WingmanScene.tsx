@@ -61,21 +61,25 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     return (
       <div className={styles.verticalLine}>
         <div className={styles.title}>11241 Metrics</div>
-        {initialData.map((group, groupIdx) => (
-          <div key={group.title}>
-            <div className={styles.horizontalLine} />
-            <h2 className={styles.title}>{group.title}</h2>
-            <div className={styles.label}>
-              <RadioButtonList<string>
-                name={group.title + '---name'}
-                value={state[group.id]}
-                disabledOptions={group.options.filter((opt) => !opt.available).map((op) => op.id)}
-                options={group.options.map((opt) => ({ label: opt.label, value: opt.id }))}
-                onChange={(val) => onWingmanOptionChanged(group.id, val)}
-              />
+        {initialData.map((group, groupIdx) =>
+          state.wm_display_view === 'red_metrics' && group.id === 'wm_group_by' ? (
+            <></>
+          ) : (
+            <div key={group.title}>
+              <div className={styles.horizontalLine} />
+              <h2 className={styles.title}>{group.title}</h2>
+              <div className={styles.label}>
+                <RadioButtonList<string>
+                  name={group.title + '---name'}
+                  value={state[group.id]}
+                  disabledOptions={group.options.filter((opt) => !opt.available).map((op) => op.id)}
+                  options={group.options.map((opt) => ({ label: opt.label, value: opt.id }))}
+                  onChange={(val) => onWingmanOptionChanged(group.id, val)}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     );
   };
