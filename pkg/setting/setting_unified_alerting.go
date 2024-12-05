@@ -49,7 +49,7 @@ const (
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
-	schedulerDefaultMaxAttempts             = 1
+	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
