@@ -3,76 +3,87 @@ package llmclient
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/klog/v2"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-// NewGitHubClient creates a new GitHub client
-func NewLLMClient(url string, config ChatOptions, cfg *setting.Cfg) (*LLMClient, error) {
-	c := &LLMClient{
-		URL:         url,
-		ChatOptions: config,
-		cfg:         cfg,
-	}
-	if r, err := readResponsibilities(cfg); err != nil {
-		return c, err
-	} else {
-		c.TeamResponsibilities = r
+//go:embed template_team_prompt.txt
+var templateTeamPrompt string
+
+//go:embed template_issue_name_prompt.txt
+var templateIssueNamePrompt string
+
+//go:embed team_responsibilities.csv
+var teamReponsibilities string
+
+// NewLLMClient creates a new LLM client
+func NewLLMClient(url string, config ChatOptions) (*LLMClient, error) {
+	responsibilities, err := readTeamResponsibilities()
+	if err != nil {
+		return nil, err
 	}
 
-	return c, nil
+	tmplTeamPrompt, err := template.New("templateTeamPrompt").Parse(templateTeamPrompt)
+	if err != nil {
+		return nil, fmt.Errorf("parsing templateTeamPrompt: %w", err)
+	}
+
+	tmplIssueNamePrompt, err := template.New("templateIssueNamePrompt").Parse(templateIssueNamePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("parsing templateIssueNamePrompt: %w", err)
+	}
+
+	return &LLMClient{
+		URL:                  url,
+		ChatOptions:          config,
+		TeamResponsibilities: responsibilities,
+		tmplTeamPrompt:       tmplTeamPrompt,
+		tmplIssueNamePrompt:  tmplIssueNamePrompt,
+		httpClient: &http.Client{
+			Timeout: 2 * time.Minute, // TODO: how long does this usually take?
+		},
+	}, nil
 }
 
-func readResponsibilities(cfg *setting.Cfg) (map[string]string, error) {
-	path := filepath.Join(cfg.HomePath, TEAM_RESPONSIBILITIES_FILE)
-	// nolint:gosec
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("reading file %s: %w", path, err)
-	}
-	reader := csv.NewReader(bytes.NewReader(raw))
+func readTeamResponsibilities() (map[string]string, error) {
+	reader := csv.NewReader(bytes.NewBufferString(teamReponsibilities))
 
 	// Read all rows
 	rows, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("reading csv %s: %w", path, err)
+		return nil, fmt.Errorf("reading csv: %w", err)
 	}
 
 	// Create a map of feature -> owning team
 	itemMap := make(map[string]string)
+
 	for _, row := range rows[1:] { // Skip the header row
 		itemMap[row[1]] = row[0]
 	}
+
 	return itemMap, nil
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *LLMClient) PromptForLabels(ctx context.Context, userText string) []string {
-	path := filepath.Join(c.cfg.HomePath, TEAM_PROMPT_TEMPLATE)
-
-	t, err := template.ParseFiles(path)
-	if err != nil {
-		klog.ErrorS(err, "parsing template")
-		return nil
-	}
+func (c *LLMClient) PromptForLabels(ctx context.Context, userText string) ([]string, error) {
 	var content bytes.Buffer
-	if err := t.Execute(&content, LLMTeamPromptTemplate{
+
+	if err := c.tmplTeamPrompt.Execute(&content, LLMTeamPromptTemplate{
 		TeamResponsibilities: c.TeamResponsibilities,
 		UserFeedback:         userText,
 	}); err != nil {
-		klog.ErrorS(err, "executing template")
-		return nil
+		return nil, fmt.Errorf("executing templateTeamPrompt: %w", err)
 	}
+
 	llmReq := LLMRequest{
 		ChatOptions: c.ChatOptions,
 		Messages: []LLMMessage{
@@ -86,41 +97,36 @@ func (c *LLMClient) PromptForLabels(ctx context.Context, userText string) []stri
 	// Marshal the issue struct into JSON
 	payload, err := json.Marshal(llmReq)
 	if err != nil {
-		klog.ErrorS(err, "failed to marshal request")
-		return nil
+		return nil, fmt.Errorf("failed to marshal llm request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
 	if err != nil {
-		klog.ErrorS(err, "failed to create request")
-		return nil
+		return nil, fmt.Errorf("failed to create http request: %w", err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "*/*")
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		klog.ErrorS(err, "failed to send request")
-		return nil
+		return nil, fmt.Errorf("http request failed: %w", err)
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			klog.ErrorS(err, "failed to close response body")
+			logging.FromContext(ctx).Error("failed to close response body", "error", err.Error())
 		}
 	}()
 
-	if resp.StatusCode > 399 {
-		klog.ErrorS(fmt.Errorf("bad status code from github"), "bad status code", "status", resp.StatusCode)
-		return nil
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("http response bad status code: %s", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		klog.ErrorS(err, "reading response")
-		return nil
+		return nil, fmt.Errorf("error reading http response: %w", err)
 	}
 
 	// Response is a mess and looks somethinglike this:
@@ -139,22 +145,17 @@ func (c *LLMClient) PromptForLabels(ctx context.Context, userText string) []stri
 		tokens[i] = fmt.Sprintf("team/%s", strings.TrimSuffix(t, "\""))
 	}
 
-	return tokens
+	return tokens, nil
 }
 
 // CreateIssue creates an issue in the Github repository
 func (c *LLMClient) PromptForShortIssueTitle(ctx context.Context, userText string) (string, error) {
-	path := filepath.Join(c.cfg.HomePath, ISSUE_NAME_PROMPT_TEMPLATE)
-
-	t, err := template.ParseFiles(path)
-	if err != nil {
-		return "", fmt.Errorf("parsing template: %w", err)
-	}
 	var content bytes.Buffer
-	if err := t.Execute(&content, userText); err != nil {
-		return "", fmt.Errorf("executing template: %w", err)
 
+	if err := c.tmplIssueNamePrompt.Execute(&content, userText); err != nil {
+		return "", fmt.Errorf("executing templateIssueNamePrompt: %w", err)
 	}
+
 	llmReq := LLMRequest{
 		ChatOptions: c.ChatOptions,
 		Messages: []LLMMessage{
@@ -180,24 +181,24 @@ func (c *LLMClient) PromptForShortIssueTitle(ctx context.Context, userText strin
 	req.Header.Add("Accept", "*/*")
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			klog.ErrorS(err, "failed to close response body")
+			logging.FromContext(ctx).Error("failed to close response body", "error", err.Error())
 		}
 	}()
 
-	if resp.StatusCode > 399 {
-		return "", fmt.Errorf("bad status code from github: %d", resp.StatusCode)
+	if resp.StatusCode >= http.StatusBadRequest {
+		return "", fmt.Errorf("http response bad status code: %s", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		klog.ErrorS(err, "reading response")
+		return "", fmt.Errorf("error reading http response: %w", err)
 	}
 
 	// Response is a mess and looks something like this:
