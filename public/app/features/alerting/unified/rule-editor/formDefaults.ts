@@ -9,6 +9,7 @@ import {
   getDefaultQueries,
   rulerRuleToFormValues,
 } from '../utils/rule-form';
+import { isGrafanaRecordingRuleByType } from '../utils/rules';
 
 import {
   ignoreHiddenQueries,
@@ -52,6 +53,16 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+}
+
+export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
+  return {
+    ...getDefaultFormValues(),
+    condition: 'C',
+    queries: getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
+    type: ruleType,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+  };
 }
 
 // TODO This function is not 100% valid. There is no support for cloud form type because

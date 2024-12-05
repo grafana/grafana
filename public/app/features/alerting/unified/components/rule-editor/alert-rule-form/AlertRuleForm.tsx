@@ -38,25 +38,21 @@ import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import {
+  defaultFormValuesForRuleType,
   formValuesFromExistingRule,
   formValuesFromPrefill,
   translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
-  DEFAULT_GROUP_EVALUATION_INTERVAL,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
-  getDefaultFormValues,
-  getDefaultQueries,
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
-import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -79,9 +75,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
-  const [queryParams] = useURLSearchParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -106,14 +100,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     const defaultRuleType = ruleType || RuleFormType.grafana;
 
-    return {
-      ...getDefaultFormValues(),
-      condition: 'C',
-      queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
-      type: defaultRuleType,
-      evaluateEvery: evaluateEvery,
-    };
-  }, [existing, prefill, evaluateEvery, ruleType]);
+    return defaultFormValuesForRuleType(defaultRuleType);
+  }, [existing, prefill, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -124,6 +112,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const {
     handleSubmit,
     watch,
+    getValues,
+    setValue,
     formState: { isSubmitting },
   } = formAPI;
 
@@ -139,6 +129,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
+
+  // TODO If the group is changed, RTKQ refreshes the existing rule definition and we need to update the form values
+  // Preferrably, the rule editor should not save changes until the whole rule is saved
+  // useEffect(() => {
+  //   if (existing?.group && existing.group.name !== getValues('group')) {
+  //     setValue('group', existing.group.name);
+  //   }
+  //   if (existing?.group?.interval && existing.group.interval !== getValues('evaluateEvery')) {
+  //     setValue('evaluateEvery', existing.group.interval);
+  //   }
+  // }, [existing, getValues, setValue]);
 
   // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
@@ -164,7 +165,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, undefined);
       grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
@@ -173,7 +174,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         ruleIdentifier,
         ruleDefinition,
         targetRuleGroupIdentifier,
-        evaluateEvery
+        undefined
       );
     }
 
@@ -197,12 +198,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const deleteRule = async () => {
     if (existing) {
-      const returnTo = queryParams.get('returnTo') || '/alerting/list';
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
 
       await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
-      locationService.replace(returnTo);
+      locationService.replace(returnTo ?? '/alerting/list');
     }
   };
 
@@ -226,9 +226,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
     locationService.getHistory().goBack();
   };
-
-  const evaluateEveryInForm = watch('evaluateEvery');
-  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   const actionButtons = (
     <Stack justifyContent="flex-end" alignItems="center">
@@ -305,12 +302,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
                 {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehaviorStep
-                    evaluateEvery={evaluateEvery}
-                    setEvaluateEvery={setEvaluateEvery}
-                    existing={Boolean(existing)}
-                    enableProvisionedGroups={false}
-                  />
+                  <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={false} />
                 )}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />

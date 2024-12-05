@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, RegisterOptions, useForm, useFormContext, WatchObserver } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,6 +22,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -30,6 +31,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
@@ -68,16 +70,17 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
       }
     );
 
-  // There should be only one entry in the rulerNamespace object
-  // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
-  const groupOptions = useMemo(() => {
+  const folderGroups = useMemo(() => {
     if (!rulerNamespace) {
       // still waiting for namespace information to be fetched
       return [];
     }
 
-    const folderGroups = Object.values(rulerNamespace).flat() ?? [];
-
+    return Object.values(rulerNamespace).flat();
+  }, [rulerNamespace]);
+  // There should be only one entry in the rulerNamespace object
+  // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
+  const groupOptions = useMemo(() => {
     return folderGroups
       .map<SelectableValue<string>>((group) => {
         const isProvisioned = isProvisionedGroup(group);
@@ -90,11 +93,14 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
           isProvisioned: isProvisioned,
         };
       })
-
       .sort(sortByLabel);
-  }, [rulerNamespace, enableProvisionedGroups]);
+  }, [folderGroups, enableProvisionedGroups]);
 
-  return { groupOptions, loading: isLoadingRulerNamespace };
+  const intervalsByGroup = useMemo(() => {
+    return new Map(folderGroups.map((group) => [group.name, group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL]));
+  }, [folderGroups]);
+
+  return { groupOptions, intervalsByGroup, loading: isLoadingRulerNamespace };
 };
 
 const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
@@ -160,18 +166,15 @@ const useIsNewGroup = (folder: string, group: string) => {
 };
 
 export function GrafanaEvaluationBehaviorStep({
-  evaluateEvery,
-  setEvaluateEvery,
   existing,
   enableProvisionedGroups,
 }: {
-  evaluateEvery: string;
-  setEvaluateEvery: (value: string) => void;
   existing: boolean;
   enableProvisionedGroups: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
+  const dispatch = useDispatch();
 
   const {
     watch,
@@ -181,9 +184,10 @@ export function GrafanaEvaluationBehaviorStep({
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [folder, group, type, isPaused, folderUid, folderName] = watch([
+  const [folder, group, evaluateEvery, type, isPaused, folderUid, folderName] = watch([
     'folder',
     'group',
+    'evaluateEvery',
     'type',
     'isPaused',
     'folder.uid',
@@ -192,9 +196,11 @@ export function GrafanaEvaluationBehaviorStep({
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
-  const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
+  const { groupOptions, intervalsByGroup, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
+  // TODO This is way suboptimal, but it requires more changes to make it right, especiall in EditRuleGroupModal
+  // dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
@@ -204,11 +210,30 @@ export function GrafanaEvaluationBehaviorStep({
 
   const isNewGroup = useIsNewGroup(folderUid ?? '', group);
 
+  const handleFieldsDependecies: WatchObserver<RuleFormValues> = useCallback(
+    (formValues, { name }) => {
+      if (name === 'group' && formValues.group) {
+        const interval = intervalsByGroup.get(formValues.group);
+        if (interval) {
+          setValue('evaluateEvery', interval);
+        }
+      }
+    },
+    [intervalsByGroup, setValue]
+  );
+
+  useEffect(() => {
+    const { unsubscribe } = watch(handleFieldsDependecies);
+    return () => unsubscribe();
+  }, [watch, handleFieldsDependecies]);
+
+  // TODO How to make it easier?
+  // We should have a callback on the EditRuleGroupModal that updates the form values
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
-      setEvaluateEvery(existingGroup.interval);
+      setValue('evaluateEvery', existingGroup.interval);
     }
-  }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
+  }, [isNewGroup, setValue, existingGroup]);
 
   const closeEditGroupModal = (saved = false) => {
     if (!saved) {
@@ -219,13 +244,23 @@ export function GrafanaEvaluationBehaviorStep({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
+  useEffect(() => {
+    // TODO This is way suboptimal, but it requires more changes to make it right, especiall in EditRuleGroupModal
+    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+  }, [existing, dispatch]);
+
   const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !group;
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
     groups: [],
   };
-  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
+  const emptyGroup: CombinedRuleGroup = {
+    name: group,
+    interval: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    rules: [],
+    totals: {},
+  };
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -380,7 +415,7 @@ export function GrafanaEvaluationBehaviorStep({
           </div>
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
-        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+        {isGrafanaAlertingRule && <ForInput />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -581,7 +616,7 @@ function EvaluationGroupCreationModal({
   );
 }
 
-export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+export function ForInput() {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -591,7 +626,7 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   } = useFormContext<RuleFormValues>();
 
   const evaluateForId = 'eval-for-input';
-  const currentPendingPeriod = watch('evaluateFor');
+  const [currentPendingPeriod, evaluateEvery] = watch(['evaluateFor', 'evaluateEvery']);
 
   const setPendingPeriod = (pendingPeriod: string) => {
     setValue('evaluateFor', pendingPeriod);
