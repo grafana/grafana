@@ -372,6 +372,7 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 	resp := srv.proxySvc.withReq(c, http.MethodGet, withPath(*c.Req.URL, path), nil, yamlExtractor(&promGroups), nil)
 
 	// 2. Convert Prometheus Rules to GMA
+	fmt.Println("FAZ: ", string(resp.Body()))
 	var ruleResp apimodels.RuleResponse
 	nsMap := make(map[string]string) // File -> NamespaceUID
 	if err := json.Unmarshal(resp.Body(), &ruleResp); err != nil {
