@@ -81,6 +81,26 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		}
 	}
 
+	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
+	return nil
+}
+
+// Update handles update events for feedback.Feedback resources.
+func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew resource.Object) error {
+	ctx, span := otel.GetTracerProvider().Tracer("watcher").Start(ctx, "watcher-update")
+	defer span.End()
+	oldObject, ok := rOld.(*feedback.Feedback)
+	if !ok {
+		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
+			rOld.GetStaticMetadata().Name, rOld.GetStaticMetadata().Namespace, rOld.GetStaticMetadata().Kind)
+	}
+
+	object, ok := rNew.(*feedback.Feedback)
+	if !ok {
+		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
+			rNew.GetStaticMetadata().Name, rNew.GetStaticMetadata().Namespace, rNew.GetStaticMetadata().Kind)
+	}
+
 	// Create issue in Github
 
 	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
@@ -97,6 +117,8 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	// defaults
 	var labels = []string{"type/unknown"}
 	var title = object.Spec.Message[:50] + "..." // truncate
+
+	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("query_llm").MustBool(false) {
 		llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
 		if len(llmLabels) > 0 {
@@ -118,40 +140,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	if err := s.gitClient.CreateIssue(issue); err != nil {
 		return err
 	}
-
-	logging.FromContext(ctx).Debug("Added resource", "name", object.GetStaticMetadata().Identifier().Name)
-	return nil
-}
-
-// Update handles update events for feedback.Feedback resources.
-func (s *FeedbackWatcher) Update(ctx context.Context, rOld resource.Object, rNew resource.Object) error {
-	ctx, span := otel.GetTracerProvider().Tracer("watcher").Start(ctx, "watcher-update")
-	defer span.End()
-	oldObject, ok := rOld.(*feedback.Feedback)
-	if !ok {
-		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
-			rOld.GetStaticMetadata().Name, rOld.GetStaticMetadata().Namespace, rOld.GetStaticMetadata().Kind)
-	}
-
-	_, ok = rNew.(*feedback.Feedback)
-	if !ok {
-		return fmt.Errorf("provided object is not of type *feedback.Feedback (name=%s, namespace=%s, kind=%s)",
-			rNew.GetStaticMetadata().Name, rNew.GetStaticMetadata().Namespace, rNew.GetStaticMetadata().Kind)
-	}
-
-	// // Create issue in Github
-	// llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
-	// if object.Spec.ScreenshotUrl != nil {
-	// 	screenshotURL := *object.Spec.ScreenshotUrl
-	// 	issue := githubClient.Issue{
-	// 		Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
-	// 		Body:   fmt.Sprintf("![Screenshot](%s?raw=true)", screenshotURL),
-	// 		Labels: llmLabels,
-	// 	}
-	// 	if err := s.gitClient.CreateIssue(issue); err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	logging.FromContext(ctx).Debug("Updated resource", "name", oldObject.GetStaticMetadata().Identifier().Name)
 	return nil
