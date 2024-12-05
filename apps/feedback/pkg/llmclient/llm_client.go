@@ -153,7 +153,6 @@ func (c *LLMClient) PromptForShortIssueTitle(ctx context.Context, userText strin
 	var content bytes.Buffer
 	if err := t.Execute(&content, userText); err != nil {
 		return "", fmt.Errorf("executing template: %w", err)
-
 	}
 	llmReq := LLMRequest{
 		ChatOptions: c.ChatOptions,
