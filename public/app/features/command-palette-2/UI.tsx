@@ -2,7 +2,7 @@
 /* eslint @grafana/no-border-radius-literal: 0 */
 
 import { css, cx } from '@emotion/css';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { ChangeEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -150,6 +150,12 @@ export function CommandPalette2() {
     scrollingRef.current.scrollTo({ top: yPos, behavior: 'smooth' });
   }, [activeItemYPos, activeIndex, filteredItems]);
 
+  const variants = {
+    in: { y: 50, opacity: 1, maxHeight: 650, transition: { duration: 0.2 } },
+    expanded: { y: 0, opacity: 1, maxHeight: 700, transition: { duration: 0.2 } },
+    out: { y: 70, opacity: 0, maxHeight: 650, transition: { duration: 0.2, delay: 0.5 } },
+  };
+
   return (
     <Portal>
       <motion.div
@@ -157,7 +163,50 @@ export function CommandPalette2() {
         animate={{ backgroundColor: `rgba(255, 255, 255, 0.10)` }}
         className={styles.wrapper}
       >
-        <motion.div initial={{ y: 20, scale: 0.95 }} animate={{ y: 0, scale: 1 }} className={styles.palette}>
+        <motion.div
+          layout
+          initial={'out'}
+          animate={mode === 'command' ? 'expanded' : 'in'}
+          variants={variants}
+          className={styles.palette}
+        >
+          <div className={styles.navWrapper}>
+            <AnimatePresence>
+              {mode === 'command' && (
+                <motion.div
+                  layout
+                  initial={{ height: 0 }}
+                  animate={{ height: 50 }}
+                  exit={{ height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={styles.nav}
+                >
+                  <button className={styles.navClose}>
+                    <Icon name="arrow-left" />
+                  </button>
+                  <ul className={styles.breadcrumbs}>
+                    <motion.li
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.2 } }}
+                      exit={{ opacity: 0, y: 4, transition: { duration: 0.1 } }}
+                      className={styles.breadcrumb}
+                    >
+                      Home
+                    </motion.li>
+                    <motion.li
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 0.25 } }}
+                      exit={{ opacity: 0, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={styles.breadcrumb}
+                    >
+                      Commands
+                    </motion.li>
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <div className={styles.inputBarCell}>
             <div className={styles.searchIcon}>
               <Icon name={mode === 'search' ? 'search' : 'brackets-curly'} />
@@ -328,10 +377,67 @@ const getStyles = (theme: GrafanaTheme2) => {
       ].join(','),
       gridTemplateAreas: gt([
         // no prettier
+        ['nav', 'nav'],
         ['input', 'input'],
         ['main', 'main'],
         ['footer', 'footer'],
       ]),
+    }),
+
+    navWrapper: css({
+      gridArea: 'nav',
+      // height: 50,
+      display: 'block',
+      fontSize: 14,
+      position: 'relative',
+      zIndex: 1000,
+    }),
+
+    nav: css({
+      color: tokens.colors.grey[400],
+      background: hexToRgba(tokens.colors.grey[950], 0.8),
+      paddingInline: theme.spacing(2),
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+      alignItems: 'center',
+      display: 'flex',
+      overflow: 'hidden',
+    }),
+
+    navClose: css({
+      all: 'unset',
+      width: 26,
+      height: 26,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'blue',
+    }),
+
+    breadcrumbs: css({
+      display: 'flex',
+      gap: theme.spacing(2),
+      listStyle: 'none',
+      padding: 0,
+      marginLeft: theme.spacing(2),
+    }),
+
+    breadcrumb: css({
+      position: 'relative',
+      color: tokens.colors.grey[300],
+      '&::before': {
+        content: '"/"',
+        position: 'absolute',
+        left: -12,
+        color: tokens.colors.grey[400],
+      },
+      '&:first-child::before': {
+        content: 'none',
+      },
+      '&:last-child': {
+        color: tokens.colors.white,
+        fontWeight: 500,
+      },
     }),
 
     inputBarCell: css({
