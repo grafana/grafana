@@ -25,9 +25,12 @@ type RedObject = {
  * [x] 3 panels per row
  * [x] add __ignore_usage__="" to each query
  * [x] header with group
- * [x] color
- * [x] visualizations
+ * [x] color for each r, e, or d
+ * [x] visualizations for each r, e, or d
  * [x] x axis filtering
+ * [x] add padding between groups
+ * [x] make header background transparent
+ * [x] don't show grouping options in wingman when selecting red metrics
  * [ ] add adhoc filters to queries
  * [ ] identify extra metrics associated with RED metrics
  * @param trail 
@@ -84,6 +87,7 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
     const et = redPanelItem(query, 'error', index);
     const dt = redPanelItem(query, 'duration', index);
     
+    // make two grid layouts to handle the column amounts
     const row = new SceneCSSGridLayout({
       children: [rt,et,dt],
       templateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -97,6 +101,7 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
       autoRows: '30px',      
     });
 
+    // make one full row to add space between groups
     const fullRow = new SceneCSSGridLayout({
       children: [headerRow, row],
       templateColumns: '1/-1',
@@ -104,8 +109,6 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
       rowGap: .5,
     });
 
-    // children.push(headerRow);
-    // children.push(row);
     children.push(fullRow);
   });
 
@@ -113,7 +116,7 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
 };
 
 /**
- * WIP needs to add a different color, viz and other things based on R, E or D
+ * Creates a panel with a viz based on red type (rate, error, or duration)
  * @param query 
  * @param red 
  * @param index 
