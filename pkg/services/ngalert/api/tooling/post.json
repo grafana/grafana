@@ -6897,6 +6897,21 @@
       "type": "string"
      },
      {
+      "in": "header",
+      "name": "x-datasource-type",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-alert-rules-paused",
+      "type": "boolean"
+     },
+     {
       "in": "body",
       "name": "Body",
       "schema": {

@@ -669,7 +669,7 @@ func TestRoutePostGrafanaRuleGroupPrometheusConfig(t *testing.T) {
 		permissions := createPermissionsToImportPrometheusRules(orgID)
 		req := createRequestContextWithPerms(orgID, permissions, nil)
 
-		response := service.RoutePostGrafanaRuleGroupPrometheusConfig(req, ruleGroup, promNamespace, "")
+		response := service.RoutePostGrafanaRuleGroupPrometheusConfig(req, ruleGroup, promNamespace)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{

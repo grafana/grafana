@@ -7,10 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
-	converter := NewConverter(Config{})
+	converter, err := NewConverter(Config{})
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name        string
@@ -152,7 +154,8 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 }
 
 func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
-	converter := NewConverter(Config{})
+	converter, err := NewConverter(Config{})
+	require.NoError(t, err)
 
 	promGroup := PrometheusRuleGroup{
 		Name:     "test-group-1",
@@ -190,7 +193,9 @@ func TestPrometheusRulesToGrafanaWithDuplicateRuleNames(t *testing.T) {
 
 func TestGrafanaRulesToPrometheus(t *testing.T) {
 	t.Run("basic alert rule group success", func(t *testing.T) {
-		converter := NewConverter(Config{})
+		converter, err := NewConverter(Config{})
+		require.NoError(t, err)
+
 		rg := models.AlertRuleGroup{
 			Title:    "my-group",
 			Interval: 60,
