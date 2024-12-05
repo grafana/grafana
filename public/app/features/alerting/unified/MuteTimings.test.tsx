@@ -5,22 +5,20 @@ import { render, within, userEvent, screen } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import EditMuteTimingPage from './components/mute-timings/EditMuteTiming';
 import NewMuteTimingPage from './components/mute-timings/NewMuteTiming';
-import { grantUserPermissions, mockDataSource } from './mocks';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { grantUserPermissions } from './mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 const indexPageText = 'redirected routes page';
 const Index = () => {
@@ -35,16 +33,6 @@ const renderMuteTimings = (location?: InitialEntry) => {
     </Routes>,
     { historyOptions: location ? { initialEntries: [location] } : undefined }
   );
-};
-
-const alertmanagerName = 'alertmanager';
-
-const dataSources = {
-  am: mockDataSource({
-    name: alertmanagerName,
-    uid: MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    type: DataSourceType.Alertmanager,
-  }),
 };
 
 const ui = {
@@ -183,7 +171,7 @@ const saveMuteTiming = async () => {
   await user.click(await screen.findByText(/save mute timing/i));
 };
 
-setupMswServer();
+const { dataSources } = setupAlertingTestEnv();
 
 const getAlertmanagerConfigUpdate = async (requests: Request[]): Promise<AlertManagerCortexConfig> => {
   const alertmanagerUpdate = requests.find(
@@ -195,7 +183,6 @@ const getAlertmanagerConfigUpdate = async (requests: Request[]): Promise<AlertMa
 
 describe('Mute timings', () => {
   beforeEach(() => {
-    setupDataSources(dataSources.am);
     // FIXME: scope down
     grantUserPermissions(Object.values(AccessControlAction));
 
@@ -235,8 +222,11 @@ describe('Mute timings', () => {
 
   it('creates a new mute timing, with time_intervals in config', async () => {
     const capture = captureRequests();
-    setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithNewTimeIntervalsField);
-    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
+    setAlertmanagerConfig(dataSources.alertmanager.uid, defaultConfigWithNewTimeIntervalsField);
+    renderMuteTimings({
+      pathname: '/alerting/routes/new',
+      search: `?alertmanager=${dataSources.alertmanager.name}`,
+    });
 
     await fillOutForm({
       name: 'maintenance period',
@@ -257,8 +247,8 @@ describe('Mute timings', () => {
   });
 
   it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
-    setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithBothTimeIntervalsField);
-    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
+    setAlertmanagerConfig(dataSources.alertmanager.uid, defaultConfigWithBothTimeIntervalsField);
+    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.alertmanager.name}` });
 
     expect(ui.nameField.get()).toBeInTheDocument();
 

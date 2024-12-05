@@ -33,6 +33,7 @@ export const PROVISIONED_MIMIR_ALERTMANAGER_UID = 'provisioned-alertmanager';
 
 jest.spyOn(config, 'getAllDataSources');
 
+/** @deprecated Use `setupAlertingTestEnv` instead */
 export const mockDataSources = {
   [EXTERNAL_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>(
     {

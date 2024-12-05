@@ -5,7 +5,6 @@ import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,
   makeAllAlertmanagerConfigFetchFail,
@@ -20,30 +19,18 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-  MatcherOperator,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { setupAlertingTestEnv, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { AlertManagerCortexConfig, MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPolicies';
-import {
-  grantUserPermissions,
-  mockDataSource,
-  someCloudAlertManagerConfig,
-  someCloudAlertManagerStatus,
-} from './mocks';
+import { grantUserPermissions, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./useRouteGroupsMatcher');
 
-setupMswServer();
+const { dataSources } = setupAlertingTestEnv();
 
 const updateTiming = async (selectElement: HTMLElement, value: string): Promise<void> => {
   const user = userEvent.setup();
@@ -82,29 +69,6 @@ const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RUL
       },
     }
   );
-
-const dataSources = {
-  am: mockDataSource({
-    name: 'Alertmanager',
-    type: DataSourceType.Alertmanager,
-  }),
-  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'PromManager',
-    type: DataSourceType.Alertmanager,
-    uid: 'prometheusAlertManager',
-    jsonData: {
-      implementation: AlertManagerImplementation.prometheus,
-    },
-  }),
-  mimir: mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'mimir',
-    type: DataSourceType.Alertmanager,
-    uid: 'mimir',
-    jsonData: {
-      implementation: AlertManagerImplementation.mimir,
-    },
-  }),
-};
 
 const ui = {
   /** Row of policy tree containing default policy */
@@ -146,7 +110,6 @@ describe.each([
 ])('NotificationPolicies with alertingApiServer=%p', (apiServerEnabled) => {
   apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
   beforeEach(() => {
-    setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
       AccessControlAction.AlertingInstanceRead,
       AccessControlAction.AlertingInstanceCreate,
@@ -396,7 +359,7 @@ describe('Non-Grafana alertmanagers', () => {
   });
 
   it('Keeps matchers for non-grafana alertmanager sources', async () => {
-    setAlertmanagerConfig(dataSources.am.uid, {
+    setAlertmanagerConfig(dataSources.alertmanager.uid, {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
         route: {
@@ -418,7 +381,7 @@ describe('Non-Grafana alertmanagers', () => {
       template_files: {},
     });
 
-    const { user } = renderNotificationPolicies(dataSources.am.name);
+    const { user } = renderNotificationPolicies(dataSources.alertmanager.name);
 
     const policyIndex = 0;
     await openEditModal(policyIndex);
@@ -426,16 +389,16 @@ describe('Non-Grafana alertmanagers', () => {
     // Save policy to test that format is NOT converted
     await user.click(await ui.saveButton.find());
 
-    const updatedConfig = getAlertmanagerConfig(dataSources.am.uid);
+    const updatedConfig = getAlertmanagerConfig(dataSources.alertmanager.uid);
     expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].matchers).toMatchSnapshot();
   });
 
   it('Prometheus Alertmanager routes cannot be edited', async () => {
-    setAlertmanagerStatus(dataSources.promAlertManager.uid, {
+    setAlertmanagerStatus(dataSources.externalPrometheus.uid, {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.externalPrometheus.name);
 
     expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
 
@@ -447,7 +410,7 @@ describe('Non-Grafana alertmanagers', () => {
   });
 
   it('Prometheus Alertmanager has no CTA button if there are no specific policies', async () => {
-    setAlertmanagerStatus(dataSources.promAlertManager.uid, {
+    setAlertmanagerStatus(dataSources.externalPrometheus.uid, {
       ...someCloudAlertManagerStatus,
       config: {
         ...someCloudAlertManagerConfig.alertmanager_config,
@@ -458,7 +421,7 @@ describe('Non-Grafana alertmanagers', () => {
       },
     });
 
-    renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.externalPrometheus.name);
 
     expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
 

@@ -2,6 +2,9 @@ import { act } from '@testing-library/react';
 
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockDataSources } from 'app/features/alerting/unified/test/fixtures';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 /**
  * Flushes out microtasks so we don't get warnings from `@floating-ui/react`
@@ -46,4 +49,18 @@ export const testWithLicenseFeatures = (features: string[]) => {
   afterEach(() => {
     config.licenseInfo.enabledFeatures = originalFeatures;
   });
+};
+
+export const setupAlertingDataSources = () => {
+  const service = setupDataSources(...Object.values(mockDataSources));
+  return { dataSources: mockDataSources, dataSourceService: service };
+};
+
+/**
+ * Setup mock API, datasources, and anything else commonly needed for alerting tests
+ */
+export const setupAlertingTestEnv = () => {
+  const server = setupMswServer();
+  const dataSourceSetup = setupAlertingDataSources();
+  return { server, ...dataSourceSetup };
 };
