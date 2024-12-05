@@ -2,8 +2,6 @@ import { BettererFileTest } from '@betterer/betterer';
 import { ESLint } from 'eslint';
 import { promises as fs } from 'fs';
 
-import config from './.betterer.eslint.config';
-
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
@@ -11,7 +9,6 @@ const eslintPathsToIgnore = [
   'public/app/angular', // will be removed in Grafana 12
   'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
   'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
-  'e2e/test-plugins',
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
@@ -75,17 +72,14 @@ function regexp(pattern: RegExp, issueMessage: string) {
 }
 
 function countEslintErrors() {
-  return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+  return new BettererFileTest(async (filePaths, fileTestResult) => {
     // Just bail early if there's no files to test. Prevents trying to get the base config from failing
     if (filePaths.length === 0) {
       return;
     }
 
-    const { baseDirectory } = resolver;
-
     const runner = new ESLint({
-      overrideConfig: config,
-      cwd: baseDirectory,
+      overrideConfigFile: './.betterer.eslint.config.js',
       warnIgnored: false,
     });
 
