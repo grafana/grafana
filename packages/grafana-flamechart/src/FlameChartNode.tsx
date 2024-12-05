@@ -31,7 +31,7 @@ function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.Reac
   } else if (renderItem.cutOffLeft) {
     background = `linear-gradient(to right, transparent, ${backgroundColor} 10px)`;
   } else if (renderItem.cutOffRight) {
-    background = `linear-gradient(to right, ${backgroundColor} 99%, ${backgroundColor} ${renderItem.width - 10}px, transparent)`;
+    background = `linear-gradient(to right, ${backgroundColor} ${renderItem.width - 10}px, transparent)`;
   }
 
   const style: React.CSSProperties = {
