@@ -1,9 +1,12 @@
 package watchers
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
+	"encoding/json"
 	"fmt"
-	"strings"
+	"html/template"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -111,20 +114,13 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) (string, error) {
 	// Create issue in Github
 
-	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
-	var sb strings.Builder
-	sb.WriteString("**Description:**\n")
-	sb.WriteString(object.Spec.Message)
-	sb.WriteString("\n\n**Screenshot:**\n")
-	if object.Spec.ScreenshotUrl != nil {
-		sb.WriteString(fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl))
-	} else {
-		sb.WriteString("no screenshot provided")
+	issueBody, err := s.buildIssueBody(object)
+	if err != nil {
+		return "", fmt.Errorf("building issue body: %w", err)
 	}
 
 	// defaults
 	labels := []string{"type/unknown"}
-
 	title := object.Spec.Message
 	if len(title) > 50 {
 		title = object.Spec.Message[:50] + "..." // truncate
@@ -150,7 +146,7 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 
 	issue := githubClient.Issue{
 		Title:  fmt.Sprintf("[feedback] %s", title),
-		Body:   sb.String(),
+		Body:   issueBody,
 		Labels: labels,
 	}
 
@@ -211,4 +207,56 @@ func (s *FeedbackWatcher) Sync(ctx context.Context, rObj resource.Object) error 
 	// TODO
 	logging.FromContext(ctx).Debug("Possible resource update", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
+}
+
+func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, error) {
+	// Convert map[string]any to JSON
+	jsonData, err := json.Marshal(object.Spec.DiagnosticData)
+	if err != nil {
+		return "", fmt.Errorf("unmarshaling diagnostic data: %w", err)
+	}
+
+	// Convert JSON to Diagnostic struct
+	var diagnostic githubClient.Diagnostic
+	err = json.Unmarshal(jsonData, &diagnostic)
+	if err != nil {
+		return "", fmt.Errorf("unmarshaling diagnostic data: %w", err)
+	}
+
+	var snapshotURL string
+	if object.Spec.ScreenshotUrl != nil {
+		snapshotURL = fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl)
+	} else {
+		snapshotURL = "No screenshot provided"
+	}
+	configsList := githubClient.BuildConfigList(diagnostic.Instance)
+
+	// Combine data into TemplateData struct
+	templateData := githubClient.TemplateData{
+		Datasources:    diagnostic.Instance.Datasources,
+		Plugins:        diagnostic.Instance.Plugins,
+		FeatureToggles: diagnostic.Instance.FeatureToggles,
+		Configs:        configsList,
+
+		WhatHappenedQuestion:   object.Spec.Message,
+		InstanceSlug:           "slug", // TODO: replace this
+		InstanceVersion:        diagnostic.Instance.Edition,
+		InstanceRunningVersion: diagnostic.Instance.Version,
+		BrowserName:            diagnostic.Browser.UserAgent,
+		SnapshotURL:            snapshotURL,
+	}
+
+	// Parse the embedded template
+	tmpl, err := template.New("issueBody").Parse(githubClient.TemplateContent)
+	if err != nil {
+		return "", fmt.Errorf("parsing template: %w", err)
+	}
+
+	// Render the template with data
+	var issueBody bytes.Buffer
+	if err := tmpl.Execute(&issueBody, templateData); err != nil {
+		return "", fmt.Errorf("executing template: %w", err)
+	}
+
+	return issueBody.String(), nil
 }
