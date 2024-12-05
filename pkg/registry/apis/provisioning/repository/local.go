@@ -113,13 +113,43 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *localRepository) Test(ctx context.Context, logger *slog.Logger, cfg *provisioning.Repository) (*provisioning.TestResults, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "test is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
+	local := r.config.Spec.Local
+	if local == nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []string{
+				"missing local config",
+			},
+		}, nil
 	}
+
+	if r.path == "" {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []string{
+				fmt.Sprintf("invalid path: %s", r.config.Spec.Local.Path),
+			},
+		}, nil
+	}
+
+	_, err := os.Stat(r.path)
+	if errors.Is(err, os.ErrNotExist) {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []string{
+				fmt.Sprintf("file not found: %s", r.config.Spec.Local.Path),
+			},
+		}, nil
+	}
+
+	return &provisioning.TestResults{
+		Code:    http.StatusOK,
+		Success: true,
+	}, nil
 }
 
 // Test implements provisioning.Repository.

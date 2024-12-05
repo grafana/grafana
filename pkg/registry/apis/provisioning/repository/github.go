@@ -98,7 +98,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *githubRepository) Test(ctx context.Context, logger *slog.Logger, cfg *provisioning.Repository) (*provisioning.TestResults, error) {
+func (r *githubRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
 	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",

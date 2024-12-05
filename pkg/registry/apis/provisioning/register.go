@@ -236,7 +236,10 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
 	}
+	return b.AsRepository(ctx, r)
+}
 
+func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
@@ -465,7 +468,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	}
 
 	// Reserved names (for now)
-	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file"}
+	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file", "new", "create", "update", "delete"}
 	if slices.Contains(reserved, cfg.Name) {
 		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
 	}
