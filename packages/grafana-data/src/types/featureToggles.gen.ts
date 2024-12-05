@@ -244,4 +244,5 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  feedbackButton?: boolean;
 }
