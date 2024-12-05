@@ -16,6 +16,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	testCases := []struct {
 		name               string
 		externalOrgs       []string
+		orgMappingRegex    string
 		orgMappingSettings []string
 		directlyMappedRole org.RoleType
 		strictRoleMapping  bool
@@ -190,6 +191,25 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			directlyMappedRole: org.RoleAdmin,
 			expected:           nil,
 		},
+		{
+			name:            "should map dynamically to 2 different orgs with 2 different roles with one mapping regex",
+			externalOrgs:    []string{"PREFIX_First_SUFFIX_EDITOR", "PREFIX_Second_SUFFIX_ADMIN"},
+			orgMappingRegex: ".*_(.*)_.*_(.*)",
+			expected:        map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleAdmin},
+		},
+		{
+			name:               "should map dynamically and disregard orgMappingSettings",
+			externalOrgs:       []string{"PREFIX_First_SUFFIX_EDITOR", "PREFIX_Second_SUFFIX_ADMIN"},
+			orgMappingSettings: []string{"First:*:Admin"},
+			orgMappingRegex:    ".*_(.*)_.*_(.*)",
+			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleAdmin},
+		},
+		{
+			name:            "should return the default mapping in case the mapping regex is valid but no matching org is found",
+			externalOrgs:    []string{"PREFIX_NotExistingOrg_SUFFIX_EDITOR"},
+			orgMappingRegex: ".*_(.*)_.*_(.*)",
+			expected:        map[int64]org.RoleType{2: org.RoleViewer},
+		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
 	cfg := setting.NewCfg()
@@ -209,8 +229,8 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 					{Name: "Third", ID: 3},
 				}
 			}
-			mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, tc.strictRoleMapping)
-			actual := mapper.MapOrgRoles(mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
+			mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, tc.strictRoleMapping, tc.orgMappingRegex)
+			actual := mapper.MapOrgRoles(context.Background(), mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
 
 			assert.EqualValues(t, tc.expected, actual)
 		})
@@ -219,11 +239,12 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 
 func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 	testCases := []struct {
-		name       string
-		rawMapping []string
-		roleStrict bool
-		setupMock  func(*orgtest.MockService)
-		expected   *MappingConfiguration
+		name            string
+		rawMapping      []string
+		orgMappingRegex string
+		roleStrict      bool
+		setupMock       func(*orgtest.MockService)
+		expected        *MappingConfiguration
 	}{
 		{
 			name:       "should return empty mapping when no org mapping settings are provided",
@@ -347,6 +368,44 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				strictRoleMapping: false,
 			},
 		},
+		{
+			name:            "should return empty mapping regex when no org mapping regex is provided",
+			orgMappingRegex: "",
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
+			},
+		},
+		{
+			name:            "should return org mapping as org mapping regex is not supplied",
+			orgMappingRegex: "",
+			rawMapping:      []string{"ExternalOrg1:1:Editor", "ExternalOrg2:2:Viewer"},
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: "Editor"}, "ExternalOrg2": {2: "Viewer"}},
+			},
+		},
+		{
+			name:            "should return org mapping regex as is and no org mapping",
+			orgMappingRegex: ".*()()",
+			rawMapping:      []string{"ExternalOrg1:First:Editor", "ExternalOrg1:Second:Viewer"},
+			expected: &MappingConfiguration{
+				orgMappingRegex:   ".*()()",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
+			},
+		},
+		{
+			name:            "should return no org mapping regex when regex does not have 2 capture groups and also no org mapping since org mapping is empty",
+			orgMappingRegex: ".*",
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -357,7 +416,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			}
 			mapper := ProvideOrgRoleMapper(cfg, orgService)
 
-			actual := mapper.ParseOrgMappingSettings(context.Background(), tc.rawMapping, tc.roleStrict)
+			actual := mapper.ParseOrgMappingSettings(context.Background(), tc.rawMapping, tc.roleStrict, tc.expected.orgMappingRegex)
 
 			assert.EqualValues(t, tc.expected, actual)
 		})
