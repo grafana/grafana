@@ -1688,6 +1688,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 

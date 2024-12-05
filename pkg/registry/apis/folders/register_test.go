@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
@@ -149,6 +148,42 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 				allow: false,
 			},
 		},
+		{
+			name: "user with write permissions should be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{
+				eval:  "folders:write",
+				allow: true,
+			},
+		},
+		{
+			name: "user without write permissions should NOT be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{
+				eval:  "folders:write",
+				allow: false,
+			},
+		},
 	}
 
 	b := &FolderAPIBuilder{
@@ -177,9 +212,19 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 
 func TestFolderAPIBuilder_Validate(t *testing.T) {
 	type input struct {
-		obj  *unstructured.Unstructured
-		name string
+		obj         *v0alpha1.Folder
+		annotations map[string]string
+		name        string
 	}
+
+	circularObj := &v0alpha1.Folder{
+		Spec: v0alpha1.Spec{
+			Title: "foo",
+		},
+	}
+	circularObj.Name = "valid-name"
+	circularObj.Annotations = map[string]string{"grafana.app/folder": "valid-name"}
+
 	tests := []struct {
 		name    string
 		input   input
@@ -189,9 +234,9 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return error when name is invalid",
 			input: input{
-				obj: &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"meta": map[string]interface{}{"name": folderValidationRules.invalidNames[0]},
+				obj: &v0alpha1.Folder{
+					Spec: v0alpha1.Spec{
+						Title: "foo",
 					},
 				},
 				name: folderValidationRules.invalidNames[0],
@@ -201,9 +246,9 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return no error if every validation passes",
 			input: input{
-				obj: &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"meta": map[string]interface{}{"name": "valid-name"},
+				obj: &v0alpha1.Folder{
+					Spec: v0alpha1.Spec{
+						Title: "foo",
 					},
 				},
 				name: "valid-name",
@@ -212,22 +257,32 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return error when creating a nested folder higher than max depth",
 			input: input{
-				obj: &unstructured.Unstructured{
-					Object: map[string]any{
-						"metadata": map[string]any{"name": "valid-name", "annotations": map[string]any{"grafana.app/folder": "valid-name"}},
+				obj: &v0alpha1.Folder{
+					Spec: v0alpha1.Spec{
+						Title: "foo",
 					},
 				},
-				name: "valid-name",
+				annotations: map[string]string{"grafana.app/folder": "valid-name"},
+				name:        "valid-name",
 			},
 			setupFn: func(m *mock.Mock) {
 				m.On("Get", mock.Anything, "valid-name", mock.Anything).Return(
-					&unstructured.Unstructured{
-						Object: map[string]any{
-							"metadata": map[string]any{"name": "valid-name", "annotations": map[string]any{"grafana.app/folder": "valid-name"}},
-						},
-					}, nil)
+					circularObj,
+					nil)
 			},
 			err: folder.ErrMaximumDepthReached,
+		},
+		{
+			name: "should return error when title is empty",
+			input: input{
+				obj: &v0alpha1.Folder{
+					Spec: v0alpha1.Spec{
+						Title: "",
+					},
+				},
+				name: "foo",
+			},
+			err: dashboards.ErrFolderTitleEmpty,
 		},
 	}
 
@@ -246,6 +301,9 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.input.obj.Name = tt.input.name
+			tt.input.obj.Annotations = tt.input.annotations
+
 			if tt.setupFn != nil {
 				tt.setupFn(m)
 			}
@@ -264,7 +322,9 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				&user.SignedInUser{},
 			), nil)
 
-			if tt.err != nil {
+			if tt.err == nil {
+				require.NoError(t, err)
+			} else {
 				require.ErrorIs(t, err, tt.err)
 				return
 			}
