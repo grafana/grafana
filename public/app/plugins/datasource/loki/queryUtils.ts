@@ -319,9 +319,19 @@ export function requestSupportsSharding(allQueries: LokiQuery[]) {
     .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
-    .filter((query) => query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr));
+    .filter((query) => {
+      const isLogs = isLogsQuery(query.expr);
+      if (isLogs && query.direction === LokiQueryDirection.Scan) {
+        return true;
+      }
+      return !isLogs ? metricQuerySupportsSharding(query.expr) : false;
+    });
 
   return queries.length > 0;
+}
+
+function metricQuerySupportsSharding(expr: string) {
+  return !!expr;
 }
 
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
