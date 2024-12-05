@@ -352,7 +352,7 @@ interface GroupedWeightedShards {
 
 function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   const gb = Math.pow(2, 30);
-  const splittingLimit = 300 * gb;
+  const splittingLimit = 250 * gb;
   if (!shards.some((shard) => shard.size > 0)) {
     return [
       {
@@ -412,9 +412,10 @@ function addSplittingDurationToTargets(targets: LokiQuery[], bytes: number) {
   }
   const minChunkRangeMs = 3 * 60 * 60 * 1000;
   chunkRangeMs = chunkRangeMs < minChunkRangeMs ? minChunkRangeMs : chunkRangeMs;
+  const hours = Math.round(chunkRangeMs / 1000 / 60 / 60);
 
-  targets.forEach((query) => (query.splitDuration = `${chunkRangeMs / 1000 / 60 / 60}h`));
-  console.log(`${chunkRangeMs / 1000 / 60 / 60}h`);
+  targets.forEach((query) => (query.splitDuration = `${hours}h`));
+  console.log(`${hours}h`);
 
   return targets;
 }
