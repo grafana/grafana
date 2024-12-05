@@ -1,31 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { type CustomCommand } from '@grafana/schema';
 import { Button, Field, Input, Stack, TagsInput, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { PreferencesService } from 'app/core/services/PreferencesService';
 
-interface CustomCommand {
-  id: string;
-  title: string;
-  path?: string;
-  shortcut?: string[];
-  keywords?: string[];
-  category?: string;
-}
-
-const mockCommands: CustomCommand[] = [
-  {
-    id: 'create-incident',
-    title: 'Create Incident',
-    path: 'irm/create-incident',
-    shortcut: ['/ci'],
-    keywords: ['incident', 'create', 'new'],
-    category: 'IRM',
-  },
-];
+const service = new PreferencesService('user');
 
 export function UserCommands({}) {
-  const [commands, setCommands] = useState<CustomCommand[]>(mockCommands);
+  const [savedCommands, setSavedCommands] = useState<CustomCommand[]>([]);
 
   const {
     control,
@@ -36,18 +20,20 @@ export function UserCommands({}) {
   } = useForm<CustomCommand>();
 
   useEffect(() => {
-    // Fetch commands from API
+    fetchCommands();
   }, []);
 
-  const onSubmit = (data: CustomCommand) => {
-    // Save command to API
-    setCommands([...commands, data]);
-    reset();
+  const fetchCommands = async () => {
+    const { customCommands = [] } = await service.load();
+    setSavedCommands(customCommands);
   };
 
-  const onDelete = (id: string) => {
-    // Delete command from API
-    setCommands(commands.filter((command) => command.id !== id));
+  const onSubmit = async (values: CustomCommand) => {
+    // excluding for now shortcut and keywords since we need to transform strings to arrays
+    const { shortcut, keywords, ...preparedValues } = values;
+    await service.patch({ customCommands: [...savedCommands, preparedValues] });
+    fetchCommands();
+    reset();
   };
 
   return (
@@ -160,23 +146,17 @@ export function UserCommands({}) {
               <th>
                 <Trans i18nKey="user-profile.commands-table.path-column">Path</Trans>
               </th>
-              <th />
             </tr>
           </thead>
           <tbody>
-            {commands.map((command: CustomCommand, index) => {
+            {savedCommands.map((command: CustomCommand) => {
               return (
-                <tr key={index}>
+                <tr key={command.ID}>
                   <td>{command.title}</td>
                   <td>{command.category}</td>
                   <td>{command.keywords?.join(', ')}</td>
                   <td>{command.shortcut?.join(', ') ?? ''}</td>
                   <td>{command.path}</td>
-                  <td className="text-right">
-                    <Button variant="destructive" size="sm" onClick={() => onDelete(command.id)}>
-                      <Trans i18nKey="user-profile.commands-table.delete-button">Delete</Trans>
-                    </Button>
-                  </td>
                 </tr>
               );
             })}
