@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
+    "@rspack/cli": "^1.1.5",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.1",
@@ -30,16 +31,15 @@
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "typescript": "5.5.4"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
   },
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "webpack -w -c ./webpack.config.ts --env development"
+    "build": "rspack -c ./rspack.config.ts --env production",
+    "build:commit": "rspack -c ./rspack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
+    "dev": "rspack -w -c ./rspack.config.ts --env development"
   },
   "packageManager": "yarn@4.5.3"
 }
