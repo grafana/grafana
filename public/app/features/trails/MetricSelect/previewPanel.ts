@@ -33,6 +33,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
   if (config.featureToggles.exploreMetricsWingman) {
     panel = new WithUsageDataPreviewPanel({
       vizPanelInGridItem: vizPanel,
+      metric,
     });
   }
 

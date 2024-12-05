@@ -38,11 +38,11 @@ func (hs *HTTPServer) GetMetricStats(c *contextmodel.ReqContext) response.Respon
 	}
 
 	metricCount := map[string]map[string]int{
-		"alert_rules": make(map[string]int),
-		"dashboards":  make(map[string]int),
+		"alertRules": make(map[string]int),
+		"dashboards": make(map[string]int),
 	}
 
-	countMetricNames(alertRuleQueryResult, metricCount["alert_rules"])
+	countMetricNames(alertRuleQueryResult, metricCount["alertRules"])
 	countMetricNames(dashboardQueryResult, metricCount["dashboards"])
 
 	return response.JSON(http.StatusOK, metricCount)

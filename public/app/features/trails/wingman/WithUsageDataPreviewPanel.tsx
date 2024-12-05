@@ -4,33 +4,40 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { UsageStats } from '../shared';
+import { getTrailFor } from '../utils';
+
 interface WithUsageDataPreviewPanelState extends SceneObjectState {
-  vizPanelInGridItem?: VizPanel;
+  vizPanelInGridItem: VizPanel;
+  metric: string;
+  stats?: UsageStats;
 }
 
 export class WithUsageDataPreviewPanel extends SceneObjectBase<WithUsageDataPreviewPanelState> {
-  constructor(state: Partial<WithUsageDataPreviewPanelState>) {
-    super(state);
+  constructor(state: WithUsageDataPreviewPanelState) {
+    super({ ...state });
   }
 
   public static Component = ({ model }: SceneComponentProps<WithUsageDataPreviewPanel>) => {
-    const { vizPanelInGridItem } = model.useState();
+    const { vizPanelInGridItem, metric } = model.useState();
     if (!vizPanelInGridItem) {
       console.log('no viz panel');
       return;
     }
 
     const styles = useStyles2(getStyles);
+    const trails = getTrailFor(model);
+    const { usageStats } = trails.useState();
 
     return (
       <div className={styles.panelContainer}>
         <vizPanelInGridItem.Component model={vizPanelInGridItem} />
         <div className={styles.usageContainer}>
           <span className={styles.usageItem}>
-            <Icon name="apps" /> 16
+            <Icon name="apps" /> {usageStats.dashboards[metric] ?? 0}
           </span>
           <span className={styles.usageItem}>
-            <Icon name="bell" /> 16
+            <Icon name="bell" /> {usageStats.alertRules[metric] ?? 0}
           </span>
         </div>
       </div>
