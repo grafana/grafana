@@ -1,6 +1,5 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
-const { fixupPluginRules } = require('@eslint/compat');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
@@ -260,7 +259,7 @@ module.exports = [
   {
     name: 'grafana/alerting-test-overrides',
     plugins: {
-      'testing-library': fixupPluginRules({ rules: testingLibraryPlugin.rules }),
+      'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
     },
     files: [
