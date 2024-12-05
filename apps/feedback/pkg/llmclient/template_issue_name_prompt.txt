@@ -2,6 +2,6 @@ Here is a user description of an issue with Grafana:
 "{{ . }}"
 Come up with a concise Github title for this issue that will be helpful for software developers debugging it. 
 Try to keep it around 60 characters.
-Be professional. 
+Be professional, no plays on words or puns. 
 Talk about the user in the third person. 
 Only respond with the proposed title, nothing else.
