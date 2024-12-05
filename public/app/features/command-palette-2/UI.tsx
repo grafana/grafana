@@ -83,6 +83,11 @@ export function CommandPalette2() {
     }
   }, []);
 
+  const handleBackButtonClick = useCallback(() => {
+    setMode('search');
+    setInputValue('');
+  }, []);
+
   useEffect(() => {
     function handler(ev: KeyboardEvent) {
       if (ev.key === 'Backspace' && inputValue.length === 0 && mode === 'command') {
@@ -124,7 +129,7 @@ export function CommandPalette2() {
         // Filter out consecutive dividers
         .filter((item, index, all) => {
           const nextItem = all[index + 1];
-          if (item.type === 'divider' && nextItem?.type === 'divider') {
+          if (item.type === 'divider' && (nextItem?.type === 'divider' || !nextItem)) {
             return false;
           }
           return true;
@@ -175,7 +180,7 @@ export function CommandPalette2() {
           {mode === 'command' && (
             <div className={styles.navBarCell}>
               <Stack gap={2}>
-                <button className={styles.button} onClick={() => setMode('search')}>
+                <button className={styles.button} onClick={handleBackButtonClick}>
                   <Icon size="lg" name="arrow-left" />
                 </button>
                 <Stack gap={1}>
