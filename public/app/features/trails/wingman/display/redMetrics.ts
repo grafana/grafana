@@ -1,10 +1,20 @@
-import { PanelBuilders, SceneCSSGridItem, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { PanelBuilders, SceneCSSGridItem, SceneCSSGridLayout, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { DataTrail } from '../../DataTrail';
 import { MDP_METRIC_PREVIEW, trailDS } from '../../shared';
 import { getColorByIndex } from '../../utils';
+
+/**
+ * This is an object that represents a collection of RED metrics
+ */
+type RedObject = {
+  job: string;
+  rate: string;
+  error: string;
+  duration: string;
+};
 
 /**
  * WIP
@@ -23,7 +33,7 @@ import { getColorByIndex } from '../../utils';
  * @param trail 
  * @returns grouped panels for red metrics based on job
  */
-export const renderAsRedMetricsDisplay = async (trail: DataTrail): Promise<SceneCSSGridItem[]> => {
+export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string): Promise<SceneCSSGridLayout[]> => {
   // use this file for red metrics display code
   // return children as in red metrics display
   // I think we can return SceneFlexLayout in SceneFlexItem so it will also display rows
@@ -65,17 +75,32 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail): Promise<Scene
     redQueriesByJob.push(queries);
   }
   // [x] add __ignore_usage__="" to each query
-  const children: SceneCSSGridItem[] = [];
+  const children:  SceneCSSGridLayout[] = [];
 
   // 3. Create the children panels grouped in 3
   redQueriesByJob.forEach((query, index) => {
+    const header = panelHeader(query.job);
     const rt = redPanelItem(query, 'rate', index);
     const et = redPanelItem(query, 'error', index);
     const dt = redPanelItem(query, 'duration', index);
     
-    children.push(rt);
-    children.push(et);
-    children.push(dt);
+    const row = new SceneCSSGridLayout({
+      children: [rt,et,dt],
+      templateColumns: 'repeat(3, minmax(0, 1fr))',
+      autoRows: height,
+      isLazy: true,
+      // templateRows: 'auto'
+    })
+
+    const headerRow = new SceneCSSGridLayout({
+      children: [header],
+      templateColumns: '1/-1',
+      autoRows: '30px',
+      // templateRows: 'auto'      
+    });
+
+    children.push(headerRow);
+    children.push(row);
   });
 
   return children;
@@ -105,7 +130,7 @@ function redPanelItem(query: RedObject, red: 'rate'|'error'|'duration', index: n
       ],
     }),
     body: PanelBuilders.barchart()
-      .setTitle(`${red.toLocaleUpperCase()}: ${query.job}`)
+      .setTitle(`${red.toLocaleUpperCase()}`)
       .setUnit('rps')
       .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
@@ -120,12 +145,16 @@ function redPanelItem(query: RedObject, red: 'rate'|'error'|'duration', index: n
   });
 }
 
-type RedObject = {
-  job: string;
-  rate: string;
-  error: string;
-  duration: string;
-};
+function panelHeader(job: string) {
+  return new SceneCSSGridItem({
+    gridColumn: '1/-1',
+    // gridRow: '30px',
+    body: PanelBuilders.text()
+      .setTitle(`Job: ${job}`)
+      .setOption('content', '')
+      .build()
+  });
+}
 
 /**
  * WIP need to create a new previewCache to sort and filter by job values
