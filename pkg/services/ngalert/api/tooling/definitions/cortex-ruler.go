@@ -125,6 +125,17 @@ import (
 //       204: The rule group was deleted successfully.
 //       403: ForbiddenError
 
+// swagger:route DELETE /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RouteDeleteGrafanaPrometheusNamespace
+//
+// Deletes all rule groups in the given namespace.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       204: The rule groups in the namespace were deleted successfully.
+//       403: ForbiddenError
+
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
@@ -715,4 +726,10 @@ type RouteDeleteGrafanaPrometheusRuleGroupParams struct {
 	Namespace string
 	// in: path
 	Group string
+}
+
+// swagger:parameters RouteDeleteGrafanaPrometheusNamespace
+type RouteDeleteGrafanaPrometheusNamespaceParams struct {
+	// in: path
+	Namespace string
 }
