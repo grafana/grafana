@@ -11,14 +11,9 @@ import { VizPanelMore } from './VizPanelMore';
 import { VizPanelDelete } from './VizPanelDelete';
 import { getBackendSrv } from '@grafana/runtime';
 
-export interface FileImportResult {
-  dataFrames: DataFrame[];
-  file: File;
-}
-
 export function useDropAndPaste(dashboard: DashboardScene) {
   const [editComponent, setEditComponent] = useState<React.ReactNode | null>(null);
-  const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<string[]>>({
+  const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<PasteHandler[] | null>>({
     extensionPointId: 'dashboard/grid',
     limitPerPlugin: 1,
   });
@@ -26,6 +21,8 @@ export function useDropAndPaste(dashboard: DashboardScene) {
     extensionPointId: 'dashboard/dragndrop',
     limitPerPlugin: 1,
   });
+
+
 
   const onImportFile = useCallback(
     async (file?: File) => {
@@ -106,38 +103,9 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         return;
       }
 
-      for (const hook of fileHooks) {
-        const result = await hook(file);
-        console.log(result);
-        for (const uid of result) {
-          console.log(uid);
-          const vizPanel = new VizPanel({
-            pluginId: 'table',
-            title: `JSON Data fetched from ${uid}`,
-            menu: new VizPanelMenu({
-              $behaviors: [panelMenuBehavior],
-            }),
-            $data: new SceneDataTransformer({
-              $data: new SceneQueryRunner({
-                queries: [
-                  {
-                    refId: 'A',
-                    type: 'series',
-                    source: 'unistore',
-                    format: 'table',
-                    dataset: uid,
-                  },
-                ],
-                datasource: { uid: 'ee5sgnbe5wum8b', type: 'yesoreyeram-infinity-datasource' },
-              }),
-              transformations: [],
-            }),
-          });
-          dashboard.addPanel(vizPanel);
-        }
-      }
+      const results = await Promise.all(fileHooks.map((h) => h(file)));
+      buildPanel(results);
 
-      //alert(`Importing file: ${file.name}`);
     },
     [dashboard, fileHooks]
   );
@@ -156,47 +124,7 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         // Handle plaintext paste
         const text = clipboardData.getData('text/plain');
         const results = await Promise.all(pasteHooks.map((h) => h(text)));
-        const filtered = results.filter((x) => x !== null).flat();
-        if (filtered.length === 0) {
-          return;
-        }
-        const immediatePanels = filtered.filter((x) => x.panel !== null);
-        const preferedViz = immediatePanels.find((x) => x.panel?.type === 'table') ?? immediatePanels[0];
-        const addPanel = (model: PanelModel) => {
-          const panel = buildPanelFromModel(model);
-          panel.setState({
-            headerActions: [
-              new VizPanelDelete({ onClick: () => dashboard.removePanel(panel) }),
-              new VizPanelMore({
-                actions: filtered.map((p) => ({
-                  name: p.title,
-                  icon: p.icon,
-                  onClick: () => {
-                    if (p.panel != null) {
-                      dashboard.removePanel(panel);
-                      addPanel(p.panel);
-                    } else if (p.component) {
-                      setEditComponent(
-                        <div>
-                          <p.component
-                            addPanel={(p) => {
-                              dashboard.removePanel(panel);
-                              addPanel(p);
-                            }}
-                            input={text}
-                          />
-                        </div>
-                      );
-                    }
-                  },
-                })),
-              }),
-            ],
-          });
-          dashboard.addPanel(panel);
-          setEditComponent(null);
-        };
-        addPanel(preferedViz.panel!);
+        buildPanel(results, text)
         return;
       }
 
@@ -220,6 +148,50 @@ export function useDropAndPaste(dashboard: DashboardScene) {
   );
 
   const { getRootProps, isDragActive } = useDropzone({ onDrop: ([acceptedFile]) => onImportFile(acceptedFile) });
+
+  const buildPanel = (results: (PasteHandler[] | null)[], source: string = '') => {
+    const filtered = results.filter((x) => x !== null).flat();
+    if (filtered.length === 0) {
+      return;
+    }
+    const immediatePanels = filtered.filter((x) => x.panel !== null);
+    const preferedViz = immediatePanels.find((x) => x.panel?.type === 'table') ?? immediatePanels[0];
+    const addPanel = (model: PanelModel) => {
+      const panel = buildPanelFromModel(model);
+      panel.setState({
+        headerActions: [
+          new VizPanelDelete({ onClick: () => dashboard.removePanel(panel) }),
+          new VizPanelMore({
+            actions: filtered.map((p) => ({
+              name: p.title,
+              icon: p.icon,
+              onClick: () => {
+                if (p.panel != null) {
+                  dashboard.removePanel(panel);
+                  addPanel(p.panel);
+                } else if (p.component) {
+                  setEditComponent(
+                    <div>
+                      <p.component
+                        addPanel={(p) => {
+                          dashboard.removePanel(panel);
+                          addPanel(p);
+                        }}
+                        input={source}
+                      />
+                    </div>
+                  );
+                }
+              },
+            })),
+          }),
+        ],
+      });
+      dashboard.addPanel(panel);
+      setEditComponent(null);
+    };
+    addPanel(preferedViz.panel!);
+  };
 
   return {
     getRootProps,
