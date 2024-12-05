@@ -1,4 +1,3 @@
-import { max, min } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { FlameChartContainer, ParallelConnector, RenderContainer, RenderItem, ViewRange } from '../types';
