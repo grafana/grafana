@@ -126,7 +126,7 @@ const RuleListV1 = () => {
       actions={
         hasAlertRulesCreated && (
           <Stack gap={1}>
-            <CreateAlertButton /> <ExportNewRuleButton />
+            <CreateAlertButton /> <ExportNewRuleButton /> <ImportAlertsButton />
           </Stack>
         )
       }
@@ -197,4 +197,22 @@ function ExportNewRuleButton() {
       <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export rule definition</Trans>
     </LinkButton>
   );
+}
+
+export function ImportAlertsButton() {
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+
+  if (canCreateGrafanaRules || canCreateCloudRules) {
+    return (
+      <LinkButton variant="secondary" href={urlUtil.renderUrl('alerting/import-datasource', {})} icon="import">
+        <Trans i18nKey="alerting.rule-list.import-alert-rules">Import from a datasource</Trans>
+      </LinkButton>
+    );
+  }
+  return null;
 }
