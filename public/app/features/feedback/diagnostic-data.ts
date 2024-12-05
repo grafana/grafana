@@ -7,9 +7,7 @@ export async function getDiagnosticData() {
 
   return {
     instance: {
-      ...((config as GrafanaBootConfigExtra)?.licensing?.slug && {
-        slug: (config as GrafanaBootConfigExtra)?.licensing?.slug,
-      }),
+      // slug will be populated on the backend when running in Hosted Grafana
       version: config?.buildInfo?.versionString,
       edition: config?.licenseInfo?.edition,
       apps: Object.keys(config?.apps),
