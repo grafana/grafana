@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -266,8 +267,23 @@ func TestAlertRule(t *testing.T) {
 	})
 }
 
+type fakeRetry struct {
+	interval     time.Duration
+	maxRetries   int
+	currentRetry int
+}
+
+func (b *fakeRetry) NextAttemptIn() time.Duration {
+	if b.currentRetry == b.maxRetries-1 {
+		return retryStop
+	}
+	b.currentRetry++
+
+	return b.interval
+}
+
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
-	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	return newAlertRule(ctx, key, nil, false, 0, 0, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -606,7 +622,27 @@ func TestRuleRoutine(t *testing.T) {
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
 		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
-		factory := ruleFactoryFromScheduler(sch)
+
+		factory := newRuleFactory(
+			sch.appURL,
+			sch.disableGrafanaFolder,
+			sch.maxAttempts,
+			sch.initialRetryDelay,
+			sch.maxRetryDelay,
+			sch.alertsSender,
+			sch.stateManager,
+			sch.evaluatorFactory,
+			&sch.schedulableAlertRules,
+			sch.clock,
+			sch.rrCfg,
+			sch.metrics,
+			sch.log,
+			sch.tracer,
+			sch.recordingWriter,
+			sch.evalAppliedFunc,
+			sch.stopAppliedFunc,
+		)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 		ruleInfo := factory.new(ctx, rule)
@@ -846,8 +882,145 @@ func TestRuleRoutine(t *testing.T) {
 	})
 }
 
+func TestAlertRuleRetry(t *testing.T) {
+	gen := models.RuleGen
+	createSchedule := func(
+		evalAppliedChan chan time.Time,
+		senderMock *SyncAlertsSenderMock,
+	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
+		ruleStore := newFakeRulesStore()
+		instanceStore := &state.FakeInstanceStore{}
+
+		registry := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
+		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
+			evalAppliedChan <- t
+		}
+		return sch, ruleStore, instanceStore, registry
+	}
+
+	evalAppliedChan := make(chan time.Time)
+
+	rule := gen.With(withQueryForState(t, eval.Error)).GenerateRef()
+	rule.ExecErrState = models.ErrorErrState
+
+	sender := NewSyncAlertsSenderMock()
+	sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+	sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
+	fakeClock := sch.clock.(*clock.Mock)
+
+	ruleStore.PutRule(context.Background(), rule)
+
+	backoffDuration := time.Millisecond * 10
+
+	factory := newRuleFactory(
+		sch.appURL,
+		sch.disableGrafanaFolder,
+		3,
+		backoffDuration,
+		backoffDuration,
+		sch.alertsSender,
+		sch.stateManager,
+		sch.evaluatorFactory,
+		&sch.schedulableAlertRules,
+		fakeClock,
+		sch.rrCfg,
+		sch.metrics,
+		sch.log,
+		sch.tracer,
+		sch.recordingWriter,
+		sch.evalAppliedFunc,
+		sch.stopAppliedFunc,
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	ruleInfo := factory.new(ctx, rule)
+
+	go func() {
+		_ = ruleInfo.Run()
+	}()
+
+	// Run the rule evaluation tick
+	ruleInfo.Eval(&Evaluation{
+		scheduledAt: sch.clock.Now(),
+		rule:        rule,
+	})
+
+	compareMetrics := func(c *assert.CollectT, evaluations, expectedFailures int) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+			# TYPE grafana_alerting_rule_evaluation_attempts_total counter
+			grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} %[3]d
+			# HELP grafana_alerting_rule_evaluation_attempt_failures_total The total number of rule evaluation attempt failures.
+			# TYPE grafana_alerting_rule_evaluation_attempt_failures_total counter
+			grafana_alerting_rule_evaluation_attempt_failures_total{org="%[1]d"} %[3]d
+			# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+			# TYPE grafana_alerting_rule_evaluations_total counter
+			grafana_alerting_rule_evaluations_total{org="%[1]d"} %[2]d
+			`, rule.OrgID, evaluations, expectedFailures)
+
+		err := testutil.GatherAndCompare(
+			reg,
+			bytes.NewBufferString(expectedMetric),
+			"grafana_alerting_rule_evaluations_total",
+			"grafana_alerting_rule_evaluation_attempts_total",
+			"grafana_alerting_rule_evaluation_attempt_failures_total",
+		)
+		assert.NoError(c, err)
+	}
+
+	t.Run("first attempt", func(t *testing.T) {
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			compareMetrics(c, 1, 1)
+		}, 5*time.Millisecond, 1*time.Millisecond)
+	})
+
+	t.Run("second attempt", func(t *testing.T) {
+		// advance the clock by the backoff duration
+		fakeClock.Add(backoffDuration)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			compareMetrics(c, 1, 2)
+		}, 5*time.Millisecond, 1*time.Millisecond)
+	})
+
+	t.Run("third attempt", func(t *testing.T) {
+		// advance the clock by the backoff duration
+		fakeClock.Add(backoffDuration)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			compareMetrics(c, 1, 3)
+		}, 5*time.Millisecond, 1*time.Millisecond)
+	})
+
+	t.Run("fourth attempt", func(t *testing.T) {
+		fakeClock.Add(backoffDuration * 5)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			compareMetrics(c, 1, 3)
+		}, 5*time.Millisecond, 1*time.Millisecond)
+	})
+}
+
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
-	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.rrCfg, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
+	return newRuleFactory(
+		sch.appURL,
+		sch.disableGrafanaFolder,
+		sch.maxAttempts,
+		sch.initialRetryDelay,
+		sch.maxRetryDelay,
+		sch.alertsSender,
+		sch.stateManager,
+		sch.evaluatorFactory,
+		&sch.schedulableAlertRules,
+		sch.clock,
+		sch.rrCfg,
+		sch.metrics,
+		sch.log,
+		sch.tracer,
+		sch.recordingWriter,
+		sch.evalAppliedFunc,
+		sch.stopAppliedFunc,
+	)
 }
 
 func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
