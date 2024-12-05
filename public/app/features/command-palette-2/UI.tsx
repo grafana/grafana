@@ -134,24 +134,19 @@ export function CommandPalette2() {
   const activeIndex = useActiveIndex(filteredItems);
   const activeItemYPos = useMemo(() => {
     const itemsBefore = filteredItems.slice(0, activeIndex);
-    const yPos = itemsBefore.reduce((acc, item) => {
-      return acc + (item.type === 'divider' ? 18.85 : 54);
-    }, 0);
-    return yPos;
+    return calcHeightForRows(itemsBefore);
   }, [filteredItems, activeIndex]);
 
   const scrollingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Scroll the view to the active item
     if (!scrollingRef.current) {
       return;
     }
 
     const itemsBefore = filteredItems.slice(0, Math.max(activeIndex - 2, 0));
-    const yPos = itemsBefore.reduce((acc, item) => {
-      return acc + (item.type === 'divider' ? 18.85 : 54);
-    }, 0);
-
+    const yPos = calcHeightForRows(itemsBefore);
     scrollingRef.current.scrollTo({ top: yPos, behavior: 'smooth' });
   }, [activeItemYPos, activeIndex, filteredItems]);
 
@@ -287,6 +282,15 @@ export function CommandPalette2() {
     </Portal>
   );
 }
+
+function calcHeightForRows(items: CommandPaletteItem[]) {
+  return items.reduce((acc, item) => {
+    return acc + (item.type === 'divider' ? DIVIDER_HEIGHT : RESULT_HEIGHT);
+  }, 0);
+}
+
+const DIVIDER_HEIGHT = 42.85;
+const RESULT_HEIGHT = 54;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
