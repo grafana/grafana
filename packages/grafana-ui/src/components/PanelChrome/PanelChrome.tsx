@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
@@ -34,6 +35,7 @@ interface BaseProps {
   dragClass?: string;
   dragClassCancel?: string;
   onDragStart?: (e: React.PointerEvent) => void;
+  selectionId?: string;
   /**
    * Use only to indicate loading or streaming data in the panel.
    * Any other values of loadingState are ignored.
@@ -132,6 +134,7 @@ export function PanelChrome({
   statusMessageOnClick,
   leftItems,
   actions,
+  selectionId,
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
@@ -147,6 +150,7 @@ export function PanelChrome({
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
+  const { isSelected, onSelect } = useElementSelection(selectionId);
 
   const hasHeader = !hoverHeader;
 
@@ -265,7 +269,11 @@ export function PanelChrome({
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
     <section
-      className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
+      className={cx(
+        styles.container,
+        isPanelTransparent && styles.transparentContainer,
+        isSelected && 'dashboard-selected-element'
+      )}
       style={containerStyles}
       aria-labelledby={!!title ? panelTitleId : undefined}
       data-testid={testid}
@@ -307,6 +315,7 @@ export function PanelChrome({
           style={headerStyles}
           data-testid="header-container"
           onPointerDown={onDragStart}
+          onPointerUp={onSelect}
         >
           {statusMessage && (
             <div className={dragClassCancel}>

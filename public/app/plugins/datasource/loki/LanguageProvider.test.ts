@@ -441,6 +441,14 @@ describe('Language completion provider', () => {
         start: 1560153109000,
       });
     });
+
+    it('should filter internal labels', async () => {
+      const datasourceWithLabels = setup({ foo: [], bar: [], __name__: [], __stream_shard__: [] });
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      const labels = await instance.fetchLabels();
+      expect(labels).toEqual(['bar', 'foo']);
+    });
   });
 });
 
