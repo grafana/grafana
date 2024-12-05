@@ -53,7 +53,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const fieldName = useCallback((fieldName: string) => `${pathPrefix}${fieldName}`, [pathPrefix]);
 
-  const { control, watch, register, trigger, formState, setValue } = useFormContext();
+  const { control, watch, register, trigger, formState, setValue, getValues } = useFormContext();
   const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const parse_mode = watch(fieldName('settings.parse_mode'));
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
@@ -73,22 +73,14 @@ export function ChannelSubForm<R extends ChannelValues>({
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((v, { name, type }) => {
-      const value = name ? v[name] : '';
+      const value = name ? getValues(name) : '';
       if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
         setValue(fieldName('settings'), initialValues.settings);
-      }
-      // Restore initial value of an existing oncall integration
-      if (
-        initialValues &&
-        name === fieldName('settings.integration_type') &&
-        value === OnCallIntegrationType.ExistingIntegration
-      ) {
-        setValue(fieldName('settings.url'), initialValues.settings.url);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, fieldName, watch]);
+  }, [selectedType, initialValues, setValue, getValues, fieldName, watch]);
 
   const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
 
