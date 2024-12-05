@@ -259,10 +259,16 @@ async function groupTargetsByQueryType(
         shards.push(-1);
       }
       const weightedShards: WeightedShard[] = [];
+      const promises: Array<Promise<QueryStats | null>> = [];
 
       for (const shard of shards) {
         const interpolated = interpolateShardingSelector([{ expr: selector, refId: `shard_${shard}` }], [shard]);
-        const stats = await getStats(interpolated[0].expr, request.range, datasource);
+        promises.push(getStats(interpolated[0].expr, request.range, datasource));
+      }
+
+      const allStats = await Promise.all(promises);
+      for (const stats of allStats) {
+        const shard = shards[allStats.indexOf(stats)];
         if (!stats) {
           weightedShards.push({
             shard,
