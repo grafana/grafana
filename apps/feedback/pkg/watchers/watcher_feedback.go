@@ -232,6 +232,11 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	configsList := githubClient.BuildConfigList(diagnostic.Instance)
 
 	// Combine data into TemplateData struct
+	slug := diagnostic.Instance.Slug
+	if slug == nil {
+		slug = new(string)
+	}
+
 	templateData := githubClient.TemplateData{
 		Datasources:    diagnostic.Instance.Datasources,
 		Plugins:        diagnostic.Instance.Plugins,
@@ -239,7 +244,7 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 		Configs:        configsList,
 
 		WhatHappenedQuestion:   object.Spec.Message,
-		InstanceSlug:           "slug", // TODO: replace this
+		InstanceSlug:           *slug,
 		InstanceVersion:        diagnostic.Instance.Edition,
 		InstanceRunningVersion: diagnostic.Instance.Version,
 		BrowserName:            diagnostic.Browser.UserAgent,
