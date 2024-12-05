@@ -780,17 +780,16 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 
 	ctx := c.Req.Context()
 
-	// TODO: how can we check for alert rules, library panels and SLOs?
-	var folderDependants = map[string]int{
-		folderalpha1.RESOURCEGROUP:               0,
-		"dashboards.dashboard.grafana.app":       0,
-		"slos.slo.grafana.app":                   0,
-		"librarypanels.librarypanel.grafana.app": 0,
-		"alertrules.alertmanager.grafana.app":    0,
+	// TODO: how can we check for alert rules and library panels?
+	var folderDependants = []string{
+		folderalpha1.RESOURCEGROUP,
+		"dashboards.dashboard.grafana.app",
+		"librarypanels.librarypanel.grafana.app",
+		"alertrules.alertmanager.grafana.app",
 	}
 	var hasDependants bool
-	for k := range folderDependants {
-		item, found, err := fk8s.kvstore.Get(ctx, k)
+	for _, resource := range folderDependants {
+		item, found, err := fk8s.kvstore.Get(ctx, resource)
 		if err != nil {
 			fk8s.writeError(c, err)
 			return
@@ -810,6 +809,8 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 
 		}
 	}
+
+	// TODO: also check for SLORules in another store
 
 	if hasDependants {
 		fk8s.writeError(c, folder.ErrFolderNotEmpty.Errorf("this folder is not empty. Please make sure it does not contain any dashboards, alerts, library panels or SLOs"))
