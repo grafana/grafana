@@ -488,7 +488,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             }
             setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
           },
-          id: 'query-and-expressions-advanced-switch',
         }
       : undefined;
 
