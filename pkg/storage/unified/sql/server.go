@@ -79,5 +79,11 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 		return nil, err
 	}
 
+	// initialize the resource server - this includes building the index
+	err = rs.Init(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return rs, nil
 }

@@ -29,6 +29,9 @@ type ResourceServer interface {
 	ResourceIndexServer
 	BlobStoreServer
 	DiagnosticsServer
+
+	// Initialize the server before any traffic is served
+	Init(ctx context.Context) error
 }
 
 type ListIterator interface {
@@ -294,14 +297,14 @@ func (s *server) Init(ctx context.Context) error {
 			}
 		}
 
-		// Start watching for changes
-		if s.initErr == nil {
-			s.initErr = s.initWatcher()
-		}
-
 		// initialize the search index
 		if s.initErr == nil && s.search != nil {
 			s.initErr = s.search.init(ctx)
+		}
+
+		// Start watching for changes
+		if s.initErr == nil {
+			s.initErr = s.initWatcher()
 		}
 
 		if s.initErr != nil {
@@ -446,10 +449,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-
 	rsp := &CreateResponse{}
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -487,10 +486,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 
 	rsp := &UpdateResponse{}
 	user, ok := claims.From(ctx)
@@ -541,10 +536,6 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 
 	rsp := &DeleteResponse{}
 	if req.ResourceVersion < 0 {
@@ -634,9 +625,6 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
 		return &ReadResponse{
@@ -693,9 +681,6 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			}}, nil
 	}
 
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	if req.Limit < 1 {
 		req.Limit = 50 // default max 50 items in a page
 	}
@@ -785,10 +770,6 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	ctx := srv.Context()
-
-	if err := s.Init(ctx); err != nil {
-		return err
-	}
 
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -930,9 +911,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 }
 
 func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -941,25 +919,16 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	return s.search.History(ctx, req)
 }
 
 // Origin implements ResourceServer.
 func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	return s.search.Origin(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	return s.diagnostics.IsHealthy(ctx, req)
 }
 
@@ -970,9 +939,6 @@ func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResp
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
 		}}, nil
-	}
-	if err := s.Init(ctx); err != nil {
-		return nil, err
 	}
 
 	rsp, err := s.blob.PutResourceBlob(ctx, req)
@@ -1014,10 +980,6 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
 		}}, nil
-	}
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
 	}
 
 	// The linked blob is stored in the resource metadata attributes
