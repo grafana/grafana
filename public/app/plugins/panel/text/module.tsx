@@ -1,4 +1,4 @@
-import { PanelModel, PanelPlugin } from '@grafana/data';
+import { PanelModel, PanelPlugin, PasteHandler } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
@@ -6,20 +6,24 @@ import { CodeLanguage, defaultCodeOptions, defaultOptions, Options, TextMode } f
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<Options>(TextPanel)
-  .addHook<(data: string) => Promise<PanelModel | null>>({
+  .addHook<(data: string) => Promise<PasteHandler | null>>({
     title: 'foo',
     targets: ['dashboard/dragndrop'],
     hook: async (data: string) => {
       return {
-        id: 0,
-        type: 'text',
-        title: `Pasted text contents`,
-        options: {
-          content: data,
-        },
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
+        title: 'Use clipboard contents as text',
+        icon: 'wrap-text',
+        panel: {
+          id: 0,
+          type: 'text',
+          title: `Pasted text contents`,
+          options: {
+            content: data,
+          },
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
         },
       };
     },

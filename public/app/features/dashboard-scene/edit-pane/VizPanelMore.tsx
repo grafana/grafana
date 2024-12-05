@@ -23,6 +23,7 @@ function VizPanelMoreRenderer({ model }: SceneComponentProps<VizPanelMore>) {
   return (
     <Toggletip
       title={<h3>Panel added</h3>}
+      fitContent={true}
       content={
         <>
           <p>We've added a table panel with the data. Is there anything else you'd like to explore or customize?</p>

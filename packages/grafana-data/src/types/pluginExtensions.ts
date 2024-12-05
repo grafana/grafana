@@ -7,6 +7,7 @@ import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
+import { PanelModel } from './dashboard';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -269,4 +270,11 @@ export type PluginExtensionComponentConfig<Props = {}> = {
    * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
    */
   extensionPointId: string;
+};
+
+export type PasteHandler = {
+  title: string;
+  icon: IconName;
+  component?: React.ComponentType<{ addPanel: (p: PanelModel) => void; input: string }>;
+  panel?: PanelModel;
 };

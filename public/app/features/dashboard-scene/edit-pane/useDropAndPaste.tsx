@@ -1,7 +1,7 @@
-import { ClipboardEvent, useCallback } from 'react';
+import { ClipboardEvent, Component, ComponentType, useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
-import { DataFrame, PanelModel } from '@grafana/data';
+import { DataFrame, PanelModel, PasteHandler } from '@grafana/data';
 import { SceneDataQuery, SceneDataTransformer, SceneQueryRunner, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 
@@ -16,11 +16,12 @@ export interface FileImportResult {
 }
 
 export function useDropAndPaste(dashboard: DashboardScene) {
+  const [editComponent, setEditComponent] = useState<React.ReactNode | null>(null);
   const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<string[]>>({
     extensionPointId: 'dashboard/grid',
     limitPerPlugin: 1,
   });
-  const { hooks: pasteHooks } = usePluginHooks<(data: string) => Promise<PanelModel | null>>({
+  const { hooks: pasteHooks } = usePluginHooks<(data: string) => Promise<PasteHandler[] | null>>({
     extensionPointId: 'dashboard/dragndrop',
     limitPerPlugin: 1,
   });
@@ -81,11 +82,12 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         // Handle plaintext paste
         const text = clipboardData.getData('text/plain');
         const results = await Promise.all(pasteHooks.map((h) => h(text)));
-        const filtered = results.filter((x) => x != null);
-        if (filtered.length == 0) {
+        const filtered = results.filter((x) => x !== null).flat();
+        if (filtered.length === 0) {
           return;
         }
-        const preferedViz = filtered.find((x) => x?.type == 'table') ?? filtered[0];
+        const immediatePanels = filtered.filter((x) => x.panel !== null);
+        const preferedViz = immediatePanels.find((x) => x.panel?.type === 'table') ?? immediatePanels[0];
         const addPanel = (model: PanelModel) => {
           const panel = buildPanelFromModel(model);
           panel.setState({
@@ -93,18 +95,34 @@ export function useDropAndPaste(dashboard: DashboardScene) {
               new VizPanelDelete({ onClick: () => dashboard.removePanel(panel) }),
               new VizPanelMore({
                 actions: filtered.map((p) => ({
-                  name: p.title ?? p.type,
+                  name: p.title,
+                  icon: p.icon,
                   onClick: () => {
-                    dashboard.removePanel(panel);
-                    addPanel(p);
+                    if (p.panel != null) {
+                      dashboard.removePanel(panel);
+                      addPanel(p.panel);
+                    } else if (p.component) {
+                      setEditComponent(
+                        <div>
+                          <p.component
+                            addPanel={(p) => {
+                              dashboard.removePanel(panel);
+                              addPanel(p);
+                            }}
+                            input={text}
+                          />
+                        </div>
+                      );
+                    }
                   },
                 })),
               }),
             ],
           });
           dashboard.addPanel(panel);
+          setEditComponent(null);
         };
-        addPanel(preferedViz);
+        addPanel(preferedViz.panel!);
         return;
       }
 
@@ -124,7 +142,7 @@ export function useDropAndPaste(dashboard: DashboardScene) {
 
       alert('Pasted data of unknown type');
     },
-    [onImportFile]
+    [onImportFile, setEditComponent]
   );
 
   const { getRootProps, isDragActive } = useDropzone({ onDrop: ([acceptedFile]) => onImportFile(acceptedFile) });
@@ -133,6 +151,10 @@ export function useDropAndPaste(dashboard: DashboardScene) {
     getRootProps,
     isDragActive,
     onPaste,
+    editComponent,
+    closeDrawer: () => {
+      setEditComponent(null);
+    },
   };
 }
 

@@ -560,6 +560,7 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedHookConfig,
+  type PasteHandler,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
