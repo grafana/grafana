@@ -46,6 +46,7 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
+      '!.betterer.eslint.config.js',
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
