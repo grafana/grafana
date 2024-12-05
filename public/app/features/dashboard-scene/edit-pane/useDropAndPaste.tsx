@@ -37,14 +37,72 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const base64String = reader.result as string;
-          console.log('Base64 Image String:', base64String);
 
           const backendSrv = getBackendSrv();
           const payload = makeAPIFile(base64String, file.name);
           backendSrv.post('/apis/file.grafana.app/v0alpha1/namespaces/default/files', payload);
-          alert('Saved file ' + file.name);
         };
         reader.readAsDataURL(file);
+
+        //real URL should be I think http://localhost:3000/api/plugins/grafana-dragdroppaste-app/resources/file/${file.name}
+        const mockUrl = 'http://localhost:3000/api/plugins/grafana-dragdroppaste-app/resources/ping';
+        const vizPanel = new VizPanel({
+          pluginId: 'canvas',
+          title: `Image fetched from ${file.name}`,
+          menu: new VizPanelMenu({
+            $behaviors: [panelMenuBehavior],
+          }),
+          options: {
+            infinitePan: false,
+            inlineEditing: true,
+            panZoom: false,
+            root: {
+              background: {
+                color: {
+                  fixed: 'transparent',
+                },
+                image: {
+                  fixed: mockUrl,
+                },
+              },
+              border: {
+                color: {
+                  fixed: 'dark-green',
+                },
+              },
+              constraint: {
+                horizontal: 'left',
+                vertical: 'top',
+              },
+              elements: [],
+              name: 'Element 1733410656032',
+              oneClickMode: 'off',
+              placement: {
+                height: 100,
+                left: 0,
+                rotation: 0,
+                top: 0,
+                width: 100,
+              },
+              type: 'frame',
+            },
+            showAdvancedTypes: true,
+          },
+          $data: new SceneDataTransformer({
+            $data: new SceneQueryRunner({
+              queries: [
+                {
+                  queryType: 'randomWalk',
+                  refId: 'A',
+                },
+              ],
+              datasource: { uid: '-- Grafana --', type: 'grafana' },
+            }),
+            transformations: [],
+          }),
+        });
+        dashboard.addPanel(vizPanel);
+
         return;
       }
 
