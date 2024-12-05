@@ -249,6 +249,8 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 		InstanceRunningVersion: diagnostic.Instance.Version,
 		BrowserName:            diagnostic.Browser.UserAgent,
 		SnapshotURL:            snapshotURL,
+		CanContactReporter:     object.Spec.CanContactReporter,
+		CanAccessInstance:      object.Spec.CanAccessInstance,
 	}
 
 	// Parse the embedded template
