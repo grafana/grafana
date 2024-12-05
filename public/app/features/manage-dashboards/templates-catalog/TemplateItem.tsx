@@ -21,7 +21,7 @@ export function TemplateItem({ dashboard, compact = false, onClick }: TemplateIt
   const thumbnailUrl = getThumbnailUrl();
   const imgHeight = compact ? `100px` : '150px';
   const header = compact ? 'h5' : 'h4';
-  const body = compact ? 'body' : 'bodySmall';
+  const body = compact ? 'bodySmall' : 'body';
 
   const onOpenTemplateDrawer = () => {
     onClick?.(String(dashboard.id));
@@ -62,10 +62,11 @@ export function TemplateItem({ dashboard, compact = false, onClick }: TemplateIt
             display="flex"
             direction="row"
             paddingX={2}
-            alignItems="center"
             justifyContent="space-between"
             minWidth="100%"
             paddingBottom={1}
+            flex={1}
+            alignItems={'end'}
           >
             <Stack direction="column" gap={0}>
               <Text variant="body">
