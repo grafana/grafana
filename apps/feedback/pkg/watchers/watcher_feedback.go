@@ -31,7 +31,7 @@ func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*fe
 	section := cfg.SectionWithEnvOverrides("feedback_button")
 	token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
 	gitClient := githubClient.NewGitHubClient(token, owner, repo)
-	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))}, cfg)
+	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))})
 	if err != nil {
 		klog.ErrorS(err, "failed to initialize llm client in feedback watcher, automated feedback triage will not work")
 	}
@@ -132,7 +132,11 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("query_llm").MustBool(false) {
-		llmLabels := s.llmClient.PromptForLabels(ctx, object.Spec.Message)
+		llmLabels, err := s.llmClient.PromptForLabels(ctx, object.Spec.Message)
+		if err != nil {
+			logging.FromContext(ctx).Error("LLM prompt for labels failed", "error", err.Error())
+		}
+
 		if len(llmLabels) > 0 {
 			labels = llmLabels
 		}
