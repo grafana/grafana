@@ -1,9 +1,11 @@
 import { PromQuery } from '@grafana/prometheus';
-import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { SceneCSSGridItem, SceneObject, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
+import { WithUsageDataPreviewPanel } from '../wingman/WithUsageDataPreviewPanel';
 
 import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
@@ -26,6 +28,14 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
     convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
   );
 
+  let panel: SceneObject = vizPanel;
+
+  if (config.featureToggles.exploreMetricsWingman) {
+    panel = new WithUsageDataPreviewPanel({
+      vizPanelInGridItem: vizPanel,
+    });
+  }
+
   return new SceneCSSGridItem({
     $variables: new SceneVariableSet({
       variables: getVariablesWithMetricConstant(metric),
@@ -36,7 +46,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
       maxDataPoints: MDP_METRIC_PREVIEW,
       queries,
     }),
-    body: vizPanel,
+    body: panel,
   });
 }
 
