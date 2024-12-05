@@ -80,8 +80,11 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
     const connectors: Array<ParallelConnector<T>> = [];
 
     const renderItems: Array<RenderItem<T>> = mapTree(operationsWithLevel, (operation) => {
-      const x = Math.floor((operation.operation.startMs - fromMs) * pxPerMs);
-      const width = Math.max(Math.floor(operation.operation.durationMs * pxPerMs), 2);
+      const x = Math.max(Math.floor((operation.operation.startMs - fromMs) * pxPerMs), 0);
+      const width = Math.min(
+        Math.max(Math.floor(operation.operation.durationMs * pxPerMs), 2),
+        containerSize.width - x
+      );
       const y = Math.floor(
         operation.level * (heightPx ?? DEFAULT_HEIGHT_PX) + operation.level * (verticalGapPx ?? DEFAULT_VERTICAL_GAP_PX)
       );
@@ -91,6 +94,9 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
         x,
         y,
         width,
+        visible: width > 0 && x < containerSize.width,
+        cutOffLeft: operation.operation.startMs < fromMs,
+        cutOffRight: operation.operation.startMs + operation.operation.durationMs > toMs,
       };
       opIdToRenderItem[getOperationId(operation.operation.entity)] = renderItem;
 

@@ -29,6 +29,9 @@ export interface RenderItem<T> {
   width: number;
   x: number;
   y: number;
+  cutOffLeft: boolean;
+  cutOffRight: boolean;
+  visible: boolean;
 }
 
 export interface ParallelConnector<T> {

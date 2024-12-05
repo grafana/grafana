@@ -27,18 +27,28 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
     viewRange,
   });
 
+  console.log('renerItems', renderItems);
+
   return (
     <div ref={sizeRef} style={{ height: `${renderItems.height}px` }} className={styles.container}>
-      {renderItems.items.map((item) => (
-        <FlameChartNode key={container.getOperationId(item.operation.entity)} container={container} renderItem={item} />
-      ))}
-      {renderItems.connectors.map((connector, index) => (
-        <ParallelGuideline
-          connector={connector}
-          container={container}
-          key={`${container.getOperationId(connector.parent.operation.entity)}-${container.getOperationId(connector.child.operation.entity)}`}
-        />
-      ))}
+      {renderItems.items
+        .filter((item) => !!item.visible)
+        .map((item) => (
+          <FlameChartNode
+            key={container.getOperationId(item.operation.entity)}
+            container={container}
+            renderItem={item}
+          />
+        ))}
+      {renderItems.connectors
+        .filter((c) => c.child.visible)
+        .map((connector) => (
+          <ParallelGuideline
+            connector={connector}
+            container={container}
+            key={`${container.getOperationId(connector.parent.operation.entity)}-${container.getOperationId(connector.child.operation.entity)}`}
+          />
+        ))}
     </div>
   );
 }

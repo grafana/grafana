@@ -39,7 +39,7 @@ function ParallelGuidelineM<T>({
 
   return (
     <>
-      <div className={styles.vertical} style={verticalStyle}></div>
+      {!from.cutOffLeft && <div className={styles.vertical} style={verticalStyle}></div>}
       <div className={styles.horizontal} style={horizontalStyle}></div>
     </>
   );

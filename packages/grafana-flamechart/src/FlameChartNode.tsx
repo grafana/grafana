@@ -23,15 +23,24 @@ function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.Reac
   const backgroundColor = container.getNodeBackgroundColor(renderItem.operation.entity, theme);
   const textColor = getTextColorForBackground(backgroundColor);
 
+  const isError = container.isError(renderItem.operation.entity);
+
+  let background = backgroundColor;
+  if (renderItem.cutOffLeft && renderItem.cutOffRight) {
+    background = `linear-gradient(to right, transparent, ${backgroundColor} 10px, ${backgroundColor} ${renderItem.width - 10}px, transparent)`;
+  } else if (renderItem.cutOffLeft) {
+    background = `linear-gradient(to right, transparent, ${backgroundColor} 10px)`;
+  } else if (renderItem.cutOffRight) {
+    background = `linear-gradient(to right, ${backgroundColor} 99%, ${backgroundColor} ${renderItem.width - 10}px, transparent)`;
+  }
+
   const style: React.CSSProperties = {
     top: renderItem.y,
     left: renderItem.x,
     width: renderItem.width,
-    backgroundColor,
+    background,
     color: textColor,
   };
-
-  const isError = container.isError(renderItem.operation.entity);
 
   console.log('isError', isError);
 
