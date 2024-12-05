@@ -10,9 +10,11 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { VizPanelMore } from './VizPanelMore';
 import { VizPanelDelete } from './VizPanelDelete';
 import { getBackendSrv } from '@grafana/runtime';
+import { useLLMSuggestions } from './llm-suggestions';
 
 export function useDropAndPaste(dashboard: DashboardScene) {
   const [editComponent, setEditComponent] = useState<React.ReactNode | null>(null);
+  const { getSuggestions, isLoading } = useLLMSuggestions();
   const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<PasteHandler[] | null>>({
     extensionPointId: 'dashboard/grid',
     limitPerPlugin: 1,
@@ -21,8 +23,6 @@ export function useDropAndPaste(dashboard: DashboardScene) {
     extensionPointId: 'dashboard/dragndrop',
     limitPerPlugin: 1,
   });
-
-
 
   const onImportFile = useCallback(
     async (file?: File) => {
@@ -104,7 +104,6 @@ export function useDropAndPaste(dashboard: DashboardScene) {
 
       const results = await Promise.all(fileHooks.map((h) => h(file)));
       buildPanel(results);
-
     },
     [dashboard, fileHooks]
   );
@@ -123,7 +122,10 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         // Handle plaintext paste
         const text = clipboardData.getData('text/plain');
         const results = await Promise.all(pasteHooks.map((h) => h(text)));
-        buildPanel(results, text)
+        const llmSuggestions = await getSuggestions(text);
+        console.log('LLM suggestions:', llmSuggestions);
+
+        buildPanel(results, text);
         return;
       }
 
