@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
-import { lastValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack,Grid, } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Button, useStyles2, Text, Box, Stack, Grid, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
@@ -29,6 +27,8 @@ export interface Props {
   dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
+
+const DEFAULT_VARIABLES_TO_USE_AS_TEMPLATE = ['11350', '10991', '14584'];
 
 const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
@@ -63,9 +63,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const [showTemplateImportForm, setShowTemplateImportForm] = useState(false);
   const [communityDashboardToImportUID, setCommunityDashboardToImportUID] = useState('');
-  const { dashboards, loading, error } = useTemplateDashboards({
+  const { dashboards } = useTemplateDashboards({
     pageSize: 3,
-    filterByIds: ['11350', '10991', '14584'],
+    filterByIds: DEFAULT_VARIABLES_TO_USE_AS_TEMPLATE,
   });
 
   const onImportTemplate = useCallback((gnetUID: string) => {
@@ -73,10 +73,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     // change the url to /dashboard/import?gnetUID=123
     setCommunityDashboardToImportUID(gnetUID);
     setShowTemplateImportForm(true);
-  }, []);
-
-  const onImportDashboardTemplate = useCallback((formData: any) => {
-    console.log('formData', formData);
   }, []);
 
   const onCancelDashboardTemplate = useCallback(() => {
