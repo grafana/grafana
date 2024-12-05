@@ -27,8 +27,9 @@ type DiagnosticUnifiedAlerting struct {
 }
 
 type DiagnosticInstance struct {
-	Edition string `json:"edition"`
-	Version string `json:"version"`
+	Edition string  `json:"edition"`
+	Version string  `json:"version"`
+	Slug    *string `json:"slug,omitempty"`
 
 	FeatureToggles []string               `json:"featureToggles"`
 	Datasources    []DiagnosticDatasource `json:"datasources"`
