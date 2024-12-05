@@ -85,7 +85,7 @@ import {
 
 const DEFAULT_DATASOURCE = 'default';
 
-type TypedVariableModelv2 =
+export type TypedVariableModelV2 =
   | QueryVariableKind
   | TextVariableKind
   | ConstantVariableKind
@@ -396,7 +396,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): SceneVariable {
+function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -593,7 +593,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVariable {
+export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

@@ -2279,6 +2279,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/v2schema/test-helpers.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard/api/dashboard_api.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
