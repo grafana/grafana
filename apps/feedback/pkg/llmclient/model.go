@@ -1,18 +1,17 @@
 package llmclient
 
-import "github.com/grafana/grafana/pkg/setting"
-
-const (
-	TEAM_RESPONSIBILITIES_FILE = "apps/feedback/pkg/llmclient/team_responsibilities.csv"
-	TEAM_PROMPT_TEMPLATE       = "apps/feedback/pkg/llmclient/template_team_prompt.txt"
-	ISSUE_NAME_PROMPT_TEMPLATE = "apps/feedback/pkg/llmclient/template_issue_name_prompt.txt"
+import (
+	"net/http"
+	"text/template"
 )
 
 type LLMClient struct {
 	URL                  string
 	ChatOptions          ChatOptions
 	TeamResponsibilities map[string]string
-	cfg                  *setting.Cfg
+	httpClient           *http.Client
+	tmplTeamPrompt       *template.Template
+	tmplIssueNamePrompt  *template.Template
 }
 
 type ChatOptions struct {
