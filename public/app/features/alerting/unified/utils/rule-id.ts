@@ -289,7 +289,7 @@ function getPromRuleFingerprint(rule: Rule) {
 }
 
 // there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-export function hashQuery(query: string) {
+export function oldhashQuery(query: string) {
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
@@ -298,6 +298,30 @@ export function hashQuery(query: string) {
   query = query.replace(/\s|\n/g, '');
   // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
   return query.split('').sort().join('');
+}
+export function hashQuery(query: string): string {
+  // one of them might be wrapped in parens
+  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
+    query = query.slice(1, -1);
+  }
+  // whitespace could be added or removed
+  query = query.replace(/\s|\n/g, '');
+
+  // Use a counting sort approach to sort characters
+  const charCount = new Array(256).fill(0); // Assuming ASCII characters
+
+  for (let i = 0; i < query.length; i++) {
+    charCount[query.charCodeAt(i)]++;
+  }
+
+  let sortedQuery = '';
+  for (let i = 0; i < charCount.length; i++) {
+    if (charCount[i] > 0) {
+      sortedQuery += String.fromCharCode(i).repeat(charCount[i]);
+    }
+  }
+
+  return sortedQuery;
 }
 
 export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
