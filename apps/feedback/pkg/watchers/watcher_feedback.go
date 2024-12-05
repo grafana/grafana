@@ -66,7 +66,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 				imageType = &defaultImageType
 			}
 
-			screenshotUrl, err := s.gitClient.UploadImage(imageUuid, imageType, object.Spec.Screenshot)
+			screenshotUrl, err := s.gitClient.UploadImage(ctx, imageUuid, imageType, object.Spec.Screenshot)
 			if err != nil {
 				return err
 			}
@@ -83,8 +83,15 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		}
 
 		if object.Spec.GithubIssueUrl == nil { // See above note
-			if err := s.createGithubIssue(ctx, object); err != nil {
+			issueUrl, err := s.createGithubIssue(ctx, object)
+			if err != nil {
 				return err
+			}
+
+			object.Spec.GithubIssueUrl = &issueUrl
+			if _, err := s.feedbackStore.Update(ctx, resource.Identifier{Namespace: rObj.GetNamespace(), Name: rObj.GetName()}, object); err != nil {
+				return fmt.Errorf("updating github issue url (name=%s, namespace=%s, kind=%s): %w",
+					rObj.GetStaticMetadata().Name, rObj.GetStaticMetadata().Namespace, rObj.GetStaticMetadata().Kind, err)
 			}
 		}
 	}
@@ -93,7 +100,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	return nil
 }
 
-func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) error {
+func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) (string, error) {
 	// Create issue in Github
 
 	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
@@ -130,11 +137,13 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 		Body:   sb.String(),
 		Labels: labels,
 	}
-	if err := s.gitClient.CreateIssue(issue); err != nil {
-		return err
+
+	issueUrl, err := s.gitClient.CreateIssue(ctx, issue)
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	return issueUrl, nil
 }
 
 // Update handles update events for feedback.Feedback resources.
