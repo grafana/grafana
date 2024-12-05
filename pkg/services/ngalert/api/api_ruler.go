@@ -380,14 +380,9 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
 	for ns, rgs := range promGroups {
-		nsUID, err := generateNamespaceUID(ns)
-		if err != nil {
-			return errorToResponse(err)
-		}
-		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", ns, "namespace_uid", nsUID)
-		namespace, err := srv.store.GetOrCreateNamespaceByUID(
+		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", ns)
+		namespace, err := srv.store.GetOrCreateNamespaceByTitle(
 			c.Req.Context(),
-			nsUID,
 			ns,
 			c.SignedInUser.GetOrgID(),
 			c.SignedInUser,
@@ -398,7 +393,10 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 		}
 		nsMap[ns] = namespace.UID
 
-		promConverter := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
+		promConverter, err := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
+		if err != nil {
+			return errorToResponse(err)
+		}
 		for _, rg := range rgs {
 			grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, rg)
 			if err != nil {
