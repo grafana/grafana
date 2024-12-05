@@ -89,14 +89,12 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
       templateColumns: 'repeat(3, minmax(0, 1fr))',
       autoRows: height,
       isLazy: true,
-      // templateRows: 'auto'
     })
 
     const headerRow = new SceneCSSGridLayout({
       children: [header],
       templateColumns: '1/-1',
-      autoRows: '30px',
-      // templateRows: 'auto'      
+      autoRows: '30px',      
     });
 
     children.push(headerRow);
@@ -148,7 +146,6 @@ function redPanelItem(query: RedObject, red: 'rate'|'error'|'duration', index: n
 function panelHeader(job: string) {
   return new SceneCSSGridItem({
     gridColumn: '1/-1',
-    // gridRow: '30px',
     body: PanelBuilders.text()
       .setTitle(`Job: ${job}`)
       .setOption('content', '')
