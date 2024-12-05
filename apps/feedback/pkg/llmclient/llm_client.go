@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/klog/v2"
@@ -20,69 +21,63 @@ func NewLLMClient(url string, config ChatOptions, cfg *setting.Cfg) (*LLMClient,
 	c := &LLMClient{
 		URL:         url,
 		ChatOptions: config,
+		cfg:         cfg,
 	}
-	if r, err := readAsLabelMap(cfg, "responsibilities.csv"); err != nil {
+	if r, err := readResponsibilities(cfg); err != nil {
 		return c, err
 	} else {
-		c.Responsibilities = r
-	}
-
-	if r, err := readAsLabelMap(cfg, "labels.csv"); err != nil {
-		return c, err
-	} else {
-		c.LabelMap = r
+		c.TeamResponsibilities = r
 	}
 
 	return c, nil
 }
 
-func readAsLabelMap(cfg *setting.Cfg, filename string) (labelMap, error) {
-	allowedFiles := map[string]bool{
-		"responsibilities.csv": true,
-		"labels.csv":           true,
-	}
-
-	if !allowedFiles[filename] {
-		return nil, fmt.Errorf("file %s is not allowed", filename)
-	}
-
-	path := filepath.Join(cfg.HomePath, "apps/feedback/pkg/llmclient/"+filename)
-	// nolint: gosec
+func readResponsibilities(cfg *setting.Cfg) (map[string]string, error) {
+	path := filepath.Join(cfg.HomePath, TEAM_RESPONSIBILITIES_FILE)
+	// nolint:gosec
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("reading file %s: %w", filename, err)
+		return nil, fmt.Errorf("reading file %s: %w", path, err)
 	}
 	reader := csv.NewReader(bytes.NewReader(raw))
 
 	// Read all rows
 	rows, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("reading csv %s: %w", filename, err)
+		return nil, fmt.Errorf("reading csv %s: %w", path, err)
 	}
 
-	// Create a map
-	dataMap := make(labelMap)
+	// Create a map of team->list of responsibilities
+	itemMap := make(map[string]string)
 	for _, row := range rows[1:] { // Skip the header row
-		dataMap[row[1]] = row[0]
+		itemMap[row[1]] = row[0]
 	}
-	return dataMap, nil
+	return itemMap, nil
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *LLMClient) PromptForLabels(userText string) (labels []string) {
-	defer func() {
-		if len(labels) == 0 {
-			labels = append(labels, "type/unknown")
-		}
-	}()
+func (c *LLMClient) PromptForLabels(userText string) []string {
+	path := filepath.Join(c.cfg.HomePath, TEAM_PROMPT_TEMPLATE)
 
+	t, err := template.ParseFiles(path)
+	if err != nil {
+		klog.ErrorS(err, "parsing template")
+		return nil
+	}
+	var content bytes.Buffer
+	if err := t.Execute(&content, LLMTeamPromptTemplate{
+		TeamResponsibilities: c.TeamResponsibilities,
+		UserFeedback:         userText,
+	}); err != nil {
+		klog.ErrorS(err, "executing template")
+		return nil
+	}
 	llmReq := LLMRequest{
 		ChatOptions: c.ChatOptions,
 		Messages: []LLMMessage{
 			{
-				Role: "user",
-				Content: fmt.Sprintf("given the following responsibilities list:\n```%s```\n and the following mapping of responsibilities to labels:\n```%s```\n and the following user feedback: \"%s\"\n which label or labels best correlate with this issue? Only reply with the labels separated by spaces.",
-					c.Responsibilities, c.LabelMap, userText),
+				Role:    "user",
+				Content: content.String(),
 			},
 		},
 	}
@@ -144,4 +139,78 @@ func (c *LLMClient) PromptForLabels(userText string) (labels []string) {
 	}
 
 	return tokens
+}
+
+// CreateIssue creates an issue in the Github repository
+func (c *LLMClient) PromptForShortIssueTitle(userText string) (string, error) {
+	path := filepath.Join(c.cfg.HomePath, ISSUE_NAME_PROMPT_TEMPLATE)
+
+	t, err := template.ParseFiles(path)
+	if err != nil {
+		return "", fmt.Errorf("parsing template: %w", err)
+	}
+	var content bytes.Buffer
+	if err := t.Execute(&content, userText); err != nil {
+		return "", fmt.Errorf("executing template: %w", err)
+
+	}
+	llmReq := LLMRequest{
+		ChatOptions: c.ChatOptions,
+		Messages: []LLMMessage{
+			{
+				Role:    "user",
+				Content: content.String(),
+			},
+		},
+	}
+
+	// Marshal the issue struct into JSON
+	payload, err := json.Marshal(llmReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", c.URL, "api/chat"), bytes.NewBuffer(payload))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "*/*")
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			klog.ErrorS(err, "failed to close response body")
+		}
+	}()
+
+	if resp.StatusCode > 399 {
+		return "", fmt.Errorf("bad status code from github: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		klog.ErrorS(err, "reading response")
+	}
+
+	// Response is a mess and looks something like this:
+	// 0:"Looks"
+	// 0:" good"
+	// 0:" to"
+	// 0:" me"
+	tokens := strings.Split(string(body), "0:\"")
+	for i, t := range tokens {
+		t = strings.ReplaceAll(t, "\n", "")
+		t = strings.ReplaceAll(t, "\\\"", "")
+		t = strings.TrimSuffix(t, "\"")
+		tokens[i] = t
+	}
+
+	return strings.TrimSpace(strings.Join(tokens, "")), nil
 }

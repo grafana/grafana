@@ -1,16 +1,18 @@
 package llmclient
 
-import (
-	"fmt"
-	"strings"
+import "github.com/grafana/grafana/pkg/setting"
+
+const (
+	TEAM_RESPONSIBILITIES_FILE = "apps/feedback/pkg/llmclient/team_responsibilities.csv"
+	TEAM_PROMPT_TEMPLATE       = "apps/feedback/pkg/llmclient/template_team_prompt.txt"
+	ISSUE_NAME_PROMPT_TEMPLATE = "apps/feedback/pkg/llmclient/template_issue_name_prompt.txt"
 )
 
-// GitHubClient defines a simple client for interacting with the GitHub API
 type LLMClient struct {
-	URL              string
-	ChatOptions      ChatOptions
-	Responsibilities labelMap
-	LabelMap         labelMap
+	URL                  string
+	ChatOptions          ChatOptions
+	TeamResponsibilities map[string]string
+	cfg                  *setting.Cfg
 }
 
 type ChatOptions struct {
@@ -29,12 +31,7 @@ type LLMMessage struct {
 	Content string `json:"content"`
 }
 
-type labelMap map[string]string
-
-func (m labelMap) String() string {
-	var sb strings.Builder
-	for k, v := range m {
-		sb.WriteString(fmt.Sprintf("%s: %s\n", v, k))
-	}
-	return sb.String()
+type LLMTeamPromptTemplate struct {
+	TeamResponsibilities map[string]string
+	UserFeedback         string
 }

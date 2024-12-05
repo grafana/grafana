@@ -1,0 +1,216 @@
+Squad,Responsibility
+alerting,Alert evaluation cycle (i.e. ticker/scheduler)
+alerting,"Alerting UI, including RBAC enforcement for Enterprise"
+alerting,Alerting provisioning support
+alerting,Enforcement of alert quotas 
+aws-datasources,CloudWatch Metrics data source
+aws-datasources,CloudWatch Logs data source
+aws-datasources,Athena data source
+aws-datasources,Redshift data source
+aws-datasources,Timestream data source
+aws-datasources,X-Ray data source
+aws-datasources,IoT TwinMaker data source
+aws-datasources,IoT SiteWise data source
+aws-datasources,Open Search data source
+aws-datasources,AWS Provisioner App
+aws-datasources,AWS Temporary Credentials in Cloud
+aws-datasources,Aurora data source
+aws-datasources,Amazon Managed Prometheus
+aws-datasources,Elasticsearch data source
+dashboards,"Panel inspect (query, data, stats and JSON inspect)"
+dashboards,Panel edit
+dashboards,Template variables
+dashboards,Query runners: dashboard & panel
+dashboards,Panel Thresholds
+dashboards,Panel datalinks
+dashboards,Panel field overrides
+dashboards,Panel annotations
+dashboards,Library panels
+dashboards,Dashboard / Panel model
+dashboards,Dashboard settings
+dashboards,Load/save/edit dashboard
+dashboards,Import/export dashboards
+dashboards,Models: Panel & dashboard
+dashboards,Dashboard scenes
+dashboards,AI: Generate title and desc for panel and dash
+dashboards,Kiosk / TV Mode
+dashboards,Live / Streaming - Frontend
+datasources-core,SQL Expressions
+datasources-core,Query Service
+data-viz,Bar gauge panel
+data-viz,Gauge panel
+data-viz,Pie chart panel
+data-viz,Stat panel
+data-viz,Table panel
+data-viz,XYZ Chart
+data-viz,Datagrid
+data-viz,Drag & Drop
+data-viz,BI App
+data-viz,Transformations
+data-viz,Actions
+data-viz,Bar chart
+data-viz,Candlestick panel
+data-viz,Canvas panel
+data-viz,Geomap
+data-viz,Heatmap
+data-viz,Histogram
+data-viz,Status History
+data-viz,Panel Menu Help
+data-viz,State timeline / Timeline panel
+data-viz,Time series panel
+data-viz,Trend
+data-viz,XY chart
+data-viz,World Map - deprecated
+data-viz,Grafana glue / Correlations
+enterprise-datasources,Adobe Analytics data source plugin
+enterprise-datasources,Appdynamics data source plugin
+enterprise-datasources,Atlassian Statuspage
+enterprise-datasources,Azure Devops data source plugin
+enterprise-datasources,Cloudfare data source plugin
+enterprise-datasources,Databricks data source plugin
+enterprise-datasources,DataDog data source plugin
+enterprise-datasources,DB2 data source plugin
+enterprise-datasources,Dynatrace data source plugin
+enterprise-datasources,GitLab data source plugin
+enterprise-datasources,Honeycomb data source plugin
+enterprise-datasources,Jira data source plugin
+enterprise-datasources,Looker data source plugin
+enterprise-datasources,MongoDB data source plugin
+enterprise-datasources,Netlify data source plugin
+enterprise-datasources,NewRelic data source plugin 
+enterprise-datasources,Oracle data source plugin
+enterprise-datasources,Salesforce data source plugin
+enterprise-datasources,SAP Hana data source plugin
+enterprise-datasources,ServiceNow data source plugin
+enterprise-datasources,SignalFx data source plugin
+enterprise-datasources,Snowflake data source plugin
+enterprise-datasources,Splunk data source plugin
+enterprise-datasources,SQLyze data source plugin ( ODBC )
+enterprise-datasources,Sumologic data source plugin
+enterprise-datasources,WaveFront data source plugin
+enterprise-datasources,Sumologic data source plugin
+enterprise-datasources,PagerDuty data source plugin
+enterprise-datasources,DynamoDB data source plugin
+enterprise-datasources,Catchpoint data source plugin
+explore-logs,Logs panel
+explore-logs,Loki data source
+explore-logs,Logs volume
+explore-logs,Explore Logs
+explore-metrics,Prometheus data source
+explore-metrics,Recorded queries
+explore-metrics,Expressions
+explore-metrics,Data Plane
+explore-metrics,Explore Metrics
+explore-traces-and-profiling,Data links
+explore-traces-and-profiling,Explore to dashboard feature
+explore-traces-and-profiling,Traces panel
+explore-traces-and-profiling,NodeGraph panel
+explore-traces-and-profiling,Flame graph panel
+explore-traces-and-profiling,Tempo data source
+explore-traces-and-profiling,Pyroscope data source
+explore-traces-and-profiling,Explore page
+explore-traces-and-profiling,Explore Traces
+grafana-app-platform,Dashboards Backend API
+grafana-app-platform,Streaming / Live - Backend
+grafana-app-platform,MQTT Datasource
+grafana-app-platform,Playlists Backend
+grafana-backend-group,Grafana server HTTP API
+grafana-backend-services,Private Datasource Connect (PDC)
+grafana-backend-services,Grafana feature toggles
+grafana-frontend-platform,"Main workflows such as Login, navigation, and clicking through the app"
+grafana-frontend-platform,Dashboard list panel
+grafana-frontend-platform,Annotations list panel
+grafana-frontend-platform,News panel
+grafana-frontend-platform,Text panel
+grafana-frontend-platform,Settings and config pages (except plugins)
+grafana-frontend-platform,Login flows
+grafana-frontend-platform,Custom branding (white labeling)
+grafana-frontend-platform,Navigation & page layouts
+grafana-frontend-platform,A11y tracking
+grafana-frontend-platform,Legacy Graph panel 
+grafana-frontend-platform,Theming
+grafana-frontend-platform,App notifications (toasts)
+grafana-frontend-platform,Timepicker
+grafana-frontend-platform,Search Frontend
+grafana-frontend-platform,Command palette
+grafana-frontend-platform,Internationalization
+grafana-frontend-platform,Folders frontend
+grafana-frontend-platform,Restore Dashboards frontend
+grafana-frontend-platform,Return to previous feature
+grafana-search-and-storage,Search backend
+grafana-search-and-storage,Database Migrations
+grafana-search-and-storage,Annotations (Backend API)
+grafana-search-and-storage,Provisioning
+grafana-search-and-storage,Nested Folders
+iam-identity,SAML
+iam-identity,Role based access control (RBAC)
+iam-identity,Grafana service accounts
+iam-identity,LDAP
+iam-identity,Authentication in Grafana
+iam-identity,Team sync
+iam-identity,JWT auth
+iam-identity,OAuth
+iam-identity,Datasource permissions
+iam-identity,API Keys and Cloud Access Policies
+iam-identity,Anonymous login
+iam-identity,Dashboard/folder permissions
+iam-identity,Users
+iam-identity,Organizations
+iam-identity,Teams
+iam-identity,Support bundles
+operator-experience,AlertList Core / Native Plugin
+operator-experience,Licensing
+operator-experience,Query and resource caching
+operator-experience,Enterprise to Cloud Automated Migration Experience
+oss-big-tent-datasources,Jaeger data source
+oss-big-tent-datasources,Zipkin data source
+oss-big-tent-datasources,Parca data source
+oss-big-tent-datasources,MySQL data source
+oss-big-tent-datasources,PostgreSQL data source
+oss-big-tent-datasources,yesoreyeram-infinity-datasource / Infinity
+oss-big-tent-datasources,Zabbix app
+oss-big-tent-datasources,Github data source
+oss-big-tent-datasources,BigQuery data source plugin
+oss-big-tent-datasources,Google Sheets data source
+oss-big-tent-datasources,Zendesk data source plugin
+oss-big-tent-datasources,Cloudflare data source plugin
+oss-big-tent-datasources,Yugabyte data source plugin
+oss-big-tent-datasources,marcusolsson-csv-datasource / CSV
+oss-big-tent-datasources,marcusolsson-json-datasource / JSON API
+oss-big-tent-datasources,Simple JSON data source
+oss-big-tent-datasources,OPC UA Datasource
+partner-datasources,"Azure Monitor data source (Metrics, Logs, Resource Graph, etc)"
+partner-datasources,Azure Data Explorer data source
+partner-datasources,MSSQL data source
+partner-datasources,Cloud Monitoring data source
+partner-datasources,Sentry data source
+partner-datasources,Clickhouse data source
+partner-datasources,Crowdstrike/Humio/Falcon Logscale data source
+partner-datasources,Datastax/AstraDB data source
+partner-datasources,CosmosDB data source
+partner-datasources,SurrealDB data source
+partner-datasources,InfluxDB data source
+partner-datasources,Graphite data source
+partner-datasources,OpenTSDB data source
+partner-datasources,CockroachDB data source
+plugins-catalog,Polystat Plugin
+plugins-catalog,Connections console
+plugins-catalog,Plugin Installation and (Auto-) Update flows
+plugins-catalog,Plugin catalog on grafana.com and in Grafana UI
+plugins-platform,App Config Editor
+plugins-platform,Data Source Config Editor
+plugins-platform,Clock Panel Plugin
+plugins-platform,Singlestat Panel Plugin
+plugins-platform,Testdatasource
+plugins-platform,Developer Portal
+sharing,Playlists
+sharing,Shared Dashboards (previously Public Dashboards)
+sharing,Snapshots
+sharing,Sharing modal
+sharing,Reporting
+sharing,Image Renderer Plugin
+sharing,Dashboard permissions UX
+operator-experience,Grafana Migration Assistant
+operator-experience,Grafana Migration Service
+grafana-frontend-platform,Announcement banner
+grafana-frontend-platform,"Any issues with the user interface, including freezing, hanging, crashing, misbehaving page elements, or anything resulting in a frontend stack trace"

@@ -3,6 +3,7 @@ package watchers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -81,17 +82,38 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	}
 
 	// Create issue in Github
-	llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
-	var ssBody string
+
+	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
+	var sb strings.Builder
+	sb.WriteString("**Description:**\n")
+	sb.WriteString(object.Spec.Message)
+	sb.WriteString("\n\n**Screenshot:**\n")
 	if object.Spec.ScreenshotUrl != nil {
-		ssBody = fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl)
+		sb.WriteString(fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl))
 	} else {
-		ssBody = "no screenshot provided"
+		sb.WriteString("no screenshot provided")
 	}
+
+	// defaults
+	var labels = []string{"type/unknown"}
+	var title = object.Spec.Message[:50] + "..." // truncate
+	if section.Key("query_llm").MustBool(false) {
+		llmLabels := s.llmClient.PromptForLabels(object.Spec.Message)
+		if len(llmLabels) > 0 {
+			labels = llmLabels
+		}
+
+		if t, err := s.llmClient.PromptForShortIssueTitle(object.Spec.Message); err != nil {
+			klog.ErrorS(err, "error prompting the llm for a short issue title")
+		} else {
+			title = t
+		}
+	}
+
 	issue := githubClient.Issue{
-		Title:  fmt.Sprintf("[feedback] %s", object.Spec.Message),
-		Body:   ssBody,
-		Labels: llmLabels,
+		Title:  fmt.Sprintf("[feedback] %s", title),
+		Body:   sb.String(),
+		Labels: labels,
 	}
 	if err := s.gitClient.CreateIssue(issue); err != nil {
 		return err
