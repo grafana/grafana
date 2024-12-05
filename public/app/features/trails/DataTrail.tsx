@@ -132,8 +132,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: true,
       usageStats: {
-        dashboards: [],
-        alertRules: [],
+        dashboards: {},
+        alertRules: {},
       },
       ...state,
     });
@@ -322,8 +322,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   public async fetchUsageStats() {
-    const usageStats = await getBackendSrv().get<UsageStats>("/api/metric-stats");
-    this.setState({usageStats});
+    const usageStats = await getBackendSrv().get<UsageStats>('/api/metric-stats');
+    this.setState({ usageStats });
   }
 
   /**
