@@ -5,11 +5,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 var _ Repository = (*unknownRepository)(nil)
@@ -39,8 +40,8 @@ func (r *unknownRepository) Validate() (fields field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *unknownRepository) Test(ctx context.Context, logger *slog.Logger) error {
-	return &errors.StatusError{
+func (r *unknownRepository) Test(ctx context.Context, logger *slog.Logger, cfg *provisioning.Repository) (*provisioning.TestResults, error) {
+	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
