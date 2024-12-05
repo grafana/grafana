@@ -40,6 +40,7 @@ type IndexViewData struct {
 type EntryPointAssets struct {
 	ContentDeliveryURL string            `json:"cdn,omitempty"`
 	JSFiles            []EntryPointAsset `json:"jsFiles"`
+	PreloadJSFiles     []EntryPointAsset `json:"preloadJsFiles"`
 	// CSSFiles           []EntryPointAsset `json:"cssFiles"`
 	Dark  string `json:"dark"`
 	Light string `json:"light"`

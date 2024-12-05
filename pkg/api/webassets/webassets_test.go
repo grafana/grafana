@@ -24,7 +24,8 @@ func TestReadWebassets(t *testing.T) {
 		  }
 		],
 		"dark": "public/build/grafana-BwD1GyB5.css",
-		"light": "public/build/grafana-RC8BVZtE.css"
+		"light": "public/build/grafana-RC8BVZtE.css",
+		"preloadJsFiles":  null
 	  }`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
@@ -42,7 +43,8 @@ func TestReadWebassets(t *testing.T) {
 		  }
 		],
 		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-BwD1GyB5.css",
-		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-RC8BVZtE.css"
+		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-RC8BVZtE.css",
+		"preloadJsFiles":  null
 	  }`, string(dto))
 }
 
@@ -86,5 +88,6 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 		],
 		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.b44253d019cd9cb46428.css",
 		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.e8e11c59b604d62836be.css"
+		"preloadJsFiles":  null
 	  }`, string(dto))
 }
