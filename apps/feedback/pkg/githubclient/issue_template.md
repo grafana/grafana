@@ -15,6 +15,8 @@
 {{- if .BrowserName }}
 - Browser: `{{ .BrowserName }}`
 {{- end }}
+- Can contact issue reporter?: `{{ .CanContactReporter }}`
+- Permission to access instance?: `{{ .CanAccessInstance }}`
 
 {{- if .Datasources }}
 <details>
