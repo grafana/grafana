@@ -3563,6 +3563,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@swc/core": "npm:1.9.3"
     "@types/eslint": "npm:9.6.1"
+    "@types/webpack-bundle-analyzer": "npm:^4.7.0"
     copy-webpack-plugin: "npm:12.0.2"
     eslint: "npm:9.14.0"
     eslint-webpack-plugin: "npm:4.2.0"
@@ -3573,6 +3574,7 @@ __metadata:
     tslib: "npm:2.7.0"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
+    webpack-bundle-analyzer: "npm:^4.10.2"
   languageName: unknown
   linkType: soft
 
@@ -9837,6 +9839,17 @@ __metadata:
     tapable: "npm:^2.2.0"
     webpack: "npm:^5"
   checksum: 10/02aa3a400227693d5cb5db4364caf91df66e9529139999c0686f139138b76d27d200de5ad8d77d4199538d92f31d37df5dcdc6bdd8ccddcabf95bfc96b964c3a
+  languageName: node
+  linkType: hard
+
+"@types/webpack-bundle-analyzer@npm:^4.7.0":
+  version: 4.7.0
+  resolution: "@types/webpack-bundle-analyzer@npm:4.7.0"
+  dependencies:
+    "@types/node": "npm:*"
+    tapable: "npm:^2.2.0"
+    webpack: "npm:^5"
+  checksum: 10/2d9a2d4e26b1239623df97caceddd37a14c258623bccf27aca9da65b963cad33fdbfdc3a4770a58dbd2f9e6f591f62990616938aa52edf58aae3f6166c0045c1
   languageName: node
   linkType: hard
 
@@ -29940,7 +29953,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-bundle-analyzer@npm:4.10.2":
+"webpack-bundle-analyzer@npm:4.10.2, webpack-bundle-analyzer@npm:^4.10.2":
   version: 4.10.2
   resolution: "webpack-bundle-analyzer@npm:4.10.2"
   dependencies:
