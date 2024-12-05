@@ -42,4 +42,4 @@ Not sure where to start? We’ve also updated our **CloudWatch Logs cheat sheet*
 
 For the complete list of commands supported for OpenSearch PPL and SQL, refer to the [Cloudwatch Logs Insights documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html).
 
-<!-- {{< youtube id="g1BfokyzF4Q" >}} -->
+{{< youtube id="g1BfokyzF4Q" >}}
