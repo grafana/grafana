@@ -10,8 +10,26 @@ import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
-  const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+  const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
+    return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
+  });
   const [numItemsToShow, setNumItemsToShow] = useState(5);
+
+  const hist = history.slice(0, numItemsToShow).reduce((acc: { [key: string]: HistoryEntry[] }, entry) => {
+    const date = moment(entry.time);
+    let key = '';
+    if (date.isSame(moment(), 'day')) {
+      key = 'Today';
+    } else if (date.isSame(moment().subtract(1, 'day'), 'day')) {
+      key = 'Yesterday';
+    } else {
+      key = date.format('YYYY-MM-DD');
+    }
+    acc[key] = [...(acc[key] || []), entry];
+    return acc;
+  }, {});
+
+  console.info(hist);
 
   const onClickHistory = (url: string) => {
     window.location.href = url;
@@ -21,9 +39,18 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   return (
     <Stack direction="column" alignItems="flex-start">
       <Box width="100%">
-        {history.slice(0, numItemsToShow).map((entry, index) => (
-          <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} onClick={onClickHistory} />
-        ))}
+        {Object.keys(hist).map((entries, date) => {
+          return (
+            <Stack key={date} direction="column" gap={1}>
+              <Text color="secondary" variant="bodySmall">
+                {entries}
+              </Text>
+              {hist[entries].map((entry, index) => (
+                <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} onClick={onClickHistory} />
+              ))}
+            </Stack>
+          );
+        })}
       </Box>
       {history.length > numItemsToShow && (
         <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>

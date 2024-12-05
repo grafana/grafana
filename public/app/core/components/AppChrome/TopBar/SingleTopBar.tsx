@@ -14,6 +14,7 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -72,6 +73,7 @@ export const SingleTopBar = memo(function SingleTopBar({
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
+        <HistoryContainer />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
