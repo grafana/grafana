@@ -88,7 +88,7 @@ describe('PanelOptionsPane', () => {
 });
 
 function setupTest(panelId: string) {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+  const scene = transformSaveModelToScene(testDashboard, {});
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const optionsPane = new PanelOptionsPane({ panelRef: panel.getRef(), listMode: OptionFilter.All, searchQuery: '' });

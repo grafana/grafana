@@ -35,17 +35,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('DashboardSceneRenderer', () => {
   it('should render Not Found notice when dashboard is not found', async () => {
-    const scene = transformSaveModelToScene({
-      meta: {
-        isSnapshot: true,
-        dashboardNotFound: true,
-        canStar: false,
-        canDelete: false,
-        canSave: false,
-        canEdit: false,
-        canShare: false,
-      },
-      dashboard: {
+    const scene = transformSaveModelToScene(
+      {
         title: 'Not found',
         uid: 'uid',
         schemaVersion: 0,
@@ -67,7 +58,16 @@ describe('DashboardSceneRenderer', () => {
           ],
         },
       },
-    });
+      {
+        isSnapshot: true,
+        dashboardNotFound: true,
+        canStar: false,
+        canDelete: false,
+        canSave: false,
+        canEdit: false,
+        canShare: false,
+      }
+    );
 
     render(<scene.Component model={scene} />);
 
@@ -78,9 +78,8 @@ describe('DashboardSceneRenderer', () => {
     const noticeText = /This dashboard depends on Angular/i;
     //enable feature flag angularDeprecationUI
     config.featureToggles.angularDeprecationUI = true;
-    const scene = transformSaveModelToScene({
-      meta: {},
-      dashboard: {
+    const scene = transformSaveModelToScene(
+      {
         title: 'Angular dashboard',
         uid: 'uid',
         schemaVersion: 0,
@@ -117,7 +116,8 @@ describe('DashboardSceneRenderer', () => {
           },
         ],
       },
-    });
+      {}
+    );
 
     render(<scene.Component model={scene} />);
 

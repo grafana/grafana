@@ -184,7 +184,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       // TODO[schema]: handle v2
     } else {
       if (rsp?.dashboard) {
-        const scene = transformSaveModelToScene(rsp);
+        const scene = transformSaveModelToScene(rsp.dashboard, rsp.meta);
         return scene;
       }
     }
@@ -260,7 +260,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           this.setState({ isLoading: false, loadError: 'Dashboard not found' });
           return;
         }
-        const scene = transformSaveModelToScene(rsp);
+        const scene = transformSaveModelToScene(rsp.dashboard, rsp.meta);
         this.setSceneCache(options.uid, scene);
         this.setState({ dashboard: scene, isLoading: false, options });
       }
@@ -295,7 +295,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       if (rsp?.dashboard) {
-        const scene = transformSaveModelToScene(rsp);
+        const scene = transformSaveModelToScene(rsp.dashboard, rsp.meta);
 
         // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
         if (options.uid) {

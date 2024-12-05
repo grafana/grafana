@@ -21,7 +21,7 @@ import {
   UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import {  DashboardDataDTO, DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -62,13 +62,13 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+export function transformSaveModelToScene(dashboard: DashboardDataDTO, meta: DashboardMeta): DashboardScene {
   // Just to have migrations run
-  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
+  const oldModel = new DashboardModel(dashboard, meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
-  scene.setInitialSaveModel(rsp.dashboard);
+  scene.setInitialSaveModel(dashboard);
 
   return scene;
 }

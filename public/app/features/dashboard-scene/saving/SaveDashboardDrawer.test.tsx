@@ -200,16 +200,16 @@ function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
 let cleanUp = () => {};
 
 function setup() {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
+  const dashboard = transformSaveModelToScene(
+    {
       title: 'hello',
       uid: 'my-uid',
       schemaVersion: 30,
       panels: [],
       version: 10,
     },
-    meta: {},
-  });
+    {}
+  );
 
   // Clear any data layers
   dashboard.setState({ $data: undefined });

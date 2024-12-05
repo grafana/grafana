@@ -167,8 +167,8 @@ interface SceneOptions {
 }
 
 function buildTestScene(options: SceneOptions) {
-  const scene = transformSaveModelToScene({
-    dashboard: {
+  const scene = transformSaveModelToScene(
+    {
       title: 'hello',
       uid: 'dash-1',
       schemaVersion: 38,
@@ -209,7 +209,7 @@ function buildTestScene(options: SceneOptions) {
           : [],
       },
     },
-    meta: {
+    {
       canEdit: options.dashboardCanEdit,
       annotationsPermissions: {
         dashboard: {
@@ -223,8 +223,8 @@ function buildTestScene(options: SceneOptions) {
           canDelete: options.canDelete ?? false,
         },
       },
-    },
-  });
+    }
+  );
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
   const context: PanelContext = {
