@@ -55,5 +55,19 @@
 </details>
 {{- end }}
 
+{{ if .Configs }}
+<details>
+<summary>Configs</summary>
+
+| Name | Enabled |
+|------------------|-----------------|
+{{- range .Configs }}
+| {{ .Name }} | {{ .Enabled }} |
+{{- end }}
+
+</details>
+{{- end }}
+
+
 **Screenshot:**
 {{.SnapshotURL}}

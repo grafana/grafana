@@ -225,12 +225,14 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	} else {
 		snapshotURL = "No screenshot provided"
 	}
+	configsList := githubClient.BuildConfigList(diagnostic)
 
 	// Combine data into TemplateData struct
 	templateData := githubClient.TemplateData{
 		Datasources:    diagnostic.Instance.Datasources,
 		Plugins:        diagnostic.Instance.Plugins,
 		FeatureToggles: diagnostic.Instance.FeatureToggles,
+		Configs:        configsList,
 
 		WhatHappenedQuestion:   object.Spec.Message,
 		InstanceSlug:           "slug", // TODO: replace this
@@ -251,8 +253,6 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	if err := tmpl.Execute(&issueBody, templateData); err != nil {
 		return "", fmt.Errorf("executing template: %w", err)
 	}
-
-	fmt.Println(issueBody.String())
 
 	return issueBody.String(), nil
 }
