@@ -33,6 +33,7 @@ interface BaseProps {
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
   dragClassCancel?: string;
+  onDragStart?: (e: React.PointerEvent) => void;
   /**
    * Use only to indicate loading or streaming data in the panel.
    * Any other values of loadingState are ignored.
@@ -139,6 +140,7 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -300,7 +302,12 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
-        <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
+        <div
+          className={cx(styles.headerContainer, dragClass)}
+          style={headerStyles}
+          data-testid="header-container"
+          onPointerDown={onDragStart}
+        >
           {statusMessage && (
             <div className={dragClassCancel}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
