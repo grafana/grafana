@@ -3,10 +3,10 @@
 
 import { css, cx } from '@emotion/css';
 import { motion } from 'motion/react';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Portal, useStyles2 } from '@grafana/ui';
+import { Icon, Portal, Stack, useStyles2 } from '@grafana/ui';
 
 import { CommandPaletteDividerItem, CommandPaletteItem } from './types';
 import { useActiveIndex } from './useActiveIndex';
@@ -41,18 +41,66 @@ const FAKE_BASE_ITEMS: CommandPaletteItem[] = [
   { type: 'result', title: 'Dashboards squad', icon: 'folder-open', parentTitle: 'Grafana Frontend Division' },
 ];
 
+const COMMAND_ITEMS: CommandPaletteItem[] = [
+  { type: 'divider', title: 'Page commands' },
+  { type: 'result', icon: 'monitor', title: 'Edit mode', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'monitor', title: 'Collapse all rows', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'monitor', title: 'Add panel', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'monitor', title: 'Add row', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'monitor', title: 'Attach to Incident', parentTitle: 'Incident' },
+
+  { type: 'divider', title: 'Global commands' },
+  { type: 'result', icon: 'globe', title: 'Create new dashboard', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'globe', title: 'Import dashboard', parentTitle: 'Dashboard' },
+  { type: 'result', icon: 'globe', title: 'Raise new Incident', parentTitle: 'Incident' },
+  { type: 'result', icon: 'globe', title: 'Add', parentTitle: 'Incident' },
+  { type: 'result', icon: 'globe', title: 'Create new alert rule', parentTitle: 'Alert' },
+  { type: 'result', icon: 'globe', title: 'Set Light theme', parentTitle: 'Theme' },
+];
+
 export function CommandPalette2() {
   const styles = useStyles2(getStyles);
   const modKey = '⌘'; /*useMemo(() => getModKey(), []);*/
   const activeKeys = useActiveKeys();
 
+  const [mode, setMode] = useState<'search' | 'command'>('search');
+
   const recentDashboardItems = useRecentDashboards();
   const navItems = useNavItems();
   const [inputValue, setInputValue] = useState('');
 
+  const handleInput = useCallback((ev: ChangeEvent<HTMLInputElement>) => {
+    const newValue = ev.currentTarget.value;
+
+    // If the user has typed just "/", switch over to 'command mode'
+    if (newValue === '/') {
+      setMode('command');
+      setInputValue('');
+    } else {
+      setInputValue(newValue);
+    }
+  }, []);
+
+  useEffect(() => {
+    function handler(ev: KeyboardEvent) {
+      if (ev.key === 'Backspace' && inputValue.length === 0 && mode === 'command') {
+        setInputValue('');
+        setMode('search');
+      }
+    }
+
+    window.addEventListener('keydown', handler);
+
+    return () => {
+      window.removeEventListener('keydown', handler);
+    };
+  }, [mode, inputValue]);
+
   const items = useMemo(() => {
-    return [...FAKE_BASE_ITEMS, DASH_DIVIDER, ...recentDashboardItems, ...FAKE_DASH_ITEMS, PAGES_DIVIDER, ...navItems];
-  }, [navItems, recentDashboardItems]);
+    return mode === 'search'
+      ? [...FAKE_BASE_ITEMS, DASH_DIVIDER, ...recentDashboardItems, ...FAKE_DASH_ITEMS, PAGES_DIVIDER, ...navItems]
+      : COMMAND_ITEMS;
+  }, [mode, navItems, recentDashboardItems]);
 
   const filteredItems = useMemo(() => {
     if (inputValue.length === 0) {
@@ -115,14 +163,14 @@ export function CommandPalette2() {
       >
         <motion.div initial={{ y: 20, scale: 0.95 }} animate={{ y: 0, scale: 1 }} className={styles.palette}>
           <div className={styles.inputBarCell}>
-            <Icon name="search" />
+            <Icon name={mode === 'search' ? 'search' : 'brackets-curly'} />
 
             <input
               className={styles.searchInput}
-              onChange={(ev) => setInputValue(ev.currentTarget.value)}
+              onChange={handleInput}
               value={inputValue}
               type="text"
-              placeholder="Search for anything..."
+              placeholder={mode === 'search' ? 'Search for anything...' : 'Search commands...'}
             />
 
             <div className={styles.shortcut}>
@@ -133,7 +181,7 @@ export function CommandPalette2() {
 
           <div className={styles.mainCell} ref={scrollingRef}>
             <motion.div
-              transition={{ type: 'spring', duration: 0.45, bounce: 0.3 }}
+              transition={{ type: 'spring', duration: 0.35, bounce: 0.3 }}
               animate={{ y: activeItemYPos }}
               className={styles.highlightBg}
             />
@@ -153,21 +201,52 @@ export function CommandPalette2() {
                 );
               }
 
+              const icon = (
+                <motion.div animate={{ color: idx === activeIndex ? '#FFFFFF' : '#75757D' }}>
+                  <Icon name={item.icon} />
+                </motion.div>
+              );
+
+              let body: ReactNode = null;
+
+              if (mode === 'search') {
+                // search mode
+                body = (
+                  <>
+                    {icon}
+                    <div className={styles.resultItemMain}>{item.title}</div>
+                    {item.parentTitle && (
+                      <div>
+                        {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
+                      </div>
+                    )}
+                  </>
+                );
+              } else {
+                // command mode
+                body = (
+                  <>
+                    {icon}
+                    <Stack gap={1} alignItems="center">
+                      {item.parentTitle && (
+                        <>
+                          <div className={styles.commandParent}>{item.parentTitle}</div>
+                          <Icon name="angle-right" />
+                        </>
+                      )}
+                      <div>{item.title}</div>
+                    </Stack>
+                  </>
+                );
+              }
+
               return (
                 <motion.div
                   key={idx}
-                  className={styles.resultItem}
+                  className={cx(styles.resultItem, mode === 'command' && styles.commandItem)}
                   animate={{ color: idx === activeIndex ? '#FFFFFF' : '#C4C4CB' }}
                 >
-                  <motion.div animate={{ color: idx === activeIndex ? '#FFFFFF' : '#75757D' }}>
-                    <Icon name={item.icon} />
-                  </motion.div>
-                  <div>{item.title}</div>
-                  {item.parentTitle && (
-                    <div>
-                      {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
-                    </div>
-                  )}
+                  {body}
                 </motion.div>
               );
             })}
@@ -210,6 +289,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: 0,
       right: 0,
       bottom: 0,
+      letterSpacing: 'initial',
       // background: 'rgba(255, 255, 255, 0.10)',
       // backdropFilter: 'blur(2px)',
     }),
@@ -310,8 +390,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     resultItem: css({
-      display: 'grid',
-      gridTemplateColumns: 'auto 1fr auto',
+      display: 'flex',
       gap: theme.spacing(2),
       alignItems: 'center',
       padding: theme.spacing(2, 0),
@@ -319,6 +398,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: 14,
       position: 'relative',
       zIndex: 2,
+    }),
+
+    commandItem: css({
+      padding: '12.575px 0px',
+    }),
+
+    resultItemMain: css({
+      flexGrow: 1,
     }),
 
     dividerItem: css({
@@ -349,6 +436,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: '#45454d4d',
       borderRadius: 6,
       zIndex: 1,
+    }),
+
+    commandParent: css({
+      padding: theme.spacing(0.5, 1),
+      borderRadius: 6,
+      border: '1px solid #2D2D32',
+      background: '#202027',
+      fontSize: 12,
     }),
   };
 };

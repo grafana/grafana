@@ -13,6 +13,7 @@ export interface CommandPaletteResultItem {
   parentTitle?: string;
   parentIcon?: IconName;
   icon: IconName;
+  action?: () => void;
 }
 
 export type CommandPaletteItem = CommandPaletteDividerItem | CommandPaletteResultItem;
