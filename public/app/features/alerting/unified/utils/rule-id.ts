@@ -308,7 +308,11 @@ export function hashQuery(query: string): string {
   query = query.replace(/\s|\n/g, '');
 
   // Use a counting sort approach to sort characters
-  const charCount = new Array(256).fill(0); // Assuming ASCII characters
+  const charCount = new Array(256).fill(0);
+  // Assuming ASCII characters, this is correct because the sort uses the UTF-16 charset order
+  // The default sort order(used in the oldHasQuery) in JavaScript is based on the UTF-16 code units, not UTF-8.
+  // This means that the sorting behavior is based on the UTF-16 encoding of the characters. However, for ASCII characters (0-127),
+  // the UTF-16 and UTF-8 encodings are the same, so the approach using an array of length 256 is still valid for ASCII characters.
 
   for (let i = 0; i < query.length; i++) {
     charCount[query.charCodeAt(i)]++;
