@@ -8,9 +8,16 @@ export const useScopesSelectorService = () => {
 
   useObservable(scopesSelectorService?.stateObservable ?? new Observable(), scopesSelectorService?.state);
 
-  if (!scopesSelectorService) {
-    return undefined;
-  }
-
-  return scopesSelectorService;
+  return scopesSelectorService
+    ? {
+        state: scopesSelectorService.state,
+        updateNode: scopesSelectorService.updateNode,
+        toggleNodeSelect: scopesSelectorService.toggleNodeSelect,
+        applyNewScopes: scopesSelectorService.applyNewScopes,
+        dismissNewScopes: scopesSelectorService.dismissNewScopes,
+        removeAllScopes: scopesSelectorService.removeAllScopes,
+        openPicker: scopesSelectorService.openPicker,
+        closePicker: scopesSelectorService.closePicker,
+      }
+    : undefined;
 };

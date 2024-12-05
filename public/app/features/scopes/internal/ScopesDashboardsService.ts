@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import { BehaviorSubject, from, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, pairwise } from 'rxjs/operators';
 
 import { ScopeDashboardBinding } from '@grafana/data';
 
@@ -35,7 +35,6 @@ const getInitialState = (): State => ({
 
 export class ScopesDashboardsService {
   private _state = new BehaviorSubject(getInitialState());
-  private prevState = getInitialState();
 
   private dashboardsFetchingSub: Subscription | undefined;
 
@@ -56,10 +55,10 @@ export class ScopesDashboardsService {
   }
 
   public updateFolder = (path: string[], isExpanded: boolean) => {
-    let newFolders = { ...this.state.folders };
-    let newFilteredFolders = { ...this.state.filteredFolders };
-    let currentLevelFolders: SuggestedDashboardsFoldersMap = newFolders;
-    let currentLevelFilteredFolders: SuggestedDashboardsFoldersMap = newFilteredFolders;
+    let folders = { ...this.state.folders };
+    let filteredFolders = { ...this.state.filteredFolders };
+    let currentLevelFolders: SuggestedDashboardsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedDashboardsFoldersMap = filteredFolders;
 
     for (let idx = 0; idx < path.length - 1; idx++) {
       currentLevelFolders = currentLevelFolders[path[idx]].folders;
@@ -73,19 +72,15 @@ export class ScopesDashboardsService {
     currentFolder.isExpanded = isExpanded;
     currentFilteredFolder.isExpanded = isExpanded;
 
-    this.updateState({
-      folders: newFolders,
-      filteredFolders: newFilteredFolders,
-    });
+    this.updateState({ folders, filteredFolders });
   };
 
-  public changeSearchQuery = (newSearchQuery: string) => {
-    newSearchQuery = newSearchQuery ?? '';
+  public changeSearchQuery = (searchQuery: string) => {
+    searchQuery = searchQuery ?? '';
 
-    this.updateState({
-      filteredFolders: filterFolders(this.state.folders, newSearchQuery),
-      searchQuery: newSearchQuery,
-    });
+    const filteredFolders = filterFolders(this.state.folders, searchQuery);
+
+    this.updateState({ filteredFolders, searchQuery });
   };
 
   public clearSearchQuery = () => {
@@ -96,18 +91,14 @@ export class ScopesDashboardsService {
     this.updateState({ isOpened: !this.state.isOpened });
   };
 
-  public subscribeToState = (cb: (newState: State, prevState: State) => void) => {
-    return this._state.subscribe((newState) => cb(newState, this.prevState));
-  };
-
-  private fetchDashboards = async (scopeNames: string[]) => {
-    if (isEqual(this.state.forScopeNames, scopeNames)) {
+  public fetchDashboards = async (forScopeNames: string[]) => {
+    if (isEqual(this.state.forScopeNames, forScopeNames)) {
       return;
     }
 
     this.dashboardsFetchingSub?.unsubscribe();
 
-    if (scopeNames.length === 0) {
+    if (forScopeNames.length === 0) {
       this.updateState({
         dashboards: [],
         filteredFolders: {},
@@ -120,32 +111,29 @@ export class ScopesDashboardsService {
       return;
     }
 
-    this.updateState({ forScopeNames: scopeNames, isLoading: true });
+    this.updateState({ forScopeNames, isLoading: true });
 
-    this.dashboardsFetchingSub = from(fetchDashboards(scopeNames))
+    this.dashboardsFetchingSub = from(fetchDashboards(forScopeNames))
       .pipe(
         finalize(() => {
           this.updateState({ isLoading: false });
         })
       )
-      .subscribe((newDashboards) => {
-        const newFolders = groupDashboards(newDashboards);
-        const newFilteredFolders = filterFolders(newFolders, this.state.searchQuery);
+      .subscribe((dashboards) => {
+        const folders = groupDashboards(dashboards);
+        const filteredFolders = filterFolders(folders, this.state.searchQuery);
 
-        this.updateState({
-          dashboards: newDashboards,
-          filteredFolders: newFilteredFolders,
-          folders: newFolders,
-          isLoading: false,
-          isOpened: true,
-        });
+        this.updateState({ dashboards, filteredFolders, folders, isLoading: false, isOpened: true });
 
         this.dashboardsFetchingSub?.unsubscribe();
       });
   };
 
+  public subscribeToState = (cb: (newState: State, prevState: State) => void) => {
+    return this._state.pipe(pairwise()).subscribe(([prevState, newState]) => cb(newState, prevState));
+  };
+
   private updateState = (newState: Partial<State>) => {
-    this.prevState = this.state;
     this._state.next({ ...this._state.getValue(), ...newState });
   };
 }

@@ -8,10 +8,10 @@ import {
   config,
   navigationLogger,
   reportInteraction,
-  ScopesContext,
   SidecarContext_EXPERIMENTAL,
   sidecarServiceSingleton_EXPERIMENTAL,
 } from '@grafana/runtime';
+import { ScopesContext } from '@grafana/scenes';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';

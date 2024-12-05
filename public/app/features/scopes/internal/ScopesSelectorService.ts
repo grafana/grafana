@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { BehaviorSubject, from, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { getScopesService } from '../services';
+import { getScopesDashboardsService, getScopesService } from '../services';
 
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
@@ -42,19 +42,6 @@ export class ScopesSelectorService {
 
   private nodesFetchingSub: Subscription | undefined;
 
-  constructor() {
-    getScopesService()?.subscribeToState(async (newState, prevState) => {
-      if (newState.pendingScopes !== prevState.pendingScopes && newState.pendingScopes) {
-        await this.applyNewScopes(newState.pendingScopes.map((scopeName) => ({ scopeName, path: [] })));
-        getScopesService()?.setNewScopes(null);
-      }
-
-      if (newState.isReadOnly && this.state.isOpened) {
-        this.closePicker();
-      }
-    });
-  }
-
   public get state() {
     return this._state.getValue();
   }
@@ -66,15 +53,15 @@ export class ScopesSelectorService {
   public updateNode = async (path: string[], isExpanded: boolean, query: string) => {
     this.nodesFetchingSub?.unsubscribe();
 
-    let newNodes = { ...this.state.nodes };
-    let currentLevel: NodesMap = newNodes;
+    let nodes = { ...this.state.nodes };
+    let currentLevel: NodesMap = nodes;
 
     for (let idx = 0; idx < path.length - 1; idx++) {
       currentLevel = currentLevel[path[idx]].nodes;
     }
 
-    const name = path[path.length - 1];
-    const currentNode = currentLevel[name];
+    const loadingNodeName = path[path.length - 1];
+    const currentNode = currentLevel[loadingNodeName];
 
     const isDifferentQuery = currentNode.query !== query;
 
@@ -82,23 +69,23 @@ export class ScopesSelectorService {
     currentNode.query = query;
 
     if (isExpanded || isDifferentQuery) {
-      this.updateState({ nodes: newNodes, loadingNodeName: name });
+      this.updateState({ nodes, loadingNodeName });
 
-      this.nodesFetchingSub = from(fetchNodes(name, query))
+      this.nodesFetchingSub = from(fetchNodes(loadingNodeName, query))
         .pipe(
           finalize(() => {
             this.updateState({ loadingNodeName: undefined });
           })
         )
         .subscribe((childNodes) => {
-          const [newSelectedScopes, newTreeScopes] = getScopesAndTreeScopesWithPaths(
+          const [selectedScopes, treeScopes] = getScopesAndTreeScopesWithPaths(
             this.state.selectedScopes,
             this.state.treeScopes,
             path,
             childNodes
           );
 
-          const persistedNodes = newTreeScopes
+          const persistedNodes = treeScopes
             .map(({ path }) => path[path.length - 1])
             .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
             .reduce<NodesMap>((acc, nodeName) => {
@@ -112,17 +99,17 @@ export class ScopesSelectorService {
 
           currentNode.nodes = { ...persistedNodes, ...childNodes };
 
-          this.updateState({ nodes: newNodes, selectedScopes: newSelectedScopes, treeScopes: newTreeScopes });
+          this.updateState({ nodes, selectedScopes, treeScopes });
 
           this.nodesFetchingSub?.unsubscribe();
         });
     } else {
-      this.updateState({ nodes: newNodes, loadingNodeName: undefined });
+      this.updateState({ nodes, loadingNodeName: undefined });
     }
   };
 
   public toggleNodeSelect = (path: string[]) => {
-    let newTreeScopes = [...this.state.treeScopes];
+    let treeScopes = [...this.state.treeScopes];
 
     let parentNode = this.state.nodes[''];
 
@@ -133,14 +120,14 @@ export class ScopesSelectorService {
     const nodeName = path[path.length - 1];
     const { linkId } = parentNode.nodes[nodeName];
 
-    const selectedIdx = newTreeScopes.findIndex(({ scopeName }) => scopeName === linkId);
+    const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
     if (selectedIdx === -1) {
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        newTreeScopes.length === 0 ||
-        Object.values(parentNode.nodes).some(({ linkId }) => linkId === newTreeScopes[0].scopeName);
+        treeScopes.length === 0 ||
+        Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
       const treeScope = {
         scopeName: linkId!,
@@ -148,31 +135,28 @@ export class ScopesSelectorService {
       };
 
       this.updateState({
-        treeScopes:
-          parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...newTreeScopes, treeScope],
+        treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
       });
     } else {
-      newTreeScopes.splice(selectedIdx, 1);
+      treeScopes.splice(selectedIdx, 1);
 
-      this.updateState({ treeScopes: newTreeScopes });
+      this.updateState({ treeScopes });
     }
   };
 
-  public applyNewScopes = async (localTreeScopes = this.state.treeScopes) => {
-    if (isEqual(localTreeScopes, getTreeScopesFromSelectedScopes(this.state.selectedScopes))) {
+  public applyNewScopes = async (treeScopes = this.state.treeScopes) => {
+    if (isEqual(treeScopes, getTreeScopesFromSelectedScopes(this.state.selectedScopes))) {
       return;
     }
 
-    this.updateState({
-      selectedScopes: localTreeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path })),
-      treeScopes: localTreeScopes,
-    });
+    let selectedScopes = treeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path }));
+    this.updateState({ selectedScopes, treeScopes });
     getScopesService()?.enterLoadingMode();
+    getScopesDashboardsService()?.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
-    const newSelectedScopes = await fetchSelectedScopes(localTreeScopes);
-
-    this.updateState({ selectedScopes: newSelectedScopes });
-    getScopesService()?.setCurrentScopes(newSelectedScopes.map(({ scope }) => scope));
+    selectedScopes = await fetchSelectedScopes(treeScopes);
+    this.updateState({ selectedScopes });
+    getScopesService()?.setScopes(selectedScopes.map(({ scope }) => scope));
     getScopesService()?.exitLoadingMode();
   };
 
@@ -190,19 +174,19 @@ export class ScopesSelectorService {
         await this.updateNode([''], true, '');
       }
 
-      let newNodes = { ...this.state.nodes };
+      let nodes = { ...this.state.nodes };
 
       // First close all nodes
-      newNodes = this.closeNodes(newNodes);
+      nodes = this.closeNodes(nodes);
 
       // Extract the path of a scope
       let path = [...(this.state.selectedScopes[0]?.path ?? ['', ''])];
       path.splice(path.length - 1, 1);
 
       // Expand the nodes to the selected scope
-      newNodes = this.expandNodes(newNodes, path);
+      nodes = this.expandNodes(nodes, path);
 
-      this.updateState({ nodes: newNodes, isOpened: true });
+      this.updateState({ nodes, isOpened: true });
     }
   };
 

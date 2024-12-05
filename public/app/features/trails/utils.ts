@@ -25,7 +25,6 @@ import {
   SceneVariable,
   SceneVariableState,
 } from '@grafana/scenes';
-import { getClosestScopesFacade } from 'app/features/scopes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -193,7 +192,7 @@ export function limitAdhocProviders(
 
       const opts = {
         filters,
-        scopes: getClosestScopesFacade(variable)?.value,
+        scopes: sceneGraph.getScopesBridge(dataTrail)?.getValue(),
         queries: dataTrail.getQueries(),
       };
 
@@ -237,7 +236,7 @@ export function limitAdhocProviders(
       const opts = {
         key: filter.key,
         filters,
-        scopes: getClosestScopesFacade(variable)?.value,
+        scopes: sceneGraph.getScopesBridge(dataTrail)?.getValue(),
         queries: dataTrail.getQueries(),
       };
 

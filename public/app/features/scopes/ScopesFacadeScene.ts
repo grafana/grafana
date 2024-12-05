@@ -36,7 +36,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
     let scopeNames = values.scopes ?? [];
     scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    getScopesService()?.setNewScopes(scopeNames);
+    getScopesService()?.changeScopes(scopeNames);
   }
 
   private _activationHandler = () => {

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useScopes } from '@grafana/runtime';
+import { useScopes } from '@grafana/scenes';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 

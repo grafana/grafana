@@ -1,13 +1,14 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, pairwise } from 'rxjs';
 
 import { Scope } from '@grafana/data';
-import { ScopesContextValue } from '@grafana/runtime';
+import { ScopesContextValue } from '@grafana/scenes';
+
+import { getScopesSelectorService } from '../services';
 
 export interface State {
   isEnabled: boolean;
   isLoading: boolean;
   isReadOnly: boolean;
-  pendingScopes: string[] | null;
   value: Scope[];
 }
 
@@ -15,13 +16,11 @@ export const getInitialState = (): State => ({
   isEnabled: false,
   isLoading: false,
   isReadOnly: false,
-  pendingScopes: null,
   value: [],
 });
 
 export class ScopesService implements ScopesContextValue {
   private _state = new BehaviorSubject<State>(getInitialState());
-  private prevState = getInitialState();
 
   public get state() {
     return this._state.getValue();
@@ -31,11 +30,11 @@ export class ScopesService implements ScopesContextValue {
     return this._state.asObservable();
   }
 
-  public setNewScopes = (scopeNames: string[] | null) => {
-    this.updateState({ pendingScopes: scopeNames });
+  public changeScopes = (scopeNames: string[]) => {
+    return getScopesSelectorService()?.applyNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
   };
 
-  public setCurrentScopes = (scopes: Scope[]) => {
+  public setScopes = (scopes: Scope[]) => {
     this.updateState({ value: scopes });
   };
 
@@ -49,6 +48,10 @@ export class ScopesService implements ScopesContextValue {
 
   public enterReadOnly = () => {
     this.updateState({ isReadOnly: true });
+
+    if (getScopesSelectorService()?.state.isOpened) {
+      getScopesSelectorService()?.closePicker();
+    }
   };
 
   public exitReadOnly = () => {
@@ -64,11 +67,10 @@ export class ScopesService implements ScopesContextValue {
   };
 
   public subscribeToState = (cb: (newState: State, prevState: State) => void) => {
-    return this._state.subscribe((newState) => cb(newState, this.prevState));
+    return this._state.pipe(pairwise()).subscribe(([prevState, newState]) => cb(newState, prevState));
   };
 
   private updateState = (newState: Partial<State>) => {
-    this.prevState = this.state;
     this._state.next({ ...this.state, ...newState });
   };
 }

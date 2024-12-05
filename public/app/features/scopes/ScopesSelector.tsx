@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, useScopes } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { useScopes } from '@grafana/scenes';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';

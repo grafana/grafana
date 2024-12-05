@@ -8,9 +8,13 @@ export const useScopesDashboardsService = () => {
 
   useObservable(scopesDashboardsService?.stateObservable ?? new Observable(), scopesDashboardsService?.state);
 
-  if (!scopesDashboardsService) {
-    return undefined;
-  }
-
-  return scopesDashboardsService;
+  return scopesDashboardsService
+    ? {
+        state: scopesDashboardsService.state,
+        updateFolder: scopesDashboardsService.updateFolder,
+        changeSearchQuery: scopesDashboardsService.changeSearchQuery,
+        clearSearchQuery: scopesDashboardsService.clearSearchQuery,
+        toggleDrawer: scopesDashboardsService.toggleDrawer,
+      }
+    : undefined;
 };

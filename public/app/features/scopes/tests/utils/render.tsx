@@ -3,7 +3,8 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, ScopesContext, setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
+import { ScopesContext } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
