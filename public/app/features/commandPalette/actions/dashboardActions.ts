@@ -79,7 +79,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   return goToSearchResultActions;
 }
 
-export function useSearchResults(searchQuery: string, isShowing: boolean) {
+export function useDashboardsAndFoldersSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);

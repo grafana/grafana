@@ -11,6 +11,7 @@ import {
   useRegisterActions,
   useKBar,
   ActionImpl,
+  Action,
 } from 'kbar';
 import { ComponentProps, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -22,7 +23,7 @@ import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
-import { useSearchResults } from './actions/dashboardActions';
+import { useDashboardsAndFoldersSearchResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
@@ -45,10 +46,9 @@ export function CommandPalette() {
     searchQuery: state.searchQuery,
   }));
 
-  const { allSearchableActions, userDefinedActions, recentActions, setNewRecentAction, extensionActions } =
-    useActions(searchQuery);
+  const { allSearchableActions, userDefinedActions, recentActions, setNewRecentAction } = useActions(searchQuery);
   useRegisterActions(allSearchableActions, [allSearchableActions]);
-  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
+  const { searchResults, isFetchingSearchResults } = useDashboardsAndFoldersSearchResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -96,24 +96,27 @@ export function CommandPalette() {
                 <TabContent>
                   {activeTab === 'recent' && (
                     <RenderKbarResults
-                      filterItems={['Actions', ...recentActions]}
-                      showEmptyState={recentActions.length === 0}
-                      searchResults={searchResults}
+                      commandPaletteActions={['Actions', ...recentActions]}
+                      isFetchingSearchResults={isFetchingSearchResults}
+                      setRecentAction={setNewRecentAction}
+                      // showEmptyState={recentActions.length === 0}
                     />
                   )}
                   {activeTab === 'mine' && (
-                    <Results
-                      items={['Actions', ...userDefinedActions]}
-                      showEmptyState={userDefinedActions.length === 0}
-                      onResultClick={setNewRecentAction}
+                    <RenderKbarResults
+                      commandPaletteActions={['Actions', ...userDefinedActions]}
+                      isFetchingSearchResults={isFetchingSearchResults}
+                      // showEmptyState={userDefinedActions.length === 0}
+                      setRecentAction={setNewRecentAction}
                     />
                   )}
 
                   {activeTab === 'all' && (
                     <RenderKbarResults
                       isFetchingSearchResults={isFetchingSearchResults}
-                      searchResults={searchResults}
+                      commandPaletteActions={[...allSearchableActions, ...searchResults]}
                       setRecentAction={setNewRecentAction}
+                      shouldAddDashboardSearchResults
                     />
                   )}
                 </TabContent>
@@ -128,43 +131,59 @@ export function CommandPalette() {
 
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
-  searchResults: CommandPaletteAction[];
-  setRecentAction: (id: string) => void;
+  commandPaletteActions: Array<CommandPaletteAction | string>;
+  shouldAddDashboardSearchResults?: boolean;
+  setRecentAction?: (id: string) => void;
 }
 
 const RenderKbarResults = ({
   isFetchingSearchResults,
-  searchResults,
+  commandPaletteActions,
   setRecentAction,
-  filterItems,
+  shouldAddDashboardSearchResults,
 }: RenderResultsProps) => {
   const { results: kbarResults } = useMatches();
-  const filteredResults = filterItems && kbarResults?.length
-    ? kbarResults.filter((result) => filterItems.some((item) => item === result || item.id === result.id))
-    : kbarResults;
+  const idsSetInCommandPaletteActions = new Set(
+    commandPaletteActions.map((item) => (typeof item === 'string' ? item : item.id))
+  );
+  const filteredResultsCandidate = kbarResults.filter(
+    (item) => typeof item === 'string' || idsSetInCommandPaletteActions.has(item.id)
+  );
+  const filteredResults = filteredResultsCandidate.filter((item, idx) => {
+    const isTitleAndLastItem = idx === filteredResultsCandidate.length - 1 && typeof item === 'string';
+    const isTitleAndNextItemIsTitleToo =
+      typeof item === 'string' && typeof filteredResultsCandidate[idx + 1] === 'string';
+    if (isTitleAndLastItem || isTitleAndNextItemIsTitleToo) {
+      return false;
+    }
+    return true;
+  });
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
+
   // because dashboard search results aren't registered as actions, we need to manually
   // convert them to ActionImpls before passing them as items to KBarResults
   const dashboardResultItems = useMemo(
     () =>
-      searchResults
-        .filter((item) => item.id.startsWith('go/dashboard'))
-        .map((dashboard) => new ActionImpl(dashboard, { store: {} })),
-    [searchResults]
+      filteredResults
+        .filter((item) => typeof item !== 'string' && item.id.startsWith('go/dashboard'))
+        .map((dashboard) => new ActionImpl(dashboard as Action, { store: {} })),
+    [filteredResults]
   );
-  const folderResultItems = useMemo(
-    () => {
-    if(!searchResults) { return [];}
-      return searchResults
-        .filter((item) => item.id.startsWith('go/folder'))
-        .map((folder) => new ActionImpl(folder, { store: {} }))
-    },
-    [searchResults]
-  );
+  const folderResultItems = useMemo(() => {
+    if (!filteredResults) {
+      return [];
+    }
+    return filteredResults
+      .filter((item) => typeof item !== 'string' && item.id.startsWith('go/folder'))
+      .map((folder) => new ActionImpl(folder as Action, { store: {} }));
+  }, [filteredResults]);
 
   const items = useMemo(() => {
     const results = [...filteredResults];
+    if (!shouldAddDashboardSearchResults) {
+      return results;
+    }
     if (folderResultItems.length > 0) {
       results.push(foldersSectionTitle);
       results.push(...folderResultItems);
@@ -174,7 +193,14 @@ const RenderKbarResults = ({
       results.push(...dashboardResultItems);
     }
     return results;
-  }, [filteredResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [
+    filteredResults,
+    shouldAddDashboardSearchResults,
+    folderResultItems,
+    dashboardResultItems,
+    foldersSectionTitle,
+    dashboardsSectionTitle,
+  ]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
