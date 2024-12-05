@@ -63,7 +63,21 @@ func New(cfg app.Config) (app.App, error) {
 				},
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						// do something here if needed
+						feedback, ok := req.Object.(*feedbackv0alpha1.Feedback)
+						if !ok {
+							logging.FromContext(ctx).Error("received admission request for validator that is not of feedback type")
+
+							return nil
+						}
+
+						if feedback.Spec.Message == "" {
+							return fmt.Errorf("message cannot be empty")
+						}
+
+						if feedback.Spec.ScreenshotUrl != nil && *feedback.Spec.ScreenshotUrl != "" && len(feedback.Spec.Screenshot) > 0 {
+							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
+						}
+
 						return nil
 					},
 				},
