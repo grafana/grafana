@@ -11,7 +11,7 @@ export function extractImageTypeAndData(encoded: string) {
 }
 
 export async function canvasToBase64String(canvas: HTMLCanvasElement): Promise<string | ArrayBuffer | null> {
-  const blob = await new Promise(resolve => canvas.toBlob(resolve));
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve));
   const b64str = await blobToBase64(blob as Blob);
   return b64str;
 }
