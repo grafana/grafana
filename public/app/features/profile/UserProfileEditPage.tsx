@@ -91,7 +91,6 @@ export function UserProfileEditPage({
 
   const convertExtensionComponentTitleToTabId = (title: string) => title.toLowerCase();
 
-  const showTabs = extensions.length > 0;
   const tabs: TabInfo[] = [
     {
       id: GENERAL_SETTINGS_TAB,
@@ -162,7 +161,9 @@ export function UserProfileEditPage({
 
   return (
     <Page navId="profile/settings">
-      <Page.Contents isLoading={!user}>{showTabs ? <UserProfileWithTabs /> : <UserProfile />}</Page.Contents>
+      <Page.Contents isLoading={!user}>
+        <UserProfileWithTabs />
+      </Page.Contents>
     </Page>
   );
 }
