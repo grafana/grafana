@@ -2,21 +2,23 @@ package githubclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 
-	"k8s.io/klog/v2"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // GitHubClient defines a simple client for interacting with the GitHub API
 type GitHubClient struct {
-	BaseURL string
-	Token   string
-	Owner   string
-	Repo    string
+	httpClient *http.Client
+	BaseURL    string
+	Token      string
+	Owner      string
+	Repo       string
 }
 
 // NewGitHubClient creates a new GitHub client
@@ -26,6 +28,9 @@ func NewGitHubClient(token string, owner string, repo string) *GitHubClient {
 		Token:   token,
 		Owner:   owner,
 		Repo:    repo,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
@@ -43,18 +48,18 @@ type ImageCommit struct {
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *GitHubClient) CreateIssue(issue Issue) error {
+func (c *GitHubClient) CreateIssue(ctx context.Context, issue Issue) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/issues", c.BaseURL, c.Owner, c.Repo)
 
 	// Marshal the issue struct into JSON
 	payload, err := json.Marshal(issue)
 	if err != nil {
-		return fmt.Errorf("failed to marshal issue: %w", err)
+		return "", fmt.Errorf("failed to marshal issue: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
-		return fmt.Errorf("failed creating request: %w", err)
+		return "", fmt.Errorf("failed creating request: %w", err)
 	}
 
 	req.Header.Add("Accept", "application/vnd.github+json")
@@ -62,38 +67,35 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// TODO: Emit metrics on failures
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return "", fmt.Errorf("failed to send request: %w", err)
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			klog.ErrorS(err, "failed to close response body")
+			logging.FromContext(ctx).Error("failed to close response body", "error", err.Error())
 		}
 	}()
 
 	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
+		return "", fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		klog.ErrorS(err, "reading request")
-	}
-
-	responseObj := &struct {
+	var responseObj struct {
 		HTMLUrl string `json:"html_url"`
-	}{}
-	if err := json.Unmarshal(body, responseObj); err != nil {
-		klog.ErrorS(err, "unmarshaling response")
 	}
 
-	return nil
+	if err := json.NewDecoder(resp.Body).Decode(&responseObj); err != nil {
+		return "", fmt.Errorf("unmarshaling response: %w", err)
+	}
+
+	return responseObj.HTMLUrl, nil
 }
 
 // UploadImage uploads an image in the Github repository
-func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screenshotData []byte) (string, error) {
+func (c *GitHubClient) UploadImage(ctx context.Context, imageUuid string, imageType *string, screenshotData []byte) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/contents/images/%s.png", c.BaseURL, c.Owner, c.Repo, imageUuid)
 
 	// Build the image commit
@@ -108,7 +110,7 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 		return "", fmt.Errorf("failed to marshal imageCommit: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return "", fmt.Errorf("failed creating request: %w", err)
 	}
@@ -118,14 +120,15 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// TODO: Emit metrics on failures
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			klog.ErrorS(err, "failed to close response body")
+			logging.FromContext(ctx).Error("failed to close response body", "error", err.Error())
 		}
 	}()
 
@@ -133,18 +136,14 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 		return "", fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		klog.ErrorS(err, "reading request")
-	}
-
-	responseObj := &struct {
+	var responseObj struct {
 		Content struct {
 			Url string `json:"html_url"` // this field with ?raw=true attached lets us embed in the issue
 		} `json:"content"`
-	}{}
-	if err := json.Unmarshal(body, responseObj); err != nil {
-		klog.ErrorS(err, "unmarshaling response")
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&responseObj); err != nil {
+		return "", fmt.Errorf("unmarshaling response: %w", err)
 	}
 
 	return responseObj.Content.Url, nil
