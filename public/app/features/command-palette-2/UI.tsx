@@ -226,7 +226,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'grid',
       gridTemplateRows: 'auto 1fr auto',
       gridTemplateColumns: '1fr 1fr',
-      backdropFilter: 'blur(20px)',
+      backdropFilter: 'blur(100px)',
       boxShadow: [
         '0px 32px 32px -16px rgba(0, 0, 0, 0.15)',
         '0px 16px 16px -8px rgba(0, 0, 0, 0.15)',
@@ -293,7 +293,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     keyboardKey: css({
-      display: 'inline-block',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       width: 24,
       height: 24,
       borderRadius: 6,
