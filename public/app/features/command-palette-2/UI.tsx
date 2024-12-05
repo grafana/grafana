@@ -110,8 +110,8 @@ export function CommandPalette2() {
   return (
     <Portal>
       <motion.div
-        initial={{ backgroundColor: `rgba(255, 255, 255, 0.0)`, backdropFilter: 'blur(0px)' }}
-        animate={{ backgroundColor: `rgba(255, 255, 255, 0.10)`, backdropFilter: 'blur(3px)' }}
+        initial={{ backgroundColor: `rgba(255, 255, 255, 0.0)` }}
+        animate={{ backgroundColor: `rgba(255, 255, 255, 0.10)` }}
         className={styles.wrapper}
       >
         <motion.div initial={{ y: 20, scale: 0.95 }} animate={{ y: 0, scale: 1 }} className={styles.palette}>
@@ -319,6 +319,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       lineHeight: 1,
       gap: 8,
+      pointerEvents: 'none',
     }),
 
     shortcutLabel: css({
