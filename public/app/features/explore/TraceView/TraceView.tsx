@@ -198,61 +198,62 @@ export function TraceView(props: Props) {
             visualization={visualization}
             visualizationOnChange={setVisualization}
           />
+
+          <SpanGraph
+            trace={traceProp}
+            viewRange={viewRange}
+            updateNextViewRangeTime={updateNextViewRangeTime}
+            updateViewRangeTime={updateViewRangeTime}
+          />
           {visualization === VisualizationType.SpanList && (
-            <>
-              <SpanGraph
-                trace={traceProp}
-                viewRange={viewRange}
-                updateNextViewRangeTime={updateNextViewRangeTime}
-                updateViewRangeTime={updateViewRangeTime}
-              />
-              <TraceTimelineViewer
-                findMatchesIDs={spanFilterMatches}
-                trace={traceProp}
-                traceToProfilesOptions={traceToProfilesOptions}
-                datasourceType={datasourceType}
-                spanBarOptions={spanBarOptions?.spanBar}
-                traceTimeline={traceTimeline}
-                updateNextViewRangeTime={updateNextViewRangeTime}
-                updateViewRangeTime={updateViewRangeTime}
-                viewRange={viewRange}
-                timeZone={timeZone}
-                setSpanNameColumnWidth={setSpanNameColumnWidth}
-                collapseAll={collapseAll}
-                collapseOne={collapseOne}
-                expandAll={expandAll}
-                expandOne={expandOne}
-                childrenToggle={childrenToggle}
-                detailLogItemToggle={detailLogItemToggle}
-                detailLogsToggle={detailLogsToggle}
-                detailWarningsToggle={detailWarningsToggle}
-                detailStackTracesToggle={detailStackTracesToggle}
-                detailReferencesToggle={detailReferencesToggle}
-                detailReferenceItemToggle={detailReferenceItemToggle}
-                detailProcessToggle={detailProcessToggle}
-                detailTagsToggle={detailTagsToggle}
-                detailToggle={toggleDetail}
-                addHoverIndentGuideId={addHoverIndentGuideId}
-                removeHoverIndentGuideId={removeHoverIndentGuideId}
-                linksGetter={() => []}
-                createSpanLink={createSpanLink}
-                scrollElement={scrollElement}
-                focusedSpanId={focusedSpanId}
-                focusedSpanIdForSearch={focusedSpanIdForSearch}
-                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-                showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-                createFocusSpanLink={createFocusSpanLink}
-                topOfViewRef={topOfViewRef}
-                headerHeight={headerHeight}
-                criticalPath={criticalPath}
-                traceFlameGraphs={traceFlameGraphs}
-                setTraceFlameGraphs={setTraceFlameGraphs}
-                redrawListView={redrawListView}
-                setRedrawListView={setRedrawListView}
-              />
-            </>
+            <TraceTimelineViewer
+              findMatchesIDs={spanFilterMatches}
+              trace={traceProp}
+              traceToProfilesOptions={traceToProfilesOptions}
+              datasourceType={datasourceType}
+              spanBarOptions={spanBarOptions?.spanBar}
+              traceTimeline={traceTimeline}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              timeZone={timeZone}
+              setSpanNameColumnWidth={setSpanNameColumnWidth}
+              collapseAll={collapseAll}
+              collapseOne={collapseOne}
+              expandAll={expandAll}
+              expandOne={expandOne}
+              childrenToggle={childrenToggle}
+              detailLogItemToggle={detailLogItemToggle}
+              detailLogsToggle={detailLogsToggle}
+              detailWarningsToggle={detailWarningsToggle}
+              detailStackTracesToggle={detailStackTracesToggle}
+              detailReferencesToggle={detailReferencesToggle}
+              detailReferenceItemToggle={detailReferenceItemToggle}
+              detailProcessToggle={detailProcessToggle}
+              detailTagsToggle={detailTagsToggle}
+              detailToggle={toggleDetail}
+              addHoverIndentGuideId={addHoverIndentGuideId}
+              removeHoverIndentGuideId={removeHoverIndentGuideId}
+              linksGetter={() => []}
+              createSpanLink={createSpanLink}
+              scrollElement={scrollElement}
+              focusedSpanId={focusedSpanId}
+              focusedSpanIdForSearch={focusedSpanIdForSearch}
+              showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+              showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+              createFocusSpanLink={createFocusSpanLink}
+              topOfViewRef={topOfViewRef}
+              headerHeight={headerHeight}
+              criticalPath={criticalPath}
+              traceFlameGraphs={traceFlameGraphs}
+              setTraceFlameGraphs={setTraceFlameGraphs}
+              redrawListView={redrawListView}
+              setRedrawListView={setRedrawListView}
+            />
           )}
-          {visualization === VisualizationType.FlameChart && <TraceFlameChart trace={traceProp} />}
+          {visualization === VisualizationType.FlameChart && (
+            <TraceFlameChart viewRange={viewRange} trace={traceProp} />
+          )}
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

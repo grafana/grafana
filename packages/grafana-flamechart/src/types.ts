@@ -43,3 +43,12 @@ export interface RenderContainer<T> {
   items: Array<RenderItem<T>>;
   connectors: Array<ParallelConnector<T>>;
 }
+
+export interface ViewRangeTime {
+  current: [number, number];
+  cursor?: number | null;
+}
+
+export interface ViewRange {
+  time: ViewRangeTime;
+}

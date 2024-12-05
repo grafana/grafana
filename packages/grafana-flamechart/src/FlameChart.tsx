@@ -1,11 +1,11 @@
 import { FlameChartViewPort } from './FlameChartViewPort';
-import { FlameChartContainer } from './types';
+import { FlameChartContainer, ViewRange } from './types';
 
 export interface FlameChartProps<T> {
   container: FlameChartContainer<T>;
+  viewRange: ViewRange;
 }
 
 export function FlameChart<T>(props: FlameChartProps<T>) {
-  const { container } = props;
-  return <FlameChartViewPort container={container} />;
+  return <FlameChartViewPort {...props} />;
 }

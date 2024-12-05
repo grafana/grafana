@@ -48,10 +48,12 @@ function ParallelGuidelineM<T>({
 const getStyles = (theme: GrafanaTheme2) => ({
   vertical: css({
     position: 'absolute',
+    zIndex: 1,
     width: '1px',
   }),
   horizontal: css({
     position: 'absolute',
+    zIndex: 1,
     height: '1px',
   }),
 });

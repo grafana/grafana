@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   }),
   label: css({
     paddingLeft: theme.spacing(1),

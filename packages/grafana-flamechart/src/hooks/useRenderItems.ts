@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { max, min } from 'lodash';
+import { useEffect, useMemo, useState } from 'react';
 
-import { FlameChartContainer, ParallelConnector, RenderContainer, RenderItem } from '../types';
+import { FlameChartContainer, ParallelConnector, RenderContainer, RenderItem, ViewRange } from '../types';
 import { findMaxBounds } from '../utils/operation';
 import { mapTree } from '../utils/tree';
 
@@ -12,8 +13,7 @@ const DEFAULT_VERTICAL_GAP_PX = 2;
 interface UseRenderItemsOptions<T> {
   container: FlameChartContainer<T>;
   containerSize: { width: number; height: number };
-  fromMs?: number;
-  toMs?: number;
+  viewRange: ViewRange;
   heightPx?: number; // default 42
   verticalGapPx?: number; // default 2
   horizontalGapPx?: number; // default 2
@@ -27,10 +27,14 @@ const EMPTY_RENDER_CONTAINER: RenderContainer<any> = {
   connectors: [],
 };
 
+function calcFomTo(minMs: number, maxMs: number, viewRange: ViewRange): { fromMs: number; toMs: number } {
+  const duration = maxMs - minMs;
+  return { fromMs: minMs + duration * viewRange.time.current[0], toMs: minMs + duration * viewRange.time.current[1] };
+}
+
 export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderContainer<T> {
   const {
-    fromMs: oFromMs,
-    toMs: oToMs,
+    viewRange,
     verticalGapPx,
     heightPx,
     containerSize,
@@ -49,8 +53,13 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
     [operations]
   );
 
-  const fromMs = Math.max(oFromMs ?? 0, minMs ?? 0);
-  const toMs = Math.min(oToMs ?? Number.MAX_VALUE, maxMs);
+  const [{ fromMs, toMs }, setTimeRange] = useState(calcFomTo(minMs, maxMs, viewRange));
+
+  useEffect(() => {
+    if (!viewRange.time.cursor) {
+      setTimeRange(calcFomTo(minMs, maxMs, viewRange));
+    }
+  }, [minMs, maxMs, viewRange]);
 
   const viewDuration = toMs - fromMs;
 
