@@ -133,6 +133,7 @@ function redPanelItem(query: RedObject, red: 'rate'|'error'|'duration', index: n
       .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
       .setCustomFieldConfig('fillOpacity', 9)
+      .setOption('xTickLabelSpacing', 50)
       .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
       // .setDescription(description)
       // .setHeaderActions([
