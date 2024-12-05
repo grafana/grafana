@@ -132,7 +132,7 @@ type rowsWrapper struct {
 	err error
 }
 
-func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, minCount int) ([]resource.ResourceStats, error) {
+func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
