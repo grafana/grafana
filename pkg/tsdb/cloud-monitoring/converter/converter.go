@@ -23,7 +23,7 @@ type Options struct {
 	Dataplane bool
 }
 
-func rspErr(e error) backend.DataResponse {
+func rspDownstreamErr(e error) backend.DataResponse {
 	return backend.DataResponse{Error: e, ErrorSource: backend.ErrorSourceDownstream}
 }
 
@@ -39,38 +39,38 @@ func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.Da
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
-			return rspErr(err)
+			return rspDownstreamErr(err)
 		}
 		switch l1Field {
 		case "status":
 			if status, err = iter.ReadString(); err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 
 		case "data":
 			rsp = readPrometheusData(iter, opt)
 			if rsp.Error != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 
 		case "error":
 			if promErrString, err = iter.ReadString(); err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 
 		case "errorType":
 			if errorType, err = iter.ReadString(); err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 
 		case "warnings":
 			if warnings, err = readWarnings(iter); err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 
 		case "":
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			break l1Fields
 
@@ -142,7 +142,7 @@ func readPrometheusData(iter *sdkjsoniter.Iterator, opt Options) backend.DataRes
 	var rsp backend.DataResponse
 	t, err := iter.WhatIsNext()
 	if err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	if t == sdkjsoniter.ArrayValue {
@@ -164,27 +164,27 @@ func readPrometheusData(iter *sdkjsoniter.Iterator, opt Options) backend.DataRes
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
-			return rspErr(err)
+			return rspDownstreamErr(err)
 		}
 		switch l1Field {
 		case "encodingFlags":
 			for ok, err := iter.ReadArray(); ok; ok, err = iter.ReadArray() {
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				encodingFlag, err := iter.ReadString()
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				encodingFlags = append(encodingFlags, encodingFlag)
 			}
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 		case "resultType":
 			resultType, err = iter.ReadString()
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			resultTypeFound = true
 
@@ -207,7 +207,7 @@ l1Fields:
 		case "stats":
 			v, err := iter.Read()
 			if err != nil {
-				rspErr(err)
+				rspDownstreamErr(err)
 			}
 			if len(rsp.Frames) > 0 {
 				meta := rsp.Frames[0].Meta
@@ -222,17 +222,17 @@ l1Fields:
 
 		case "":
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			if !resultTypeFound {
-				return rspErr(fmt.Errorf("no resultType found"))
+				return rspDownstreamErr(fmt.Errorf("no resultType found"))
 			}
 			break l1Fields
 
 		default:
 			v, err := iter.Read()
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			logf("[data] TODO, support key: %s / %v\n", l1Field, v)
 		}
@@ -270,7 +270,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *sdkjsoniter.I
 		}
 	default:
 		if err := iter.Skip(); err != nil {
-			return rspErr(err)
+			return rspDownstreamErr(err)
 		}
 		rsp = backend.DataResponse{
 			Error: fmt.Errorf("unknown result type: %s", resultType),
@@ -290,19 +290,19 @@ func readArrayData(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	stringField.Name = "Value"
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
-			rspErr(err)
+			rspDownstreamErr(err)
 		}
 
 		next, err := iter.WhatIsNext()
 		if err != nil {
-			return rspErr(err)
+			return rspDownstreamErr(err)
 		}
 
 		switch next {
 		case sdkjsoniter.StringValue:
 			s, err := iter.ReadString()
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			stringField.Append(s)
 
@@ -310,7 +310,7 @@ func readArrayData(iter *sdkjsoniter.Iterator) backend.DataResponse {
 		case sdkjsoniter.ObjectValue:
 			exemplar, labelPairs, err := readLabelsOrExemplars(iter)
 			if err != nil {
-				rspErr(err)
+				rspDownstreamErr(err)
 			}
 			if exemplar != nil {
 				rsp.Frames = append(rsp.Frames, exemplar)
@@ -350,7 +350,7 @@ func readArrayData(iter *sdkjsoniter.Iterator) backend.DataResponse {
 			{
 				ext, err := iter.ReadAny()
 				if err != nil {
-					rspErr(err)
+					rspDownstreamErr(err)
 				}
 				v := fmt.Sprintf("%v", ext)
 				stringField.Append(v)
@@ -506,25 +506,25 @@ func readString(iter *sdkjsoniter.Iterator) backend.DataResponse {
 
 	_, err := iter.ReadArray()
 	if err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	var t float64
 	if t, err = iter.ReadFloat64(); err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	if _, err = iter.ReadArray(); err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	var v string
 	if v, err = iter.ReadString(); err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	if _, err = iter.ReadArray(); err != nil {
-		return rspErr(err)
+		return rspDownstreamErr(err)
 	}
 
 	tt := timeFromFloat(t)
@@ -579,7 +579,7 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
-			return rspErr(err)
+			return rspDownstreamErr(err)
 		}
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		timeField.Name = data.TimeSeriesTimeFieldName
@@ -591,18 +591,18 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			switch l1Field {
 			case "metric":
 				if err = iter.ReadVal(&valueField.Labels); err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 
 			case "value":
 				t, v, err := readTimeValuePair(iter)
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				timeField.Append(t)
 				valueField.Append(v)
@@ -611,11 +611,11 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 			case "values":
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 					t, v, err := readTimeValuePair(iter)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 					timeField.Append(t)
 					valueField.Append(v)
@@ -627,7 +627,7 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 				}
 				err = readHistogram(iter, histogram)
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 
 			case "histograms":
@@ -636,16 +636,16 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 				}
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 					if err = readHistogram(iter, histogram); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 				}
 
 			default:
 				if err = iter.Skip(); err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				logf("readMatrixOrVector: %s\n", l1Field)
 			}
@@ -875,13 +875,13 @@ func readStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
-			rspErr(err)
+			rspDownstreamErr(err)
 		}
 
 	l1Fields:
 		for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			switch l1Field {
 			case "stream":
@@ -889,11 +889,11 @@ func readStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 				// only appends to it
 				labels := data.Labels{}
 				if err = iter.ReadVal(&labels); err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 
 				if labelJson, err = labelsToRawJson(labels); err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 
 			case "values":
@@ -904,30 +904,30 @@ func readStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					ts, err := iter.ReadString()
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					line, err := iter.ReadString()
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					t, err := timeFromLokiString(ts)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					labelsField.Append(labelJson)
@@ -937,7 +937,7 @@ func readStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 				}
 			case "":
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				break l1Fields
 			}
@@ -974,13 +974,13 @@ func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
-			rspErr(err)
+			rspDownstreamErr(err)
 		}
 
 	l1Fields:
 		for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 			if err != nil {
-				return rspErr(err)
+				return rspDownstreamErr(err)
 			}
 			switch l1Field {
 			case "stream":
@@ -988,7 +988,7 @@ func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 				// only appends to it
 				indexedLabels = data.Labels{}
 				if err = iter.ReadVal(&indexedLabels); err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 
 			case "values":
@@ -999,39 +999,39 @@ func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					ts, err := iter.ReadString()
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					line, err := iter.ReadString()
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					parsedLabelsMap, structuredMetadataMap, err := readCategorizedStreamField(iter)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					if _, err = iter.ReadArray(); err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					t, err := timeFromLokiString(ts)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					typeMap := data.Labels{}
@@ -1055,12 +1055,12 @@ func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 
 					labelJson, err := labelsToRawJson(clonedLabels)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					labelTypesJson, err := labelsToRawJson(typeMap)
 					if err != nil {
-						return rspErr(err)
+						return rspDownstreamErr(err)
 					}
 
 					labelsField.Append(labelJson)
@@ -1071,7 +1071,7 @@ func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 				}
 			case "":
 				if err != nil {
-					return rspErr(err)
+					return rspDownstreamErr(err)
 				}
 				break l1Fields
 			}
