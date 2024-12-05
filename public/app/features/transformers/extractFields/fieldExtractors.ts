@@ -142,10 +142,10 @@ const extDelimiter: FieldExtractor = {
 
     return (raw: string) => {
       // Try to split delimited values
-      const parts = raw.split(splitRegExp);
+      const parts = raw.trim().split(splitRegExp);
       const acc: Record<string, number> = {};
       for (const part of parts) {
-        acc[part.trim()] = 1;
+        acc[part] = 1;
       }
       return acc;
     };

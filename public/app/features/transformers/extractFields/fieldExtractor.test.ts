@@ -170,7 +170,7 @@ describe('Extract fields from text', () => {
     it('trims whitespace', async () => {
       const extractor = fieldExtractors.get(FieldExtractorID.Delimiter);
       const parse = extractor.getParser({});
-      const out = parse(`a, b,c, d`);
+      const out = parse(` a, b,c, d `);
 
       expect(out).toMatchInlineSnapshot(`
         {
