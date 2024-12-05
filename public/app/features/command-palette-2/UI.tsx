@@ -157,7 +157,17 @@ export function CommandPalette2() {
         animate={{ backgroundColor: `rgba(255, 255, 255, 0.10)` }}
         className={styles.wrapper}
       >
-        <motion.div initial={{ y: 20, scale: 0.95 }} animate={{ y: 0, scale: 1 }} className={styles.palette}>
+        <motion.div
+          initial={{ y: 20, scale: 0.95 }}
+          animate={{ y: 0, scale: 1 }}
+          className={cx(
+            styles.palette,
+            mode === 'search' && styles.searchMode,
+            mode === 'command' && styles.commandMode
+          )}
+        >
+          {mode === 'command' && <div className={styles.navBarCell}>Home / Commands</div>}
+
           <div className={styles.inputBarCell}>
             <div className={styles.searchIcon}>
               <Icon name={mode === 'search' ? 'search' : 'brackets-curly'} />
@@ -301,16 +311,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       bottom: 0,
       letterSpacing: 'initial',
-      // background: 'rgba(255, 255, 255, 0.10)',
-      // backdropFilter: 'blur(2px)',
     }),
 
     palette: css({
-      height: 'calc(100dvh - 64px)',
       maxHeight: 650,
       width: '100%',
       maxWidth: 1040,
-      margin: '32px auto',
+      marginInline: 'auto',
       overflow: 'hidden',
       borderRadius: 10,
       background: 'rgba(0, 0, 0, 0.80)',
@@ -328,10 +335,30 @@ const getStyles = (theme: GrafanaTheme2) => {
       ].join(','),
       gridTemplateAreas: gt([
         // no prettier
+        ['navbar', 'navbar'],
         ['input', 'input'],
         ['main', 'main'],
         ['footer', 'footer'],
       ]),
+    }),
+
+    commandMode: css({
+      marginTop: 32,
+      height: 'calc((100dvh - 64px) + 47px)',
+      maxHeight: 650 + 47,
+    }),
+
+    searchMode: css({
+      marginTop: 47 + 32,
+      height: 'calc(100dvh - 64px)',
+      maxHeight: 650,
+    }),
+
+    navBarCell: css({
+      gridArea: 'navbar',
+      padding: theme.spacing(1.5, 3),
+      display: 'flex',
+      borderBottom: '1px solid #202027',
     }),
 
     inputBarCell: css({
@@ -371,13 +398,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1, 3),
       gridArea: 'main',
       overflow: 'auto',
-      // background: 'green',
     }),
 
     detailCell: css({
       padding: 8,
       gridArea: 'detail',
-      // background: 'yellow',
     }),
 
     footerCell: css({
