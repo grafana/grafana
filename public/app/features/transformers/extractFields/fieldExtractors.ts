@@ -1,4 +1,4 @@
-import { Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
+import { escapeStringForRegex, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
 import { ExtractFieldsOptions, FieldExtractorID } from './types';
 
@@ -135,19 +135,19 @@ const extLabels: FieldExtractor = {
 
 const extCSV: FieldExtractor = {
   id: FieldExtractorID.CSV,
-  name: 'Delimiter separated values',
+  name: 'Split by delimiter',
   description: 'Splits at delimited values, such as commas',
   getParser: ({ delimiter = ',' }) => {
+    const splitRegExp = new RegExp(`\\s*${escapeStringForRegex(delimiter)}\\s*`, 'g');
+
     return (raw: string) => {
       // Try to split delimited values
-      const parts = raw.split(delimiter).map((v) => v.trim());
-      if (parts.length < 1) {
-        return undefined;
+      const parts = raw.split(splitRegExp);
+      const acc: Record<string, boolean> = {};
+      for (const part of parts) {
+        acc[part.trim()] = true;
       }
-      return parts.reduce((acc: Record<string, boolean>, part: string) => {
-        acc[part] = true;
-        return acc;
-      }, {});
+      return acc;
     };
   },
 };
@@ -165,7 +165,7 @@ const extAuto: FieldExtractor = {
       for (const parse of parsers) {
         try {
           const r = parse(v);
-          if (r != null || r !== undefined) {
+          if (r != null) {
             return r;
           }
         } catch {} // ignore errors
