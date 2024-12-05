@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelModel, PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
@@ -6,13 +6,22 @@ import { CodeLanguage, defaultCodeOptions, defaultOptions, Options, TextMode } f
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<Options>(TextPanel)
-  .addHook<(data: string) => null>({
+  .addHook<(data: string) => Promise<PanelModel | null>>({
     title: 'foo',
     targets: ['dashboard/dragndrop'],
-    hook: (data) => {
-      alert(`you've triggered the dragndrop hook inside the text plugin! ${data}`);
-      console.log(`text panel testing data using hook '${data}'`);
-      return null;
+    hook: async (data: string) => {
+      return {
+        id: 0,
+        type: 'text',
+        title: `Pasted text contents`,
+        options: {
+          content: data,
+        },
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      };
     },
   })
   .setPanelOptions((builder) => {
