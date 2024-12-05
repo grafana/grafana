@@ -7,7 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
-import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
+import { ONCALL_ADAPTIVE_ALERTING_FEATURE, ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
@@ -41,6 +41,7 @@ function useOnCallPluginStatus() {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
+    settings,
   } = usePluginBridge(SupportedPlugin.OnCall);
 
   const {
@@ -60,14 +61,27 @@ function useOnCallPluginStatus() {
       : OnCallIntegrationStatus.V1;
   }, [isOnCallEnabled, onCallFeatures]);
 
+  const escalationChainStatus = useMemo((): OnCallEscalationChainStatus => {
+    if (!isOnCallEnabled) {
+      return OnCallEscalationChainStatus.Disabled;
+    }
+    return onCallFeatures.includes(ONCALL_ADAPTIVE_ALERTING_FEATURE) // TODO: Add the feature flag to OnCall.
+      ? OnCallEscalationChainStatus.V1
+      : OnCallEscalationChainStatus.Disabled;
+  }, [isOnCallEnabled, onCallFeatures]);
+
   const isAlertingV2IntegrationEnabled = useMemo(
     () => integrationStatus === OnCallIntegrationStatus.V2,
     [integrationStatus]
   );
 
+  let jsonData: any = settings?.jsonData ?? {};
+
   return {
     isOnCallEnabled,
     integrationStatus,
+    escalationChainStatus,
+    onCallApiUrl: jsonData['onCallApiUrl'] ?? '',
     isAlertingV2IntegrationEnabled,
     isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
     onCallError: pluginError ?? onCallFeaturesError,
@@ -236,7 +250,7 @@ export function useOnCallIntegration() {
     integrationStatus,
     onCallNotifierMeta: {
       enabled: !!isOnCallEnabled,
-      order: -1, // The default is 0. We want OnCall to be the first on the list
+      order: 0,
       description: isOnCallEnabled
         ? 'Connect effortlessly to Grafana OnCall'
         : 'Enable Grafana OnCall plugin to use this integration',
@@ -249,5 +263,84 @@ export function useOnCallIntegration() {
     isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,
     isValidating,
     hasOnCallError: Boolean(onCallError) || isIntegrationsQueryError,
+  };
+}
+
+enum OnCallEscalationChainStatus {
+  Disabled = 'disabled',
+  V1 = 'v1',
+}
+
+export function useOnCallEscalationChain() {
+  const { isOnCallEnabled, escalationChainStatus, onCallApiUrl, isOnCallStatusLoading, onCallError } =
+    useOnCallPluginStatus();
+
+  const { useGrafanaOnCallEscalationChainsQuery } = onCallApi;
+
+  const {
+    data: grafanaOnCallEscalationChains = [],
+    isLoading: isLoadingOnCallEscalationChains,
+    isError: isEscalationChainsQueryError,
+  } = useGrafanaOnCallEscalationChainsQuery(undefined);
+
+  const onCallFormValidators = useMemo(() => {
+    return {
+      escalation_chain_id: (value: string) => {
+        return grafanaOnCallEscalationChains.map((i) => i.id).includes(value)
+          ? true
+          : 'Selection of existing OnCall escalation chain is required';
+      },
+    };
+  }, [grafanaOnCallEscalationChains]);
+
+  const extendOnCallEscalationChainNotifierFeatures = useCallback(
+    (notifier: NotifierDTO): NotifierDTO => {
+      if (notifier.type === ReceiverTypes.OnCallEscalationChain) {
+        let options = notifier.options.filter((o) => o.propertyName !== 'escalation_chain_id');
+        options.unshift(
+          option('escalation_chain_id', 'OnCall Escalation Chain', 'The OnCall escalation chain to send alerts to', {
+            element: 'select',
+            required: true, // For display purposes. TODO: When chatops are implemented. Create an initial Radio Option.
+            selectOptions: grafanaOnCallEscalationChains.map((i) => ({
+              label: i.name,
+              description: i.team ? `Team: ${i.team}, ID: ${i.id}` : `ID: ${i.id}`,
+              value: i.id,
+            })),
+          })
+        );
+
+        options = produce(options, (draft) => {
+          draft.forEach((option) => {
+            if (option.propertyName === 'api_url') {
+              // Hide the field under a collapsible section. The field is required by the backend, but we set a default
+              // value when it's empty.
+              option.required = false;
+              option.defaultValue = { value: onCallApiUrl };
+            }
+          });
+        });
+
+        return { ...notifier, options };
+      }
+
+      return notifier;
+    },
+    [grafanaOnCallEscalationChains, onCallApiUrl]
+  );
+
+  return {
+    escalationChainStatus,
+    notifierMeta: {
+      enabled: !!isOnCallEnabled,
+      order: -1, // The default is 0. We want OnCall to be the first on the list
+      description: isOnCallEnabled
+        ? 'Send to a Grafana OnCall Escalation Chain'
+        : 'Enable Grafana OnCall plugin to use this integration',
+      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
+    },
+    extendNotifier: extendOnCallEscalationChainNotifierFeatures,
+    formValidators: onCallFormValidators,
+    isLoading: isLoadingOnCallEscalationChains || isOnCallStatusLoading,
+    hasError: Boolean(onCallError) || isEscalationChainsQueryError,
   };
 }

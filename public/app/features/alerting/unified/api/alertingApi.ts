@@ -116,6 +116,7 @@ export const alertingApi = createApi({
     'AlertmanagerAlerts',
     'AlertmanagerSilences',
     'OnCallIntegrations',
+    'OnCallEscalationChains',
     'DataSourceSettings',
     'GrafanaLabels',
     'CombinedAlertRule',

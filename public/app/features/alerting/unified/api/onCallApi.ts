@@ -18,7 +18,8 @@ export interface OnCallPaginatedResult<T> {
 }
 
 export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
-type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
+export const ONCALL_ADAPTIVE_ALERTING_FEATURE = 'grafana_adaptive_alerting';
+type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | typeof ONCALL_ADAPTIVE_ALERTING_FEATURE | string;
 
 type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
@@ -36,6 +37,14 @@ export interface CreateIntegrationDTO {
 export interface OnCallConfigChecks {
   is_chatops_connected: boolean;
   is_integration_chatops_connected: boolean;
+}
+
+type EscalationChainResult = OnCallPaginatedResult<OnCallEscalationChainDTO> | OnCallEscalationChainDTO[];
+
+export interface OnCallEscalationChainDTO {
+  id: string;
+  name: string;
+  team?: string;
 }
 
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.OnCall}/resources${path}`;
@@ -90,12 +99,28 @@ export const onCallApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
+    grafanaOnCallEscalationChains: build.query<OnCallEscalationChainDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/escalation_chains/'),
+        params: {
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: EscalationChainResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallEscalationChains'],
+    }),
   }),
 });
 
 function isPaginatedResponse(
-  response: AlertReceiveChannelsResult
-): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
+  response: AlertReceiveChannelsResult | EscalationChainResult
+): response is OnCallPaginatedResult<any> {
   return 'results' in response && Array.isArray(response.results);
 }
 

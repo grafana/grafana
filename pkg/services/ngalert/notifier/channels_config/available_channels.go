@@ -423,7 +423,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		},
 		{
 			Type:        "oncall",
-			Name:        "Grafana OnCall",
+			Name:        "Grafana OnCall (Legacy)",
 			Description: "Sends alerts to Grafana OnCall",
 			Heading:     "Grafana OnCall settings",
 			Options: []NotifierOption{

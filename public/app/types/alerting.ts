@@ -58,6 +58,7 @@ export type GrafanaNotifierType =
   | 'webex'
   | 'mqtt'
   | 'oncall'
+  | 'oncall-ng'
   | 'sns';
 
 export type CloudNotifierType =

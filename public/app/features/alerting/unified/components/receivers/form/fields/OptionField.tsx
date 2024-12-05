@@ -175,6 +175,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
                 setValueAs: option.setValueAs,
               })}
               placeholder={option.placeholder}
+              defaultValue={option.defaultValue?.value}
             />
           )}
         </WrapWithTemplateSelection>
