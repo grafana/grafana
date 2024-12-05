@@ -122,12 +122,13 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, minCount int) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
+		Namespace:   namespace,
 		MinCount:    minCount, // not used in query... yet?
 	}
 

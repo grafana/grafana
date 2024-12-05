@@ -95,7 +95,8 @@ type StorageBackend interface {
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
-	GetResourceStats(ctx context.Context, minCount int) ([]ResourceStats, error)
+	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
+	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 }
 
 type ResourceStats struct {
