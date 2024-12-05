@@ -35,7 +35,7 @@ type SocialBase struct {
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	orgRoleMapper *OrgRoleMapper
-	orgMappingCfg *MappingConfiguration
+	orgMappingCfg MappingConfiguration
 }
 
 func newSocialBase(name string,
@@ -43,7 +43,6 @@ func newSocialBase(name string,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
-
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
