@@ -300,30 +300,30 @@ export function oldhashQuery(query: string) {
   return query.split('').sort().join('');
 }
 export function hashQuery(query: string): string {
-  // one of them might be wrapped in parens
+  // Step 1: Remove enclosing parentheses if present
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
   }
-  // whitespace could be added or removed
+
+  // Step 2: Remove whitespace and newlines
   query = query.replace(/\s|\n/g, '');
 
-  // Use a counting sort approach to sort characters
-  const charCount = new Array(256).fill(0);
-  // Assuming ASCII characters, this is correct because the sort uses the UTF-16 charset order
-  // The default sort order(used in the oldHasQuery) in JavaScript is based on the UTF-16 code units, not UTF-8.
-  // This means that the sorting behavior is based on the UTF-16 encoding of the characters. However, for ASCII characters (0-127),
-  // the UTF-16 and UTF-8 encodings are the same, so the approach using an array of length 256 is still valid for ASCII characters.
-
+  // Step 3: Count character occurrences
+  const charCounts = new Map<number, number>(); // Use a map to support UTF-16 code units
   for (let i = 0; i < query.length; i++) {
-    charCount[query.charCodeAt(i)]++;
-  }
-
-  let sortedQuery = '';
-  for (let i = 0; i < charCount.length; i++) {
-    if (charCount[i] > 0) {
-      sortedQuery += String.fromCharCode(i).repeat(charCount[i]);
+    const code = query.codePointAt(i)!; // Get the UTF-16 code point
+    charCounts.set(code, (charCounts.get(code) || 0) + 1);
+    // Advance i for surrogate pairs
+    if (code > 0xffff) {
+      i++;
     }
   }
+
+  // Step 4: Sort and construct the result
+  const sortedQuery = Array.from(charCounts.entries())
+    .sort((a, b) => a[0] - b[0]) // Sort by code point
+    .map(([code, count]) => String.fromCodePoint(code).repeat(count)) // Expand the counts
+    .join('');
 
   return sortedQuery;
 }

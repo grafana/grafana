@@ -135,7 +135,7 @@ describe('hashQuery Performance Comparison', () => {
         refId: `A${i}`,
         queryType: '',
         relativeTimeRange: { from: 600 + i * 10, to: i }, // Slightly varying time ranges
-        datasourceUid: `DSUID${i}`, // Unique datasource UID
+        datasourceUid: `DSU€ID${i}`, // Unique datasource UID
         model: {
           dimensions: {},
           expression: '',
@@ -146,7 +146,7 @@ describe('hashQuery Performance Comparison', () => {
           metricEditorMode: 0,
           metricName: `Metric${i}`, // Unique metric name
           metricQueryType: i % 3, // Rotating through query types
-          namespace: `AWS/Service${i % 5}`, // Rotating namespaces
+          namespace: `AWS/Serv€ice${i % 5}`, // Rotating namespaces
           queryMode: 'Metrics',
           refId: `A${i}`,
           region: i % 2 === 0 ? 'us-east-1' : 'us-west-1', // Alternating regions
@@ -212,6 +212,7 @@ describe('hashQuery Performance Comparison', () => {
       totalOptimizedTime += optimizedTime;
     }
 
+    // uncomment to see time comparison
     // console.log(`  Original Time: ${totalOriginalTime.toFixed(3)} ms`);
     // console.log(`  Optimized Time: ${totalOptimizedTime.toFixed(3)} ms`);
     // console.log(`  Speedup: ${(totalOriginalTime / totalOptimizedTime).toFixed(2)}x`);
