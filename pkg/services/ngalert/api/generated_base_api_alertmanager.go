@@ -44,6 +44,7 @@ type AlertmanagerApi interface {
 	RoutePostAlertingConfig(*contextmodel.ReqContext) response.Response
 	RoutePostGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
 	RoutePostGrafanaAlertingConfigHistoryActivate(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaAlerts(*contextmodel.ReqContext) response.Response
 	RoutePostTestGrafanaReceivers(*contextmodel.ReqContext) response.Response
 	RoutePostTestGrafanaTemplates(*contextmodel.ReqContext) response.Response
 }
@@ -174,6 +175,14 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(c
 	// Parse Path Parameters
 	idParam := web.Params(ctx.Req)[":id"]
 	return f.handleRoutePostGrafanaAlertingConfigHistoryActivate(ctx, idParam)
+}
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlerts(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.PostableAlerts{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostGrafanaAlerts(ctx, conf)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
@@ -479,6 +488,18 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/history/{id}/_activate",
 				api.Hooks.Wrap(srv.RoutePostGrafanaAlertingConfigHistoryActivate),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			// api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/alertmanager/grafana/api/v2/alerts",
+				api.Hooks.Wrap(srv.RoutePostGrafanaAlerts),
 				m,
 			),
 		)

@@ -246,6 +246,14 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route POST /alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+
 // Alias all the needed Alertmanager types, functions and constants so that they can be imported directly from grafana/alerting
 // without having to modify any of the usage within Grafana.
 type (
@@ -587,7 +595,7 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts
+// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`

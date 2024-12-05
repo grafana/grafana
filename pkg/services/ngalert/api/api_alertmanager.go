@@ -326,6 +326,22 @@ func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, bo
 	return response.JSON(http.StatusOK, newTestTemplateResult(res))
 }
 
+// is this the right place to put this code???
+func (srv AlertmanagerSrv) RoutePostGrafanaAlerts(c *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
+	orgID := c.SignedInUser.GetOrgID() // will this work for on-call plugin?
+	am, errResp := srv.AlertmanagerFor(orgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	err := am.PutAlerts(c.Req.Context(), body)
+	if err != nil {
+		srv.log.Error("failed to send alerts to alert manager: %v", err, "orgID", orgID)
+		return response.Error(http.StatusInternalServerError, "Problem sending alert", err)
+	}
+	return response.Empty(200)
+}
+
 // contextWithTimeoutFromRequest returns a context with a deadline set from the
 // Request-Timeout header in the HTTP request. If the header is absent then the
 // context will use the default timeout. The timeout in the Request-Timeout

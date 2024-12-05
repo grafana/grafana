@@ -166,6 +166,9 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
+		// TODO(@moustafab): figure out how to make this actually allow anonymous access
+		eval = ac.EvalPermission(ac.ActionAlertingInstanceUpdate)
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":

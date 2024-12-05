@@ -2288,12 +2288,6 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8 h1:77+Y8w2sXpMqTEyyyGE6WDk5U8v6ynCO9lBkMEqzyIo=
-github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/alerting v0.0.0-20241204190156-2de84bbb9006 h1:zcu4Ckz/3l29J0DVQwJ1DOONzFQfB51dtI6oRLhs8dw=
-github.com/grafana/alerting v0.0.0-20241204190156-2de84bbb9006/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/alerting v0.0.0-20241204203047-e9dbe702a029 h1:jarNUc5DqtHQ4XwaTjzdsXEeU7dwbMItqfh4ODPzGYM=
-github.com/grafana/alerting v0.0.0-20241204203047-e9dbe702a029/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
 github.com/grafana/alerting v0.0.0-20241204204905-40611a993364 h1:Ck/XIgIYSknlCc7xn4ZxkYVIdoJDVryeXghYpyzCeds=
 github.com/grafana/alerting v0.0.0-20241204204905-40611a993364/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
 github.com/grafana/authlib v0.0.0-20241202090931-5f1dcf611f9c h1:10aFnI5iFk0XSw19FD26oS4nIwCunfbkYT800hpHBzo=
