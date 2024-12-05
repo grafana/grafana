@@ -21,12 +21,12 @@ type Props = {
   info: PageInfoItem[];
   queryParams: UrlQueryMap;
   pageId: string;
-  showRightPanelInBody: boolean;
+  showDetails: boolean;
 };
 
 type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
-export function PluginDetailsBody({ plugin, queryParams, pageId, info, showRightPanelInBody }: Props): JSX.Element {
+export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
 
@@ -81,7 +81,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showRight
     );
   }
 
-  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showRightPanelInBody) {
+  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
     return (
       <div>
         <PluginDetailsPanel info={info} plugin={plugin} />

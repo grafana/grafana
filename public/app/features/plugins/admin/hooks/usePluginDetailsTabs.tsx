@@ -16,6 +16,17 @@ type ReturnType = {
   activePageId: PluginTabIds | string;
 };
 
+function getCurrentPageId(
+  pageId: PluginTabIds | undefined,
+  isNarrowScreen: boolean | undefined,
+  defaultTab: string
+): PluginTabIds | string {
+  if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
+    return defaultTab;
+  }
+  return pageId || defaultTab;
+}
+
 export const usePluginDetailsTabs = (
   plugin?: CatalogPlugin,
   pageId?: PluginTabIds,
@@ -25,17 +36,6 @@ export const usePluginDetailsTabs = (
   const { pathname } = useLocation();
   const defaultTab = useDefaultPage(plugin, pluginConfig);
   const isPublished = Boolean(plugin?.isPublished);
-
-  function getCurrentPageId(
-    pageId: PluginTabIds | undefined,
-    isNarrowScreen: boolean | undefined,
-    defaultTab: string
-  ): PluginTabIds | string {
-    if (!isNarrowScreen && pageId === PluginTabIds.PLUGINDETAILS) {
-      return defaultTab;
-    }
-    return pageId || defaultTab;
-  }
 
   const currentPageId = getCurrentPageId(pageId, isNarrowScreen, defaultTab);
 

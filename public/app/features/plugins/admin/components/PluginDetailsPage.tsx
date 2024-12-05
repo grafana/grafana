@@ -104,7 +104,7 @@ export function PluginDetailsPage({
               plugin={plugin}
               pageId={activePageId}
               info={info}
-              showRightPanelInBody={isNarrowScreen}
+              showDetails={isNarrowScreen}
             />
           </TabContent>
         </Page.Contents>
