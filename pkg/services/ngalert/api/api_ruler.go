@@ -66,7 +66,7 @@ type RulerSrv struct {
 	authz              RuleAccessControlService
 
 	// Hackathon: To allow conversion of Prom -> GMA
-	proxySvc LotexProm
+	proxySvc *LotexRuler
 
 	amConfigStore  AMConfigStore
 	amRefresher    AMRefresher
@@ -369,27 +369,26 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 	path := "/config/v1/rules" // TODO: Move this somewhere else
 	promGroups := map[string][]prom.PrometheusRuleGroup{}
-	resp := srv.proxySvc.withReq(c, http.MethodGet, withPath(*c.Req.URL, path), nil, yamlExtractor(&promGroups), nil)
+	resp := srv.proxySvc.requester.withReq(c, http.MethodGet, withPath(*c.Req.URL, path), nil, yamlExtractor(&promGroups), nil)
 
 	// 2. Convert Prometheus Rules to GMA
-	fmt.Println("FAZ: ", string(resp.Body()))
-	var ruleResp apimodels.RuleResponse
+	promGroups = map[string][]prom.PrometheusRuleGroup{}
 	nsMap := make(map[string]string) // File -> NamespaceUID
-	if err := json.Unmarshal(resp.Body(), &ruleResp); err != nil {
+	if err := json.Unmarshal(resp.Body(), &promGroups); err != nil {
 		return errorToResponse(err)
 	}
 
-	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(ruleResp.Data.RuleGroups))
-	for _, rg := range ruleResp.Data.RuleGroups {
-		nsUID, err := generateNamespaceUID(rg.File)
+	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
+	for ns, rgs := range promGroups {
+		nsUID, err := generateNamespaceUID(ns)
 		if err != nil {
 			return errorToResponse(err)
 		}
-		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", rg.File, "namespace_uid", nsUID)
+		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", ns, "namespace_uid", nsUID)
 		namespace, err := srv.store.GetOrCreateNamespaceByUID(
 			c.Req.Context(),
 			nsUID,
-			rg.File,
+			ns,
 			c.SignedInUser.GetOrgID(),
 			c.SignedInUser,
 		)
@@ -397,16 +396,17 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 			logger.Error("Failed to create a new namespace", "error", err)
 			return toNamespaceErrorResponse(err)
 		}
-		nsMap[rg.File] = namespace.UID
+		nsMap[ns] = namespace.UID
 
-		promGroup := convertAPIToPrometheusModel(rg)
 		promConverter := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
-		grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
-		if err != nil {
-			logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
-			return response.Err(err)
+		for _, rg := range rgs {
+			grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, rg)
+			if err != nil {
+				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
+				return response.Err(err)
+			}
+			grafanaGroups = append(grafanaGroups, grafanaGroup)
 		}
-		grafanaGroups = append(grafanaGroups, grafanaGroup)
 	}
 
 	// 3. Update the GMA Rules in the DB

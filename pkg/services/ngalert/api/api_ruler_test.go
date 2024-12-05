@@ -17,12 +17,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -30,6 +32,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -683,6 +686,104 @@ func TestRoutePostGrafanaRuleGroupPrometheusConfig(t *testing.T) {
 		require.Equal(t, 5*time.Minute, rule.For)
 		require.Equal(t, "critical", rule.Labels["severity"])
 		require.Equal(t, "Instance is down", rule.Annotations["summary"])
+	})
+}
+
+func TestRoutePostRulesGroupConvert(t *testing.T) {
+	t.Run("successfully fetches rules from datasource and saves them as Grafana rules", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		rulerService := createService(ruleStore)
+
+		permissions := createPermissionsToImportPrometheusRules(orgID)
+		req := createRequestContextWithPerms(orgID, permissions, nil)
+
+		fakeDatasource := &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType}
+		requestMock := RequestMock{}
+		defer requestMock.AssertExpectations(t)
+
+		ruleGroup1 := prom.PrometheusRuleGroup{
+			Name:     "test-group-1",
+			Interval: "1m",
+			Rules: []prom.PrometheusRule{
+				{
+					Alert: "TestAlert1",
+					Expr:  "up == 0",
+					For:   "5m",
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+					Annotations: map[string]string{
+						"summary": "Instance is down",
+					},
+				},
+				{
+					Record: "TestRecordingRule1",
+					Expr:   "up == 0",
+					For:    "5m",
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+					Annotations: map[string]string{
+						"summary": "Instance is down",
+					},
+				},
+			},
+		}
+
+		ruleGroup2 := prom.PrometheusRuleGroup{
+			Name:     "test-group-2",
+			Interval: "1m",
+			Rules: []prom.PrometheusRule{
+				{
+					Alert: "TestAlert2",
+					Expr:  "up == 0",
+					For:   "5m",
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+					Annotations: map[string]string{
+						"summary": "Instance is down",
+					},
+				},
+			},
+		}
+
+		proxyResp, err := json.Marshal(map[string][]prom.PrometheusRuleGroup{
+			"namespace1": {ruleGroup1},
+			"namespace2": {ruleGroup2},
+		})
+		require.NoError(t, err)
+
+		requestMock.On(
+			"withReq",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(response.JSON(200, proxyResp))
+
+		// Setup Proxy.
+		proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: fakeDatasource}}}
+		rulerService.proxySvc = &LotexRuler{log.NewNopLogger(), proxy, &requestMock}
+
+		response := rulerService.RoutePostRulesGroupConvert(req, fakeDatasource.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		var resp apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(response.Body(), &resp))
+		require.Len(t, resp.Created, 3)
+		require.Len(t, resp.Updated, 0)
+		require.Len(t, resp.Deleted, 0)
+
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 3)
+		// TODO: Check the actual content of the rules match
 	})
 }
 
