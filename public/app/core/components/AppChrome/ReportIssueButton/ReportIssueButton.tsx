@@ -8,7 +8,7 @@ import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
 import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
 
-export interface Props { }
+export interface Props {}
 
 const MenuActions = () => {
   const [formData, setFormData] = useState({ message: '', screenshot: '', imageType: '' });
@@ -56,7 +56,7 @@ const MenuActions = () => {
   const stopAutoClose = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-  }
+  };
 
   return (
     <Menu>
@@ -72,11 +72,10 @@ const MenuActions = () => {
         </Stack>
       </div>
     </Menu>
-
   );
 };
 
-export const ReportIssueButton = ({ }: Props) => {
+export const ReportIssueButton = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

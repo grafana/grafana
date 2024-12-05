@@ -24,7 +24,7 @@ class K8sAPI {
           generateName: 'feedback-', // the prefix. apiserver will generate the trailing random characters.
         },
         spec: {
-          ...feedback, 
+          ...feedback,
         },
       };
 
