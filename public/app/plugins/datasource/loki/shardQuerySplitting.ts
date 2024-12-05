@@ -350,7 +350,7 @@ interface GroupedWeightedShards {
 
 function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   const gb = Math.pow(2, 30);
-  const splittingLimit = 100 * gb;
+  const splittingLimit = 300 * gb;
   if (!shards.some((shard) => shard.size > 0)) {
     return [
       {
