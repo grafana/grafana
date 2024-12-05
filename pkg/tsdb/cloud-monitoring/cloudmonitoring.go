@@ -443,7 +443,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			queryInterface = cmp
 		default:
-			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
+			return nil, backend.DownstreamError(fmt.Errorf("unrecognized query type %q", query.QueryType))
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
