@@ -2,6 +2,7 @@ package githubclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -43,18 +44,18 @@ type ImageCommit struct {
 }
 
 // CreateIssue creates an issue in the Github repository
-func (c *GitHubClient) CreateIssue(issue Issue) error {
+func (c *GitHubClient) CreateIssue(ctx context.Context, issue Issue) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/issues", c.BaseURL, c.Owner, c.Repo)
 
 	// Marshal the issue struct into JSON
 	payload, err := json.Marshal(issue)
 	if err != nil {
-		return fmt.Errorf("failed to marshal issue: %w", err)
+		return "", fmt.Errorf("failed to marshal issue: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
-		return fmt.Errorf("failed creating request: %w", err)
+		return "", fmt.Errorf("failed creating request: %w", err)
 	}
 
 	req.Header.Add("Accept", "application/vnd.github+json")
@@ -62,10 +63,11 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 
 	// Send the request
+	// TODO: Emit metrics on failures
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return "", fmt.Errorf("failed to send request: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -74,7 +76,7 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 	}()
 
 	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
+		return "", fmt.Errorf("failed to create issue: status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -89,11 +91,11 @@ func (c *GitHubClient) CreateIssue(issue Issue) error {
 		klog.ErrorS(err, "unmarshaling response")
 	}
 
-	return nil
+	return responseObj.HTMLUrl, nil
 }
 
 // UploadImage uploads an image in the Github repository
-func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screenshotData []byte) (string, error) {
+func (c *GitHubClient) UploadImage(ctx context.Context, imageUuid string, imageType *string, screenshotData []byte) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/contents/images/%s.png", c.BaseURL, c.Owner, c.Repo, imageUuid)
 
 	// Build the image commit
@@ -108,7 +110,7 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 		return "", fmt.Errorf("failed to marshal imageCommit: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return "", fmt.Errorf("failed creating request: %w", err)
 	}
@@ -118,6 +120,7 @@ func (c *GitHubClient) UploadImage(imageUuid string, imageType *string, screensh
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 
 	// Send the request
+	// TODO: Emit metrics on failures
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {

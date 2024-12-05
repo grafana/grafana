@@ -1,0 +1,11 @@
+Given the following mapping of Grafana teams to their list of responsibilities:
+
+```
+{{ range $key, $value := .TeamResponsibilities }}{{ $key }}: {{ $value }}
+{{ end }}
+``` 
+
+Analyze the following user feedback about Grafana and determine which teams are the best candidates to investigate it:
+"{{ .UserFeedback }}"
+Assess all the team candidates for the feedback and rank them based on likelihood, then give me the top three. Only reply with the team names separated by spaces.
+If there is no good fit, respond back with a blank message.
