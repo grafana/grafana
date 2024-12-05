@@ -17,11 +17,13 @@ externalName: {
 		"v0alpha1": {
 			schema: {
 				spec: {
-					message:         string
-					screenshot?:     bytes
-					imageType?:      string
-					screenshotUrl?:  string
-					githubIssueUrl?: string
+					message:            string
+					screenshot?:        bytes
+					imageType?:         string
+					screenshotUrl?:     string
+					githubIssueUrl?:    string
+					canContactReporter: bool
+					canAccessInstance:  bool
 					diagnosticData?: {...}
 				}
 			}
