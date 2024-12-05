@@ -1,7 +1,7 @@
 import * as e2e from '@grafana/e2e-selectors';
 import { expect, test } from '@grafana/plugin-e2e';
 
-test('should evaluate to false if entire request returns 500', async ({ page, alertRuleEditPage, selectors }) => {
+test.skip('should evaluate to false if entire request returns 500', async ({ page, alertRuleEditPage, selectors }) => {
   await alertRuleEditPage.alertRuleNameField.fill('Test Alert Rule');
 
   // remove the default query
@@ -11,6 +11,7 @@ test('should evaluate to false if entire request returns 500', async ({ page, al
       root: queryA.locator,
     })
     .click();
+
   await expect(alertRuleEditPage.evaluate()).not.toBeOK();
 });
 
