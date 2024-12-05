@@ -97,7 +97,7 @@ const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
 const namespace = config.bootData.settings.namespace;
 
-export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
+export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
 const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
