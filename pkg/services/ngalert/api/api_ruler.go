@@ -32,6 +32,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	datasourceUIDHeader        = "X-Datasource-Uid"
+	datasourceTypeHeader       = "X-Datasource-Type"
+	recordingRulesPausedHeader = "X-Recording-Rules-Paused"
+	alertRulesPausedHeader     = "X-Alert-Rules-Paused"
+)
+
 type ConditionValidator interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx eval.EvaluationContext, condition ngmodels.Condition) error
@@ -745,16 +752,16 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, title, datasourceUID string) response.Response {
-	logger := srv.log.FromContext(c.Req.Context())
+func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, title string) response.Response {
+	logger := srv.log.FromContext(ctx.Req.Context())
 
-	srv.log.FromContext(c.Req.Context()).Debug("Getting or creating a new namespace", "title", title)
+	srv.log.FromContext(ctx.Req.Context()).Debug("Getting or creating a new namespace", "title", title)
 
 	namespace, err := srv.store.GetOrCreateNamespaceByTitle(
-		c.Req.Context(),
+		ctx.Req.Context(),
 		title,
-		c.SignedInUser.GetOrgID(),
-		c.SignedInUser,
+		ctx.SignedInUser.GetOrgID(),
+		ctx.SignedInUser,
 	)
 	if err != nil {
 		logger.Error("Failed to create a new namespace", "error", err)
@@ -765,15 +772,43 @@ func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(c *contextmodel.Re
 
 	logger.Debug("Converting Prometheus rules to Grafana rules", "group", ruleGroup.Name, "namespace_uid", namespace.UID, "rule_count", len(ruleGroup.Rules))
 	promGroup := convertToPrometheusModels(ruleGroup)
-	promConverter := prom.NewConverter(prom.Config{DatasourceUID: datasourceUID})
-	grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
+
+	datasourceUID := ctx.Req.Header.Get(datasourceUIDHeader)
+	datasourceType := ctx.Req.Header.Get(datasourceTypeHeader)
+
+	var recordingRulesPaused, alertRulesPaused bool
+	if strings.ToLower(ctx.Req.Header.Get(recordingRulesPausedHeader)) == "true" {
+		recordingRulesPaused = true
+	}
+	if strings.ToLower(ctx.Req.Header.Get(alertRulesPausedHeader)) == "true" {
+		alertRulesPaused = true
+	}
+
+	promConverter, err := prom.NewConverter(
+		prom.Config{
+			DatasourceUID:  datasourceUID,
+			DatasourceType: datasourceType,
+			RecordingRules: prom.RulesConfig{
+				IsPaused: recordingRulesPaused,
+			},
+			AlertRules: prom.RulesConfig{
+				IsPaused: alertRulesPaused,
+			},
+		},
+	)
+	if err != nil {
+		logger.Error("Failed to create Prometheus converter", "error", err)
+		return errorToResponse(unexpectedDatasourceTypeError(datasourceType, "loki, prometheus"))
+	}
+
+	grafanaGroup, err := promConverter.PrometheusRulesToGrafana(ctx.SignedInUser.GetOrgID(), namespace.UID, promGroup)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return response.Err(err)
 	}
 
 	groupKey := ngmodels.AlertRuleGroupKey{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        ctx.SignedInUser.GetOrgID(),
 		NamespaceUID: namespace.UID,
 		RuleGroup:    grafanaGroup.Title,
 	}
@@ -786,7 +821,7 @@ func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(c *contextmodel.Re
 	}
 
 	logger.Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
-	changes, errResponse := srv.updateAlertRulesInGroup(c.Req.Context(), c, groupKey, rules)
+	changes, errResponse := srv.updateAlertRulesInGroup(ctx.Req.Context(), ctx, groupKey, rules)
 	if errResponse != nil {
 		logger.Error("Failed to save Prometheus rule group")
 		return errResponse
@@ -830,7 +865,11 @@ func (srv RulerSrv) RouteGetGrafanaRulesPrometheusConfig(c *contextmodel.ReqCont
 		return errorToResponse(err)
 	}
 
-	promConverter := prom.NewConverter(prom.Config{})
+	promConverter, err := prom.NewConverter(prom.Config{})
+	if err != nil {
+		return response.Err(err)
+	}
+
 	/**/
 
 	result := map[string][]prom.PrometheusRuleGroup{}
@@ -905,7 +944,11 @@ func (srv RulerSrv) RouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.R
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}*/
 
-	promConverter := prom.NewConverter(prom.Config{})
+	promConverter, err := prom.NewConverter(prom.Config{})
+	if err != nil {
+		return response.Err(err)
+	}
+
 	deref := make([]ngmodels.AlertRule, 0, len(rules))
 	for _, rule := range rules {
 		deref = append(deref, *rule)

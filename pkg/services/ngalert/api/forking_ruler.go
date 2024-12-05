@@ -12,10 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const (
-	datasourceUIDHeader = "X-Datasource-Uid"
-)
-
 // RulerApiHandler will validate and proxy requests to the correct backend type depending on the datasource.
 type RulerApiHandler struct {
 	LotexRuler      *LotexRuler
@@ -133,14 +129,12 @@ func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *c
 	}
 	defer func() { _ = ctx.Req.Body.Close() }()
 
-	datasourceUID := ctx.Req.Header.Get(datasourceUIDHeader)
-
 	var ruleGroup apimodels.PostablePrometheusRuleGroup
 	if err := yaml.Unmarshal(body, &ruleGroup); err != nil {
 		return errorToResponse(err)
 	}
 
-	return f.GrafanaRuler.RoutePostGrafanaRuleGroupPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
+	return f.GrafanaRuler.RoutePostGrafanaRuleGroupPrometheusConfig(ctx, ruleGroup, namespace)
 }
 
 func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
@@ -163,4 +157,8 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 
 func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
 	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
+}
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusNamespace(ctx *contextmodel.ReqContext, fullpath string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, "")
 }

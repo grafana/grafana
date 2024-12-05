@@ -6879,6 +6879,36 @@
    }
   },
   "/ruler/grafana/prometheus/config/v1/rules/{Namespace}": {
+   "delete": {
+    "operationId": "RouteDeleteGrafanaPrometheusNamespace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "204": {
+      "$ref": "#/responses/The",
+      "description": "rule groups in the namespace were deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes all rule groups in the given namespace.",
+    "tags": [
+     "ruler"
+    ]
+   },
    "post": {
     "consumes": [
      "application/yaml"
@@ -6895,6 +6925,21 @@
       "in": "header",
       "name": "x-datasource-uid",
       "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-datasource-type",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "x-recording-rules-paused",
+      "type": "boolean"
+     },
+     {
+      "in": "header",
+      "name": "x-alert-rules-paused",
+      "type": "boolean"
      },
      {
       "in": "body",

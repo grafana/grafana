@@ -12,11 +12,17 @@ import (
 
 type Config struct {
 	DatasourceUID   string
-	Receiver        string
+	DatasourceType  string
 	FromTimeRange   *time.Duration
 	ExecErrState    string
 	NoDataState     string
 	DefaultInterval *time.Duration
+	RecordingRules  RulesConfig
+	AlertRules      RulesConfig
+}
+
+type RulesConfig struct {
+	IsPaused bool
 }
 
 var (
@@ -25,7 +31,7 @@ var (
 
 	defaultConfig = Config{
 		DatasourceUID:   "grafanacloud-prom",
-		Receiver:        "grafana-default-email",
+		DatasourceType:  "prometheus",
 		FromTimeRange:   &defaultTimeRange,
 		ExecErrState:    "OK",
 		NoDataState:     "NoData",
@@ -37,12 +43,12 @@ type Converter struct {
 	cfg Config
 }
 
-func NewConverter(cfg Config) *Converter {
+func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.DatasourceUID == "" {
 		cfg.DatasourceUID = defaultConfig.DatasourceUID
 	}
-	if cfg.Receiver == "" {
-		cfg.Receiver = defaultConfig.Receiver
+	if cfg.DatasourceType == "" {
+		cfg.DatasourceType = defaultConfig.DatasourceType
 	}
 	if cfg.FromTimeRange == nil {
 		cfg.FromTimeRange = defaultConfig.FromTimeRange
@@ -57,9 +63,13 @@ func NewConverter(cfg Config) *Converter {
 		cfg.DefaultInterval = defaultConfig.DefaultInterval
 	}
 
+	if cfg.DatasourceType != "prometheus" && cfg.DatasourceType != "loki" {
+		return nil, fmt.Errorf("invalid datasource type: %s", cfg.DatasourceType)
+	}
+
 	return &Converter{
 		cfg: cfg,
-	}
+	}, nil
 }
 
 // PrometheusRulesToGrafana converts Prometheus rule groups into Grafana alert rule group.
@@ -71,7 +81,7 @@ func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, g
 		}
 	}
 
-	grafanaGroup, err := p.convertRuleGroup(orgID, p.cfg.DatasourceUID, namespaceUID, group)
+	grafanaGroup, err := p.convertRuleGroup(orgID, namespaceUID, group)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert rule group '%s': %w", group.Name, err)
 	}
@@ -96,7 +106,7 @@ func validatePrometheusRule(rule PrometheusRule) error {
 	return nil
 }
 
-func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
+func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
 	duration, err := parseDurationOrDefault(promGroup.Interval, *p.cfg.DefaultInterval)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval '%s': %w", promGroup.Interval, err)
@@ -105,7 +115,7 @@ func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID st
 	uniqueNames := map[string]int{}
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
 	for i, rule := range promGroup.Rules {
-		gr, err := p.convertRule(orgID, datasourceUID, namespaceUID, promGroup.Name, rule)
+		gr, err := p.convertRule(orgID, namespaceUID, promGroup.Name, rule)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Prometheus rule '%s' to Grafana rule: %w", rule.Alert, err)
 		}
@@ -154,12 +164,12 @@ func (p *Converter) convertRuleGroupToPrometheus(group *models.AlertRuleGroup) (
 	}, nil
 }
 
-func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group string, rule PrometheusRule) (models.AlertRule, error) {
+func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule PrometheusRule) (models.AlertRule, error) {
 	forInterval, err := parseDurationOrDefault(rule.For, time.Duration(0))
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("failed to parse for '%s': %w", rule.For, err)
 	}
-	queryNode, err := createAlertQueryNode(datasourceUID, rule.Expr, *p.cfg.FromTimeRange)
+	queryNode, err := createAlertQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, rule.Expr, *p.cfg.FromTimeRange)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -196,7 +206,6 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 		ExecErrState: execErrState,
 		Annotations:  rule.Annotations,
 		Labels:       labels,
-		IsPaused:     false,
 		For:          forInterval,
 		RuleGroup:    group,
 		Metadata: models.AlertRuleMetadata{
@@ -209,6 +218,9 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 			From:   "A",
 			Metric: rule.Record,
 		}
+		result.IsPaused = p.cfg.RecordingRules.IsPaused
+	} else {
+		result.IsPaused = p.cfg.AlertRules.IsPaused
 	}
 
 	return result, nil
@@ -288,10 +300,10 @@ func getPromDurationString(dur time.Duration) string {
 	return prommodel.Duration(dur).String()
 }
 
-func createAlertQueryNode(datasourceUID, expr string, fromTimeRange time.Duration) (models.AlertQuery, error) {
+func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange time.Duration) (models.AlertQuery, error) {
 	modelData := map[string]interface{}{
 		"datasource": map[string]interface{}{
-			"type": "prometheus",
+			"type": datasourceType,
 			"uid":  datasourceUID,
 		},
 		"editorMode":    "code",
