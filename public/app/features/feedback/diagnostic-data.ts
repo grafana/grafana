@@ -32,15 +32,23 @@ export async function getDiagnosticData() {
       reportingEnabled: config.reporting.enabled,
       secureSocksDSProxyEnabled: config.secureSocksDSProxyEnabled,
       imageRendererAvailable: config.rendererAvailable,
+      datasources: Array.from(
+        new Map(
+          Object.values(config?.datasources)
+            .map(settings => [
+              settings.meta.name,
+              {
+                name: settings.meta.name,
+                type: settings.type,
+                ...(settings?.meta?.info?.version && { version: settings?.meta?.info?.version }),
+              },
+            ])
+        ).values()
+      ),
       unifiedAlerting: {
         enabled: config.unifiedAlertingEnabled,
         ...(config.unifiedAlertingEnabled && { minInterval: config.unifiedAlerting.minInterval }),
       },
-      datasources: Object.values(config?.datasources).map(settings => ({
-        name: settings.meta.name,
-        type: settings.type,
-        ...(settings?.meta?.info?.version && { version: settings?.meta?.info?.version }),
-      })),
       panels: Object.keys(config.panels),
     },
     browser: {
