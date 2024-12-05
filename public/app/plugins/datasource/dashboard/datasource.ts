@@ -119,7 +119,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return requestId.includes(MIXED_REQUEST_PREFIX)
         ? source.pipe(
             debounceTime(200),
-            first((val) => val.state === LoadingState.Done)
+            first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
           )
         : source;
     };
