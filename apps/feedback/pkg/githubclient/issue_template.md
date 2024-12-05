@@ -16,7 +16,7 @@
 - Browser: {{ .BrowserName }}
 {{ end }}
 
-{{ if .Plugins }}
+{{ if .Datasources }}
 <details>
 <summary>Datasources</summary>
 
