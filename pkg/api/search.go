@@ -205,6 +205,10 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	Deleted bool `json:"deleted"`
+	// Flag indicating if dashboard can be used as template
+	// in:query
+	// required: false
+	UseAsTemplare bool `json:"useAsTemplare"`
 }
 
 // swagger:response searchResponse

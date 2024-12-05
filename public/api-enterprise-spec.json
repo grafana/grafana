@@ -4132,6 +4132,9 @@
         "url": {
           "type": "string"
         },
+        "useAsTemplate": {
+          "type": "boolean"
+        },
         "version": {
           "type": "integer",
           "format": "int64"
@@ -7042,6 +7045,9 @@
           "type": "string"
         },
         "overwrite": {
+          "type": "boolean"
+        },
+        "useAsTemplate": {
           "type": "boolean"
         },
         "userId": {

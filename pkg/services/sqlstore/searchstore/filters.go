@@ -228,3 +228,10 @@ func (f DeletedFilter) Where() (string, []any) {
 
 	return "dashboard.deleted IS NULL", nil
 }
+
+type UseAsTemplateFilter struct {
+}
+
+func (f UseAsTemplateFilter) Where() (string, []any) {
+	return "dashboard.use_as_template = true", nil
+}

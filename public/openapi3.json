@@ -4648,6 +4648,9 @@
           "url": {
             "type": "string"
           },
+          "useAsTemplate": {
+            "type": "boolean"
+          },
           "version": {
             "format": "int64",
             "type": "integer"
@@ -10124,6 +10127,9 @@
             "type": "string"
           },
           "overwrite": {
+            "type": "boolean"
+          },
+          "useAsTemplate": {
             "type": "boolean"
           },
           "userId": {
@@ -22646,6 +22652,14 @@
             "description": "Flag indicating if only soft deleted Dashboards should be returned",
             "in": "query",
             "name": "deleted",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Flag indicating if dashboard can be used as template",
+            "in": "query",
+            "name": "useAsTemplare",
             "schema": {
               "type": "boolean"
             }
