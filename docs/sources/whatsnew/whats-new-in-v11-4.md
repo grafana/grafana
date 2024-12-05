@@ -40,6 +40,6 @@ Not sure where to start? We’ve also updated our **CloudWatch Logs cheat sheet*
 
 ![CloudWatch Logs cheat sheet with help icon highlighted](/media/docs/grafana/data-sources/screenshot-cwl-cheat-sheet-v11.4.png)
 
-For the complete list of commands supported for OpenSearch PPL and SQL, refer to the Cloudwatch Logs Insights documentation. <!-- docs link here? -->
+For the complete list of commands supported for OpenSearch PPL and SQL, refer to the [Cloudwatch Logs Insights documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html).
 
 <!-- video here -->
