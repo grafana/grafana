@@ -225,7 +225,7 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	} else {
 		snapshotURL = "No screenshot provided"
 	}
-	configsList := githubClient.BuildConfigList(diagnostic)
+	configsList := githubClient.BuildConfigList(diagnostic.Instance)
 
 	// Combine data into TemplateData struct
 	templateData := githubClient.TemplateData{

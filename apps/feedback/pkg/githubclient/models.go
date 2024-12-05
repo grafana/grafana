@@ -21,6 +21,11 @@ type DiagnosticBrowser struct {
 	UserAgent string `json:"userAgent"`
 }
 
+type DiagnosticUnifiedAlerting struct {
+	Enabled     bool `json:"enabled"`
+	MinInterval bool `json:"minInternal"`
+}
+
 type DiagnosticInstance struct {
 	Edition string `json:"edition"`
 	Version string `json:"version"`
@@ -28,6 +33,20 @@ type DiagnosticInstance struct {
 	FeatureToggles []string               `json:"featureToggles"`
 	Datasources    []DiagnosticDatasource `json:"datasources"`
 	Plugins        []DiagnosticPlugin     `json:"externallyInstalledPlugins"`
+
+	Rbac                   bool                      `json:"rbacEnabled"`
+	Saml                   bool                      `json:"samlEnabled"`
+	Ldap                   bool                      `json:"ldapEnabled"`
+	HasAngularSupport      bool                      `json:"hasAngularsupport"`
+	AuthProxy              bool                      `json:"authProxyEnabled"`
+	Expressions            bool                      `json:"expressionsEnabled"`
+	PublicDashboards       bool                      `json:"publicDashboardsEnabled"`
+	QueryHistory           bool                      `json:"queryHistoryEnabled"`
+	RecordedQueries        bool                      `json:"recordedQueriesEnabled"`
+	Reporting              bool                      `json:"reportingEnabled"`
+	SecureSocksDSProxy     bool                      `json:"secureSocksDSProxyEnabled"`
+	ImageRendererAvailable bool                      `json:"imageRendererAvailable"`
+	UnifiedAlerting        DiagnosticUnifiedAlerting `json:"unifiedAlerting"`
 }
 
 type TemplateConfig struct {
@@ -38,19 +57,6 @@ type TemplateConfig struct {
 type Diagnostic struct {
 	Browser  DiagnosticBrowser  `json:"browser"`
 	Instance DiagnosticInstance `json:"instance"`
-
-	Rbac                   bool `json:"rbacEnabled"`
-	Saml                   bool `json:"samlEnabled"`
-	Ldap                   bool `json:"ldapEnabled"`
-	HasAngularSupport      bool `json:"hasAngularsupport"`
-	AuthProxy              bool `json:"authProxyEnabled"`
-	Expressions            bool `json:"expressionsEnabled"`
-	PublicDashboards       bool `json:"publicDashboardsEnabled"`
-	QueryHistory           bool `json:"queryHistoryEnabled"`
-	RecordedQueries        bool `json:"recordedQueriesEnabled"`
-	Reporting              bool `json:"reportingEnabled"`
-	SecureSocksDSProxy     bool `json:"secureSocksDSProxyEnabled"`
-	ImageRendererAvailable bool `json:"imageRendererAvailable"`
 }
 
 //go:embed issue_template.md
@@ -75,21 +81,21 @@ type TemplateData struct {
 	SnapshotURL string
 }
 
-func BuildConfigList(diagnostic Diagnostic) []TemplateConfig {
+func BuildConfigList(instanceInfo DiagnosticInstance) []TemplateConfig {
 	configList := make([]TemplateConfig, 0)
 
-	configList = append(configList, TemplateConfig{Name: "Rbac", Enabled: diagnostic.Rbac})
-	configList = append(configList, TemplateConfig{Name: "Saml", Enabled: diagnostic.Saml})
-	configList = append(configList, TemplateConfig{Name: "Ldap", Enabled: diagnostic.Ldap})
-	configList = append(configList, TemplateConfig{Name: "Angular Support", Enabled: diagnostic.HasAngularSupport})
-	configList = append(configList, TemplateConfig{Name: "Auth Proxy", Enabled: diagnostic.AuthProxy})
-	configList = append(configList, TemplateConfig{Name: "Expressions", Enabled: diagnostic.Expressions})
-	configList = append(configList, TemplateConfig{Name: "Public Dashboards", Enabled: diagnostic.PublicDashboards})
-	configList = append(configList, TemplateConfig{Name: "Query History", Enabled: diagnostic.QueryHistory})
-	configList = append(configList, TemplateConfig{Name: "Recorded Queries", Enabled: diagnostic.RecordedQueries})
-	configList = append(configList, TemplateConfig{Name: "Reporting", Enabled: diagnostic.Reporting})
-	configList = append(configList, TemplateConfig{Name: "Secure Socks DS Proxy", Enabled: diagnostic.SecureSocksDSProxy})
-	configList = append(configList, TemplateConfig{Name: "Image Renderer", Enabled: diagnostic.ImageRendererAvailable})
-
+	configList = append(configList, TemplateConfig{Name: "Rbac", Enabled: instanceInfo.Rbac})
+	configList = append(configList, TemplateConfig{Name: "Saml", Enabled: instanceInfo.Saml})
+	configList = append(configList, TemplateConfig{Name: "Ldap", Enabled: instanceInfo.Ldap})
+	configList = append(configList, TemplateConfig{Name: "Angular Support", Enabled: instanceInfo.HasAngularSupport})
+	configList = append(configList, TemplateConfig{Name: "Auth Proxy", Enabled: instanceInfo.AuthProxy})
+	configList = append(configList, TemplateConfig{Name: "Expressions", Enabled: instanceInfo.Expressions})
+	configList = append(configList, TemplateConfig{Name: "Public Dashboards", Enabled: instanceInfo.PublicDashboards})
+	configList = append(configList, TemplateConfig{Name: "Query History", Enabled: instanceInfo.QueryHistory})
+	configList = append(configList, TemplateConfig{Name: "Recorded Queries", Enabled: instanceInfo.RecordedQueries})
+	configList = append(configList, TemplateConfig{Name: "Reporting", Enabled: instanceInfo.Reporting})
+	configList = append(configList, TemplateConfig{Name: "Secure Socks DS Proxy", Enabled: instanceInfo.SecureSocksDSProxy})
+	configList = append(configList, TemplateConfig{Name: "Image Renderer", Enabled: instanceInfo.ImageRendererAvailable})
+	configList = append(configList, TemplateConfig{Name: "Unified Alerting", Enabled: instanceInfo.UnifiedAlerting.Enabled})
 	return configList
 }
