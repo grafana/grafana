@@ -20,11 +20,19 @@ export async function getDiagnosticData() {
       rbacEnabled: config.rbacEnabled,
       samlEnabled: config.samlEnabled,
       imageRendererAvailable: config.rendererAvailable,
-      datasources: Object.values(config?.datasources).map(settings => ({
-        name: settings.meta.name,
-        type: settings.type,
-        ...(settings?.meta?.info?.version && { version: settings?.meta?.info?.version }),
-      })),
+      datasources: Array.from(
+        new Map(
+          Object.values(config?.datasources)
+            .map(settings => [
+              settings.meta.name,
+              {
+                name: settings.meta.name,
+                type: settings.type,
+                ...(settings?.meta?.info?.version && { version: settings?.meta?.info?.version }),
+              },
+            ])
+        ).values()
+      ),
       panels: Object.keys(config.panels),
     },
     browser: {

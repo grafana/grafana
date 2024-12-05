@@ -2,16 +2,12 @@
 **What happened?**
 {{ .WhatHappenedQuestion }}
 
-**How do we reproduce it?:**
-{{ .ReproduceQuestion }}
-
 **Environment:**
 - Instance: 
     - Slug: `{{ .InstanceSlug }}`
     - Version: `{{ .InstanceVersion }}`
     - Running version: `{{ .InstanceRunningVersion }}`
-- Browser: `{{ .BrowserName }}`, version `{{ .BrowserVersion }}`
-- Page: `{{ .PageURL }}`
+- Browser: `{{ .BrowserName }}`
 
 <details>
 <summary>Datasources</summary>
@@ -36,16 +32,17 @@
 
 
 <details>
+
 <summary>Feature toggles</summary>
 
-| Name | Value |
-|------------------|-----------------|
+| Name |
+|------------------|
 {{- range .FeatureToggles }}
-| {{ .Name }} | {{ .Value }} |
+| {{ . }} |
 {{- end }}
 
 </details>
 
 
 **Screenshot:**
-![Screenshot]({{ .SnapshotURL }}?raw=true)
+{{.SnapshotURL}}
