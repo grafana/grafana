@@ -78,6 +78,10 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
 						}
 
+						if feedback.Spec.CanContactReporter && feedback.Spec.ReporterEmail == nil {
+							logging.FromContext(ctx).Warn("user requested we contact them, but email is missing")
+						}
+
 						return nil
 					},
 				},
