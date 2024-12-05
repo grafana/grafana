@@ -98,7 +98,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
 
-		stats, err := backend.GetResourceStats(ctx, 0)
+		stats, err := backend.GetResourceStats(ctx, "", 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 		require.Equal(t, int64(3), stats[0].Count)
