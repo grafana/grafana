@@ -37,7 +37,7 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
-                  id="query-and-expressions-advanced-switch"
+                  id={`advanced-switch-${stepNo}`}
                   data-testid={
                     switchMode.isAdvancedMode
                       ? 'query-and-expressions-advanced-options'
