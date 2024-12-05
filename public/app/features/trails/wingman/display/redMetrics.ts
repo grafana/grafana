@@ -162,6 +162,7 @@ function panelHeader(job: string) {
     body: PanelBuilders.text()
       .setTitle(`Job: ${job}`)
       .setOption('content', '')
+      .setDisplayMode('transparent')
       .build()
   });
 }
