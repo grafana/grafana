@@ -13,6 +13,7 @@ import * as ruleActionButtons from 'app/features/alerting/unified/components/rul
 import { mockUserApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import * as actions from 'app/features/alerting/unified/state/actions';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getMockUser } from 'app/features/users/__mocks__/userMocks';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -25,7 +26,6 @@ import { fetchRules } from './api/prometheus';
 import * as apiRuler from './api/ruler';
 import { fetchRulerRules } from './api/ruler';
 import {
-  MockDataSourceSrv,
   getPotentiallyPausedRulerRules,
   grantUserPermissions,
   mockDataSource,
@@ -173,6 +173,7 @@ describe('RuleList', () => {
       ],
       isLoading: false,
     });
+    setupDataSources(...Object.values(dataSources));
   });
 
   afterEach(() => {
@@ -182,8 +183,6 @@ describe('RuleList', () => {
 
   it('load & show rule groups from multiple cloud data sources', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
-
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Prometheus,
@@ -278,7 +277,6 @@ describe('RuleList', () => {
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
 
-    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
@@ -428,7 +426,6 @@ describe('RuleList', () => {
 
   it('filters rules and alerts by labels', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
-    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
     mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
@@ -575,8 +572,6 @@ describe('RuleList', () => {
 
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
 
-    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
-
     mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
@@ -636,7 +631,6 @@ describe('RuleList', () => {
         AccessControlAction.AlertingRuleExternalWrite,
       ]);
       mocks.getAllDataSourcesMock.mockReturnValue([]);
-      setDataSourceSrv(new MockDataSourceSrv({}));
       mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(getPotentiallyPausedRulerRules(true)));
       mocks.api.fetchRules.mockImplementation((sourceName) =>
         Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
@@ -686,7 +680,6 @@ describe('RuleList', () => {
     function testCase(name: string, fn: () => Promise<void>) {
       it(name, async () => {
         mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
-        setDataSourceSrv(new MockDataSourceSrv(testDatasources));
 
         mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
@@ -777,7 +770,6 @@ describe('RuleList', () => {
         grantUserPermissions([AccessControlAction.AlertingRuleRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
         mocks.api.fetchRules.mockResolvedValue([
           mockPromRuleNamespace({
             name: 'foofolder',
@@ -814,7 +806,6 @@ describe('RuleList', () => {
         ]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
         mocks.api.fetchRules.mockResolvedValue([]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
@@ -833,7 +824,7 @@ describe('RuleList', () => {
         ]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
+
         mocks.api.fetchRules.mockResolvedValue(somePromRules('grafana'));
         mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
 
@@ -854,7 +845,7 @@ describe('RuleList', () => {
         ]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
-        setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
         mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
@@ -879,7 +870,7 @@ describe('RuleList', () => {
         ]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
-        setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
         mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
