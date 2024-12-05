@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getTextColorForBackground, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { getTextColorForBackground, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { FlameChartContainer, RenderItem } from './types';
 import { formatDuration } from './utils/date';
@@ -42,18 +42,20 @@ function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.Reac
     color: textColor,
   };
 
-  console.log('isError', isError);
+  const tooltipContent = container.renderNodeTooltip(renderItem.operation.entity, container);
 
   return (
-    <div className={cx(styles.node, isError && styles.error)} style={style}>
-      {isError && renderItem.width >= 32 && <Icon className={styles.errorIcon} name="exclamation-circle" />}
-      {renderItem.width >= WIDTH_CONTENT_CUTOFF_PX && (
-        <>
-          <div className={styles.label}>{label}</div>
-          <div className={styles.duration}>{formatDuration(renderItem.operation.durationMs * 1000)}</div>
-        </>
-      )}
-    </div>
+    <Tooltip content={tooltipContent} placement="auto">
+      <div className={cx(styles.node, isError && styles.error)} style={style}>
+        {isError && renderItem.width >= 32 && <Icon className={styles.errorIcon} name="exclamation-circle" />}
+        {renderItem.width >= WIDTH_CONTENT_CUTOFF_PX && (
+          <>
+            <div className={styles.label}>{label}</div>
+            <div className={styles.duration}>{formatDuration(renderItem.operation.durationMs * 1000)}</div>
+          </>
+        )}
+      </div>
+    </Tooltip>
   );
 }
 

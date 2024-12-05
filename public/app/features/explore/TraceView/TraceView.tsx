@@ -253,6 +253,7 @@ export function TraceView(props: Props) {
           )}
           {visualization === VisualizationType.FlameChart && (
             <TraceFlameChart
+              timeZone={timeZone}
               updateNextViewRangeTime={updateNextViewRangeTime}
               updateViewRangeTime={updateViewRangeTime}
               viewRange={viewRange}

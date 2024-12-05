@@ -17,18 +17,19 @@ const NUM_TICKS = 8;
 
 interface TraceFlameChartProps {
   trace: Trace;
+  timeZone: string;
   viewRange: ViewRange;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
 }
 
 export function TraceFlameChart(props: TraceFlameChartProps) {
-  const { trace, viewRange, updateNextViewRangeTime, updateViewRangeTime } = props;
+  const { trace, viewRange, updateNextViewRangeTime, updateViewRangeTime, timeZone } = props;
 
   const styles = useStyles2(getStyles);
   const container = useMemo(() => {
-    return traceToFlameChartContainer(trace);
-  }, [trace]);
+    return traceToFlameChartContainer(trace, timeZone);
+  }, [trace, timeZone]);
 
   const [viewStart, viewEnd] = viewRange.time.current;
 

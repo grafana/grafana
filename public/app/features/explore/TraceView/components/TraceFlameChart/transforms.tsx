@@ -3,7 +3,9 @@ import { FlameChartContainer, Operation } from '@grafana/flamechart';
 import { Trace, TraceSpan } from '../types';
 import { getColorByKey } from '../utils/color-generator';
 
-export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<TraceSpan> {
+import { TraceFlameChartTooltipPopover } from './TraceFlameChartTooltipPopover';
+
+export function traceToFlameChartContainer(trace: Trace, timeZone: string): FlameChartContainer<TraceSpan> {
   const id2operation: Record<string, Operation<TraceSpan>> = {};
   console.log('trace', trace);
   // instantiate operations
@@ -37,10 +39,12 @@ export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<Tr
   });
 
   return {
+    timeZone,
     operations: Object.values(id2operation).filter((op) => !op.parent),
     getOperationName: (span: TraceSpan) => span.operationName,
     getOperationId: (span: TraceSpan) => span.spanID,
     getNodeBackgroundColor: (span, theme) => getColorByKey(span.process.serviceName, theme),
     isError: (span) => span.statusCode !== 0,
+    renderNodeTooltip: (span, container) => <TraceFlameChartTooltipPopover span={span} container={container} />,
   };
 }

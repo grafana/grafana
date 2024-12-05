@@ -18,10 +18,12 @@ export interface OperationWithLevel<T> extends TreeNode<OperationWithLevel<T>> {
 
 export interface FlameChartContainer<T> {
   operations: Array<Operation<T>>;
+  timeZone: string;
   getOperationId: (operation: T) => string;
   getOperationName: (operation: T) => string;
   getNodeBackgroundColor: (operation: T, theme: GrafanaTheme2) => string;
   isError: (operation: T) => boolean;
+  renderNodeTooltip: (operation: T, container: FlameChartContainer<T>) => React.ReactElement;
 }
 
 export interface RenderItem<T> {

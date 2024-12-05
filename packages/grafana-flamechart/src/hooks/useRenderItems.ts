@@ -67,7 +67,7 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
   const operationsWithLevel = useMemo(() => betterVerticalLayout(operations), [operations]);
 
   return useMemo(() => {
-    console.log('renderItems', operationsWithLevel);
+    console.log('renderItems');
 
     if (!(toMs > fromMs) || !containerSize.width || fromMs === 0) {
       return EMPTY_RENDER_CONTAINER;
@@ -100,7 +100,12 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
       };
       opIdToRenderItem[getOperationId(operation.operation.entity)] = renderItem;
 
-      if (operation.parent && operation.level - operation.parent.level > 1) {
+      // add connecting lines if chid is removed by more than one level or not directly under parent
+      if (
+        operation.parent &&
+        (operation.level - operation.parent.level > 1 ||
+          operation.operation.startMs > operation.parent.operation.startMs + operation.parent.operation.durationMs)
+      ) {
         const renderParent = opIdToRenderItem[getOperationId(operation.parent.operation.entity)];
         if (renderParent) {
           connectors.push({

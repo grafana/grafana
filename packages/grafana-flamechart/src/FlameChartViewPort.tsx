@@ -27,8 +27,6 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
     viewRange,
   });
 
-  console.log('renerItems', renderItems);
-
   return (
     <div ref={sizeRef} style={{ height: `${renderItems.height}px` }} className={styles.container}>
       {renderItems.items

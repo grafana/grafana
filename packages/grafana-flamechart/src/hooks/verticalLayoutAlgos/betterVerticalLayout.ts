@@ -2,6 +2,7 @@ import { OperationWithLevel, Operation } from '../../types';
 import { findMaxBoundsLeft } from '../../utils/operation';
 
 export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<OperationWithLevel<T>> {
+  console.log('layout', operations);
   const level2ops: Record<number, Array<OperationWithLevel<T>>> = {};
 
   const operationsWithLevel: Array<OperationWithLevel<T>> = [];
@@ -45,7 +46,7 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
     ) {
       const [fromMs, toMs] = findMaxBoundsLeft(op);
       if (!levelIsTopFree(fromMs, toMs, level)) {
-        level = findTopFreeLevel(fromMs, toMs, level + 1) + 1;
+        level = findTopFreeLevel(Math.min(fromMs, parent?.operation.startMs ?? 0), toMs, level + 1) + 1;
       } else {
       }
     }
