@@ -33,6 +33,7 @@ import { MetricScene } from '../MetricScene';
 import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
 import { getMetricNames } from '../MetricSelect/api';
+import { getPreviewPanelFor } from '../MetricSelect/previewPanel';
 import { sortRelatedMetrics } from '../MetricSelect/relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from '../MetricSelect/util';
 import { StatusWrapper } from '../StatusWrapper';
@@ -52,7 +53,6 @@ import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { AnomaliesScene } from './display/AnomaliesScene';
 import { renderAsRedMetricsDisplay } from './display/redMetrics';
-import { getPreviewPanelFor } from './previewPanel';
 
 interface MetricPanel {
   name: string;
@@ -193,6 +193,9 @@ export class MetricSelectSceneForWingman
     this.subscribeToState((newState, prevState) => {
       if (newState.metricNames !== prevState.metricNames) {
         this.onMetricNamesChanged();
+      }
+      if (newState.wm_display_view !== prevState.wm_display_view) {
+        this.buildLayout();
       }
     });
 
@@ -446,7 +449,7 @@ export class MetricSelectSceneForWingman
       case 'anomalies':
         console.log('anomalies will be rendered');
         this.state.body.setState({ children: [new AnomaliesScene({})], autoRows: rowTemplate });
-        break;
+        return;
       case 'default':
       default:
       // default display no action needed.
@@ -483,10 +486,6 @@ export class MetricSelectSceneForWingman
     //   default:
     //     break;
     // }
-
-    if (typeof displayAs === 'string' && displayAs !== 'default') {
-      return;
-    }
 
     const metricsList = this.sortedPreviewMetrics();
 
