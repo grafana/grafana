@@ -233,7 +233,7 @@ func TestOrgRoleMapper_MapOrgRoles_ReturnsDefaultOnNilMapping(t *testing.T) {
 	cfg.AutoAssignOrgRole = string(org.RoleViewer)
 	mapper := ProvideOrgRoleMapper(cfg, orgService)
 
-	actual := mapper.MapOrgRoles(nil, []string{"First"}, org.RoleNone)
+	actual := mapper.MapOrgRoles(NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), []string{"First"}, org.RoleNone)
 
 	assert.EqualValues(t, map[int64]org.RoleType{2: org.RoleNone}, actual)
 }
@@ -244,68 +244,47 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 		rawMapping []string
 		roleStrict bool
 		setupMock  func(*orgtest.MockService)
-		expected   *MappingConfiguration
+		expected   MappingConfiguration
 	}{
 		{
 			name:       "should return empty mapping when no org mapping settings are provided",
 			rawMapping: []string{},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false),
 		},
 		{
 			name:       "should return empty mapping when role is invalid and role strict is enabled",
 			rawMapping: []string{"Second:1:SuperEditor"},
 			roleStrict: true,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: true,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
 		},
 		{
 			name:       "should return correct mapping when org mapping part is missing from a mapping and role strict is disabled",
 			rawMapping: []string{"Second:1", "First:"},
 			roleStrict: false,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
 		},
 		{
 			name:       "should return default mapping when role is invalid and strict role mapping is disabled",
 			rawMapping: []string{"Second:1:SuperEditor"},
 			roleStrict: false,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
 		},
 		{
 			name:       "should return empty mapping when org mapping doesn't contain any role and strict role mapping is enabled",
 			rawMapping: []string{"Second:1"},
 			roleStrict: true,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: true,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
 		},
 		{
 			name:       "should return default mapping when org mapping doesn't contain any role and strict is disabled",
 			rawMapping: []string{"Second:1"},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
 		},
 		{
 			name:       "should return correct mapping when the first part contains multiple colons",
 			rawMapping: []string{"Groups\\:IT\\:ops:1:Viewer"},
 			roleStrict: false,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Groups:IT:ops": {1: org.RoleViewer}},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Groups:IT:ops": {1: org.RoleViewer}}, false),
 		},
 		{
 			name:       "should return correct mapping when the org name contains multiple colons",
@@ -316,36 +295,24 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 					return query.Name == "Org:1"
 				})).Return(&org.Org{ID: 1}, nil)
 			},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Group1": {1: org.RoleViewer}},
-				strictRoleMapping: false,
-			},
+			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{"Group1": {1: org.RoleViewer}}, false),
 		},
 		{
 			name:       "should return empty mapping when org mapping is nil",
 			rawMapping: nil,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false),
 		},
 		{
 			name:       "should return empty mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
 			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Viewer"},
 			roleStrict: true,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: true,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
 		},
 		{
 			name:       "should skip org mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
 			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Admin"},
 			roleStrict: false,
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleAdmin}},
-				strictRoleMapping: false,
-			},
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleAdmin}}, false),
 		},
 		{
 			name:       "should return empty mapping if at least one org was not found or the resolution failed and strict role mapping is enabled",
@@ -357,10 +324,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				})).Return(&org.Org{ID: 1}, nil)
 				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{},
-				strictRoleMapping: true,
-			},
+			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
 		},
 		{
 			name:       "should skip org mapping if org was not found or the resolution fails and strict role mapping is disabled",
@@ -372,10 +336,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				})).Return(&org.Org{ID: 1}, nil)
 				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
-			expected: &MappingConfiguration{
-				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}},
-				strictRoleMapping: false,
-			},
+			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}}, false),
 		},
 	}
 	for _, tc := range testCases {
