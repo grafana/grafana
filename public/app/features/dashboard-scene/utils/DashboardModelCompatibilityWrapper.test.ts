@@ -1,24 +1,17 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import {
-  behaviors,
-  SceneQueryRunner,
-  SceneTimeRange,
-  VizPanel,
-  SceneDataTransformer,
-  SceneDataLayerSet,
-} from '@grafana/scenes';
+import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 
 describe('DashboardModelCompatibilityWrapper', () => {
   it('Provide basic prop and function of compatability', () => {
