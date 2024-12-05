@@ -97,8 +97,16 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
       autoRows: '30px',      
     });
 
-    children.push(headerRow);
-    children.push(row);
+    const fullRow = new SceneCSSGridLayout({
+      children: [headerRow, row],
+      templateColumns: '1/-1',
+      autoRows: 'auto',
+      rowGap: .5,
+    });
+
+    // children.push(headerRow);
+    // children.push(row);
+    children.push(fullRow);
   });
 
   return children;
@@ -163,18 +171,18 @@ function panelHeader(job: string) {
  */
 function ratePanel(red: string) {
   return PanelBuilders.timeseries()
-  .setTitle(`${red.toLocaleUpperCase()}`)
-  .setUnit('req/s')
-  .setOption('legend', { showLegend: false })
-  .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
-  .setCustomFieldConfig('fillOpacity', 9)
-  .setColor({ mode: 'fixed', fixedColor: 'green' })
-  // .setDescription(description)
-  // .setHeaderActions([
-  //   new SelectMetricAction({ metric, title: 'Select' }),
-  //   new AddToExplorationButton({ labelName: metric }),
-  // ])
-  .build()
+    .setTitle(`${red.toLocaleUpperCase()}`)
+    .setUnit('req/s')
+    .setOption('legend', { showLegend: false })
+    .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+    .setCustomFieldConfig('fillOpacity', 9)
+    .setColor({ mode: 'fixed', fixedColor: 'green' })
+    // .setDescription(description)
+    // .setHeaderActions([
+    //   new SelectMetricAction({ metric, title: 'Select' }),
+    //   new AddToExplorationButton({ labelName: metric }),
+    // ])
+    .build();
 }
 
 /**
@@ -182,19 +190,19 @@ function ratePanel(red: string) {
  */
 function errorPanel(red: string) {
   return PanelBuilders.barchart()
-  .setTitle(`${red.toLocaleUpperCase()}`)
-  .setUnit('err')
-  .setOption('legend', { showLegend: false })
-  .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
-  .setCustomFieldConfig('fillOpacity', 9)
-  .setOption('xTickLabelSpacing', 50)
-  .setColor({ mode: 'fixed', fixedColor: 'red' })
-  // .setDescription(description)
-  // .setHeaderActions([
-  //   new SelectMetricAction({ metric, title: 'Select' }),
-  //   new AddToExplorationButton({ labelName: metric }),
-  // ])
-  .build()
+    .setTitle(`${red.toLocaleUpperCase()}`)
+    .setUnit('err')
+    .setOption('legend', { showLegend: false })
+    .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+    .setCustomFieldConfig('fillOpacity', 9)
+    .setOption('xTickLabelSpacing', 50)
+    .setColor({ mode: 'fixed', fixedColor: 'red' })
+    // .setDescription(description)
+    // .setHeaderActions([
+    //   new SelectMetricAction({ metric, title: 'Select' }),
+    //   new AddToExplorationButton({ labelName: metric }),
+    // ])
+    .build();
 }
 
 /**
