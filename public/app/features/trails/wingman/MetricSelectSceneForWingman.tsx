@@ -441,8 +441,7 @@ export class MetricSelectSceneForWingman
       case 'red_metrics':
         console.log('red metrics will be rendered');
         const redChildren = await renderAsRedMetricsDisplay(trail);
-        children.push(...redChildren);
-        this.state.body.setState({ children, autoRows: rowTemplate });
+        this.state.body.setState({ children: redChildren, templateColumns: 'repeat(3, 1fr)', autoRows: rowTemplate });
         break;
       case 'anomalies':
         console.log('anomalies will be rendered');
