@@ -9,6 +9,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { VizPanelMore } from './VizPanelMore';
 import { VizPanelDelete } from './VizPanelDelete';
+import { getBackendSrv } from '@grafana/runtime';
 
 export interface FileImportResult {
   dataFrames: DataFrame[];
@@ -29,6 +30,21 @@ export function useDropAndPaste(dashboard: DashboardScene) {
   const onImportFile = useCallback(
     async (file?: File) => {
       if (!file) {
+        return;
+      }
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64String = reader.result as string;
+          console.log('Base64 Image String:', base64String);
+
+          const backendSrv = getBackendSrv();
+          const payload = makeAPIFile(base64String, file.name);
+          backendSrv.post('/apis/file.grafana.app/v0alpha1/namespaces/default/files', payload);
+          alert('Saved file ' + file.name);
+        };
+        reader.readAsDataURL(file);
         return;
       }
 
@@ -179,4 +195,24 @@ const createPanelDataProvider = (panel: PanelModel) => {
     $data: dataProvider,
     transformations: panel.transformations ?? [],
   });
+};
+const makeAPIFile = (fileData: string, name: string) => {
+  return {
+    kind: 'File',
+    apiVersion: 'file.grafana.app/v0alpha1',
+    metadata: {
+      name: name,
+    },
+    spec: {
+      title: name,
+      description: 'description',
+      data: [
+        {
+          type: 'image',
+          name: name,
+          contents: fileData,
+        },
+      ],
+    },
+  };
 };
