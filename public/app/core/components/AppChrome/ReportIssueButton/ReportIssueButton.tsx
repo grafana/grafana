@@ -1,6 +1,6 @@
 import FeedbackPlus from 'feedbackplus';
 // import html2canvas from 'html2canvas';
-import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Dropdown, ToolbarButton, Button, Stack, Menu, Modal } from '@grafana/ui';
 
@@ -9,7 +9,7 @@ import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
 // import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
 
-export interface Props {}
+export interface Props { }
 
 const ScreenShotEditModal = ({
   isOpen,
@@ -32,8 +32,7 @@ const ScreenShotEditModal = ({
   const [startX, setStartX] = useState(0);
   const [startY, setStartY] = useState(0);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const drawImage = (
+  const drawImage = useCallback((
     { bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number },
     canvasRef: React.RefObject<HTMLCanvasElement>
   ) => {
@@ -42,24 +41,56 @@ const ScreenShotEditModal = ({
     if (canvas && isCanvas(canvas)) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        canvas.width = 800;
-        canvas.height = 800;
+        canvas.width = 700;
         const hRatio = canvas.width / width;
         const vRatio = canvas.height / height;
         const ratio = Math.min(hRatio, vRatio);
         ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
       }
     }
-  };
+  }, []);
 
   // ideally we could just use "showEditDialog from feedbackPlus, but it doesn't seem to work"
   // implementing a similar thing just for hide
   const hide = () => {
-    setIsInEditMode(true);
+    if (isInEditMode) {
+      setIsInEditMode(false);
+      onDone()
+    } else {
+      setIsInEditMode(true);
+    }
     // add mouseDown, mousemove,  listener to canvas
     // on done, edit the clone and return that
     // then remove old and draw new image?
   };
+
+  const onDone = () => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        if (hideToolRef.current) {
+          console.log("is this happening????")
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = '#FCC934';
+          ctx.fillStyle = 'green';
+          let hideStyles = hideToolRef.current.style;
+          const topNum = +hideStyles.top.slice(0, -2);
+          const leftNum = +hideStyles.left.slice(0, -2);
+          const widthNum = +hideStyles.width.slice(0, -2);
+          const heightNum = +hideStyles.height.slice(0, -2);
+          // canvas.width = 800;
+          // canvas.height = 800;
+          // const hRatio = canvas.width / width;
+          // const vRatio = canvas.height / height;
+          // const ratio = Math.min(hRatio, vRatio);
+          // ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+          ctx.fillRect(leftNum, topNum, widthNum, heightNum);
+
+        }
+      }
+    }
+  }
 
   // when mousedown create a new element to hide things and set starting top and left and append it to the canvas.
   const onMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -79,7 +110,9 @@ const ScreenShotEditModal = ({
       setStartY(realY);
       highlightElem.style.top = realY + 'px';
       highlightElem.style.left = realX + 'px';
-      canvasContainer.appendChild(highlightElem);
+      highlightElem.toggleAttribute("unsaved-edit")
+      // todo we should really be cloning and appending these elements dynamically (or however the react-y way to do this is that way you can have mulitiple edits)
+      // canvasContainer.appendChild(highlightElem);
     }
   };
   // when mouse move, set width and height (based on boundingClientRect) of the element to hide things
@@ -128,18 +161,25 @@ const ScreenShotEditModal = ({
   return (
     <Modal title="title" isOpen={isOpen}>
       <div ref={canvasContainerRef}>
-        <canvas ref={canvasRef} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} />
+
+        <canvas
+          ref={canvasRef}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+        />
+        <div
+          ref={hideToolRef}
+          style={{
+            position: 'absolute',
+            backgroundColor: 'red',
+          }}
+        ></div>
       </div>
-      <div
-        ref={hideToolRef}
-        style={{
-          position: 'absolute',
-          backgroundColor: 'red',
-        }}
-      ></div>
+
 
       <Modal.ButtonRow>
-        <Button onClick={hide}>Hide</Button>
+        <Button onClick={hide}>{isInEditMode ? "Done" : "Hide"}</Button>
         <Button>Save</Button>
       </Modal.ButtonRow>
     </Modal>
@@ -168,35 +208,11 @@ const MenuActions = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    // const element = document.body; // TODO: choose a different selector?
-    // if (element) {
-    //   const canvas = await html2canvas(element, { backgroundColor: null });
-
-    //   const encoded = await canvasToBase64String(canvas);
-    //   if (encoded && typeof encoded === 'string') {
-    //     const screenshot = extractImageTypeAndData(encoded);
-    //     if (screenshot) {
-    //       setFormData({ ...formData, screenshot: screenshot.data, imageType: screenshot.type });
-    //     }
-    //   }
-    // }
-
     feedbackPlus
       .capture()
       .then(({ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number }) => {
         setFormData({ ...formData, bitmap, width, height });
         setIsScreenshotEditoModalOpen(true);
-        //       feedbackPlus.showEditDialog(bitmap, function (canvas: any) {
-        //         console.log("here??")
-        //         // user completed edit
-        //         FeedbackPlus.canvasToBitmap(canvas).then(({ bitmap }: { bitmap: any }) => {
-        //           canvas.getContext("2d").drawImage(bitmap, 0, 0);
-        //           feedbackPlus.closeEditDialog();
-        //         });
-        //       }, function () {
-        //         // user cancelled edit
-        //         feedbackPlus.closeEditDialog();
-        //       });
       });
   };
 
@@ -245,7 +261,7 @@ const MenuActions = () => {
   );
 };
 
-export const ReportIssueButton = ({}: Props) => {
+export const ReportIssueButton = ({ }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -264,6 +280,7 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 /* 
   TODO:
   - see if we can get annotations to work
+    - fix issue where hidden elements are scrolling and not attached to canvas
     - save the edited screenshot
     - fix the offset issue when hiding
     - add a done button for hiding
