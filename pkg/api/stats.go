@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/promlib/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 )
@@ -51,7 +53,9 @@ func countMetricNames(queryResult []*stats.ExtractedExpression, metricCount map[
 
 	// Iterate over each expression and extract metrics
 	for _, expression := range queryResult {
-		metricNames, err := extractMetricName(expression.Expr)
+		// Just interpolate the grafana built-in variables
+		interpolatedExpr := models.InterpolateIntervals(expression.Expr, time.Second, time.Second, 1000, 1)
+		metricNames, err := extractMetricName(interpolatedExpr)
 		if err != nil {
 			fmt.Println(fmt.Sprintf("couldn't extract the metric name: %v", expression.Expr))
 			continue
