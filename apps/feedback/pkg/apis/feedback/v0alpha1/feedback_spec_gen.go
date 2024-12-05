@@ -9,6 +9,7 @@ type FeedbackSpec struct {
 	ImageType          *string        `json:"imageType,omitempty"`
 	ScreenshotUrl      *string        `json:"screenshotUrl,omitempty"`
 	GithubIssueUrl     *string        `json:"githubIssueUrl,omitempty"`
+	ReporterEmail      *string        `json:"reporterEmail,omitempty"`
 	CanContactReporter bool           `json:"canContactReporter"`
 	CanAccessInstance  bool           `json:"canAccessInstance"`
 	DiagnosticData     map[string]any `json:"diagnosticData,omitempty"`

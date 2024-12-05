@@ -83,6 +83,7 @@ type TemplateData struct {
 
 	CanContactReporter bool
 	CanAccessInstance  bool
+	UserEmail          string
 }
 
 func BuildConfigList(instanceInfo DiagnosticInstance) []TemplateConfig {

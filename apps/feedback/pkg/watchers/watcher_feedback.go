@@ -145,7 +145,7 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	}
 
 	issue := githubClient.Issue{
-		Title:  fmt.Sprintf("[feedback] %s", title),
+		Title:  fmt.Sprintf("[Feedback] %s", title),
 		Body:   issueBody,
 		Labels: labels,
 	}
@@ -236,6 +236,10 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 	if slug == nil {
 		slug = new(string)
 	}
+	userEmail := object.Spec.ReporterEmail
+	if userEmail == nil {
+		userEmail = new(string)
+	}
 
 	templateData := githubClient.TemplateData{
 		Datasources:    diagnostic.Instance.Datasources,
@@ -251,6 +255,7 @@ func (s *FeedbackWatcher) buildIssueBody(object *feedback.Feedback) (string, err
 		SnapshotURL:            snapshotURL,
 		CanContactReporter:     object.Spec.CanContactReporter,
 		CanAccessInstance:      object.Spec.CanAccessInstance,
+		UserEmail:              *userEmail,
 	}
 
 	// Parse the embedded template
