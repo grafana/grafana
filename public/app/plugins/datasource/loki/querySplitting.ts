@@ -388,6 +388,10 @@ function calculateStep(intervalMs: number, range: TimeRange, resolution: number,
 
 async function adjustRequestsByVolume(requests: LokiGroupedRequest[], datasource: LokiDatasource) {
   for (const group of requests) {
+    if (group.chunkRangeMs < oneDayMs) {
+      console.log('Less than a day split, skipping adjustment');
+      continue;
+    }
     for (const query of group.request.targets) {
       let maxBytes = 0;
       for (const range of group.partition) {

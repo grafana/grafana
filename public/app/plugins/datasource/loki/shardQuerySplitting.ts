@@ -69,6 +69,7 @@ function splitQueriesByStreamShard(
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
     const { shards, cycle } = groups[group];
     const useTimeSplitting = cycle && shards && shards[cycle].timeSplit;
+    const groupSize = cycle && shards && shards[cycle].size;
     let retrying = false;
 
     if (subquerySubscription != null) {
@@ -162,8 +163,12 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
+    if (useTimeSplitting && groupSize) {
+      subRequest.targets = addSplittingDurationToTargets(subRequest.targets, groupSize);
+    }
+
     const queryRunner =
-      shardsToQuery.length > 0 || !useTimeSplitting ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
+      shardsToQuery.length > 0 && !useTimeSplitting ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
     subquerySubscription = queryRunner(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
@@ -259,7 +264,7 @@ async function groupTargetsByQueryType(
         if (!stats) {
           weightedShards.push({
             shard,
-            size: -1,
+            size: 0,
           });
           continue;
         }
@@ -346,7 +351,7 @@ interface GroupedWeightedShards {
 function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   const gb = Math.pow(2, 30);
   const splittingLimit = 100 * gb;
-  if (!shards.every((shard) => shard.size >= 0)) {
+  if (!shards.some((shard) => shard.size > 0)) {
     return [
       {
         shards: shards.map((shard) => shard.shard),
@@ -359,21 +364,17 @@ function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   let currentSize = 0;
   let group: number[] = [];
   for (const shard of shards) {
-    if (shard.size > splittingLimit) {
-      groups.push({
-        shards: [shard.shard],
-        timeSplit: true,
-        size: shard.size,
-      });
-    } else if (currentSize + shard.size < splittingLimit) {
+    if (currentSize + shard.size < splittingLimit) {
       currentSize += shard.size;
       group.push(shard.shard);
     } else {
-      groups.push({
-        shards: group,
-        timeSplit: false,
-        size: currentSize,
-      });
+      if (group.length > 0) {
+        groups.push({
+          shards: group,
+          timeSplit: currentSize > splittingLimit,
+          size: currentSize,
+        });
+      }
       group = [shard.shard];
       currentSize = shard.size;
     }
@@ -382,7 +383,7 @@ function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   if (group.length > 0) {
     groups.push({
       shards: group,
-      timeSplit: false,
+      timeSplit: currentSize > splittingLimit,
       size: currentSize,
     });
   }
@@ -393,4 +394,25 @@ function groupShardsByWeight(shards: WeightedShard[]): GroupedWeightedShards[] {
   }
 
   return groups;
+}
+
+function addSplittingDurationToTargets(targets: LokiQuery[], bytes: number) {
+  const gb = Math.pow(2, 30);
+  const tb = Math.pow(2, 40);
+
+  let chunkRangeMs = 24 * 60 * 60 * 1000;
+  if (bytes < tb) {
+    const gbs = Math.ceil(Math.round(bytes / gb) / 100) + 1;
+    chunkRangeMs = Math.round(chunkRangeMs / gbs);
+  } else {
+    const tbs = Math.ceil(Math.round(bytes / tb)) + 1;
+    chunkRangeMs = Math.round(chunkRangeMs / (tbs * 10));
+  }
+  const minChunkRangeMs = 3 * 60 * 60 * 1000;
+  chunkRangeMs = chunkRangeMs < minChunkRangeMs ? minChunkRangeMs : chunkRangeMs;
+
+  targets.forEach(query => query.splitDuration = `${chunkRangeMs / 1000 / 60 / 60}h`);
+  console.log(`${chunkRangeMs / 1000 / 60 / 60}h`);
+
+  return targets;
 }
