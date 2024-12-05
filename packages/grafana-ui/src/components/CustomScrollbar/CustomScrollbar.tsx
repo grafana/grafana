@@ -32,6 +32,7 @@ interface Props {
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
+ * @deprecated Use `ScrollContainer` from `@grafana/ui` instead. It uses native scrollbars and has a simpler API.
  */
 export const CustomScrollbar = ({
   autoHide = false,

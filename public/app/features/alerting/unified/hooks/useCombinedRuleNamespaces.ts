@@ -126,7 +126,7 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
-export function combineRulesNamespaces(
+export function combineRulesNamespace(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
   rulerRules?: RulerRulesConfigDTO

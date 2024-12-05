@@ -9,11 +9,10 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
+func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("user")
 	// accept the core Grafana jargon of `password` as well, originally Unified
@@ -25,6 +24,10 @@ func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, err
 	config.Params = map[string]string{
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
+	}
+	sslMode := getter.String("ssl_mode")
+	if sslMode == "true" || sslMode == "skip-verify" {
+		config.Params["tls"] = "preferred"
 	}
 	tls := getter.String("tls")
 	if tls != "" {
@@ -54,8 +57,6 @@ func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, err
 	}
 
 	// FIXME: get rid of xorm
-	// TODO figure out why wrapping the db driver with hooks causes mysql errors when writing
-	//driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverMySQL, tracer)
 	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -68,14 +69,18 @@ func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, err
 	return engine, nil
 }
 
-func getEnginePostgres(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
+func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user": getter.String("user"),
 		// accept the core Grafana jargon of `password` as well, originally
 		// Unified Storage used `pass`
-		"password": cmp.Or(getter.String("pass"), getter.String("password")),
-		"dbname":   getter.String("name"),
-		"sslmode":  cmp.Or(getter.String("sslmode"), "disable"),
+		"password":    cmp.Or(getter.String("pass"), getter.String("password")),
+		"dbname":      getter.String("name"),
+		"sslmode":     cmp.Or(getter.String("ssl_mode"), "disable"),
+		"sslsni":      getter.String("ssl_sni"),
+		"sslrootcert": getter.String("ca_cert_path"),
+		"sslkey":      getter.String("client_key_path"),
+		"sslcert":     getter.String("client_cert_path"),
 	}
 
 	// TODO: probably interesting:
@@ -87,8 +92,7 @@ func getEnginePostgres(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, 
 	//	dsnKV["enable_experimental_alter_column_type_general"] = "true"
 
 	// TODO: do we want to support these options in the DSN as well?
-	//	"sslkey", "sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
-	//	"krbsrvname", "target_session_attrs", "service", "servicefile"
+	//	"sslpassword", "krbspn", "krbsrvname", "target_session_attrs", "service", "servicefile"
 
 	// More on Postgres connection string parameters:
 	//	https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING

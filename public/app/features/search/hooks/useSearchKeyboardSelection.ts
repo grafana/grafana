@@ -17,6 +17,7 @@ export function useKeyNavigationListener() {
         case 'ArrowLeft':
         case 'ArrowRight':
         case 'Enter':
+        case 'Escape':
           eventsRef.current.next(e);
         default:
         // ignore

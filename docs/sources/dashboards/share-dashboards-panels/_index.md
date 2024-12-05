@@ -71,7 +71,7 @@ You must have an authorized viewer permission to see an image rendered by a dire
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
+Anonymous access permission is not available in Grafana Cloud.
 {{< /admonition >}}
 
 ## Share dashboards {#share-a-dashboard}
@@ -249,13 +249,13 @@ To share a personalized, direct link to your panel within your organization, fol
 
 When you click **Render image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
 
-| Parameter | Description                                                                                                                                                |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| width     | Width in pixels. Default is 800.                                                                                                                           |
-| height    | Height in pixels. Default is 400.                                                                                                                          |
-| tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                                                          |
-| timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.                                         |
-| scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+. |
+| Parameter | Description                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| width     | Width in pixels. Default is 800.                                                                                               |
+| height    | Height in pixels. Default is 400.                                                                                              |
+| tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                              |
+| timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
+| scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
 
 You can also update these parameters in the [image rendering configuration](ref:image-rendering-config).
 
@@ -270,7 +270,7 @@ https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&t
 You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel.
 
 {{< admonition type="note" >}}
-As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+Anonymous access permission is no longer available for Grafana Cloud.
 {{< /admonition >}}
 
 To create a panel that can be embedded, follow these steps:

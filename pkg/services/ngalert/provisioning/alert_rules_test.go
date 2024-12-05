@@ -867,6 +867,37 @@ func TestCreateAlertRule(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+	t.Run("when dashboard is specified", func(t *testing.T) {
+		t.Run("return no error when both specified", func(t *testing.T) {
+			rule := dummyRule("test#4", orgID)
+			dashboardUid := "oinwerfgiuac"
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+				models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+		})
+		t.Run("return 4xx error when missing dashboard uid", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+		t.Run("return 4xx error when missing panel id", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			dashboardUid := "oinwerfgiuac"
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+	})
 }
 
 func TestUpdateAlertRule(t *testing.T) {
@@ -1647,6 +1678,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		},
 		Logger:        log.NewNopLogger(),
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

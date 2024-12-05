@@ -1,3 +1,5 @@
+// `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
+import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';

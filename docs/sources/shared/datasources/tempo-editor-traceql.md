@@ -129,10 +129,8 @@ Using the **Spans** option makes it easier access the spans to apply transformat
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
 
-{{% admonition type="note" %}}
-To use this feature in Grafana OSS v10.1 and later, enable the `traceQLStreaming` feature toggle. This capability is enabled by default in Grafana Cloud.
-{{% /admonition %}}
-
 Streaming is available for both the **Search** and **TraceQL** query types, and you'll get immediate visibility of incoming traces on the results table.
+
+To learn how to activate streaming, refer to [Streaming](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming) in the Tempo data source documentation.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}

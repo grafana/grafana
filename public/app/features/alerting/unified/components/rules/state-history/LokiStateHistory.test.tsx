@@ -20,6 +20,19 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
+// Mock useMeasure from LogTimelineViewer > TimelineChart > GraphNG > VizLayout
+// so it always renders the chart
+jest.mock('react-use', () => {
+  const reactUse = jest.requireActual('react-use');
+  return {
+    ...reactUse,
+    useMeasure: () => {
+      const setRef = () => {};
+      return [setRef, { height: 300, width: 500 }];
+    },
+  };
+});
+
 beforeAll(() => {
   server.use(
     http.get('/api/v1/rules/history', () =>
@@ -76,7 +89,6 @@ window.HTMLElement.prototype.scrollIntoView = jest.fn();
 const ui = {
   loadingIndicator: byText('Loading...'),
   timestampViewer: byRole('list', { name: 'State history by timestamp' }),
-  record: byRole('listitem'),
   noRecords: byText('No state transitions have occurred in the last 30 days'),
   timelineChart: byTestId('uplot-main-div'),
 };

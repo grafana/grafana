@@ -80,7 +80,7 @@ This setting determines if the data is already a calculated heatmap (from the da
 
 ### X Bucket
 
-This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
+This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis. If the value is a number only, the duration is in milliseconds.
 
 ### Y Bucket
 

@@ -27,11 +27,14 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
+  exportNewGrafanaRule: 'exporting new Grafana rule',
 };
 
-const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
+  module: 'Alerting',
+});
 
-export { logError, logInfo, logMeasurement };
+export { logError, logInfo, logMeasurement, logWarning };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
@@ -188,6 +191,18 @@ export const trackAlertRuleFormError = (
   props: AlertRuleTrackingProps & { error: string; formAction: 'create' | 'update' }
 ) => {
   reportInteraction('grafana_alerting_rule_form_error', props);
+};
+
+export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+};
+
+export const trackNewGrafanaAlertRuleFormCancelled = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_aborted');
+};
+
+export const trackNewGrafanaAlertRuleFormError = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
 };
 
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {

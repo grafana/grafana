@@ -151,7 +151,7 @@ export function addLabelToQuery(
   value: string,
   labelType?: LabelType | null
 ): string {
-  if (!key || !value) {
+  if (!key) {
     throw new Error('Need label to add to query.');
   }
 
@@ -239,14 +239,60 @@ export function addParserToQuery(query: string, parser: string): string {
   const lineFilterPositions = getLineFiltersPositions(query);
 
   if (lineFilterPositions.length) {
-    return addParser(query, lineFilterPositions, parser);
+    return appendToLogsQuery(query, lineFilterPositions, parser);
   } else {
     const streamSelectorPositions = getStreamSelectorPositions(query);
     if (!streamSelectorPositions.length) {
       return query;
     }
-    return addParser(query, streamSelectorPositions, parser);
+    return appendToLogsQuery(query, streamSelectorPositions, parser);
   }
+}
+
+/**
+ * Adds a drop statement to the query.
+ * It uses LogQL parser to find instances of stream selectors or line filters and adds parser after them.
+ *
+ * @param query
+ * @param parser
+ */
+export function addDropToQuery(query: string, labelsToDrop: string[]): string {
+  const lineFilterPositions = getLineFiltersPositions(query);
+
+  if (lineFilterPositions.length) {
+    return appendToLogsQuery(query, lineFilterPositions, `drop ${labelsToDrop.join(', ')}`);
+  } else {
+    const streamSelectorPositions = getStreamSelectorPositions(query);
+    if (!streamSelectorPositions.length) {
+      return query;
+    }
+    return appendToLogsQuery(query, streamSelectorPositions, `drop ${labelsToDrop.join(', ')}`);
+  }
+}
+
+/**
+ * Adds a statement after line filters or stream selectors
+ * @param query
+ * @param queryPartPositions
+ * @param parser
+ */
+function appendToLogsQuery(query: string, queryPartPositions: NodePosition[], statement: string): string {
+  let newQuery = '';
+  let prev = 0;
+
+  for (let i = 0; i < queryPartPositions.length; i++) {
+    // Splice on a string for each matched vector selector
+    const match = queryPartPositions[i];
+    const isLast = i === queryPartPositions.length - 1;
+
+    const start = query.substring(prev, match.to);
+    const end = isLast ? query.substring(match.to) : '';
+
+    // Add parser
+    newQuery += start + ` | ${statement}` + end;
+    prev = match.to;
+  }
+  return newQuery;
 }
 
 /**
@@ -489,31 +535,6 @@ export function addFilterAsLabelFilter(
     }
 
     newQuery += start + labelFilter + end;
-    prev = match.to;
-  }
-  return newQuery;
-}
-
-/**
- * Add parser after line filter or stream selector
- * @param query
- * @param queryPartPositions
- * @param parser
- */
-function addParser(query: string, queryPartPositions: NodePosition[], parser: string): string {
-  let newQuery = '';
-  let prev = 0;
-
-  for (let i = 0; i < queryPartPositions.length; i++) {
-    // Splice on a string for each matched vector selector
-    const match = queryPartPositions[i];
-    const isLast = i === queryPartPositions.length - 1;
-
-    const start = query.substring(prev, match.to);
-    const end = isLast ? query.substring(match.to) : '';
-
-    // Add parser
-    newQuery += start + ` | ${parser}` + end;
     prev = match.to;
   }
   return newQuery;

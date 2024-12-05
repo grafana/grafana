@@ -7,10 +7,12 @@ export type ResourcePermission = {
   isInherited: boolean;
   isServiceAccount: boolean;
   userId?: number;
+  userUid?: string;
   userLogin?: string;
   userAvatarUrl?: string;
   team?: string;
   teamId?: number;
+  teamUid?: string;
   teamAvatarUrl?: string;
   builtInRole?: string;
   actions: AccessControlAction[];
@@ -20,8 +22,8 @@ export type ResourcePermission = {
 };
 
 export type SetPermission = {
-  userId?: number;
-  teamId?: number;
+  userUid?: string;
+  teamUid?: string;
   builtInRole?: string;
   permission: string;
   target: PermissionTarget;

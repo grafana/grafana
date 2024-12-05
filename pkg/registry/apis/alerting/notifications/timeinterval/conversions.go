@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
@@ -74,14 +75,14 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 	result := definitions.MuteTimeInterval{}
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 	result.Version = interval.ResourceVersion
 	result.UID = interval.ObjectMeta.Name
 	result.Provenance = definitions.Provenance(ngmodels.ProvenanceNone)
 	err = result.Validate()
 	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 	return result, nil
 }

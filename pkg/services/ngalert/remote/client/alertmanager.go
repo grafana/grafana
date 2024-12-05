@@ -71,7 +71,7 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	readyURL := am.url.JoinPath(am.url.Path, alertmanagerAPIMountPath, alertmanagerReadyPath)
+	readyURL := am.url.JoinPath(alertmanagerAPIMountPath, alertmanagerReadyPath)
 
 	attempt := func() (int, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL.String(), nil)

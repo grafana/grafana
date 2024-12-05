@@ -1,20 +1,18 @@
 import { useMemo } from 'react';
 
+import { AadCurrentUserCredentials, AzureCredentials, instanceOfAzureCredential } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Select, Field, RadioButtonGroup, Alert, Stack } from '@grafana/ui';
 
-import { instanceOfAzureCredential } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { AadCurrentUserCredentials, AzureAuthType, AzureCredentials } from '../../types';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
-  userIdentityEnabled: boolean;
   credentials: AadCurrentUserCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
@@ -32,8 +30,9 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     workloadIdentityEnabled,
   } = props;
 
+  type FallbackCredentialAuthTypeOptions = 'clientsecret' | 'msi' | 'workloadidentity';
   const authTypeOptions = useMemo(() => {
-    let opts: Array<SelectableValue<Exclude<AzureAuthType, 'currentuser'>>> = [
+    let opts: Array<SelectableValue<FallbackCredentialAuthTypeOptions>> = [
       {
         value: 'clientsecret',
         label: 'App Registration',
@@ -57,7 +56,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     return opts;
   }, [managedIdentityEnabled, workloadIdentityEnabled]);
 
-  const onAuthTypeChange = (selected: SelectableValue<Exclude<AzureAuthType, 'currentuser'>>) => {
+  const onAuthTypeChange = (selected: SelectableValue<FallbackCredentialAuthTypeOptions>) => {
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled

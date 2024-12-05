@@ -18,8 +18,7 @@ import (
 // initialized tracer from the opentelemetry package.
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/quota/quotaimpl/service")
 
-type serviceDisabled struct {
-}
+type serviceDisabled struct{}
 
 func (s *serviceDisabled) QuotaReached(c *contextmodel.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
 	return false, nil

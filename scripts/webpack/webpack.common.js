@@ -9,6 +9,10 @@ module.exports = {
     app: './public/app/index.ts',
     swagger: './public/swagger/index.tsx',
   },
+  experiments: {
+    // Required to load WASM modules.
+    asyncWebAssembly: true,
+  },
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),
@@ -95,10 +99,6 @@ module.exports = {
             },
           },
         ],
-      },
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

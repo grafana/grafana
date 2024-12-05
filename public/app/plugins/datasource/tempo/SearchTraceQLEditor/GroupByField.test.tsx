@@ -35,6 +35,7 @@ describe('GroupByField', () => {
   };
 
   jest.spyOn(lp, 'getMetricsSummaryTags').mockReturnValue(['component', 'http.method', 'http.status_code']);
+  jest.spyOn(lp, 'getTags').mockReturnValue(['component', 'http.method', 'http.status_code']);
 
   beforeEach(() => {
     jest.useFakeTimers();

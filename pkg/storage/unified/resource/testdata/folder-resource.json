@@ -1,0 +1,16 @@
+{
+    "kind": "Folder",
+    "apiVersion": "folder.grafana.app/v0alpha1",
+    "metadata": {
+        "name": "ae2ntrqxefvnke",
+        "namespace": "default",
+        "uid": "aaaa-bbbb",
+        "creationTimestamp": "2024-11-01T19:42:22Z",
+        "annotations": {
+            "grafana.app/createdBy": "user:1"
+        }
+    },
+    "spec": {
+        "title": "test-us"
+    }
+}

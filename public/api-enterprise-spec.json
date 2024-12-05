@@ -228,7 +228,7 @@
     },
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
-        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -582,7 +582,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": [
           "access_control",
           "enterprise"
@@ -981,6 +981,188 @@
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups": {
+      "get": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "getMappedGroups",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups/{group_id}": {
+      "put": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "updateGroupMappings",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupAttributes"
+            }
+          },
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "createGroupMappings",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GroupAttributes"
+            }
+          },
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "deleteGroupMappings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/groupsync/groups/{group_id}/roles": {
+      "get": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "getGroupRoles",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getGroupRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -1798,13 +1980,14 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Get a report.",
         "operationId": "getReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -1836,13 +2019,14 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Update a report.",
         "operationId": "updateReport",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -1882,13 +2066,14 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2395,6 +2580,9 @@
           "format": "int64"
         },
         "message": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -3756,6 +3944,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -3780,6 +3971,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -4064,7 +4258,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -4307,6 +4501,21 @@
         }
       }
     },
+    "EmailSchema": {
+      "description": "Implementation of SCIM specification email schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2",
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "EnumFieldConfig": {
       "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
       "type": "object",
@@ -4360,10 +4569,6 @@
           "type": "string"
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
@@ -4823,6 +5028,55 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "GetUsersBody": {
+      "type": "object",
+      "properties": {
+        "Resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UserSchema"
+          }
+        },
+        "itemsPerPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalResults": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Group": {
+      "type": "object",
+      "properties": {
+        "groupID": {
+          "type": "string"
+        },
+        "mappings": {}
+      }
+    },
+    "GroupAttributes": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -5343,6 +5597,29 @@
         }
       }
     },
+    "MetaSchema": {
+      "description": "Implementation of SCIM specification meta schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-3.1",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -5414,6 +5691,23 @@
         "status"
       ],
       "properties": {
+        "errorCode": {
+          "type": "string",
+          "enum": [
+            "DATASOURCE_NAME_CONFLICT",
+            "DATASOURCE_INVALID_URL",
+            "DATASOURCE_ALREADY_MANAGED",
+            "FOLDER_NAME_CONFLICT",
+            "DASHBOARD_ALREADY_MANAGED",
+            "LIBRARY_ELEMENT_NAME_CONFLICT",
+            "UNSUPPORTED_DATA_TYPE",
+            "RESOURCE_CONFLICT",
+            "UNEXPECTED_STATUS_CODE",
+            "INTERNAL_SERVICE_ERROR",
+            "ONLY_CORE_DATA_SOURCES",
+            "GENERIC_ERROR"
+          ]
+        },
         "message": {
           "type": "string"
         },
@@ -5442,7 +5736,12 @@
             "DASHBOARD",
             "DATASOURCE",
             "FOLDER",
-            "LIBRARY_ELEMENT"
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING"
           ]
         }
       }
@@ -5502,6 +5801,24 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "NameSchema": {
+      "description": "Implementation of SCIM specification name schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
+      "type": "object",
+      "properties": {
+        "familyName": {
+          "type": "string"
+        },
+        "formatted": {
+          "type": "string"
+        },
+        "givenName": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
         }
       }
     },
@@ -5654,6 +5971,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -6563,6 +6883,12 @@
         "orientation": {
           "type": "string"
         },
+        "pdfCombineOneFile": {
+          "type": "boolean"
+        },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -6606,6 +6932,9 @@
         "branding": {
           "$ref": "#/definitions/ReportBrandingOptions"
         },
+        "embeddedImageTheme": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -6613,6 +6942,9 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfTheme": {
+          "type": "string"
         },
         "userId": {
           "type": "integer",
@@ -6717,6 +7049,9 @@
           "type": "string"
         },
         "hidden": {
+          "type": "boolean"
+        },
+        "mapped": {
           "type": "boolean"
         },
         "name": {
@@ -7039,6 +7374,10 @@
           "type": "integer",
           "format": "int64",
           "example": 0
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         }
       }
     },
@@ -7104,6 +7443,10 @@
         "tokens": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         },
         "updatedAt": {
           "type": "string",
@@ -7276,6 +7619,10 @@
         }
       }
     },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
+    },
     "State": {
       "description": "+enum",
       "type": "string"
@@ -7413,6 +7760,9 @@
           }
         },
         "teamId": {
+          "type": "string"
+        },
+        "teamUid": {
           "type": "string"
         }
       }
@@ -8205,6 +8555,9 @@
         "login": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -8298,6 +8651,45 @@
         }
       }
     },
+    "UserSchema": {
+      "description": "Implementation of SCIM specification user schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailSchema"
+          }
+        },
+        "externalId": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/definitions/MetaSchema"
+        },
+        "name": {
+          "$ref": "#/definitions/NameSchema"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "userName": {
+          "type": "string"
+        }
+      }
+    },
     "UserSearchHitDTO": {
       "type": "object",
       "properties": {
@@ -8355,6 +8747,10 @@
           "type": "string"
         },
         "CreatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ExternalSessionId": {
           "type": "integer",
           "format": "int64"
         },
@@ -8439,6 +8835,21 @@
         }
       }
     },
+    "getGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Group"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "healthResponse": {
       "type": "object",
       "properties": {
@@ -8452,6 +8863,14 @@
           "type": "string"
         },
         "version": {
+          "type": "string"
+        }
+      }
+    },
+    "messageResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
           "type": "string"
         }
       }
@@ -8525,6 +8944,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -8533,6 +8955,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -8592,6 +9017,12 @@
         "items": {
           "$ref": "#/definitions/UserToken"
         }
+      }
+    },
+    "apiResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/messageResponse"
       }
     },
     "badRequestError": {
@@ -8816,6 +9247,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }
@@ -9121,6 +9555,21 @@
         }
       }
     },
+    "getGroupRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "getGroupsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/getGroupsResponse"
+      }
+    },
     "getHomeDashboardResponse": {
       "description": "",
       "schema": {
@@ -9405,10 +9854,7 @@
     "getTeamLBACRulesResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/TeamLBACRules"
-        }
+        "$ref": "#/definitions/TeamLBACRules"
       }
     },
     "getTeamMembersResponse": {
@@ -9445,6 +9891,12 @@
         "items": {
           "$ref": "#/definitions/TeamDTO"
         }
+      }
+    },
+    "getUsers": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GetUsersBody"
       }
     },
     "goneError": {
@@ -9921,14 +10373,17 @@
             "type": "integer",
             "format": "int64"
           },
-          "lbacRules": {
-            "$ref": "#/definitions/TeamLBACRules"
-          },
           "message": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/TeamLBACRule"
+            }
           },
           "uid": {
             "type": "string"

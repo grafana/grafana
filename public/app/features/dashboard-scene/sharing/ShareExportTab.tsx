@@ -95,7 +95,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
   const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
-
   const dashboardJson = useAsync(async () => {
     if (isViewingJSON) {
       const json = await model.getExportableDashboardJson();
@@ -143,7 +142,6 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           </Modal.ButtonRow>
         </>
       )}
-
       {isViewingJSON && (
         <>
           <AutoSizer disableHeight>
@@ -161,7 +159,12 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               }
 
               if (dashboardJson.loading) {
-                return <div>Loading...</div>;
+                return (
+                  <div>
+                    {' '}
+                    <Trans i18nKey="share-modal.export.loading">Loading...</Trans>
+                  </div>
+                );
               }
 
               return null;

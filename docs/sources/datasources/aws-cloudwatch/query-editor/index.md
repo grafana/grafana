@@ -132,10 +132,6 @@ This feature is not available for metrics based on [metric math expressions](#me
 
 ### Create a Metric Insights query
 
-{{% admonition type="note" %}}
-This query option is available only in Grafana v8.3 and higher.
-{{% /admonition %}}
-
 The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
 It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
 

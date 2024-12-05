@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
@@ -129,7 +129,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatumLayout>(item: T) {
               }
             : undefined
         }
-        target={'_self'}
+        target={link.target || '_self'}
       />
     );
   };
@@ -140,6 +140,7 @@ type LinkData<T extends NodeDatum | EdgeDatumLayout> = {
   ariaLabel?: string;
   url?: string;
   onClick?: (item: T) => void;
+  target?: LinkTarget;
 };
 
 function getItems(links: LinkModel[]) {
@@ -169,6 +170,7 @@ function getItems(links: LinkModel[]) {
         ariaLabel: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
+        target: link.l.target,
       })),
     };
   });
@@ -251,19 +253,19 @@ function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
 
 export const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
-    label: css`
-      label: Label;
-      line-height: 1.25;
-      color: ${theme.colors.text.disabled};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(1)};
-    `,
-    value: css`
-      label: Value;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.text.primary};
-    `,
+    label: css({
+      label: 'Label',
+      lineHeight: 1.25,
+      color: theme.colors.text.disabled,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1),
+    }),
+    value: css({
+      label: 'Value',
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+    }),
   };
 };

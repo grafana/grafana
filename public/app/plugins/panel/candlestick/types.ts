@@ -28,12 +28,12 @@ export const defaultOptions: Partial<Options> = {
 };
 
 export {
-  Options,
-  CandlestickColors,
+  type Options,
+  type CandlestickColors,
   defaultCandlestickColors,
   CandleStyle,
   ColorStrategy,
   VizDisplayMode,
-  CandlestickFieldMap,
-  FieldConfig,
+  type CandlestickFieldMap,
+  type FieldConfig,
 };

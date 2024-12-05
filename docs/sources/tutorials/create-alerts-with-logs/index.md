@@ -1,7 +1,5 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-authors:
-  - melori_arellano
 categories:
   - alerting
 description: Create alerts with Logs
@@ -15,10 +13,10 @@ labels:
     - alerting
 tags:
   - advanced
-title: How to create alerts with log data
+title: How to create alert rules with log data
 weight: 70
 killercoda:
-  title: How to create alerts with log data
+  title: How to create alert rules with log data
   description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real log data.
   preprocessing:
     substitutions:
@@ -43,14 +41,14 @@ In this tutorial, you'll:
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-> Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
@@ -62,31 +60,29 @@ Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alertin
 
 <!-- INTERACTIVE ignore START -->
 
-### Grafana Cloud users
+There are different ways you can follow along with this tutorial.
 
-As a Grafana Cloud user, you don't have to install anything.
+- **Grafana OSS**
 
-Continue to [Generate sample logs](#generate-sample-logs).
+  To run a Grafana stack locally, ensure you have the following applications installed:
 
-<!-- INTERACTIVE ignore END-->
+  - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+  - [Git](https://git-scm.com/)
 
-### Grafana OSS users
+- **Interactive learning environment**
 
-<!-- INTERACTIVE ignore START -->
+  - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
 
-In order to run a Grafana stack locally, ensure you have the following applications installed.
-
-- [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
-- [Git](https://git-scm.com/)
+## Set up the Grafana stack
 
 <!-- INTERACTIVE ignore END -->
 
-To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
 1. Download and save a Docker compose file to run Grafana, Loki and Promtail.
 
    ```bash
-   wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
+   wget https://raw.githubusercontent.com/grafana/loki/refs/heads/main/production/docker-compose.yaml -O docker-compose.yaml
    ```
 
 2. Run the Grafana stack.
@@ -113,25 +109,13 @@ If you already have Grafana, Loki, or Prometheus running on your system, you mig
 
 {{< /docs/ignore >}}
 
-<!-- INTERACTIVE ignore START -->
-
-{{< admonition type="tip" >}}
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs).
-
-It's a fully configured environment with all the dependencies already installed.
-
-![Interactive](/media/docs/grafana/full-stack-ile.png)
-
-Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
-{{< /admonition >}}
-
-<!-- INTERACTIVE ignore END -->
-
 <!-- INTERACTIVE page step1.md END -->
 
 <!-- INTERACTIVE page step2.md START -->
 
 ## Generate sample logs
+
+To demonstrate how to create alert rules based on logs, you’ll use a script that generates realistic log entries to simulate typical monitoring data in Grafana. Running this script outputs logs continuously, each containing a timestamp, HTTP method (either GET or POST), status code (200 for success or 500 for failures), and request duration in milliseconds.
 
 1. Download and save a Python file that generates logs.
 
@@ -162,13 +146,13 @@ If you don't see the sample logs in Explore:
 
 Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
-In this step, we'll set up a new [contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+In this step, we set up a new contact point. This contact point uses the [webhook integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point uses the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We can use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
 <!-- INTERACTIVE ignore START -->
 
 1. In your browser, **sign in** to your Grafana Cloud account.
 
-   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
@@ -176,7 +160,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 {{< docs/ignore >}}
 
-1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
    {{< /docs/ignore >}}
@@ -186,12 +170,12 @@ Your webhook endpoint is now waiting for the first request.
 Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
-1. Click **+ Add contact point**.
+1. Click **+ Create contact point**.
 1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
 1. In **URL**, paste the endpoint to your webhook endpoint.
 1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint.
-1. Navigate back to [Webhook.site](https://webhook.site/). On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+1. Navigate back to _Webhook.site_. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 
    {{< figure src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
 
@@ -209,56 +193,48 @@ Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alert
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**.
 1. Click on **New alert rule**.
-1. Enter alert rule name for your alert rule. Make it short and descriptive as this will appear in your alert notification. For instance, **web-requests-logs**
+1. Enter alert rule name for your alert rule. Make it short and descriptive as this appears in your alert notification. For instance, **web-requests-logs**
 
 ### Define query and alert condition
 
-In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
+In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 1. Select the **Loki** datasource from the drop-down.
-2. In the Query editor, switch to Code mode by clicking the button on the right.
-3. Paste the query below.
+1. In the Query editor, switch to **Code** mode by clicking the button on the right.
+1. Paste the query below.
 
    ```
    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
    ```
 
-This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+   This query counts the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
-You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
+   You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
 
-```
-2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
-```
+   ```
+   2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
+   ```
 
-  <!-- INTERACTIVE ignore START -->
+   <!-- INTERACTIVE ignore START -->
 
-{{% admonition type="note" %}}
+   {{% admonition type="note" %}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{% / admonition %}}
+   <!-- INTERACTIVE ignore END -->
 
-If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{< docs/ignore >}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{< /docs/ignore >}}
 
-{{% / admonition %}}
+1. In the **Alert condition** section:
 
-  <!-- INTERACTIVE ignore END -->
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-{{< docs/ignore >}}
-
-If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
-
-{{< /docs/ignore >}}
-
-4. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
-
-5. In the ‘C’ **Threshold expression**:
-
-   - Change the **Input** to **'A'** to select the data source.
-   - Enter `0` as the threshold value. This is the value above which the alert rule should trigger.
-
-6. Click **Preview** to run the queries.
+1. Click **Preview alert rule condition** to run the query.
 
    It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any occurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
-   {{< figure src="/media/docs/alerting/expression-loki-alert.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
+   {{< figure src="/media/docs/alerting/firing-loki-alert-rule.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
 ### Set evaluation behavior
 
@@ -269,9 +245,9 @@ An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundament
 
 To set up the evaluation:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder will contain our alerts.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
-1. Choose an **Evaluation interval** (how often the alert will be evaluated).
+1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder contains our alerts.
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
+1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
 1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
@@ -288,7 +264,7 @@ Choose the contact point where you want to receive your alert notifications.
 
 ## Trigger the alert rule
 
-Since the Python script will continue to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
+Since the Python script continues to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
@@ -299,14 +275,14 @@ Since the Python script will continue to generate log data that matches the aler
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-> Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 

@@ -1,6 +1,6 @@
 import { Scope, ScopeDashboardBinding } from '@grafana/data';
 
-import { SelectedScope, SuggestedDashboardsFoldersMap, TreeScope } from './types';
+import { NodesMap, SelectedScope, SuggestedDashboardsFoldersMap, TreeScope } from './types';
 
 export function getBasicScope(name: string): Scope {
   return {
@@ -42,6 +42,59 @@ export function getScopesFromSelectedScopes(scopes: SelectedScope[]): Scope[] {
 
 export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string[] {
   return scopes.map(({ scope }) => scope.metadata.name);
+}
+
+// helper func to get the selected/tree scopes together with their paths
+// needed to maintain selected scopes in tree for example when navigating
+// between categories or when loading scopes from URL to find the scope's path
+export function getScopesAndTreeScopesWithPaths(
+  selectedScopes: SelectedScope[],
+  treeScopes: TreeScope[],
+  path: string[],
+  childNodes: NodesMap
+): [SelectedScope[], TreeScope[]] {
+  const childNodesArr = Object.values(childNodes);
+
+  // Get all scopes without paths
+  // We use tree scopes as the list is always up to date as opposed to selected scopes which can be outdated
+  const scopeNamesWithoutPaths = treeScopes.filter(({ path }) => path.length === 0).map(({ scopeName }) => scopeName);
+
+  // We search for the path of each scope name without a path
+  const scopeNamesWithPaths = scopeNamesWithoutPaths.reduce<Record<string, string[]>>((acc, scopeName) => {
+    const possibleParent = childNodesArr.find((childNode) => childNode.isSelectable && childNode.linkId === scopeName);
+
+    if (possibleParent) {
+      acc[scopeName] = [...path, possibleParent.name];
+    }
+
+    return acc;
+  }, {});
+
+  // Update the paths of the selected scopes based on what we found
+  const newSelectedScopes = selectedScopes.map((selectedScope) => {
+    if (selectedScope.path.length > 0) {
+      return selectedScope;
+    }
+
+    return {
+      ...selectedScope,
+      path: scopeNamesWithPaths[selectedScope.scope.metadata.name] ?? [],
+    };
+  });
+
+  // Update the paths of the tree scopes based on what we found
+  const newTreeScopes = treeScopes.map((treeScope) => {
+    if (treeScope.path.length > 0) {
+      return treeScope;
+    }
+
+    return {
+      ...treeScope,
+      path: scopeNamesWithPaths[treeScope.scopeName] ?? [],
+    };
+  });
+
+  return [newSelectedScopes, newTreeScopes];
 }
 
 export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap {

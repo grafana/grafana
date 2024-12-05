@@ -32,9 +32,9 @@ export const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  typeSelect: css`
-    max-width: ${theme.spacing(40)};
-  `,
+  typeSelect: css({
+    maxWidth: theme.spacing(40),
+  }),
 });
 
 export const ConfigureCorrelationTargetForm = () => {

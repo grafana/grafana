@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneGridLayout,
@@ -8,19 +9,25 @@ import {
   sceneUtils,
   SceneComponentProps,
 } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { Trans } from 'app/core/internationalization';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
+  getDefaultVizPanel,
 } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
-import { DashboardLayoutManager } from '../types';
+import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
+
+import { DashboardGridItem } from './DashboardGridItem';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -34,21 +41,27 @@ export class DefaultGridLayoutManager
   implements DashboardLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {
-    this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
-    forceRenderChildren(this.state.grid, true);
-  }
+    const updateResizeAndDragging = () => {
+      this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+      forceRenderChildren(this.state.grid, true);
+    };
 
-  /**
-   * Removes the first panel
-   */
-  public cleanUpStateFromExplore(): void {
-    this.state.grid.setState({
-      children: this.state.grid.state.children.slice(1),
-    });
+    if (config.featureToggles.dashboardNewLayouts) {
+      // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
+      // if we show the edit pane without animations it opens much faster and feels more responsive
+      setTimeout(updateResizeAndDragging, 10);
+      return;
+    }
+
+    updateResizeAndDragging();
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    const panelId = getPanelIdForVizPanel(vizPanel);
+    const panelId = this.getNextPanelId();
+
+    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    vizPanel.clearParent();
+
     const newGridItem = new DashboardGridItem({
       height: NEW_PANEL_HEIGHT,
       width: NEW_PANEL_WIDTH,
@@ -309,6 +322,29 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public getDescriptor(): LayoutRegistryItem {
+    return DefaultGridLayoutManager.getDescriptor();
+  }
+
+  public static getDescriptor(): LayoutRegistryItem {
+    return {
+      name: 'Default grid',
+      description: 'The default grid layout',
+      id: 'default-grid',
+      createFromLayout: DefaultGridLayoutManager.createFromLayout,
+    };
+  }
+
+  /**
+   * Handle switching to the manual grid layout from other layouts
+   * @param currentLayout
+   * @returns
+   */
+  public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
+    const panels = currentLayout.getVizPanels();
+    return DefaultGridLayoutManager.fromVizPanels(panels);
+  }
+
   /**
    * For simple test grids
    * @param panels
@@ -321,6 +357,8 @@ export class DefaultGridLayoutManager
     let currentX = 0;
 
     for (let panel of panels) {
+      panel.clearParent();
+
       children.push(
         new DashboardGridItem({
           key: `griditem-${getPanelIdForVizPanel(panel)}`,
@@ -343,13 +381,54 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
-        isDraggable: false,
-        isResizable: false,
+        isDraggable: true,
+        isResizable: true,
       }),
     });
   }
 
+  public renderEditor() {
+    return <DefaultGridLayoutEditor layoutManager={this} />;
+  }
+
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    return <model.state.grid.Component model={model.state.grid} />;
+    if (!config.featureToggles.dashboardNewLayouts) {
+      return <model.state.grid.Component model={model.state.grid} />;
+    }
+
+    return (
+      <LayoutEditChrome layoutManager={model}>
+        <model.state.grid.Component model={model.state.grid} />
+      </LayoutEditChrome>
+    );
   };
+}
+
+function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGridLayoutManager>) {
+  return (
+    <>
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          const vizPanel = getDefaultVizPanel();
+          layoutManager.addPanel(vizPanel);
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+        }}
+      >
+        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
+      </Button>
+
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewRow!();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      >
+        <Trans i18nKey="dashboard.add-menu.row">Row</Trans>
+      </Button>
+    </>
+  );
 }

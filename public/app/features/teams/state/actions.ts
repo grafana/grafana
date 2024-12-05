@@ -60,17 +60,17 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
 const loadTeamsWithDebounce = debounce((dispatch) => dispatch(loadTeams()), 500);
 
-export function loadTeam(id: string | number): ThunkResult<Promise<void>> {
+export function loadTeam(uid: string): ThunkResult<Promise<void>> {
   return async (dispatch) => {
-    const response = await getBackendSrv().get(`/api/teams/${id}`, accessControlQueryParam());
+    const response = await getBackendSrv().get(`/api/teams/${uid}`, accessControlQueryParam());
     dispatch(teamLoaded(response));
     dispatch(updateNavIndex(buildNavModel(response)));
   };
 }
 
-export function deleteTeam(id: number): ThunkResult<void> {
+export function deleteTeam(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/teams/${id}`);
+    await getBackendSrv().delete(`/api/teams/${uid}`);
     // Update users permissions in case they lost teams.read with the deletion
     await contextSrv.fetchUserPermissions();
     dispatch(loadTeams());
@@ -102,32 +102,16 @@ export function changeSort({ sortBy }: FetchDataArgs<Team>): ThunkResult<void> {
 export function loadTeamMembers(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    const response = await getBackendSrv().get(`/api/teams/${team.id}/members`);
+    const response = await getBackendSrv().get(`/api/teams/${team.uid}/members`);
     dispatch(teamMembersLoaded(response));
-  };
-}
-
-export function addTeamMember(id: number): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.id}/members`, { userId: id });
-    dispatch(loadTeamMembers());
-  };
-}
-
-export function removeTeamMember(id: number): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const team = getStore().team.team;
-    await getBackendSrv().delete(`/api/teams/${team.id}/members/${id}`);
-    dispatch(loadTeamMembers());
   };
 }
 
 export function updateTeam(name: string, email: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().put(`/api/teams/${team.id}`, { name, email });
-    dispatch(loadTeam(team.id));
+    await getBackendSrv().put(`/api/teams/${team.uid}`, { name, email });
+    dispatch(loadTeam(team.uid));
   };
 }
 

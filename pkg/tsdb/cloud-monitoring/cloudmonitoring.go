@@ -591,7 +591,10 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
 		project, err := s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
-		return project, errorsource.DownstreamError(err, false)
+		if err != nil {
+			return project, errorsource.DownstreamError(err, false)
+		}
+		return project, nil
 	}
 	return dsInfo.defaultProject, nil
 }

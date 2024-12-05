@@ -1,20 +1,20 @@
 import {
-  sortAlerts,
-  wrapWithQuotes,
-  escapeQuotes,
   createExploreLink,
-  makeLabelBasedSilenceLink,
-  makeDataSourceLink,
-  makeFolderLink,
-  makeFolderAlertsLink,
-  makeFolderSettingsLink,
   makeDashboardLink,
+  makeDataSourceLink,
+  makeFolderAlertsLink,
+  makeFolderLink,
+  makeFolderSettingsLink,
+  makeLabelBasedSilenceLink,
   makePanelLink,
+  sortAlerts,
   stringifyErrorLike,
 } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+
+import { ApiMachineryError, ERROR_NEWER_CONFIGURATION, getErrorMessageFromCode } from './k8s/errors';
 
 function withState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
@@ -45,24 +45,6 @@ function permute(inputArray: any[]): any[] {
     );
   }, []);
 }
-
-describe('wrapWithQuotes', () => {
-  it('should work as expected', () => {
-    expect(wrapWithQuotes('"hello, world!"')).toBe('\\"hello, world!\\"');
-    expect(wrapWithQuotes('hello, world!')).toBe('"hello, world!"');
-    expect(wrapWithQuotes('hello, "world"!')).toBe('"hello, \\"world\\"!"');
-    expect(wrapWithQuotes('"hello""')).toBe('\\"hello\\"\\"');
-  });
-});
-
-describe('escapeQuotes', () => {
-  it('should escape all quotes', () => {
-    expect(escapeQuotes('"hello, world!"')).toBe('\\"hello, world!\\"');
-    expect(escapeQuotes('hello, world!')).toBe('hello, world!');
-    expect(escapeQuotes('hello, "world"!')).toBe('hello, \\"world\\"!');
-    expect(escapeQuotes('hello"')).toBe('hello\\"');
-  });
-});
 
 describe('Unified Altering misc', () => {
   describe('sortAlerts', () => {
@@ -144,5 +126,58 @@ describe('stringifyErrorLike', () => {
   it('should stringify error with cause', () => {
     const error = new Error('Something went strong', { cause: new Error('database did not respond') });
     expect(stringifyErrorLike(error)).toBe('Something went strong, cause: database did not respond');
+  });
+
+  it('should stringify error with cause being a code', () => {
+    const error = new Error('Something went strong', { cause: ERROR_NEWER_CONFIGURATION });
+    expect(stringifyErrorLike(error)).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
+  });
+
+  it('should stringify Fetch error with message', () => {
+    const error = { status: 404, data: {}, message: 'something broke' };
+    expect(stringifyErrorLike(error)).toBe('something broke');
+  });
+
+  it('should stringify Fetch error with message embedded in HTTP response', () => {
+    const error = { status: 404, data: { message: 'message from the API' } };
+    expect(stringifyErrorLike(error)).toBe('message from the API');
+  });
+
+  it('should stringify Fetch error with status text as fallback', () => {
+    const error = { status: 404, data: {}, statusText: 'not found' };
+    expect(stringifyErrorLike(error)).toBe('not found');
+  });
+
+  it('should stringify Fetch error with status number as fallback', () => {
+    const error = { status: 404, data: {} };
+    expect(stringifyErrorLike(error)).toBe('404');
+  });
+
+  it('should stringify ApiMachineryError with unknown code', () => {
+    const error: ApiMachineryError = {
+      apiVersion: 'v1',
+      code: 409,
+      details: { uid: 'some.code' },
+      kind: 'Status',
+      status: 'Failure',
+      message: 'some message',
+      reason: 'Conflict',
+    };
+
+    expect(stringifyErrorLike({ status: 409, data: error })).toBe('some message');
+  });
+
+  it('should stringify ApiMachineryError with known code', () => {
+    const error: ApiMachineryError = {
+      apiVersion: 'v1',
+      code: 409,
+      details: { uid: ERROR_NEWER_CONFIGURATION },
+      kind: 'Status',
+      status: 'Failure',
+      message: 'some message',
+      reason: 'Conflict',
+    };
+
+    expect(stringifyErrorLike({ status: 409, data: error })).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
   });
 });

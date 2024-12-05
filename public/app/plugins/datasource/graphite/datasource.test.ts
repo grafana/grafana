@@ -55,8 +55,8 @@ describe('graphiteDatasource', () => {
 
   describe('convertResponseToDataFrames', () => {
     it('should transform regular result', () => {
-      const result = ctx.ds.convertResponseToDataFrames({
-        data: {
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
           meta: {
             stats: {
               'executeplan.cache-hit-partial.count': 5,
@@ -105,8 +105,8 @@ describe('graphiteDatasource', () => {
               ],
             },
           ],
-        },
-      });
+        })
+      );
 
       expect(result.data.length).toBe(2);
       expect(getFrameDisplayName(result.data[0])).toBe('seriesA');

@@ -89,6 +89,7 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: '{foo="bar"}' });
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
     expect(screen.queryByText(/step/i)).not.toBeInTheDocument();
   });
 
@@ -98,15 +99,16 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
     expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
+    expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
   });
 
-  it('does not shows resolution field if resolution is not set', async () => {
+  it('does not show resolution field if resolution is not set', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
   });
 
-  it('does not shows resolution field if resolution is set to default value 1', async () => {
+  it('does not show resolution field if resolution is set to default value 1', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
@@ -121,8 +123,9 @@ describe('LokiQueryBuilderOptions', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows correct options for metric query with invalid step', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
+  it.each(['abc', 10])('shows correct options for metric query with invalid step', async (step: string | number) => {
+    // @ts-expect-error Expected for backward compatibility test
+    setup({ expr: 'rate({foo="bar"}[5m]', step });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: Invalid value')).toBeInTheDocument();
@@ -134,19 +137,19 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
   });
 
-  it('does not shows error when valid value in step', async () => {
+  it('does not show error when valid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid millisecond value in step', async () => {
+  it('does not show error when valid millisecond value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1ms' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid day value in step', async () => {
+  it('does not show error when valid day value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
@@ -162,9 +165,28 @@ describe('LokiQueryBuilderOptions', () => {
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
   });
+
+  it('allows to clear step input', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4s' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.getByDisplayValue('4s')).toBeInTheDocument();
+    await userEvent.clear(screen.getByDisplayValue('4s'));
+    expect(screen.queryByDisplayValue('4s')).not.toBeInTheDocument();
+  });
+
+  it('should transform non duration numbers to duration', async () => {
+    const onChange = jest.fn();
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4' }, onChange);
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(onChange).toHaveBeenCalledWith({
+      refId: 'A',
+      expr: 'rate({foo="bar"}[5m]',
+      step: '4s',
+    });
+  });
 });
 
-function setup(queryOverrides: Partial<LokiQuery> = {}) {
+function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn()) {
   const props = {
     query: {
       refId: 'A',
@@ -172,7 +194,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),
-    onChange: jest.fn(),
+    onChange,
     maxLines: 20,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
   };

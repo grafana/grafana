@@ -39,7 +39,7 @@ func ProvideService(
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
 		metrics:  newMetrics(reg),
-		nsMapper: request.GetTemporarySingularNamespaceMapper(cfg), // TODO replace with the plural one
+		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
 	authnService.RegisterPostAuthHook(s.hook, 140)
@@ -86,7 +86,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		idClaims := &auth.IDClaims{
-			Claims: &jwt.Claims{
+			Claims: jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  id.GetID(),
@@ -102,10 +102,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		if id.IsIdentityType(claims.TypeUser) {
 			idClaims.Rest.Email = id.GetEmail()
-			idClaims.Rest.EmailVerified = id.IsEmailVerified()
+			idClaims.Rest.EmailVerified = id.GetEmailVerified()
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
-			idClaims.Rest.DisplayName = id.GetDisplayName()
+			idClaims.Rest.DisplayName = id.GetName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)

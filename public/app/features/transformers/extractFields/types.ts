@@ -2,6 +2,7 @@ export enum FieldExtractorID {
   JSON = 'json',
   KeyValues = 'kvp',
   Auto = 'auto',
+  RegExp = 'regexp',
 }
 
 export interface JSONPath {
@@ -11,6 +12,7 @@ export interface JSONPath {
 export interface ExtractFieldsOptions {
   source?: string;
   jsonPaths?: JSONPath[];
+  regExp?: string;
   format?: FieldExtractorID;
   replace?: boolean;
   keepTime?: boolean;

@@ -45,8 +45,8 @@ func WithRequester(handler http.Handler) http.Handler {
 					Login:   info.GetName(),
 					OrgRole: identity.RoleAdmin,
 
-					IsGrafanaAdmin:             true,
-					AllowedKubernetesNamespace: "default",
+					IsGrafanaAdmin: true,
+					Namespace:      "default",
 
 					Permissions: map[int64]map[string][]string{
 						orgId: {

@@ -5,3 +5,4 @@
  */
 export * from './selectors';
 export * from './types';
+export { resolveSelectors } from './resolver';

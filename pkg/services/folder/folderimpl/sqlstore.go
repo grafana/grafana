@@ -201,8 +201,11 @@ func (ss *FolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*f
 		if q.WithFullpath {
 			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
 		}
+		if q.WithFullpathUIDs {
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath_uids`, getFullapathUIDsSQL(ss.db.GetDialect())))
+		}
 		s.WriteString(" FROM folder f0")
-		if q.WithFullpath {
+		if q.WithFullpath || q.WithFullpathUIDs {
 			s.WriteString(getFullpathJoinsSQL())
 		}
 		switch {
@@ -241,6 +244,7 @@ func (ss *FolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQuery) (*f
 	})
 
 	foldr.Fullpath = strings.TrimLeft(foldr.Fullpath, "/")
+	foldr.FullpathUIDs = strings.TrimLeft(foldr.FullpathUIDs, "/")
 	return foldr.WithURL(), err
 }
 

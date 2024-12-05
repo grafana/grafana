@@ -6,6 +6,7 @@ import { NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Input, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 interface UserDTO {
   name: string;
@@ -33,9 +34,9 @@ const UserCreatePage = () => {
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      const { id } = await createUser(data);
+      const { uid } = await createUser(data);
 
-      navigate(`/admin/users/edit/${id}`);
+      navigate(`/admin/users/edit/${uid}`);
     },
     [navigate]
   );
@@ -69,7 +70,9 @@ const UserCreatePage = () => {
               type="password"
             />
           </Field>
-          <Button type="submit">Create user</Button>
+          <Button type="submit">
+            <Trans i18nKey="admin.users-create.create-button">Create user</Trans>
+          </Button>
         </form>
       </Page.Contents>
     </Page>

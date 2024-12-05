@@ -2,7 +2,9 @@ package resource
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -15,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -23,6 +26,7 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
@@ -30,25 +34,29 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
-func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
+	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
 	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
+		&BlobStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -71,8 +79,53 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
+}
+
+func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (ResourceClient, error) {
+	// scenario: remote on-prem
+	clientInt, err := authnlib.NewGrpcClientInterceptor(
+		&authnlib.GrpcClientConfig{},
+		authnlib.WithDisableAccessTokenOption(),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
+}
+
+func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
+	// scenario: remote cloud
+	opts := []authnlib.GrpcClientInterceptorOption{
+		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
+	}
+
+	if allowInsecure {
+		opts = allowInsecureTransportOpt(&cfg, opts)
+	}
+
+	clientInt, err := authnlib.NewGrpcClientInterceptor(&cfg, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
@@ -89,17 +142,22 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	// If no token is found, create an internal token.
 	// This is a workaround for StaticRequester not having a signed ID token.
 	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
-		token, idClaims, err := createInternalToken(staticRequester)
+		token, _, err := createInternalToken(staticRequester)
 		if err != nil {
 			return "", fmt.Errorf("failed to create internal token: %w", err)
 		}
 
 		staticRequester.IDToken = token
-		staticRequester.IDTokenClaims = idClaims
 		return token, nil
 	}
 
 	return "", fmt.Errorf("id-token not found")
+}
+
+func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
+	return append(opts, authnlib.WithTokenClientOption(tokenClient))
 }
 
 // createInternalToken creates a symmetrically signed token for using in in-proc mode only.
@@ -111,29 +169,28 @@ func createInternalToken(authInfo claims.AuthInfo) (string, *authnlib.Claims[aut
 		return "", nil, err
 	}
 
-	identity := authInfo.GetIdentity()
 	now := time.Now()
 	tokenTTL := 10 * time.Minute
 	idClaims := &auth.IDClaims{
-		Claims: &jwt.Claims{
-			Audience: identity.Audience(),
-			Subject:  identity.Subject(),
+		Claims: jwt.Claims{
+			Audience: authInfo.GetAudience(),
+			Subject:  authInfo.GetSubject(),
 			Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 			IssuedAt: jwt.NewNumericDate(now),
 		},
 		Rest: authnlib.IDTokenClaims{
-			Namespace:  identity.Namespace(),
-			Identifier: identity.Identifier(),
-			Type:       identity.IdentityType(),
+			Namespace:  authInfo.GetNamespace(),
+			Identifier: authInfo.GetIdentifier(),
+			Type:       authInfo.GetIdentityType(),
 		},
 	}
 
-	if claims.IsIdentityType(identity.IdentityType(), claims.TypeUser) {
-		idClaims.Rest.Email = identity.Email()
-		idClaims.Rest.EmailVerified = identity.EmailVerified()
-		idClaims.Rest.AuthenticatedBy = identity.AuthenticatedBy()
-		idClaims.Rest.Username = identity.Username()
-		idClaims.Rest.DisplayName = identity.DisplayName()
+	if claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeUser) {
+		idClaims.Rest.Email = authInfo.GetEmail()
+		idClaims.Rest.EmailVerified = authInfo.GetEmailVerified()
+		idClaims.Rest.AuthenticatedBy = authInfo.GetAuthenticatedBy()
+		idClaims.Rest.Username = authInfo.GetUsername()
+		idClaims.Rest.DisplayName = authInfo.GetName()
 	}
 
 	builder := jwt.Signed(signer).Claims(&idClaims.Rest).Claims(idClaims.Claims)

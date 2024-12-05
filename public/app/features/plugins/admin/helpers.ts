@@ -118,6 +118,9 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     status,
     angularDetected,
     keywords,
+    signatureType,
+    versionSignatureType,
+    versionSignedByOrgName,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
@@ -137,6 +140,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     popularity,
     publishedAt,
     signature: getPluginSignature({ remote: plugin, error }),
+    signatureType: signatureType || versionSignatureType || undefined,
+    signatureOrg: versionSignedByOrgName,
     updatedAt,
     hasUpdate: false,
     isPublished: true,

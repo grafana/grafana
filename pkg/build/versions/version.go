@@ -13,15 +13,17 @@ import (
 )
 
 var (
-	reGrafanaTag        = regexp.MustCompile(`^v(\d+\.\d+\.\d+$)`)
-	reGrafanaTagPreview = regexp.MustCompile(`^v(\d+\.\d+\.\d+-preview)`)
-	reGrafanaTagCustom  = regexp.MustCompile(`^v(\d+\.\d+\.\d+-\w+)`)
+	reGrafanaTag         = regexp.MustCompile(`^v(\d+\.\d+\.\d+$)`)
+	reGrafanaTagPreview  = regexp.MustCompile(`^v(\d+\.\d+\.\d+-preview)`)
+	reGrafanaTagCustom   = regexp.MustCompile(`^v(\d+\.\d+\.\d+-\w+)`)
+	reGrafanaTagSecurity = regexp.MustCompile(`^v(\d+\.\d+\.\d+\+\w+\-\d+)`)
 )
 
 const (
-	Latest = "latest"
-	Next   = "next"
-	Test   = "test"
+	Latest   = "latest"
+	Next     = "next"
+	Test     = "test"
+	Security = "security"
 )
 
 type Version struct {
@@ -151,6 +153,11 @@ func GetVersion(tag string) (*Version, error) {
 		version = Version{
 			Version: reGrafanaTagCustom.FindStringSubmatch(tag)[1],
 			Channel: Test,
+		}
+	case reGrafanaTagSecurity.MatchString(tag):
+		version = Version{
+			Version: reGrafanaTagSecurity.FindStringSubmatch(tag)[1],
+			Channel: Security,
 		}
 	default:
 		return nil, fmt.Errorf("%s not a supported Grafana version, exitting", tag)
