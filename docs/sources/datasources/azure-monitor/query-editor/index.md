@@ -161,7 +161,7 @@ You can also augment queries by using [template variables]({{< relref "./templat
    {{% /admonition %}}
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ### Logs query examples
 
