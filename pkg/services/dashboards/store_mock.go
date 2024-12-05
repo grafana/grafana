@@ -18,16 +18,6 @@ type FakeDashboardStore struct {
 	mock.Mock
 }
 
-func (_m *FakeDashboardStore) GetExpressionsFromDashboardPanels(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (_m *FakeDashboardStore) GetExpressionsFromAlertRules(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 // Count provides a mock function with given fields: _a0, _a1
 func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParameters) (*quota.Map, error) {
 	ret := _m.Called(_a0, _a1)

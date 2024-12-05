@@ -16,16 +16,6 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
-func (_m *FakeDashboardService) GetDashboardMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (_m *FakeDashboardService) GetAlertRuleMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 // BuildSaveDashboardCommand provides a mock function with given fields: ctx, dto, validateProvisionedDashboard
 func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error) {
 	ret := _m.Called(ctx, dto, validateProvisionedDashboard)

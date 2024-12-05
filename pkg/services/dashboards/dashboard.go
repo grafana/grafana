@@ -34,8 +34,6 @@ type DashboardService interface {
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
-	GetDashboardMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
-	GetAlertRuleMetricStats(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -70,8 +68,6 @@ type Store interface {
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
-	GetExpressionsFromDashboardPanels(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
-	GetExpressionsFromAlertRules(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)

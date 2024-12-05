@@ -801,14 +801,6 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardMetricStats(ctx context.Context, query *dashboards.GetExtractedExpressionsQuery) ([]*dashboards.ExtractedExpression, error) {
-	return dr.dashboardStore.GetExpressionsFromDashboardPanels(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) GetAlertRuleMetricStats(ctx context.Context, query *dashboards.GetExtractedExpressionsQuery) ([]*dashboards.ExtractedExpression, error) {
-	return dr.dashboardStore.GetExpressionsFromAlertRules(ctx, query)
-}
-
 func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return dr.dashboardStore.CountDashboardsInFolders(ctx, &dashboards.CountDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
 }
