@@ -1,11 +1,10 @@
 import { PanelBuilders, SceneCSSGridItem, SceneCSSGridLayout, sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
+import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
 import { DataTrail } from '../../DataTrail';
 import { MDP_METRIC_PREVIEW, trailDS } from '../../shared';
-import { getColorByIndex } from '../../utils';
-import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
 /**
  * This is an object that represents a collection of RED metrics
