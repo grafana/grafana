@@ -61,7 +61,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const [showTemplateImportForm, setShowTemplateImportForm] = useState(false);
   const [templateDashboards, setTemplateDashboards] = useState([]);
-  const [communityDashboardToImport, setCommunityDashboardToImport] = useState({});
+  const [communityDashboardToImportUID, setCommunityDashboardToImportUID] = useState('');
   const [folder, setFolder] = useState({ uid: '' });
 
   const getCommunityDashboards = async () => {
@@ -86,26 +86,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     getCommunityDashboards();
   }, []);
 
-  const onImportTemplate = useCallback(
-    (gnetUID: string) => {
-      // fetch the dashboard from grafana.com
-
-      getBackendSrv()
-        .get(`/api/gnet/dashboards/${gnetUID}`)
-        .then((dashboard) => {
-          // show the import dashboard form
-          console.log('dashboard from gnet to import', dashboard);
-          setCommunityDashboardToImport(dashboard);
-          setShowTemplateImportForm(true);
-          //set intial folder
-          const searchObj = locationService.getSearchObject();
-
-          const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
-          setFolder(folder);
-        });
-    },
-    [setShowTemplateImportForm]
-  );
+  const onImportTemplate = useCallback((gnetUID: string) => {
+    //show the import dashboard form
+    // change the url to /dashboard/import?gnetUID=123
+    setCommunityDashboardToImportUID(gnetUID);
+    setShowTemplateImportForm(true);
+  }, []);
 
   const onImportDashboardTemplate = useCallback((formData: any) => {
     console.log('formData', formData);
@@ -143,8 +129,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Stack>
             {showTemplateImportForm && (
               <DashboardTemplateImport
-                dashboard={communityDashboardToImport}
-                onImport={onImportDashboardTemplate}
+                dashboardUid={communityDashboardToImportUID}
                 onCancel={onCancelDashboardTemplate}
               />
             )}

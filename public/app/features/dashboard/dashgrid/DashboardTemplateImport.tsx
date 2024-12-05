@@ -1,72 +1,117 @@
-import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
-import { lastValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, Drawer, Form } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { Drawer, Form } from '@grafana/ui';
 import { ImportDashboardForm } from 'app/features/manage-dashboards/components/ImportDashboardForm';
 import { DashboardInputs } from 'app/features/manage-dashboards/state/reducers';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+
+import { InputUsage } from '../components/DashExportModal/DashboardExporter';
 
 export interface Props {
-  dashboard: any; // gnet dashboard
-  onImport: (formData: any) => void;
+  dashboardUid: string; // gnet dashboard uid
   onCancel: () => void;
 }
 
-const DashboardTemplateImport = ({ dashboard, onImport, onCancel }: Props) => {
-  console.log('dashboard', dashboard);
-
+const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
   //from dashboard.json get constants, libraryPanels, and dataSources
 
-  const dashboardJson = dashboard.json;
-  console.log('dashboardJson', dashboardJson);
-
-  const inputs: DashboardInputs = {
+  const defaultInputs: DashboardInputs = {
     constants: [],
     libraryPanels: [],
     dataSources: [],
   };
 
-  const [showTemplateImportForm, setShowTemplateImportForm] = useState(false);
-  const [templateDashboards, setTemplateDashboards] = useState([]);
-  const [communityDashboardToImport, setCommunityDashboardToImport] = useState({});
-
+  const [inputs, setInputs] = useState<DashboardInputs>(defaultInputs);
   const [folder, setFolder] = useState({ uid: '' });
-
-  const getCommunityDashboards = async () => {
-    // fetch dashboards from grafana.com
-    const gnetDashboards = (await lastValueFrom(
-      getBackendSrv()
-        .fetch({
-          url: '/api/gnet/dashboards',
-          method: 'GET',
-          params: {
-            pageSize: 20,
-          },
-        })
-        .pipe(map((res) => res.data))
-    )) as any;
-    setTemplateDashboards(gnetDashboards.items);
-
-    console.log('gnetDashboards', gnetDashboards);
-  };
+  const [communityDashboardToImport, setCommunityDashboardToImport] = useState<any>({});
+  enum InputType {
+    DataSource = 'datasource',
+    Constant = 'constant',
+    LibraryPanel = 'libraryPanel',
+  }
 
   useEffect(() => {
-    getCommunityDashboards();
-  }, []);
+    const processInputs = (dashboard: DashboardJson) => {
+      if (dashboard && dashboard.__inputs) {
+        const inputs: any[] = [];
+        dashboard.__inputs.forEach((input: any) => {
+          const inputModel: any = {
+            name: input.name,
+            label: input.label,
+            info: input.description,
+            value: input.value,
+            type: input.type,
+            pluginId: input.pluginId,
+            options: [],
+          };
+
+          inputModel.description = getDataSourceDescription(input);
+
+          if (input.type === InputType.DataSource) {
+            getDataSourceOptions(input, inputModel);
+          } else if (!inputModel.info) {
+            inputModel.info = 'Specify a string constant';
+          }
+
+          inputs.push(inputModel);
+        });
+        return inputs;
+      }
+      return [];
+    };
+
+    const fetchAndProcessDashboard = async () => {
+      try {
+        const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${dashboardUid}`);
+        const searchObj = locationService.getSearchObject();
+        const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
+
+        setCommunityDashboardToImport(dashboard.json);
+        setFolder(folder);
+        setInputs(processInputs(dashboard.json));
+      } catch (error) {
+        console.error('Failed to fetch dashboard:', error);
+        // Handle error appropriately
+      }
+    };
+
+    fetchAndProcessDashboard();
+  }, [dashboardUid, InputType.DataSource]); // Remove communityDashboardToImport from dependencies
+
+  const getDataSourceDescription = (input: { usage?: InputUsage }): string | undefined => {
+    if (!input.usage) {
+      return undefined;
+    }
+
+    if (input.usage.libraryPanels) {
+      const libPanelNames = input.usage.libraryPanels.reduce(
+        (acc: string, libPanel, index) => (index === 0 ? libPanel.name : `${acc}, ${libPanel.name}`),
+        ''
+      );
+      return `List of affected library panels: ${libPanelNames}`;
+    }
+
+    return undefined;
+  };
+
+  const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, inputModel: any) => {
+    const sources = getDataSourceSrv().getList({ pluginId: input.pluginId });
+
+    if (sources.length === 0) {
+      inputModel.info = 'No data sources of type ' + input.pluginName + ' found';
+    } else if (!inputModel.info) {
+      inputModel.info = 'Select a ' + input.pluginName + ' data source';
+    }
+  };
 
   const onSubmitCommunityDashboard = useCallback((formData: any) => {
     console.log('formData', formData);
   }, []);
 
   const onCancelCommunityDashboard = useCallback(() => {
-    setShowTemplateImportForm(false);
-  }, []);
+    onCancel();
+  }, [onCancel]);
 
   const onUidResetCommunityDashboard = useCallback(() => {
     console.log('uid reset');
