@@ -903,8 +903,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.UseAsTemplateFilter{})
 	}
 
-	filters = append(filters, searchstore.UseAsTemplateFilter{})
-
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
 
