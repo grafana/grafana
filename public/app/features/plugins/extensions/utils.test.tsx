@@ -17,6 +17,7 @@ import {
   getExposedComponentPluginDependencies,
   getAppPluginConfigs,
   getAppPluginIdFromExposedComponentId,
+  getAppPluginDependencies,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -877,6 +878,95 @@ describe('Plugin Extensions / Utils', () => {
       const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
 
       expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
+    });
+  });
+
+  describe('getAppPluginDependencies()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should not end up in an infinite loop if there are circular dependencies', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-third-app/link/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-second-app/link/v1'],
+            },
+          },
+        },
+      };
+
+      const appPluginIds = getAppPluginDependencies('myorg-second-app');
+
+      expect(appPluginIds).toEqual(['myorg-third-app']);
+    });
+
+    test('should not end up in an infinite loop if a plugin depends on itself', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              // Not a valid scenario!
+              // (As this is sometimes happening out in the wild, we thought it's better to also cover it with a test-case.)
+              exposedComponents: ['myorg-second-app/link/v1'],
+            },
+          },
+        },
+      };
+
+      const appPluginIds = getAppPluginDependencies('myorg-second-app');
+
+      expect(appPluginIds).toEqual([]);
     });
   });
 });
