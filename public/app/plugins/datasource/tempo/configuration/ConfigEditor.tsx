@@ -26,9 +26,9 @@ import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { StreamingSection } from './StreamingSection';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
-export type Props = DataSourcePluginOptionsEditorProps;
+export type ConfigEditorProps = DataSourcePluginOptionsEditorProps;
 
-export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
+const ConfigEditor = ({ options, onOptionsChange }: ConfigEditorProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -130,3 +130,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '900px',
   }),
 });
+
+export default ConfigEditor;
