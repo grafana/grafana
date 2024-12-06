@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -358,18 +357,31 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 }
 
 func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID string) response.Response {
+	logger := srv.log.FromContext(c.Req.Context())
+
 	pauseRecordingRules := c.QueryBoolWithDefault("pauseRecordingRules", true)
 	pauseAlerts := c.QueryBoolWithDefault("pauseAlerts", true)
 
 	// 1. Fetch rules from datasource
-	_, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
+	ds, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource by UID")
 	}
 
-	path := "/config/v1/rules" // TODO: Move this somewhere else
+	prefix, err := srv.proxySvc.getPrefixForDatasourceSubtype(c, ds, "mimir")
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("unsupported data source type %s", ds.Type), "")
+	}
+
 	promGroups := map[string][]prom.PrometheusRuleGroup{}
-	resp := srv.proxySvc.requester.withReq(c, http.MethodGet, withPath(*c.Req.URL, path), nil, yamlExtractor(&promGroups), nil)
+	resp := srv.proxySvc.requester.withReq(
+		c,
+		http.MethodGet,
+		withPath(*c.Req.URL, prefix),
+		nil,
+		yamlExtractor(&promGroups),
+		nil,
+	)
 
 	// 2. Convert Prometheus Rules to GMA
 	promGroups = map[string][]prom.PrometheusRuleGroup{}
@@ -456,27 +468,6 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 	}
 
 	return response.JSON(http.StatusAccepted, changes)
-}
-
-func convertAPIToPrometheusModel(group apimodels.RuleGroup) prom.PrometheusRuleGroup {
-	rules := make([]prom.PrometheusRule, 0, len(group.Rules))
-	for _, r := range group.Rules {
-		rule := prom.PrometheusRule{
-			Alert:         r.Name,
-			Expr:          r.Query,
-			For:           gtime.FormatInterval(time.Duration(r.Duration * float64(time.Second))),
-			KeepFiringFor: "", // Unsupported
-			Labels:        r.Labels.Map(),
-			Annotations:   r.Annotations.Map(),
-			Record:        "", // Can we ever have a recording rule here?
-		}
-		rules = append(rules, rule)
-	}
-
-	return prom.PrometheusRuleGroup{
-		Name:  group.Name,
-		Rules: rules,
-	}
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
