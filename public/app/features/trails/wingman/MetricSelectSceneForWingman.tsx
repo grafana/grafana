@@ -74,7 +74,7 @@ export interface MetricSelectSceneForWingmanState extends SceneObjectState {
   wm_display_view?: string;
 }
 
-const ROW_PREVIEW_HEIGHT = '175px';
+const ROW_PREVIEW_HEIGHT = '220px';
 const ROW_CARD_HEIGHT = '64px';
 const METRIC_PREFIX_ALL = 'all';
 

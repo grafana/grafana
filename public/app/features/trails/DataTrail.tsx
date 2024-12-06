@@ -11,7 +11,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, getBackendSrv, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -63,6 +63,7 @@ import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
   trailDS,
+  UsageStats,
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
@@ -100,6 +101,9 @@ export interface DataTrailState extends SceneObjectState {
   // Synced with url
   metric?: string;
   metricSearch?: string;
+
+  // Usage Stats
+  usageStats: UsageStats;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
@@ -127,6 +131,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: true,
+      usageStats: {
+        dashboards: {},
+        alertRules: {},
+      },
       ...state,
     });
 
@@ -311,6 +319,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     }
 
     this.setState(stateUpdate);
+  }
+
+  public async fetchUsageStats() {
+    const usageStats = await getBackendSrv().get<UsageStats>('/api/metric-stats');
+    this.setState({ usageStats });
   }
 
   /**
@@ -653,6 +666,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
       const datasourceHelper = model.datasourceHelper;
       limitAdhocProviders(model, filtersVariable, datasourceHelper);
+      model.fetchUsageStats();
     }, [model]);
 
     return (

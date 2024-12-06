@@ -456,6 +456,9 @@ func (hs *HTTPServer) registerRoutes() {
 		// Folders
 		hs.registerFolderAPI(apiRoute, authorize)
 
+		// Metric Stats
+		apiRoute.Get("/metric-stats", routing.Wrap(hs.GetMetricStats))
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))

@@ -52,6 +52,11 @@ export const MDP_METRIC_OVERVIEW = 500;
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
+export type UsageStats = {
+  alertRules: Record<string, number>;
+  dashboards: Record<string, number>;
+};
+
 export function getVariablesWithMetricConstant(metric: string) {
   return [
     new ConstantVariable({
