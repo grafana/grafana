@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.260.1
+	github.com/grafana/grafana-plugin-sdk-go v0.260.2-0.20241206135145-486df5b73e4e
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -24,7 +24,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/apache/arrow/go/v15 v15.0.2 // indirect
+	github.com/apache/arrow-go/v18 v18.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
@@ -135,7 +135,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
@@ -146,7 +146,6 @@ require (
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
-	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto v0.0.0-20240820151423-278611b39280 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect

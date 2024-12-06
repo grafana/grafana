@@ -31,7 +31,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.33.0 // @grafana/alerting-backend
-	github.com/andybalholm/brotli v1.1.0 // @grafana/partner-datasources
+	github.com/andybalholm/brotli v1.1.1 // @grafana/partner-datasources
 	github.com/apache/arrow/go/v15 v15.0.2 // @grafana/observability-metrics
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
@@ -89,7 +89,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.260.1 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.260.2-0.20241206135145-486df5b73e4e // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
@@ -172,7 +172,7 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.40.0 // @grafana/grafana-app-platform-squad
 	golang.org/x/crypto v0.29.0 // @grafana/grafana-backend-group
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // @grafana/alerting-backend
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
 	golang.org/x/mod v0.22.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.31.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team
@@ -335,7 +335,7 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/karlseguin/ccache/v3 v3.0.5 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -480,6 +480,7 @@ require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
+	github.com/apache/arrow-go/v18 v18.0.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/blevesearch/bleve_index_api v1.1.12 // indirect
 	github.com/blevesearch/geo v0.1.20 // indirect
