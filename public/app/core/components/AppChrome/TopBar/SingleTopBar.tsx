@@ -75,6 +75,7 @@ export const SingleTopBar = memo(function SingleTopBar({
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
         {feedbackEnabled && <ReportIssueButton />}
+        {/* <button onClick={screenshot}>here</button> */}
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
