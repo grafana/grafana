@@ -1,5 +1,4 @@
 import FeedbackPlus from 'feedbackplus';
-// import html2canvas from 'html2canvas';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Dropdown, ToolbarButton, Button, Stack, Menu, Modal } from '@grafana/ui';
@@ -7,9 +6,18 @@ import { Dropdown, ToolbarButton, Button, Stack, Menu, Modal } from '@grafana/ui
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
-// import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
+import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 export interface Props { }
+
+type FeedbackFormData = {
+  message: string,
+  screenshot: string,
+  imageType: string,
+  width: number,
+  height: number,
+  bitmap: HTMLImageElement,
+}
 
 const ScreenShotEditModal = ({
   isOpen,
@@ -17,12 +25,16 @@ const ScreenShotEditModal = ({
   width,
   height,
   feedbackPlus,
+  setFormData,
+  formData
 }: {
   isOpen: boolean;
   bitmap: HTMLImageElement;
   width: number;
   height: number;
   feedbackPlus: any;
+  setFormData: (fd: FeedbackFormData) => void;
+  formData: FeedbackFormData;
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -158,6 +170,20 @@ const ScreenShotEditModal = ({
     drawImage({ bitmap, width, height }, canvasRef);
   }, [bitmap, drawImage, feedbackPlus, height, width]);
 
+  const save = () => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const dataURL = canvas.toDataURL('image/png');
+        const imageData = extractImageTypeAndData(dataURL);
+        if (imageData) {
+          setFormData({ ...formData, screenshot: imageData.data, imageType: imageData.type });
+        }
+      }
+    }
+  }
+
   return (
     <Modal title="title" isOpen={isOpen}>
       <div ref={canvasContainerRef}>
@@ -180,14 +206,14 @@ const ScreenShotEditModal = ({
 
       <Modal.ButtonRow>
         <Button onClick={hide}>{isInEditMode ? "Done" : "Hide"}</Button>
-        <Button>Save</Button>
+        <Button onClick={save}>Save</Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
 const MenuActions = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FeedbackFormData>({
     message: '',
     screenshot: '',
     imageType: '',
@@ -255,6 +281,8 @@ const MenuActions = () => {
           width={formData.width}
           height={formData.height}
           feedbackPlus={feedbackPlus}
+          setFormData={setFormData}
+          formData={formData}
         />
       </div>
     </Menu>
@@ -280,9 +308,7 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 /* 
   TODO:
   - see if we can get annotations to work
-    - fix issue where hidden elements are scrolling and not attached to canvas
-    - save the edited screenshot
-    - fix the offset issue when hiding
+    - fix the offset issue when actively hiding (seems to work when saving?)
     - add a done button for hiding
     - fix the scroll issue inside the widget
     - add a title to the modal
