@@ -16,16 +16,26 @@ labels:
 title: Heatmap
 weight: 100
 refs:
-  introduction-to-histograms-and-heatmaps:
+  intro-histograms-heatmaps:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
+  histograms:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/histogram/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram/
+  dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/
 ---
 
 # Heatmap
 
-Heatmaps allow you to view [histograms](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/) over time. While histograms display the data distribution that falls in a specific value range, heatmaps allow you to identify patterns in the histogram data distribution over time. For more information about heatmaps, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/fundamentals/intro-histograms/).
+Heatmaps allow you to view [histograms](ref:histograms) over time. While histograms display the data distribution that falls in a specific value range, heatmaps allow you to identify patterns in the histogram data distribution over time. For more information about heatmaps, refer to [Introduction to histograms and heatmaps](ref:intro-histograms-heatmaps).
 
 For example, if you want to understand the temperature changes for the past few years, you can use a heatmap visualization to identify trends in your data:
 
@@ -42,7 +52,7 @@ You can use a heatmap visualization if you need to:
 
 ## Configure a heatmap visualization
 
-Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a heatmap visualization:
+Once you’ve created a [dashboard](ref:dashboards), the following video shows you how to configure a heatmap visualization:
 
 {{< youtube id="SGWBzQ54koE" >}}
 
