@@ -35,7 +35,7 @@ import { SpanFilters } from './SpanFilters/SpanFilters';
 
 const VISUALIZATION_OPTIONS: Array<SelectableValue<VisualizationType>> = [
   { label: 'Span List', value: VisualizationType.SpanList, icon: 'list-ui-alt' },
-  { label: 'Flame Graph', value: VisualizationType.FlameChart, icon: 'fire' },
+  { label: 'Flame Chart', value: VisualizationType.FlameChart, icon: 'fire' },
 ];
 
 export type TracePageHeaderProps = {
