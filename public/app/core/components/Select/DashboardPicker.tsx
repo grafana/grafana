@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -58,9 +59,17 @@ export const DashboardPicker = ({
       // We need to fetch dashboard information.
       const res = await getDashboardAPI().getDashboardDTO(value);
 
+
       if (isDashboardResource(res)) {
-        // TODO[schema]: handle v2
-        throw new Error('v2 schema handling not implemented');
+        setCurrent({
+          value: {
+            uid: res.metadata.name,
+            title: res.spec.title,
+            folderTitle: res.metadata.annotations?.[AnnoKeyFolderTitle],
+            folderUid: res.metadata.annotations?.[AnnoKeyFolder],
+          },
+          label: formatLabel(res.metadata.annotations?.[AnnoKeyFolder], res.spec.title),
+        });
       } else {
         if (res.dashboard) {
           setCurrent({
