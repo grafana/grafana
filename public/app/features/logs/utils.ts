@@ -360,7 +360,7 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel) {
   if (!idField) {
     return null;
   }
-  const rowIndex = idField.values.findIndex(id => id === row.rowId);
+  const rowIndex = idField.values.findIndex((id) => id === row.rowId);
   if (rowIndex < 0) {
     return null;
   }
