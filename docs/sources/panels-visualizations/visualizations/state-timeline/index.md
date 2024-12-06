@@ -97,41 +97,51 @@ The data is converted as follows:
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
 
-## Panel options
+## Time series data with thresholds
+
+The visualization can be used with time series data as well. In this case, the thresholds are used to turn the time series into discrete colored state regions.
+
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
+
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## State timeline options
+### State timeline options
 
 Use these options to refine the visualization.
 
-### Merge equal consecutive values
+#### Merge equal consecutive values
 
 Controls whether Grafana merges identical values if they are next to each other.
 
-### Show values
+#### Show values
 
 Controls whether values are rendered inside the state regions. Auto will render values if there is sufficient space.
 
-### Align values
+#### Align values
 
 Controls value alignment inside state regions.
 
-### Row height
+#### Row height
 
 Controls how much space between rows there are. 1 = no space = 0.5 = 50% space.
 
-### Page size (enable pagination)
+#### Page size (enable pagination)
 
 The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. With paginated results, the visualization displays a subset of all series on each page:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
 
-### Line width
+#### Line width
 
 Controls line width of state regions.
 
-### Fill opacity
+#### Fill opacity
 
 Controls the opacity of state regions.
 
@@ -139,38 +149,32 @@ Controls the opacity of state regions.
 
 {{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Time series data with thresholds
-
-The visualization can be used with time series data as well. In this case, the thresholds are used to turn the time series into discrete colored state regions.
-
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
-
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Tooltip options
+### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
