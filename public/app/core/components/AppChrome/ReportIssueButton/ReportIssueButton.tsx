@@ -15,6 +15,8 @@ type FeedbackFormData = {
   screenshot: string;
   imageType: string;
   reporterEmail: string;
+  accessChecked: boolean;
+  contactChecked: boolean;
   width: number;
   height: number;
   bitmap: HTMLImageElement;
@@ -254,16 +256,12 @@ const DrawerContents = ({
       });
   };
 
-  const [accessChecked, setAccessChecked] = useState(false);
-  const [contactChecked, setContactChecked] = useState(false);
-  const handleAccessCheckedChange = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => setAccessChecked(e.currentTarget.checked),
-    [setAccessChecked]
-  );
-  const handleContactCheckedChange = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => setContactChecked(e.currentTarget.checked),
-    [setContactChecked]
-  );
+  const onAccessChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, accessChecked: e.target.checked });
+  };
+  const onContactChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, contactChecked: e.target.checked });
+  };
 
   const onSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -275,8 +273,8 @@ const DrawerContents = ({
       screenshot: formData.screenshot,
       imageType: formData.imageType,
       diagnosticData,
-      canContactReporter: contactChecked,
-      canAccessInstance: accessChecked,
+      canContactReporter: formData.contactChecked,
+      canAccessInstance: formData.accessChecked,
       reporterEmail: formData.reporterEmail,
     };
 
@@ -310,8 +308,8 @@ const DrawerContents = ({
         Tell us what happened:
         <TextArea onChange={onInputChange} placeholder="what did you expect to see?" />
       </Label>
-      <Checkbox label="Can we access your instance?" value={accessChecked} onChange={handleAccessCheckedChange} />
-      <Checkbox label="Can we contact you?" value={contactChecked} onChange={handleContactCheckedChange} />
+      <Checkbox label="Can we access your instance?" value={formData.accessChecked} onChange={onAccessChange} />
+      <Checkbox label="Can we contact you?" value={formData.contactChecked} onChange={onContactChange} />
       <Label>
         If so, what is your email?
         <TextArea onChange={onEmailChange} placeholder="your email" />
@@ -333,6 +331,8 @@ export const ReportIssueButton = ({}: Props) => {
     screenshot: '',
     imageType: '',
     reporterEmail: '',
+    accessChecked: false,
+    contactChecked: false,
     width: 0,
     height: 0,
     bitmap: {} as HTMLImageElement,
