@@ -1,9 +1,20 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { urlUtil, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Spinner, withErrorBoundary, Button, Box, InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
+import {
+  Spinner,
+  withErrorBoundary,
+  Collapse,
+  Button,
+  Box,
+  InlineField,
+  Input,
+  InlineSwitch,
+  useStyles2,
+} from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 
@@ -11,10 +22,13 @@ interface FormValues {
   selectedDatasource: DataSourceInstanceSettings | null;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
+  namespace: string;
+  group: string;
 }
 
 const RuleImporter = () => {
   const styles = useStyles2(getStyles);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
 
   const {
     register,
@@ -29,6 +43,8 @@ const RuleImporter = () => {
       selectedDatasource: null,
       pauseAlertingRules: true,
       pauseRecordingRules: true,
+      namespace: '',
+      group: '',
     },
   });
 
@@ -46,6 +62,8 @@ const RuleImporter = () => {
       const queryParams = new URLSearchParams({
         pauseRecordingRules: String(data.pauseRecordingRules),
         pauseAlerts: String(data.pauseAlertingRules),
+        namespace: data.namespace,
+        group: data.group,
       });
       const url = `/api/ruler/${data.selectedDatasource.uid}/api/v1/rules/convert?${queryParams.toString()}`;
 
@@ -132,6 +150,37 @@ const RuleImporter = () => {
                 onChange={() => setValue('pauseRecordingRules', !pauseRecordingRules, { shouldDirty: true })}
               />
             </InlineField>
+          </Box>
+
+          <Box marginBottom={4} width={100}>
+            <Collapse
+              label="Filters (optional)"
+              collapsible={true}
+              isOpen={advancedFiltersOpen}
+              onToggle={() => setAdvancedFiltersOpen(!advancedFiltersOpen)}
+            >
+              <Box marginBottom={4}>
+                <InlineField
+                  transparent={true}
+                  label="Enter namespace to import"
+                  tooltip="If empty, all namespaces are imported"
+                  labelWidth={30}
+                >
+                  <Input id="group-name" placeholder="Namespace" width={40} {...register('namespace')} />
+                </InlineField>
+              </Box>
+
+              <Box marginBottom={4}>
+                <InlineField
+                  transparent={true}
+                  label="Enter rule group name to import"
+                  tooltip="If empty, all namespaces are imported"
+                  labelWidth={30}
+                >
+                  <Input id="group-name" placeholder="Rule group" width={40} {...register('group')} />
+                </InlineField>
+              </Box>
+            </Collapse>
           </Box>
 
           <Box display="flex" justifyContent="left">

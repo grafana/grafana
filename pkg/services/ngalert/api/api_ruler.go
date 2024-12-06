@@ -360,6 +360,8 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 	pauseRecordingRules := c.QueryBoolWithDefault("pauseRecordingRules", true)
 	pauseAlerts := c.QueryBoolWithDefault("pauseAlerts", true)
+	filterByNamespace := c.Query("namespace")
+	filterByGroupName := c.Query("group")
 
 	// 1. Fetch rules from datasource
 	ds, err := getDatasourceByUID(c, srv.proxySvc.DataProxy.DataSourceCache, apimodels.LoTexRulerBackend)
@@ -391,6 +393,21 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 	grafanaGroups := make([]*ngmodels.AlertRuleGroup, 0, len(promGroups))
 	for ns, rgs := range promGroups {
+		if filterByNamespace != "" && ns != filterByNamespace {
+			logger.Debug("Skipping namespace", "namespace", ns)
+			continue
+		}
+
+		if filterByGroupName != "" {
+			newRgs := make([]prom.PrometheusRuleGroup, 0, len(rgs))
+			for _, rg := range rgs {
+				if rg.Name == filterByGroupName {
+					newRgs = append(newRgs, rg)
+				}
+			}
+			rgs = newRgs
+		}
+
 		srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", ns)
 		namespace, err := srv.store.GetOrCreateNamespaceByTitle(
 			c.Req.Context(),
