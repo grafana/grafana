@@ -95,6 +95,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       datasource: this.state.datasource,
       panel_type: this.state.panel_type,
       starred: this.state.starred ? this.state.starred : null,
+      useAsTemplate: this.state.useAsTemplate ? this.state.useAsTemplate : null,
       sort: this.state.sort,
     });
 
@@ -199,12 +200,13 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   hasSearchFilters() {
     return Boolean(
       this.state.query ||
-        this.state.tag.length ||
-        this.state.starred ||
-        this.state.panel_type ||
-        this.state.sort ||
-        this.state.deleted ||
-        this.state.layout === SearchLayout.List
+      this.state.tag.length ||
+      this.state.starred ||
+      this.state.panel_type ||
+      this.state.sort ||
+      this.state.deleted ||
+      this.state.layout === SearchLayout.List ||
+      this.state.useAsTemplate
     );
   }
 
@@ -220,6 +222,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
       deleted: this.state.deleted,
+      useAsTemplate: this.state.useAsTemplate,
     };
 
     // Only dashboards have additional properties
@@ -254,6 +257,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
       deleted: this.state.deleted,
+      useAsTemplate: this.state.useAsTemplate,
     };
 
     reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);

@@ -39,6 +39,10 @@ interface MoveItemsArgs extends DeleteItemsArgs {
   destinationUID: string;
 }
 
+interface MarkItemsAsTemplateArgs {
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+}
+
 export interface ImportInputs {
   name: string;
   type: string;
@@ -392,6 +396,47 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
+    // mark *multiple* items ( dashboards) as templates. used in the mark as a template modal.
+    markDashboardsAsTemplate: builder.mutation<void, MarkItemsAsTemplateArgs>({
+      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        for (const dashboardUID of selectedDashboards) {
+          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
+
+          const options = {
+            dashboard: fullDash.dashboard,
+            overwrite: true,
+            useAsTemplate: true,
+          };
+
+          const response = await baseQuery({
+            url: `/dashboards/db`,
+            method: 'POST',
+            data: options,
+          });
+
+          // @ts-expect-error
+          const name = response?.data?.title;
+
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [
+                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} marked as a template', { name }),
+              ],
+            });
+          }
+        }
+        return { data: undefined };
+      },
+      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([...selectedDashboards]));
+        });
+      },
+    }),
+
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       query: ({ dashboardUID, targetFolderUID }) => ({
@@ -446,6 +491,7 @@ export const {
   useSaveFolderMutation,
   useRestoreDashboardMutation,
   useHardDeleteDashboardMutation,
+  useMarkDashboardsAsTemplateMutation,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

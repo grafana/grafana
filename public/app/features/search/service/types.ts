@@ -28,6 +28,7 @@ export interface SearchQuery {
   starred?: boolean;
   permission?: PermissionLevelString;
   deleted?: boolean;
+  useAsTemplate?: boolean;
 }
 
 export interface DashboardQueryResult {
