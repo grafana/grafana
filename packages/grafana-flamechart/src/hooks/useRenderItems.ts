@@ -80,11 +80,14 @@ export function useRenderItems<T>(options: UseRenderItemsOptions<T>): RenderCont
     const connectors: Array<ParallelConnector<T>> = [];
 
     const renderItems: Array<RenderItem<T>> = mapTree(operationsWithLevel, (operation) => {
-      const x = Math.max(Math.floor((operation.operation.startMs - fromMs) * pxPerMs), 0);
+      const absX = Math.floor((operation.operation.startMs - fromMs) * pxPerMs);
+      const leftDeltaX = absX < 0 ? -absX : 0;
+      const x = absX < 0 ? 0 : absX;
       const width = Math.min(
-        Math.max(Math.floor(operation.operation.durationMs * pxPerMs), 2),
+        Math.max(Math.floor(operation.operation.durationMs * pxPerMs), 2) - leftDeltaX,
         containerSize.width - x
       );
+
       const y = Math.floor(
         operation.level * (heightPx ?? DEFAULT_HEIGHT_PX) + operation.level * (verticalGapPx ?? DEFAULT_VERTICAL_GAP_PX)
       );

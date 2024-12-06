@@ -4,6 +4,7 @@ import React, { memo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTextColorForBackground, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { getCommonStyles } from './commonStyles';
 import { FlameChartContainer, RenderItem } from './types';
 import { formatDuration } from './utils/date';
 
@@ -13,10 +14,17 @@ const WIDTH_CONTENT_CUTOFF_PX = 100;
 interface NodeProps<T> {
   container: FlameChartContainer<T>;
   renderItem: RenderItem<T>;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+
+  // gray out if unrelated to the focused item
+  deemphasise?: boolean;
 }
 
-function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.ReactElement {
+function FlameChartNodeM<T>(props: NodeProps<T>): React.ReactElement {
+  const { container, renderItem, onMouseEnter, onMouseLeave, deemphasise } = props;
   const styles = useStyles2(getStyles);
+  const commonStyles = useStyles2(getCommonStyles);
   const theme = useTheme2();
   const label = container.getOperationName(renderItem.operation.entity);
 
@@ -45,8 +53,18 @@ function FlameChartNodeM<T>({ container, renderItem }: NodeProps<T>): React.Reac
   const tooltipContent = container.renderNodeTooltip(renderItem.operation.entity, container);
 
   return (
-    <Tooltip content={tooltipContent} placement="auto">
-      <div className={cx(styles.node, isError && styles.error)} style={style}>
+    <Tooltip content={tooltipContent} placement="right">
+      <div
+        className={cx(
+          styles.node,
+          commonStyles.animated,
+          isError && styles.error,
+          deemphasise && commonStyles.deemphasize
+        )}
+        style={style}
+        onMouseOver={onMouseEnter}
+        onMouseOut={onMouseLeave}
+      >
         {isError && renderItem.width >= 32 && <Icon className={styles.errorIcon} name="exclamation-circle" />}
         {renderItem.width >= WIDTH_CONTENT_CUTOFF_PX && (
           <>

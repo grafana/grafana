@@ -14,9 +14,20 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
       return false;
     }
 
-    return ops.some(
-      (otherOp) => fromMs < otherOp.operation.startMs + otherOp.operation.durationMs && toMs > otherOp.operation.startMs
-    );
+    return ops.some((otherOp) => {
+      const result =
+        fromMs < otherOp.operation.startMs + otherOp.operation.durationMs && toMs > otherOp.operation.startMs;
+      console.log(
+        'hasIntersections',
+        fromMs,
+        toMs,
+        level,
+        otherOp,
+        result,
+        otherOp.operation.startMs + otherOp.operation.durationMs
+      );
+      return result;
+    });
   }
 
   function levelIsTopFree(fromMs: number, toMs: number, startLevel: number): boolean {
@@ -47,7 +58,6 @@ export function betterVerticalLayout<T>(operations: Array<Operation<T>>): Array<
       const [fromMs, toMs] = findMaxBoundsLeft(op);
       if (!levelIsTopFree(fromMs, toMs, level)) {
         level = findTopFreeLevel(Math.min(fromMs, parent?.operation.startMs ?? 0), toMs, level + 1) + 1;
-      } else {
       }
     }
 

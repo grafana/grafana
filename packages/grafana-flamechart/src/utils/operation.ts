@@ -24,3 +24,18 @@ export function findMaxBoundsLeft<T>(operation: Operation<T>): [number, number] 
   }
   return [min, max];
 }
+
+export function isRelatedTo<T>(operation: Operation<T>, otherOp: Operation<T>): boolean {
+  return isDescendantOf(operation, otherOp) || isDescendantOf(otherOp, operation);
+}
+
+export function isDescendantOf<T>(operation: Operation<T>, parent: Operation<T>): boolean {
+  let p: Operation<T> | undefined = operation;
+  while (p) {
+    if (p === parent) {
+      return true;
+    }
+    p = p.parent;
+  }
+  return false;
+}
