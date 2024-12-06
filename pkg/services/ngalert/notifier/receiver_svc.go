@@ -836,15 +836,15 @@ func (rs *ReceiverService) PatchReceiverSettings(ctx context.Context, user ident
 				return false, nil
 			}
 			var settings struct {
-				APIUrl  string `json:"onCallApiUrl"`
-				StackId string `json:"stackId"`
+				APIUrl  string      `json:"onCallApiUrl"`
+				StackId json.Number `json:"stackId"`
 			}
 			err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, &settings)
 			if err != nil {
 				return false, err
 			}
 			rcv.Integrations[idx].Settings["api_url"] = settings.APIUrl
-			rcv.Integrations[idx].Settings["stack_id"] = settings.StackId
+			rcv.Integrations[idx].Settings["stack_id"] = settings.StackId.String()
 			rs.log.FromContext(ctx).Debug("Patched OnCall integration settings", "receiver", rcv.Name, "OnCallApi", settings.APIUrl)
 			patched = true
 		default:
