@@ -424,7 +424,7 @@ func (r *githubRepository) getJobsFromPushEvent(ctx context.Context, logger *slo
 	}
 
 	// pushed to "main" branch
-	job := Job{
+	job := &Job{
 		Action: "push",
 		Ref:    r.config.Spec.GitHub.Branch, // checked above!
 	}
@@ -464,8 +464,8 @@ func (r *githubRepository) getJobsFromPushEvent(ctx context.Context, logger *slo
 
 	return &WebhookResponse{
 		Code:    http.StatusAccepted,
-		Jobs:    []Job{job},
 		Message: fmt.Sprintf("%d files", count),
+		Job:     job,
 	}, nil
 }
 
@@ -517,7 +517,7 @@ func (r *githubRepository) getJobsFromPR(ctx context.Context, logger *slog.Logge
 		return nil, fmt.Errorf("list pull request files: %w", err)
 	}
 
-	job := Job{
+	job := &Job{
 		Action: action,
 		Ref:    pr.GetBase().GetRef(),
 		Hash:   pr.GetHead().GetSHA(),
@@ -563,7 +563,7 @@ func (r *githubRepository) getJobsFromPR(ctx context.Context, logger *slog.Logge
 	return &WebhookResponse{
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("%d files to process in the PR", count),
-		Jobs:    []Job{job},
+		Job:     job,
 	}, nil
 }
 

@@ -58,9 +58,13 @@ type FileTreeEntry struct {
 type Job struct {
 	Action string // enum?
 	Ref    string // The branch name
-	PR     int64  // The PR number (github only)
-	URL    string // used in PRs
 	Hash   string // optional SHA
+
+	// Pull request number (when appropriate)
+	PR int64
+
+	// URL to the originator (eg, PR URL)
+	URL string
 
 	Added    []string
 	Modified []string
@@ -74,8 +78,8 @@ type WebhookResponse struct {
 	// Optional message (returned as status)
 	Message string
 
-	// The jobs parsed from this request
-	Jobs []Job
+	// The parsed job (should this be an array?)
+	Job *Job
 }
 
 type Repository interface {

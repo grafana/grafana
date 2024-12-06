@@ -65,7 +65,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	ignoreable := func(p string) bool {
+	ignorable := func(p string) bool {
 		ext := filepath.Ext(p)
 		if ext == "yaml" || ext == "json" {
 			return false
@@ -75,7 +75,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := s.logger.With("repo", name)
-		rsp, err := repo.Webhook(ctx, logger, ignoreable, r)
+		rsp, err := repo.Webhook(ctx, logger, ignorable, r)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -84,16 +84,18 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Error(fmt.Errorf("expecting a response"))
 			return
 		}
-		if len(rsp.Jobs) > 0 {
-			// TODO Async process the jobs!!
+		if rsp.Job != nil {
+			// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
+			// TODO: Async process the jobs!!
 			ctx := identity.WithRequester(context.Background(), id)
+			ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+			defer cancel()
+
 			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			for _, job := range rsp.Jobs {
-				err := repo.Process(ctx, logger, job, factory)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
+			err := repo.Process(ctx, logger, *rsp.Job, factory)
+			if err != nil {
+				responder.Error(err)
+				return
 			}
 		}
 		responder.Object(rsp.Code, &metav1.Status{
