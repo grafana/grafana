@@ -286,11 +286,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
   getUrlState(): SceneObjectUrlValues {
     const { metric, metricSearch, showPreviews } = this.state;
-    console.log('getUrlState', { showPreviews });
     return {
       metric,
       metricSearch,
-      ...(showPreviews === false ? { showPreviews: 'false' } : { showPreviews: null }),
+      ...{ showPreviews: showPreviews === false ? 'false' : null },
     };
   }
 
@@ -314,11 +313,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     if (typeof values.showPreviews === 'string') {
       stateUpdate.showPreviews = values.showPreviews !== 'false';
-    } else {
-      console.log('somehow it is not a string');
     }
-
-    console.log('updateFromUrl', { showPreviews: values.showPreviews });
 
     this.setState(stateUpdate);
   }
