@@ -77,7 +77,6 @@ export const ReportIssueButton = () => {
   TODO:
   - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
   - make dropdown cooler looking
-  - add a cancel button to delete screenshot if the user doesn't like it
   - make this file easier to look at without crying, add prop types, fix "any" types
   - add a highlight feature
   - let user make multiple edits to a screenshot (you can kind of do this already by saving and editing multiple times)
