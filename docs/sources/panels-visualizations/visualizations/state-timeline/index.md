@@ -34,7 +34,7 @@ A state timeline visualization displays data in a way that shows state changes o
 
 For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “LOW,” “NORMAL,” “HIGH,” or “CRITICAL,” over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline visualization showing CPU usage" >}}
+![A state timeline visualization showing CPU usage](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-v11.4.png)
 
 The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you need to:
 
@@ -62,7 +62,7 @@ Each state ends when the next state begins or when there is a `null` value.
 
 The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
 
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" alt="State timeline with time series" >}}
+![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
 
 ### Example 1
 
@@ -82,7 +82,7 @@ The following table is one example of the type of data you need for a state time
 | 2024-02-29 10:00:00 | Down     | Down     |
 | 2024-02-29 10:30:00 | Warning  | Down     |
 
-The data is converted as follows, with the [null and empty values visualized as gaps](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/#connect-null-values) in the state timeline:
+The data is converted as follows, with the [null and empty values visualized as gaps](#connect-null-values) in the state timeline:
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline visualization with null values showing the status of two servers" >}}
 
@@ -165,8 +165,6 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
-
 ### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -175,7 +173,7 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
 
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" alt="State timeline with time series" >}}
+![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
 
 ### Field overrides
 
