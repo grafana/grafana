@@ -443,8 +443,8 @@ export class MetricSelectSceneForWingman
     switch (displayAs) {
       case 'red_metrics':
         console.log('red metrics will be rendered');
-        children.push(...renderAsRedMetricsDisplay());
-        this.state.body.setState({ children, autoRows: rowTemplate });
+        const redChildren = await renderAsRedMetricsDisplay(trail, ROW_PREVIEW_HEIGHT);
+        this.state.body.setState({ children: redChildren, templateColumns: '1fr', autoRows: 'auto', rowGap: 2 });
         return;
       case 'anomalies':
         console.log('anomalies will be rendered');
@@ -453,6 +453,7 @@ export class MetricSelectSceneForWingman
           children: [new AnomaliesScene({})],
           autoRows: rowTemplate,
           templateColumns: undefined,
+          rowGap: 1, // to reset the row gap which is changed in RED metrics
         });
         return;
       case 'default':
@@ -527,7 +528,12 @@ export class MetricSelectSceneForWingman
       }
     }
 
-    this.state.body.setState({ children, autoRows: rowTemplate });
+    this.state.body.setState({ 
+      children, 
+      autoRows: rowTemplate, 
+      templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', // reset because of red metrics changing this
+      rowGap: 1, // reset because of red metrics changing this
+    });
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
