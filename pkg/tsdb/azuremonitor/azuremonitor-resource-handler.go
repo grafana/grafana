@@ -121,8 +121,8 @@ func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
 	errorBody := map[string]string{
 		"error": msg,
 	}
-	json, _ := json.Marshal(errorBody)
-	_, err := rw.Write(json)
+	jsonRes, _ := json.Marshal(errorBody)
+	_, err := rw.Write(jsonRes)
 	if err != nil {
 		backend.Logger.Error("Unable to write HTTP response", "error", err)
 	}
