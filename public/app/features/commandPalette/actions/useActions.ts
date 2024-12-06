@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { useSelector } from 'app/types';
@@ -14,29 +14,25 @@ const userPreferencesService = new PreferencesService('user');
 const RECENT_ACTIONS_LS_KEY = 'grafana.command-palette.recent-actions';
 const RECENT_ACTIONS_LIMIT = 20;
 
-export default function useActions(searchQuery: string) {
+const getRecentActionsFromAllActions = (allActions: CommandPaletteAction[]): CommandPaletteAction[] => {
+  const recentActionIdsInLocalStorage = localStorage.getItem(RECENT_ACTIONS_LS_KEY);
+  const jsonParsedRecentActions: string[] = recentActionIdsInLocalStorage
+    ? JSON.parse(recentActionIdsInLocalStorage)
+    : [];
+  const newRecentActions = allActions.filter((action) => jsonParsedRecentActions.includes(action.id));
+  return newRecentActions.slice(0, RECENT_ACTIONS_LIMIT);
+};
+
+export default function useActions(searchQuery: string, showing: boolean) {
   const [staticActions, setStaticActions] = useState<CommandPaletteAction[]>([]);
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
   const [userDefinedActions, setUserDefinedActions] = useState<CommandPaletteAction[]>([]);
-  const [recentActions, setRecentActions] = useState<CommandPaletteAction[]>([]);
+  const [isFechingUserDefinedActions, setIsFetchingUserDefinedActions] = useState(true);
   const extensionActions = useExtensionActions();
 
   const navBarTree = useSelector((state) => state.navBarTree);
 
-  const ingestRecentActionsFromAllActions = (allActions: CommandPaletteAction[]): void => {
-    const recentActionIdsInLocalStorage = localStorage.getItem(RECENT_ACTIONS_LS_KEY);
-    const jsonParsedRecentActions: string[] = recentActionIdsInLocalStorage
-      ? JSON.parse(recentActionIdsInLocalStorage)
-      : [];
-    const newRecentActions = allActions.filter((action) => jsonParsedRecentActions.includes(action.id));
-
-    setRecentActions(newRecentActions);
-  };
-
-  const allSearchableActions = useMemo(
-    () => [...userDefinedActions, ...recentDashboardActions, ...staticActions],
-    [staticActions, recentDashboardActions, userDefinedActions]
-  );
+  const allSearchableActions = [...userDefinedActions, ...recentDashboardActions, ...staticActions];
 
   // Load standard static actions
   useEffect(() => {
@@ -55,29 +51,34 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  // Load user defined actions
+  const fetchUserDefinedActions = async () => {
+    setIsFetchingUserDefinedActions(true);
+    const { customCommands = [] } = await userPreferencesService.load();
+    setUserDefinedActions(
+      customCommands.map((command) => ({
+        id: command.ID,
+        name: command.title,
+        url: command.path,
+        parent: '',
+        children: [],
+        ancestors: [],
+        priority: 1,
+        shortcut: command.shortcut,
+        section: 'Mine',
+      }))
+    );
+    setIsFetchingUserDefinedActions(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      const { customCommands = [] } = await userPreferencesService.load();
-      setUserDefinedActions(
-        customCommands.map((command) => ({
-          id: command.ID,
-          name: command.title,
-          url: command.path,
-          parent: '',
-          children: [],
-          ancestors: [],
-          priority: 1,
-          shortcut: command.shortcut,
-          section: 'Mine',
-        }))
-      );
-    })();
+    fetchUserDefinedActions();
   }, []);
 
   useEffect(() => {
-    ingestRecentActionsFromAllActions(allSearchableActions);
-  }, [allSearchableActions]);
+    if (showing) {
+      fetchUserDefinedActions();
+    }
+  }, [showing]);
 
   const setNewRecentAction = (id: string) => {
     const foundAction = allSearchableActions.find((action) => action.id === id);
@@ -87,17 +88,20 @@ export default function useActions(searchQuery: string) {
       return;
     }
 
-    const newRecentActions = [foundAction, ...recentActions.filter((action) => action.id !== id)];
+    const newRecentActions = [
+      foundAction,
+      ...getRecentActionsFromAllActions(allSearchableActions).filter((action) => action.id !== id),
+    ];
     localStorage.setItem(RECENT_ACTIONS_LS_KEY, JSON.stringify(newRecentActions.map((action) => action.id)));
-    setRecentActions(newRecentActions.slice(0, RECENT_ACTIONS_LIMIT));
   };
 
   return {
     allSearchableActions,
     userDefinedActions,
-    recentActions,
+    recentActions: getRecentActionsFromAllActions(allSearchableActions),
     setNewRecentAction,
     extensionActions,
     staticActions,
+    isFechingUserDefinedActions,
   };
 }

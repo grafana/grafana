@@ -23,20 +23,12 @@ import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
 import { useDashboardsAndFoldersSearchResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
-import { CommandPaletteAction } from './types';
+import { COMMAND_PALETTE_TABS, CommandPaletteAction, CommandPaletteActiveTab } from './types';
 import { useMatches } from './useMatches';
 import { getCommandPalettePosition, getFilteredKbarResultsBasedOnCommandPaletteActions } from './utils';
 
-type ActiveTab = 'recent' | 'mine' | 'all';
-
-const TABS: Array<{ label: string; key: ActiveTab }> = [
-  { label: 'Recent', key: 'recent' },
-  { label: 'Mine', key: 'mine' },
-  { label: 'All', key: 'all' },
-];
-
 export function CommandPalette() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('recent');
+  const [activeTab, setActiveTab] = useState<CommandPaletteActiveTab>('recent');
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
@@ -45,7 +37,9 @@ export function CommandPalette() {
     searchQuery: state.searchQuery,
   }));
 
-  const { allSearchableActions, userDefinedActions, recentActions, setNewRecentAction } = useActions(searchQuery);
+  const { allSearchableActions, userDefinedActions, recentActions, setNewRecentAction, isFechingUserDefinedActions } =
+    useActions(searchQuery, showing);
+
   useRegisterActions(allSearchableActions, [allSearchableActions]);
   const { searchResults, isFetchingSearchResults } = useDashboardsAndFoldersSearchResults(searchQuery, showing);
 
@@ -59,7 +53,9 @@ export function CommandPalette() {
 
   // Report interaction when opened
   useEffect(() => {
-    showing && reportInteraction('command_palette_opened');
+    if (showing) {
+      reportInteraction('command_palette_opened');
+    }
   }, [showing]);
 
   return allSearchableActions.length > 0 ? (
@@ -81,7 +77,7 @@ export function CommandPalette() {
               </div>
               <div className={styles.resultsContainer}>
                 <TabsBar>
-                  {TABS.map((tab) => (
+                  {COMMAND_PALETTE_TABS.map((tab) => (
                     <Tab
                       key={tab.key}
                       label={tab.label}
@@ -96,21 +92,20 @@ export function CommandPalette() {
                   {activeTab === 'recent' && (
                     <FlatKbarResults
                       commandPaletteActions={['Actions', ...recentActions]}
-                      isFetchingSearchResults={isFetchingSearchResults}
+                      isLoading={isFechingUserDefinedActions}
                       setRecentAction={setNewRecentAction}
                     />
                   )}
                   {activeTab === 'mine' && (
                     <FlatKbarResults
                       commandPaletteActions={['Actions', ...userDefinedActions]}
-                      isFetchingSearchResults={isFetchingSearchResults}
+                      isLoading={isFechingUserDefinedActions}
                       setRecentAction={setNewRecentAction}
                     />
                   )}
-
                   {activeTab === 'all' && (
                     <KbarResults
-                      isFetchingSearchResults={isFetchingSearchResults}
+                      isLoading={isFetchingSearchResults || isFechingUserDefinedActions}
                       commandPaletteActions={[...allSearchableActions, ...searchResults]}
                       setRecentAction={setNewRecentAction}
                     />
@@ -126,12 +121,12 @@ export function CommandPalette() {
 }
 
 interface RenderResultsProps {
-  isFetchingSearchResults: boolean;
+  isLoading: boolean;
   commandPaletteActions: Array<CommandPaletteAction | string>;
   setRecentAction?: (id: string) => void;
 }
 
-const KbarResults = ({ isFetchingSearchResults, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
+const KbarResults = ({ isLoading, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
   const { results: kbarResults } = useMatches();
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
@@ -161,32 +156,30 @@ const KbarResults = ({ isFetchingSearchResults, commandPaletteActions, setRecent
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
-  const showEmptyState = !isFetchingSearchResults && items.length === 0;
-
-  return <Results items={items} showEmptyState={showEmptyState} onResultClick={setRecentAction} />;
+  return <Results items={items} isLoading={isLoading} onResultClick={setRecentAction} />;
 };
 
-const FlatKbarResults = ({ isFetchingSearchResults, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
+const FlatKbarResults = ({ isLoading, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
   const { results: kbarResults } = useMatches();
   const filteredResults = getFilteredKbarResultsBasedOnCommandPaletteActions(kbarResults, commandPaletteActions);
 
-  const showEmptyState = !isFetchingSearchResults && filteredResults.length === 0;
-
-  return <Results items={filteredResults} showEmptyState={showEmptyState} onResultClick={setRecentAction} />;
+  return <Results items={filteredResults} isLoading={isLoading} onResultClick={setRecentAction} />;
 };
 
 const Results = ({
   items,
-  showEmptyState,
+  isLoading,
   onResultClick,
 }: {
   items: ComponentProps<typeof KBarResults>['items'];
-  showEmptyState?: boolean;
+  isLoading?: boolean;
   onResultClick?: (id: string) => void;
 }) => {
   const { rootActionId } = useMatches();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
+
+  const showEmptyState = !isLoading && items.length === 0;
 
   return showEmptyState ? (
     <EmptyState
