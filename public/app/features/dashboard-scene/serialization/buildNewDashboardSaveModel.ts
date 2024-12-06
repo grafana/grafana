@@ -10,13 +10,14 @@ import {
   GroupByVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 export async function buildNewDashboardSaveModel(
   urlFolderUid?: string
-): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
+): Promise<DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>> {
   if (config.featureToggles.useV2DashboardsAPI) {
     return buildNewDashboardSaveModelV2(urlFolderUid);
   }
@@ -24,7 +25,7 @@ export async function buildNewDashboardSaveModel(
   return buildNewDashboardSaveModelV1(urlFolderUid);
 }
 
-export async function buildNewDashboardSaveModelV1(urlFolderUid?: string): Promise<DashboardDTO> {
+export async function buildNewDashboardSaveModelV1(urlFolderUid?: string) {
   let variablesList = defaultDashboard.templating?.list;
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
@@ -81,7 +82,7 @@ export async function buildNewDashboardSaveModelV1(urlFolderUid?: string): Promi
     data.meta.folderUid = urlFolderUid;
   }
 
-  return data;
+  return ResponseTransformers.transformDashboardDTOToDashboardWithAccessInfo(data);
 }
 
 export async function buildNewDashboardSaveModelV2(

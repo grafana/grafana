@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, Dashboard, DataQuery, Panel, VariableModel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -14,6 +14,9 @@ import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashb
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyFolderId,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -31,6 +34,44 @@ import { DashboardDataDTO, DashboardDTO } from 'app/types';
 import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV2Spec } from './utils';
 
+export function transformDashboardDTOToDashboardWithAccessInfo(
+  dto: DashboardDTO
+): DashboardWithAccessInfo<DashboardDataDTO> {
+  const response: DashboardWithAccessInfo<DashboardDataDTO> = {
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'legacy',
+    metadata: {
+      creationTimestamp: dto.meta.created!,
+      name: dto.dashboard.uid,
+      resourceVersion: String(dto.dashboard.version || 0),
+      annotations: {
+        [AnnoKeyCreatedBy]: dto.meta.createdBy,
+        [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
+        [AnnoKeyUpdatedBy]: dto.meta.updatedBy,
+        [AnnoKeySlug]: dto.meta.slug,
+        [AnnoKeyFolder]: dto.meta.folderUid,
+        [AnnoKeyFolderTitle]: dto.meta.folderTitle,
+        [AnnoKeyFolderUrl]: dto.meta.folderUrl,
+        [AnnoKeyFolderId]: dto.meta.folderId,
+      },
+    },
+    spec: dto.dashboard,
+    access: {
+      slug: dto.meta.slug,
+      url: dto.meta.url,
+      canAdmin: dto.meta.canAdmin,
+      canDelete: dto.meta.canDelete,
+      canEdit: dto.meta.canEdit,
+      canSave: dto.meta.canSave,
+      canShare: dto.meta.canShare,
+      canStar: dto.meta.canStar,
+      annotationsPermissions: dto.meta.annotationsPermissions,
+    },
+  };
+
+  return response;
+}
+
 export function transformV1ToV2(
   dto: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
@@ -45,6 +86,44 @@ export function transformV1ToV2(
     return dto;
   }
 
+  return {
+    ...dto,
+    spec: transformV1SpecToV2Spec(spec),
+  };
+}
+
+export function transformV2ToV1(dashboard: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO): DashboardDTO {
+  if (!isDashboardResource(dashboard)) {
+    return dashboard;
+  }
+
+  const spec = dashboard.spec;
+
+  return {
+    meta: {
+      created: dashboard.metadata.creationTimestamp,
+      createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
+      updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+      updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
+      folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
+      slug: dashboard.metadata.annotations?.[AnnoKeySlug],
+      url: dashboard.access.url,
+      canAdmin: dashboard.access.canAdmin,
+      canDelete: dashboard.access.canDelete,
+      canEdit: dashboard.access.canEdit,
+      canSave: dashboard.access.canSave,
+      canShare: dashboard.access.canShare,
+      canStar: dashboard.access.canStar,
+      annotationsPermissions: dashboard.access.annotationsPermissions,
+    },
+    dashboard: {
+      ...transformV2SpecToV1Spec(dashboard.metadata.name, spec),
+      version: parseInt(dashboard.metadata.resourceVersion, 10),
+    },
+  };
+}
+
+export function transformV1SpecToV2Spec(spec: DashboardDataDTO): DashboardV2Spec {
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
   const [elements, layout] = getElementsFromPanels(spec.panels || []);
@@ -79,83 +158,55 @@ export function transformV1ToV2(
     layout,
   };
 
-  return {
-    ...dto,
-    spec: result,
-  };
+  return result;
 }
 
-export function transformV2ToV1(dashboard: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO): DashboardDTO {
-  if (!isDashboardResource(dashboard)) {
-    return dashboard;
-  }
-
-  const spec = dashboard.spec;
-
+export function transformV2SpecToV1Spec(uid: string, spec: DashboardV2Spec): DashboardDataDTO {
   return {
-    meta: {
-      created: dashboard.metadata.creationTimestamp,
-      createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
-      updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-      updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
-      folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
-      slug: dashboard.metadata.annotations?.[AnnoKeySlug],
-      url: dashboard.access.url,
-      canAdmin: dashboard.access.canAdmin,
-      canDelete: dashboard.access.canDelete,
-      canEdit: dashboard.access.canEdit,
-      canSave: dashboard.access.canSave,
-      canShare: dashboard.access.canShare,
-      canStar: dashboard.access.canStar,
-      annotationsPermissions: dashboard.access.annotationsPermissions,
+    uid,
+    title: spec.title,
+    description: spec.description,
+    tags: spec.tags,
+    schemaVersion: spec.schemaVersion,
+    graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
+    preload: spec.preload,
+    liveNow: spec.liveNow,
+    editable: spec.editable,
+    time: {
+      from: spec.timeSettings.from,
+      to: spec.timeSettings.to,
     },
-    dashboard: {
-      uid: dashboard.metadata.name,
-      title: spec.title,
-      description: spec.description,
-      tags: spec.tags,
-      schemaVersion: spec.schemaVersion,
-      graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
-      preload: spec.preload,
-      liveNow: spec.liveNow,
-      editable: spec.editable,
-      time: {
-        from: spec.timeSettings.from,
-        to: spec.timeSettings.to,
-      },
-      timezone: spec.timeSettings.timezone,
-      refresh: spec.timeSettings.autoRefresh,
-      timepicker: {
-        refresh_intervals: spec.timeSettings.autoRefreshIntervals,
-        hidden: spec.timeSettings.hideTimepicker,
-        time_options: spec.timeSettings.quickRanges,
-        nowDelay: spec.timeSettings.nowDelay,
-      },
-      fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
-      weekStart: spec.timeSettings.weekStart,
-      version: parseInt(dashboard.metadata.resourceVersion, 10),
-      links: spec.links,
-      // TODO[schema v2]: handle annotations
-      annotations: { list: [] },
-      // TODO[schema v2]: handle panels
-      panels: [],
-      // TODO[schema v2]: handle variables
-      templating: {
-        list: [],
-      },
-      // TODO[schema v2]: handle id
-      // id: 0,
-      // TODO[schema v2]: handle revision
-      // revision: 0,
-      // TODO[schema v2]: handle variables
-      // gnetId
+    timezone: spec.timeSettings.timezone,
+    refresh: spec.timeSettings.autoRefresh,
+    timepicker: {
+      refresh_intervals: spec.timeSettings.autoRefreshIntervals,
+      hidden: spec.timeSettings.hideTimepicker,
+      time_options: spec.timeSettings.quickRanges,
+      nowDelay: spec.timeSettings.nowDelay,
     },
+    fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
+    weekStart: spec.timeSettings.weekStart,
+    links: spec.links,
+    // TODO[schema v2]: handle annotations
+    annotations: { list: [] },
+    // TODO[schema v2]: handle panels
+    panels: [],
+    // TODO[schema v2]: handle variables
+    templating: {
+      list: [],
+    },
+    // TODO[schema v2]: handle id
+    // id: 0,
+    // TODO[schema v2]: handle revision
+    // revision: 0,
+    // TODO[schema v2]: handle variables
+    // gnetId
   };
 }
-
 export const ResponseTransformers = {
   transformV1ToV2,
   transformV2ToV1,
+  transformDashboardDTOToDashboardWithAccessInfo,
 };
 
 // TODO[schema v2]: handle rows
