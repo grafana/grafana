@@ -130,6 +130,11 @@ For more information on span details, refer to [Traces in Explore](https://grafa
 
 ![Selecting a trace ID or a span to view span details](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-span-details-v11.png)
 
+Querying spansets with a large number of spans can negatively impact performance.
+You can use the **Span Limit** field in **Options** section of the TraceQL query editor.
+This field sets the maximum number of spans to return for each span set.
+If the **Span Limit** is set to `0`, then the capability is disabled.
+
 ### Focus on traces or spans
 
 Under **Options**, you can choose to display the table as **Traces** or **Spans** focused.
