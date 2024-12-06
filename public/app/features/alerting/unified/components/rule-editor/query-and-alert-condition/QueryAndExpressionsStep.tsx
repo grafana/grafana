@@ -183,7 +183,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     expressionQueries
   );
 
-  const simplifiedQueryStep = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') : false;
+  const simplifiedQueryStep =
+    isSwitchModeEnabled && isGrafanaAlertingType ? getValues('editorSettings.simplifiedQueryEditor') : false;
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
