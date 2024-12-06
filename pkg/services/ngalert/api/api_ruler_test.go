@@ -785,6 +785,59 @@ func TestRoutePostRulesGroupConvert(t *testing.T) {
 		require.Len(t, rules, 3)
 		// TODO: Check the actual content of the rules match
 	})
+
+	t.Run("successfully converts empty rule group", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		rulerService := createService(ruleStore)
+
+		permissions := createPermissionsToImportPrometheusRules(orgID)
+		req := createRequestContextWithPerms(orgID, permissions, nil)
+
+		fakeDatasource := &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType}
+		requestMock := RequestMock{}
+		defer requestMock.AssertExpectations(t)
+
+		ruleGroup1 := prom.PrometheusRuleGroup{
+			Name:     "test-group-1",
+			Interval: "1m",
+			Rules:    []prom.PrometheusRule{},
+		}
+
+		proxyResp, err := json.Marshal(map[string][]prom.PrometheusRuleGroup{
+			"namespace1": {ruleGroup1},
+		})
+		require.NoError(t, err)
+
+		requestMock.On(
+			"withReq",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(response.JSON(200, proxyResp))
+
+		// Setup Proxy.
+		proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: fakeDatasource}}}
+		rulerService.proxySvc = &LotexRuler{log.NewNopLogger(), proxy, &requestMock}
+
+		response := rulerService.RoutePostRulesGroupConvert(req, fakeDatasource.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		var resp apimodels.UpdateRuleGroupResponse
+		require.NoError(t, json.Unmarshal(response.Body(), &resp))
+		require.Len(t, resp.Created, 0)
+		require.Len(t, resp.Updated, 0)
+		require.Len(t, resp.Deleted, 0)
+
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 0)
+	})
 }
 
 func createServiceWithProvenanceStore(store *fakes.RuleStore, provenanceStore provisioning.ProvisioningStore) *RulerSrv {

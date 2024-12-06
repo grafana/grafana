@@ -468,7 +468,7 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 				})
 			}
 
-			srv.log.FromContext(ctx).Info("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "rule_count", len(rules), "datasource_uid", grafanaGroup.Rules[0].Data[0].DatasourceUID)
+			srv.log.FromContext(ctx).Info("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", grafanaGroup.FolderUID, "rule_count", len(rules), "datasource_uid", dsUID)
 			var gc *apimodels.UpdateRuleGroupResponse
 			gc, errResponse = srv.updateAlertRulesInGroup(ctx, c, groupKey, rules)
 			if errResponse == nil {
