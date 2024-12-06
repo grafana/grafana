@@ -8,11 +8,13 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
+import { AnnoKeyDashboardNotFound, AnnoKeyFromScript, AnnoKeyIsSnapshot, AnnoKeyPublicDashboardEnabled } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
 
@@ -21,19 +23,29 @@ import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
 export class DashboardLoaderSrv {
   constructor() {}
-  _dashboardLoadFailed(title: string, snapshot?: boolean): DashboardDTO {
+  _dashboardLoadFailed(title: string, snapshot?: boolean): DashboardWithAccessInfo<DashboardDataDTO> {
     snapshot = snapshot || false;
     return {
-      meta: {
+      apiVersion: 'legacy',
+      kind: 'DashboardWithAccessInfo',
+      access: {
         canStar: false,
-        isSnapshot: snapshot,
         canDelete: false,
         canSave: false,
         canEdit: false,
-        canShare: false,
-        dashboardNotFound: true,
+        canShare: false
       },
-      dashboard: { title, uid: title, schemaVersion: 0 },
+      metadata: {
+        annotations: {
+          [AnnoKeyIsSnapshot]: snapshot,
+          [AnnoKeyDashboardNotFound]: true
+        },
+        creationTimestamp: '',
+        name: title,
+        resourceVersion: '0',
+        // dashboardNotFound: true,
+      },
+      spec: { title, uid: title, schemaVersion: 0 },
     };
   }
 
@@ -42,15 +54,18 @@ export class DashboardLoaderSrv {
     slug: string | undefined,
     uid: string | undefined,
     params?: UrlQueryMap
-  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>> {
     const stateManager = getDashboardScenePageStateManager();
-    let promise: Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
+    let promise: Promise<DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>>;
 
     if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv()
         .getSnapshot(slug)
+        .then((result) => {
+          return ResponseTransformers.transformDashboardDTOToDashboardWithAccessInfo(result);
+        })
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
@@ -58,7 +73,7 @@ export class DashboardLoaderSrv {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
         .then((result) => {
-          return result;
+          return ResponseTransformers.transformDashboardDTOToDashboardWithAccessInfo(result);
         })
         .catch((e) => {
           const isPublicDashboardPaused =
@@ -72,14 +87,27 @@ export class DashboardLoaderSrv {
             isPublicDashboardPaused ? 'Public Dashboard paused' : 'Public Dashboard Not found',
             true
           );
-          return {
-            ...dashboardModel,
-            meta: {
-              ...dashboardModel.meta,
-              publicDashboardEnabled: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused,
-              dashboardNotFound: isPublicDashboardNotFound || isDashboardNotFound,
-            },
-          };
+
+          if(dashboardModel.metadata.annotations){  
+            dashboardModel.metadata.annotations[AnnoKeyDashboardNotFound] = isPublicDashboardNotFound || isDashboardNotFound;
+            dashboardModel.metadata.annotations[AnnoKeyPublicDashboardEnabled] = isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused;
+          } else {
+            dashboardModel.metadata.annotations = {
+              [AnnoKeyDashboardNotFound]: isPublicDashboardNotFound || isDashboardNotFound,
+              [AnnoKeyPublicDashboardEnabled]: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused, 
+            }
+          }
+
+          return dashboardModel
+
+          // return {
+          //   ...dashboardModel,
+          //   meta: {
+          //     ...dashboardModel.meta,
+          //     publicDashboardEnabled: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused,
+          //     dashboardNotFound: isPublicDashboardNotFound || isDashboardNotFound,
+          //   },
+          // };
         });
     } else if (uid) {
       if (!params) {
@@ -93,7 +121,7 @@ export class DashboardLoaderSrv {
         .getDashboardDTO(uid, params)
         .catch(() => {
           const dash = this._dashboardLoadFailed('Not found', true);
-          dash.dashboard.uid = '';
+          dash.metadata.name = '';
           return dash;
         });
     } else {
@@ -109,7 +137,7 @@ export class DashboardLoaderSrv {
     return promise;
   }
 
-  _loadScriptedDashboard(file: string): Promise<DashboardDTO> {
+  _loadScriptedDashboard(file: string): Promise<DashboardWithAccessInfo<DashboardDataDTO>> {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
@@ -117,15 +145,31 @@ export class DashboardLoaderSrv {
       .then(this._executeScript.bind(this))
       .then(
         (result: any) => {
-          return {
-            meta: {
-              fromScript: true,
-              canDelete: false,
-              canSave: false,
-              canStar: false,
-            },
-            dashboard: result.data,
-          };
+
+          const dashboard = ResponseTransformers.transformDashboardDTOToDashboardWithAccessInfo(result)
+
+          dashboard.access.canDelete = false;
+          dashboard.access.canSave = false;
+          dashboard.access.canStar = false;
+
+          if(dashboard.metadata.annotations){
+            dashboard.metadata.annotations[AnnoKeyFromScript] = true;
+          } else {
+            dashboard.metadata.annotations = {
+              [AnnoKeyFromScript]: true
+            }
+          }
+          return dashboard
+          
+          // return {
+          //   meta: {
+          //     fromScript: true,
+          //     canDelete: false,
+          //     canSave: false,
+          //     canStar: false,
+          //   },
+          //   dashboard: result.data,
+          // };
         },
         (err) => {
           console.error('Script dashboard error ' + err);

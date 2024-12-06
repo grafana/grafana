@@ -1,5 +1,6 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
 import { config, isFetchError, locationService } from '@grafana/runtime';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -7,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -21,6 +23,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
 import {
   DASHBOARD_FROM_LS_KEY,
+  DashboardDataDTO,
   DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
@@ -32,6 +35,8 @@ import {
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { ResponseTransformers } from '../api/ResponseTransformers';
+import { DashboardWithAccessInfo } from '../api/types';
 import { isDashboardResource } from '../api/utils';
 import { trackDashboardLoaded } from '../utils/tracking';
 
@@ -58,7 +63,7 @@ async function fetchDashboard(
   args: InitDashboardArgs,
   dispatch: ThunkDispatch,
   getState: () => StoreState
-): Promise<DashboardDTO | null> {
+): Promise<DashboardWithAccessInfo<DashboardDataDTO | DashboardV2Spec> | null> {
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -76,6 +81,8 @@ async function fetchDashboard(
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
+        const transformedDash = ResponseTransformers.transformDashboardDTOToDashboardWithAccessInfo(dashDTO);
+
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
@@ -84,40 +91,50 @@ async function fetchDashboard(
         }
 
         // disable some actions on the default home dashboard
-        dashDTO.meta.canSave = false;
-        dashDTO.meta.canShare = false;
-        dashDTO.meta.canStar = false;
-        return dashDTO;
+        transformedDash.access.canSave = false;
+        transformedDash.access.canShare = false;
+        transformedDash.access.canStar = false;
+        // dashDTO.meta.canSave = false;
+        // dashDTO.meta.canShare = false;
+        // dashDTO.meta.canStar = false;
+        return transformedDash;
       }
       case DashboardRoutes.Public: {
         const dashboard = await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
 
-        if (isDashboardResource(dashboard)) {
-          throw new Error('v2 schema not supported');
-        }
+        // if (isDashboardResource(dashboard)) {
+        //   throw new Error('v2 schema not supported');
+        // }
 
         return dashboard;
       }
       case DashboardRoutes.Normal: {
         const dashDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (isDashboardResource(dashDTO)) {
-          throw new Error('v2 schema not supported');
-        }
+        // if (isDashboardResource(dashDTO)) {
+        //   throw new Error('v2 schema not supported');
+        // }
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (dashDTO.meta.folderUid) {
+        // if (dashDTO.meta.folderUid) {
+        if (dashDTO.metadata.annotations && dashDTO.metadata.annotations[AnnoKeyFolder]) {
           try {
-            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
+            await dispatch(getFolderByUid(dashDTO.metadata.annotations[AnnoKeyFolder]));
           } catch (err) {
-            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
+            console.warn(
+              'Error fetching parent folder',
+              dashDTO.metadata.annotations[AnnoKeyFolder],
+              'for dashboard',
+              err
+            );
           }
         }
 
-        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
+        // if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
+        if (args.fixUrl && dashDTO.access.url && !playlistSrv.state.isPlaying) {
           // check if the current url is correct (might be old slug)
-          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
+          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.access.url);
           const currentPath = locationService.getLocation().pathname;
 
           if (dashboardUrl !== currentPath) {
@@ -140,9 +157,9 @@ async function fetchDashboard(
         }
         const dash = await buildNewDashboardSaveModel(args.urlFolderUid);
 
-        if (isDashboardResource(dash)) {
-          throw new Error('v2 schema not supported');
-        }
+        // if (isDashboardResource(dash)) {
+        //   throw new Error('v2 schema not supported');
+        // }
 
         return dash;
       }
@@ -201,14 +218,20 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
-    const versionBeforeMigration = dashDTO?.dashboard?.version;
+    let versionBeforeMigration: number | undefined;
+    
+    if (dashDTO && dashDTO.metadata && dashDTO.metadata.resourceVersion && dashDTO.metadata.resourceVersion !== '') {
+      versionBeforeMigration = parseInt(dashDTO.metadata.resourceVersion, 10);
+    }
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
     }
 
-    addPanelsFromLocalStorage(dashDTO);
+    const legacyDashboardDTO = ResponseTransformers.transformDashboardWithAccessInfoToDashboardDTO(dashDTO);
+
+    addPanelsFromLocalStorage(legacyDashboardDTO);
 
     // set initializing state
     dispatch(dashboardInitServices());
@@ -216,7 +239,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // create model
     let dashboard: DashboardModel;
     try {
-      dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
+      dashboard = new DashboardModel(legacyDashboardDTO.dashboard, legacyDashboardDTO.meta);
     } catch (err) {
       dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
       console.error(err);

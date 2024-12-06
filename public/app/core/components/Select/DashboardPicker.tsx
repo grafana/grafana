@@ -6,7 +6,6 @@ import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -59,30 +58,15 @@ export const DashboardPicker = ({
       // We need to fetch dashboard information.
       const res = await getDashboardAPI().getDashboardDTO(value);
 
-
-      if (isDashboardResource(res)) {
-        setCurrent({
-          value: {
-            uid: res.metadata.name,
-            title: res.spec.title,
-            folderTitle: res.metadata.annotations?.[AnnoKeyFolderTitle],
-            folderUid: res.metadata.annotations?.[AnnoKeyFolder],
-          },
-          label: formatLabel(res.metadata.annotations?.[AnnoKeyFolder], res.spec.title),
-        });
-      } else {
-        if (res.dashboard) {
-          setCurrent({
-            value: {
-              uid: res.dashboard.uid,
-              title: res.dashboard.title,
-              folderTitle: res.meta.folderTitle,
-              folderUid: res.meta.folderUid,
-            },
-            label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
-          });
-        }
-      }
+      setCurrent({
+        value: {
+          uid: res.metadata.name,
+          title: res.spec.title,
+          folderTitle: res.metadata.annotations?.[AnnoKeyFolderTitle],
+          folderUid: res.metadata.annotations?.[AnnoKeyFolder],
+        },
+        label: formatLabel(res.metadata.annotations?.[AnnoKeyFolderTitle], res.spec.title),
+      });
     })();
     // we don't need to rerun this effect every time `current` changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

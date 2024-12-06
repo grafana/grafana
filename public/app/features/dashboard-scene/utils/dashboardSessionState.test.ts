@@ -120,7 +120,7 @@ function buildTestScene() {
     weekStart: '',
   };
 
-  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+  const scene = transformSaveModelToScene(testDashboard, {} );
 
   // Removing data layers to avoid mocking built-in Grafana data source
   scene.setState({ $data: undefined });

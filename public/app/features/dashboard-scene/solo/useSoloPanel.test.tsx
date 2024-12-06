@@ -63,7 +63,7 @@ describe('useSoloPanel', () => {
 });
 
 const setup = () => {
-  const dashboard = transformSaveModelToScene({ dashboard: TEST_DASHBOARD, meta: {} });
+  const dashboard = transformSaveModelToScene(TEST_DASHBOARD, {} );
 
   return { dashboard };
 };

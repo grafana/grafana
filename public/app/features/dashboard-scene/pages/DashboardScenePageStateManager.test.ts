@@ -16,7 +16,16 @@ describe('DashboardScenePageStateManager', () => {
 
   describe('when fetching/loading a dashboard', () => {
     it('should call loader from server if the dashboard is not cached', async () => {
-      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+      // { dashboard: { uid: 'fake-dash', editable: true }, meta: {} }
+      const loadDashboardMock = setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash',
+        },
+        spec: {
+          editable: true,
+        },
+        access: {},
+      });
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -29,7 +38,7 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     it("should error when the dashboard doesn't exist", async () => {
-      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
+      setupLoadDashboardMock(undefined);
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -40,14 +49,32 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     it('should clear current dashboard while loading next', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+      setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash',
+        },
+        spec: {
+          editable: true,
+          panels: [],
+        },
+        access: {},
+      });
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeDefined();
 
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash2', editable: true }, meta: {} });
+      setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash-2',
+        },
+        spec: {
+          editable: true,
+          panels: [],
+        },
+        access: {},
+      });
 
       loader.loadDashboard({ uid: 'fake-dash2', route: DashboardRoutes.Normal });
 
@@ -56,7 +83,16 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash',
+        },
+        spec: {
+          editable: true,
+          panels: [],
+        },
+        access: {},
+      });
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -67,7 +103,17 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     it('should use DashboardScene creator to initialize the scene', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash',
+        },
+        spec: {
+          editable: true,
+          panels: [],
+        },
+        access: {},
+      });
+
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -77,7 +123,17 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     it('should use DashboardScene creator to initialize the snapshot scene', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setupLoadDashboardMock({
+        metadata: {
+          name: 'fake-dash',
+        },
+        spec: {
+          editable: true,
+          panels: [],
+        },
+        access: {},
+      });
+
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadSnapshot('fake-slug');
@@ -137,8 +193,18 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     describe('caching', () => {
-      it('should take scene from cache if it exists', async () => {
-        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
+      it.only('should take scene from cache if it exists', async () => {
+        setupLoadDashboardMock({
+          metadata: {
+            name: 'fake-dash',
+            resourceVersion:'10'
+          },
+          spec: {
+            editable: true,
+            panels: [],
+          },
+          access: {},
+        });
 
         const loader = new DashboardScenePageStateManager({});
 

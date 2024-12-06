@@ -119,8 +119,8 @@ describe('getDashboardChangesFromScene', () => {
       });
 
       it('Can detect group by static options change', () => {
-        const dashboard = transformSaveModelToScene({
-          dashboard: {
+        const dashboard = transformSaveModelToScene(
+          {
             title: 'hello',
             uid: 'my-uid',
             schemaVersion: 30,
@@ -155,8 +155,8 @@ describe('getDashboardChangesFromScene', () => {
               ],
             },
           },
-          meta: {},
-        });
+          {}
+        );
         const initialSaveModel = transformSceneToSaveModel(dashboard);
         dashboard.setInitialSaveModel(initialSaveModel);
 
@@ -194,8 +194,8 @@ describe('getDashboardChangesFromScene', () => {
           ],
         } as VariableModel;
 
-        const dashboard = transformSaveModelToScene({
-          dashboard: {
+        const dashboard = transformSaveModelToScene(
+          {
             title: 'hello',
             uid: 'my-uid',
             schemaVersion: 30,
@@ -211,8 +211,8 @@ describe('getDashboardChangesFromScene', () => {
               list: [adhocVar],
             },
           },
-          meta: {},
-        });
+          {}
+        );
 
         const initialSaveModel = transformSceneToSaveModel(dashboard);
         dashboard.setInitialSaveModel(initialSaveModel);
@@ -251,8 +251,8 @@ interface ScenarioOptions {
 }
 
 function setup(options: ScenarioOptions = {}) {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
+  const dashboard = transformSaveModelToScene(
+    {
       title: 'hello',
       uid: 'my-uid',
       schemaVersion: 30,
@@ -277,8 +277,8 @@ function setup(options: ScenarioOptions = {}) {
         ],
       },
     },
-    meta: {},
-  });
+    {}
+  );
 
   const initialSaveModel = transformSceneToSaveModel(dashboard);
   dashboard.setInitialSaveModel(initialSaveModel);

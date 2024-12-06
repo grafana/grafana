@@ -725,7 +725,7 @@ describe('PanelDataQueriesTab', () => {
 });
 
 async function setupScene(panelId: string) {
-  const dashboard = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+  const dashboard = transformSaveModelToScene(testDashboard as unknown as DashboardDataDTO, {});
   const panel = findVizPanelByKey(dashboard, panelId)!;
 
   const panelEditor = buildPanelEditScene(panel);

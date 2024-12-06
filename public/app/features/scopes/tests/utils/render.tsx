@@ -186,7 +186,7 @@ export function renderDashboard(
   initializeScopes();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
-  const scene = transformSaveModelToScene(dto);
+  const scene = transformSaveModelToScene(dto.dashboard, dto.meta);
 
   render(
     <KBarProvider>

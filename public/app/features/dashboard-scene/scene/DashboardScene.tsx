@@ -374,7 +374,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboard: new DashboardModel(version.data),
       meta: this.state.meta,
     };
-    const dashScene = transformSaveModelToScene(dashboardDTO);
+    const dashScene = transformSaveModelToScene(dashboardDTO.dashboard, dashboardDTO.meta);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 

@@ -77,7 +77,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     let scene: SceneObject | undefined = undefined;
     if (snapshot) {
       try {
-        const dash = transformSaveModelToScene({ dashboard: snapshot, meta: { isEmbedded: true } });
+        const dash = transformSaveModelToScene(snapshot, { isEmbedded: true } );
         scene = dash.state.body; // skip the wrappers
       } catch (ex) {
         console.log('Error creating scene:', ex);
