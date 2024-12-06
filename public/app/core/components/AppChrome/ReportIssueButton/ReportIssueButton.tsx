@@ -14,7 +14,7 @@ type FeedbackFormData = {
   message: string;
   screenshot: string;
   imageType: string;
-  userEmail: string;
+  reporterEmail: string;
   width: number;
   height: number;
   bitmap: HTMLImageElement;
@@ -239,7 +239,7 @@ const DrawerContents = ({
   const onEmailChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setFormData({ ...formData, userEmail: e.target.value });
+    setFormData({ ...formData, reporterEmail: e.target.value });
   };
 
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -277,6 +277,7 @@ const DrawerContents = ({
       diagnosticData,
       canContactReporter: contactChecked,
       canAccessInstance: accessChecked,
+      reporterEmail: formData.reporterEmail,
     };
 
     const feedbackApi = getFeedbackAPI();
@@ -331,7 +332,7 @@ export const ReportIssueButton = ({}: Props) => {
     message: '',
     screenshot: '',
     imageType: '',
-    userEmail: '',
+    reporterEmail: '',
     width: 0,
     height: 0,
     bitmap: {} as HTMLImageElement,
@@ -370,6 +371,7 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
+  - fix that form fields getting back to default after screenshot is taken
   - fix the offset issue when actively hiding (seems to work when saving? why is the red preview box off??)
   - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
   - add a cancel button to delete screenshot if the user doesn't like it
