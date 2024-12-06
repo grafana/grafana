@@ -107,6 +107,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
     renderSimplifiedRuleEditor();
 
+    // Just to make sure all dropdowns have been loaded
+    await selectFolderAndGroup();
+
     expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument();
   });
 

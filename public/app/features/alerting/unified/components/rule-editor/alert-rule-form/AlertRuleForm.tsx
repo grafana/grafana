@@ -152,7 +152,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, undefined);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
       grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
@@ -161,7 +161,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         ruleIdentifier,
         ruleDefinition,
         targetRuleGroupIdentifier,
-        undefined
+        values.evaluateEvery
       );
     }
 

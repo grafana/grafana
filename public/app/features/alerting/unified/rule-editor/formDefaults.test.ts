@@ -1,14 +1,13 @@
-import { isDataQuery } from 'app/core/utils/query';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { config } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, reduceExpression, thresholdExpression } from '../mocks';
 import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
-import { getDefaultFormValues, getDefaultQueries } from '../utils/rule-form';
+import { getDefaultQueries, MANUAL_ROUTING_KEY } from '../utils/rule-form';
 
-import { formValuesFromQueryParams } from './formDefaults';
+import { formValuesFromQueryParams, getDefaultFormValues, getDefautManualRouting } from './formDefaults';
 import { isAlertQueryOfAlertData } from './formProcessing';
 
 jest.mock('../utils/datasource');
@@ -163,5 +162,35 @@ describe('formValuesFromQueryParams', () => {
     expect(q1.model).not.toHaveProperty('hide');
     expect(q2.model).not.toHaveProperty('hide');
     expect(q3.model).not.toHaveProperty('hide');
+  });
+});
+
+describe('getDefaultManualRouting', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('returns false if the feature toggle is not enabled', () => {
+    config.featureToggles.alertingSimplifiedRouting = false;
+    expect(getDefautManualRouting()).toBe(false);
+  });
+
+  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    expect(getDefautManualRouting()).toBe(true);
+  });
+
+  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+    expect(getDefautManualRouting()).toBe(false);
+  });
+
+  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+    expect(getDefautManualRouting()).toBe(true);
+    localStorage.removeItem(MANUAL_ROUTING_KEY);
+    expect(getDefautManualRouting()).toBe(true);
   });
 });

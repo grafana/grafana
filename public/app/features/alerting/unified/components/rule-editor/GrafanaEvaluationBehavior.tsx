@@ -31,10 +31,10 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,

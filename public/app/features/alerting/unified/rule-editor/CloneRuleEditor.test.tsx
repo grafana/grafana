@@ -30,12 +30,12 @@ import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
-import { getDefaultFormValues } from '../utils/rule-form';
 import { hashRulerRule } from '../utils/rule-id';
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
+import { getDefaultFormValues } from './formDefaults';
 
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
+jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
