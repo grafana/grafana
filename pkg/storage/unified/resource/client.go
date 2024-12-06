@@ -142,13 +142,12 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	// If no token is found, create an internal token.
 	// This is a workaround for StaticRequester not having a signed ID token.
 	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
-		token, idClaims, err := createInternalToken(staticRequester)
+		token, _, err := createInternalToken(staticRequester)
 		if err != nil {
 			return "", fmt.Errorf("failed to create internal token: %w", err)
 		}
 
 		staticRequester.IDToken = token
-		staticRequester.IDTokenClaims = idClaims
 		return token, nil
 	}
 
@@ -170,29 +169,28 @@ func createInternalToken(authInfo claims.AuthInfo) (string, *authnlib.Claims[aut
 		return "", nil, err
 	}
 
-	identity := authInfo.GetIdentity()
 	now := time.Now()
 	tokenTTL := 10 * time.Minute
 	idClaims := &auth.IDClaims{
-		Claims: &jwt.Claims{
-			Audience: identity.Audience(),
-			Subject:  identity.Subject(),
+		Claims: jwt.Claims{
+			Audience: authInfo.GetAudience(),
+			Subject:  authInfo.GetSubject(),
 			Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 			IssuedAt: jwt.NewNumericDate(now),
 		},
 		Rest: authnlib.IDTokenClaims{
-			Namespace:  identity.Namespace(),
-			Identifier: identity.Identifier(),
-			Type:       identity.IdentityType(),
+			Namespace:  authInfo.GetNamespace(),
+			Identifier: authInfo.GetIdentifier(),
+			Type:       authInfo.GetIdentityType(),
 		},
 	}
 
-	if claims.IsIdentityType(identity.IdentityType(), claims.TypeUser) {
-		idClaims.Rest.Email = identity.Email()
-		idClaims.Rest.EmailVerified = identity.EmailVerified()
-		idClaims.Rest.AuthenticatedBy = identity.AuthenticatedBy()
-		idClaims.Rest.Username = identity.Username()
-		idClaims.Rest.DisplayName = identity.DisplayName()
+	if claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeUser) {
+		idClaims.Rest.Email = authInfo.GetEmail()
+		idClaims.Rest.EmailVerified = authInfo.GetEmailVerified()
+		idClaims.Rest.AuthenticatedBy = authInfo.GetAuthenticatedBy()
+		idClaims.Rest.Username = authInfo.GetUsername()
+		idClaims.Rest.DisplayName = authInfo.GetName()
 	}
 
 	builder := jwt.Signed(signer).Claims(&idClaims.Rest).Claims(idClaims.Claims)

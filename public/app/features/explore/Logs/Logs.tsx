@@ -10,7 +10,6 @@ import {
   LogRowModel,
   LogsMetaItem,
   DataFrame,
-  DataQuery,
   AbsoluteTimeRange,
   GrafanaTheme2,
   LoadingState,
@@ -37,6 +36,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -52,7 +52,7 @@ import {
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
-import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -79,7 +79,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -221,6 +221,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
+  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -331,6 +332,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [panelState?.logs?.visualisationType]);
 
   useEffect(() => {
+    let displayedFields: string[] = [];
+    if (Array.isArray(panelState?.logs?.displayedFields)) {
+      displayedFields = panelState?.logs?.displayedFields;
+    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
+      displayedFields = Object.values(panelState?.logs?.displayedFields);
+    }
+    setDisplayedFields(displayedFields);
+  }, [panelState?.logs?.displayedFields]);
+
+  useEffect(() => {
     registerLogLevelsWithContentOutline();
   }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
 
@@ -344,8 +355,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   });
 
   useUnmount(() => {
-    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
-    if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
+    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
+    if (
+      panelState?.logs?.columns ||
+      panelState?.logs?.refId ||
+      panelState?.logs?.labelFieldName ||
+      panelState?.logs?.displayedFields
+    ) {
       dispatch(
         changePanelState(exploreId, 'logs', {
           ...panelState?.logs,
@@ -353,6 +369,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           visualisationType: visualisationType,
           labelFieldName: undefined,
           refId: undefined,
+          displayedFields: undefined,
         })
       );
     }
@@ -369,12 +386,34 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
+            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
           })
         );
       }
     },
-    [dispatch, exploreId, panelState?.logs?.columns, panelState?.logs?.refId, visualisationType]
+    [
+      dispatch,
+      exploreId,
+      panelState?.logs?.columns,
+      panelState?.logs?.displayedFields,
+      panelState?.logs?.refId,
+      visualisationType,
+    ]
   );
+
+  useEffect(() => {
+    if (!prevLogsQueries) {
+      // Initial load, ignore
+      return;
+    }
+    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
+      setDisplayedFields([]);
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: [],
+      });
+    }
+  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -559,25 +598,39 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const index = displayedFields.indexOf(key);
 
       if (index === -1) {
-        setDisplayedFields(displayedFields.concat(key));
+        const updatedDisplayedFields = displayedFields.concat(key);
+        setDisplayedFields(updatedDisplayedFields);
+        updatePanelState({
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields.indexOf(key);
       if (index > -1) {
-        setDisplayedFields(displayedFields.filter((k) => key !== k));
+        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
+        setDisplayedFields(updatedDisplayedFields);
+        updatePanelState({
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const clearDetectedFields = useCallback(() => {
+    updatePanelState({
+      ...panelState?.logs,
+      displayedFields: [],
+    });
     setDisplayedFields([]);
-  }, []);
+  }, [panelState?.logs, updatePanelState]);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
@@ -602,49 +655,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef.current = onClose;
   };
 
-  const getPreviousLog = useCallback((row: LogRowModel, allLogs: LogRowModel[]) => {
-    for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
-      if (allLogs[i].timeEpochMs > row.timeEpochMs) {
-        return allLogs[i];
-      }
-    }
-
-    return null;
-  }, []);
-
-  const getPermalinkRange = useCallback(
-    (row: LogRowModel) => {
-      const range = {
-        from: new Date(absoluteRange.from).toISOString(),
-        to: new Date(absoluteRange.to).toISOString(),
-      };
-      if (!config.featureToggles.logsInfiniteScrolling) {
-        return range;
-      }
-
-      // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
-      // Look for the previous sibling log, and use its timestamp
-      const allLogs = logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-      const prevLog = getPreviousLog(row, allLogs);
-
-      if (row.timeEpochMs > absoluteRange.to && !prevLog) {
-        // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
-        // This only happens when you scroll into the future and you want to share the first log of the list
-        return {
-          from: new Date(absoluteRange.from).toISOString(),
-          // Slide 1ms otherwise it's very likely to be omitted in the results
-          to: new Date(row.timeEpochMs + 1).toISOString(),
-        };
-      }
-
-      return {
-        from: new Date(absoluteRange.from).toISOString(),
-        to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
-      };
-    },
-    [absoluteRange.from, absoluteRange.to, getPreviousLog, logRows]
-  );
-
   const onPermalinkClick = async (row: LogRowModel) => {
     // this is an extra check, to be sure that we are not
     // creating permalinks for logs without an id-field.
@@ -658,9 +668,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
     urlState.panelsState = {
       ...panelState,
-      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType() },
+      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
     };
-    urlState.range = getPermalinkRange(row);
+    urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
     // append changed urlState to baseUrl
     const serializedState = serializeStateToUrlParam(urlState);

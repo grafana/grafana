@@ -87,6 +87,8 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
       For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
 
+      Alternatively, you can generate a new private key and certificate pair directly from the UI. Click on the `Generate key and certificate` button to open a form where you enter some information you want to be embedded into the new certificate.
+
    1. Choose which signature algorithm should be used.
 
       The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
@@ -111,8 +113,8 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
 1. If you wish to [map user information from SAML assertions]({{< relref "../saml#assertion-mapping" >}}), complete the **Assertion attributes mappings** section.
 
-   You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
-   Learn more about [team sync]({{< relref "../../configure-team-sync" >}}) and [configuring team sync for SAML]({{< relref "../saml#configure-team-sync" >}}).
+   You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
+   To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 

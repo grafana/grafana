@@ -4,9 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -125,14 +123,12 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
           await contextSrv.fetchUserPermissions();
-          dispatch(notifyApp(createSuccessNotification('Folder created')));
           dispatch(
             refetchChildren({
               parentUID: parentUid,
               pageSize: PAGE_SIZE,
             })
           );
-          locationService.push(locationUtil.stripBaseFromUrl(folder.url));
         });
       },
     }),
@@ -267,19 +263,14 @@ export const browseDashboardsAPI = createApi({
         for (const dashboardUID of selectedDashboards) {
           const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
-          const options = {
+          await getDashboardAPI().saveDashboard({
             dashboard: fullDash.dashboard,
             folderUid: destinationUID,
             overwrite: false,
             message: '',
-          };
-
-          await baseQuery({
-            url: `/dashboards/db`,
-            method: 'POST',
-            data: options,
           });
         }
+
         return { data: undefined };
       },
       onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
@@ -318,11 +309,8 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = await baseQuery({
-            url: `/dashboards/uid/${dashboardUID}`,
-            method: 'DELETE',
-            showSuccessAlert: false,
-          });
+          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+
           // @ts-expect-error
           const name = response?.data?.title;
 

@@ -26,15 +26,16 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-					showLabels:           bool
-					showCommonLabels:     bool
-					showTime:             bool
-					showLogContextToggle: bool
-					wrapLogMessage:       bool
-					prettifyLogMessage:   bool
-					enableLogDetails:     bool
+					showLabels:              bool
+					showCommonLabels:        bool
+					showTime:                bool
+					showLogContextToggle:    bool
+					wrapLogMessage:          bool
+					prettifyLogMessage:      bool
+					enableLogDetails:        bool
 					sortOrder:            common.LogsSortOrder
 					dedupStrategy:        common.LogsDedupStrategy
+					enableInfiniteScrolling?: bool
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _
@@ -45,6 +46,7 @@ composableKinds: PanelCfg: {
 					onClickHideField?:       _
 					logRowMenuIconsBefore?:  _
 					logRowMenuIconsAfter?:   _
+					onNewLogsReceived?:      _
 					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
 			}
