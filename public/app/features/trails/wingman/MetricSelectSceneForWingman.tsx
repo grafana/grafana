@@ -456,42 +456,14 @@ export class MetricSelectSceneForWingman
           rowGap: 1, // to reset the row gap which is changed in RED metrics
         });
         return;
+      case 'up_down_time':
+      // TODO implement up/down time
       case 'default':
       default:
       // default display no action needed.
     }
 
-    // switch (groupBy) {
-    //   case 'none':
-    //     break;
-    //   case 'alerts':
-    //     break;
-    //   case 'dashboards':
-    //     break;
-    //   case 'metric_name':
-    //     break;
-    //   case 'services':
-    //     break;
-    //   default:
-    //     break;
-    // }
-    //
-    // switch (sortBy) {
-    //   case 'alphabetical_az':
-    //     break;
-    //   case 'alphabetical_za':
-    //     break;
-    //   case 'org_most_queried':
-    //     break;
-    //   case 'org_most_recent':
-    //     break;
-    //   case 'team_most_queried':
-    //     break;
-    //   case 'team_most_recent':
-    //     break;
-    //   default:
-    //     break;
-    // }
+    // TODO implement grouping (this.state.wm_group_by) and sorting (this.state.wm_sort_by)
 
     const metricsList = this.sortedPreviewMetrics();
 
@@ -528,9 +500,9 @@ export class MetricSelectSceneForWingman
       }
     }
 
-    this.state.body.setState({ 
-      children, 
-      autoRows: rowTemplate, 
+    this.state.body.setState({
+      children,
+      autoRows: rowTemplate,
       templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', // reset because of red metrics changing this
       rowGap: 1, // reset because of red metrics changing this
     });

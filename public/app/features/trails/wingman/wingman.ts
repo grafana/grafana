@@ -47,7 +47,7 @@ export const useWingmanOptionGroup = (): WingmanOptionGroup[] => {
           },
           { id: 'red_metrics', label: 'RED Metrics', description: 'Option 2', enabled: false, available: true },
           { id: 'anomalies', label: 'Anomalies', description: 'Option 3', enabled: false, available: true },
-          { id: 'up_downtime', label: 'Uptime/downtime', description: 'Option 4', enabled: false, available: true },
+          { id: 'up_down_time', label: 'Uptime/downtime', description: 'Option 4', enabled: false, available: true },
         ],
       },
       {
