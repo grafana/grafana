@@ -4,8 +4,6 @@ import { SceneCSSGridItem, sceneGraph, SceneQueryRunner, VizPanel } from '@grafa
 import { AnomaliesScene } from './AnomaliesScene';
 
 export function hideEmptyPanels(metric: string) {
-  // eslint-disable-next-line no-console
-  console.debug('hideEmptyPanels');
   return (gridItem: SceneCSSGridItem) => {
     const scene = sceneGraph.getAncestor(gridItem, AnomaliesScene);
     const vizPanel = sceneGraph.findDescendents(gridItem, VizPanel).at(0) as VizPanel;
