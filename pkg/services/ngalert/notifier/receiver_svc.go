@@ -3,10 +3,12 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
@@ -51,6 +53,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	pluginContextProvider  pluginContextProvider
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -94,6 +97,10 @@ type transactionManager interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
+type pluginContextProvider interface {
+	Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error)
+}
+
 func NewReceiverService(
 	authz receiverAccessControlService,
 	cfgStore alertmanagerConfigStore,
@@ -104,6 +111,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	pluginContextProvider pluginContextProvider,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -116,6 +124,7 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		pluginContextProvider:  pluginContextProvider,
 	}
 }
 
@@ -409,6 +418,12 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
 	createdReceiver := r.Clone()
+
+	err = rs.PatchReceiverSettings(ctx, user, orgID, &createdReceiver)
+	if err != nil {
+		return nil, err
+	}
+
 	err = createdReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -508,6 +523,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
 	//      to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
+
+	err = rs.PatchReceiverSettings(ctx, user, orgID, &updatedReceiver)
+	if err != nil {
+		return nil, err
+	}
+
 	err = updatedReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -794,6 +815,37 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 	}
 	if len(affected) > 0 || updatedRoutes > 0 {
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	}
+	return nil
+}
+
+func (rs *ReceiverService) PatchReceiverSettings(ctx context.Context, user identity.Requester, orgID int64, rcv *models.Receiver) error {
+	for idx := range rcv.Integrations {
+		switch rcv.Integrations[idx].Config.Type {
+		case "oncall-ng":
+			if rs.pluginContextProvider == nil {
+				rs.log.FromContext(ctx).Info("Plugin settings are not available. Skipping patching on-call integration", "receiver", rcv.Name)
+				return nil
+			}
+			pluginCtx, err := rs.pluginContextProvider.Get(ctx, "grafana-oncall-app", user, orgID) // TODO use background user
+			if err != nil {
+				return nil
+			}
+			if pluginCtx.AppInstanceSettings == nil {
+				return nil
+			}
+			var settings struct {
+				APIUrl string `json:"onCallApiUrl"`
+			}
+			err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, &settings)
+			if err != nil {
+				return err
+			}
+			rcv.Integrations[idx].Settings["api_url"] = settings.APIUrl
+			rs.log.FromContext(ctx).Debug("Patched OnCall integration settings", "receiver", rcv.Name, "OnCallApi", settings.APIUrl)
+		default:
+			continue
+		}
 	}
 	return nil
 }

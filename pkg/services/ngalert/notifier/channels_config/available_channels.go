@@ -1705,15 +1705,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Description: "Sends notifications to selected Escalation Chains",
 			Heading:     "Settings",
 			Options: []NotifierOption{
-				{
-					Label:        "API URL",
-					Element:      ElementTypeInput,
-					InputType:    InputTypeText,
-					Placeholder:  "http://localhost:8080",
-					Description:  "API endpoint at which we'll send webhooks to.",
-					PropertyName: "api_url",
-					Required:     true,
-				},
+				// {
+				// 	Label:        "API URL",
+				// 	Element:      ElementTypeInput,
+				// 	InputType:    InputTypeText,
+				// 	Placeholder:  "http://localhost:8080",
+				// 	Description:  "API endpoint at which we'll send webhooks to.",
+				// 	PropertyName: "api_url",
+				// 	Required:     true,
+				// },
 				{
 					Label:        "Escalation Chain ID",
 					Description:  "ID of escalation chain to send notifications to",
