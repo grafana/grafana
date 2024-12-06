@@ -207,6 +207,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/import-datasource',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingRuleImporter"*/ 'app/features/alerting/unified/RuleImporter')
+      ),
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
