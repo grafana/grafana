@@ -25,7 +25,7 @@
 <details>
 <summary>Debugging Dashboards</summary>
 
-{{- range $name, $url := .OpsDashboards }}
+{{ range $name, $url := .OpsDashboards }}
 - [{{ $name }}]({{ $url }})
 {{- end }}
 
