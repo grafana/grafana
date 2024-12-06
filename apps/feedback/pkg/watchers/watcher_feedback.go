@@ -247,6 +247,8 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 	// construct ops dashboard set for the time period
 	var opsDashList map[string]string
 	slug := s.cfg.Slug
+	instanceVersion := diagnostic.Instance.Edition
+	instanceRunningVersion := diagnostic.Instance.Version
 	// thank you, us :)
 	inst, err := s.gcomService.GetInstanceByID(ctx, tracing.TraceIDFromContext(ctx, false), s.cfg.StackID)
 	if err != nil {
@@ -254,6 +256,8 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 		logging.FromContext(ctx).Error("failed to query gcom", "stackID", s.cfg.StackID, "error", err)
 	} else {
 		cluster := inst.ClusterSlug
+		instanceVersion = inst.Version
+		instanceRunningVersion = inst.RunningVersion
 		to, from := object.CreationTimestamp.Format("2006-01-02T15:04:05.000Z"), object.CreationTimestamp.Add(-10*time.Minute).Format("2006-01-02T15:04:05.000Z")
 		opsDashList = map[string]string{
 			"Instance Debugging":   fmt.Sprintf("https://ops.grafana-ops.net/d/BqokFhx7z/hg-instance-debugging?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
@@ -276,8 +280,8 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 
 		WhatHappenedQuestion:   object.Spec.Message,
 		InstanceSlug:           slug,
-		InstanceVersion:        diagnostic.Instance.Edition,
-		InstanceRunningVersion: diagnostic.Instance.Version,
+		InstanceVersion:        instanceVersion,
+		InstanceRunningVersion: instanceRunningVersion,
 		BrowserName:            diagnostic.Browser.UserAgent,
 		SnapshotURL:            snapshotURL,
 		CanContactReporter:     object.Spec.CanContactReporter,
