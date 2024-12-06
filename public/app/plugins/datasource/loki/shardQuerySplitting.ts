@@ -335,18 +335,12 @@ interface WeightedShard {
   size: number;
 }
 
-const statsCache = new LRUCache<string, QueryStats>({ max: 10 });
+
 async function getStats(expr: string, range: TimeRange, datasource: LokiDatasource) {
-  const key = `${expr}.${range.from.valueOf()}.${range.to.valueOf}.${datasource.uid}`;
-  const cached = statsCache.get(key);
-  if (cached) {
-    return cached;
-  }
   const stats = await datasource.getStats({ expr, refId: `stats_${Math.random()}` }, range);
   if (!stats) {
     return null;
   }
-  statsCache.set(key, stats);
   return stats;
 }
 
