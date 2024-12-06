@@ -26,20 +26,23 @@ import (
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type FileParser struct {
-	// The target repository
-	repo repository.Repository
-
 	// client helper (for this namespace?)
-	client *DynamicClient
-	kinds  KindsLookup
+	client     *DynamicClient
+	kinds      KindsLookup
+	repository *provisioning.Repository
+	linter     lint.Linter
 }
 
-func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLookup) *FileParser {
+func NewParser(repository *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *FileParser {
 	return &FileParser{
-		repo:   repo,
-		client: client,
-		kinds:  kinds,
+		repository: repository,
+		client:     client,
+		kinds:      kinds,
 	}
+}
+
+func (p *FileParser) SetLinter(l lint.Linter) {
+	p.linter = l
 }
 
 type ParsedFile struct {
@@ -78,7 +81,7 @@ type ParsedFile struct {
 	Errors []error
 }
 
-func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
+func (p *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
 	parsed = &ParsedFile{
 		Info: info,
 	}
@@ -98,16 +101,15 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 		return nil, err
 	}
 	obj := parsed.Obj
-	cfg := r.repo.Config()
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != cfg.GetNamespace() {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != p.repository.GetNamespace() {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
 
-	obj.SetNamespace(cfg.GetNamespace())
+	obj.SetNamespace(p.repository.GetNamespace())
 	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      cfg.Name,
+		Name:      p.repository.GetName(),
 		Path:      joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
@@ -128,18 +130,19 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 		return parsed, nil
 	}
 
-	gvr, ok := r.kinds.Resource(*parsed.GVK)
+	gvr, ok := p.kinds.Resource(*parsed.GVK)
 	if !ok {
 		return parsed, nil
 	}
 
 	parsed.GVR = &gvr
-	parsed.Client = r.client.Resource(gvr)
+	parsed.Client = p.client.Resource(gvr)
 	if !validate {
 		return parsed, nil
 	}
 
-	if true { // lint
+	// lint
+	if p.linter != nil {
 		raw := info.Data
 		if parsed.Classic == provisioning.ClassicDashboard {
 			raw, err = json.MarshalIndent(parsed.Obj, "", "  ") // indent so it is not all on one line
@@ -147,12 +150,11 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 				return parsed, err
 			}
 		}
-		linter := lint.NewDashboardLinter()
-		// TODO: pass the config file
-		parsed.Lint, err = linter.Lint(ctx, raw)
-		if err != nil {
-			parsed.Errors = append(parsed.Errors, err)
-		}
+		parsed.Lint, err = p.linter.Lint(ctx, raw)
+	}
+
+	if err != nil {
+		parsed.Errors = append(parsed.Errors, err)
 	}
 
 	if parsed.Client == nil {
