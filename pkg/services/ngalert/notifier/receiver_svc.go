@@ -419,7 +419,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 
 	createdReceiver := r.Clone()
 
-	err = rs.PatchReceiverSettings(ctx, user, orgID, &createdReceiver)
+	_, err = rs.PatchReceiverSettings(ctx, user, orgID, &createdReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +524,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	//      to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
 
-	err = rs.PatchReceiverSettings(ctx, user, orgID, &updatedReceiver)
+	_, err = rs.PatchReceiverSettings(ctx, user, orgID, &updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -819,33 +819,35 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 	return nil
 }
 
-func (rs *ReceiverService) PatchReceiverSettings(ctx context.Context, user identity.Requester, orgID int64, rcv *models.Receiver) error {
+func (rs *ReceiverService) PatchReceiverSettings(ctx context.Context, user identity.Requester, orgID int64, rcv *models.Receiver) (bool, error) {
+	patched := false
 	for idx := range rcv.Integrations {
 		switch rcv.Integrations[idx].Config.Type {
 		case "oncall-ng":
 			if rs.pluginContextProvider == nil {
 				rs.log.FromContext(ctx).Info("Plugin settings are not available. Skipping patching on-call integration", "receiver", rcv.Name)
-				return nil
+				return false, nil
 			}
 			pluginCtx, err := rs.pluginContextProvider.Get(ctx, "grafana-oncall-app", user, orgID) // TODO use background user
 			if err != nil {
-				return nil
+				return false, nil
 			}
 			if pluginCtx.AppInstanceSettings == nil {
-				return nil
+				return false, nil
 			}
 			var settings struct {
 				APIUrl string `json:"onCallApiUrl"`
 			}
 			err = json.Unmarshal(pluginCtx.AppInstanceSettings.JSONData, &settings)
 			if err != nil {
-				return err
+				return false, err
 			}
 			rcv.Integrations[idx].Settings["api_url"] = settings.APIUrl
 			rs.log.FromContext(ctx).Debug("Patched OnCall integration settings", "receiver", rcv.Name, "OnCallApi", settings.APIUrl)
+			patched = true
 		default:
 			continue
 		}
 	}
-	return nil
+	return patched, nil
 }
