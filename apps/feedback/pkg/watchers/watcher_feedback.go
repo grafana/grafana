@@ -7,18 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"k8s.io/klog/v2"
 
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	githubClient "github.com/grafana/grafana/apps/feedback/pkg/githubclient"
 	"github.com/grafana/grafana/apps/feedback/pkg/llmclient"
+	"github.com/grafana/grafana/apps/feedback/pkg/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
@@ -158,6 +161,12 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	if err != nil {
 		return "", err
 	}
+
+	metrics.GetMetrics().GithubIssueCreated.With(prometheus.Labels{
+		"slug":           s.cfg.Slug,
+		"has_screenshot": strconv.FormatBool(object.Spec.ScreenshotUrl != nil),
+		"was_triaged":    strconv.FormatBool(len(labels) > 0 && labels[0] != "team/unknown"),
+	}).Inc()
 
 	return issueUrl, nil
 }
