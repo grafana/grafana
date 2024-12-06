@@ -69,6 +69,7 @@ type TemplateData struct {
 	Plugins        []DiagnosticPlugin     // Directly using diagnostic plugins.
 	FeatureToggles []string
 	Configs        []TemplateConfig
+	OpsDashboards  map[string]string
 
 	WhatHappenedQuestion string
 
