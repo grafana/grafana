@@ -226,8 +226,8 @@ export function CommandPalette2() {
                   <motion.div
                     // layout
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
-                    exit={{ opacity: 0, transition: { delay: 0 } }}
+                    animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.15 } }}
+                    exit={{ opacity: 0, transition: { delay: 0, duration: 0.07 } }}
                     transition={{ duration: 0.2 }}
                     className={styles.commandIcon}
                     key={mode}
@@ -245,8 +245,8 @@ export function CommandPalette2() {
                   <motion.div
                     // layout
                     initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2, duration: 0.2 } }}
-                    exit={{ opacity: 0, x: 20, transition: { delay: 0 } }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.1, duration: 0.15 } }}
+                    exit={{ opacity: 0, x: 20, transition: { delay: 0, duration: 0 } }}
                     transition={{ duration: 0.2 }}
                     className={styles.commandIcon}
                     key={mode}
