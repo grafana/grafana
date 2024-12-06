@@ -15,8 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-
 	"github.com/grafana/authlib/authz"
 )
 
