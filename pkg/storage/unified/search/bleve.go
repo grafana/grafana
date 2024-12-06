@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -307,7 +308,7 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder, repository string) (i
 	}
 
 	qR := &query.TermQuery{
-		Term:     resource.SEARCH_FIELD_REPOSITORY,
+		Term:     "repository.name",
 		FieldVal: repository,
 	}
 
@@ -461,6 +462,9 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 			Desc: false,
 		})
 	}
+
+	jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
+	fmt.Printf("SORT: %+v\n", string(jj))
 
 	return searchrequest, nil
 }

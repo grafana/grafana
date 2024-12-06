@@ -130,7 +130,7 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit: 100000,
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: true}, // ccc,bbb,aaa
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
