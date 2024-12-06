@@ -11,6 +11,7 @@ import {
 } from '@grafana/scenes';
 import { RadioButtonList, useStyles2 } from '@grafana/ui';
 
+import { WingmanLogo } from './assets/wingmanLogo';
 import { isWingmanGroupKey, useWingmanOptionGroup, WingmanGroupKeyType } from './wingman';
 
 type WingmanGroupKeyInState = {
@@ -60,7 +61,12 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     const initialData = useWingmanOptionGroup();
     return (
       <div className={styles.verticalLine}>
-        <div className={styles.title}>11241 Metrics</div>
+        <div className={styles.title}>
+          Metrics Wingman <WingmanLogo />
+        </div>
+        {/* <div className={styles.wingmanLogo}>
+          <WingmanLogo />
+        </div> */}
         {initialData.map((group, groupIdx) =>
           state.wm_display_view === 'red_metrics' && group.id === 'wm_group_by' ? (
             <></>
@@ -88,26 +94,27 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
 export function getStyles(theme: GrafanaTheme2) {
   return {
     verticalLine: css({
-      borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
-      height: '540px',
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      height: '755px',
       paddingRight: '16px',
     }),
+    wingmanLogo: css({
+      height: '20px',
+    }),
     title: css({
-      overflow: 'hidden',
-      color: '#FFF',
-      textOverflow: 'ellipsis',
+      color: theme.colors.text.primary,
       fontSize: '14px',
       fontWeight: 500,
       lineHeight: '18px',
       letterSpacing: '0.018px',
     }),
     label: css({
-      color: 'theme.colors.text.primary',
+      color: theme.colors.text.primary,
       fontWeight: 400,
       letterSpacing: '0.018px',
     }),
     horizontalLine: css({
-      width: '200px',
+      width: '230px',
       height: '1px',
       background: theme.colors.border.weak,
       marginTop: '8px',
