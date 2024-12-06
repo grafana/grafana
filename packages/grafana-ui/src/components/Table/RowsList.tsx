@@ -128,7 +128,10 @@ export const RowsList = (props: RowsListProps) => {
         return;
       }
 
+      // HERE
+
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+      console.log('onrowHover', timeField.values[idx], timeField, frame, idx);
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
@@ -311,7 +314,7 @@ export const RowsList = (props: RowsListProps) => {
           key={key}
           {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => onRowHover(index, data)}
+          onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
