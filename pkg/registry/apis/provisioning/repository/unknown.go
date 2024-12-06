@@ -2,14 +2,16 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 var _ Repository = (*unknownRepository)(nil)
@@ -103,10 +105,19 @@ func (r *unknownRepository) History(ctx context.Context, logger *slog.Logger, pa
 	}
 }
 
-// Webhook implements provisioning.Repository.
-func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
-	// webhooks are not supported with local
-	return nil
+// Process implements Repository.
+func (r *unknownRepository) Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error {
+	return fmt.Errorf("not implemented yet")
+}
+
+// Webhook implements Repository.
+func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
+	return nil, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusNotImplemented,
+			Message: "webhook not implemented",
+		},
+	}
 }
 
 func (r *unknownRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {

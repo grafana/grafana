@@ -19,7 +19,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -276,10 +275,19 @@ func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path
 	}
 }
 
-// Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
-	// webhooks are not supported with local
-	return nil
+// Process implements Repository.
+func (r *localRepository) Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error {
+	return fmt.Errorf("not implemented yet")
+}
+
+// Webhook implements Repository.
+func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
+	return nil, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code:    http.StatusNotImplemented,
+			Message: "webhook not implemented",
+		},
+	}
 }
 
 func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
