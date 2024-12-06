@@ -11,9 +11,10 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -76,10 +77,6 @@ func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 func (b *UserStorageAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return userstorage.GetOpenAPIDefinitions
-}
-
-func (b *UserStorageAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
