@@ -29,9 +29,6 @@ type ResourceServer interface {
 	ResourceIndexServer
 	BlobStoreServer
 	DiagnosticsServer
-
-	// Initialize the server before any traffic is served
-	Init(ctx context.Context) error
 }
 
 type ListIterator interface {
@@ -256,6 +253,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	err := s.Init(ctx)
+	if err != nil {
+		s.log.Error("error initializing resource server", "error", err)
+		return nil, err
 	}
 
 	return s, nil
