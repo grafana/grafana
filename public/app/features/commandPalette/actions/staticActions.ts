@@ -71,6 +71,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
 }
 
 export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteAction[]): CommandPaletteAction[] => {
+  const themeSubtitle = t('command-palette.action.change-theme', 'Change theme').replace('...', '');
   const globalActions: CommandPaletteAction[] = [
     {
       id: 'preferences/theme',
@@ -86,6 +87,8 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
       priority: PREFERENCES_PRIORITY,
+      section: t('command-palette.section.preferences', 'Preferences'),
+      subtitle: themeSubtitle,
     },
     {
       id: 'preferences/light-theme',
@@ -94,6 +97,8 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       perform: () => changeTheme('light'),
       parent: 'preferences/theme',
       priority: PREFERENCES_PRIORITY,
+      section: t('command-palette.section.preferences', 'Preferences'),
+      subtitle: themeSubtitle,
     },
   ];
 

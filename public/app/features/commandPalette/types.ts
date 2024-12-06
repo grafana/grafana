@@ -21,3 +21,11 @@ type ChildCommandPaletteAction = Action & {
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
 };
+
+export type CommandPaletteActiveTab = 'recent' | 'mine' | 'all';
+
+export const COMMAND_PALETTE_TABS: Array<{ label: string; key: CommandPaletteActiveTab }> = [
+  { label: 'Recent', key: 'recent' },
+  { label: 'Mine', key: 'mine' },
+  { label: 'All', key: 'all' },
+];

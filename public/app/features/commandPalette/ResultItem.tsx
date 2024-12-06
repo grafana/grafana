@@ -5,6 +5,8 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Stack, useStyles2 } from '@grafana/ui';
 
+import { hasCommandOrLink } from './utils';
+
 export const ResultItem = React.forwardRef(
   (
     {
@@ -20,7 +22,7 @@ export const ResultItem = React.forwardRef(
   ) => {
     const ancestors = React.useMemo(() => {
       if (!currentRootActionId) {
-        return action.ancestors;
+        return action.ancestors || [];
       }
 
       const index = action.ancestors.findIndex((ancestor) => ancestor.id === currentRootActionId);
@@ -35,12 +37,8 @@ export const ResultItem = React.forwardRef(
 
     let name = action.name;
 
-    const hasCommandOrLink = (action: ActionImpl) =>
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
-
     // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
+    if (action.children?.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
       name += '...';
     }
 

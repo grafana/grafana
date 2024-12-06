@@ -29,9 +29,9 @@ export function UserCommands({}) {
   };
 
   const onSubmit = async (values: CustomCommand) => {
-    // excluding for now shortcut and keywords since we need to transform strings to arrays
-    const { shortcut, keywords, ...preparedValues } = values;
-    await service.patch({ customCommands: [...savedCommands, preparedValues] });
+    await service.patch({
+      customCommands: [{ ...values, ID: `user-defined/${toKebabCase(values.title)}` }, ...savedCommands],
+    });
     fetchCommands();
     reset();
   };
@@ -44,11 +44,11 @@ export function UserCommands({}) {
         </h3>
         <Text>
           <Trans i18nKey="user-profile.commands.subtitle-one">
-            Here you can add commands that will be available in the Grafana UI command pallette.
+            Add commands that will be available in the Grafana UI command pallette.
           </Trans>
           <br />
           <Trans i18nKey="user-profile.commands.subtitle-two">
-            Commands can be used to trigger actions, navigate to pages, or open modals.
+            They can be used to trigger various actions or navigate to pages.
           </Trans>
         </Text>
 
@@ -165,4 +165,12 @@ export function UserCommands({}) {
       </div>
     </Stack>
   );
+}
+
+function toKebabCase(str: string) {
+  return str
+    .trim() // Remove leading/trailing whitespace
+    .toLowerCase() // Convert to lowercase
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric characters with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }

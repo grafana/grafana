@@ -26,6 +26,8 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       perform: () => link.onClick && link.onClick(),
       shortcut: extractKeyboardShortcuts(link.description),
       keywords: extractKeywords(link.description),
+      parent: undefined,
+      children: [],
     }));
   }, [links]);
 }
