@@ -1,20 +1,29 @@
 package watchers
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
+	"encoding/json"
 	"fmt"
-	"strings"
+	"html/template"
+	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"k8s.io/klog/v2"
 
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	githubClient "github.com/grafana/grafana/apps/feedback/pkg/githubclient"
 	"github.com/grafana/grafana/apps/feedback/pkg/llmclient"
+	"github.com/grafana/grafana/apps/feedback/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,13 +34,14 @@ type FeedbackWatcher struct {
 	cfg           *setting.Cfg
 	gitClient     *githubClient.GitHubClient
 	llmClient     *llmclient.LLMClient
+	gcomService   gcom.Service
 }
 
-func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*feedback.Feedback]) (*FeedbackWatcher, error) {
+func NewFeedbackWatcher(cfg *setting.Cfg, gcomService gcom.Service, feedbackStore *resource.TypedStore[*feedback.Feedback]) (*FeedbackWatcher, error) {
 	section := cfg.SectionWithEnvOverrides("feedback_button")
 	token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
 	gitClient := githubClient.NewGitHubClient(token, owner, repo)
-	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))}, cfg)
+	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))})
 	if err != nil {
 		klog.ErrorS(err, "failed to initialize llm client in feedback watcher, automated feedback triage will not work")
 	}
@@ -41,6 +51,7 @@ func NewFeedbackWatcher(cfg *setting.Cfg, feedbackStore *resource.TypedStore[*fe
 		cfg:           cfg,
 		gitClient:     gitClient,
 		llmClient:     llmClient,
+		gcomService:   gcomService,
 	}, nil
 }
 
@@ -57,7 +68,8 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 		)
 	}
 
-	// Skip processing if there's a GitHub issue. The screenshot is optional to the report.
+	// Skip processing if there's a GitHub issue. This means it was already processed but the Add() was retriggered by our update.
+	// That will be fixed at some point, but we need to keep this guardrail in place in the meantime.
 	if object.Spec.GithubIssueUrl != nil {
 		return nil
 	}
@@ -109,30 +121,25 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 }
 
 func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedback.Feedback) (string, error) {
-	// Create issue in Github
-
-	// Building the body like this will all go away when Dana merges her template stuff, but wanted to test the end to end
-	var sb strings.Builder
-	sb.WriteString("**Description:**\n")
-	sb.WriteString(object.Spec.Message)
-	sb.WriteString("\n\n**Screenshot:**\n")
-	if object.Spec.ScreenshotUrl != nil {
-		sb.WriteString(fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl))
-	} else {
-		sb.WriteString("no screenshot provided")
+	issueBody, err := s.buildIssueBody(ctx, object)
+	if err != nil {
+		return "", fmt.Errorf("building issue body: %w", err)
 	}
 
 	// defaults
-	labels := []string{"type/unknown"}
-
+	labels := []string{"team/unknown"}
 	title := object.Spec.Message
-	if len(title) > 50 {
-		title = object.Spec.Message[:50] + "..." // truncate
+	if len(title) > 60 {
+		title = object.Spec.Message[:60] + "..." // truncate
 	}
 
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("query_llm").MustBool(false) {
-		llmLabels := s.llmClient.PromptForLabels(ctx, object.Spec.Message)
+		llmLabels, err := s.llmClient.PromptForLabels(ctx, object.Spec.Message)
+		if err != nil {
+			logging.FromContext(ctx).Error("LLM prompt for labels failed", "error", err.Error())
+		}
+
 		if len(llmLabels) > 0 {
 			labels = llmLabels
 		}
@@ -145,8 +152,8 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	}
 
 	issue := githubClient.Issue{
-		Title:  fmt.Sprintf("[feedback] %s", title),
-		Body:   sb.String(),
+		Title:  fmt.Sprintf("[Feedback] %s", title),
+		Body:   issueBody,
 		Labels: labels,
 	}
 
@@ -154,6 +161,12 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 	if err != nil {
 		return "", err
 	}
+
+	metrics.GetMetrics().GithubIssueCreated.With(prometheus.Labels{
+		"slug":           s.cfg.Slug,
+		"has_screenshot": strconv.FormatBool(object.Spec.ScreenshotUrl != nil),
+		"was_triaged":    strconv.FormatBool(len(labels) > 0 && labels[0] != "team/unknown"),
+	}).Inc()
 
 	return issueUrl, nil
 }
@@ -207,4 +220,82 @@ func (s *FeedbackWatcher) Sync(ctx context.Context, rObj resource.Object) error 
 	// TODO
 	logging.FromContext(ctx).Debug("Possible resource update", "name", object.GetStaticMetadata().Identifier().Name)
 	return nil
+}
+
+func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.Feedback) (string, error) {
+	// Convert map[string]any to JSON
+	jsonData, err := json.Marshal(object.Spec.DiagnosticData)
+	if err != nil {
+		return "", fmt.Errorf("unmarshaling diagnostic data: %w", err)
+	}
+
+	// Convert JSON to Diagnostic struct
+	var diagnostic githubClient.Diagnostic
+	err = json.Unmarshal(jsonData, &diagnostic)
+	if err != nil {
+		return "", fmt.Errorf("unmarshaling diagnostic data: %w", err)
+	}
+
+	var snapshotURL string
+	if object.Spec.ScreenshotUrl != nil {
+		snapshotURL = fmt.Sprintf("![Screenshot](%s?raw=true)", *object.Spec.ScreenshotUrl)
+	} else {
+		snapshotURL = "No screenshot provided"
+	}
+	configsList := githubClient.BuildConfigList(diagnostic.Instance)
+
+	// construct ops dashboard set for the time period
+	var opsDashList map[string]string
+	slug := s.cfg.Slug
+	// thank you, us :)
+	inst, err := s.gcomService.GetInstanceByID(ctx, tracing.TraceIDFromContext(ctx, false), s.cfg.StackID)
+	if err != nil {
+		// not a dealbreaker
+		logging.FromContext(ctx).Error("failed to query gcom", "stackID", s.cfg.StackID, "error", err)
+	} else {
+		cluster := inst.ClusterSlug
+		to, from := object.CreationTimestamp.Format("2006-01-02T15:04:05.000Z"), object.CreationTimestamp.Add(-10*time.Minute).Format("2006-01-02T15:04:05.000Z")
+		opsDashList = map[string]string{
+			"Instance Debugging":   fmt.Sprintf("https://ops.grafana-ops.net/d/BqokFhx7z/hg-instance-debugging?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
+			"Instance Event Audit": fmt.Sprintf("https://ops.grafana-ops.net/d/77e353652d419aa4c832523ac060fb14/hg-instance-audit?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
+		}
+	}
+
+	// Combine data into TemplateData struct
+	userEmail := object.Spec.ReporterEmail
+	if userEmail == nil {
+		userEmail = new(string)
+	}
+
+	templateData := githubClient.TemplateData{
+		Datasources:    diagnostic.Instance.Datasources,
+		Plugins:        diagnostic.Instance.Plugins,
+		FeatureToggles: diagnostic.Instance.FeatureToggles,
+		Configs:        configsList,
+		OpsDashboards:  opsDashList,
+
+		WhatHappenedQuestion:   object.Spec.Message,
+		InstanceSlug:           slug,
+		InstanceVersion:        diagnostic.Instance.Edition,
+		InstanceRunningVersion: diagnostic.Instance.Version,
+		BrowserName:            diagnostic.Browser.UserAgent,
+		SnapshotURL:            snapshotURL,
+		CanContactReporter:     object.Spec.CanContactReporter,
+		CanAccessInstance:      object.Spec.CanAccessInstance,
+		UserEmail:              *userEmail,
+	}
+
+	// Parse the embedded template
+	tmpl, err := template.New("issueBody").Parse(githubClient.TemplateContent)
+	if err != nil {
+		return "", fmt.Errorf("parsing template: %w", err)
+	}
+
+	// Render the template with data
+	var issueBody bytes.Buffer
+	if err := tmpl.Execute(&issueBody, templateData); err != nil {
+		return "", fmt.Errorf("executing template: %w", err)
+	}
+
+	return issueBody.String(), nil
 }

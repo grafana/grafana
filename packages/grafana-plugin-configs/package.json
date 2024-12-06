@@ -10,6 +10,7 @@
     "@grafana/tsconfig": "^2.0.0",
     "@swc/core": "1.9.3",
     "@types/eslint": "9.6.1",
+    "@types/webpack-bundle-analyzer": "^4.7.0",
     "copy-webpack-plugin": "12.0.2",
     "eslint": "9.14.0",
     "eslint-webpack-plugin": "4.2.0",
@@ -18,7 +19,8 @@
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
     "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "webpack": "5.95.0",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "packageManager": "yarn@4.5.3"
 }

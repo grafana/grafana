@@ -3,6 +3,7 @@ package feedback
 import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/feedback/pkg/apis"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	feedbackapp "github.com/grafana/grafana/apps/feedback/pkg/app"
@@ -18,6 +19,7 @@ type FeedbackAppProvider struct {
 func RegisterApp(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	httpClientProvider *httpclient.Provider,
 ) *FeedbackAppProvider {
 	if !features.IsEnabledGlobally(featuremgmt.FlagFeedbackButton) {
 		return nil
@@ -29,7 +31,8 @@ func RegisterApp(
 		OpenAPIDefGetter: feedbackv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     feedbackapp.GetKinds(),
 		CustomConfig: feedbackapp.FeedbackConfig{
-			GrafanaCfg: cfg,
+			GrafanaCfg:         cfg,
+			HttpClientProvider: httpClientProvider,
 		},
 	}
 

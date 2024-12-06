@@ -257,6 +257,8 @@ const DrawerContents = ({
       screenshot: formData.screenshot,
       imageType: formData.imageType,
       diagnosticData,
+      canContactReporter: false, // TODO
+      canAccessInstance: false, // TODO
     };
 
     const feedbackApi = getFeedbackAPI();
