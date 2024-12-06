@@ -54,25 +54,25 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 Use the following options to refine your alert list visualization.
 
-#### View mode
+<!-- prettier-ignore-start -->
 
-Choose between **List** to display alerts in a detailed list format with comprehensive information, or **Stat** to show alerts as a summarized single-value statistic.
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| View mode  | Choose between **List** to display alerts in a detailed list format with comprehensive information, or **Stat** to show alerts as a summarized single-value statistic.  |
+| Group mode | Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels. |
+| Max items | Sets the maximum number of alerts to list. By default, Grafana sets this value to 10. |
+| [Sort order](#sort-order) | Select how to order the alerts displayed. |
+| Alerts linked to this dashboard | Toggle the switch on to only show alerts from the dashboard the alert list is in. |
 
-#### Group mode
-
-Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels.
-
-#### Max items
-
-Sets the maximum number of alerts to list. By default, Grafana sets this value to 10.
+<!-- prettier-ignore-end -->
 
 #### Sort order
 
 Select how to order the alerts displayed. Choose from:
 
-- **Alphabetical (asc) -** Alphabetical order.
-- **Alphabetical (desc) -** Reverse alphabetical order.
-- **Importance -** By importance according to the following values, with 1 being the highest:
+- **Alphabetical (asc)** - Alphabetical order.
+- **Alphabetical (desc)** - Reverse alphabetical order.
+- **Importance** - By importance according to the following values, with 1 being the highest:
   - alerting: 1
   - firing: 1
   - no_data: 2
@@ -80,39 +80,34 @@ Select how to order the alerts displayed. Choose from:
   - ok: 4
   - paused: 5
   - inactive: 5
-- **Time (asc) -** Newest active alert instances first.
-- **Time (desc) -** Oldest active alert instances first.
+- **Time (asc)** - Newest active alert instances first.
+- **Time (desc)** - Oldest active alert instances first.
 
-#### Alerts linked to this dashboard
-
-Toggle the switch on to only show alerts from the dashboard the alert list is in.
-
-### Filter
+### Filter options
 
 These options allow you to limit alerts shown to only those that match the query, folder, or tags you choose.
 
-#### Alert name
+<!-- prettier-ignore-start -->
 
-Filter alerts by name.
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Alert name | Filter alerts by name. |
+| Alert instance label | Filter alert instances using [label](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
+| Datasource | Filter alerts from the selected data source. |
+| Folder | Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed. |
 
-#### Alert instance label
-
-Filter alert instances using [label](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`.
-
-#### Datasource
-
-Filter alerts from the selected data source.
-
-#### Folder
-
-Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed.
-
-### Alert state filter
+### Alert state filter options
 
 Choose which alert states to display in this visualization.
 
-- **Alerting / Firing -** Shows alerts that are currently active and triggering an alert condition.
-- **Pending -** Shows alerts that are in a transitional state, waiting for conditions to be met before triggering.
-- **No Data -** Shows alerts where the data source is not returning any data, which could indicate an issue with data collection.
-- **Normal -** Shows alerts that are in a normal or resolved state, where no alert condition is currently met.
-- **Error -** Shows alerts where an error has occurred, typically related to an issue in the alerting process.
+<!-- prettier-ignore-start -->
+
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Alerting / Firing | Shows alerts that are currently active and triggering an alert condition. |
+| Pending | Shows alerts that are in a transitional state, waiting for conditions to be met before triggering. |
+| No Data | Shows alerts where the data source is not returning any data, which could indicate an issue with data collection. |
+| Normal | Shows alerts that are in a normal or resolved state, where no alert condition is currently met. |
+| Error | Shows alerts where an error has occurred, typically related to an issue in the alerting process. |
+
+<!-- prettier-ignore-end -->
