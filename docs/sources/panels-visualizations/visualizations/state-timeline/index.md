@@ -58,6 +58,12 @@ The state timeline visualization works best if you have data capturing the vario
 
 Each state ends when the next state begins or when there is a `null` value.
 
+### Time series data with thresholds
+
+The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
+
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" alt="State timeline with time series" >}}
+
 ### Example 1
 
 The following table is one example of the type of data you need for a state timeline visualization and how it should be formatted.
@@ -101,12 +107,6 @@ The data is converted as follows:
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
 
-## Time series data with thresholds
-
-The visualization can be used with time series data as well. In this case, the thresholds are used to turn the time series into discrete colored state regions.
-
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
-
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -119,21 +119,21 @@ The visualization can be used with time series data as well. In this case, the t
 
 Use these options to refine the visualization.
 
-#### Merge equal consecutive values
+<!-- prettier-ignore-start -->
 
-Controls whether Grafana merges identical values if they are next to each other.
+| Option | Description                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| Merge equal consecutive values  | Controls whether Grafana merges identical values if they are next to each other. |
+| Show values  | Controls whether values are rendered inside the state regions. Auto will render values if there is sufficient space. |
+| Align values | Controls value alignment inside state regions. |
+| Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
+| [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
+| Line width | Controls line width of state regions. |
+| Fill opacity | Controls value alignment inside state regions. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
-#### Show values
-
-Controls whether values are rendered inside the state regions. Auto will render values if there is sufficient space.
-
-#### Align values
-
-Controls value alignment inside state regions.
-
-#### Row height
-
-Controls how much space between rows there are. 1 = no space = 0.5 = 50% space.
+<!-- prettier-ignore-end -->
 
 #### Page size (enable pagination)
 
@@ -141,25 +141,17 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
 
-#### Line width
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-Controls line width of state regions.
-
-#### Fill opacity
-
-Controls the opacity of state regions.
-
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Legend options
 
-{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Standard options
 
@@ -178,6 +170,12 @@ Controls the opacity of state regions.
 ### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+#### Time series data with thresholds
+
+The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
+
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" alt="State timeline with time series" >}}
 
 ### Field overrides
 
