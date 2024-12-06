@@ -56,7 +56,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   };
 }
 
-const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): LibraryPanel[] | undefined => {
+export const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): LibraryPanel[] | undefined => {
   return input?.usage?.libraryPanels?.filter((usageLibPanel) =>
     state.inputs.libraryPanels.some(
       (libPanel) => libPanel.state !== LibraryPanelInputState.Exists && libPanel.model.uid === usageLibPanel.uid
@@ -64,6 +64,7 @@ const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): 
   );
 };
 
+// TODO: extract this into a different file for hackathon
 export function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
   let inputs = dashboardJson.__inputs;
   if (!!state.inputs.libraryPanels?.length) {
@@ -136,7 +137,7 @@ function processInputs(): ThunkResult<void> {
 }
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
-  return async function (dispatch) {
+  return async function(dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
