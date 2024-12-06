@@ -1765,6 +1765,14 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
       },
     ],
   },
+  "oncall-ng": {
+    type: 'oncall-ng',
+    name: 'Grafana OnCall',
+    heading: 'Grafana OnCall settings',
+    description: 'Sends notifications to Grafana OnCall',
+    info: '',
+    options: [],
+  },
   oncall: {
     type: 'oncall',
     name: 'Grafana OnCall',
