@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -116,7 +115,7 @@ func (r *s3Repository) Process(ctx context.Context, logger *slog.Logger, job Job
 
 // Webhook implements Repository.
 func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
+	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Code:    http.StatusNotImplemented,
 			Message: "webhook not implemented",

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -112,7 +111,7 @@ func (r *unknownRepository) Process(ctx context.Context, logger *slog.Logger, jo
 
 // Webhook implements Repository.
 func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
+	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Code:    http.StatusNotImplemented,
 			Message: "webhook not implemented",
