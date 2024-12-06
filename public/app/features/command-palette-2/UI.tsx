@@ -1,5 +1,6 @@
 /* eslint @grafana/no-untranslated-strings: 0 */
 /* eslint @grafana/no-border-radius-literal: 0 */
+/* eslint @grafana/no-unreduced-motion: 0 */
 
 import { css, cx } from '@emotion/css';
 import { AnimatePresence, motion } from 'motion/react';
@@ -82,6 +83,11 @@ export function CommandPalette2() {
     }
   }, []);
 
+  const handleBackButtonClick = useCallback(() => {
+    setMode('search');
+    setInputValue('');
+  }, []);
+
   useEffect(() => {
     function handler(ev: KeyboardEvent) {
       if (ev.key === 'Backspace' && inputValue.length === 0 && mode === 'command') {
@@ -123,7 +129,7 @@ export function CommandPalette2() {
         // Filter out consecutive dividers
         .filter((item, index, all) => {
           const nextItem = all[index + 1];
-          if (item.type === 'divider' && nextItem?.type === 'divider') {
+          if (item.type === 'divider' && (nextItem?.type === 'divider' || !nextItem)) {
             return false;
           }
           return true;
@@ -155,6 +161,10 @@ export function CommandPalette2() {
     expanded: { y: 0, opacity: 1, maxHeight: 700, transition: { duration: 0.2 } },
     out: { y: 70, opacity: 0, maxHeight: 650, transition: { duration: 0.2, delay: 0.5 } },
   };
+  const breadcrumbs = ['Home'];
+  if (mode === 'command') {
+    breadcrumbs.push('Commands');
+  }
 
   return (
     <Portal>
@@ -392,26 +402,26 @@ const RESULT_HEIGHT = 54;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
+      label: 'wrapper',
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
       letterSpacing: 'initial',
-      // background: 'rgba(255, 255, 255, 0.10)',
-      // backdropFilter: 'blur(2px)',
     }),
 
     palette: css({
-      height: 'calc(100dvh - 64px)',
+      label: 'palette',
+      display: 'flex',
+      flexDirection: 'column',
       maxHeight: 650,
       width: '100%',
       maxWidth: 1040,
-      margin: '32px auto',
+      marginInline: 'auto',
       overflow: 'hidden',
       borderRadius: 10,
       background: 'rgba(0, 0, 0, 0.80)',
-      display: 'grid',
       gridTemplateRows: 'auto 1fr auto',
       gridTemplateColumns: '1fr 1fr',
       backdropFilter: 'blur(100px)',
@@ -423,13 +433,30 @@ const getStyles = (theme: GrafanaTheme2) => {
         '0px 2px 2px -1px rgba(0, 0, 0, 0.15)',
         '0px 1px 1px 0px rgba(255, 255, 255, 0.10) inset',
       ].join(','),
-      gridTemplateAreas: gt([
-        // no prettier
-        ['nav', 'nav'],
-        ['input', 'input'],
-        ['main', 'main'],
-        ['footer', 'footer'],
-      ]),
+    }),
+
+    // commandMode: css({
+    //   marginTop: 32,
+    //   height: 'calc((100dvh - 64px) + 51px)',
+    //   maxHeight: 650 + 51,
+    // }),
+
+    // searchMode: css({
+    //   marginTop: 51 + 32,
+    //   height: 'calc(100dvh - 64px)',
+    //   maxHeight: 650,
+    // }),
+
+    navBarCell: css({
+      label: 'navBar',
+      padding: theme.spacing(1.5, 3),
+      display: 'flex',
+      borderBottom: '1px solid #202027',
+      color: tokens.colors.grey[400],
+    }),
+
+    lastCrumb: css({
+      color: tokens.colors.grey[200],
     }),
 
     navWrapper: css({
@@ -500,8 +527,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     inputBarCell: css({
+      label: 'inputBar',
+      flex: '0 0 auto',
       paddingInline: theme.spacing(3),
-      gridArea: 'input',
       background: hexToRgba(tokens.colors.black, 0.4),
       display: 'grid',
       gridTemplateColumns: 'auto 1fr auto',
@@ -543,22 +571,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     mainCell: css({
+      label: 'main',
       position: 'relative',
       padding: theme.spacing(1, 3),
-      gridArea: 'main',
       overflow: 'auto',
-      // background: 'green',
+      flex: '1 1 100%',
     }),
 
     detailCell: css({
+      label: 'detail',
       padding: 8,
-      gridArea: 'detail',
-      // background: 'yellow',
     }),
 
     footerCell: css({
+      label: 'footer',
       padding: theme.spacing(2, 3),
-      gridArea: 'footer',
       background: hexToRgba(tokens.colors.grey[800], 0.3),
       display: 'flex',
       gap: theme.spacing(2),
@@ -670,16 +697,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: '#202027',
       fontSize: 12,
     }),
-  };
-};
 
-const gt = (gridDef: Array<string | string[]>) => {
-  return gridDef
-    .map((row) => {
-      const rowString = typeof row === 'string' ? row : row.join(' ');
-      return `"${rowString}"`;
-    })
-    .join('\n');
+    button: css({
+      all: 'unset',
+      lineHeight: 1,
+      color: '#D9D9D9',
+      border: `1px solid ${tokens.colors.grey[700]}`,
+      background: tokens.colors.grey[800],
+      borderRadius: 6,
+      padding: 3,
+      cursor: 'pointer',
+      transition: '200ms ease-in-out all',
+      boxShadow: `0px -4px 11px -3px rgba(0, 0, 0, 0.10) inset, 0px 8px 8px -4px rgba(0, 0, 0, 0.05), 0px 4px 4px -2px rgba(0, 0, 0, 0.10), 0px 2px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 1px -0.5px rgba(0, 0, 0, 0.10)`,
+
+      ['&:hover']: {
+        borderColor: tokens.colors.grey[600],
+        background: tokens.colors.grey[700],
+      },
+    }),
+  };
 };
 
 function AnimatedKeyCap({
