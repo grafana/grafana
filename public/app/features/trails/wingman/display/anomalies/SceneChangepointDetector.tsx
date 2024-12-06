@@ -15,7 +15,8 @@ import { DataTopic } from '@grafana/schema';
 import { ButtonGroup, Checkbox, ToolbarButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-init().then(() => console.log('augurs changepoints initialized'));
+// eslint-disable-next-line no-console
+init()?.then(() => console.debug('augurs changepoints initialized'));
 
 interface MetricState {
   changepointCount: number;
