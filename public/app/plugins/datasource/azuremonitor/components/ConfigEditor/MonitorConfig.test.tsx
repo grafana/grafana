@@ -60,6 +60,7 @@ describe('MonitorConfig', () => {
   it('should render with user identity enabled when feature toggle is true', async () => {
     config.azure.userIdentityEnabled = true;
     config.featureToggles.azureMonitorEnableUserAuth = true;
+    config.azure.cloud = AzureCloud.Public;
 
     const optionsWithUserAuth = createMockDatasourceSettings({
       jsonData: { azureAuthType: 'currentuser' },
