@@ -56,13 +56,13 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
   // note remove cluster but add for interpolated filters
   // Rate: 
     // metric: traces_spanmetrics_latency_count
-    // sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job)
+    // App o11y example query: sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job)
   // Error: 
     // metric: traces_spanmetrics_latency_count
-    // query: (sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job)
+    // App o11y example query: (sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (job)
   // Duration: 
     // metric: traces_spanmetrics_latency_bucket
-    // query: histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (le,job))
+    // App o11y example query: histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="o11y-apps-platform/apiserver", cluster=~"prod-ap-northeast-0"} [$__rate_interval])) by (le,job))
 
   // group the queries by job
   // *** convert filters to interpolated filters here
@@ -72,7 +72,7 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
     const queries = {
       job: ''+job.text,
       rate: `sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job)`,
-      error: `(sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__="", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job)`,
+      error: `((sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__="", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job)) * 100`,
       duration: `sum by (le) (rate(traces_spanmetrics_latency_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval]))`,
     }
     redQueriesByJob.push(queries);
@@ -175,6 +175,7 @@ function panelHeader(job: string) {
  */
 function ratePanel(red: string) {
   return PanelBuilders.timeseries()
+    .setDescription('Rate of requests per second.')
     .setTitle(`${red.toLocaleUpperCase()}`)
     .setUnit('req/s')
     .setOption('legend', { showLegend: false })
@@ -194,10 +195,13 @@ function ratePanel(red: string) {
  */
 function errorPanel(red: string) {
   return PanelBuilders.barchart()
+    .setDescription('Percentage of requests that resulted in an error over all requests.')
     .setTitle(`${red.toLocaleUpperCase()}`)
-    .setUnit('err')
+    .setUnit('%')
     .setOption('legend', { showLegend: false })
     .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+    .setMin(0)
+    .setMax(100)
     .setCustomFieldConfig('fillOpacity', 9)
     .setOption('xTickLabelSpacing', 50)
     .setColor({ mode: 'fixed', fixedColor: 'red' })
@@ -213,7 +217,8 @@ function errorPanel(red: string) {
  * duration histogram panel
  */
 function durationPanel(red: string) {
-  return PanelBuilders.heatmap() //
+  return PanelBuilders.heatmap() 
+    .setDescription('Distribution of request durations over time.')
     .setTitle(`${red.toLocaleUpperCase()}`)
     .setUnit('ms')
     .setOption('calculate', false)
