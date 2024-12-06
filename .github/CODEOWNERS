@@ -604,7 +604,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
-/public/app/jquery.ts @grafana/frontend-ops
+/public/app/viteGlobals.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
