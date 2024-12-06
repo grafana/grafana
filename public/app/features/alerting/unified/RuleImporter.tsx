@@ -79,7 +79,25 @@ const RuleImporter = () => {
       }
 
       await response.json();
-      window.location.href = urlUtil.renderUrl('alerting/list', {});
+
+      const namespaceValue = data.namespace.trim();
+      const groupValue = data.group.trim();
+      const searchParts: string[] = [];
+
+      if (namespaceValue) {
+        searchParts.push(`namespace:"${namespaceValue}"`);
+      }
+      if (groupValue) {
+        searchParts.push(`group:"${groupValue}"`);
+      }
+
+      const queryObj: Record<string, string> = {};
+
+      if (searchParts.length > 0) {
+        queryObj.search = searchParts.join(' ');
+      }
+
+      window.location.href = urlUtil.renderUrl('alerting/list', queryObj);
     } catch (err) {
       if (err instanceof Error) {
         setError('selectedDatasource', { type: 'manual', message: err.message });
