@@ -44,7 +44,8 @@ export const ScreenShotEditModal = ({
 					const proportionalHeight = fixedWidth * aspectRatio;
 					canvas.width = fixedWidth;
 					canvas.height = proportionalHeight;
-
+					ctx.imageSmoothingEnabled = true;
+					ctx.imageSmoothingQuality = 'high';
 					ctx.drawImage(bitmap, 0, 0, fixedWidth, proportionalHeight);
 				}
 			}
