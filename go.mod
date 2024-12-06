@@ -64,7 +64,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
 	github.com/golang-jwt/jwt/v4 v4.5.1 // @grafana/grafana-backend-group
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/grafana-backend-group
-	github.com/golang/mock v1.6.0 // @grafana/alerting-backend
+	github.com/golang/mock v1.7.0-rc.1 // @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
@@ -83,7 +83,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.23.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.25.2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.3 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -149,7 +149,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
-	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569 // @grafana/grafana-backend-group
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // indirect; @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
@@ -182,7 +182,7 @@ require (
 	golang.org/x/tools v0.27.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.67.1 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.68.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -472,6 +472,10 @@ require (
 	github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-app-platform-squad
 )
 
+require github.com/grafana/grafana/apps/feedback v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-operator-experience-squad
+
+replace github.com/grafana/grafana/apps/feedback v0.0.0-20241105090059-facca37f4d1f => ./apps/feedback
+
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
@@ -499,6 +503,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect
@@ -513,10 +518,11 @@ require (
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/sercand/kuberesolver/v5 v5.1.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
+	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.32.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.31.3 // indirect
