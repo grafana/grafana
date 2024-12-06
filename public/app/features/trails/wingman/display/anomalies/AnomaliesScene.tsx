@@ -208,11 +208,87 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   }
 
   /**
-   * Generate a unique key for a panel based on its metric name and datasource.
-   * Used for both caching panels and ensuring React can track panel identity.
+   * Display all metrics, showing only one instance of each metric even if it appears
+   * in multiple dashboards.
    */
-  private getPanelKey(metric: string, datasourceUid: string): string {
-    return `${metric}-${datasourceUid}`;
+  private displayAllDashboardMetrics() {
+    if (!Object.keys(this.state.dashboardPanelMetrics.byDashboard).length) {
+      return;
+    }
+
+    const allMetrics = Object.values(this.state.dashboardPanelMetrics.byDashboard).flat();
+
+    // deduplicate metrics that appear in multiple dashboards
+    const uniqueMetrics = Array.from(new Map(allMetrics.map((m) => [`${m.metric}-${m.datasource.uid}`, m])).values());
+
+    const sortedMetrics = this.sortMetrics(uniqueMetrics);
+
+    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
+      this.getOrCreatePanelForMetric(metric, uid, idx)
+    );
+
+    this.state.body.setState({ children });
+  }
+
+  private displayDashboardMetricsByDashboard() {
+    for (const [, metrics] of Object.entries(this.state.dashboardPanelMetrics.byDashboard)) {
+      const sortedMetrics = this.sortMetrics(metrics);
+
+      const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
+        this.getOrCreatePanelForMetric(metric, uid, idx)
+      );
+
+      this.state.body.setState({ children });
+    }
+  }
+
+  /**
+   * Sort metrics based on the specified criteria:
+   * - 'alphabetical': A-Z by metric name
+   * - 'alphabetical-reversed': Z-A by metric name
+   * - default: by number of changepoints (highest first), with complex metrics at the end
+   */
+  private sortMetrics(metrics: MetricWithMeta[], sortBy?: string): MetricWithMeta[] {
+    if (sortBy === 'alphabetical') {
+      return [...metrics].sort((a, b) => a.metric.localeCompare(b.metric));
+    }
+
+    if (sortBy === 'alphabetical-reversed') {
+      return [...metrics].sort((a, b) => b.metric.localeCompare(a.metric));
+    }
+
+    // Default to changepoints sorting
+    return [...metrics].sort((a, b) => {
+      // Put complex metrics at the end
+      const aState = changepointDetector.state.metricStates?.[a.metric];
+      const bState = changepointDetector.state.metricStates?.[b.metric];
+
+      if (aState?.isComplexMetric && !bState?.isComplexMetric) {
+        return 1;
+      }
+      if (!aState?.isComplexMetric && bState?.isComplexMetric) {
+        return -1;
+      }
+
+      return (bState?.changepointCount || 0) - (aState?.changepointCount || 0);
+    });
+  }
+
+  /**
+   * Sort and rerender panels based on the current sort criteria.
+   * Uses cached panel instances to prevent unnecessary recreation.
+   */
+  private sortPanels(sortBy: string) {
+    const allMetrics = Object.values(this.state.dashboardPanelMetrics.byDashboard).flat();
+    const uniqueMetrics = Array.from(new Map(allMetrics.map((m) => [`${m.metric}-${m.datasource.uid}`, m])).values());
+
+    const sortedMetrics = this.sortMetrics(uniqueMetrics, sortBy);
+
+    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
+      this.getOrCreatePanelForMetric(metric, uid, idx)
+    );
+
+    this.state.body.setState({ children });
   }
 
   /**
@@ -243,20 +319,11 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   }
 
   /**
-   * Sort and rerender panels based on the current sort criteria.
-   * Uses cached panel instances to prevent unnecessary recreation.
+   * Generate a unique key for a panel based on its metric name and datasource.
+   * Used for both caching panels and ensuring React can track panel identity.
    */
-  private sortPanels(sortBy: string) {
-    const allMetrics = Object.values(this.state.dashboardPanelMetrics.byDashboard).flat();
-    const uniqueMetrics = Array.from(new Map(allMetrics.map((m) => [`${m.metric}-${m.datasource.uid}`, m])).values());
-
-    const sortedMetrics = this.sortMetrics(uniqueMetrics, sortBy);
-
-    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-      this.getOrCreatePanelForMetric(metric, uid, idx)
-    );
-
-    this.state.body.setState({ children });
+  private getPanelKey(metric: string, datasourceUid: string): string {
+    return `${metric}-${datasourceUid}`;
   }
 
   /**
@@ -299,73 +366,6 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
     });
     this.sortPanels(this.state.sortBy.state.sortBy);
   };
-
-  /**
-   * Sort metrics based on the specified criteria:
-   * - 'alphabetical': A-Z by metric name
-   * - 'alphabetical-reversed': Z-A by metric name
-   * - default: by number of changepoints (highest first), with complex metrics at the end
-   */
-  private sortMetrics(metrics: MetricWithMeta[], sortBy?: string): MetricWithMeta[] {
-    if (sortBy === 'alphabetical') {
-      return [...metrics].sort((a, b) => a.metric.localeCompare(b.metric));
-    }
-
-    if (sortBy === 'alphabetical-reversed') {
-      return [...metrics].sort((a, b) => b.metric.localeCompare(a.metric));
-    }
-
-    // Default to changepoints sorting
-    return [...metrics].sort((a, b) => {
-      // Put complex metrics at the end
-      const aState = changepointDetector.state.metricStates?.[a.metric];
-      const bState = changepointDetector.state.metricStates?.[b.metric];
-
-      if (aState?.isComplexMetric && !bState?.isComplexMetric) {
-        return 1;
-      }
-      if (!aState?.isComplexMetric && bState?.isComplexMetric) {
-        return -1;
-      }
-
-      return (bState?.changepointCount || 0) - (aState?.changepointCount || 0);
-    });
-  }
-
-  /**
-   * Display all metrics, showing only one instance of each metric even if it appears
-   * in multiple dashboards.
-   */
-  private displayAllDashboardMetrics() {
-    if (!Object.keys(this.state.dashboardPanelMetrics.byDashboard).length) {
-      return;
-    }
-
-    const allMetrics = Object.values(this.state.dashboardPanelMetrics.byDashboard).flat();
-
-    // deduplicate metrics that appear in multiple dashboards
-    const uniqueMetrics = Array.from(new Map(allMetrics.map((m) => [`${m.metric}-${m.datasource.uid}`, m])).values());
-
-    const sortedMetrics = this.sortMetrics(uniqueMetrics);
-
-    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-      this.getOrCreatePanelForMetric(metric, uid, idx)
-    );
-
-    this.state.body.setState({ children });
-  }
-
-  private displayDashboardMetricsByDashboard() {
-    for (const [, metrics] of Object.entries(this.state.dashboardPanelMetrics.byDashboard)) {
-      const sortedMetrics = this.sortMetrics(metrics);
-
-      const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-        this.getOrCreatePanelForMetric(metric, uid, idx)
-      );
-
-      this.state.body.setState({ children });
-    }
-  }
 
   public static Component = ({ model }: SceneComponentProps<AnomaliesScene>) => {
     const { dashboardPanelMetrics, body, loading } = model.useState();
