@@ -1,4 +1,3 @@
-import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
@@ -91,10 +90,32 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     mouseIsOver: false,
   };
   logLineRef: React.RefObject<HTMLTableRowElement>;
+  private timestamp = '';
+  private levelStyles: ReturnType<typeof getLogLevelStyles> | null = null;
+  private processedRow: LogRowModel;
 
   constructor(props: Props) {
     super(props);
     this.logLineRef = React.createRef();
+    this.processedRow = props.row;
+    this.updateTimestamp();
+    this.updateLevelStyles();
+    this.updateProcessedRow();
+  }
+
+  updateTimestamp() {
+    this.timestamp = dateTimeFormat(this.props.row.timeEpochMs, {
+      timeZone: this.props.timeZone,
+      defaultWithMS: true,
+    });
+  }
+
+  updateLevelStyles() {
+    this.levelStyles = getLogLevelStyles(this.props.theme, this.props.row.logLevel);
+  }
+
+  updateProcessedRow() {
+    this.processedRow = this.escapeRow(this.props.row, this.props.forceEscape);
   }
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
@@ -124,13 +145,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
-  renderTimeStamp(epochMs: number) {
-    return dateTimeFormat(epochMs, {
-      timeZone: this.props.timeZone,
-      defaultWithMS: true,
-    });
-  }
-
   onMouseEnter = () => {
     this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
@@ -157,8 +171,17 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.scrollToLogRow(this.state, true);
   }
 
-  componentDidUpdate(_: Props, prevState: State) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     this.scrollToLogRow(prevState);
+    if (this.props.row.timeEpochMs !== prevProps.row.timeEpochMs || this.props.timeZone !== prevProps.timeZone) {
+      this.updateTimestamp();
+    }
+    if (this.props.row.logLevel !== prevProps.row.logLevel || this.props.theme !== prevProps.theme) {
+      this.updateLevelStyles();
+    }
+    if (this.props.row !== prevProps.row || this.props.forceEscape !== prevProps.forceEscape) {
+      this.updateProcessedRow();
+    }
   }
 
   scrollToLogRow = (prevState: State, mounted = false) => {
@@ -205,9 +228,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       displayedFields,
       wrapLogMessage,
       prettifyLogMessage,
-      theme,
       getFieldLinks,
-      forceEscape,
       app,
       styles,
       getRowContextQuery,
@@ -217,25 +238,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     } = this.props;
 
     const { showDetails, showingContext, permalinked } = this.state;
-    const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const { sampleMessage, isSampled } = checkLogsSampled(row);
-    const logRowBackground = cx(styles.logsRow, {
-      [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked || pinned,
-    });
-    const logRowDetailsBackground = cx(styles.logsRow, {
-      [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: permalinked && !this.state.showDetails,
-    });
-
-    const processedRow = this.escapeRow(row, forceEscape);
 
     return (
       <>
         <tr
           ref={this.logLineRef}
-          className={logRowBackground}
+          className={`${styles.logsRow} ${hasError ? styles.errorLogRow : ''} ${showingContext || permalinked || pinned ? styles.highlightBackground : ''}`}
           onClick={this.onRowClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
@@ -249,14 +259,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
-              {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
+              {this.processedRow.duplicates && this.processedRow.duplicates > 0
+                ? `${this.processedRow.duplicates + 1}x`
+                : null}
             </td>
           )}
           <td
             className={
               hasError || isSampled
                 ? styles.logsRowWithError
-                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+                : `${this.levelStyles?.logsRowLevelColor ?? ''} ${styles.logsRowLevel}`
             }
           >
             {hasError && (
@@ -278,15 +290,15 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             )}
           </td>
-          {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
-          {showLabels && processedRow.uniqueLabels && (
+          {showTime && <td className={styles.logsRowLocalTime}>{this.timestamp}</td>}
+          {showLabels && this.processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
-              <LogLabels labels={processedRow.uniqueLabels} />
+              <LogLabels labels={this.processedRow.uniqueLabels} />
             </td>
           )}
           {displayedFields && displayedFields.length > 0 ? (
             <LogRowMessageDisplayedFields
-              row={processedRow}
+              row={this.processedRow}
               showContextToggle={showContextToggle}
               detectedFields={displayedFields}
               getFieldLinks={getFieldLinks}
@@ -304,7 +316,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           ) : (
             <LogRowMessage
-              row={processedRow}
+              row={this.processedRow}
               showContextToggle={showContextToggle}
               getRowContextQuery={getRowContextQuery}
               wrapLogMessage={wrapLogMessage}
@@ -328,7 +340,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         {this.state.showDetails && (
           <LogDetails
             onPinLine={this.props.onPinLine}
-            className={logRowDetailsBackground}
+            className={`${styles.logsRow} ${hasError ? styles.errorLogRow : ''} ${permalinked && !this.state.showDetails ? styles.highlightBackground : ''}`}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
@@ -336,7 +348,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             onClickShowField={onClickShowField}
             onClickHideField={onClickHideField}
             getRows={getRows}
-            row={processedRow}
+            row={this.processedRow}
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
             displayedFields={displayedFields}
