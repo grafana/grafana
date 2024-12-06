@@ -55,17 +55,24 @@ export default function useActions(searchQuery: string, showing: boolean) {
     setIsFetchingUserDefinedActions(true);
     const { customCommands = [] } = await userPreferencesService.load();
     setUserDefinedActions(
-      customCommands.map((command) => ({
-        id: command.ID,
-        name: command.title,
-        url: command.path,
-        parent: '',
-        children: [],
-        ancestors: [],
-        priority: 1,
-        shortcut: command.shortcut,
-        section: 'Mine',
-      }))
+      customCommands.map((command) => {
+        const action = {
+          id: command.ID,
+          name: command.title,
+          url: command.path,
+          parent: '',
+          children: [],
+          ancestors: [],
+          priority: 1,
+          shortcut: command.shortcut,
+          keywords: command.keywords?.join(' '),
+          section: 'Mine',
+          perform: () => {
+            window.location.href = action.url as string;
+          },
+        };
+        return action;
+      })
     );
     setIsFetchingUserDefinedActions(false);
   };

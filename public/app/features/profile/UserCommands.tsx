@@ -6,6 +6,8 @@ import { Button, Field, Input, Stack, TagsInput, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 
+import ShortcutBadge from '../commandPalette/Shortcut';
+
 const service = new PreferencesService('user');
 
 export function UserCommands({}) {
@@ -128,40 +130,49 @@ export function UserCommands({}) {
           <Trans i18nKey="user-profile.commands-table.title">Commands</Trans>
         </h3>
 
-        <table className="filter-table form-inline">
-          <thead>
-            <tr>
-              <th>
-                <Trans i18nKey="user-profile.commands-table.title-column">Title</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="user-profile.commands-table.category-column">Category</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="user-profile.commands-table.keywords-column">Keywords</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="user-profile.commands-table.shortcuts-column">Shortcuts</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="user-profile.commands-table.path-column">Path</Trans>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {savedCommands.map((command: CustomCommand) => {
-              return (
-                <tr key={command.ID}>
-                  <td>{command.title}</td>
-                  <td>{command.category}</td>
-                  <td>{command.keywords?.join(', ')}</td>
-                  <td>{command.shortcut?.join(', ') ?? ''}</td>
-                  <td>{command.path}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {savedCommands.length === 0 ? (
+          <Text color="secondary">
+            <Trans i18nKey="user-profile.commands.no-commands">No commands added yet</Trans>
+            <br />
+          </Text>
+        ) : (
+          <table className="filter-table form-inline">
+            <thead>
+              <tr>
+                <th>
+                  <Trans i18nKey="user-profile.commands-table.title-column">Title</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="user-profile.commands-table.category-column">Category</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="user-profile.commands-table.keywords-column">Keywords</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="user-profile.commands-table.shortcuts-column">Shortcut</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="user-profile.commands-table.path-column">Path</Trans>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {savedCommands.map((command: CustomCommand) => {
+                return (
+                  <tr key={command.ID}>
+                    <td>{command.title}</td>
+                    <td>{command.category}</td>
+                    <td>{command.keywords?.join(', ')}</td>
+                    <td>
+                      <ShortcutBadge shortcut={command.shortcut} />
+                    </td>
+                    <td>{command.path}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </Stack>
   );
