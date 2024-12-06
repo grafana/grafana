@@ -205,7 +205,7 @@ export function CommandPalette2() {
                     {breadcrumbs.map((crumb, idx) => (
                       <motion.li
                         initial={{ opacity: 0, x: -4 }}
-                        animate={{ opacity: 1, x: 0, transition: { delay: 0.15, duration: 0.2 } }}
+                        animate={{ opacity: 1, x: 0, transition: { delay: 0.05 * (idx + 1), duration: 0.2 } }}
                         exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
                         className={styles.breadcrumb}
                         key={idx}
@@ -696,9 +696,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     dividerItem: css({
       textTransform: 'uppercase',
       display: 'flex',
+      letterSpacing: 0.5,
       gap: theme.spacing(3),
       alignItems: 'center',
-      color: '#75757D',
+      color: tokens.colors.grey[500],
       fontWeight: 500,
       fontSize: 12,
       position: 'relative',
