@@ -1505,6 +1505,7 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
+  "Import": "Import",
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1758,6 +1759,7 @@
       "more": "more"
     }
   },
+  "Migrate your alert rules from a datasource into Grafana": "Migrate your alert rules from a datasource into Grafana.",
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",

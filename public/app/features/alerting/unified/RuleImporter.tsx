@@ -109,7 +109,7 @@ const RuleImporter = () => {
     <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Import alert rules from a datasource' }}>
       <Box maxWidth={300}>
         <p style={{ textAlign: 'left', marginBottom: '20px' }}>
-          Migrate your alert rules from a datasource into Grafana.
+          <Trans>Migrate your alert rules from a datasource into Grafana.</Trans>
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -209,7 +209,7 @@ const RuleImporter = () => {
               onClick={() => clearErrors()}
             >
               {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-              Import
+              <Trans>Import</Trans>
             </Button>
           </Box>
         </form>
