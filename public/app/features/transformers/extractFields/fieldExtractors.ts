@@ -138,6 +138,7 @@ const extDelimiter: FieldExtractor = {
   name: 'Split by delimiter',
   description: 'Splits at delimited values, such as commas',
   getParser: ({ delimiter = ',' }) => {
+    // Match for delimiter with surrounding whitesapce (\s)
     const splitRegExp = new RegExp(`\\s*${escapeStringForRegex(delimiter)}\\s*`, 'g');
 
     return (raw: string) => {
