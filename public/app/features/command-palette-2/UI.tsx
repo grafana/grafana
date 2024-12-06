@@ -235,70 +235,98 @@ export function CommandPalette2() {
               className={styles.highlightBg}
             />
 
-            {filteredItems.map((item, idx) => {
-              // const nextItem = filteredItems[idx + 1];
-              // if (item.type === 'divider' && nextItem?.type === 'divider') {
-              //   return null;
-              // }
+            <AnimatePresence mode="wait">
+              {filteredItems.map((item, idx) => {
+                // const nextItem = filteredItems[idx + 1];
+                // if (item.type === 'divider' && nextItem?.type === 'divider') {
+                //   return null;
+                // }
 
-              if (item.type === 'divider') {
-                return (
-                  <div key={idx} className={styles.dividerItem}>
-                    <div>{item.title}</div>
-                    <div className={styles.dividerDivider} />
-                  </div>
-                );
-              }
+                // Framer Motion requires a unique key to trigger a re-render
+                const longId = `${item.type}-${item.title}-${idx}`;
 
-              const icon = (
-                <motion.div animate={{ color: idx === activeIndex ? '#FFFFFF' : '#75757D' }}>
-                  <Icon name={item.icon} />
-                </motion.div>
-              );
+                const variants = {
+                  in: {
+                    opacity: 1,
+                    y: 0,
+                    color: tokens.colors.grey[400],
+                    transition: { duration: 0.2, delay: 0.03 * idx },
+                  },
+                  active: { opacity: 1, y: 0, color: '#FFFFFF', transition: { duration: 0.2 } },
+                  out: { opacity: 0, y: 20, transition: { duration: 0.2, delay: 0.03 * idx } },
+                };
 
-              let body: ReactNode = null;
-
-              if (mode === 'search') {
-                // search mode
-                body = (
-                  <>
-                    {icon}
-                    <div className={styles.resultItemMain}>{item.title}</div>
-                    {item.parentTitle && (
-                      <div>
-                        {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
-                      </div>
-                    )}
-                  </>
-                );
-              } else {
-                // command mode
-                body = (
-                  <>
-                    {icon}
-                    <Stack gap={1} alignItems="center">
-                      {item.parentTitle && (
-                        <>
-                          <div className={styles.commandParent}>{item.parentTitle}</div>
-                          <Icon name="angle-right" />
-                        </>
-                      )}
+                if (item.type === 'divider') {
+                  return (
+                    <motion.div
+                      key={longId}
+                      initial={'out'}
+                      animate={longId === `${item.type}-${item.title}-${activeIndex}` ? 'active' : 'in'}
+                      variants={variants}
+                      className={styles.dividerItem}
+                    >
                       <div>{item.title}</div>
-                    </Stack>
-                  </>
-                );
-              }
+                      <div className={styles.dividerDivider} />
+                    </motion.div>
+                  );
+                }
 
-              return (
-                <motion.div
-                  key={idx}
-                  className={cx(styles.resultItem, mode === 'command' && styles.commandItem)}
-                  animate={{ color: idx === activeIndex ? '#FFFFFF' : '#C4C4CB' }}
-                >
-                  {body}
-                </motion.div>
-              );
-            })}
+                const icon = (
+                  <motion.div
+                    animate={{ color: longId === `${item.type}-${item.title}-${activeIndex}` ? '#FFFFFF' : '#75757D' }}
+                  >
+                    <Icon name={item.icon} />
+                  </motion.div>
+                );
+
+                let body: ReactNode = null;
+
+                if (mode === 'search') {
+                  // search mode
+                  body = (
+                    <>
+                      {icon}
+                      <div className={styles.resultItemMain}>{item.title}</div>
+                      {item.parentTitle && (
+                        <div>
+                          {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
+                        </div>
+                      )}
+                    </>
+                  );
+                } else {
+                  // command mode
+                  body = (
+                    <>
+                      {icon}
+                      <Stack gap={1} alignItems="center">
+                        {item.parentTitle && (
+                          <>
+                            <div className={styles.commandParent}>{item.parentTitle}</div>
+                            <Icon name="angle-right" />
+                          </>
+                        )}
+                        <div>{item.title}</div>
+                      </Stack>
+                    </>
+                  );
+                }
+
+                return (
+                  <motion.div
+                    key={longId}
+                    className={cx(styles.resultItem, mode === 'command' && styles.commandItem)}
+                    // animate={{ color: idx === activeIndex ? '#FFFFFF' : '#C4C4CB' }}
+                    // animate={idx === activeIndex ? 'active' : 'in'}
+                    initial={'out'}
+                    animate={longId === `${item.type}-${item.title}-${activeIndex}` ? 'active' : 'in'}
+                    variants={variants}
+                  >
+                    {body}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
 
           {/* <div className={styles.detailCell}>detail</div> */}
