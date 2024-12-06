@@ -8,10 +8,14 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, splitVendorChunkPlugin, createLogger } from 'vite';
 import EnvironmentPlugin from 'vite-plugin-environment';
 
+import { getEnvConfig } from './scripts/webpack/env-util.js';
+
 const require = createRequire(import.meta.url);
 const shouldMinify = process.env.NO_MINIFY === '1' ? false : 'esbuild';
 
 const allWorkspaceDependencies = getAllWorkspaceDependencies();
+
+const frontendDevEnvSettings = getEnvConfig();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
@@ -50,6 +54,8 @@ export default defineConfig(({ command }) => ({
     EnvironmentPlugin({
       // these are default values in case NODE_ENV is not set in the environment
       NODE_ENV: command === 'build' ? 'production' : 'development',
+      // Expose frontend_dev_* settings from ini files
+      ...frontendDevEnvSettings,
     }),
     { ...moveAssets(), apply: 'build' },
     { ...visualizer(), apply: 'build' },

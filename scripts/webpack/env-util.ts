@@ -1,9 +1,8 @@
-// @ts-check
-const { parse } = require('ini');
-const { readFileSync, existsSync } = require('node:fs');
-const path = require('path');
+import { parse } from 'ini';
+import { readFileSync, existsSync } from 'node:fs';
+import path from 'path';
 
-const getEnvConfig = () => {
+export const getEnvConfig = () => {
   const grafanaRoot = path.join(__dirname, '../..');
   const defaultSettings = readFileSync(`${grafanaRoot}/conf/defaults.ini`, {
     encoding: 'utf-8',
@@ -22,8 +21,7 @@ const getEnvConfig = () => {
 
   // Take all frontend keys from the ini file and prefix with `frontend_dev_`,
   // so they can be added to `process.env` elsewhere
-  /** @type {Record<string, unknown>} */
-  const env = {};
+  const env: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(merged)) {
     env[`frontend_dev_${key}`] = value;
@@ -31,5 +29,3 @@ const getEnvConfig = () => {
 
   return env;
 };
-
-module.exports = getEnvConfig;
