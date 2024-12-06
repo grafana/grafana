@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import {
+  Alert,
   CellProps,
   Column,
   EmptyState,
@@ -15,7 +16,7 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery } from './api';
+import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
 import { PROVISIONING_URL } from './constants';
 
 export default function RepositoryStatusPage() {
@@ -39,7 +40,10 @@ export default function RepositoryStatusPage() {
             <TextLink href={PROVISIONING_URL}>Back to repositories</TextLink>
           </EmptyState>
         ) : (
-          <FilesTable name={name} />
+          <>
+            <RepoTestOptions name={name} />
+            <FilesTable name={name} />
+          </>
         )}
       </Page.Contents>
     </Page>
@@ -55,6 +59,22 @@ type FileDetails = {
 interface FilesTableProps {
   name: string;
 }
+
+
+function RepoTestOptions({ name }: FilesTableProps) {
+  const status = useTestRepositoryQuery({ name });
+  if (status.isLoading) {
+    return <div><Spinner/> Testing configuration...</div>
+  }
+  if (status.isError){
+    if (!status.data) {
+      return <Alert title='Error testing configuration' severity='error'/>
+    }
+    return <pre>{JSON.stringify(status.data, null, '  ')}</pre>
+  }
+  return null; // don't show anything when it is OK?
+}
+
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 

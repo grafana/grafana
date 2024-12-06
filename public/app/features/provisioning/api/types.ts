@@ -58,16 +58,13 @@ export type RepositoryList = ResourceList<RepositorySpec>;
 
 export type RepositoryResource = Resource<RepositorySpec>;
 
-export type HelloWorld = {
+export type TestResponse = {
   apiVersion?: string;
   kind?: string;
-  whom?: string;
-};
-
-export type WebhookResponse = {
-  apiVersion?: string;
-  kind?: string;
-  status?: string;
+  code: number;
+  success: boolean;
+  errors?: string[];
+  details?: object;
 };
 
 export type ResourceObjects = {
