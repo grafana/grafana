@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 type annotationEvent struct {
@@ -25,10 +24,10 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	resp := backend.NewQueryDataResponse()
 	dr, queryRes, _, err := queries[0].run(ctx, req, s, dsInfo, logger)
 	if dr.Error != nil {
-		errorsource.AddErrorToResponse(queries[0].getRefID(), resp, dr.Error)
+		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(dr.Error)
 	}
 	if err != nil {
-		errorsource.AddErrorToResponse(queries[0].getRefID(), resp, err)
+		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(err)
 		return resp, err
 	}
 
@@ -43,7 +42,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	err = json.Unmarshal(firstQuery.JSON, &tslq)
 	if err != nil {
 		logger.Error("error unmarshaling query", "error", err, "statusSource", backend.ErrorSourceDownstream)
-		errorsource.AddErrorToResponse(firstQuery.RefID, resp, err)
+		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
 		return resp, nil
 	}
 
@@ -52,7 +51,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	resp.Responses[firstQuery.RefID] = *dr
 
 	if err != nil {
-		errorsource.AddErrorToResponse(firstQuery.RefID, resp, err)
+		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
 		return resp, err
 	}
 
