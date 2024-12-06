@@ -54,7 +54,7 @@ Grafana supports two types of alert rules:
 
 We recommend using Grafana-managed alert rules whenever possible, and opting for data source-managed alert rules when horizontal scaling is required. Refer to the [comparison table of alert rule types](ref:alert-types-comparison-table) for a more detailed overview.
 
-Both types of alert rules can be configured in Grafana using the **+ New alert rule** flow . For step-by-step instructions, refer to:
+Both types of alert rules can be configured in Grafana using the **+ New alert rule** flow. For step-by-step instructions, refer to:
 
 - [Configure Grafana-managed alert rules](ref:configure-grafana-alerts)
 - [Configure data source-managed alert rules](ref:configure-ds-alerts)
