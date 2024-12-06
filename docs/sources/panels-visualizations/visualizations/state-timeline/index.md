@@ -58,11 +58,11 @@ The state timeline visualization works best if you have data capturing the vario
 
 Each state ends when the next state begins or when there is a `null` value.
 
-### Examples
+### Example 1
 
-The following tables are examples of the type of data you need for a state timeline visualization and how it should be formatted.
+The following table is one example of the type of data you need for a state timeline visualization and how it should be formatted.
 
-#### Single time column with null values
+**Single time column with null values**
 
 | Timestamps          | Server A | Server B |
 | ------------------- | -------- | -------- |
@@ -80,7 +80,11 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline visualization with null values showing the status of two servers" >}}
 
-#### Two time columns without null values
+### Example 2
+
+The following table is one example of the type of data you need for a state timeline visualization and how it should be formatted.
+
+**Two time columns without null values**
 
 | Start time          | End time            | Server A | Server B |
 | ------------------- | ------------------- | -------- | -------- |
