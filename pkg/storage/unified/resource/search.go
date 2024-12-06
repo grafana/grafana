@@ -15,8 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-
 	"github.com/grafana/authlib/authz"
 )
 
@@ -360,7 +358,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
 	if latencySeconds > 5 {
-		logger.Warn("high index latency", "latency", latencySeconds)
+		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
 		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
