@@ -359,7 +359,7 @@ export function useOnCallEscalationChain() {
 
       return notifier;
     },
-    [grafanaOnCallEscalationChains]
+    [grafanaOnCallEscalationChains, slackChannels, teams]
   );
 
   return {
