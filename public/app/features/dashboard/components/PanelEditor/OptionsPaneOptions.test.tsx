@@ -17,7 +17,7 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';

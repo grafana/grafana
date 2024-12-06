@@ -18,7 +18,7 @@ import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';

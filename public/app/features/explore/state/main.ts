@@ -5,7 +5,7 @@ import { AnyAction } from 'redux';
 import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 

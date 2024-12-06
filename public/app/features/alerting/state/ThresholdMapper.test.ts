@@ -1,4 +1,4 @@
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { hiddenReducerTypes, ThresholdMapper } from './ThresholdMapper';
 import alertDef from './alertDef';

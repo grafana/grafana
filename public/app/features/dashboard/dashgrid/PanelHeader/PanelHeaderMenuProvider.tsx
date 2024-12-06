@@ -11,7 +11,8 @@ import { usePluginLinks } from '@grafana/runtime';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { useSelector } from 'app/types';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 import { getPanelMenu } from '../../utils/getPanelMenu';
 
 interface PanelHeaderMenuProviderApi {

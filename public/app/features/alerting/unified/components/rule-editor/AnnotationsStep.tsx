@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { DashboardModel } from '../../../../dashboard/state';
+import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
