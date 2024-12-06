@@ -40,7 +40,7 @@ const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry {
-  dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
+  dashboard: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>;
   ts: number;
   cacheKey: string;
 }
@@ -340,7 +340,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     });
   }
 
-  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
+  public setDashboardCache(cacheKey: string, dashboard: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>) {
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 

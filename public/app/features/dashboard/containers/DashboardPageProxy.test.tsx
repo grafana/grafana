@@ -8,12 +8,21 @@ import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import { DashboardDataDTO, DashboardRoutes } from 'app/types';
+
+import { DashboardWithAccessInfo } from '../api/types';
 
 import DashboardPageProxy, { DashboardPageProxyProps } from './DashboardPageProxy';
 
-const dashMock: DashboardDTO = {
-  dashboard: {
+const dashMock: DashboardWithAccessInfo<DashboardDataDTO> = {
+  apiVersion: 'legacy',
+  kind: 'DashboardWithAccessInfo',
+  metadata: {
+    name: 'uid',
+    resourceVersion: '1',
+    creationTimestamp: '1',  
+  },
+  spec: {
     id: 1,
     annotations: {
       list: [],
@@ -24,32 +33,32 @@ const dashMock: DashboardDTO = {
     version: 1,
     schemaVersion: 1,
   },
-  meta: {
+  access: {
     canEdit: false,
   },
 };
 
-const homeMock = {
+const homeMock: DashboardWithAccessInfo<DashboardDataDTO>  = {
   ...dashMock,
-  dashboard: {
-    ...dashMock.dashboard,
+  spec: {
+    ...dashMock.spec,
     uid: '',
     title: 'Home',
   },
 };
 
-const homeMockEditable = {
+const homeMockEditable: DashboardWithAccessInfo<DashboardDataDTO>  = {
   ...homeMock,
-  meta: {
-    ...homeMock.meta,
+  access: {
+    ...homeMock.access,
     canEdit: true,
   },
 };
 
-const dashMockEditable = {
+const dashMockEditable: DashboardWithAccessInfo<DashboardDataDTO>  = {
   ...dashMock,
-  meta: {
-    ...dashMock.meta,
+  access: {
+    ...dashMock.access,
     canEdit: true,
   },
 };
