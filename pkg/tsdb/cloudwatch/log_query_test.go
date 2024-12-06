@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -270,6 +271,72 @@ func TestLogsResultsToDataframes_MixedTypes_NumericValuesMixedWithStringFallBack
 			},
 		},
 	}
+
+	assert.Equal(t, expectedDataframe.Name, dataframes.Name)
+	assert.Equal(t, expectedDataframe.RefID, dataframes.RefID)
+	assert.Equal(t, expectedDataframe.Meta, dataframes.Meta)
+	assert.ElementsMatch(t, expectedDataframe.Fields, dataframes.Fields)
+}
+
+func TestLogsResultsToDataframes_With_Millisecond_Timestamps(t *testing.T) {
+	stringTimeField := "2020-03-02 15:04:05.000"
+	timestampField := int64(1732749534876)
+	ingestionTimeField := int64(1732790372916)
+
+	dataframes, err := logsResultsToDataframes(&cloudwatchlogs.GetQueryResultsOutput{
+		Results: [][]*cloudwatchlogs.ResultField{
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("@timestamp"),
+					Value: aws.String(fmt.Sprintf("%d", timestampField)),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("@ingestionTime"),
+					Value: aws.String(fmt.Sprintf("%d", ingestionTimeField)),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("stringTimeField"),
+					Value: aws.String(stringTimeField),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("message"),
+					Value: aws.String("log message"),
+				},
+			},
+		},
+		Status: aws.String("ok"),
+	})
+	require.NoError(t, err)
+
+	timeStampResult := time.Unix(timestampField/1000, (timestampField%1000)*int64(time.Millisecond))
+	ingestionTimeResult := time.Unix(ingestionTimeField/1000, (ingestionTimeField%1000)*int64(time.Millisecond))
+	stringTimeFieldResult, err := time.Parse(cloudWatchTSFormat, stringTimeField)
+	require.NoError(t, err)
+
+	expectedDataframe := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			data.NewField("@timestamp", nil, []*time.Time{
+				&timeStampResult,
+			}),
+			data.NewField("@ingestionTime", nil, []*time.Time{
+				&ingestionTimeResult,
+			}),
+			data.NewField("stringTimeField", nil, []*time.Time{
+				&stringTimeFieldResult,
+			}),
+			data.NewField("message", nil, []*string{
+				aws.String("log message"),
+			}),
+		},
+		RefID: "",
+		Meta: &data.FrameMeta{
+			Custom: map[string]any{
+				"Status": "ok",
+			},
+		},
+	}
+	expectedDataframe.Fields[0].SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 	assert.Equal(t, expectedDataframe.Name, dataframes.Name)
 	assert.Equal(t, expectedDataframe.RefID, dataframes.RefID)
