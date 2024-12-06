@@ -3,11 +3,12 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Drawer, Form } from '@grafana/ui';
-import { ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { ImportDashboardForm } from 'app/features/manage-dashboards/components/ImportDashboardForm';
-import { getLibraryPanelInputs } from 'app/features/manage-dashboards/state/actions';
+import { getLibraryPanelInputs, importDashboard } from 'app/features/manage-dashboards/state/actions';
 import { DashboardInputs, LibraryPanelInputState } from 'app/features/manage-dashboards/state/reducers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { dispatch } from 'app/store/store';
 
 import { Input, InputUsage, LibraryPanel } from '../components/DashExportModal/DashboardExporter';
 
@@ -102,20 +103,20 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
 
       const dashboardInputs = !!libraryPanels?.length
         ? dashboardJson.__inputs.reduce((acc: Input[], input: Input) => {
-          if (!input?.usage?.libraryPanels) {
-            acc.push(input);
-            return acc;
-          }
+            if (!input?.usage?.libraryPanels) {
+              acc.push(input);
+              return acc;
+            }
 
-          const newLibraryPanels = getNewLibraryPanelsByInput(input);
-          if (newLibraryPanels?.length) {
-            acc.push({
-              ...input,
-              usage: { libraryPanels: newLibraryPanels },
-            });
-          }
-          return acc;
-        }, [])
+            const newLibraryPanels = getNewLibraryPanelsByInput(input);
+            if (newLibraryPanels?.length) {
+              acc.push({
+                ...input,
+                usage: { libraryPanels: newLibraryPanels },
+              });
+            }
+            return acc;
+          }, [])
         : dashboardJson.__inputs;
 
       return { ...dashboardJson, __inputs: dashboardInputs };
@@ -226,6 +227,22 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
       });
 
       console.log('Processing inputs:', inputsToPersist);
+
+      dispatch(
+        browseDashboardsAPI.endpoints.importDashboard.initiate({
+          // uid: if user changed it, take the new uid from importDashboardForm,
+          // else read it from original dashboard
+          // by default the uid input is disabled, onSubmit ignores values from disabled inputs
+          dashboard: {
+            ...communityDashboardToImport,
+            title: formData.title,
+            uid: formData.uid || communityDashboardToImport.uid,
+          },
+          overwrite: true,
+          inputs: inputsToPersist,
+          folderUid: formData.folder.uid,
+        })
+      );
     },
     [inputs]
   );
@@ -280,4 +297,3 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
 };
 
 export default DashboardTemplateImport;
-
