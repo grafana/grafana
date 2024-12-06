@@ -1,4 +1,3 @@
-import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
@@ -139,9 +138,6 @@ export class MetricSelectSceneForWingman
   }
 
   private _onActivate() {
-    // eslint-disable-next-line no-console
-    init().then(() => console.debug('Grafana ML initialized'));
-
     if (this.state.body.state.children.length === 0) {
       this.buildLayout();
     } else {
@@ -458,7 +454,7 @@ export class MetricSelectSceneForWingman
           autoRows: rowTemplate,
           templateColumns: undefined,
         });
-        break;
+        return;
       case 'default':
       default:
       // default display no action needed.
