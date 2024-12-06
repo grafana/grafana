@@ -1,7 +1,7 @@
 import FeedbackPlus from 'feedbackplus';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { ToolbarButton, Button, Stack, Modal, Drawer, Label, TextArea } from '@grafana/ui';
+import { ToolbarButton, Button, Stack, Modal, Drawer, Label, TextArea, Checkbox } from '@grafana/ui';
 import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
@@ -14,6 +14,7 @@ type FeedbackFormData = {
   message: string;
   screenshot: string;
   imageType: string;
+  userEmail: string;
   width: number;
   height: number;
   bitmap: HTMLImageElement;
@@ -235,6 +236,12 @@ const DrawerContents = ({
     setFormData({ ...formData, message: e.target.value });
   };
 
+  const onEmailChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFormData({ ...formData, userEmail: e.target.value });
+  };
+
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -247,6 +254,17 @@ const DrawerContents = ({
       });
   };
 
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [contactChecked, setContactChecked] = useState(false);
+  const handleAccessCheckedChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setAccessChecked(e.currentTarget.checked),
+    [setAccessChecked]
+  );
+  const handleContactCheckedChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setContactChecked(e.currentTarget.checked),
+    [setContactChecked]
+  );
+
   const onSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
@@ -257,8 +275,8 @@ const DrawerContents = ({
       screenshot: formData.screenshot,
       imageType: formData.imageType,
       diagnosticData,
-      canContactReporter: false, // TODO
-      canAccessInstance: false, // TODO
+      canContactReporter: contactChecked,
+      canAccessInstance: accessChecked,
     };
 
     const feedbackApi = getFeedbackAPI();
@@ -291,6 +309,12 @@ const DrawerContents = ({
         Tell us what happened:
         <TextArea onChange={onInputChange} placeholder="what did you expect to see?" />
       </Label>
+      <Checkbox label="Can we access your instance?" value={accessChecked} onChange={handleAccessCheckedChange} />
+      <Checkbox label="Can we contact you?" value={contactChecked} onChange={handleContactCheckedChange} />
+      <Label>
+        If so, what is your email?
+        <TextArea onChange={onEmailChange} placeholder="your email" />
+      </Label>
       <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
       {formData.screenshot && <canvas ref={canvasRef}></canvas>}
       <Button type="submit" onClick={onSubmit}>
@@ -307,6 +331,7 @@ export const ReportIssueButton = ({}: Props) => {
     message: '',
     screenshot: '',
     imageType: '',
+    userEmail: '',
     width: 0,
     height: 0,
     bitmap: {} as HTMLImageElement,
