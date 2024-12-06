@@ -15,6 +15,7 @@ import {
   InlineSwitch,
   useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 
@@ -109,7 +110,9 @@ const RuleImporter = () => {
     <AlertingPageWrapper navId="alert-list" pageNav={{ text: 'Import alert rules from a datasource' }}>
       <Box maxWidth={300}>
         <p style={{ textAlign: 'left', marginBottom: '20px' }}>
-          <Trans>Migrate your alert rules from a datasource into Grafana.</Trans>
+          <Trans i18nKey="migrate-alert-rules-from-datasource">
+            Migrate your alert rules from a datasource into Grafana.
+          </Trans>
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -209,7 +212,7 @@ const RuleImporter = () => {
               onClick={() => clearErrors()}
             >
               {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-              <Trans>Import</Trans>
+              <Trans i18nKey="import-alert-rules-button">Import</Trans>
             </Button>
           </Box>
         </form>
