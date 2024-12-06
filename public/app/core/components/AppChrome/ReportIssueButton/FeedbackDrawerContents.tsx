@@ -103,6 +103,8 @@ export const DrawerContents = ({
 
         const image = new Image();
         image.onload = function () {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(image, 0, 0, fixedWidth, proportionalHeight);
         };
         image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
