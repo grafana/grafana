@@ -327,14 +327,14 @@ func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, bo
 }
 
 // is this the right place to put this code???
-func (srv AlertmanagerSrv) RoutePostGrafanaAlerts(c *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
+func (srv AlertmanagerSrv) RoutePostGrafanaAlerts(c *contextmodel.ReqContext, body apimodels.Alerts) response.Response {
 	orgID := c.SignedInUser.GetOrgID() // will this work for on-call plugin?
 	am, errResp := srv.AlertmanagerFor(orgID)
 	if errResp != nil {
 		return errResp
 	}
 
-	err := am.PutAlerts(c.Req.Context(), body)
+	err := am.PutAlerts(c.Req.Context(), apimodels.PostableAlerts{PostableAlerts: body})
 	if err != nil {
 		srv.log.Error("failed to send alerts to alert manager: %v", err, "orgID", orgID)
 		return response.Error(http.StatusInternalServerError, "Problem sending alert", err)

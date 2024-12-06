@@ -122,7 +122,7 @@ func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel
 	return s.RoutePostAlertingConfig(ctx, body)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *contextmodel.ReqContext, body apimodels.PostableAlerts, dsUID string) response.Response {
+func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *contextmodel.ReqContext, body apimodels.Alerts, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
@@ -194,6 +194,6 @@ func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaTemplates(ctx *contex
 	return f.GrafanaSvc.RoutePostTestTemplates(ctx, conf)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlerts(ctx *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
+func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlerts(ctx *contextmodel.ReqContext, body apimodels.Alerts) response.Response {
 	return f.GrafanaSvc.RoutePostGrafanaAlerts(ctx, body)
 }
