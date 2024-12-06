@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Enrichment, MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
@@ -170,6 +170,17 @@ export const formAmRouteToAmRoute = (
     formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)
   );
 
+  // Enrichments are optional and only
+  const enrichments: Enrichment[] = Object.keys(formAmRoute.enrichments ?? {}).map((enrichment) => {
+    const data = (formAmRoute.enrichments ?? {})[enrichment];
+    return {
+      key: enrichment,
+      active: ((data ?? { active: ''}) as unknown as { active: boolean }).active,
+      url: ((data ?? { url: ''}) as unknown as { url: string }).url,
+      query: ((data ?? { query: ''}) as unknown as { query: string }).query,
+    }
+  });
+  
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
@@ -183,6 +194,7 @@ export const formAmRouteToAmRoute = (
     routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
     receiver: receiver,
+    enrichments: enrichments,
   };
 
   // non-Grafana managed rules should use "matchers", Grafana-managed rules should use "object_matchers"
