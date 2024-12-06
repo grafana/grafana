@@ -102,7 +102,6 @@ export class DashboardLoaderSrv {
 
     promise.then((result) => {
       impressionSrv.addDashboardImpression(result);
-      
 
       return result;
     });
