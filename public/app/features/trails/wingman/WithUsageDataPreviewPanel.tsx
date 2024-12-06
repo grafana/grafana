@@ -56,9 +56,9 @@ export function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-start',
       gap: '17px',
       padding: '8px 12px',
-      border: '1px solid rgba(204, 204, 220, 0.12)',
+      border: `1px solid ${theme.colors.border.weak}`,
       borderTopWidth: 0,
-      backgroundColor: '#181B1F',
+      backgroundColor: theme.colors.background.primary,
       alignItems: 'center',
     }),
     usageItem: css({
