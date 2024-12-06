@@ -1241,6 +1241,10 @@
       "name": "Unexpected any. Specify a different type.",
       "files": [
         {
+          "path": "/public/app/features/alerting/unified/api/onCallApi.ts",
+          "count": 1
+        },
+        {
           "path": "/packages/grafana-data/src/dataframe/ArrayDataFrame.ts",
           "count": 1
         },
