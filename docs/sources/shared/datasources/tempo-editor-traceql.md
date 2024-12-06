@@ -133,7 +133,10 @@ For more information on span details, refer to [Traces in Explore](https://grafa
 Querying spansets with a large number of spans can negatively impact performance.
 You can use the **Span Limit** field in **Options** section of the TraceQL query editor.
 This field sets the maximum number of spans to return for each span set.
-If the **Span Limit** is set to `0`, then the capability is disabled.
+By default, the maximum value that you can set for the **Span Limit** value (or the spss query) is 100. 
+In Tempo configuration, this value is controlled by the `max_spans_per_span_set` parameter and can be modified by your Tempo administrator.
+Grafana Cloud users can contact Grafana Support to request a change.
+Entering a value higher than the default results in an error. 
 
 ### Focus on traces or spans
 
