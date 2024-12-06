@@ -18,6 +18,7 @@ import { ROW_PREVIEW_HEIGHT } from '../../MetricSelectSceneForWingman';
 
 import { SceneChangepointDetector } from './SceneChangepointDetector';
 import { SortByScene, SortCriteriaChanged } from './SortByChangepointsScene';
+import { hideEmptyPanels } from './hideEmptyPanels';
 
 const changepointDetector = new SceneChangepointDetector({
   enabled: true,
@@ -80,6 +81,7 @@ interface DashboardPanelMetrics {
 export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   // Cache panel instances by metric+datasource key to avoid recreation during sorting
   private panelInstances: Map<string, SceneCSSGridItem> = new Map();
+  private panelInstancesToIngore: Set<string> = new Set();
 
   constructor(state: Partial<AnomaliesSceneState>) {
     super({
@@ -224,9 +226,9 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
 
     const sortedMetrics = this.sortMetrics(uniqueMetrics);
 
-    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-      this.getOrCreatePanelForMetric(metric, uid, idx)
-    );
+    const children = sortedMetrics
+      .map(({ metric, datasource: { uid } }, idx) => this.getOrCreatePanelForMetric(metric, uid, idx))
+      .filter(isGridItem);
 
     this.state.body.setState({ children });
   }
@@ -235,9 +237,9 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
     for (const [, metrics] of Object.entries(this.state.dashboardPanelMetrics.byDashboard)) {
       const sortedMetrics = this.sortMetrics(metrics);
 
-      const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-        this.getOrCreatePanelForMetric(metric, uid, idx)
-      );
+      const children = sortedMetrics
+        .map(({ metric, datasource: { uid } }, idx) => this.getOrCreatePanelForMetric(metric, uid, idx))
+        .filter(isGridItem);
 
       this.state.body.setState({ children });
     }
@@ -285,9 +287,9 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
 
     const sortedMetrics = this.sortMetrics(uniqueMetrics, sortBy);
 
-    const children = sortedMetrics.map(({ metric, datasource: { uid } }, idx) =>
-      this.getOrCreatePanelForMetric(metric, uid, idx)
-    );
+    const children = sortedMetrics
+      .map(({ metric, datasource: { uid } }, idx) => this.getOrCreatePanelForMetric(metric, uid, idx))
+      .filter(isGridItem);
 
     this.state.body.setState({ children });
   }
@@ -296,8 +298,13 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
    * Get an existing panel from the cache or create a new one.
    * This ensures we maintain panel identity across sorts and updates.
    */
-  private getOrCreatePanelForMetric(metric: string, datasourceUid: string, index: number): SceneCSSGridItem {
+  private getOrCreatePanelForMetric(metric: string, datasourceUid: string, index: number): SceneCSSGridItem | null {
     const key = this.getPanelKey(metric, datasourceUid);
+    const shouldIgnore = this.panelInstancesToIngore.has(key);
+
+    if (shouldIgnore) {
+      return null;
+    }
 
     // If we already have a panel for this metric+datasource, use it
     let panel = this.panelInstances.get(key);
@@ -313,6 +320,14 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
       });
 
       panel = getPreviewPanelFor(metric, index, 0, undefined, [detector], { uid: datasourceUid });
+
+      // ensure the panel has the hideEmptyPanels behavior
+      if (!panel.state.$behaviors?.includes(hideEmptyPanels(metric))) {
+        panel.setState({
+          $behaviors: [...(panel.state.$behaviors || []), hideEmptyPanels(metric)],
+        });
+      }
+
       this.panelInstances.set(key, panel);
     }
 
@@ -367,6 +382,10 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
     });
     this.sortPanels(this.state.sortBy.state.sortBy);
   };
+
+  public ignorePanel(metric: string, datasourceUid: string) {
+    this.panelInstancesToIngore.add(this.getPanelKey(metric, datasourceUid));
+  }
 
   public static Component = ({ model }: SceneComponentProps<AnomaliesScene>) => {
     const { dashboardPanelMetrics, body, loading } = model.useState();
@@ -440,4 +459,8 @@ function isPrometheusDataSource(input: unknown): input is Required<Pick<DataSour
     'uid' in input &&
     typeof input.uid === 'string'
   );
+}
+
+function isGridItem(item: unknown): item is SceneCSSGridItem {
+  return item instanceof SceneCSSGridItem;
 }
