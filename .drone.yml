@@ -912,15 +912,14 @@ steps:
     - success
     - failure
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx wait-on@7.0.1 $GRAFANA_URL
   - yarn playwright install --with-deps chromium
   - cd bench/frontend && yarn playwright test
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
-    HOST: grafana-server
-    PORT: "3001"
+    GRAFANA_URL: http://grafana-server:3001
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   image: node:20-bookworm
   name: bench-playwright-plugin-e2e
@@ -2405,15 +2404,14 @@ steps:
     - success
     - failure
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx wait-on@7.0.1 $GRAFANA_URL
   - yarn playwright install --with-deps chromium
   - cd bench/frontend && yarn playwright test
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
-    HOST: grafana-server
-    PORT: "3001"
+    GRAFANA_URL: http://grafana-server:3001
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   image: node:20-bookworm
   name: bench-playwright-plugin-e2e
@@ -5766,6 +5764,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 184798de7b80d47a466bd4928d9fd9e0ad5523ca3b9a19f5adf29ceae21f1dc9
+hmac: 3a65a64a5e92539980c921e5e52db7b4a927799ea27cf97ac78b047975be7eea
 
 ...

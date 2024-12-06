@@ -13,7 +13,7 @@ export default defineConfig<PluginOptions>({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3001}`,
+    baseURL: process.env.GRAFANA_URL || `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
     trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',
