@@ -197,27 +197,22 @@ export function CommandPalette2() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={{ duration: 0.2 }}
+                    onClick={handleBackButtonClick}
                   >
-                    <Icon name="arrow-left" />
+                    <Icon className={styles.navCloseIcon} name="arrow-left" />
                   </motion.button>
                   <ul className={styles.breadcrumbs}>
-                    <motion.li
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0, transition: { delay: 0.15, duration: 0.2 } }}
-                      exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
-                      className={styles.breadcrumb}
-                    >
-                      Home
-                    </motion.li>
-                    <motion.li
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0, transition: { delay: 0.15 } }}
-                      exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
-                      transition={{ duration: 0.2 }}
-                      className={styles.breadcrumb}
-                    >
-                      Commands
-                    </motion.li>
+                    {breadcrumbs.map((crumb, idx) => (
+                      <motion.li
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0, transition: { delay: 0.15, duration: 0.2 } }}
+                        exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
+                        className={styles.breadcrumb}
+                        key={idx}
+                      >
+                        {crumb}
+                      </motion.li>
+                    ))}
                   </ul>
                 </motion.div>
               )}
@@ -409,6 +404,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       bottom: 0,
       letterSpacing: 'initial',
+      padding: theme.spacing(3),
     }),
 
     palette: css({
@@ -416,6 +412,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       maxHeight: 650,
+      height: '100%',
       width: '100%',
       maxWidth: 1040,
       marginInline: 'auto',
@@ -490,6 +487,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: tokens.colors.grey[800],
       color: tokens.colors.grey[300],
       borderRadius: 6,
+      cursor: 'pointer',
       boxShadow: [
         '0px 8px 8px -4px rgba(0, 0, 0, 0.15)',
         '0px 4px 4px -2px rgba(0, 0, 0, 0.15)',
@@ -498,6 +496,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         '0px 0px 0px 1px rgba(255, 255, 255, 0.05) inset',
         '0px 0px 0px 0.5px rgba(0, 0, 0, 0.25)',
       ].join(','),
+      '&:hover': {
+        background: tokens.colors.grey[700],
+        svg: {
+          transform: 'translateX(-2px)',
+        },
+      },
+    }),
+
+    navCloseIcon: css({
+      transition: '200ms ease-in-out all',
     }),
 
     breadcrumbs: css({
