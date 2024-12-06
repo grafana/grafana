@@ -54,7 +54,7 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
         htmlFor="sort-by-criteria"
         label={
           <div className={styles.sortByTooltip}>
-            <Trans i18nKey="explore-metrics.breakdown.sortBy">Sort by</Trans>
+            <Trans i18nKey="explore-metrics.wingman.sortBy">Sort by</Trans>
             <IconButton
               name={'info-circle'}
               size="sm"

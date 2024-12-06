@@ -1294,7 +1294,10 @@
       "relatedLogsUnavailableBeforeDocsLink": "Ŗęľäŧęđ ľőģş äřę ŉőŧ äväįľäþľę ƒőř ŧĥįş męŧřįč. Ŧřy şęľęčŧįŉģ ä męŧřįč čřęäŧęđ þy ä ",
       "warnExperimentalFeature": "Ŗęľäŧęđ ľőģş įş äŉ ęχpęřįmęŉŧäľ ƒęäŧūřę."
     },
-    "viewBy": "Vįęŵ þy"
+    "viewBy": "Vįęŵ þy",
+    "wingman": {
+      "sortBy": "Ŝőřŧ þy"
+    }
   },
   "export": {
     "json": {
