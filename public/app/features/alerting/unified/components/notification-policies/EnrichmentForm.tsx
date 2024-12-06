@@ -199,7 +199,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   enrichmentItemDetails: css({
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
     width: '100%',
     marginLeft: theme.spacing(3),
   }),
