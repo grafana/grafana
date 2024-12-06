@@ -90,7 +90,7 @@ The data is converted as follows:
 
 ### Heatmap options
 
-<!-- add intro text here -->
+The following options control how data in the heatmap is calculated and grouped.
 
 <!-- prettier-ignore-start -->
 
@@ -105,16 +105,14 @@ The data is converted as follows:
 
 ### Y-Axis options
 
-Defines how the y-axis is displayed
-
-<!-- fix above -->
+The following options define the display of the y-axis.
 
 <!-- prettier-ignore-start -->
 
 | Options | Description |
 | ------- | ----------- |
 | Placement | Set where the y-axis is displayed. Choose from: **Left**, **Right**, or **Hidden**. |
-| Unit | Unit configuration |
+| Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Min/Max value | These settings configure the axis range. |
 | Axis width | This setting configures the width for the axis. |
@@ -159,13 +157,13 @@ By default, Grafana calculates cell colors based on minimum and maximum bucket v
 
 ### Cell display options
 
-Use these settings to refine your visualization.
+Use these settings to control the display of heatmap cells.
 
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| Unit | Unit configuration |
+| Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Cell gap | Set how much space there is between cells. |
 | Hide cells with values <= | Enter a value. |
