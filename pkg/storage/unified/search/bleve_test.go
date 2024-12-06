@@ -171,10 +171,23 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(disp))
 
+<<<<<<< HEAD
 		count, _ := index.DocCount(ctx, "")
 		assert.Equal(t, int64(3), count)
 
 		count, _ = index.DocCount(ctx, "zzz")
+=======
+		count, _ := index.DocCount(ctx, "", "")
+		assert.Equal(t, int64(3), count)
+
+		count, _ = index.DocCount(ctx, "zzz", "")
+		assert.Equal(t, int64(1), count)
+
+		count, _ = index.DocCount(ctx, "", "r0")
+		assert.Equal(t, int64(1), count)
+
+		count, _ = index.DocCount(ctx, "zzz", "r0") // both
+>>>>>>> cbcd427b9af (get stats from index)
 		assert.Equal(t, int64(1), count)
 	})
 

@@ -294,20 +294,34 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
-func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
-	if folder == "" {
-		count, err := b.index.DocCount()
-		return int64(count), err
-	}
-
+func (b *bleveIndex) DocCount(ctx context.Context, folder, repository string) (int64, error) {
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query: &query.TermQuery{
-			Term:     folder,
-			FieldVal: resource.SEARCH_FIELD_FOLDER,
-		},
 	}
+
+	qF := &query.TermQuery{
+		Term:     resource.SEARCH_FIELD_FOLDER,
+		FieldVal: folder,
+	}
+
+	qR := &query.TermQuery{
+		Term:     resource.SEARCH_FIELD_REPOSITORY,
+		FieldVal: repository,
+	}
+
+	if folder == "" {
+		if repository == "" {
+			count, err := b.index.DocCount()
+			return int64(count), err
+		}
+		req.Query = qR
+	} else if repository == "" {
+		req.Query = qF
+	} else {
+		req.Query = bleve.NewConjunctionQuery(qF, qR)
+	}
+
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
 		return 0, err
