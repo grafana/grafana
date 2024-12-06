@@ -11,14 +11,12 @@ import (
 )
 
 func TestPrometheusRulesToGrafana(t *testing.T) {
-	converter, err := NewConverter(Config{})
-	require.NoError(t, err)
-
 	testCases := []struct {
 		name        string
 		orgID       int64
 		namespace   string
 		promGroup   PrometheusRuleGroup
+		config      Config
 		expectError bool
 	}{
 		{
@@ -111,6 +109,9 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			converter, err := NewConverter(tc.config)
+			require.NoError(t, err)
+
 			grafanaGroup, err := converter.PrometheusRulesToGrafana(tc.orgID, tc.namespace, tc.promGroup)
 
 			if tc.expectError {
@@ -148,6 +149,8 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				assert.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
 				assert.Equal(t, promRule.Annotations, grafanaRule.Annotations, tc.name)
 				assert.True(t, grafanaRule.Metadata.PrometheusStyleRule, tc.name)
+				assert.Equal(t, models.Duration(1*time.Minute), grafanaRule.Data[0].RelativeTimeRange.To)
+				assert.Equal(t, models.Duration(11*time.Minute), grafanaRule.Data[0].RelativeTimeRange.From)
 			}
 		})
 	}
