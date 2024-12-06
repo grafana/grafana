@@ -780,45 +780,17 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 
 	ctx := c.Req.Context()
 
-	// TODO: how can we check for alert rules and library panels?
-	var folderDependants = []string{
-		folderalpha1.RESOURCEGROUP,
-		"dashboards.dashboard.grafana.app",
-		"librarypanels.librarypanel.grafana.app",
-		"alertrules.alertmanager.grafana.app",
+	hasDependants, err := hasDependants(ctx, fk8s.kvstore)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
 	}
-	var hasDependants bool
-	for _, resource := range folderDependants {
-		item, found, err := fk8s.kvstore.Get(ctx, resource)
-		if err != nil {
-			fk8s.writeError(c, err)
-			return
-		}
-		if found {
-			mode, err := strconv.Atoi(item)
-			if err != nil {
-				fk8s.writeError(c, err)
-				return
-			}
-			// if dual writer mode > 2, it means the source of truth is unified store
-			if mode > 2 {
-				// call unified store count
-				fmt.Println("counting dependants in unified store")
-			}
-			// if not found or mode < 3 call legacy store count
-		} else {
-			fmt.Println("counting dependants in legacy store")
-		}
-	}
-
-	// TODO: also check for SLORules in another store
 
 	if hasDependants {
 		fk8s.writeError(c, folder.ErrFolderNotEmpty.Errorf("this folder is not empty. Please make sure it does not contain any dashboards, alerts, library panels or SLOs"))
 		return
 	}
-	err := client.Delete(ctx, uid, v1.DeleteOptions{})
-	if err != nil {
+	if err := client.Delete(ctx, uid, v1.DeleteOptions{}); err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
@@ -865,6 +837,40 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 //-----------------------------------------------------------------------------------------
 // Utility functions
 //-----------------------------------------------------------------------------------------
+
+func hasDependants(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+	// TODO: how can we check for alert rules and library panels?
+	var folderDependants = []string{
+		folderalpha1.RESOURCEGROUP,
+		"dashboards.dashboard.grafana.app",
+		"librarypanels.librarypanel.grafana.app",
+		"alertrules.alertmanager.grafana.app",
+	}
+	var hasDependants bool
+	for _, resource := range folderDependants {
+		item, found, err := kvstore.Get(ctx, resource)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			mode, err := strconv.Atoi(item)
+			if err != nil {
+				return false, err
+			}
+			// if dual writer mode > 2, it means the source of truth is unified store
+			if mode > 2 {
+				// call unified store count
+				fmt.Println("counting dependants in unified store")
+			}
+			// if not found or mode < 3 call legacy store count
+		} else {
+			fmt.Println("counting dependants in legacy store")
+		}
+	}
+
+	// TODO: also check for SLORules in another store
+	return hasDependants, nil
+}
 
 func (fk8s *folderK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
 	dyn, err := dynamic.NewForConfig(fk8s.clientConfigProvider.GetDirectRestConfig(c))
