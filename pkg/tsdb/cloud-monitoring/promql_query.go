@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/converter"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -68,7 +67,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]any) 
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return res, errorsource.DownstreamError(err, false)
+		return res, backend.DownstreamError(err)
 	}
 
 	return res, nil
