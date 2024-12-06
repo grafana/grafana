@@ -1,6 +1,6 @@
 import { ChangeEvent, useRef, MouseEvent, useEffect } from 'react';
 
-import { Button, Checkbox, Label, Stack, TextArea } from '@grafana/ui';
+import { Button, InlineSwitch, Stack, TextArea, Field, Input } from '@grafana/ui';
 import { getFeedbackAPI } from 'app/features/feedback/api';
 import { getDiagnosticData } from 'app/features/feedback/diagnostic-data';
 
@@ -32,7 +32,7 @@ export const DrawerContents = ({
     setFormData({ ...formData, message: e.target.value });
   };
 
-  const onEmailChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+  const onEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setFormData({ ...formData, reporterEmail: e.target.value });
@@ -98,22 +98,41 @@ export const DrawerContents = ({
   }, [formData.height, formData.imageType, formData.screenshot, formData.width]);
 
   return (
-    <Stack gap={2} direction={'column'}>
-      <Label>
-        Tell us what happened:
+    <Stack direction={'column'}>
+      <Field label="Tell us what happened: ">
         <TextArea onChange={onInputChange} placeholder="what did you expect to see?" value={formData.message} />
-      </Label>
-      <Checkbox label="Can we access your instance?" value={formData.accessChecked} onChange={onAccessChange} />
-      <Checkbox label="Can we contact you?" value={formData.contactChecked} onChange={onContactChange} />
-      <Label>
-        If so, what is your email?
-        <TextArea onChange={onEmailChange} placeholder="your email" value={formData.reporterEmail} />
-      </Label>
-      <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
-      {formData.screenshot && <canvas ref={canvasRef}></canvas>}
-      <Button type="submit" onClick={onSubmit}>
-        Submit feedback
-      </Button>
+      </Field>
+
+      <InlineSwitch
+        label="Can we access your instance?"
+        value={formData.accessChecked}
+        onChange={onAccessChange}
+        showLabel={true}
+        transparent={true}
+      />
+      <InlineSwitch
+        label="Can we contact you?"
+        value={formData.contactChecked}
+        onChange={onContactChange}
+        showLabel={true}
+        transparent={true}
+      />
+
+      <Field label="If you want to be contacted about this feedback, complete your email below">
+        <Input onChange={onEmailChange} placeholder="your email" value={formData.reporterEmail} />
+      </Field>
+
+      <Stack direction={'column'}>
+        <Button onClick={onTakeScreenshot} icon="camera" variant="secondary">
+          Take Screenshot
+        </Button>
+
+        {formData.screenshot && <canvas ref={canvasRef}></canvas>}
+
+        <Button type="submit" onClick={onSubmit}>
+          Submit feedback
+        </Button>
+      </Stack>
     </Stack>
   );
 };
