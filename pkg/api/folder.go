@@ -803,10 +803,11 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 			// if dual writer mode > 2, it means the source of truth is unified store
 			if mode > 2 {
 				// call unified store count
+				fmt.Println("counting dependants in unified store")
 			}
 			// if not found or mode < 3 call legacy store count
 		} else {
-
+			fmt.Println("counting dependants in legacy store")
 		}
 	}
 
