@@ -74,6 +74,7 @@ export const DrawerContents = ({
 
     const feedbackApi = getFeedbackAPI();
     await feedbackApi.createFeedback(feedback);
+    setFormData({ message: "", screenshot: "", imageType: "", reporterEmail: "", accessChecked: false, contactChecked: false, width: 0, height: 0, bitmap: {} as HTMLImageElement });
   };
 
   useEffect(() => {
