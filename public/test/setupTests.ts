@@ -7,11 +7,11 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import { getEnvConfig } from '../../scripts/webpack/env-util.js';
+import getEnvConfig from '../../scripts/webpack/env-util.cjs';
 
 import { matchers } from './matchers';
 
-const config = getEnvConfig();
+const config = getEnvConfig() as Record<`frontend_dev_${string}`, unknown>;
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
