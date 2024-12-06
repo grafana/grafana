@@ -55,11 +55,13 @@ const ScreenShotEditModal = ({
       if (canvas && isCanvas(canvas)) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          canvas.width = 700;
-          const hRatio = canvas.width / width;
-          const vRatio = canvas.height / height;
-          const ratio = Math.min(hRatio, vRatio);
-          ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+          const fixedWidth = 700;
+          const aspectRatio = height / width;
+          const proportionalHeight = fixedWidth * aspectRatio;
+          canvas.width = fixedWidth;
+          canvas.height = proportionalHeight;
+
+          ctx.drawImage(bitmap, 0, 0, fixedWidth, proportionalHeight);
         }
       }
     },
@@ -86,21 +88,15 @@ const ScreenShotEditModal = ({
       const ctx = canvas.getContext('2d');
       if (ctx) {
         if (hideToolRef.current) {
-          console.log('is this happening????');
           ctx.lineWidth = 5;
           ctx.strokeStyle = '#FCC934';
-          ctx.fillStyle = 'green';
+          ctx.fillStyle = 'red';
           let hideStyles = hideToolRef.current.style;
           const topNum = +hideStyles.top.slice(0, -2);
           const leftNum = +hideStyles.left.slice(0, -2);
           const widthNum = +hideStyles.width.slice(0, -2);
           const heightNum = +hideStyles.height.slice(0, -2);
-          // canvas.width = 800;
-          // canvas.height = 800;
-          // const hRatio = canvas.width / width;
-          // const vRatio = canvas.height / height;
-          // const ratio = Math.min(hRatio, vRatio);
-          // ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+
           ctx.fillRect(leftNum, topNum, widthNum, heightNum);
         }
       }
@@ -196,7 +192,7 @@ const ScreenShotEditModal = ({
           ? 'Click and drag to hide sensitive information then press Finished Editing'
           : 'Click Edit button to hide sensitive information, or press save to attach screenshot to feedback form'}
       </div>
-      <div ref={canvasContainerRef}>
+      <div ref={canvasContainerRef} style={{ position: 'relative' }}>
         <canvas ref={canvasRef} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} />
         <div
           ref={hideToolRef}
@@ -306,13 +302,13 @@ const DrawerContents = ({
     <Stack gap={2} direction={'column'}>
       <Label>
         Tell us what happened:
-        <TextArea onChange={onInputChange} placeholder="what did you expect to see?" />
+        <TextArea onChange={onInputChange} placeholder="what did you expect to see?" value={formData.message} />
       </Label>
       <Checkbox label="Can we access your instance?" value={formData.accessChecked} onChange={onAccessChange} />
       <Checkbox label="Can we contact you?" value={formData.contactChecked} onChange={onContactChange} />
       <Label>
         If so, what is your email?
-        <TextArea onChange={onEmailChange} placeholder="your email" />
+        <TextArea onChange={onEmailChange} placeholder="your email" value={formData.reporterEmail} />
       </Label>
       <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
       {formData.screenshot && <canvas ref={canvasRef}></canvas>}
@@ -371,8 +367,6 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
-  - fix that form fields getting back to default after screenshot is taken
-  - fix the offset issue when actively hiding (seems to work when saving? why is the red preview box off??)
   - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
   - add a cancel button to delete screenshot if the user doesn't like it
   - make dropdown cooler looking
