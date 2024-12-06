@@ -58,17 +58,9 @@ The state timeline visualization works best if you have data capturing the vario
 
 Each state ends when the next state begins or when there is a `null` value.
 
-### Time series data with thresholds
-
-The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
-
-![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
-
 ### Example 1
 
-The following table is one example of the type of data you need for a state timeline visualization and how it should be formatted.
-
-**Single time column with null values**
+The following example has a single time column and includes null values:
 
 | Timestamps          | Server A | Server B |
 | ------------------- | -------- | -------- |
@@ -88,9 +80,7 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 ### Example 2
 
-The following table is one example of the type of data you need for a state timeline visualization and how it should be formatted.
-
-**Two time columns without null values**
+The following example has two time columns and doesn't include any null values:
 
 | Start time          | End time            | Server A | Server B |
 | ------------------- | ------------------- | -------- | -------- |
@@ -106,6 +96,12 @@ The data is converted as follows:
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline visualization with two time columns showing the status of two servers" >}}
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
+
+### Time series data
+
+You can also create a state timeline visualization using time series data. To do this, add [thresholds](#thresholds), which turn the time series into discrete colored state regions.
+
+![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
 
 ## Configuration options
 
@@ -168,12 +164,6 @@ The **Page size** option lets you paginate the state timeline visualization to l
 ### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-#### Time series data with thresholds
-
-The visualization can be used with time series data as well. In this case, thresholds are used to turn the time series into discrete colored state regions.
-
-![State timeline with time series](/media/docs/grafana/panels-visualizations/screenshot-state-timeline-time-series-v11.4.png)
 
 ### Field overrides
 
