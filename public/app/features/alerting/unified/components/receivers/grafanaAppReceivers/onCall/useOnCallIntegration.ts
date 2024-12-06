@@ -41,7 +41,6 @@ function useOnCallPluginStatus() {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
-    settings,
   } = usePluginBridge(SupportedPlugin.OnCall);
 
   const {
@@ -75,13 +74,10 @@ function useOnCallPluginStatus() {
     [integrationStatus]
   );
 
-  const jsonData: any = settings?.jsonData ?? {};
-
   return {
     isOnCallEnabled,
     integrationStatus,
     escalationChainStatus,
-    onCallApiUrl: jsonData.onCallApiUrl ?? '',
     isAlertingV2IntegrationEnabled,
     isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
     onCallError: pluginError ?? onCallFeaturesError,
@@ -275,12 +271,10 @@ enum OnCallEscalationSelectKeys {
   EscalationChainID = 'escalation_chain_id',
   TeamName = 'team_name',
   SlackChannelID = 'slack_channel_id',
-  APIUrl = 'api_url',
 }
 
 export function useOnCallEscalationChain() {
-  const { isOnCallEnabled, escalationChainStatus, onCallApiUrl, isOnCallStatusLoading, onCallError } =
-    useOnCallPluginStatus();
+  const { isOnCallEnabled, escalationChainStatus, isOnCallStatusLoading, onCallError } = useOnCallPluginStatus();
 
   const { useGrafanaOnCallEscalationChainsQuery, useGrafanaOnCallTeamsQuery, useGrafanaOnCallSlackChannelsQuery } =
     onCallApi;
@@ -356,11 +350,6 @@ export function useOnCallEscalationChain() {
                 value: i.name,
               }));
               option.selectOptions.unshift({ label: 'No team', value: undefined });
-            } else if (option.propertyName === OnCallEscalationSelectKeys.APIUrl) {
-              // Hide the field under a collapsible section. The field is required by the backend, but we set a default
-              // value when it's empty.
-              option.required = false;
-              option.defaultValue = { value: onCallApiUrl };
             }
           });
         });
@@ -370,7 +359,7 @@ export function useOnCallEscalationChain() {
 
       return notifier;
     },
-    [grafanaOnCallEscalationChains, onCallApiUrl]
+    [grafanaOnCallEscalationChains]
   );
 
   return {
