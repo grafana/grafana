@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -36,9 +37,12 @@ func GetMetrics() *metrics {
 				Help:      "Total number of github issues created",
 			}, []string{"slug", "has_screenshot", "was_triaged"}),
 		}
+
+		if err := prometheus.Register(instantiated); err != nil {
+			klog.ErrorS(err, "error registering metrics")
+		}
 	})
 	return instantiated
-
 }
 
 func (m *metrics) Collect(ch chan<- prometheus.Metric) {
