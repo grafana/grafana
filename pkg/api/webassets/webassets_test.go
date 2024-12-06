@@ -19,13 +19,18 @@ func TestReadWebassets(t *testing.T) {
 	require.JSONEq(t, `{
 		"jsFiles": [
 		  {
-			"filePath": "public/build/index-3exGqndc.js",
+			"filePath": "public/build/index-fkCrlmGK.js",
 			"integrity": ""
 		  }
 		],
-		"dark": "public/build/grafana-BwD1GyB5.css",
-		"light": "public/build/grafana-RC8BVZtE.css",
-		"preloadJsFiles":  null
+		"dark": "public/build/grafana-B9F4fUOy.css",
+		"light": "public/build/grafana-Cu0f8nVU.css",
+		"preloadJsFiles":  [
+		  {
+			"filePath": "public/build/vendor-r65R1Ntf.js",
+			"integrity": ""
+		  }
+		]
 	  }`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
@@ -38,13 +43,18 @@ func TestReadWebassets(t *testing.T) {
 		"cdn": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/",
 		"jsFiles": [
 		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/index-3exGqndc.js",
+			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/index-fkCrlmGK.js",
 			"integrity": ""
 		  }
 		],
-		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-BwD1GyB5.css",
-		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-RC8BVZtE.css",
-		"preloadJsFiles":  null
+		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-B9F4fUOy.css",
+		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-Cu0f8nVU.css",
+		"preloadJsFiles":  [
+		  {
+			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/vendor-r65R1Ntf.js",
+			"integrity": ""
+		  }
+		]
 	  }`, string(dto))
 }
 

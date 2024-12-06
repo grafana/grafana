@@ -1,319 +1,181 @@
 {
-  "../node_modules/brace/ext/language_tools.js": {
-    "file": "public/build/language_tools-Dm4pZh5M.js",
-    "src": "../node_modules/brace/ext/language_tools.js",
-    "isDynamicEntry": true
+  "_vendor-!~{004}~.js": {
+    "file": "public/build/vendor-BrUJaDlA.css",
+    "src": "_vendor-!~{004}~.js"
   },
-  "../node_modules/brace/mode/sql.js": {
-    "file": "public/build/sql-DH4lMGia.js",
-    "src": "../node_modules/brace/mode/sql.js",
-    "isDynamicEntry": true
-  },
-  "../node_modules/brace/mode/sqlserver.js": {
-    "file": "public/build/sqlserver-CLrN2VIu.js",
-    "src": "../node_modules/brace/mode/sqlserver.js",
-    "isDynamicEntry": true
-  },
-  "app/core/components/ForgottenPassword/ChangePasswordPage.tsx": {
-    "file": "public/build/ChangePasswordPage-CbYmNYCv.js",
-    "src": "app/core/components/ForgottenPassword/ChangePasswordPage.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts"
-    ]
-  },
-  "app/core/components/Signup/VerifyEmailPage.tsx": {
-    "file": "public/build/VerifyEmailPage-Bxdx23lG.js",
-    "src": "app/core/components/Signup/VerifyEmailPage.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts"
-    ]
-  },
-  "app/core/utils/sheet.ts": {
-    "file": "public/build/sheet-9uUyEW4X.js",
-    "src": "app/core/utils/sheet.ts",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts"
-    ]
-  },
-  "app/features/teams/CreateTeam.tsx": {
-    "file": "public/build/CreateTeam-B4hfNcHL.js",
-    "src": "app/features/teams/CreateTeam.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts",
-      "_TeamRolePicker-1zTggeY0.js",
-      "_hooks-M04A4Qgs.js"
-    ]
-  },
-  "app/features/teams/TeamList.tsx": {
-    "file": "public/build/TeamList-Y98yK4rl.js",
-    "src": "app/features/teams/TeamList.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts",
-      "_TeamRolePicker-1zTggeY0.js",
-      "_actions-BwQYIEhd.js"
-    ]
-  },
-  "app/features/teams/TeamPages.tsx": {
-    "file": "public/build/TeamPages-Dm8Zu8u-.js",
-    "src": "app/features/teams/TeamPages.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts",
-      "_actions-BwQYIEhd.js",
-      "_TeamRolePicker-1zTggeY0.js",
-      "_hooks-M04A4Qgs.js",
-      "_SharedPreferences-CKZWlfKA.js"
-    ]
-  },
-  "app/features/trails/DataTrailsPage.tsx": {
-    "file": "public/build/DataTrailsPage-BdMUpjqc.js",
-    "src": "app/features/trails/DataTrailsPage.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts"
-    ]
-  },
-  "app/features/users/UsersListPage.tsx": {
-    "file": "public/build/UsersListPage-CygUZVce.js",
-    "src": "app/features/users/UsersListPage.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "app/index.ts",
-      "_OrgUsersTable-BuunTEZZ.js"
-    ]
-  },
-  "app/index.ts": {
-    "file": "public/build/index-3exGqndc.js",
-    "src": "app/index.ts",
-    "isEntry": true,
+  "_vendor-r65R1Ntf.js": {
+    "file": "public/build/vendor-r65R1Ntf.js",
+    "name": "vendor",
     "isDynamicEntry": true,
     "dynamicImports": [
       "../packages/grafana-ui/src/components/Monaco/ReactMonacoEditor.tsx",
-      "locales/en-US/grafana.json",
-      "locales/fr-FR/grafana.json",
-      "locales/es-ES/grafana.json",
-      "locales/de-DE/grafana.json",
-      "locales/zh-Hans/grafana.json",
-      "app/core/utils/sheet.ts",
-      "app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx",
-      "app/features/alerting/unified/components/rules/state-history/StateHistory.tsx",
-      "app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx",
-      "app/features/alerting/unified/components/rule-viewer/RuleViewer.v1.tsx",
-      "app/features/alerting/unified/components/rules/state-history/StateHistory.tsx",
-      "app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx",
-      "../node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/data-grid-overlay-editor.js",
-      "../node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/private/number-overlay-editor.js",
-      "app/plugins/datasource/graphite/module.ts",
-      "app/plugins/datasource/cloudwatch/module.tsx",
-      "app/plugins/datasource/dashboard/module.ts",
-      "app/plugins/datasource/elasticsearch/module.ts",
-      "app/plugins/datasource/opentsdb/module.ts",
-      "app/plugins/datasource/grafana/module.ts",
-      "app/plugins/datasource/influxdb/module.ts",
-      "_module-Cmu6B5jg.js",
-      "app/plugins/datasource/jaeger/module.ts",
-      "app/plugins/datasource/zipkin/module.ts",
-      "app/plugins/datasource/mysql/module.ts",
-      "app/plugins/datasource/grafana-postgresql-datasource/module.ts",
-      "app/plugins/datasource/prometheus/module.ts",
-      "app/plugins/datasource/mssql/module.ts",
-      "app/plugins/datasource/grafana-testdata-datasource/module.tsx",
-      "app/plugins/datasource/cloud-monitoring/module.ts",
-      "app/plugins/datasource/azuremonitor/module.ts",
-      "app/plugins/datasource/tempo/module.ts",
-      "app/plugins/datasource/alertmanager/module.ts",
-      "app/plugins/datasource/grafana-pyroscope-datasource/module.ts",
-      "app/plugins/datasource/parca/module.ts",
-      "app/plugins/panel/geomap/module.tsx",
-      "app/plugins/panel/canvas/module.tsx",
-      "app/plugins/panel/graph/module.ts",
-      "app/plugins/panel/heatmap/module.tsx",
-      "app/plugins/panel/table-old/module.ts",
-      "app/plugins/panel/nodeGraph/module.tsx",
-      "../node_modules/@kusto/monaco-kusto/release/esm/kustoMode.js",
-      "_vis-Womzq2ki.js",
-      "app/features/alerting/AlertRuleList.tsx",
-      "app/features/alerting/AlertRuleList.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NotificationsListPage.tsx",
-      "app/features/alerting/NewNotificationChannelPage.tsx",
-      "app/features/alerting/EditNotificationChannelPage.tsx",
-      "app/features/alerting/Upgrade.tsx",
-      "app/features/alerting/unified/home/Home.tsx",
-      "app/features/alerting/unified/home/Home.tsx",
-      "app/features/alerting/unified/RuleList.tsx",
-      "app/features/alerting/unified/NotificationPolicies.tsx",
-      "app/features/alerting/unified/MuteTimings.tsx",
-      "app/features/alerting/unified/MuteTimings.tsx",
-      "app/features/alerting/unified/Silences.tsx",
-      "app/features/alerting/unified/Silences.tsx",
-      "app/features/alerting/unified/Silences.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/Receivers.tsx",
-      "app/features/alerting/unified/AlertGroups.tsx",
-      "app/features/alerting/unified/RuleEditor.tsx",
-      "app/features/alerting/unified/RuleEditor.tsx",
-      "app/features/alerting/unified/components/export/GrafanaModifyExport.tsx",
-      "app/features/alerting/unified/RedirectToRuleViewer.tsx",
-      "app/features/alerting/unified/Admin.tsx",
-      "app/features/alerting/FeatureTogglePage.tsx",
-      "app/features/connections/Connections.tsx",
-      "app/features/plugins/admin/pages/Browse.tsx",
-      "app/features/plugins/admin/pages/Browse.tsx",
-      "app/features/plugins/admin/pages/PluginDetails.tsx",
-      "app/features/profile/UserProfileEditPage.tsx",
-      "app/features/profile/ChangePasswordPage.tsx",
-      "app/features/org/SelectOrgPage.tsx",
-      "app/features/notifications/NotificationsPage.tsx",
-      "app/features/profile/FeatureTogglePage.tsx",
-      "app/features/manage-dashboards/PublicDashboardListPage.tsx",
-      "app/features/dashboard/containers/PublicDashboardPage.tsx",
-      "_DashboardPageProxy-Bm8P-86W.js",
-      "_DashboardPageProxy-Bm8P-86W.js",
-      "_DashboardPageProxy-Bm8P-86W.js",
-      "app/features/dashboard/containers/NewDashboardWithDS.tsx",
-      "_DashboardPageProxy-Bm8P-86W.js",
-      "app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage.tsx",
-      "app/features/dashboard-scene/solo/SoloPanelPage.tsx",
-      "app/features/dashboard/containers/SoloPanelPage.tsx",
-      "app/features/dashboard/containers/SoloPanelPage.tsx",
-      "app/features/manage-dashboards/DashboardImportPage.tsx",
-      "app/features/correlations/CorrelationsPage.tsx",
-      "app/features/correlations/CorrelationsFeatureToggle.tsx",
-      "app/features/browse-dashboards/BrowseDashboardsPage.tsx",
-      "app/features/browse-dashboards/BrowseDashboardsPage.tsx",
-      "app/features/browse-dashboards/BrowseDashboardsPage.tsx",
-      "app/features/explore/ExplorePage.tsx",
-      "app/features/explore/FeatureTogglePage.tsx",
-      "app/features/org/OrgDetailsPage.tsx",
-      "app/features/org/NewOrgPage.tsx",
-      "app/features/users/UsersListPage.tsx",
-      "app/features/org/UserInvitePage.tsx",
-      "app/features/api-keys/ApiKeysPage.tsx",
-      "app/features/serviceaccounts/ServiceAccountsListPage.tsx",
-      "app/features/serviceaccounts/ServiceAccountCreatePage.tsx",
-      "app/features/serviceaccounts/ServiceAccountPage.tsx",
-      "app/features/teams/TeamList.tsx",
-      "app/features/teams/CreateTeam.tsx",
-      "app/features/teams/TeamPages.tsx",
-      "app/features/auth-config/AuthProvidersListPage.tsx",
-      "app/features/auth-config/ProviderConfigPage.tsx",
-      "app/features/admin/AdminSettings.tsx",
-      "app/features/admin/UpgradePage.tsx",
-      "app/features/admin/UserListPage.tsx",
-      "app/features/admin/UserCreatePage.tsx",
-      "app/features/admin/AdminListOrgsPage.tsx",
-      "app/features/admin/AdminEditOrgPage.tsx",
-      "app/features/admin/AdminFeatureTogglesPage.tsx",
-      "app/features/storage/StoragePage.tsx",
-      "app/features/admin/ServerStats.tsx",
-      "app/features/admin/migrate-to-cloud/MigrateToCloud.tsx",
-      "app/features/invites/SignupInvited.tsx",
-      "app/core/components/Signup/VerifyEmailPage.tsx",
-      "app/core/components/Signup/SignupPage.tsx",
-      "app/core/components/ForgottenPassword/SendResetMailPage.tsx",
-      "app/core/components/ForgottenPassword/ChangePasswordPage.tsx",
-      "app/features/manage-dashboards/SnapshotListPage.tsx",
-      "app/features/playlist/PlaylistPage.tsx",
-      "app/features/playlist/PlaylistStartPage.tsx",
-      "app/features/playlist/PlaylistNewPage.tsx",
-      "app/features/playlist/PlaylistEditPage.tsx",
-      "app/features/sandbox/BenchmarksPage.tsx",
-      "app/features/sandbox/TestStuffPage.tsx",
-      "app/features/browse-dashboards/BrowseFolderLibraryPanelsPage.tsx",
-      "app/features/browse-dashboards/BrowseFolderAlertingPage.tsx",
-      "app/features/library-panels/LibraryPanelsPage.tsx",
-      "app/features/notifications/NotificationsPage.tsx",
-      "app/features/trails/DataTrailsPage.tsx",
-      "app/features/support-bundles/SupportBundles.tsx",
-      "app/features/support-bundles/SupportBundlesCreate.tsx",
-      "app/angular/index.ts",
-      "app/features/alerting/unified/integration/AlertRulesToolbarButton.tsx",
-      "app/features/dashboard-scene/embedding/EmbeddedDashboard.tsx"
+      "../node_modules/monaco-promql/promql/promql.js"
     ],
     "css": [
-      "public/build/index-Dd9uKMaJ.css"
+      "public/build/vendor-BrUJaDlA.css"
     ],
     "assets": [
-      "public/build/codicon-SZR-f31-.ttf"
+      "public/build/grot-cta-B42JPuvP.svg",
+      "public/build/grot-not-found-Bjhtecdw.svg",
+      "public/build/grot-completed-D-h3ZMGB.svg"
     ]
   },
-  "app/plugins/datasource/alertmanager/module.ts": {
-    "file": "public/build/module-ClURw6yo.js",
-    "src": "app/plugins/datasource/alertmanager/module.ts",
+  "_viridis--y8fz-dE.js": {
+    "file": "public/build/viridis--y8fz-dE.js",
+    "name": "viridis",
+    "imports": [
+      "_linear-D23a9ZoO.js",
+      "_vendor-r65R1Ntf.js"
+    ]
+  },
+  "_vis-B4F-Fj9n.js": {
+    "file": "public/build/vis-B4F-Fj9n.js",
+    "name": "vis",
     "isDynamicEntry": true,
     "imports": [
+      "_vendor-r65R1Ntf.js"
+    ]
+  },
+  "app/features/teams/TeamList.tsx": {
+    "file": "public/build/TeamList-DSwjs7Wa.js",
+    "name": "TeamList",
+    "src": "app/features/teams/TeamList.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-r65R1Ntf.js",
+      "app/index.ts",
+      "_api-y46G0_KO.js",
+      "_TeamRolePicker-Yl7zWxKI.js",
+      "_actions-DdmCGKOg.js",
+      "_ProBadge-DkW08ySd.js",
+      "_utils-CQ7yl5br.js"
+    ]
+  },
+  "app/features/teams/TeamPages.tsx": {
+    "file": "public/build/TeamPages-1zHLHq7V.js",
+    "name": "TeamPages",
+    "src": "app/features/teams/TeamPages.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-r65R1Ntf.js",
+      "app/index.ts",
+      "_EmptyListCTA-C7ObQVwC.js",
+      "_utils-CQ7yl5br.js",
+      "_actions-DdmCGKOg.js",
+      "_TeamRolePicker-Yl7zWxKI.js",
+      "_hooks-t-SNFABd.js",
+      "_SharedPreferences-flYo2s4z.js",
+      "_ProBadge-DkW08ySd.js",
+      "_api-y46G0_KO.js"
+    ]
+  },
+  "app/features/trails/DataTrailsPage.tsx": {
+    "file": "public/build/DataTrailsPage-CVUXQGkO.js",
+    "name": "DataTrailsPage",
+    "src": "app/features/trails/DataTrailsPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-r65R1Ntf.js",
       "app/index.ts"
     ]
   },
-  "app/plugins/datasource/tempo/module.ts": {
-    "file": "public/build/module-mDlfavKl.js",
-    "src": "app/plugins/datasource/tempo/module.ts",
+  "app/index.ts": {
+    "file": "public/build/index-fkCrlmGK.js",
+    "name": "index",
+    "src": "app/index.ts",
+    "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
-      "app/index.ts",
-      "_TemporaryAlert-Et36jdMG.js",
-      "_AdvancedHttpSettings-DqLVD8b4.js",
-      "_TraceToMetricsSettings-GcbhYWBY.js"
+      "_vendor-r65R1Ntf.js"
     ],
     "dynamicImports": [
-      "app/plugins/datasource/tempo/_importedDependencies/datasources/loki/monaco-query-field/MonacoQueryField.tsx"
+      "locales/de-DE/grafana.json",
+      "locales/en-US/grafana.json",
+      "locales/pseudo-LOCALE/grafana.json",
+      "app/plugins/panel/flamegraph/module.tsx",
+      "app/plugins/panel/geomap/module.tsx",
+      "app/features/teams/TeamList.tsx",
+      "app/features/teams/CreateTeam.tsx",
+      "app/features/teams/TeamPages.tsx",
+      "app/features/trails/DataTrailsPage.tsx",
+      "_vendor-r65R1Ntf.js"
+    ],
+    "css": [
+      "public/build/index-DTTxS2na.css"
+    ],
+    "assets": [
+      "public/build/outlier_bg-hJPFLdCg.wasm"
     ]
   },
-  "app/plugins/datasource/zipkin/module.ts": {
-    "file": "public/build/module-ByCTqn6F.js",
-    "src": "app/plugins/datasource/zipkin/module.ts",
+  "app/plugins/panel/flamegraph/module.tsx": {
+    "file": "public/build/module-J53A9Kyn.js",
+    "name": "module",
+    "src": "app/plugins/panel/flamegraph/module.tsx",
     "isDynamicEntry": true,
     "imports": [
+      "_vendor-r65R1Ntf.js",
+      "_FlameGraphContainer-DF3CoxWe.js",
       "app/index.ts",
-      "_TraceToMetricsSettings-GcbhYWBY.js",
-      "_TemporaryAlert-Et36jdMG.js",
-      "_useMount-BIcCtvbK.js"
+      "_transform-Bj7g0BsI.js",
+      "_linear-D23a9ZoO.js",
+      "_useDebounce-Cf1ms9C9.js"
     ]
   },
   "app/plugins/panel/geomap/module.tsx": {
-    "file": "public/build/module-J50XoVZR.js",
+    "file": "public/build/module-0YAl9hqA.js",
+    "name": "module",
     "src": "app/plugins/panel/geomap/module.tsx",
     "isDynamicEntry": true,
     "imports": [
+      "_vendor-r65R1Ntf.js",
+      "_ExemplarHoverView-BHzhrBsl.js",
       "app/index.ts",
-      "_ColorScale-D3geLGGq.js",
-      "_utils-C4mptSl4.js",
-      "_AddLayerButton-BmnOeRAx.js"
+      "_DataHoverView-v8a68bIA.js",
+      "_ColorScale-CltZV5Bm.js",
+      "_utils-GV5L4DHo.js",
+      "_AddLayerButton-B7iJGNLs.js",
+      "_utils-Dvc-eevq.js",
+      "_LayerName-kazir38s.js",
+      "_VizTooltipRow-B1eXWnxp.js",
+      "_quadtree-BhY-3CT1.js"
     ],
     "css": [
-      "public/build/module-OX74HEF1.css"
+      "public/build/module-C4D2GwWP.css"
     ]
   },
-  "img/grafana_icon.svg": {
-    "file": "public/build/grafana_icon-Cshq9v_j.svg",
-    "src": "img/grafana_icon.svg"
+  "fonts/fontawesome-webfont.woff2": {
+    "file": "public/build/fontawesome-webfont-B-jkhYfk.woff2",
+    "src": "fonts/fontawesome-webfont.woff2"
+  },
+  "fonts/grafana-icons.woff": {
+    "file": "public/build/grafana-icons-Dd-C-eHA.woff",
+    "src": "fonts/grafana-icons.woff"
   },
   "locales/de-DE/grafana.json": {
-    "file": "public/build/grafana-BY4qWiug.js",
+    "file": "public/build/grafana-BJ4JxwFS.js",
+    "name": "grafana",
     "src": "locales/de-DE/grafana.json",
     "isDynamicEntry": true
   },
+  "locales/en-US/grafana.json": {
+    "file": "public/build/grafana-DkCX6RXR.js",
+    "name": "grafana",
+    "src": "locales/en-US/grafana.json",
+    "isDynamicEntry": true
+  },
+  "locales/pseudo-LOCALE/grafana.json": {
+    "file": "public/build/grafana-BwPdh-XN.js",
+    "name": "grafana",
+    "src": "locales/pseudo-LOCALE/grafana.json",
+    "isDynamicEntry": true
+  },
   "sass/grafana.dark.scss": {
-    "file": "public/build/grafana-BwD1GyB5.css",
+    "file": "public/build/grafana-B9F4fUOy.css",
     "src": "sass/grafana.dark.scss",
     "isEntry": true
   },
   "sass/grafana.light.scss": {
-    "file": "public/build/grafana-RC8BVZtE.css",
+    "file": "public/build/grafana-Cu0f8nVU.css",
     "src": "sass/grafana.light.scss",
     "isEntry": true
   }
