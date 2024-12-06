@@ -336,6 +336,12 @@ message ResourceStatsRequest {
 
   // Limit the stats within a folder (not recursive!) 
   string folder = 3;
+<<<<<<< HEAD
+=======
+
+  // Limit the stats to items owned by a given repository
+  string repository = 4;
+>>>>>>> cbcd427b9af (get stats from index)
 }
 
 message ResourceStatsResponse {
