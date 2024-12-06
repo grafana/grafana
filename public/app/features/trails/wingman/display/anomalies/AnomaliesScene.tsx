@@ -11,8 +11,9 @@ import {
 } from '@grafana/scenes';
 import type { Dashboard, DataSourceRef } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { getPreviewPanelFor } from '../../previewPanel';
+import { getPreviewPanelFor } from '../../../MetricSelect/previewPanel';
 
 import { SceneChangepointDetector } from './SceneChangepointDetector';
 import { SortByScene, SortCriteriaChanged } from './SortByChangepointsScene';
@@ -149,7 +150,7 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
 
                 const metricsInPanel: string[] = [];
                 for (const target of panel.targets) {
-                  const expr = (target.expr as string) ?? '';
+                  const expr = typeof target.expr === 'string' ? target.expr : '';
                   const metrics = extractMetricNames(expr);
                   metrics.forEach((metric) => metricsInPanel.push(metric));
                 }
@@ -371,15 +372,27 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
     const styles = useStyles2(getStyles);
 
     if (loading === 'pending') {
-      return <div>Loading...</div>;
+      return (
+        <div>
+          <Trans i18nKey="trail.metric-select.wingman.anomalies.loading.pending">Loading...</Trans>
+        </div>
+      );
     }
 
     if (loading === 'rejected') {
-      return <div>Failed to load metrics</div>;
+      return (
+        <div>
+          <Trans i18nKey="trail.metric-select.wingman.anomalies.loading.rejected">Failed to load metrics</Trans>
+        </div>
+      );
     }
 
     if (!Object.keys(dashboardPanelMetrics.byDashboard).length) {
-      return <div>No metrics found</div>;
+      return (
+        <div>
+          <Trans i18nKey="trail.metric-select.wingman.anomalies.none-found">No metrics found</Trans>
+        </div>
+      );
     }
 
     return (

@@ -3227,6 +3227,20 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "trail": {
+    "metric-select": {
+      "wingman": {
+        "anomalies": {
+          "changepoints": "Changepoints",
+          "loading": {
+            "pending": "Loading...",
+            "rejected": "Failed to load metrics"
+          },
+          "none-found": "No metrics found"
+        }
+      }
+    }
+  },
   "trails": {
     "bookmarks": {
       "or-view-bookmarks": "Or view bookmarks"

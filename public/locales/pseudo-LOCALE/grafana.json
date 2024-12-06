@@ -3227,6 +3227,20 @@
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
+  "trail": {
+    "metric-select": {
+      "wingman": {
+        "anomalies": {
+          "changepoints": "Cĥäŉģępőįŉŧş",
+          "loading": {
+            "pending": "Ŀőäđįŉģ...",
+            "rejected": "Fäįľęđ ŧő ľőäđ męŧřįčş"
+          },
+          "none-found": "Ńő męŧřįčş ƒőūŉđ"
+        }
+      }
+    }
+  },
   "trails": {
     "bookmarks": {
       "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"

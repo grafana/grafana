@@ -1,3 +1,4 @@
+/* eslint @grafana/no-untranslated-strings: "error" */
 import init, { ChangepointDetector } from '@bsull/augurs/changepoint';
 import { of } from 'rxjs';
 
@@ -12,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 import { ButtonGroup, Checkbox, ToolbarButton } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 init().then(() => console.log('augurs changepoints initialized'));
 
@@ -194,7 +196,7 @@ function SceneChangepointDetectorRenderer({ model }: SceneComponentProps<SceneCh
         }}
       >
         <Checkbox label=" " value={enabled ?? false} onClick={() => onClick(!enabled)} />
-        Changepoints
+        <Trans i18nKey="trail.metric-select.wingman.anomalies.changepoints">Changepoints</Trans>
       </ToolbarButton>
     </ButtonGroup>
   );
