@@ -912,6 +912,19 @@ steps:
     - success
     - failure
 - commands:
+  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - yarn playwright install --with-deps chromium
+  - cd bench/frontend && yarn playwright test
+  depends_on:
+  - grafana-server
+  - build-test-plugins
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
+  image: node:20-bookworm
+  name: bench-playwright-plugin-e2e
+- commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
@@ -2391,6 +2404,19 @@ steps:
     status:
     - success
     - failure
+- commands:
+  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - yarn playwright install --with-deps chromium
+  - cd bench/frontend && yarn playwright test
+  depends_on:
+  - grafana-server
+  - build-test-plugins
+  environment:
+    HOST: grafana-server
+    PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
+  image: node:20-bookworm
+  name: bench-playwright-plugin-e2e
 - commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
@@ -5740,6 +5766,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e97f7a0c3923b506dad6bf861bb1ea440a8f072ee3744742eec35e7278c3581c
+hmac: 184798de7b80d47a466bd4928d9fd9e0ad5523ca3b9a19f5adf29ceae21f1dc9
 
 ...
