@@ -51,7 +51,7 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AnomaliesScene } from './display/AnomaliesScene';
+import { AnomaliesScene } from './display/anomalies/AnomaliesScene';
 import { renderAsRedMetricsDisplay } from './display/redMetrics';
 
 interface MetricPanel {
@@ -448,7 +448,13 @@ export class MetricSelectSceneForWingman
         return;
       case 'anomalies':
         console.log('anomalies will be rendered');
-        this.state.body.setState({ children: [new AnomaliesScene({})], autoRows: rowTemplate, templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', rowGap: 1 });
+        // TODO: Undo this temporary hack of a grid inside a grid
+        this.state.body.setState({
+          children: [new AnomaliesScene({})],
+          autoRows: rowTemplate,
+          templateColumns: undefined,
+          rowGap: 1, // to reset the row gap which is changed in RED metrics
+        });
         return;
       case 'default':
       default:
@@ -522,7 +528,12 @@ export class MetricSelectSceneForWingman
       }
     }
 
-    this.state.body.setState({ children, autoRows: rowTemplate, templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', rowGap: 1 });
+    this.state.body.setState({ 
+      children, 
+      autoRows: rowTemplate, 
+      templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', // reset because of red metrics changing this
+      rowGap: 1, // reset because of red metrics changing this
+    });
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {

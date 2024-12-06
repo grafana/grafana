@@ -54,9 +54,9 @@ export function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'flex-start',
-      gap: '10px',
-      padding: '8px 16px',
-      border: '1px solid #4e4c4c',
+      gap: '17px',
+      padding: '8px 12px',
+      border: '1px solid rgba(204, 204, 220, 0.12)',
       borderTopWidth: 0,
       backgroundColor: '#181B1F',
       alignItems: 'center',
@@ -64,7 +64,9 @@ export function getStyles(theme: GrafanaTheme2) {
     usageItem: css({
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
+      gap: '4px',
+      color: theme.colors.text.secondary,
+      opacity: '65%',
     }),
   };
 }
