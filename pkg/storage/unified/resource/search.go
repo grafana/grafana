@@ -48,11 +48,7 @@ type ResourceIndex interface {
 	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
 
 	// Get the number of documents in the index
-<<<<<<< HEAD
 	DocCount(ctx context.Context, folder string) (int64, error)
-=======
-	DocCount(ctx context.Context, folder, repository string) (int64, error)
->>>>>>> cbcd427b9af (get stats from index)
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -196,11 +192,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-<<<<<<< HEAD
 			count, err := index.DocCount(ctx, req.Folder)
-=======
-			count, err := index.DocCount(ctx, req.Folder, req.Repository)
->>>>>>> cbcd427b9af (get stats from index)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -223,11 +215,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 	rsp.Stats = make([]*ResourceStatsResponse_Stats, len(stats))
 
 	// When not filtered by folder or repository, we can use the results directly
-<<<<<<< HEAD
 	if req.Folder == "" {
-=======
-	if req.Folder == "" && req.Repository == "" {
->>>>>>> cbcd427b9af (get stats from index)
 		for i, stat := range stats {
 			rsp.Stats[i] = &ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -248,11 +236,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-<<<<<<< HEAD
 		count, err := index.DocCount(ctx, req.Folder)
-=======
-		count, err := index.DocCount(ctx, req.Folder, req.Repository)
->>>>>>> cbcd427b9af (get stats from index)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -458,11 +442,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 
 	// Record the number of objects indexed for the kind/resource
-<<<<<<< HEAD
 	docCount, err := index.DocCount(ctx, "")
-=======
-	docCount, err := index.DocCount(ctx, "", "")
->>>>>>> cbcd427b9af (get stats from index)
 	if err != nil {
 		s.log.Warn("error getting doc count", "error", err)
 	}
