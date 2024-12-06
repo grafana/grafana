@@ -42,7 +42,7 @@ const config = {
       id: 'enrichments.sift',
       icon: 'search',
       name: 'Sift Investigation',
-      description: 'Pull in details from releveant Sift investigations',
+      description: 'Pull in details from relevant Sift investigations',
       detailComponent: undefined,
       payload: {
         url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/sift',
