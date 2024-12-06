@@ -1,15 +1,16 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { Drawer, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
+import { DashboardDropOverlay } from './DashboardDropOverlay';
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
 import { useEditPaneCollapsed } from './shared';
 import { useDropAndPaste } from './useDropAndPaste';
@@ -38,14 +39,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             <div className={styles.controlsWrapperSticky}>{controls}</div>
             <div {...getRootProps({ className: styles.body })}>
               {body}
-              <div className={styles.dropOverlay}>
-                <div className={styles.dropHint}>
-                  <Icon name="upload" size="xxl" className={styles.dropIcon} />
-                  <Text variant="body" element="p">
-                    Drop file to upload it to your dashboard
-                  </Text>
-                </div>
-              </div>
+              <DashboardDropOverlay isDragActive={isDragActive} />
             </div>
           </div>
         </NativeScrollbar>
@@ -166,44 +160,5 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, isDragActive: boo
         top: headerHeight,
       },
     }),
-    dropZone: css({ height: '100%' }),
-    dropOverlay: css({
-      display: isDragActive ? 'flex' : 'none',
-      backdropFilter: 'blur(2px)',
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'backdrop-filter 0.3s',
-      },
-      position: 'absolute',
-      zIndex: theme.zIndex.modal,
-      inset: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-    dropHint: css({
-      alignItems: 'center',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: theme.colors.background.secondary,
-      border: `1px dashed ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(2, 4),
-    }),
-    dropIcon: css({
-      [theme.transitions.handleMotion('no-preference')]: {
-        animationName: bounce,
-        animationIterationCount: 'infinite',
-        animationDuration: '0.6s',
-        animationTimingFunction: 'ease-out',
-      },
-    }),
   };
 }
-
-const bounce = keyframes({
-  'from, to': {
-    transform: 'translateY(0px)',
-  },
-  '50%': {
-    transform: 'translateY(-8px)',
-  },
-});
