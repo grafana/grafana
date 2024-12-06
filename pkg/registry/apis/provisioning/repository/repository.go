@@ -8,7 +8,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -56,6 +55,33 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+type Job struct {
+	Action string // enum?
+	Ref    string // The branch name
+	Hash   string // optional SHA
+
+	// Pull request number (when appropriate)
+	PR int64
+
+	// URL to the originator (eg, PR URL)
+	URL string
+
+	Added    []string
+	Modified []string
+	Removed  []string
+}
+
+type WebhookResponse struct {
+	// HTTP Status code
+	Code int
+
+	// Optional message (returned as status)
+	Message string
+
+	// The parsed job (should this be an array?)
+	Job *Job
+}
+
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -94,7 +120,11 @@ type Repository interface {
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
 
 	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc
+	Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error)
+
+	// Temporary... likely want this as its own thing... eg GithubWorker or similar
+	Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error
+
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error
 	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
