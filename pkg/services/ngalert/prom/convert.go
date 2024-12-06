@@ -12,14 +12,15 @@ import (
 )
 
 type Config struct {
-	DatasourceUID   string
-	DatasourceType  string
-	FromTimeRange   *time.Duration
-	ExecErrState    models.ExecutionErrorState
-	NoDataState     models.NoDataState
-	DefaultInterval *time.Duration
-	RecordingRules  RulesConfig
-	AlertRules      RulesConfig
+	DatasourceUID    string
+	DatasourceType   string
+	FromTimeRange    *time.Duration
+	EvaluationOffset *time.Duration
+	ExecErrState     models.ExecutionErrorState
+	NoDataState      models.NoDataState
+	DefaultInterval  *time.Duration
+	RecordingRules   RulesConfig
+	AlertRules       RulesConfig
 }
 
 type RulesConfig struct {
@@ -27,16 +28,18 @@ type RulesConfig struct {
 }
 
 var (
-	defaultTimeRange = 600 * time.Second
-	defaultInterval  = 60 * time.Second
+	defaultTimeRange        = 600 * time.Second
+	defaultInterval         = 60 * time.Second
+	defaultEvaluationOffset = 1 * time.Minute
 
 	defaultConfig = Config{
-		DatasourceUID:   "grafanacloud-prom",
-		DatasourceType:  "prometheus",
-		FromTimeRange:   &defaultTimeRange,
-		ExecErrState:    models.ErrorErrState,
-		NoDataState:     models.NoData,
-		DefaultInterval: &defaultInterval,
+		DatasourceUID:    "grafanacloud-prom",
+		DatasourceType:   "prometheus",
+		FromTimeRange:    &defaultTimeRange,
+		EvaluationOffset: &defaultEvaluationOffset,
+		ExecErrState:     models.ErrorErrState,
+		NoDataState:      models.NoData,
+		DefaultInterval:  &defaultInterval,
 	}
 )
 
@@ -53,6 +56,9 @@ func NewConverter(cfg Config) (*Converter, error) {
 	}
 	if cfg.FromTimeRange == nil {
 		cfg.FromTimeRange = defaultConfig.FromTimeRange
+	}
+	if cfg.EvaluationOffset == nil {
+		cfg.EvaluationOffset = defaultConfig.EvaluationOffset
 	}
 	if cfg.ExecErrState == "" {
 		cfg.ExecErrState = defaultConfig.ExecErrState
@@ -170,7 +176,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("failed to parse for '%s': %w", rule.For, err)
 	}
-	queryNode, err := createAlertQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, rule.Expr, *p.cfg.FromTimeRange)
+	queryNode, err := createAlertQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, rule.Expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -292,7 +298,7 @@ func getPromDurationString(dur time.Duration) string {
 	return prommodel.Duration(dur).String()
 }
 
-func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange time.Duration) (models.AlertQuery, error) {
+func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRange, evaluationOffset time.Duration) (models.AlertQuery, error) {
 	modelData := map[string]interface{}{
 		"datasource": map[string]interface{}{
 			"type": datasourceType,
@@ -322,8 +328,8 @@ func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRa
 		Model:         modelJSON,
 		RefID:         "A",
 		RelativeTimeRange: models.RelativeTimeRange{
-			From: models.Duration(fromTimeRange),
-			To:   0,
+			From: models.Duration(fromTimeRange + evaluationOffset),
+			To:   models.Duration(0 + evaluationOffset),
 		},
 	}, nil
 }
