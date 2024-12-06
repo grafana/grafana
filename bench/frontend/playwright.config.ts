@@ -28,28 +28,5 @@ export default defineConfig<PluginOptions>({
       testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
       testMatch: [/.*\.js/],
     },
-    // Login to Grafana with new user with viewer role and store the cookie on disk for use in other tests
-    {
-      name: 'createUserAndAuthenticate',
-      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
-      testMatch: [/.*\.js/],
-      use: {
-        user: {
-          user: 'viewer',
-          password: 'password',
-          role: 'Viewer',
-        },
-      },
-    },
-    // Run all bench tests in parallel using user with viewer role
-    {
-      name: 'viewer',
-      testDir: path.join(testDirRoot, '/bench'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/viewer.json',
-      },
-      dependencies: ['createUserAndAuthenticate'],
-    },
   ],
 });
