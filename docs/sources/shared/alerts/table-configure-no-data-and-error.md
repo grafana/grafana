@@ -2,7 +2,7 @@
 labels:
   products:
     - oss
-title: 'Table configure no data and error '
+title: 'Table configure no data and error'
 ---
 
 | Configure    | Set alert state | Description                                                                                                                                                                                                                                                          |
