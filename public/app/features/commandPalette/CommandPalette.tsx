@@ -11,12 +11,10 @@ import {
   useRegisterActions,
   useKBar,
   ActionImpl,
-  Action,
 } from 'kbar';
-import { ComponentProps, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -27,6 +25,7 @@ import { useDashboardsAndFoldersSearchResults } from './actions/dashboardActions
 import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
+import { getCommandPalettePosition, getFilteredKbarResultsBasedOnCommandPaletteActions } from './utils';
 
 type ActiveTab = 'recent' | 'mine' | 'all';
 
@@ -95,28 +94,25 @@ export function CommandPalette() {
                 </TabsBar>
                 <TabContent>
                   {activeTab === 'recent' && (
-                    <RenderKbarResults
+                    <FlatKbarResults
                       commandPaletteActions={['Actions', ...recentActions]}
                       isFetchingSearchResults={isFetchingSearchResults}
                       setRecentAction={setNewRecentAction}
-                      // showEmptyState={recentActions.length === 0}
                     />
                   )}
                   {activeTab === 'mine' && (
-                    <RenderKbarResults
+                    <FlatKbarResults
                       commandPaletteActions={['Actions', ...userDefinedActions]}
                       isFetchingSearchResults={isFetchingSearchResults}
-                      // showEmptyState={userDefinedActions.length === 0}
                       setRecentAction={setNewRecentAction}
                     />
                   )}
 
                   {activeTab === 'all' && (
-                    <RenderKbarResults
+                    <KbarResults
                       isFetchingSearchResults={isFetchingSearchResults}
                       commandPaletteActions={[...allSearchableActions, ...searchResults]}
                       setRecentAction={setNewRecentAction}
-                      shouldAddDashboardSearchResults
                     />
                   )}
                 </TabContent>
@@ -132,58 +128,28 @@ export function CommandPalette() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   commandPaletteActions: Array<CommandPaletteAction | string>;
-  shouldAddDashboardSearchResults?: boolean;
   setRecentAction?: (id: string) => void;
 }
 
-const RenderKbarResults = ({
-  isFetchingSearchResults,
-  commandPaletteActions,
-  setRecentAction,
-  shouldAddDashboardSearchResults,
-}: RenderResultsProps) => {
+const KbarResults = ({ isFetchingSearchResults, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
   const { results: kbarResults } = useMatches();
-  const idsSetInCommandPaletteActions = new Set(
-    commandPaletteActions.map((item) => (typeof item === 'string' ? item : item.id))
-  );
-  const filteredResultsCandidate = kbarResults.filter(
-    (item) => typeof item === 'string' || idsSetInCommandPaletteActions.has(item.id)
-  );
-  const filteredResults = filteredResultsCandidate.filter((item, idx) => {
-    const isTitleAndLastItem = idx === filteredResultsCandidate.length - 1 && typeof item === 'string';
-    const isTitleAndNextItemIsTitleToo =
-      typeof item === 'string' && typeof filteredResultsCandidate[idx + 1] === 'string';
-    if (isTitleAndLastItem || isTitleAndNextItemIsTitleToo) {
-      return false;
-    }
-    return true;
-  });
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
 
   // because dashboard search results aren't registered as actions, we need to manually
   // convert them to ActionImpls before passing them as items to KBarResults
-  const dashboardResultItems = useMemo(
-    () =>
-      filteredResults
-        .filter((item) => typeof item !== 'string' && item.id.startsWith('go/dashboard'))
-        .map((dashboard) => new ActionImpl(dashboard as Action, { store: {} })),
-    [filteredResults]
+  const getResultItems = useCallback(
+    (name: 'dashboard' | 'folder') =>
+      commandPaletteActions
+        .filter((item) => typeof item !== 'string' && item.id.startsWith(`go/${name}`))
+        .map((d) => (typeof d === 'string' ? d : new ActionImpl(d, { store: {} }))),
+    [commandPaletteActions]
   );
-  const folderResultItems = useMemo(() => {
-    if (!filteredResults) {
-      return [];
-    }
-    return filteredResults
-      .filter((item) => typeof item !== 'string' && item.id.startsWith('go/folder'))
-      .map((folder) => new ActionImpl(folder as Action, { store: {} }));
-  }, [filteredResults]);
+  const dashboardResultItems = useMemo(() => getResultItems('dashboard'), [getResultItems]);
+  const folderResultItems = useMemo(() => getResultItems('folder'), [getResultItems]);
 
   const items = useMemo(() => {
-    const results = [...filteredResults];
-    if (!shouldAddDashboardSearchResults) {
-      return results;
-    }
+    const results = [...kbarResults];
     if (folderResultItems.length > 0) {
       results.push(foldersSectionTitle);
       results.push(...folderResultItems);
@@ -193,18 +159,20 @@ const RenderKbarResults = ({
       results.push(...dashboardResultItems);
     }
     return results;
-  }, [
-    filteredResults,
-    shouldAddDashboardSearchResults,
-    folderResultItems,
-    dashboardResultItems,
-    foldersSectionTitle,
-    dashboardsSectionTitle,
-  ]);
+  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
   return <Results items={items} showEmptyState={showEmptyState} onResultClick={setRecentAction} />;
+};
+
+const FlatKbarResults = ({ isFetchingSearchResults, commandPaletteActions, setRecentAction }: RenderResultsProps) => {
+  const { results: kbarResults } = useMatches();
+  const filteredResults = getFilteredKbarResultsBasedOnCommandPaletteActions(kbarResults, commandPaletteActions);
+
+  const showEmptyState = !isFetchingSearchResults && filteredResults.length === 0;
+
+  return <Results items={filteredResults} showEmptyState={showEmptyState} onResultClick={setRecentAction} />;
 };
 
 const Results = ({
@@ -245,14 +213,6 @@ const Results = ({
       }}
     />
   );
-};
-
-const getCommandPalettePosition = () => {
-  const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
-  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
-  const screenWidth = document.body.clientWidth;
-  const lateralSpace = screenWidth - inputRightPosition;
-  return lateralSpace;
 };
 
 const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
