@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -13,7 +14,8 @@ import {
   validMetricSearchCodeQuery,
 } from '../../__mocks__/queries';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../types';
+import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -23,11 +25,11 @@ const migratedFields = {
   metricEditorMode: MetricEditorMode.Builder,
   metricQueryType: MetricQueryType.Insights,
 };
-
+const mockOnChange = jest.fn();
 const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> = {
   datasource: setupMockedDataSource().datasource,
   onRunQuery: jest.fn(),
-  onChange: jest.fn(),
+  onChange: mockOnChange,
   query: {} as CloudWatchQuery,
 };
 
@@ -52,6 +54,13 @@ jest.mock('@grafana/runtime', () => ({
       cloudWatchCrossAccountQuerying: true,
     },
   },
+}));
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: jest.fn().mockImplementation(() => {
+    return <input id="cloudwatch-fake-editor"></input>;
+  }),
 }));
 
 export { SQLCodeEditor } from './MetricsQueryEditor/SQLCodeEditor';
@@ -349,6 +358,45 @@ describe('QueryEditor should render right editor', () => {
       render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
       await screen.findByText('Metric Insights');
       expect(await screen.findByText('Account')).toBeInTheDocument();
+    });
+  });
+});
+describe('LogsQueryEditor', () => {
+  const logsProps = {
+    ...props,
+    datasource: setupMockedDataSource().datasource,
+    query: validLogsQuery,
+  };
+  describe('setting default query', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should set default query expression if query is empty', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await waitFor(() => {
+        expect(mockOnChange).toHaveBeenLastCalledWith({
+          ...logsProps.query,
+          expression: DEFAULT_CWLI_QUERY_STRING,
+        });
+      });
+    });
+    it('should not change the query expression if not empty', async () => {
+      const nonEmptyQuery = { ...logsProps.query, expression: 'some expression' };
+      render(<QueryEditor {...logsProps} query={nonEmptyQuery} />);
+      await waitFor(() => {
+        expect(mockOnChange).not.toHaveBeenCalled();
+      });
+    });
+    it('should set the correct default expression if query is new', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await selectOptionInTest(screen.getByLabelText(/Query language/), 'OpenSearch SQL');
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...logsProps.query,
+        queryLanguage: LogsQueryLanguage.SQL,
+        expression: DEFAULT_SQL_QUERY_STRING,
+      });
     });
   });
 });
