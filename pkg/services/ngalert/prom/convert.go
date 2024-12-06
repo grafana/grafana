@@ -14,8 +14,8 @@ type Config struct {
 	DatasourceUID   string
 	DatasourceType  string
 	FromTimeRange   *time.Duration
-	ExecErrState    string
-	NoDataState     string
+	ExecErrState    models.ExecutionErrorState
+	NoDataState     models.NoDataState
 	DefaultInterval *time.Duration
 	RecordingRules  RulesConfig
 	AlertRules      RulesConfig
@@ -33,8 +33,8 @@ var (
 		DatasourceUID:   "grafanacloud-prom",
 		DatasourceType:  "prometheus",
 		FromTimeRange:   &defaultTimeRange,
-		ExecErrState:    "OK",
-		NoDataState:     "NoData",
+		ExecErrState:    models.ErrorErrState,
+		NoDataState:     models.NoData,
 		DefaultInterval: &defaultInterval,
 	}
 )
@@ -174,15 +174,6 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		return models.AlertRule{}, err
 	}
 
-	noDataState, err := models.NoDataStateFromString(p.cfg.NoDataState)
-	if err != nil {
-		return models.AlertRule{}, fmt.Errorf("failed to parse no_data_state '%s': %w", p.cfg.NoDataState, err)
-	}
-	execErrState, err := models.ErrStateFromString(p.cfg.ExecErrState)
-	if err != nil {
-		return models.AlertRule{}, fmt.Errorf("failed to parse exec_err_state '%s': %w", p.cfg.ExecErrState, err)
-	}
-
 	var title string
 	if rule.Record != "" {
 		title = rule.Record
@@ -202,8 +193,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID, group string, rule Pr
 		Title:        title,
 		Data:         []models.AlertQuery{queryNode},
 		Condition:    "A",
-		NoDataState:  noDataState,
-		ExecErrState: execErrState,
+		NoDataState:  p.cfg.NoDataState,
+		ExecErrState: p.cfg.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       labels,
 		For:          forInterval,
