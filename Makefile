@@ -440,12 +440,11 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 .PHONY: drone
-drone: $(DRONE)
+drone: $(DRONE) format-drone
 	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
-	buildifier --lint=fix -r scripts/drone
 
 # Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
 .PHONY: scripts/drone/TAGS
