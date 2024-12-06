@@ -1,96 +1,60 @@
-import html2canvas from 'html2canvas';
-import { ChangeEvent, MouseEvent, useState } from 'react';
+import FeedbackPlus from 'feedbackplus';
+import { useState } from 'react';
 
-import { Dropdown, ToolbarButton, Button, Stack, Menu } from '@grafana/ui';
+import { ToolbarButton, Drawer } from '@grafana/ui';
 
-import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
-import { getFeedbackAPI } from '../../../../features/feedback/api';
-import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
-import { canvasToBase64String, extractImageTypeAndData } from '../../../../features/feedback/screenshot-encode';
+import { DrawerContents } from './FeedbackDrawerContents';
+import { ScreenShotEditModal } from './ScreenShotEditModal';
+import { FeedbackFormData } from './types';
 
-export interface Props {}
-
-const MenuActions = () => {
-  const [formData, setFormData] = useState({ message: '', screenshot: '', imageType: '' });
-
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFormData({ ...formData, message: e.target.value });
-  };
-
-  const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const element = document.body; // TODO: choose a different selector?
-    if (element) {
-      const canvas = await html2canvas(element, { backgroundColor: null });
-
-      const encoded = await canvasToBase64String(canvas);
-      if (encoded && typeof encoded === 'string') {
-        const screenshot = extractImageTypeAndData(encoded);
-        if (screenshot) {
-          setFormData({ ...formData, screenshot: screenshot.data, imageType: screenshot.type });
-        }
-      }
-    }
-  };
-
-  const onSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-
-    const diagnosticData = await getDiagnosticData();
-
-    const feedback: Spec = {
-      message: formData.message,
-      screenshot: formData.screenshot,
-      imageType: formData.imageType,
-      diagnosticData,
-      canContactReporter: false, // TODO
-      canAccessInstance: false, // TODO
-    };
-
-    const feedbackApi = getFeedbackAPI();
-    await feedbackApi.createFeedback(feedback);
-  };
-
-  const stopAutoClose = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  return (
-    <Menu>
-      <div onClick={stopAutoClose}>
-        <b>Send feedback to Grafana</b>
-
-        <Stack gap={2} direction={'column'}>
-          <input onChange={onInputChange} placeholder="so what happened?"></input>
-          <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
-          <Button type="submit" onClick={onSubmit}>
-            Submit feedback
-          </Button>
-        </Stack>
-      </div>
-    </Menu>
-  );
-};
-
-export const ReportIssueButton = ({}: Props) => {
+export const ReportIssueButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScreenshotEditModalOpen, setIsScreenshotEditModalOpen] = useState(false);
+  const [formData, setFormData] = useState<FeedbackFormData>({
+    message: '',
+    screenshot: '',
+    imageType: '',
+    reporterEmail: '',
+    accessChecked: false,
+    contactChecked: false,
+    width: 0,
+    height: 0,
+    bitmap: {} as HTMLImageElement,
+  });
+  const feedbackPlus = new FeedbackPlus();
 
   return (
     <>
-      <Dropdown overlay={<MenuActions />} placement="bottom-end" onVisibleChange={setIsOpen}>
-        <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="New" />
-      </Dropdown>
+      <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="Report Issue" onClick={() => setIsOpen(true)} />
+      {isOpen && (
+        <Drawer title="Send feedback to Grafana" size="md" onClose={() => setIsOpen(false)}>
+          <DrawerContents
+            setIsOpen={setIsOpen}
+            setFormData={setFormData}
+            formData={formData}
+            feedbackPlus={feedbackPlus}
+            setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
+          />
+        </Drawer>
+      )}
+      <ScreenShotEditModal
+        isOpen={isScreenshotEditModalOpen}
+        feedbackPlus={feedbackPlus}
+        setFormData={setFormData}
+        formData={formData}
+        setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
+        setIsDropdownOpen={setIsOpen}
+      />
     </>
   );
 };
 
 /* 
   TODO:
-  - see if we can get annotations to work
-  - make it stylistically pretty
+  - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
+  - make dropdown cooler looking
+  - add a cancel button to delete screenshot if the user doesn't like it
+  - make this file easier to look at without crying, add prop types, fix "any" types
+  - add a highlight feature
+  - let user make multiple edits to a screenshot (you can kind of do this already by saving and editing multiple times)
 */

@@ -21,11 +21,13 @@ type Service interface {
 }
 
 type Instance struct {
-	ID          int    `json:"id"`
-	Slug        string `json:"slug"`
-	RegionSlug  string `json:"regionSlug"`
-	ClusterSlug string `json:"clusterSlug"`
-	OrgId       int    `json:"orgId"`
+	ID             int    `json:"id"`
+	Slug           string `json:"slug"`
+	RegionSlug     string `json:"regionSlug"`
+	ClusterSlug    string `json:"clusterSlug"`
+	OrgId          int    `json:"orgId"`
+	Version        string `json:"version"`
+	RunningVersion string `json:"runningVersion"`
 }
 
 type GcomClient struct {
