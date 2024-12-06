@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, locale } from '@grafana/data';
-import { useStyles2, Box, Stack, Text, Button } from '@grafana/ui';
+import { useStyles2, Box, Stack, Text } from '@grafana/ui';
 
 import { Template, Link } from './types';
 

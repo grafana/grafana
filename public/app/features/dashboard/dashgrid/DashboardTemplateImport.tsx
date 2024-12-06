@@ -5,7 +5,7 @@ import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runti
 import { Drawer, Form } from '@grafana/ui';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { ImportDashboardForm } from 'app/features/manage-dashboards/components/ImportDashboardForm';
-import { getLibraryPanelInputs, importDashboard } from 'app/features/manage-dashboards/state/actions';
+import { getLibraryPanelInputs } from 'app/features/manage-dashboards/state/actions';
 import { DashboardInputs, LibraryPanelInputState } from 'app/features/manage-dashboards/state/reducers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/store/store';
@@ -103,20 +103,20 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
 
       const dashboardInputs = !!libraryPanels?.length
         ? dashboardJson.__inputs.reduce((acc: Input[], input: Input) => {
-            if (!input?.usage?.libraryPanels) {
-              acc.push(input);
-              return acc;
-            }
-
-            const newLibraryPanels = getNewLibraryPanelsByInput(input);
-            if (newLibraryPanels?.length) {
-              acc.push({
-                ...input,
-                usage: { libraryPanels: newLibraryPanels },
-              });
-            }
+          if (!input?.usage?.libraryPanels) {
+            acc.push(input);
             return acc;
-          }, [])
+          }
+
+          const newLibraryPanels = getNewLibraryPanelsByInput(input);
+          if (newLibraryPanels?.length) {
+            acc.push({
+              ...input,
+              usage: { libraryPanels: newLibraryPanels },
+            });
+          }
+          return acc;
+        }, [])
         : dashboardJson.__inputs;
 
       return { ...dashboardJson, __inputs: dashboardInputs };
@@ -244,7 +244,7 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
         })
       );
     },
-    [inputs]
+    [inputs, communityDashboardToImport]
   );
 
   const onCancelCommunityDashboard = useCallback(() => {
@@ -252,11 +252,11 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
   }, [onCancel]);
 
   const onUidResetCommunityDashboard = useCallback(() => {
-    console.log('uid reset');
+    setUidReset(true);
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>; // Consider using a proper loading component
+    return <div>Loading...</div>;
   }
 
   return (
