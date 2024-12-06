@@ -405,7 +405,7 @@ function getStyles() {
   return {
     // eslint-disable-next-line @emotion/syntax-preference
     outliers: css`
-      /* fix: ensure vertical placement of checkbox */
+      /* fix: ensure vertical placement of checkbox when controls are visible */
       button[aria-label='Enable changepoint detection'] > div > label {
         place-content: center;
       }
