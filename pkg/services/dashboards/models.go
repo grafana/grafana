@@ -197,6 +197,7 @@ type ValidateDashboardBeforeSaveResult struct {
 type SaveDashboardCommand struct {
 	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
 	UserID       int64            `json:"userId" xorm:"user_id"`
+	UID          string           `json:"uid"`
 	Overwrite    bool             `json:"overwrite"`
 	Message      string           `json:"message"`
 	OrgID        int64            `json:"-" xorm:"org_id"`
@@ -260,6 +261,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+
+	IncludeDeleted bool // only supported when using unified storage
 }
 
 type DashboardTagCloudItem struct {

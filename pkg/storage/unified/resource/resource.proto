@@ -193,6 +193,8 @@ message ReadRequest {
 
   // Optionally pick an explicit resource version
   int64 resource_version = 3;
+  // Optionally decide to return the latest RV if deleted
+  bool include_deleted = 4;
 }
 
 message ReadResponse {

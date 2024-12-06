@@ -1505,6 +1505,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		nestedFolderStore,
 		nil,
 		zanzana.NewNoopClient(),
+		nil,
 	)
 	require.NoError(t, err)
 
