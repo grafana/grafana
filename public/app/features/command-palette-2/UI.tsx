@@ -215,7 +215,21 @@ export function CommandPalette2() {
           </div>
           <div className={styles.inputBarCell}>
             <div className={styles.searchIcon}>
-              <Icon name={mode === 'search' ? 'search' : 'brackets-curly'} />
+              <AnimatePresence>
+                {mode === 'search' ? (
+                  <Icon name="search" />
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className={styles.commandIcon}
+                  >
+                    /
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <input
@@ -430,7 +444,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     nav: css({
       color: tokens.colors.grey[400],
       background: hexToRgba(tokens.colors.grey[950], 0.8),
-      paddingInline: theme.spacing(2),
+      paddingInline: theme.spacing(3),
       borderTopLeftRadius: 8,
       borderTopRightRadius: 8,
       alignItems: 'center',
@@ -504,6 +518,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       height: '100%',
       color: tokens.colors.grey[400],
+    }),
+
+    commandIcon: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: tokens.colors.grey[200],
+      borderRadius: 6,
+      border: `1px solid ${hexToRgba(tokens.colors.grey[700], 0.7)}`,
+      height: 24,
+      width: 24,
     }),
 
     searchInput: css({
