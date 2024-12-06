@@ -79,9 +79,23 @@ To query a particular trace by its trace ID:
 
 You can use the query editor’s autocomplete suggestions to write queries.
 The editor detects spansets to provide relevant autocomplete options.
-It uses regular expressions (regex) to detect where it is inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
+It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
 
 ![Query editor showing the auto-complete feature](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-editor-autocomplete.png)
+
+### Anchored regular expressions
+
+Regular expressions are anchored at both ends.
+This anchoring makes the queries faster and matches the behavior of PromQL, where regular expressions are also fully anchored.
+
+An unanchored query, such as:
+`{ span.foo =~ "bar" }`
+is now treated as:
+`{ span.foo =~ "^bar$" }`.
+
+If you use TraceQL with regular expressions in your Grafana dashboards and you want the unanchored behavior, update the queries to use the unanchored version, such as `{ span.foo =~ ".*bar.*"}`.
+
+### Create a query with autocomplete
 
 To create a query using autocomplete, follow these steps:
 
