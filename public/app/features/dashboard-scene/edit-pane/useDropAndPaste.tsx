@@ -139,8 +139,11 @@ export function useDropAndPaste(dashboard: DashboardScene) {
 
       if (clipboardData.types.includes('image/png') || clipboardData.types.includes('image/jpeg')) {
         // Handle image paste
-        // const image = clipboardData.items[0].getAsFile();
-        alert('Pasted image - no preview available yet');
+        const image = clipboardData.items[0].getAsFile();
+
+        if (image) {
+          onImportFile(image);
+        }
       }
 
       alert('Pasted data of unknown type');
