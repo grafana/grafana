@@ -85,24 +85,20 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if len(rsp.Jobs) > 0 {
-			go func() {
-				// Async process the jobs
-				// TODO!!! this should be a job queue
-				ctx := identity.WithRequester(context.Background(), id)
-				factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-				for _, job := range rsp.Jobs {
-					err := repo.Process(ctx, logger, job, factory)
-					if err != nil {
-						logger.Error("error running job", "error", err)
-					}
+			// TODO Async process the jobs!!
+			ctx := identity.WithRequester(context.Background(), id)
+			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
+			for _, job := range rsp.Jobs {
+				err := repo.Process(ctx, logger, job, factory)
+				if err != nil {
+					responder.Error(err)
+					return
 				}
-			}()
+			}
 		}
-
 		responder.Object(rsp.Code, &metav1.Status{
 			Message: rsp.Message,
 		})
-
 	}), nil
 }
 
