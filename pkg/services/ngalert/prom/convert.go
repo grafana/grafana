@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	prommodel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -63,7 +64,7 @@ func NewConverter(cfg Config) (*Converter, error) {
 		cfg.DefaultInterval = defaultConfig.DefaultInterval
 	}
 
-	if cfg.DatasourceType != "prometheus" && cfg.DatasourceType != "loki" {
+	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
 		return nil, fmt.Errorf("invalid datasource type: %s", cfg.DatasourceType)
 	}
 
@@ -305,6 +306,10 @@ func createAlertQueryNode(datasourceUID, datasourceType, expr string, fromTimeRa
 		"legendFormat":  "__auto",
 		"maxDataPoints": 43200,
 		"refId":         "A",
+	}
+
+	if datasourceType == datasources.DS_LOKI {
+		modelData["queryType"] = "instant"
 	}
 
 	modelJSON, err := json.Marshal(modelData)
