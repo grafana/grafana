@@ -222,14 +222,33 @@ export function CommandPalette2() {
             <div className={styles.searchIcon}>
               <AnimatePresence>
                 {mode === 'search' ? (
-                  <Icon name="search" />
-                ) : (
                   <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
+                    // layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
+                    exit={{ opacity: 0, transition: { delay: 0 } }}
                     transition={{ duration: 0.2 }}
                     className={styles.commandIcon}
+                    key={mode}
+                  >
+                    <Icon
+                      style={{
+                        width: 12,
+                        height: 12,
+                        overflow: 'hidden',
+                      }}
+                      name="search"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    // layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2, duration: 0.2 } }}
+                    exit={{ opacity: 0, x: 20, transition: { delay: 0 } }}
+                    transition={{ duration: 0.2 }}
+                    className={styles.commandIcon}
+                    key={mode}
                   >
                     /
                   </motion.div>
@@ -310,7 +329,7 @@ export function CommandPalette2() {
                   // search mode
                   body = (
                     <>
-                      {icon}
+                      <div className={styles.commandIconWrapper}>{icon}</div>
                       <div className={styles.resultItemMain}>{item.title}</div>
                       {item.parentTitle && (
                         <div>
@@ -323,12 +342,14 @@ export function CommandPalette2() {
                   // command mode
                   body = (
                     <>
-                      {icon}
-                      <Stack gap={1} alignItems="center">
+                      <div className={styles.commandIconWrapper}>{icon}</div>
+                      <Stack gap={0.5} alignItems="center">
                         {item.parentTitle && (
                           <>
-                            <div className={styles.commandParent}>{item.parentTitle}</div>
-                            <Icon name="angle-right" />
+                            <div className={styles.commandParentWrapper}>
+                              <div className={styles.commandParent}>{item.parentTitle}</div>
+                            </div>
+                            <Icon name="angle-right" className={styles.commandParentIcon} />
                           </>
                         )}
                         <div>{item.title}</div>
@@ -513,7 +534,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(3),
       listStyle: 'none',
       padding: 0,
-      marginLeft: theme.spacing(2),
+      marginLeft: 16,
     }),
 
     breadcrumb: css({
@@ -554,6 +575,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       height: '100%',
       color: tokens.colors.grey[400],
+      width: 26,
     }),
 
     commandIcon: css({
@@ -565,6 +587,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${hexToRgba(tokens.colors.grey[700], 0.7)}`,
       height: 24,
       width: 24,
+      marginLeft: 1,
+      overflow: 'hidden',
     }),
 
     searchInput: css({
@@ -650,9 +674,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     resultItem: css({
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1.5),
       alignItems: 'center',
-      padding: theme.spacing(2, 0),
+      padding: '14px 0',
       color: '#9898A4',
       fontSize: 14,
       position: 'relative',
@@ -660,7 +684,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     commandItem: css({
-      padding: '12.575px 0px',
+      padding: '14px 0px',
+      display: 'flex',
+      alignItems: 'center',
     }),
 
     resultItemMain: css({
@@ -698,12 +724,40 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: 1,
     }),
 
+    commandParentWrapper: css({
+      width: 80,
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      marginLeft: 4,
+    }),
+
     commandParent: css({
-      padding: theme.spacing(0.5, 1),
+      padding: '2px 6px 1px 6px',
       borderRadius: 6,
-      border: '1px solid #2D2D32',
-      background: '#202027',
+      border: `1px solid ${hexToRgba(tokens.colors.grey[700], 0.7)}`,
+      background: hexToRgba(tokens.colors.grey[800], 0.8),
+      color: tokens.colors.grey[200],
       fontSize: 12,
+      boxShadow: [
+        '0px 4px 4px -2px rgba(0, 0, 0, 0.15)',
+        '0px 2px 2px -1px rgba(0, 0, 0, 0.15)',
+        // '0px 1px 1px 0px rgba(255, 255, 255, 0.10) inset',
+      ].join(','),
+    }),
+
+    commandIconWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 26,
+      height: 26,
+      borderRadius: 6,
+      background: hexToRgba(tokens.colors.white, 0.05),
+    }),
+
+    commandParentIcon: css({
+      color: tokens.colors.grey[500],
     }),
 
     button: css({
