@@ -1,6 +1,6 @@
 import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { SceneCSSGridItem, SceneObject, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
+import { SceneCSSGridItem, SceneObject, SceneObjectState, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
@@ -11,22 +11,37 @@ import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
-  const autoQuery = getAutoQueriesForMetric(metric);
+type HeaderActions = Array<SceneObject<SceneObjectState>>;
 
+export function getPreviewPanelFor(
+  metric: string,
+  index: number,
+  currentFilterCount: number,
+  description?: string,
+  headerActions?: HeaderActions,
+  datasource: { uid: string } = trailDS
+) {
+  const autoQuery = getAutoQueriesForMetric(metric);
+  const queries = autoQuery.preview.queries.map((query) =>
+    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
+  );
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
     .setHeaderActions([
+      ...(headerActions ?? []),
       new SelectMetricAction({ metric, title: 'Select' }),
       new AddToExplorationButton({ labelName: metric }),
     ])
+    .setData(
+      new SceneQueryRunner({
+        datasource,
+        maxDataPoints: MDP_METRIC_PREVIEW,
+        queries,
+      })
+    )
     .build();
-
-  const queries = autoQuery.preview.queries.map((query) =>
-    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
-  );
 
   let panel: SceneObject = vizPanel;
 
@@ -42,11 +57,6 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
       variables: getVariablesWithMetricConstant(metric),
     }),
     $behaviors: [hideEmptyPreviews(metric)],
-    $data: new SceneQueryRunner({
-      datasource: trailDS,
-      maxDataPoints: MDP_METRIC_PREVIEW,
-      queries,
-    }),
     body: panel,
   });
 }

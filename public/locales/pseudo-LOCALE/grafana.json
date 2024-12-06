@@ -1294,7 +1294,10 @@
       "relatedLogsUnavailableBeforeDocsLink": "Ŗęľäŧęđ ľőģş äřę ŉőŧ äväįľäþľę ƒőř ŧĥįş męŧřįč. Ŧřy şęľęčŧįŉģ ä męŧřįč čřęäŧęđ þy ä ",
       "warnExperimentalFeature": "Ŗęľäŧęđ ľőģş įş äŉ ęχpęřįmęŉŧäľ ƒęäŧūřę."
     },
-    "viewBy": "Vįęŵ þy"
+    "viewBy": "Vįęŵ þy",
+    "wingman": {
+      "sortBy": "Ŝőřŧ þy"
+    }
   },
   "export": {
     "json": {
@@ -3222,6 +3225,20 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
+    }
+  },
+  "trail": {
+    "metric-select": {
+      "wingman": {
+        "anomalies": {
+          "changepoints": "Cĥäŉģępőįŉŧş",
+          "loading": {
+            "pending": "Ŀőäđįŉģ...",
+            "rejected": "Fäįľęđ ŧő ľőäđ męŧřįčş"
+          },
+          "none-found": "Ńő męŧřįčş ƒőūŉđ"
+        }
+      }
     }
   },
   "trails": {

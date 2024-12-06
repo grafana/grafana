@@ -51,7 +51,7 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AnomaliesScene } from './display/AnomaliesScene';
+import { AnomaliesScene } from './display/anomalies/AnomaliesScene';
 import { renderAsRedMetricsDisplay } from './display/redMetrics';
 
 interface MetricPanel {
@@ -448,7 +448,12 @@ export class MetricSelectSceneForWingman
         return;
       case 'anomalies':
         console.log('anomalies will be rendered');
-        this.state.body.setState({ children: [new AnomaliesScene({})], autoRows: rowTemplate });
+        // TODO: Undo this temporary hack of a grid inside a grid
+        this.state.body.setState({
+          children: [new AnomaliesScene({})],
+          autoRows: rowTemplate,
+          templateColumns: undefined,
+        });
         return;
       case 'default':
       default:
