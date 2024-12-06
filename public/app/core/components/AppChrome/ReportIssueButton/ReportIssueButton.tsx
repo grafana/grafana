@@ -2,11 +2,11 @@ import FeedbackPlus from 'feedbackplus';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Dropdown, ToolbarButton, Button, Stack, Menu, Modal } from '@grafana/ui';
+import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
-import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 export interface Props { }
 
@@ -185,9 +185,11 @@ const ScreenShotEditModal = ({
   }
 
   return (
-    <Modal title="title" isOpen={isOpen}>
+    <Modal title="Edit Screenshot" isOpen={isOpen}>
+      <div>{isInEditMode ?
+        "Click and drag to hide sensitive information then press Finished Editing" :
+        "Click Edit button to hide sensitive information, or press save to attach screenshot to feedback form"}</div>
       <div ref={canvasContainerRef}>
-
         <canvas
           ref={canvasRef}
           onMouseDown={onMouseDown}
@@ -202,11 +204,9 @@ const ScreenShotEditModal = ({
           }}
         ></div>
       </div>
-
-
       <Modal.ButtonRow>
-        <Button onClick={hide}>{isInEditMode ? "Done" : "Hide"}</Button>
-        <Button onClick={save}>Save</Button>
+        <Button onClick={hide}>{isInEditMode ? "Finished Editing" : "Edit"}</Button>
+        <Button onClick={save} disabled={isInEditMode}>Save</Button>
       </Modal.ButtonRow>
     </Modal>
   );
@@ -307,11 +307,9 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
-  - see if we can get annotations to work
-    - fix the offset issue when actively hiding (seems to work when saving?)
-    - add a done button for hiding
-    - fix the scroll issue inside the widget
-    - add a title to the modal
-    - close drodown on screenshot, and reopen after done
+  - close on save, show thumbnail of screenshot in feedback dropdown
+  - fix the offset issue when actively hiding (seems to work when saving?)
+  - close drodown on screenshot, and reopen after done
+  - add a cancel button to delete screenshot
   - make dropdown cooler looking
 */
