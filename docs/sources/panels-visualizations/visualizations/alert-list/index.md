@@ -24,6 +24,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  create-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/
+  alert-label:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
 
 # Alert list
@@ -38,7 +48,7 @@ On each dashboard load, this visualization queries the alert list, always provid
 
 ## Configure an alert list
 
-Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure an alert list visualization:
+Once you’ve [created a dashboard](ref:create-dashboard), the following video shows you how to configure an alert list visualization:
 
 {{< youtube id="o4rK7_AXZ9Y" >}}
 
@@ -92,7 +102,7 @@ These options allow you to limit alerts shown to only those that match the query
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | Alert name | Filter alerts by name. |
-| Alert instance label | Filter alert instances using [label](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
+| Alert instance label | Filter alert instances using [label](ref:alert-label) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
 | Datasource | Filter alerts from the selected data source. |
 | Folder | Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed. |
 
