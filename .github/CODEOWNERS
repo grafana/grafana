@@ -463,7 +463,7 @@
 /.husky/pre-commit @grafana/frontend-ops
 /cypress.config.cjs @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
-playwright.config.ts @grafana/plugins-platform-frontend
+playwright.config.cts @grafana/plugins-platform-frontend
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
