@@ -179,7 +179,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, s.initMinSize)
+	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
 	if err != nil {
 		return err
 	}
@@ -355,6 +355,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return rv, err
 	})
 
+	if err != nil {
+		return nil, 0, err
+	}
+
 	// Record the number of objects indexed for the kind/resource
 	docCount, err := index.DocCount()
 	if err != nil {
@@ -362,10 +366,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	if IndexMetrics != nil {
 		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
-	}
-
-	if err != nil {
-		return nil, 0, err
 	}
 
 	if err == nil {
