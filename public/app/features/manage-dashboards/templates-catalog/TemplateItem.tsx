@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, locale } from '@grafana/data';
-import { useStyles2, Box, Stack, Text } from '@grafana/ui';
+import { useStyles2, Box, Stack, Text, Button } from '@grafana/ui';
 
 import { Template, Link } from './types';
 
 interface TemplateItemProps {
   dashboard: Template;
   compact?: boolean;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: (dashboardId: string) => void;
 }
 
 export function TemplateItem({ dashboard, compact = false, onClick }: TemplateItemProps) {
@@ -23,8 +23,12 @@ export function TemplateItem({ dashboard, compact = false, onClick }: TemplateIt
   const header = compact ? 'h5' : 'h4';
   const body = compact ? 'body' : 'bodySmall';
 
+  const onOpenTemplateDrawer = () => {
+    onClick?.(String(dashboard.id));
+  };
+
   return (
-    <div className={styles.container} onClick={onClick}>
+    <div className={styles.container} onClick={onOpenTemplateDrawer}>
       <Box display="flex" direction="column" backgroundColor="secondary" paddingBottom={1} height="100%">
         <Box display="flex" height={imgHeight}>
           {thumbnailUrl ? (

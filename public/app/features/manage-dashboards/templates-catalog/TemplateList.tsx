@@ -1,18 +1,29 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Box, EmptySearchResult, Grid, Input, Pagination, Select, Stack } from '@grafana/ui';
+import DashboardTemplateImport from 'app/features/dashboard/dashgrid/DashboardTemplateImport';
 
 import { TemplateItem } from './TemplateItem';
 import { useTemplateDashboards } from './hooks';
 import { SORT_BY_OPTIONS, SortBy } from './types';
 
-interface TemplateListProps {}
+interface TemplateListProps { }
 
-export function TemplateList({}: TemplateListProps) {
+export function TemplateList({ }: TemplateListProps) {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState(SORT_BY_OPTIONS[0].value);
   const [filter, setFilter] = useState('');
   const { dashboards, pages, loading, error, page: currentPage } = useTemplateDashboards({ sortBy, page, filter });
+  const [openTemplateImportDrawer, setOpenTemplateImportDrawer] = useState(false);
+  const [dashboardUid, setDashboardUid] = useState<string>('');
+
+  const onOpenImportTemplate = useCallback(
+    (d: any) => {
+      setOpenTemplateImportDrawer(true);
+      setDashboardUid(d); // set the selected dashboard to import id and use it in the drawer
+    },
+    [setOpenTemplateImportDrawer]
+  );
 
   return (
     <Stack gap={3} direction="column">
@@ -38,7 +49,7 @@ export function TemplateList({}: TemplateListProps) {
         <>
           <Grid columns={3} gap={2} alignItems="stretch">
             {dashboards.map((d) => (
-              <TemplateItem key={d.slug} dashboard={d} />
+              <TemplateItem key={d.slug} dashboard={d} onClick={(d) => onOpenImportTemplate(d)} />
             ))}
           </Grid>
           <Pagination
@@ -50,6 +61,9 @@ export function TemplateList({}: TemplateListProps) {
         </>
       ) : (
         <EmptySearchResult>No Dashboards</EmptySearchResult>
+      )}
+      {openTemplateImportDrawer && (
+        <DashboardTemplateImport dashboardUid={dashboardUid} onCancel={() => setOpenTemplateImportDrawer(false)} />
       )}
     </Stack>
   );
