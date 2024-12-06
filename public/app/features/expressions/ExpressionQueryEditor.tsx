@@ -44,7 +44,6 @@ function useExpressionsCache() {
       // We want to use the same value for Reduce, Resample and Threshold
       case ExpressionQueryType.reduce:
       case ExpressionQueryType.resample:
-      case ExpressionQueryType.resample:
         expressionCache.current.reduce = value;
         expressionCache.current.resample = value;
         expressionCache.current.threshold = value;
