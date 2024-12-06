@@ -1,10 +1,13 @@
+import { RawTimeRange } from '@grafana/data';
+import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { getBackendSrv } from '@grafana/runtime';
 import { PanelBuilders, SceneCSSGridItem, SceneCSSGridLayout, sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
 import { DataTrail } from '../../DataTrail';
-import { MDP_METRIC_PREVIEW, trailDS } from '../../shared';
+import { MDP_METRIC_PREVIEW, trailDS, VAR_DATASOURCE_EXPR } from '../../shared';
 
 /**
  * This is an object that represents a collection of RED metrics
@@ -49,7 +52,45 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
     key: '__name__', value: 'traces_spanmetrics_latency_.*', operator: '=~',
   }];
 
-  const jobValues = await trail.datasourceHelper.getTagValues({key: 'job', filters});
+  // const jobValues = await trail.datasourceHelper.getTagValues({key: 'job', filters});
+
+  const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+  const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+  if (!timeRange) {
+    return [];
+  }
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+
+  const jobValsUrl = `/api/datasources/uid/${datasourceUid}/resources/api/v1/label/job/values`;
+  const params: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': '{__name__="traces_spanmetrics_latency_count",span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}',
+  };
+
+  const response = await getBackendSrv().get(
+    jobValsUrl,
+    params,
+    'explore-metrics-red-metrics-traces-to-metrics-jobs'
+  );
+
+  const jobValues = response.data;
+
+  // const queryUrl = `/api/datasources/uid/${datasourceUid}/resources/api/v1/query`;
+  // const paramsTotalTargets: Record<string, string | number> = {
+  //   start,
+  //   end,
+  //   query,
+  // };
+
+
+
+  // const responseTotal = await getBackendSrv().get<OtelResponse>(
+  //   url,
+  //   paramsTotalTargets,
+  //   `explore-metrics-otel-check-total-${query}`
+  // );
   
   // 2. identify the metrics and query
   // what will each query look like?
@@ -70,10 +111,10 @@ export const renderAsRedMetricsDisplay = async (trail: DataTrail, height: string
 
   for (const job of jobValues) {
     const queries = {
-      job: ''+job.text,
-      rate: `sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job)`,
-      error: `((sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__="", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval])) by (job)) * 100`,
-      duration: `sum by (le) (rate(traces_spanmetrics_latency_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job.value}", __ignore_usage__=""} [$__rate_interval]))`,
+      job: ''+job,
+      rate: `sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job}", __ignore_usage__=""} [$__rate_interval])) by (job)`,
+      error: `((sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job}", __ignore_usage__="", status_code="STATUS_CODE_ERROR"} [$__rate_interval])) by (job) OR sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job}", __ignore_usage__=""} [$__rate_interval])) by (job) * 0) / sum(rate(traces_spanmetrics_latency_count{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job}", __ignore_usage__=""} [$__rate_interval])) by (job)) * 100`,
+      duration: `sum by (le) (rate(traces_spanmetrics_latency_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER", job="${job}", __ignore_usage__=""} [$__rate_interval]))`,
     }
     redQueriesByJob.push(queries);
   }
