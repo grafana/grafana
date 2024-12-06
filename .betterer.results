@@ -2519,10 +2519,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/dashboard/components/ShareModal/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./ShareModal\`)", "0"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
-    ],
     "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -3771,10 +3767,6 @@ exports[`better eslint`] = {
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/search/service/index.ts:5381": [
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./searcher\`)", "1"]
     ],
     "public/app/features/search/service/sql.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
