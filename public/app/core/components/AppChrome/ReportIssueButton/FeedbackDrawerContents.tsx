@@ -10,7 +10,7 @@ import { FeedbackFormData } from './types';
 import { isCanvas } from './utils';
 
 type DrawerContentsProps = {
-  setIsOpen: (isOpen: boolean) => void;
+  setIsDrawerOpen: (isOpen: boolean) => void;
   setFormData: (fd: FeedbackFormData) => void;
   setIsScreenshotEditModalOpen: (isOpen: boolean) => void;
   feedbackPlus: any;
@@ -18,7 +18,7 @@ type DrawerContentsProps = {
 };
 
 export const DrawerContents = ({
-  setIsOpen,
+  setIsDrawerOpen,
   setFormData,
   feedbackPlus,
   formData,
@@ -41,7 +41,7 @@ export const DrawerContents = ({
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsOpen(false);
+    setIsDrawerOpen(false);
     feedbackPlus
       .capture()
       .then(({ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number }) => {
@@ -73,8 +73,20 @@ export const DrawerContents = ({
     };
 
     const feedbackApi = getFeedbackAPI();
-    await feedbackApi.createFeedback(feedback);
-    setFormData({ message: "", screenshot: "", imageType: "", reporterEmail: "", accessChecked: false, contactChecked: false, width: 0, height: 0, bitmap: {} as HTMLImageElement });
+    const requestSucceeded = await feedbackApi.createFeedback(feedback);
+    if (requestSucceeded) {
+      setFormData({
+        message: '',
+        screenshot: '',
+        imageType: '',
+        reporterEmail: '',
+        accessChecked: false,
+        contactChecked: false,
+        width: 0,
+        height: 0,
+        bitmap: {} as HTMLImageElement,
+      });
+    }
   };
 
   useEffect(() => {

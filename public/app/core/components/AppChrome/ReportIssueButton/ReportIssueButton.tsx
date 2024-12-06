@@ -1,15 +1,15 @@
 import FeedbackPlus from 'feedbackplus';
 import { useState } from 'react';
 
+import { FeatureState } from '@grafana/data';
 import { ToolbarButton, Drawer, Stack, FeatureBadge, Icon } from '@grafana/ui';
 
 import { DrawerContents } from './FeedbackDrawerContents';
 import { ScreenShotEditModal } from './ScreenShotEditModal';
 import { FeedbackFormData } from './types';
-import { FeatureState } from '@grafana/data';
 
 export const ReportIssueButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isScreenshotEditModalOpen, setIsScreenshotEditModalOpen] = useState(false);
   const [formData, setFormData] = useState<FeedbackFormData>({
     message: '',
@@ -26,12 +26,12 @@ export const ReportIssueButton = () => {
 
   return (
     <>
-      <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="Report Issue" onClick={() => setIsOpen(true)} />
-      {isOpen && (
+      <ToolbarButton iconOnly icon={'bug'} isOpen={isDrawerOpen} aria-label="Report Issue" onClick={() => setIsDrawerOpen(true)} />
+      {isDrawerOpen && (
         <Drawer
           title="Send feedback to Grafana"
           size="md"
-          onClose={() => setIsOpen(false)}
+          onClose={() => setIsDrawerOpen(false)}
           subtitle={
             <Stack direction="column" gap={1}>
               <Stack direction="row" gap={1}>
@@ -53,7 +53,7 @@ export const ReportIssueButton = () => {
           }
         >
           <DrawerContents
-            setIsOpen={setIsOpen}
+            setIsDrawerOpen={setIsDrawerOpen}
             setFormData={setFormData}
             formData={formData}
             feedbackPlus={feedbackPlus}
@@ -62,12 +62,12 @@ export const ReportIssueButton = () => {
         </Drawer>
       )}
       <ScreenShotEditModal
-        isOpen={isScreenshotEditModalOpen}
+        isScreenshotEditModalOpen={isScreenshotEditModalOpen}
         feedbackPlus={feedbackPlus}
         setFormData={setFormData}
         formData={formData}
         setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
-        setIsDropdownOpen={setIsOpen}
+        setIsDrawerOpen={setIsDrawerOpen}
       />
     </>
   );
