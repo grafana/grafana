@@ -2,7 +2,6 @@ package tempo
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -92,7 +91,12 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
-		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		tls, err := httpclient.GetTLSConfig(opts)
+		if err != nil {
+			return nil, fmt.Errorf("failure in configuring tls for grpc: %w", err)
+		}
+
+		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
 		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
 			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
 		}))
