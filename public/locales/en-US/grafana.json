@@ -479,6 +479,7 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "import-alert-rules": "Import from a datasource",
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
