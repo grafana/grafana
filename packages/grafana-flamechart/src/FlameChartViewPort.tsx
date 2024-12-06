@@ -14,6 +14,8 @@ import { isRelatedTo } from './utils/operation';
 interface FlameChartViewPortProps<T> {
   container: FlameChartContainer<T>;
   viewRange: ViewRange;
+  onSelectEntity?: (entity: T) => void;
+  selectedEntity?: T;
 }
 
 export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
@@ -23,7 +25,7 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
 
   const [sizeRef, { width, height }] = useMeasure<HTMLDivElement>();
 
-  const [focusedItem, setFocusedItem] = useState<RenderItem<T> | null>(null);
+  const [hoverItem, setHoverItem] = useState<RenderItem<T> | null>(null);
 
   const renderItems = useRenderItems({
     container,
@@ -36,8 +38,6 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
     [renderItems.items, renderItems.connectors]
   );
 
-  console.log('focusedItem', focusedItem);
-
   return (
     <div ref={sizeRef} style={{ height: `${renderItems.height}px` }} className={styles.container}>
       {itemsFiltered.map((item) => (
@@ -45,22 +45,24 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
           key={container.getOperationId(item.operation.entity)}
           container={container}
           renderItem={item}
-          deemphasise={!!(focusedItem && !isRelatedTo(item.operation, focusedItem.operation))}
-          onMouseEnter={() => setFocusedItem(item)}
+          onSelect={() => props.onSelectEntity?.(item.operation.entity)}
+          isSelected={props.selectedEntity === item.operation.entity}
+          deemphasise={!!(hoverItem && !isRelatedTo(item.operation, hoverItem.operation))}
+          onMouseEnter={() => setHoverItem(item)}
           onMouseLeave={() => {
             console.log('leave');
-            setFocusedItem(null);
+            setHoverItem(null);
           }}
         />
       ))}
       {connectorsFiltered.map((connector) => {
-        const related = focusedItem && isRelatedTo(focusedItem.operation, connector.child.operation);
+        const related = hoverItem && isRelatedTo(hoverItem.operation, connector.child.operation);
         return (
           <ParallelGuideline
             connector={connector}
             container={container}
-            emphasize={!!(focusedItem && related)}
-            deemphasize={!!(focusedItem && !related)}
+            emphasize={!!(hoverItem && related)}
+            deemphasize={!!(hoverItem && !related)}
             key={`${container.getOperationId(connector.parent.operation.entity)}-${container.getOperationId(connector.child.operation.entity)}`}
           />
         );

@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FlameChart } from '@grafana/flamechart';
-import { useStyles2 } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import Ticks from '../TraceTimelineViewer/Ticks';
 import TimelineViewingLayer from '../TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../TraceTimelineViewer/types';
-import { Trace } from '../types';
+import { Trace, TraceSpan } from '../types';
 
+import { TFCSpanDetails } from './TFCSPanDetails';
 import { traceToFlameChartContainer } from './transforms';
 
 const NUM_TICKS = 8;
@@ -33,6 +34,8 @@ export function TraceFlameChart(props: TraceFlameChartProps) {
 
   const [viewStart, viewEnd] = viewRange.time.current;
 
+  const [selectedSpan, setSelectedSpan] = useState<TraceSpan>();
+
   return (
     <div className={styles.container}>
       <div className={styles.viewingLayer}>
@@ -51,8 +54,18 @@ export function TraceFlameChart(props: TraceFlameChartProps) {
       </div>
       <div className={styles.chartContainer}>
         <Ticks numTicks={NUM_TICKS} />
-        <FlameChart viewRange={viewRange} container={container} />
+        <FlameChart
+          viewRange={viewRange}
+          container={container}
+          onSelectEntity={setSelectedSpan}
+          selectedEntity={selectedSpan}
+        />
       </div>
+      {!!selectedSpan && (
+        <Drawer title="Span details" size="sm" onClose={() => setSelectedSpan(undefined)} placement="bottom">
+          <TFCSpanDetails span={selectedSpan} timeZone={timeZone} />
+        </Drawer>
+      )}
     </div>
   );
 }

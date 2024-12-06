@@ -16,13 +16,15 @@ interface NodeProps<T> {
   renderItem: RenderItem<T>;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onSelect?: () => void;
+  isSelected?: boolean;
 
   // gray out if unrelated to the focused item
   deemphasise?: boolean;
 }
 
 function FlameChartNodeM<T>(props: NodeProps<T>): React.ReactElement {
-  const { container, renderItem, onMouseEnter, onMouseLeave, deemphasise } = props;
+  const { container, renderItem, onMouseEnter, onMouseLeave, deemphasise, isSelected } = props;
   const styles = useStyles2(getStyles);
   const commonStyles = useStyles2(getCommonStyles);
   const theme = useTheme2();
@@ -59,8 +61,10 @@ function FlameChartNodeM<T>(props: NodeProps<T>): React.ReactElement {
           styles.node,
           commonStyles.animated,
           isError && styles.error,
+          isSelected && styles.selected,
           deemphasise && commonStyles.deemphasize
         )}
+        onClick={props.onSelect}
         style={style}
         onMouseOver={onMouseEnter}
         onMouseOut={onMouseLeave}
@@ -90,6 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     zIndex: 2,
   }),
+  selected: css({}),
   label: css({
     paddingLeft: theme.spacing(1),
     flex: 1,
