@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 
+import { ScopesSelectorService } from '../selector/ScopesSelectorService';
+
 import {
   applyScopes,
   clearScopesSearch,
@@ -39,7 +41,7 @@ import {
   expectSelectedScopePath,
   expectTreeScopePath,
 } from './utils/assertions';
-import { fetchNodesSpy, fetchScopeSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -52,6 +54,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Tree', () => {
+  let fetchNodesSpy: jest.SpyInstance;
+  let fetchScopeSpy: jest.SpyInstance;
+
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
@@ -59,10 +64,12 @@ describe('Tree', () => {
 
   beforeEach(() => {
     renderDashboard();
+    fetchNodesSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchNodeApi');
+    fetchScopeSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchScopeApi');
   });
 
   afterEach(async () => {
-    await resetScenes();
+    await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
   it('Fetches scope details on select', async () => {

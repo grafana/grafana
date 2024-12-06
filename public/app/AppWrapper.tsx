@@ -11,7 +11,6 @@ import {
   SidecarContext_EXPERIMENTAL,
   sidecarServiceSingleton_EXPERIMENTAL,
 } from '@grafana/runtime';
-import { ScopesContext } from '@grafana/scenes';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -25,7 +24,7 @@ import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { getScopesService } from './features/scopes';
+import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -125,7 +124,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <GlobalStyles />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ScopesContext.Provider value={getScopesService()}>
+                      <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                           <div className="grafana-app">
                             {config.featureToggles.appSidecar ? (
@@ -137,7 +136,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                             <PortalContainer />
                           </div>
                         </ExtensionRegistriesProvider>
-                      </ScopesContext.Provider>
+                      </ScopesContextProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>

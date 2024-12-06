@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui/';
 import { Page } from 'app/core/components/Page/Page';
-import { ScopesSelector } from 'app/features/scopes';
+import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { AppChromeUpdate } from '../../core/components/AppChrome/AppChromeUpdate';
 
@@ -30,6 +30,8 @@ export interface DataTrailsAppState extends SceneObjectState {
 }
 
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
+  protected _renderBeforeActivation = true;
+
   public constructor(state: DataTrailsAppState) {
     super(state);
   }
@@ -112,18 +114,22 @@ export function getDataTrailsApp() {
       config.featureToggles.scopeFilters && config.featureToggles.enableScopesInMetricsExplore
         ? new SceneScopesBridge({})
         : undefined;
+
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({}),
       scopesBridge,
       $behaviors: [
         () => {
+          scopesBridge?.enable();
+
           const sub = scopesBridge?.subscribeToValue(() => {
             dataTrailsApp.state.trail.publishEvent(new RefreshMetricsEvent());
             dataTrailsApp.state.trail.checkDataSourceForOTelResources();
           });
 
           return () => {
+            scopesBridge?.disable();
             sub?.unsubscribe();
           };
         },

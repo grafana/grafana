@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { getScopesDashboardsService, getScopesService } from '../services';
+import { ScopesService } from '../ScopesService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import {
@@ -40,8 +40,8 @@ describe('View mode', () => {
 
   it('Enters view mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(getScopesService()?.state.isReadOnly).toEqual(true);
-    expect(getScopesDashboardsService()?.state.isOpened).toEqual(false);
+    expect(ScopesService.instance?.state.isReadOnly).toEqual(true);
+    expect(ScopesService.instance?.state.isDrawerOpened).toEqual(false);
   });
 
   it('Closes selector on enter', async () => {

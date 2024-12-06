@@ -32,8 +32,6 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { getScopesService } from '../scopes';
-
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
@@ -61,7 +59,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getTrailFor, limitAdhocProviders } from './utils';
+import { getScopesBridgeFor, getTrailFor, limitAdhocProviders } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -430,7 +428,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const deploymentEnvironments = await getDeploymentEnvironments(
         datasourceUid,
         timeRange,
-        getScopesService()?.state.value ?? []
+        sceneGraph.getScopesBridge(trail)?.getValue() ?? []
       );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       // loading from the url with otel resources selected will result in turning on OTel experience

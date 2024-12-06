@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { useObservable } from 'react-use';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,10 +9,9 @@ import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesInput } from './internal/ScopesInput';
-import { ScopesTree } from './internal/ScopesTree';
-import { useScopesDashboardsService } from './useScopesDashboardsService';
-import { useScopesSelectorService } from './useScopesSelectorService';
+import { ScopesInput } from './ScopesInput';
+import { ScopesSelectorService } from './ScopesSelectorService';
+import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
   const { chrome } = useGrafana();
@@ -18,28 +19,18 @@ export const ScopesSelector = () => {
   const menuDockedAndOpen = !chromeState.chromeless && chromeState.megaMenuDocked && chromeState.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const scopes = useScopes();
-  const scopesSelectorService = useScopesSelectorService();
-  const scopesDashboardsService = useScopesDashboardsService();
 
-  if (!scopes || !scopesSelectorService || !scopesDashboardsService || !scopes.state.isEnabled) {
+  const scopesSelectorService = ScopesSelectorService.instance;
+
+  useObservable(scopesSelectorService?.stateObservable ?? new Observable(), scopesSelectorService?.state);
+
+  if (!scopes || !scopesSelectorService || !scopes.state.isEnabled) {
     return null;
   }
 
-  const {
-    applyNewScopes,
-    closePicker,
-    dismissNewScopes,
-    openPicker,
-    removeAllScopes,
-    state,
-    toggleNodeSelect,
-    updateNode,
-  } = scopesSelectorService;
-  const { state: scopesDashboardsState, toggleDrawer } = scopesDashboardsService;
-
   const dashboardsIconLabel = scopes.state.isReadOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
-    : scopesDashboardsState.isOpened
+    : scopes.state.isDrawerOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
       : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
 
@@ -52,25 +43,25 @@ export const ScopesSelector = () => {
         tooltip={dashboardsIconLabel}
         data-testid="scopes-dashboards-expand"
         disabled={scopes.state.isReadOnly}
-        onClick={toggleDrawer}
+        onClick={scopes.toggleDrawer}
       />
 
       <ScopesInput
-        nodes={state.nodes}
-        scopes={state.selectedScopes}
+        nodes={scopesSelectorService.state.nodes}
+        scopes={scopesSelectorService.state.selectedScopes}
         isDisabled={scopes.state.isReadOnly}
         isLoading={scopes.state.isLoading}
-        onInputClick={openPicker}
-        onRemoveAllClick={removeAllScopes}
+        onInputClick={scopesSelectorService.openPicker}
+        onRemoveAllClick={scopesSelectorService.removeAllScopes}
       />
 
-      {state.isOpened && (
+      {scopesSelectorService.state.isOpened && (
         <Drawer
           title={t('scopes.selector.title', 'Select scopes')}
           size="sm"
           onClose={() => {
-            closePicker();
-            dismissNewScopes();
+            scopesSelectorService!.closePicker();
+            scopesSelectorService!.dismissNewScopes();
           }}
         >
           <div className={styles.drawerContainer}>
@@ -79,12 +70,12 @@ export const ScopesSelector = () => {
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <ScopesTree
-                  nodes={state.nodes}
+                  nodes={scopesSelectorService.state.nodes}
                   nodePath={['']}
-                  loadingNodeName={state.loadingNodeName}
-                  scopes={state.treeScopes}
-                  onNodeUpdate={updateNode}
-                  onNodeSelectToggle={toggleNodeSelect}
+                  loadingNodeName={scopesSelectorService.state.loadingNodeName}
+                  scopes={scopesSelectorService.state.treeScopes}
+                  onNodeUpdate={scopesSelectorService.updateNode}
+                  onNodeSelectToggle={scopesSelectorService.toggleNodeSelect}
                 />
               )}
             </div>
@@ -94,8 +85,8 @@ export const ScopesSelector = () => {
                 variant="primary"
                 data-testid="scopes-selector-apply"
                 onClick={() => {
-                  closePicker();
-                  applyNewScopes();
+                  scopesSelectorService!.closePicker();
+                  scopesSelectorService!.applyNewScopes();
                 }}
               >
                 <Trans i18nKey="scopes.selector.apply">Apply</Trans>
@@ -104,8 +95,8 @@ export const ScopesSelector = () => {
                 variant="secondary"
                 data-testid="scopes-selector-cancel"
                 onClick={() => {
-                  closePicker();
-                  dismissNewScopes();
+                  scopesSelectorService!.closePicker();
+                  scopesSelectorService!.dismissNewScopes();
                 }}
               >
                 <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>

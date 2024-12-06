@@ -20,6 +20,7 @@ import {
   SceneObject,
   SceneObjectState,
   SceneObjectUrlValues,
+  SceneScopesBridge,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -50,6 +51,10 @@ export function isConstantVariable(variable: SceneVariable | null): variable is 
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
+}
+
+export function getScopesBridgeFor(model: SceneObject): SceneScopesBridge | undefined {
+  return sceneGraph.getScopesBridge(getTrailFor(model));
 }
 
 export function getTrailSettings(model: SceneObject): DataTrailSettings {

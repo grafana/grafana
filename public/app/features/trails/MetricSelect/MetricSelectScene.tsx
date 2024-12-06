@@ -28,7 +28,6 @@ import {
 import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getScopesService } from '../../scopes';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -257,7 +256,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       const response = await getMetricNames(
         datasourceUid,
         timeRange,
-        getScopesService()?.state.value ?? [],
+        sceneGraph.getScopesBridge(this)?.getValue() ?? [],
         filters,
         jobsList,
         instancesList,
