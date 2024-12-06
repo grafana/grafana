@@ -79,9 +79,23 @@ To query a particular trace by its trace ID:
 
 You can use the query editor’s autocomplete suggestions to write queries.
 The editor detects spansets to provide relevant autocomplete options.
-It uses regular expressions (regex) to detect where it is inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
+It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
 
 ![Query editor showing the auto-complete feature](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-editor-autocomplete.png)
+
+### Anchored regular expressions
+
+Regular expressions are anchored at both ends.
+This anchoring makes the queries faster and matches the behavior of PromQL, where regular expressions are also fully anchored.
+
+An unanchored query, such as:
+`{ span.foo =~ "bar" }`
+is now treated as:
+`{ span.foo =~ "^bar$" }`.
+
+If you use TraceQL with regular expressions in your Grafana dashboards and you want the unanchored behavior, update the queries to use the unanchored version, such as `{ span.foo =~ ".*bar.*"}`.
+
+### Create a query with autocomplete
 
 To create a query using autocomplete, follow these steps:
 
@@ -115,6 +129,14 @@ Selecting a span from the returned results opens a trace diagram and reveals the
 For more information on span details, refer to [Traces in Explore](https://grafana.com/docs/grafana/latest/explore/trace-integration/#span-details).
 
 ![Selecting a trace ID or a span to view span details](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-span-details-v11.png)
+
+Querying spansets with a large number of spans can negatively impact performance.
+You can use the **Span Limit** field in **Options** section of the TraceQL query editor.
+This field sets the maximum number of spans to return for each span set.
+By default, the maximum value that you can set for the **Span Limit** value (or the spss query) is 100.
+In Tempo configuration, this value is controlled by the `max_spans_per_span_set` parameter and can be modified by your Tempo administrator.
+Grafana Cloud users can contact Grafana Support to request a change.
+Entering a value higher than the default results in an error.
 
 ### Focus on traces or spans
 
