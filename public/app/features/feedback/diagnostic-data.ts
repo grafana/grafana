@@ -1,6 +1,4 @@
-import { config, getBackendSrv, GrafanaBootConfig } from '@grafana/runtime';
-
-type GrafanaBootConfigExtra = GrafanaBootConfig & { licensing: { slug: string } };
+import { config, getBackendSrv } from '@grafana/runtime';
 
 export async function getDiagnosticData() {
   const externallyInstalledPlugins = await getBackendSrv().get('/api/plugins', { embedded: 0, core: 0, enabled: 1 });

@@ -1,7 +1,7 @@
 import FeedbackPlus from 'feedbackplus';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { ToolbarButton, Button, Stack, Modal, Drawer, Label, TextArea } from '@grafana/ui';
+import { ToolbarButton, Button, Stack, Modal, Drawer, Label, TextArea, Checkbox } from '@grafana/ui';
 import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
@@ -14,6 +14,9 @@ type FeedbackFormData = {
   message: string;
   screenshot: string;
   imageType: string;
+  reporterEmail: string;
+  accessChecked: boolean;
+  contactChecked: boolean;
   width: number;
   height: number;
   bitmap: HTMLImageElement;
@@ -235,6 +238,12 @@ const DrawerContents = ({
     setFormData({ ...formData, message: e.target.value });
   };
 
+  const onEmailChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFormData({ ...formData, reporterEmail: e.target.value });
+  };
+
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -247,6 +256,13 @@ const DrawerContents = ({
       });
   };
 
+  const onAccessChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, accessChecked: e.target.checked });
+  };
+  const onContactChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, contactChecked: e.target.checked });
+  };
+
   const onSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
@@ -257,8 +273,9 @@ const DrawerContents = ({
       screenshot: formData.screenshot,
       imageType: formData.imageType,
       diagnosticData,
-      canContactReporter: false, // TODO
-      canAccessInstance: false, // TODO
+      canContactReporter: formData.contactChecked,
+      canAccessInstance: formData.accessChecked,
+      reporterEmail: formData.reporterEmail,
     };
 
     const feedbackApi = getFeedbackAPI();
@@ -291,6 +308,12 @@ const DrawerContents = ({
         Tell us what happened:
         <TextArea onChange={onInputChange} placeholder="what did you expect to see?" />
       </Label>
+      <Checkbox label="Can we access your instance?" value={formData.accessChecked} onChange={onAccessChange} />
+      <Checkbox label="Can we contact you?" value={formData.contactChecked} onChange={onContactChange} />
+      <Label>
+        If so, what is your email?
+        <TextArea onChange={onEmailChange} placeholder="your email" />
+      </Label>
       <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
       {formData.screenshot && <canvas ref={canvasRef}></canvas>}
       <Button type="submit" onClick={onSubmit}>
@@ -307,6 +330,9 @@ export const ReportIssueButton = ({}: Props) => {
     message: '',
     screenshot: '',
     imageType: '',
+    reporterEmail: '',
+    accessChecked: false,
+    contactChecked: false,
     width: 0,
     height: 0,
     bitmap: {} as HTMLImageElement,
@@ -345,6 +371,7 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
+  - fix that form fields getting back to default after screenshot is taken
   - fix the offset issue when actively hiding (seems to work when saving? why is the red preview box off??)
   - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
   - add a cancel button to delete screenshot if the user doesn't like it
