@@ -58,12 +58,18 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
+	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
+	}
+
+	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		unified = nil // hide the search index
 	}
 
 	builder := &FolderAPIBuilder{
@@ -72,6 +78,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:    request.GetNamespaceMapper(cfg),
 		folderSvc:     folderSvc,
 		accessControl: accessControl,
+		searcher:      unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -125,9 +132,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("count")] = &subCountREST{
-		searcher: b.searcher,
-	}
+	storage[resourceInfo.StoragePath("count")] = &subCountREST{}
 
 	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {
@@ -240,6 +245,9 @@ var folderValidationRules = struct {
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
 	obj := a.GetObject()
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
 
 	f, ok := obj.(*v0alpha1.Folder)
 	if !ok {
