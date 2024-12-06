@@ -445,6 +445,7 @@ drone: $(DRONE)
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
+	buildifier --lint=fix -r scripts/drone
 
 # Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
 .PHONY: scripts/drone/TAGS

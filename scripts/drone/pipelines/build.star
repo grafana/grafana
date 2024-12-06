@@ -7,6 +7,7 @@ load(
 )
 load(
     "scripts/drone/steps/lib.star",
+    "bench_frontend_tests_step",
     "build_frontend_package_step",
     "build_storybook_step",
     "build_test_plugins_step",
@@ -22,7 +23,6 @@ load(
     "playwright_e2e_report_post_link",
     "playwright_e2e_report_upload",
     "playwright_e2e_tests_step",
-    "bench_frontend_tests_step",
     "publish_images_step",
     "release_canary_npm_packages_step",
     "store_storybook_step",
