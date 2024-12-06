@@ -13,6 +13,7 @@ export interface CommandPaletteResultItem {
   parentTitle?: string;
   parentIcon?: IconName;
   icon: IconName;
+  starred?: boolean;
   action?: () => void;
 }
 
