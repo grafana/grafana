@@ -96,9 +96,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapper)
-		if err == nil {
-			//b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
-		}
+
+		// TODO, check last RV so we can see if the numbers have changed
+
 		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
