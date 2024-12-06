@@ -175,28 +175,34 @@ export function CommandPalette2() {
               {mode === 'command' && (
                 <motion.div
                   layout
-                  initial={{ height: 0 }}
-                  animate={{ height: 50 }}
-                  exit={{ height: 0 }}
+                  initial={{ height: 0, borderBottomColor: hexToRgba(tokens.colors.grey[800], 0.5) }}
+                  animate={{ height: 50, borderBottomColor: hexToRgba(tokens.colors.grey[800], 0.5) }}
+                  exit={{ height: 0, borderBottomColor: hexToRgba(tokens.colors.grey[800], 0.5) }}
                   transition={{ duration: 0.2 }}
                   className={styles.nav}
                 >
-                  <button className={styles.navClose}>
+                  <motion.button
+                    className={styles.navClose}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <Icon name="arrow-left" />
-                  </button>
+                  </motion.button>
                   <ul className={styles.breadcrumbs}>
                     <motion.li
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.2 } }}
-                      exit={{ opacity: 0, y: 4, transition: { duration: 0.1 } }}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0, transition: { delay: 0.15, duration: 0.2 } }}
+                      exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
                       className={styles.breadcrumb}
                     >
                       Home
                     </motion.li>
                     <motion.li
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0, transition: { delay: 0.25 } }}
-                      exit={{ opacity: 0, y: 0 }}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0, transition: { delay: 0.15 } }}
+                      exit={{ opacity: 0, x: -4, transition: { duration: 0.1 } }}
                       transition={{ duration: 0.2 }}
                       className={styles.breadcrumb}
                     >
@@ -252,7 +258,7 @@ export function CommandPalette2() {
                     color: tokens.colors.grey[400],
                     transition: { duration: 0.2, delay: 0.03 * idx },
                   },
-                  active: { opacity: 1, y: 0, color: '#FFFFFF', transition: { duration: 0.2 } },
+                  active: { opacity: 1, y: 0, color: '#FFFFFF', transition: { duration: 0.2, delay: 0.03 * idx } },
                   out: { opacity: 0, y: 20, transition: { duration: 0.2, delay: 0.03 * idx } },
                 };
 
@@ -430,6 +436,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       display: 'flex',
       overflow: 'hidden',
+      borderBottom: `1px solid transparent`,
     }),
 
     navClose: css({
@@ -439,12 +446,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'blue',
+      background: tokens.colors.grey[800],
+      color: tokens.colors.grey[300],
+      borderRadius: 6,
+      boxShadow: [
+        '0px 8px 8px -4px rgba(0, 0, 0, 0.15)',
+        '0px 4px 4px -2px rgba(0, 0, 0, 0.15)',
+        '0px 2px 2px -1px rgba(0, 0, 0, 0.15)',
+        '0px 1px 0px 0px rgba(255, 255, 255, 0.08) inset',
+        '0px 0px 0px 1px rgba(255, 255, 255, 0.05) inset',
+        '0px 0px 0px 0.5px rgba(0, 0, 0, 0.25)',
+      ].join(','),
     }),
 
     breadcrumbs: css({
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(3),
       listStyle: 'none',
       padding: 0,
       marginLeft: theme.spacing(2),
@@ -456,7 +473,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&::before': {
         content: '"/"',
         position: 'absolute',
-        left: -12,
+        left: -14,
         color: tokens.colors.grey[400],
       },
       '&:first-child::before': {
@@ -478,7 +495,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       backdropFilter: 'blur(2px)',
       height: 66,
-      borderBottom: `1px solid ${hexToRgba(tokens.colors.grey[800], 0.8)}`,
+      borderBottom: `1px solid ${hexToRgba(tokens.colors.grey[800], 0.5)}`,
     }),
 
     searchIcon: css({
@@ -521,7 +538,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(2),
       backdropFilter: 'blur(2px)',
-      borderTop: `1px solid ${tokens.colors.grey[800]}`,
+      borderTop: `1px solid ${hexToRgba(tokens.colors.grey[800], 0.5)}`,
     }),
 
     footerDivider: css({
