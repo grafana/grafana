@@ -72,22 +72,19 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
+// When the size is known, it will be passed along here
+// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-	// The last known resource version can be used to know that we can skip calling the builder
+// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-	// the non-standard searchable fields
+// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-	// The builder will write all documents before returning
+// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
-	b.cacheMu.Lock()
-	defer b.cacheMu.Unlock()
-
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -100,7 +97,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapper)
 		if err == nil {
-			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
+			//b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
 		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
@@ -137,7 +134,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
+	b.cacheMu.Lock()
 	b.cache[key] = idx
+	b.cacheMu.Unlock()
 	return idx, nil
 }
 
