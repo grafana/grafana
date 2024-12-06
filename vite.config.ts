@@ -8,9 +8,8 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, splitVendorChunkPlugin, createLogger } from 'vite';
 import EnvironmentPlugin from 'vite-plugin-environment';
 
-import getEnvConfig from './scripts/webpack/env-util.cjs';
-
 const require = createRequire(import.meta.url);
+const getEnvConfig = require('./scripts/webpack/env-util.cjs');
 const shouldMinify = process.env.NO_MINIFY === '1' ? false : 'esbuild';
 
 const allWorkspaceDependencies = getAllWorkspaceDependencies();
