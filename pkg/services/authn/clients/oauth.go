@@ -174,6 +174,10 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}
+	allowInsecureLoginLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_login_lookup").MustBool(false)
+	if allowInsecureLoginLookup {
+		lookupParams.Login = &userInfo.Login
+	}
 
 	return &authn.Identity{
 		Login:           userInfo.Login,
