@@ -42,27 +42,31 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="o4rK7_AXZ9Y" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Options
+### Options
 
 Use the following options to refine your alert list visualization.
 
-### View mode
+#### View mode
 
 Choose between **List** to display alerts in a detailed list format with comprehensive information, or **Stat** to show alerts as a summarized single-value statistic.
 
-### Group mode
+#### Group mode
 
 Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels.
 
-### Max items
+#### Max items
 
 Sets the maximum number of alerts to list. By default, Grafana sets this value to 10.
 
-### Sort order
+#### Sort order
 
 Select how to order the alerts displayed. Choose from:
 
@@ -79,31 +83,31 @@ Select how to order the alerts displayed. Choose from:
 - **Time (asc) -** Newest active alert instances first.
 - **Time (desc) -** Oldest active alert instances first.
 
-### Alerts linked to this dashboard
+#### Alerts linked to this dashboard
 
 Toggle the switch on to only show alerts from the dashboard the alert list is in.
 
-## Filter
+### Filter
 
 These options allow you to limit alerts shown to only those that match the query, folder, or tags you choose.
 
-### Alert name
+#### Alert name
 
 Filter alerts by name.
 
-### Alert instance label
+#### Alert instance label
 
 Filter alert instances using [label](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`.
 
-### Datasource
+#### Datasource
 
 Filter alerts from the selected data source.
 
-### Folder
+#### Folder
 
 Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed.
 
-## Alert state filter
+### Alert state filter
 
 Choose which alert states to display in this visualization.
 
