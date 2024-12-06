@@ -4,16 +4,19 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
+	"github.com/grafana/grafana/apps/feedback/pkg/metrics"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
@@ -95,6 +98,10 @@ func New(cfg app.Config) (app.App, error) {
 							logging.FromContext(ctx).Warn("user requested we contact them, but email is missing")
 						}
 
+						metrics.GetMetrics().FeedbackCollected.With(prometheus.Labels{
+							"slug":           feedbackCfg.GrafanaCfg.Slug,
+							"has_screenshot": strconv.FormatBool(len(feedback.Spec.Screenshot) > 0),
+						}).Inc()
 						return nil
 					},
 				},
