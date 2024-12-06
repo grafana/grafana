@@ -10,11 +10,9 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { VizPanelMore } from './VizPanelMore';
 import { VizPanelDelete } from './VizPanelDelete';
 import { getBackendSrv } from '@grafana/runtime';
-import { useLLMSuggestions } from './llm-suggestions';
 
 export function useDropAndPaste(dashboard: DashboardScene) {
   const [editComponent, setEditComponent] = useState<React.ReactNode | null>(null);
-  const { getSuggestions, isLoading } = useLLMSuggestions();
   const { hooks: fileHooks } = usePluginHooks<(data: File | string) => Promise<PasteHandler[] | null>>({
     extensionPointId: 'dashboard/grid',
     limitPerPlugin: 1,
@@ -122,8 +120,6 @@ export function useDropAndPaste(dashboard: DashboardScene) {
         // Handle plaintext paste
         const text = clipboardData.getData('text/plain');
         const results = await Promise.all(pasteHooks.map((h) => h(text)));
-        const llmSuggestions = await getSuggestions(text);
-        console.log('LLM suggestions:', llmSuggestions);
 
         buildPanel(results, text);
         return;
@@ -153,7 +149,7 @@ export function useDropAndPaste(dashboard: DashboardScene) {
 
   const { getRootProps, isDragActive } = useDropzone({ onDrop: ([acceptedFile]) => onImportFile(acceptedFile) });
 
-  const buildPanel = (results: (PasteHandler[] | null)[], source: string = '') => {
+  const buildPanel = async (results: Array<PasteHandler[] | null>, source = '') => {
     const filtered = results.filter((x) => x !== null).flat();
     if (filtered.length === 0) {
       return;
@@ -188,6 +184,7 @@ export function useDropAndPaste(dashboard: DashboardScene) {
                 }
               },
             })),
+            source,
           }),
         ],
       });
