@@ -12,13 +12,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FeedbackConfig struct {
-	GrafanaCfg *setting.Cfg
+	GrafanaCfg         *setting.Cfg
+	HttpClientProvider *httpclient.Provider
 }
 
 func New(cfg app.Config) (app.App, error) {
@@ -27,15 +30,21 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("expected %s but received %s", reflect.TypeOf(FeedbackConfig{}).String(), reflect.TypeOf(feedbackCfg).String()) // not sure if necessary
 	}
 
+	// gcom client so we can get info about the instance
+	httpClient, err := feedbackCfg.HttpClientProvider.New()
+	if err != nil {
+		return nil, fmt.Errorf("creating http client for GCOM: %w", err)
+	}
+	gcomClient := gcom.New(gcom.Config{ApiURL: feedbackCfg.GrafanaCfg.GrafanaComAPIURL, Token: feedbackCfg.GrafanaCfg.CloudMigration.GcomAPIToken}, httpClient)
+
 	// blind copy pasta
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
-
 	feedbackStore, err := resource.NewTypedStore[*feedbackv0alpha1.Feedback](feedbackv0alpha1.FeedbackKind(), clientGenerator)
 	if err != nil {
 		return nil, err
 	}
 
-	feedbackWatcher, err := watchers.NewFeedbackWatcher(feedbackCfg.GrafanaCfg, feedbackStore)
+	feedbackWatcher, err := watchers.NewFeedbackWatcher(feedbackCfg.GrafanaCfg, gcomClient, feedbackStore)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FeedbackWatcher: %w", err)
 	}

@@ -21,6 +21,17 @@
 - User Email: `{{ .UserEmail }}`
 {{- end }}
 
+{{- if .OpsDashboards }}
+<details>
+<summary>Debugging Dashboards</summary>
+
+{{- range $name, $url := .OpsDashboards }}
+- [{{ $name }}]({{ $url }})
+{{- end }}
+
+</details>
+{{- end }}
+
 {{- if .Datasources }}
 <details>
 <summary>Datasources</summary>
