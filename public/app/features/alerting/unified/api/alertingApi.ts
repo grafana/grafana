@@ -117,6 +117,8 @@ export const alertingApi = createApi({
     'AlertmanagerSilences',
     'OnCallIntegrations',
     'OnCallEscalationChains',
+    'OnCallTeams',
+    'OnCallSlackChannels',
     'DataSourceSettings',
     'GrafanaLabels',
     'CombinedAlertRule',

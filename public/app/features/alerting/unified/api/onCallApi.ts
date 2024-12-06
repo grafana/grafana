@@ -47,6 +47,24 @@ export interface OnCallEscalationChainDTO {
   team?: string;
 }
 
+type TeamResult = OnCallPaginatedResult<OnCallTeamDTO> | OnCallTeamDTO[];
+
+export interface OnCallTeamDTO {
+  id: string;
+  name: string;
+  email?: string;
+  avatar_url?: string;
+  is_sharing_resources_to_all: boolean;
+}
+
+type SlackChannelResult = OnCallPaginatedResult<OnCallSlackChannelDTO> | OnCallSlackChannelDTO[];
+
+export interface OnCallSlackChannelDTO {
+  id: string;
+  display_name: string;
+  slack_id: string;
+}
+
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.OnCall}/resources${path}`;
 
 export const onCallApi = alertingApi.injectEndpoints({
@@ -115,11 +133,46 @@ export const onCallApi = alertingApi.injectEndpoints({
       },
       providesTags: ['OnCallEscalationChains'],
     }),
+    grafanaOnCallTeams: build.query<OnCallTeamDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/teams/'),
+        params: {
+          include_no_team: false,
+          only_include_notifiable_teams: false,
+          short: true,
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: TeamResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallTeams'],
+    }),
+    grafanaOnCallSlackChannels: build.query<OnCallSlackChannelDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/slack_channels/'),
+        params: {
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: SlackChannelResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallSlackChannels'],
+    }),
   }),
 });
 
 function isPaginatedResponse(
-  response: AlertReceiveChannelsResult | EscalationChainResult
+  response: AlertReceiveChannelsResult | EscalationChainResult | TeamResult | SlackChannelResult
 ): response is OnCallPaginatedResult<any> {
   return 'results' in response && Array.isArray(response.results);
 }

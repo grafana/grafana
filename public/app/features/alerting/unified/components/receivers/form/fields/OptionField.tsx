@@ -189,7 +189,13 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
               disabled={readOnly}
               options={option.selectOptions ?? undefined}
               invalid={invalid}
-              onChange={(value) => onChange(value.value)}
+              onChange={(value) => {
+                if (value === null) {
+                  return onChange(null);
+                }
+                onChange(value.value);
+              }}
+              isClearable={true}
               {...field}
             />
           )}

@@ -271,11 +271,19 @@ enum OnCallEscalationChainStatus {
   V1 = 'v1',
 }
 
+enum OnCallEscalationSelectKeys {
+  EscalationChainID = 'escalation_chain_id',
+  TeamName = 'team_name',
+  SlackChannelID = 'slack_channel_id',
+  APIUrl = 'api_url',
+}
+
 export function useOnCallEscalationChain() {
   const { isOnCallEnabled, escalationChainStatus, onCallApiUrl, isOnCallStatusLoading, onCallError } =
     useOnCallPluginStatus();
 
-  const { useGrafanaOnCallEscalationChainsQuery } = onCallApi;
+  const { useGrafanaOnCallEscalationChainsQuery, useGrafanaOnCallTeamsQuery, useGrafanaOnCallSlackChannelsQuery } =
+    onCallApi;
 
   const {
     data: grafanaOnCallEscalationChains = [],
@@ -283,35 +291,72 @@ export function useOnCallEscalationChain() {
     isError: isEscalationChainsQueryError,
   } = useGrafanaOnCallEscalationChainsQuery(undefined);
 
+  const { data: teams = [], isLoading: isTeamsLoading, isError: isTeamsError } = useGrafanaOnCallTeamsQuery(undefined);
+
+  const {
+    data: slackChannels = [],
+    isLoading: isSlackChannelsLoading,
+    isError: isSlackChannelsError,
+  } = useGrafanaOnCallSlackChannelsQuery(undefined);
+
   const onCallFormValidators = useMemo(() => {
     return {
-      escalation_chain_id: (value: string) => {
+      [OnCallEscalationSelectKeys.EscalationChainID]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
         return grafanaOnCallEscalationChains.map((i) => i.id).includes(value)
           ? true
           : 'Selection of existing OnCall escalation chain is required';
       },
+      [OnCallEscalationSelectKeys.TeamName]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
+        return teams.map((i) => i.name).includes(value) ? true : 'Selection of existing OnCall team is required';
+      },
+      [OnCallEscalationSelectKeys.SlackChannelID]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
+        return slackChannels.map((i) => i.slack_id).includes(value)
+          ? true
+          : 'Selection of existing OnCall slack channel is required';
+      },
     };
-  }, [grafanaOnCallEscalationChains]);
+  }, [grafanaOnCallEscalationChains, teams, slackChannels]);
 
   const extendOnCallEscalationChainNotifierFeatures = useCallback(
     (notifier: NotifierDTO): NotifierDTO => {
       if (notifier.type === ReceiverTypes.OnCallEscalationChain) {
-        let options = notifier.options.filter((o) => o.propertyName !== 'escalation_chain_id');
-        options.unshift(
-          option('escalation_chain_id', 'OnCall Escalation Chain', 'The OnCall escalation chain to send alerts to', {
-            element: 'select',
-            required: true, // For display purposes. TODO: When chatops are implemented. Create an initial Radio Option.
-            selectOptions: grafanaOnCallEscalationChains.map((i) => ({
-              label: i.name,
-              description: i.team ? `Team: ${i.team}, ID: ${i.id}` : `ID: ${i.id}`,
-              value: i.id,
-            })),
-          })
-        );
-
-        options = produce(options, (draft) => {
+        const options = produce(notifier.options, (draft) => {
           draft.forEach((option) => {
-            if (option.propertyName === 'api_url') {
+            if (option.propertyName === OnCallEscalationSelectKeys.EscalationChainID) {
+              option.element = 'select';
+              option.selectOptions = grafanaOnCallEscalationChains.map((i) => ({
+                label: i.name,
+                description: i.team ? `Team: ${i.team}, ID: ${i.id}` : `ID: ${i.id}`,
+                value: i.id,
+              }));
+            } else if (option.propertyName === OnCallEscalationSelectKeys.SlackChannelID) {
+              option.element = 'select';
+              option.selectOptions = slackChannels.map((i) => ({
+                label: `#${i.display_name}`,
+                description: `ID: ${i.slack_id}`,
+                value: i.slack_id,
+              }));
+            } else if (option.propertyName === OnCallEscalationSelectKeys.TeamName) {
+              option.element = 'select';
+              option.selectOptions = teams.map((i) => ({
+                label: i.name,
+                description: i.email ? `Email: ${i.email}, ID: ${i.id}` : `ID: ${i.id}`,
+                value: i.name,
+              }));
+              option.selectOptions.unshift({ label: 'No team', value: undefined });
+            } else if (option.propertyName === OnCallEscalationSelectKeys.APIUrl) {
               // Hide the field under a collapsible section. The field is required by the backend, but we set a default
               // value when it's empty.
               option.required = false;
@@ -340,7 +385,7 @@ export function useOnCallEscalationChain() {
     },
     extendNotifier: extendOnCallEscalationChainNotifierFeatures,
     formValidators: onCallFormValidators,
-    isLoading: isLoadingOnCallEscalationChains || isOnCallStatusLoading,
-    hasError: Boolean(onCallError) || isEscalationChainsQueryError,
+    isLoading: isLoadingOnCallEscalationChains || isOnCallStatusLoading || isTeamsLoading || isSlackChannelsLoading,
+    hasError: Boolean(onCallError) || isEscalationChainsQueryError || isTeamsError || isSlackChannelsError,
   };
 }
