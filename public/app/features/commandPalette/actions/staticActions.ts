@@ -11,6 +11,39 @@ function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
 }
 
+const SHORTCUTS = {
+  'dashboards/new': ['/', 'd', 'n'],
+  'dashboards/import': ['/', 'd', 'i'],
+  alert: ['/', 'a', 'r'],
+  home: ['/', 'g', 'h'],
+  bookmarks: ['/', 'g', 'b'],
+  starred: ['/', 'g', 's'],
+  'dashboards/browse': ['/', 'g', 'd'],
+  explore: ['/', 'g', 'e'],
+  'alerts-and-incidents': ['/', 'g', 'i'],
+  connections: ['/', 'g', 'c'],
+  cfg: ['/', 'g', 'a'],
+  profile: ['/', 'g', 'p'],
+  help: ['/', '?'],
+};
+
+type MappedAction = keyof typeof SHORTCUTS;
+type Shortcut = (typeof SHORTCUTS)[MappedAction];
+const PREFIX = 'navModel.';
+
+const isMapped = (id: MappedAction | string): id is MappedAction => Object.hasOwnProperty.call(SHORTCUTS, id);
+
+function addShortcut(navId: string): {};
+function addShortcut(navId: `${typeof PREFIX}${MappedAction}`): { shortcut: Shortcut };
+function addShortcut(navId: `${typeof PREFIX}${MappedAction}` | string): { shortcut: string[] } | {} {
+  const id = navId.replace(PREFIX, '');
+  if (isMapped(id)) {
+    return { shortcut: SHORTCUTS[id] };
+  }
+
+  return {};
+}
+
 function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
   const navActions: CommandPaletteAction[] = [];
 
@@ -46,8 +79,9 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
 
     const subtitle = parents.map((parent) => parent.text).join(' > ');
+    const id = idForNavItem(navItem);
     const action: CommandPaletteAction = {
-      id: idForNavItem(navItem),
+      id,
       name: text,
       section,
       url: urlOrCallback,
@@ -57,6 +91,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       keywords: keywords?.join(' '),
       priority,
       subtitle: isCreateAction ? undefined : subtitle,
+      ...addShortcut(id),
     };
 
     navActions.push(action);
@@ -79,6 +114,7 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
       priority: PREFERENCES_PRIORITY,
+      shortcut: ['/', 't', 'c'],
     },
     {
       id: 'preferences/dark-theme',
@@ -89,6 +125,7 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       priority: PREFERENCES_PRIORITY,
       section: t('command-palette.section.preferences', 'Preferences'),
       subtitle: themeSubtitle,
+      shortcut: ['/', 't', 'd'],
     },
     {
       id: 'preferences/light-theme',
@@ -99,6 +136,7 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       priority: PREFERENCES_PRIORITY,
       section: t('command-palette.section.preferences', 'Preferences'),
       subtitle: themeSubtitle,
+      shortcut: ['/', 't', 'l'],
     },
   ];
 
