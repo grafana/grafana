@@ -244,7 +244,7 @@ function errorPanel(red: string) {
     .setMin(0)
     .setMax(100)
     .setCustomFieldConfig('fillOpacity', 9)
-    .setOption('xTickLabelSpacing', 50)
+    .setOption('xTickLabelSpacing', 100)
     .setColor({ mode: 'fixed', fixedColor: 'red' })
     // .setDescription(description)
     // .setHeaderActions([
