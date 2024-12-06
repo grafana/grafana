@@ -1,42 +1,38 @@
 import FeedbackPlus from 'feedbackplus';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { Dropdown, ToolbarButton, Button, Stack, Menu, Modal } from '@grafana/ui';
+import { ToolbarButton, Button, Stack, Modal, Drawer, Label, TextArea } from '@grafana/ui';
 import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
 import { Spec } from '../../../../../../apps/feedback/plugin/src/feedback/v0alpha1/types.spec.gen';
 import { getFeedbackAPI } from '../../../../features/feedback/api';
 import { getDiagnosticData } from '../../../../features/feedback/diagnostic-data';
 
-export interface Props { }
+export interface Props {}
 
 type FeedbackFormData = {
-  message: string,
-  screenshot: string,
-  imageType: string,
-  width: number,
-  height: number,
-  bitmap: HTMLImageElement,
-}
+  message: string;
+  screenshot: string;
+  imageType: string;
+  width: number;
+  height: number;
+  bitmap: HTMLImageElement;
+};
 
 const ScreenShotEditModal = ({
   isOpen,
-  bitmap,
-  width,
-  height,
   feedbackPlus,
   setFormData,
   formData,
-  setIsScreenshotEditoModalOpen
+  setIsScreenshotEditModalOpen,
+  setIsDropdownOpen,
 }: {
   isOpen: boolean;
-  bitmap: HTMLImageElement;
-  width: number;
-  height: number;
   feedbackPlus: any;
   setFormData: (fd: FeedbackFormData) => void;
   formData: FeedbackFormData;
-  setIsScreenshotEditoModalOpen: (isOpen: boolean) => void;
+  setIsScreenshotEditModalOpen: (isOpen: boolean) => void;
+  setIsDropdownOpen: (isOpen: boolean) => void;
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -46,30 +42,33 @@ const ScreenShotEditModal = ({
   const [startX, setStartX] = useState(0);
   const [startY, setStartY] = useState(0);
 
-  const drawImage = useCallback((
-    { bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number },
-    canvasRef: React.RefObject<HTMLCanvasElement>
-  ) => {
-    const canvas = canvasRef.current;
+  const drawImage = useCallback(
+    (
+      { bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number },
+      canvasRef: React.RefObject<HTMLCanvasElement>
+    ) => {
+      const canvas = canvasRef.current;
 
-    if (canvas && isCanvas(canvas)) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        canvas.width = 700;
-        const hRatio = canvas.width / width;
-        const vRatio = canvas.height / height;
-        const ratio = Math.min(hRatio, vRatio);
-        ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+      if (canvas && isCanvas(canvas)) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          canvas.width = 700;
+          const hRatio = canvas.width / width;
+          const vRatio = canvas.height / height;
+          const ratio = Math.min(hRatio, vRatio);
+          ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   // ideally we could just use "showEditDialog from feedbackPlus, but it doesn't seem to work"
   // implementing a similar thing just for hide
   const hide = () => {
     if (isInEditMode) {
       setIsInEditMode(false);
-      onDone()
+      onDone();
     } else {
       setIsInEditMode(true);
     }
@@ -84,7 +83,7 @@ const ScreenShotEditModal = ({
       const ctx = canvas.getContext('2d');
       if (ctx) {
         if (hideToolRef.current) {
-          console.log("is this happening????")
+          console.log('is this happening????');
           ctx.lineWidth = 5;
           ctx.strokeStyle = '#FCC934';
           ctx.fillStyle = 'green';
@@ -100,11 +99,10 @@ const ScreenShotEditModal = ({
           // const ratio = Math.min(hRatio, vRatio);
           // ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
           ctx.fillRect(leftNum, topNum, widthNum, heightNum);
-
         }
       }
     }
-  }
+  };
 
   // when mousedown create a new element to hide things and set starting top and left and append it to the canvas.
   const onMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
@@ -124,7 +122,7 @@ const ScreenShotEditModal = ({
       setStartY(realY);
       highlightElem.style.top = realY + 'px';
       highlightElem.style.left = realX + 'px';
-      highlightElem.toggleAttribute("unsaved-edit")
+      highlightElem.toggleAttribute('unsaved-edit');
       // todo we should really be cloning and appending these elements dynamically (or however the react-y way to do this is that way you can have mulitiple edits)
       // canvasContainer.appendChild(highlightElem);
     }
@@ -169,8 +167,8 @@ const ScreenShotEditModal = ({
   };
 
   useEffect(() => {
-    drawImage({ bitmap, width, height }, canvasRef);
-  }, [bitmap, drawImage, feedbackPlus, height, width]);
+    drawImage({ bitmap: formData.bitmap, width: formData.width, height: formData.height }, canvasRef);
+  }, [formData, drawImage, feedbackPlus]);
 
   const save = () => {
     if (canvasRef.current) {
@@ -184,21 +182,19 @@ const ScreenShotEditModal = ({
         }
       }
     }
-    setIsScreenshotEditoModalOpen(false);
-  }
+    setIsScreenshotEditModalOpen(false);
+    setIsDropdownOpen(true);
+  };
 
   return (
     <Modal title="Edit Screenshot" isOpen={isOpen}>
-      <div>{isInEditMode ?
-        "Click and drag to hide sensitive information then press Finished Editing" :
-        "Click Edit button to hide sensitive information, or press save to attach screenshot to feedback form"}</div>
+      <div>
+        {isInEditMode
+          ? 'Click and drag to hide sensitive information then press Finished Editing'
+          : 'Click Edit button to hide sensitive information, or press save to attach screenshot to feedback form'}
+      </div>
       <div ref={canvasContainerRef}>
-        <canvas
-          ref={canvasRef}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-        />
+        <canvas ref={canvasRef} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} />
         <div
           ref={hideToolRef}
           style={{
@@ -208,27 +204,32 @@ const ScreenShotEditModal = ({
         ></div>
       </div>
       <Modal.ButtonRow>
-        <Button onClick={hide}>{isInEditMode ? "Finished Editing" : "Edit"}</Button>
-        <Button onClick={save} disabled={isInEditMode}>Save</Button>
+        <Button onClick={hide}>{isInEditMode ? 'Finished Editing' : 'Edit'}</Button>
+        <Button onClick={save} disabled={isInEditMode}>
+          Save
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
-const MenuActions = () => {
+type DrawerContentsProps = {
+  setIsOpen: (isOpen: boolean) => void;
+  setFormData: (fd: FeedbackFormData) => void;
+  setIsScreenshotEditModalOpen: (isOpen: boolean) => void;
+  feedbackPlus: any;
+  formData: FeedbackFormData;
+};
+const DrawerContents = ({
+  setIsOpen,
+  setFormData,
+  feedbackPlus,
+  formData,
+  setIsScreenshotEditModalOpen,
+}: DrawerContentsProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [formData, setFormData] = useState<FeedbackFormData>({
-    message: '',
-    screenshot: '',
-    imageType: '',
-    width: 0,
-    height: 0,
-    bitmap: {} as HTMLImageElement,
-  });
-  const feedbackPlus = new FeedbackPlus();
-  const [isScreenshotEditoModalOpen, setIsScreenshotEditoModalOpen] = useState(false);
 
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const onInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setFormData({ ...formData, message: e.target.value });
@@ -237,12 +238,12 @@ const MenuActions = () => {
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
+    setIsOpen(false);
     feedbackPlus
       .capture()
       .then(({ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number }) => {
         setFormData({ ...formData, bitmap, width, height });
-        setIsScreenshotEditoModalOpen(true);
+        setIsScreenshotEditModalOpen(true);
       });
   };
 
@@ -262,11 +263,6 @@ const MenuActions = () => {
     await feedbackApi.createFeedback(feedback);
   };
 
-  const stopAutoClose = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -282,47 +278,61 @@ const MenuActions = () => {
         image.onload = function () {
           ctx.drawImage(image, 0, 0);
         };
-        image.src = "data:image/" + formData.imageType + ";base64," + formData.screenshot;
+        image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
       }
     }
   }, [formData.height, formData.imageType, formData.screenshot, formData.width]);
 
   return (
-    <Menu>
-      <div onClick={stopAutoClose}>
-        <b>Send feedback to Grafana</b>
-
-        <Stack gap={2} direction={'column'}>
-          <input onChange={onInputChange} placeholder="so what happened?"></input>
-          <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
-          <canvas ref={canvasRef}></canvas>
-          <Button type="submit" onClick={onSubmit}>
-            Submit feedback
-          </Button>
-        </Stack>
-        <ScreenShotEditModal
-          isOpen={isScreenshotEditoModalOpen}
-          bitmap={formData.bitmap}
-          width={formData.width}
-          height={formData.height}
-          feedbackPlus={feedbackPlus}
-          setFormData={setFormData}
-          formData={formData}
-          setIsScreenshotEditoModalOpen={setIsScreenshotEditoModalOpen}
-        />
-      </div>
-    </Menu>
+    <Stack gap={2} direction={'column'}>
+      <Label>
+        Tell us what happened:
+        <TextArea onChange={onInputChange} placeholder="what did you expect to see?" />
+      </Label>
+      <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
+      {formData.screenshot && <canvas ref={canvasRef}></canvas>}
+      <Button type="submit" onClick={onSubmit}>
+        Submit feedback
+      </Button>
+    </Stack>
   );
 };
 
-export const ReportIssueButton = ({ }: Props) => {
+export const ReportIssueButton = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScreenshotEditModalOpen, setIsScreenshotEditModalOpen] = useState(false);
+  const [formData, setFormData] = useState<FeedbackFormData>({
+    message: '',
+    screenshot: '',
+    imageType: '',
+    width: 0,
+    height: 0,
+    bitmap: {} as HTMLImageElement,
+  });
+  const feedbackPlus = new FeedbackPlus();
 
   return (
     <>
-      <Dropdown overlay={<MenuActions />} placement="bottom-end" onVisibleChange={setIsOpen}>
-        <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="New" />
-      </Dropdown>
+      <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="Report Issue" onClick={() => setIsOpen(true)} />
+      {isOpen && (
+        <Drawer title="Send feedback to Grafana" size="md" onClose={() => setIsOpen(false)}>
+          <DrawerContents
+            setIsOpen={setIsOpen}
+            setFormData={setFormData}
+            formData={formData}
+            feedbackPlus={feedbackPlus}
+            setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
+          />
+        </Drawer>
+      )}
+      <ScreenShotEditModal
+        isOpen={isScreenshotEditModalOpen}
+        feedbackPlus={feedbackPlus}
+        setFormData={setFormData}
+        formData={formData}
+        setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
+        setIsDropdownOpen={setIsOpen}
+      />
     </>
   );
 };
@@ -333,10 +343,11 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
-  - make initial drodown bigger
-  - close drodown on screenshot, and reopen after done
-  - fix width/ratio of thumbnail
-  - fix the offset issue when actively hiding (seems to work when saving?)
-  - add a cancel button to delete screenshot
+  - fix the offset issue when actively hiding (seems to work when saving? why is the red preview box off??)
+  - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
+  - add a cancel button to delete screenshot if the user doesn't like it
   - make dropdown cooler looking
+  - make this file easier to look at without crying, break it up into smaller components, add prop types, fix "any" types
+  - let user make multiple edits to a screenshot
+  - add a highlight feature
 */
