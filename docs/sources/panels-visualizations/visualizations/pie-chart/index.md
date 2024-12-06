@@ -110,28 +110,16 @@ If you want to display only the values from a given field (or column), once the 
 
 Use the following options to refine the value in your visualization.
 
-#### Show
+<!-- prettier-ignore-start -->
 
-Choose how much information to show.
+| Option | Description |
+| ------ | ----------- |
+| Show | Choose how much information to show. **Calculate** reduces each value to a single value per series. **All values** displays every value from a single series. |
+| Calculation | Select a calculation to reduce each series when **Calculate** has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
+| Limit | When displaying every value from a single series, this limits the number of values displayed. <!--only applies to All values --> |
+| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
 
-- **Calculate -** Reduces each value to a single value per series.
-- **All values -** Displays every value from a single series.
-
-#### Calculation
-
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
-
-#### Limit
-
-When displaying every value from a single series, this limits the number of values displayed.
-
-#### Fields
-
-Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:
-
-- **Numeric fields -** All fields with numerical values.
-- **All fields -** All fields that are not removed by transformations.
-- **Time -** All fields with time values.
+<!-- prettier-ignore-end -->
 
 ### Pie chart options
 
@@ -139,66 +127,43 @@ Use these options to refine how your visualization looks.
 
 #### Pie chart type
 
-Select the pie chart display style.
+Select the pie chart display style. Choose from **Pie** or **Donut**.
 
-#### Pie
-
-![Pie type chart](/static/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
-
-#### Donut
-
-![Donut type chart](/static/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
+![Pie chart types](/media/docs/grafana/panels-visualizations/screenshot-pie-chart-types.png)
 
 #### Labels
 
 Select labels to display on the pie chart. You can select more than one.
 
-- **Name -** The series or field name.
-- **Percent -** The percentage of the whole.
-- **Value -** The raw numerical value.
+- **Name** - The series or field name.
+- **Percent** - The percentage of the whole.
+- **Value** - The raw numerical value.
 
 Labels are displayed in white over the body of the chart. You might need to select darker chart colors to make them more visible. Long names or numbers might be clipped.
 
-The following example shows a pie chart with **Name** and **Percent** labels displayed.
+The following example shows a pie chart with **Name** and **Percent** labels displayed:
 
-![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png" alt="Pie chart labels" max-width="350px" >}}
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" level-offset="+3" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Legend options
 
 Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
 
-#### Visibility
+<!-- prettier-ignore-start -->
 
-Toggle the switch to turn the legend on or off.
+| Option | Description |
+| ------ | ----------- |
+| Visibility | Toggle the switch to turn the legend on or off. |
+| Mode | Use these settings to define how the legend appears in your visualization. **List** displays the legend as a list. This is a default display mode of the legend.**Table** displays the legend as a table. |
+| Placement | Choose where to display the legend. Choose from **Bottom** - Below the graph and **Right** - To the right of the graph. |
+| Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
+| Values | Select values to display in the legend. You can select more than one. **Percent:** The percentage of the whole. **Value:** The raw numerical value. |
 
-#### Mode
-
-Use these settings to define how the legend appears in your visualization.
-
-- **List -** Displays the legend as a list. This is a default display mode of the legend.
-- **Table -** Displays the legend as a table.
-
-#### Placement
-
-Choose where to display the legend.
-
-- **Bottom -** Below the graph.
-- **Right -** To the right of the graph.
-
-##### Width
-
-Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
-
-#### Values
-
-Select values to display in the legend. You can select more than one.
-
-- **Percent:** The percentage of the whole.
-- **Value:** The raw numerical value.
+<!-- prettier-ignore-end -->
 
 ### Standard options
 
