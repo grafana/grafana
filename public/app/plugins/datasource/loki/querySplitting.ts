@@ -433,7 +433,6 @@ async function adjustRequestsByVolume(requests: LokiGroupedRequest[], datasource
 function adjustPartitionByVolume(group: LokiGroupedRequest, bytes: number, queryIndex: number) {
   const gb = Math.pow(2, 30);
   const tb = Math.pow(2, 40);
-  const days = group.partition.length - 1;
 
   if (bytes <= gb) {
     console.log('Less than a gb, skipping');
@@ -442,18 +441,17 @@ function adjustPartitionByVolume(group: LokiGroupedRequest, bytes: number, query
 
   let newChunkRangeMs = group.chunkRangeMs;
   if (bytes < tb) {
-    const gbs = Math.round(bytes / gb) || 1;
-    newChunkRangeMs = days >= 1 ? 12 * 60 * 60 * 1000 : Math.round(group.chunkRangeMs / gbs);
+    const gbs = Math.ceil(Math.round(bytes / gb) / 250) + 1;
+    newChunkRangeMs = Math.round(newChunkRangeMs / gbs);
   } else {
-    const tbs = Math.round(bytes / tb) || 1;
-    newChunkRangeMs = days >= 1 ? 6 * 60 * 60 * 1000 : Math.round(group.chunkRangeMs / (tbs * 10));
+    const tbs = Math.ceil(Math.round(bytes / tb)) + 1;
+    newChunkRangeMs = Math.round(newChunkRangeMs / (tbs * 10));
   }
   const minChunkRangeMs = 3 * 60 * 60 * 1000;
   newChunkRangeMs = newChunkRangeMs < minChunkRangeMs ? minChunkRangeMs : newChunkRangeMs;
+  const hours = Math.round(newChunkRangeMs / 1000 / 60 / 60);
 
-  const { text } = getValueFormat('dtdurationms')(newChunkRangeMs, 1);
-
-  console.log(`New chunk size is ${text}`);
+  console.log(`New chunk size is ${hours}h`);
 
   const isLogs = isLogsQuery(group.request.targets[queryIndex].expr);
   if (isLogs) {
