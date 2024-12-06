@@ -19,44 +19,54 @@ interface EnrichmentConfig {
 const config = {
   enrichments: [
     {
-      id: 'enrichments.ip-validation',
+      id: 'enrichments.blocklist',
       icon: 'search',
-      name: 'IP Validation',
+      name: 'IP Blocklist',
       description: 'Check IPs against blocked lists',
       detailComponent: undefined,
       payload: {
-        url: '/enrichment/ip-validation',
+        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/blocklist',
       },
     },
     {
-      id: 'enrichments.sift-details',
+      id: 'enrichments.ipgeo',
+      icon: 'search',
+      name: 'IP Geolocation',
+      description: 'Check IPs against blocked lists',
+      detailComponent: undefined,
+      payload: {
+        url: '/http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/ipgeo',
+      },
+    },
+    {
+      id: 'enrichments.sift',
       icon: 'book-open',
-      name: 'Sift Details',
+      name: 'Sift Investigation',
       description: 'Pull in details from releveant Sift investigations',
       detailComponent: undefined,
       payload: {
-        url: '/enrichment/sift-details',
+        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/sift',
       },
     },
+//    {
+//      id: 'enrichments.append-dashboard-images',
+//      icon: 'chart-line',
+//      name: 'Append Dashboard Images',
+//      description: 'Add snapshots of relevant dashboards',
+//      detailComponent: undefined,
+//      payload: {
+//        url: '/enrichment/append-dashboard-images',
+//      },
+//    },
     {
-      id: 'enrichments.append-dashboard-images',
-      icon: 'chart-line',
-      name: 'Append Dashboard Images',
-      description: 'Add snapshots of relevant dashboards',
-      detailComponent: undefined,
-      payload: {
-        url: '/enrichment/append-dashboard-images',
-      },
-    },
-    {
-      id: 'enrichments.custom-query',
+      id: 'enrichments.dsquery',
       icon: 'question-circle',
-      name: 'Custom Query Enrichment',
+      name: 'Grafana Datasource Query',
       description: 'Add a query to lookup and append additional details',
       hasDetails: true,
       detailComponent: 'CustomQueryEnrichmentForm',
       payload: {
-        url: '',
+        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/sift',
       },
     },
     {

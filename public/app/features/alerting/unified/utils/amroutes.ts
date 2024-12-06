@@ -171,15 +171,25 @@ export const formAmRouteToAmRoute = (
   );
 
   // Enrichments are optional and only
-  const enrichments: Enrichment[] = Object.keys(formAmRoute.enrichments ?? {}).map((enrichment) => {
-    const data = (formAmRoute.enrichments ?? {})[enrichment];
-    return {
-      key: enrichment,
-      active: ((data ?? { active: ''}) as unknown as { active: boolean }).active,
-      url: ((data ?? { url: ''}) as unknown as { url: string }).url,
-      query: ((data ?? { query: ''}) as unknown as { query: string }).query,
-    }
-  });
+  const enrichments: Enrichment[] =
+        Object
+        .keys(formAmRoute.enrichments ?? {})
+        .filter((enrichment) => {
+          const data = (formAmRoute.enrichments ?? {})[enrichment];
+          return data.active
+        })
+        .map((enrichment) => {
+          const data = (formAmRoute.enrichments ?? {})[enrichment];
+          return {
+            options: {
+              key: enrichment,
+              expr: ((data ?? { query: ''}) as unknown as { query: string }).query,
+            },
+            //active: ((data ?? { active: ''}) as unknown as { active: boolean }).active,
+            //url: ((data ?? { url: ''}) as unknown as { url: string }).url,
+            url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/' + enrichment,
+          }
+        });
   
   const amRoute: Route = {
     ...(existing ?? {}),
