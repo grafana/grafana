@@ -24,7 +24,7 @@ import { config, locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { store } from 'app/store/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';

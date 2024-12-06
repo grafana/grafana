@@ -1,6 +1,6 @@
 import { DataSourceRef, LoadingState } from '@grafana/data/src';
 import { setDataSourceSrv } from '@grafana/runtime/src';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';

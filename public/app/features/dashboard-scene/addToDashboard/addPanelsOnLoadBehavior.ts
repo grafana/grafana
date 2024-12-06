@@ -1,6 +1,6 @@
 import { SceneTimeRange } from '@grafana/scenes';
 import store from 'app/core/store';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';

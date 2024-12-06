@@ -7,7 +7,7 @@ import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';

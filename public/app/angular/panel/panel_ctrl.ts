@@ -13,7 +13,7 @@ import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 
-import { DashboardModel } from '../../features/dashboard/state';
+import { DashboardModel } from '../../features/dashboard/state/DashboardModel';
 
 export class PanelCtrl {
   panel: any;

@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 
 import { PanelQueryRunner } from '../../features/query/state/PanelQueryRunner';

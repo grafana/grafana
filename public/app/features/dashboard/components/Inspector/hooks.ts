@@ -4,7 +4,8 @@ import useAsync from 'react-use/lib/useAsync';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { supportsDataQuery } from '../PanelEditor/utils';

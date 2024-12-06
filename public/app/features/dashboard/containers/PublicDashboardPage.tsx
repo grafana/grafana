@@ -24,7 +24,7 @@ import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePu
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { initDashboard } from '../state/initDashboard';
 
 export type Props = Omit<
