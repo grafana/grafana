@@ -41,3 +41,16 @@ export function isDashboardResource(
 export function isDashboardV2Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardV2Spec {
   return 'elements' in obj;
 }
+
+export function isDashboardV1Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardDataDTO {
+  return 'panels' in obj;
+}
+
+export function isDashboardV2Response(obj: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>): obj is DashboardWithAccessInfo<DashboardV2Spec> {
+  return obj != null && isDashboardV2Spec(obj.spec);
+}
+
+export function isDashboardV1Response(obj: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>): obj is DashboardWithAccessInfo<DashboardDataDTO> {
+  return obj != null && isDashboardV1Spec(obj.spec);
+}
+

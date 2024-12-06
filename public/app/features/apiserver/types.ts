@@ -50,14 +50,16 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 export const AnnoKeyIsFolder = 'grafana.app/isFolder';
 export const AnnoKeyIsSnapshot = 'grafana.app/isSnapshot';
 export const AnnoKeyDashboardNotFound = 'grafana.app/dashboardNotFound';
+export const AnnoKeyPublicDashboardEnabled = 'grafana.app/publicDashboardEnabled';
 export const AnnoKeyIsEmbedded = 'grafana.app/isEmbedded';
+export const AnnoKeyFromScript = 'grafana.app/fromScript';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
   [AnnoKeyUpdatedTimestamp]?: string;
   [AnnoKeyUpdatedBy]?: string;
-  [AnnoKeyFolder]?: string;
+  [AnnoKeyFolder]?: string; 
   [AnnoKeySlug]?: string;
   [AnnoKeyRedirectUri]?: string;
 
@@ -78,7 +80,9 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyIsSnapshot]?: boolean;
   [AnnoKeyDashboardNotFound]?: boolean;
+  [AnnoKeyPublicDashboardEnabled]?: boolean;
   [AnnoKeyIsEmbedded]?: boolean;
+  [AnnoKeyFromScript]?: boolean;
 };
 
 export interface Resource<T = object, K = string> extends TypeMeta<K> {

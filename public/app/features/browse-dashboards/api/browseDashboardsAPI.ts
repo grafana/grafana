@@ -25,6 +25,7 @@ import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE } from './services';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -263,12 +264,17 @@ export const browseDashboardsAPI = createApi({
         for (const dashboardUID of selectedDashboards) {
           const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
+          // TODO[schema v2]: save commmand should accept either v1 or v2 
+          if(isDashboardV2Spec(dashDto.spec)) {
+            throw new Error('schema v2 not supported');
+          }
+
           const options: SaveDashboardCommand = {
             folderUid: destinationUID,
             overwrite: false,
             message: '',
             // TODO[schema v2]: save commmand should accept either v1 or v2
-            dashboard: ResponseTransformers.transformV2ToV1(dashDto).dashboard,
+            dashboard: ResponseTransformers.transformDashboardWithAccessInfoToDashboardDTO(dashDto).dashboard,
           };
 
           await getDashboardAPI().saveDashboard(options);

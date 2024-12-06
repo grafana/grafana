@@ -53,7 +53,10 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDataDTO> {
          [AnnoKeyFolderTitle]: result.meta.folderTitle,
          [AnnoKeyFolderUrl]: result.meta.folderUrl,
          [AnnoKeyFolderId]: result.meta.folderId,
+         [AnnoKeyRedirectUri]: result.redirectUri,
         },
+        // Adding legacy metadata for legacy API backwards compatibility
+        _legacyMetadata: result.meta
       },
       spec: result.dashboard,
       access: {

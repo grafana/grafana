@@ -4,21 +4,21 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import config from 'app/core/config';
 import store from 'app/core/store';
+import { AnnoKeyDashboardNotFound } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types';
 
 export class ImpressionSrv {
   constructor() {}
 
-  addDashboardImpression(dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
-    const shouldAddImpression = isDashboardResource(dashboard) || dashboard.meta.dashboardNotFound !== true;
+  addDashboardImpression(dashboard:  DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>) {
+    const shouldAddImpression =  dashboard.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true;
 
     if (!shouldAddImpression) {
       return;
     }
 
-    const dashboardUID = isDashboardResource(dashboard) ? dashboard.metadata.name : dashboard.dashboard.uid;
+    const dashboardUID = dashboard.metadata.name;
 
     const impressionsKey = this.impressionKey();
     let impressions: string[] = [];

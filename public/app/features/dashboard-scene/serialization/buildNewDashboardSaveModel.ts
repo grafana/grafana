@@ -62,6 +62,7 @@ export async function buildNewDashboardSaveModelV1(urlFolderUid?: string) {
       canDelete: false,
       isNew: true,
       folderUid: '',
+      created: '',
     },
     dashboard: {
       ...defaultDashboard,

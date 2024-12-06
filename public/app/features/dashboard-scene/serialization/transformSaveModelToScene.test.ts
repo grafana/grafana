@@ -20,6 +20,7 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -173,7 +174,8 @@ describe('transformSaveModelToScene', () => {
   describe('When creating a new dashboard', () => {
     it('should initialize the DashboardScene in edit mode and dirty', async () => {
       const rsp = await buildNewDashboardSaveModelV1();
-      const scene = transformSaveModelToScene(rsp.dashboard, rsp.meta);
+
+      const scene = transformSaveModelToScene(rsp.spec, ResponseTransformers.getDashboardMeta(rsp));
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
     });

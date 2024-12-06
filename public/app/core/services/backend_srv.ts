@@ -519,7 +519,7 @@ export class BackendSrv implements BackendService {
     const dashboard = await getDashboardAPI().getDashboardDTO(uid);
 
     // Since we have a deprecated method here, let's transoform the response to the format that the consumers are using (v1 schema)
-    return ResponseTransformers.transformV2ToV1(dashboard);
+    return ResponseTransformers.transformDashboardWithAccessInfoToDashboardDTO(dashboard);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {

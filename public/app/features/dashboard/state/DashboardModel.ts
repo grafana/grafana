@@ -129,6 +129,7 @@ export class DashboardModel implements TimeModel {
       getVariablesFromState?: GetVariables;
     }
   ) {
+    
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;

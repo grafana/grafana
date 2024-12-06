@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, Dashboard, DataQuery, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -29,7 +29,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV2Spec } from './utils';
@@ -66,10 +66,42 @@ export function transformDashboardDTOToDashboardWithAccessInfo(
       canShare: dto.meta.canShare,
       canStar: dto.meta.canStar,
       annotationsPermissions: dto.meta.annotationsPermissions,
+      isNew: dto.meta.isNew,
     },
   };
 
   return response;
+}
+
+export function transformDashboardWithAccessInfoToDashboardDTO(
+  dashboard: DashboardWithAccessInfo<DashboardDataDTO | DashboardV2Spec>
+): DashboardDTO {
+  const spec = dashboard.spec;
+  const transformedSpec = isDashboardV2Spec(spec) ? transformV2SpecToV1Spec(dashboard.metadata.name, spec) : spec;
+
+  return {
+    dashboard: transformedSpec,
+    meta: {
+      annotationsPermissions: dashboard.access.annotationsPermissions,
+      canAdmin: dashboard.access.canAdmin,
+      canDelete: dashboard.access.canDelete,
+      canEdit: dashboard.access.canEdit,
+      canSave: dashboard.access.canSave,
+      canShare: dashboard.access.canShare,
+      canStar: dashboard.access.canStar,
+      folderId: dashboard.metadata.annotations?.[AnnoKeyFolderId],
+      folderTitle: dashboard.metadata.annotations?.[AnnoKeyFolderTitle],
+      folderUrl: dashboard.metadata.annotations?.[AnnoKeyFolderUrl],
+      folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
+      slug: dashboard.access.slug,
+      url: dashboard.access.url,
+      created: dashboard.metadata.creationTimestamp,
+      createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy],
+      updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+      updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
+
+    },
+  };
 }
 
 export function transformV1ToV2(
@@ -203,11 +235,38 @@ export function transformV2SpecToV1Spec(uid: string, spec: DashboardV2Spec): Das
     // gnetId
   };
 }
+
+export function getDashboardMeta(dashboard: DashboardWithAccessInfo<unknown>): DashboardMeta {
+  return {
+    annotationsPermissions: dashboard.access.annotationsPermissions,
+    canAdmin: dashboard.access.canAdmin,
+    canDelete: dashboard.access.canDelete,
+    canEdit: dashboard.access.canEdit,
+    canSave: dashboard.access.canSave,
+    canShare: dashboard.access.canShare,
+    canStar: dashboard.access.canStar,
+    folderId: dashboard.metadata.annotations?.[AnnoKeyFolderId],
+    folderTitle: dashboard.metadata.annotations?.[AnnoKeyFolderTitle],
+    folderUrl: dashboard.metadata.annotations?.[AnnoKeyFolderUrl],
+    folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
+    slug: dashboard.access.slug,
+    url: dashboard.access.url,
+    created: dashboard.metadata.creationTimestamp,
+    createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy],
+    updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+    updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
+       
+  }
+}
 export const ResponseTransformers = {
   transformV1ToV2,
   transformV2ToV1,
   transformDashboardDTOToDashboardWithAccessInfo,
+  transformDashboardWithAccessInfoToDashboardDTO,
+  getDashboardMeta
 };
+
+
 
 // TODO[schema v2]: handle rows
 function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {

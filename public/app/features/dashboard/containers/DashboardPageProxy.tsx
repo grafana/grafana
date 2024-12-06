@@ -7,7 +7,6 @@ import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScen
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types';
 
-import { isDashboardResource } from '../api/utils';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
@@ -54,32 +53,34 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   if (dashboard.loading) {
     return null;
   }
-  if (isDashboardResource(dashboard.value)) {
-    // TODO[schema]: handle v2
-    throw new Error('v2 schema handling not implemented');
-  } else {
-    if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
+
+
+  // if (isDashboardResource(dashboard.value)) {
+  //   // TODO[schema]: handle v2
+  //   throw new Error('v2 schema handling not implemented');
+  // } else {
+    if (dashboard?.value?.metadata?.name !== params.uid && dashboard.value?.access?.isNew !== true) {
       return null;
     }
-  }
+  // }
 
   if (!config.featureToggles.dashboardSceneForViewers) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (isDashboardResource(dashboard.value)) {
-    throw new Error('v2 schema handling not implemented');
-  } else {
+  // if (isDashboardResource(dashboard.value)) {
+  //   throw new Error('v2 schema handling not implemented');
+  // } else { 
     if (
       dashboard.value &&
-      !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
+      !(dashboard.value.access?.canEdit || dashboard.value.access?.canMakeEditable) &&
       isScenesSupportedRoute
     ) {
       return <DashboardScenePage {...props} />;
     } else {
       return <DashboardPage {...props} params={params} location={location} />;
     }
-  }
+  // }
 }
 
 export default DashboardPageProxy;
