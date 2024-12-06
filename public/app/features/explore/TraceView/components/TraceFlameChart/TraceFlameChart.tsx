@@ -62,7 +62,7 @@ export function TraceFlameChart(props: TraceFlameChartProps) {
         />
       </div>
       {!!selectedSpan && (
-        <Drawer title="Span details" size="sm" onClose={() => setSelectedSpan(undefined)} placement="bottom">
+        <Drawer title="Span details" size="sm" onClose={() => setSelectedSpan(undefined)}>
           <TFCSpanDetails span={selectedSpan} timeZone={timeZone} />
         </Drawer>
       )}
