@@ -81,7 +81,7 @@ const RuleImporter = () => {
             <InlineField
               transparent={true}
               label="Datasource"
-              labelWidth={20}
+              labelWidth={30}
               invalid={!!errors.selectedDatasource}
               error={errors.selectedDatasource?.message}
             >
@@ -106,12 +106,13 @@ const RuleImporter = () => {
             <InlineField
               transparent={true}
               label="Pause alerting rules"
-              labelWidth={25}
+              labelWidth={30}
               tooltip="Imported alerting rules will be paused."
             >
               <InlineSwitch
                 {...register('pauseAlertingRules')}
                 checked={pauseAlertingRules}
+                transparent={true}
                 onChange={() => setValue('pauseAlertingRules', !pauseAlertingRules, { shouldDirty: true })}
               />
             </InlineField>
@@ -121,12 +122,13 @@ const RuleImporter = () => {
             <InlineField
               transparent={true}
               label="Pause recording rules"
-              labelWidth={25}
+              labelWidth={30}
               tooltip="Imported recording rules will be paused."
             >
               <InlineSwitch
                 {...register('pauseRecordingRules')}
                 checked={pauseRecordingRules}
+                transparent={true}
                 onChange={() => setValue('pauseRecordingRules', !pauseRecordingRules, { shouldDirty: true })}
               />
             </InlineField>
