@@ -300,6 +300,10 @@ export class MetricSelectSceneForWingman
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
 
+      // don't show metric names warning for anomalies or red metrics
+      const { wm_display_view: displayAs } = this.state;
+      metricNamesWarning = displayAs === 'anomalies' || displayAs === 'red_metrics' ? undefined : metricNamesWarning;
+
       // if there are no otel targets for otel resources, there will be no labels
       if (trail.state.useOtelExperience && (jobsList.length === 0 || instancesList.length === 0)) {
         metricNames = [];
