@@ -289,11 +289,11 @@ export function CommandPalette2() {
                 // Framer Motion requires a unique key to trigger a re-render
                 const longId = `${item.type}-${item.title}-${idx}`;
 
-                const variants = {
+                const dividerVariants = {
                   in: {
                     opacity: 1,
                     y: 0,
-                    color: tokens.colors.grey[400],
+                    color: hexToRgba(tokens.colors.grey[500], 0.8),
                     transition: { duration: 0.2, delay: 0.03 * idx },
                   },
                   active: { opacity: 1, y: 0, color: '#FFFFFF', transition: { duration: 0.2, delay: 0.03 * idx } },
@@ -306,7 +306,7 @@ export function CommandPalette2() {
                       key={longId}
                       initial={'out'}
                       animate={longId === `${item.type}-${item.title}-${activeIndex}` ? 'active' : 'in'}
-                      variants={variants}
+                      variants={dividerVariants}
                       className={styles.dividerItem}
                     >
                       <div>{item.title}</div>
@@ -314,6 +314,17 @@ export function CommandPalette2() {
                     </motion.div>
                   );
                 }
+
+                const variants = {
+                  in: {
+                    opacity: 1,
+                    y: 0,
+                    color: tokens.colors.grey[400],
+                    transition: { duration: 0.2, delay: 0.03 * idx },
+                  },
+                  active: { opacity: 1, y: 0, color: '#FFFFFF', transition: { duration: 0.2, delay: 0.03 * idx } },
+                  out: { opacity: 0, y: 20, transition: { duration: 0.2, delay: 0.03 * idx } },
+                };
 
                 const icon = (
                   <motion.div
@@ -332,7 +343,7 @@ export function CommandPalette2() {
                       <div className={styles.commandIconWrapper}>{icon}</div>
                       <div className={styles.resultItemMain}>{item.title}</div>
                       {item.parentTitle && (
-                        <div>
+                        <div className={styles.parentTitle}>
                           {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
                         </div>
                       )}
@@ -691,6 +702,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     resultItemMain: css({
       flexGrow: 1,
+    }),
+
+    parentTitle: css({
+      color: tokens.colors.grey[500],
     }),
 
     dividerItem: css({
