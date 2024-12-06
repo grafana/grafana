@@ -20,7 +20,7 @@ const config = {
   enrichments: [
     {
       id: 'enrichments.blocklist',
-      icon: 'search',
+      icon: 'globe',
       name: 'IP Blocklist',
       description: 'Check IPs against blocked lists',
       detailComponent: undefined,
@@ -30,7 +30,7 @@ const config = {
     },
     {
       id: 'enrichments.ipgeo',
-      icon: 'search',
+      icon: 'globe',
       name: 'IP Geolocation',
       description: 'Check IPs against blocked lists',
       detailComponent: undefined,
@@ -40,7 +40,7 @@ const config = {
     },
     {
       id: 'enrichments.sift',
-      icon: 'book-open',
+      icon: 'search',
       name: 'Sift Investigation',
       description: 'Pull in details from releveant Sift investigations',
       detailComponent: undefined,
@@ -48,30 +48,40 @@ const config = {
         url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/sift',
       },
     },
-//    {
-//      id: 'enrichments.append-dashboard-images',
-//      icon: 'chart-line',
-//      name: 'Append Dashboard Images',
-//      description: 'Add snapshots of relevant dashboards',
-//      detailComponent: undefined,
-//      payload: {
-//        url: '/enrichment/append-dashboard-images',
-//      },
-//    },
+    {
+      id: 'enrichments.explain',
+      icon: 'ai',
+      name: 'AI Powered Alert Explanation',
+      description: 'Explain the alert using an LLM. Requires the Grafana LLM App to be configured.',
+      detailComponent: undefined,
+      payload: {
+        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/explain',
+      },
+    },
+    //    {
+    //      id: 'enrichments.append-dashboard-images',
+    //      icon: 'chart-line',
+    //      name: 'Append Dashboard Images',
+    //      description: 'Add snapshots of relevant dashboards',
+    //      detailComponent: undefined,
+    //      payload: {
+    //        url: '/enrichment/append-dashboard-images',
+    //      },
+    //    },
     {
       id: 'enrichments.dsquery',
-      icon: 'question-circle',
+      icon: 'database',
       name: 'Grafana Datasource Query',
       description: 'Add a query to lookup and append additional details',
       hasDetails: true,
       detailComponent: 'CustomQueryEnrichmentForm',
       payload: {
-        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/sift',
+        url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/dsquery',
       },
     },
     {
       id: 'enrichments.custom-url',
-      icon: 'question-circle',
+      icon: 'link',
       name: 'Custom URL Enrichment',
       description: 'Add your own URL-based enrichment',
       hasDetails: true,
