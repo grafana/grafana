@@ -114,7 +114,7 @@ The table below compares Grafana-managed and data source-managed alert rules.
 
 ## Recording rules
 
-Similar to alert rules, recording rules are evaluated periodically. A recording rule pre-compute frequently used or computationally expensive queries, and saves the results as a new time series metric.
+Similar to alert rules, recording rules are evaluated periodically. A recording rule pre-computes frequently used or computationally expensive queries, and saves the results as a new time series metric.
 
 The new recording metric can then be used in alert rules and dashboards to optimize their queries.
 
