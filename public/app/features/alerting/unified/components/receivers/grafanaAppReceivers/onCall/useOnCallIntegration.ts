@@ -75,13 +75,13 @@ function useOnCallPluginStatus() {
     [integrationStatus]
   );
 
-  let jsonData: any = settings?.jsonData ?? {};
+  const jsonData: any = settings?.jsonData ?? {};
 
   return {
     isOnCallEnabled,
     integrationStatus,
     escalationChainStatus,
-    onCallApiUrl: jsonData['onCallApiUrl'] ?? '',
+    onCallApiUrl: jsonData.onCallApiUrl ?? '',
     isAlertingV2IntegrationEnabled,
     isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
     onCallError: pluginError ?? onCallFeaturesError,
