@@ -56,4 +56,5 @@ export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } 
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
+export { usePluginUserStorage } from './utils/userStorage';
 export { TeamPicker } from './components/TeamPicker';

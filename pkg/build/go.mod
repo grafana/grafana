@@ -28,17 +28,17 @@ require (
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
-	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
+	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.28.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.21.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.30.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
+	golang.org/x/crypto v0.29.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
+	golang.org/x/net v0.31.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.9.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.20.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
