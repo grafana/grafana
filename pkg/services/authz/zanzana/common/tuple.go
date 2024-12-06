@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeResource  string = "resource"
-	TypeNamespace string = "namespace"
+	TypeUser           string = "user"
+	TypeServiceAccount string = "service-account"
+	TypeTeam           string = "team"
+	TypeRole           string = "role"
+	TypeFolder         string = "folder"
+	TypeResource       string = "resource"
+	TypeNamespace      string = "namespace"
 )
 
 const (
@@ -50,7 +51,6 @@ const (
 var ResourceRelations = []string{
 	RelationRead,
 	RelationWrite,
-	RelationCreate,
 	RelationDelete,
 	RelationPermissionsRead,
 	RelationPermissionsWrite,
@@ -58,6 +58,7 @@ var ResourceRelations = []string{
 
 var FolderRelations = append(
 	ResourceRelations,
+	RelationCreate,
 	RelationFolderResourceRead,
 	RelationFolderResourceWrite,
 	RelationFolderResourceCreate,

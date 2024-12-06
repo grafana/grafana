@@ -16,8 +16,10 @@ import { TimeRangeMock } from './__mocks__/timeRange';
 import {
   CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
+  CloudWatchLogsRequest,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
+  LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
@@ -28,10 +30,16 @@ describe('datasource', () => {
     jest.clearAllMocks();
   });
   describe('query', () => {
-    it('should not run a query if log groups is not specified', async () => {
-      const { datasource, queryMock } = setupMockedDataSource();
-      await lastValueFrom(
-        datasource.query({
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    describe('query filtering', () => {
+      const testCases: Array<{
+        targets: CloudWatchQuery[];
+        queryLanguage: string | LogsQueryLanguage;
+        expectedOutput: Partial<CloudWatchLogsRequest>;
+      }> = [
+        {
           targets: [
             {
               queryMode: 'Logs',
@@ -49,22 +57,104 @@ describe('datasource', () => {
               expression: 'some query string',
             },
           ],
-          requestId: '',
-          interval: '',
-          intervalMs: 0,
-          range: TimeRangeMock,
-          scopedVars: {},
-          timezone: '',
-          app: '',
-          startTime: 0,
-        })
-      );
+          expectedOutput: {
+            queryString: 'some query string',
+            logGroupNames: ['/some/group'],
+            region: 'us-west-1',
+          },
+          queryLanguage: 'undefined',
+        },
+        {
+          targets: [
+            {
+              queryMode: 'Logs',
+              queryLanguage: LogsQueryLanguage.CWLI,
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string', // missing logGroups and logGroupNames, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          expectedOutput: {
+            queryString: 'some query string',
+            logGroupNames: ['/some/group'],
+            region: 'us-west-1',
+          },
+          queryLanguage: LogsQueryLanguage.CWLI,
+        },
+        {
+          targets: [
+            {
+              queryMode: 'Logs',
+              queryLanguage: LogsQueryLanguage.PPL,
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string', // missing logGroups and logGroupNames, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              queryLanguage: LogsQueryLanguage.CWLI,
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          expectedOutput: {
+            queryString: 'some query string',
+            logGroupNames: ['/some/group'],
+            region: 'us-west-1',
+          },
+          queryLanguage: LogsQueryLanguage.PPL,
+        },
+        {
+          targets: [
+            {
+              queryMode: 'Logs',
+              queryLanguage: LogsQueryLanguage.SQL,
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string',
+            },
+          ],
+          expectedOutput: {
+            queryString: 'some query string',
+            region: 'us-west-1',
+          },
+          queryLanguage: LogsQueryLanguage.SQL,
+        },
+      ];
+      testCases.forEach(async (testCase) => {
+        it(`should filter out query with no log groups when query language is ${testCase.queryLanguage}`, async () => {
+          const { datasource, queryMock } = setupMockedDataSource();
+          await lastValueFrom(
+            datasource.query({
+              targets: testCase.targets,
+              requestId: '',
+              interval: '',
+              intervalMs: 0,
+              range: TimeRangeMock,
+              scopedVars: {},
+              timezone: '',
+              app: '',
+              startTime: 0,
+            })
+          );
 
-      expect(queryMock.mock.calls[0][0].targets).toHaveLength(1);
-      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
-        queryString: 'some query string',
-        logGroupNames: ['/some/group'],
-        region: 'us-west-1',
+          expect(queryMock.mock.calls[0][0].targets).toHaveLength(1);
+          expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject(testCase.expectedOutput);
+        });
       });
     });
 
@@ -364,6 +454,20 @@ describe('datasource', () => {
         MetricEditorMode.Builder
       );
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
+    });
+    it('should set default values from logs query', () => {
+      const defaultLogGroups = [{ name: 'logName', arn: 'logARN' }];
+      const { datasource } = setupMockedDataSource({
+        customInstanceSettings: {
+          ...CloudWatchSettings,
+          jsonData: { ...CloudWatchSettings.jsonData, logGroups: defaultLogGroups },
+        },
+      });
+      expect(datasource.getDefaultQuery(CoreApp.PanelEditor).region).toEqual('default');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).queryLanguage).toEqual('CWLI');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroups).toEqual(
+        defaultLogGroups
+      );
     });
   });
 });
