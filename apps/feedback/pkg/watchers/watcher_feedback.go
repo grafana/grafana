@@ -254,7 +254,7 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 		logging.FromContext(ctx).Error("failed to query gcom", "stackID", s.cfg.StackID, "error", err)
 	} else {
 		cluster := inst.ClusterSlug
-		to, from := object.CreationTimestamp.Format("2006-01-02T15:04:05.999Z"), object.CreationTimestamp.Add(-10*time.Minute).Format("2006-01-02T15:04:05.999Z")
+		to, from := object.CreationTimestamp.Format("2006-01-02T15:04:05.000"), object.CreationTimestamp.Add(-10*time.Minute).Format("2006-01-02T15:04:05.000")
 		opsDashList = map[string]string{
 			"Instance Debugging":   fmt.Sprintf("https://ops.grafana-ops.net/d/BqokFhx7z/hg-instance-debugging?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
 			"Instance Event Audit": fmt.Sprintf("https://ops.grafana-ops.net/d/77e353652d419aa4c832523ac060fb14/hg-instance-audit?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
