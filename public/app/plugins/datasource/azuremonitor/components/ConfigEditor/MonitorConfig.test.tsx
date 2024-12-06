@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/re
 import { config } from '@grafana/runtime';
 
 import { createMockDatasourceSettings } from '../../__mocks__/datasourceSettings';
+import { AzureCloud } from '../../types';
 
 import { MonitorConfig, Props } from './MonitorConfig';
 
