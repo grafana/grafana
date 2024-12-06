@@ -25,7 +25,7 @@ refs:
 
 A pie chart is a graph that displays data as segments of a circle proportional to the whole, making it look like a sliced pie. Each slice corresponds to a value or measurement.
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="1200px" lightbox="true" alt="Pie charts" >}}
+![Pie chart visualizations](/media/docs/grafana/panels-visualizations/screenshot-pie-chart-v11.4.png)
 
 The pie chart visualization is ideal when you have data that adds up to a total and you want to show the proportion of each value compared to other slices, as well as to the whole of the pie.
 
@@ -165,7 +165,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" level-offset="+3" >}}
 
 ### Legend options
 
@@ -215,9 +215,3 @@ Select values to display in the legend. You can select more than one.
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-| Option     | Description                                                                                               |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| Color      | Set the background color.                                                                                 |
-| Image      | Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements). |
-| Image size | Control the size of the image or set it as a tile.                                                        |
