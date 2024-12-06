@@ -124,14 +124,15 @@ export const RowsList = (props: RowsListProps) => {
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
-      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+      if (!panelContext || !enableSharedCrosshair) {
         return;
       }
 
-      // HERE
-
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
-      console.log('onrowHover', timeField.values[idx], timeField, frame, idx);
+
+      if (!timeField) {
+        return;
+      }
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
