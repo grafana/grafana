@@ -423,7 +423,8 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 		promConverter, err := prom.NewConverter(
 			prom.Config{
-				DatasourceUID: dsUID,
+				DatasourceUID:  dsUID,
+				DatasourceType: ds.Type,
 				RecordingRules: prom.RulesConfig{
 					IsPaused: pauseRecordingRules,
 				},
