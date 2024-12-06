@@ -9,7 +9,6 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
