@@ -14,6 +14,7 @@ import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { getPreviewPanelFor } from '../../../MetricSelect/previewPanel';
+import { ROW_PREVIEW_HEIGHT } from '../../MetricSelectSceneForWingman';
 
 import { SceneChangepointDetector } from './SceneChangepointDetector';
 import { SortByScene, SortCriteriaChanged } from './SortByChangepointsScene';
@@ -88,7 +89,7 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
       },
       body: new SceneCSSGridLayout({
         children: [],
-        autoRows: '175px',
+        autoRows: ROW_PREVIEW_HEIGHT,
         templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
         isLazy: true,
       }),
