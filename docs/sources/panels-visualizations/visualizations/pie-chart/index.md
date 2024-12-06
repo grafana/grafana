@@ -98,30 +98,34 @@ If you want to display only the values from a given field (or column), once the 
 
 ![Pie chart visualization with multiple rows and columns showing values from one column](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-pie-example6.png)
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value options
+### Value options
 
 Use the following options to refine the value in your visualization.
 
-### Show
+#### Show
 
 Choose how much information to show.
 
 - **Calculate -** Reduces each value to a single value per series.
 - **All values -** Displays every value from a single series.
 
-### Calculation
+#### Calculation
 
 Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
 
-### Limit
+#### Limit
 
 When displaying every value from a single series, this limits the number of values displayed.
 
-### Fields
+#### Fields
 
 Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:
 
@@ -129,23 +133,23 @@ Select which field or fields to display in the visualization. Each field name is
 - **All fields -** All fields that are not removed by transformations.
 - **Time -** All fields with time values.
 
-## Pie chart options
+### Pie chart options
 
 Use these options to refine how your visualization looks.
 
-### Pie chart type
+#### Pie chart type
 
 Select the pie chart display style.
 
-### Pie
+#### Pie
 
 ![Pie type chart](/static/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
 
-### Donut
+#### Donut
 
 ![Donut type chart](/static/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
 
-### Labels
+#### Labels
 
 Select labels to display on the pie chart. You can select more than one.
 
@@ -159,55 +163,61 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-## Tooltip options
+### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Legend options
+### Legend options
 
 Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
 
-### Visibility
+#### Visibility
 
 Toggle the switch to turn the legend on or off.
 
-### Mode
+#### Mode
 
 Use these settings to define how the legend appears in your visualization.
 
 - **List -** Displays the legend as a list. This is a default display mode of the legend.
 - **Table -** Displays the legend as a table.
 
-### Placement
+#### Placement
 
 Choose where to display the legend.
 
 - **Bottom -** Below the graph.
 - **Right -** To the right of the graph.
 
-#### Width
+##### Width
 
 Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
 
-### Values
+#### Values
 
 Select values to display in the legend. You can select more than one.
 
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Color      | Set the background color.                                                                                 |
+| Image      | Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements). |
+| Image size | Control the size of the image or set it as a tile.                                                        |
