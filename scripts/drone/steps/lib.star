@@ -917,8 +917,7 @@ def playwright_e2e_tests_step():
 def bench_frontend_tests_step():
     return {
         "environment": {
-            "PORT": "3001",
-            "HOST": "grafana-server",
+            "GRAFANA_URL": "http://grafana-server:3001",
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "bench-playwright-plugin-e2e",
@@ -928,7 +927,7 @@ def bench_frontend_tests_step():
             "build-test-plugins",
         ],
         "commands": [
-            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "npx wait-on@7.0.1 $GRAFANA_URL",
             "yarn playwright install --with-deps chromium",
             "cd bench/frontend && yarn playwright test",
         ],
