@@ -107,6 +107,20 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
         value: unquoteWithUnescape(value),
       })) ?? [];
 
+  console.log(route.enrichments);
+
+  const enrichments: Record<string, string> =
+        route.enrichments?.reduce((a, v) => ({
+          ...a,
+          [v.options.key]: {
+            active: true,
+            query: v.options.expr ?? '',
+            url: v.url,
+          }
+        }), {}) ?? {};
+
+  console.log(enrichments);
+  
   return {
     id,
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
@@ -126,6 +140,7 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     repeatIntervalValue: route.repeat_interval ?? '',
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
+    enrichments: enrichments ?? undefined,
   };
 };
 
@@ -185,9 +200,7 @@ export const formAmRouteToAmRoute = (
               key: enrichment,
               expr: ((data ?? { query: ''}) as unknown as { query: string }).query,
             },
-            //active: ((data ?? { active: ''}) as unknown as { active: boolean }).active,
-            //url: ((data ?? { url: ''}) as unknown as { url: string }).url,
-            url: 'http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/' + enrichment,
+            url: data.url ?? ('http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/' + enrichment),
           }
         });
   
