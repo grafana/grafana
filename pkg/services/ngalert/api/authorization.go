@@ -69,6 +69,17 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 			),
 		)
+	case http.MethodPost + "/api/ruler/{DatasourceUID}/api/v1/rules/convert":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID"))
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+			),
+		)
 
 	// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":

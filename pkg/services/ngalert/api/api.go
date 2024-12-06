@@ -120,9 +120,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
+	lr := NewLotexRuler(proxy, logger)
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
-		NewLotexRuler(proxy, logger),
+		lr,
 		&RulerSrv{
 			conditionValidator: api.ConditionValidator,
 			QuotaService:       api.QuotaService,
@@ -135,6 +136,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
+			proxySvc:           lr,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(

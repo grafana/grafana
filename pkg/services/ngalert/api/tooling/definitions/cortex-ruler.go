@@ -155,6 +155,21 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route POST /ruler/{DatasourceUID}/api/v1/rules/convert ruler RoutePostRulesGroupConvert
+//
+// Converts submitted rule groups from Prometheus format to Grafana-Managed
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route POST /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
@@ -247,6 +262,16 @@ import (
 //       202: Ack
 //       403: ForbiddenError
 //       404: NotFound
+
+// swagger:parameters RoutePostRulesGroupConvert
+type PathPostRulesGroupConvert struct {
+	// in:path
+	DatasourceUID string
+	// in:query
+	PauseRecordingRules bool
+	// in:query
+	PauseAlerts bool
+}
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
