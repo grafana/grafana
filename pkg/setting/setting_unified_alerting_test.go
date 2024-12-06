@@ -120,14 +120,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "1",
+				"max_attempts":               "1", // Note: Ignored, setting does not exist.
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "true",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
@@ -168,14 +168,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout": "invalid",
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "1",
+				"max_attempts":               "1", // Note: Ignored, setting does not exist.
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "false",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
