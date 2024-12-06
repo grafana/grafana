@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -112,8 +112,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const {
     handleSubmit,
     watch,
-    getValues,
-    setValue,
     formState: { isSubmitting },
   } = formAPI;
 
@@ -129,17 +127,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
-
-  // TODO If the group is changed, RTKQ refreshes the existing rule definition and we need to update the form values
-  // Preferrably, the rule editor should not save changes until the whole rule is saved
-  // useEffect(() => {
-  //   if (existing?.group && existing.group.name !== getValues('group')) {
-  //     setValue('group', existing.group.name);
-  //   }
-  //   if (existing?.group?.interval && existing.group.interval !== getValues('evaluateEvery')) {
-  //     setValue('evaluateEvery', existing.group.interval);
-  //   }
-  // }, [existing, getValues, setValue]);
 
   // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {

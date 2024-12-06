@@ -113,11 +113,17 @@ export function isExpressionQueryInAlert(
   return isExpressionQuery(query.model);
 }
 
+export function isAlertQueryOfAlertData(
+  query: AlertQuery<AlertDataQuery | ExpressionQuery>
+): query is AlertQuery<AlertDataQuery> {
+  return !isExpressionQuery(query.model);
+}
+
 // the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
 // to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
 // furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
 // It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
-export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
+export const revealHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
   return {
     ...ruleDefinition,
     queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),

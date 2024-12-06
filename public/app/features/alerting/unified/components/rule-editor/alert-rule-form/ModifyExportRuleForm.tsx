@@ -65,7 +65,6 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
-  const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const onInvalid = (): void => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
@@ -111,12 +110,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
               <GrafanaFolderAndLabelsStep />
 
               {/* Step 4 & 5 */}
-              <GrafanaEvaluationBehaviorStep
-                evaluateEvery={evaluateEvery}
-                setEvaluateEvery={setEvaluateEvery}
-                existing={Boolean(existing)}
-                enableProvisionedGroups={true}
-              />
+              <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
               {/* Notifications step*/}
               <NotificationsStep alertUid={alertUid} />
               {/* Annotations only for cloud and Grafana */}

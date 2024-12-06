@@ -12,7 +12,7 @@ import {
 import { isGrafanaRecordingRuleByType } from '../utils/rules';
 
 import {
-  ignoreHiddenQueries,
+  revealHiddenQueries,
   normalizeDefaultAnnotations,
   setInstantOrRange,
   setQueryEditorSettings,
@@ -32,7 +32,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
 
   return setQueryEditorSettings(
     setInstantOrRange(
-      ignoreHiddenQueries({
+      revealHiddenQueries({
         ...getDefaultFormValues(),
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
@@ -45,14 +45,14 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
 }
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  return ignoreHiddenQueries({
+  return revealHiddenQueries({
     ...getDefaultFormValues(),
     ...rule,
   });
 }
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
-  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+  return revealHiddenQueries(rulerRuleToFormValues(rule));
 }
 
 export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
