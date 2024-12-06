@@ -26,7 +26,8 @@ const ScreenShotEditModal = ({
   height,
   feedbackPlus,
   setFormData,
-  formData
+  formData,
+  setIsScreenshotEditoModalOpen
 }: {
   isOpen: boolean;
   bitmap: HTMLImageElement;
@@ -35,6 +36,7 @@ const ScreenShotEditModal = ({
   feedbackPlus: any;
   setFormData: (fd: FeedbackFormData) => void;
   formData: FeedbackFormData;
+  setIsScreenshotEditoModalOpen: (isOpen: boolean) => void;
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -182,6 +184,7 @@ const ScreenShotEditModal = ({
         }
       }
     }
+    setIsScreenshotEditoModalOpen(false);
   }
 
   return (
@@ -213,6 +216,7 @@ const ScreenShotEditModal = ({
 };
 
 const MenuActions = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [formData, setFormData] = useState<FeedbackFormData>({
     message: '',
     screenshot: '',
@@ -263,6 +267,26 @@ const MenuActions = () => {
     e.stopPropagation();
   };
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    if (canvas && isCanvas(canvas) && formData.screenshot) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        canvas.width = 200;
+        // const hRatio = canvas.width / formData.width;
+        // const vRatio = canvas.height / formData.height;
+        // const ratio = Math.min(hRatio, vRatio);
+        // ctx.drawImage(bitmap, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+        const image = new Image();
+        image.onload = function () {
+          ctx.drawImage(image, 0, 0);
+        };
+        image.src = "data:image/" + formData.imageType + ";base64," + formData.screenshot;
+      }
+    }
+  }, [formData.height, formData.imageType, formData.screenshot, formData.width]);
+
   return (
     <Menu>
       <div onClick={stopAutoClose}>
@@ -271,6 +295,7 @@ const MenuActions = () => {
         <Stack gap={2} direction={'column'}>
           <input onChange={onInputChange} placeholder="so what happened?"></input>
           <Button onClick={onTakeScreenshot}>Take Screenshot</Button>
+          <canvas ref={canvasRef}></canvas>
           <Button type="submit" onClick={onSubmit}>
             Submit feedback
           </Button>
@@ -283,6 +308,7 @@ const MenuActions = () => {
           feedbackPlus={feedbackPlus}
           setFormData={setFormData}
           formData={formData}
+          setIsScreenshotEditoModalOpen={setIsScreenshotEditoModalOpen}
         />
       </div>
     </Menu>
@@ -307,9 +333,10 @@ function isCanvas(obj: HTMLCanvasElement | HTMLElement): obj is HTMLCanvasElemen
 
 /* 
   TODO:
-  - close on save, show thumbnail of screenshot in feedback dropdown
-  - fix the offset issue when actively hiding (seems to work when saving?)
+  - make initial drodown bigger
   - close drodown on screenshot, and reopen after done
+  - fix width/ratio of thumbnail
+  - fix the offset issue when actively hiding (seems to work when saving?)
   - add a cancel button to delete screenshot
   - make dropdown cooler looking
 */
