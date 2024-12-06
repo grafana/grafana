@@ -410,25 +410,37 @@ export function CommandPalette2() {
           {/* <div className={styles.detailCell}>detail</div> */}
 
           <div className={styles.footerCell}>
-            <div className={styles.shortcut}>
-              <div className={styles.shortcutKeys}>
-                <AnimatedKeyCap direction={-1} isActive={!!activeKeys.ArrowUp} className={styles.keyboardKey}>
-                  <Icon name="arrow-up" />
-                </AnimatedKeyCap>
+            <div className={styles.shortcutGroup}>
+              <div className={styles.shortcut}>
+                <div className={styles.shortcutKeys}>
+                  <AnimatedKeyCap direction={-1} isActive={!!activeKeys.ArrowUp} className={styles.keyboardKey}>
+                    <Icon name="arrow-up" />
+                  </AnimatedKeyCap>
 
-                <AnimatedKeyCap direction={1} isActive={!!activeKeys.ArrowDown} className={styles.keyboardKey}>
-                  <Icon name="arrow-down" />
-                </AnimatedKeyCap>
+                  <AnimatedKeyCap direction={1} isActive={!!activeKeys.ArrowDown} className={styles.keyboardKey}>
+                    <Icon name="arrow-down" />
+                  </AnimatedKeyCap>
+                </div>
+                <span className={styles.shortcutLabel}>to navigate</span>
               </div>
-              <span className={styles.shortcutLabel}>to navigate</span>
+
+              <div className={styles.footerDivider} />
+
+              <div className={styles.shortcut}>
+                <span className={cx(styles.keyboardKey, styles.keyboardMultiKey)}>esc</span>
+                <span className={styles.shortcutLabel}>
+                  Close <strong className={styles.shortcutEmphasis}>Launchpad</strong>
+                </span>
+              </div>
             </div>
 
-            <div className={styles.footerDivider} />
-
             <div className={styles.shortcut}>
-              <span className={cx(styles.keyboardKey, styles.keyboardMultiKey)}>esc</span>
               <span className={styles.shortcutLabel}>
-                Close <strong className={styles.shortcutEmphasis}>Launchpad</strong>
+                {mode === 'search' ? 'Open' : 'Run'}{' '}
+                <strong className={styles.shortcutEmphasis}>{filteredItems[activeIndex]?.title}</strong>
+              </span>
+              <span className={cx(styles.keyboardKey)}>
+                <Icon name="corner-down-right-alt" />
               </span>
             </div>
           </div>
@@ -653,6 +665,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: hexToRgba(tokens.colors.grey[800], 0.3),
       display: 'flex',
       gap: theme.spacing(2),
+      justifyContent: 'space-between',
       backdropFilter: 'blur(2px)',
       borderTop: `1px solid ${hexToRgba(tokens.colors.grey[800], 0.5)}`,
     }),
@@ -667,8 +680,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       lineHeight: 1,
-      gap: 8,
+      gap: 12,
       pointerEvents: 'none',
+    }),
+
+    shortcutGroup: css({
+      display: 'flex',
+      gap: theme.spacing(2),
     }),
 
     shortcutLabel: css({
