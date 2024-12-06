@@ -12,7 +12,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -393,7 +392,17 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 		}
 		nsMap[ns] = namespace.UID
 
-		promConverter, err := prom.NewConverter(prom.Config{DatasourceUID: dsUID})
+		promConverter, err := prom.NewConverter(
+			prom.Config{
+				DatasourceUID: dsUID,
+				RecordingRules: prom.RulesConfig{
+					IsPaused: pauseRecordingRules,
+				},
+				AlertRules: prom.RulesConfig{
+					IsPaused: pauseAlerts,
+				},
+			},
+		)
 		if err != nil {
 			return errorToResponse(err)
 		}
@@ -425,11 +434,6 @@ func (srv RulerSrv) RoutePostRulesGroupConvert(c *contextmodel.ReqContext, dsUID
 
 			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
 			for _, r := range grafanaGroup.Rules {
-				if r.Record != nil && pauseRecordingRules {
-					r.IsPaused = true
-				} else if pauseAlerts {
-					r.IsPaused = true
-				}
 				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
 					AlertRule: r,
 				})
@@ -904,13 +908,8 @@ func (srv RulerSrv) RoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.
 	datasourceUID := ctx.Req.Header.Get(datasourceUIDHeader)
 	datasourceType := ctx.Req.Header.Get(datasourceTypeHeader)
 
-	var recordingRulesPaused, alertRulesPaused bool
-	if strings.ToLower(ctx.Req.Header.Get(recordingRulesPausedHeader)) == "true" {
-		recordingRulesPaused = true
-	}
-	if strings.ToLower(ctx.Req.Header.Get(alertRulesPausedHeader)) == "true" {
-		alertRulesPaused = true
-	}
+	recordingRulesPaused := ctx.QueryBool(ctx.Req.Header.Get(recordingRulesPausedHeader))
+	alertRulesPaused := ctx.QueryBool(ctx.Req.Header.Get(alertRulesPausedHeader))
 
 	promConverter, err := prom.NewConverter(
 		prom.Config{
