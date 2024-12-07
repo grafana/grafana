@@ -396,6 +396,10 @@ func InterpolateVariables(
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 
+	return InterpolateIntervals(expr, calculatedStep, rateInterval, rangeMs, rangeSRounded)
+}
+
+func InterpolateIntervals(expr string, calculatedStep, rateInterval time.Duration, rangeMs, rangeSRounded int64) string {
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varInterval, gtime.FormatInterval(calculatedStep))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))

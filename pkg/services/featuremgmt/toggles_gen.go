@@ -871,6 +871,10 @@ const (
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
+	// FlagExploreMetricsWingman
+	// Enables wingman feature in Explore Metrics
+	FlagExploreMetricsWingman = "exploreMetricsWingman"
+
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"

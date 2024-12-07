@@ -6,7 +6,7 @@ describe('getPreviewPanelFor', () => {
   describe('includes __ignore_usage__ indicator', () => {
     function callAndGetExpr(filterCount: number) {
       const result = getPreviewPanelFor('METRIC', 0, filterCount);
-      const runner = result.state.$data as SceneQueryRunner;
+      const runner = result.state.body?.state.$data as SceneQueryRunner;
       expect(runner).toBeInstanceOf(SceneQueryRunner);
       const query = runner.state.queries[0];
       const expr = query.expr as string;
