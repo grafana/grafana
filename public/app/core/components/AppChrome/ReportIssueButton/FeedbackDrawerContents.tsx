@@ -1,3 +1,4 @@
+import pica from 'pica';
 import { ChangeEvent, useRef, MouseEvent, useEffect } from 'react';
 
 import { Button, InlineSwitch, Stack, TextArea, Field, Input } from '@grafana/ui';
@@ -10,7 +11,7 @@ import { FeedbackFormData } from './types';
 import { isCanvas } from './utils';
 
 type DrawerContentsProps = {
-  setIsOpen: (isOpen: boolean) => void;
+  setIsDrawerOpen: (isOpen: boolean) => void;
   setFormData: (fd: FeedbackFormData) => void;
   setIsScreenshotEditModalOpen: (isOpen: boolean) => void;
   feedbackPlus: any;
@@ -18,7 +19,7 @@ type DrawerContentsProps = {
 };
 
 export const DrawerContents = ({
-  setIsOpen,
+  setIsDrawerOpen,
   setFormData,
   feedbackPlus,
   formData,
@@ -41,13 +42,11 @@ export const DrawerContents = ({
   const onTakeScreenshot = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsOpen(false);
-    feedbackPlus
-      .capture()
-      .then(({ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number }) => {
-        setFormData({ ...formData, bitmap, width, height });
-        setIsScreenshotEditModalOpen(true);
-      });
+    setIsDrawerOpen(false);
+    feedbackPlus.capture().then(({ bitmap, width, height }: { bitmap: ImageBitmap; width: number; height: number }) => {
+      setFormData({ ...formData, bitmap, width, height });
+      setIsScreenshotEditModalOpen(true);
+    });
   };
 
   const onAccessChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +72,20 @@ export const DrawerContents = ({
     };
 
     const feedbackApi = getFeedbackAPI();
-    await feedbackApi.createFeedback(feedback);
+    const requestSucceeded = await feedbackApi.createFeedback(feedback);
+    if (requestSucceeded) {
+      setFormData({
+        message: '',
+        screenshot: '',
+        imageType: '',
+        reporterEmail: '',
+        accessChecked: false,
+        contactChecked: false,
+        width: 0,
+        height: 0,
+        bitmap: {} as ImageBitmap,
+      });
+    }
   };
 
   useEffect(() => {
@@ -82,20 +94,12 @@ export const DrawerContents = ({
     if (canvas && isCanvas(canvas) && formData.screenshot) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        const fixedWidth = 200;
-        const aspectRatio = formData.height / formData.width;
-        const proportionalHeight = fixedWidth * aspectRatio;
-        canvas.width = fixedWidth;
-        canvas.height = proportionalHeight;
-
-        const image = new Image();
-        image.onload = function () {
-          ctx.drawImage(image, 0, 0, fixedWidth, proportionalHeight);
-        };
-        image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
+        canvas.width = formData.width;
+        canvas.height = formData.height;
+        pica().resize(formData.bitmap, canvas);
       }
     }
-  }, [formData.height, formData.imageType, formData.screenshot, formData.width]);
+  }, [formData.bitmap, formData.height, formData.imageType, formData.screenshot, formData.width]);
 
   return (
     <Stack direction={'column'}>

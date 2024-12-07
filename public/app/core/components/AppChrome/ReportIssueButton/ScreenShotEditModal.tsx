@@ -1,27 +1,29 @@
-import { useCallback, useRef, useState, MouseEvent, useEffect } from "react";
+import pica from 'pica';
+import { useRef, useState, MouseEvent, useEffect } from 'react';
 
-import { Button, Modal } from "@grafana/ui";
-import { extractImageTypeAndData } from "app/features/feedback/screenshot-encode";
+import { Button, Modal } from '@grafana/ui';
+import { extractImageTypeAndData } from 'app/features/feedback/screenshot-encode';
 
-import { FeedbackFormData } from "./types";
-import { isCanvas } from "./utils";
+import { FeedbackFormData } from './types';
+import { isCanvas } from './utils';
 
-
-export const ScreenShotEditModal = ({
-	isOpen,
-	feedbackPlus,
-	setFormData,
-	formData,
-	setIsScreenshotEditModalOpen,
-	setIsDropdownOpen,
-}: {
-	isOpen: boolean;
+type ScreenshotEditModalProps = {
+	isScreenshotEditModalOpen: boolean;
 	feedbackPlus: any;
 	setFormData: (fd: FeedbackFormData) => void;
 	formData: FeedbackFormData;
 	setIsScreenshotEditModalOpen: (isOpen: boolean) => void;
-	setIsDropdownOpen: (isOpen: boolean) => void;
-}) => {
+	setIsDrawerOpen: (isOpen: boolean) => void;
+}
+
+export const ScreenShotEditModal = ({
+	isScreenshotEditModalOpen,
+	feedbackPlus,
+	setFormData,
+	formData,
+	setIsScreenshotEditModalOpen,
+	setIsDrawerOpen,
+}: ScreenshotEditModalProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const canvasContainerRef = useRef<HTMLDivElement>(null);
 	const hideToolRef = useRef<HTMLDivElement>(null);
@@ -30,31 +32,6 @@ export const ScreenShotEditModal = ({
 	const [startX, setStartX] = useState(0);
 	const [startY, setStartY] = useState(0);
 
-	const drawImage = useCallback(
-		(
-			{ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number },
-			canvasRef: React.RefObject<HTMLCanvasElement>
-		) => {
-			const canvas = canvasRef.current;
-
-			if (canvas && isCanvas(canvas)) {
-				const ctx = canvas.getContext('2d');
-				if (ctx) {
-					const fixedWidth = 700;
-					const aspectRatio = height / width;
-					const proportionalHeight = fixedWidth * aspectRatio;
-					canvas.width = fixedWidth;
-					canvas.height = proportionalHeight;
-
-					ctx.drawImage(bitmap, 0, 0, fixedWidth, proportionalHeight);
-				}
-			}
-		},
-		[]
-	);
-
-	// ideally we could just use "showEditDialog from feedbackPlus, but it doesn't seem to work"
-	// implementing a similar thing just for hide
 	const hide = () => {
 		if (isInEditMode) {
 			setIsInEditMode(false);
@@ -62,11 +39,10 @@ export const ScreenShotEditModal = ({
 		} else {
 			setIsInEditMode(true);
 		}
-		// add mouseDown, mousemove,  listener to canvas
-		// on done, edit the clone and return that
-		// then remove old and draw new image?
 	};
 
+	// Takes the overlayed hidden blocks and edits the original canvas to have the same blocks built into it
+	// heavily inspired by https://github.com/puffinsoft/feedbackplus/blob/674c4cd5a23684030a77fa2cbae033c13e567026/src/feedbackplus.js#L220
 	const onDone = () => {
 		if (canvasRef.current) {
 			const canvas = canvasRef.current;
@@ -88,7 +64,8 @@ export const ScreenShotEditModal = ({
 		}
 	};
 
-	// when mousedown create a new element to hide things and set starting top and left and append it to the canvas.
+	// On click of the canvas, take the hidden block and move it to the mouse position
+	// heavily inspired by https://github.com/puffinsoft/feedbackplus/blob/674c4cd5a23684030a77fa2cbae033c13e567026/src/feedbackplus.js#L146
 	const onMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
 		if (isInEditMode && e && canvasContainerRef.current && hideToolRef.current) {
 			setIsInTheMiddleOfHiding(true);
@@ -106,12 +83,12 @@ export const ScreenShotEditModal = ({
 			setStartY(realY);
 			highlightElem.style.top = realY + 'px';
 			highlightElem.style.left = realX + 'px';
-			highlightElem.toggleAttribute('unsaved-edit');
-			// todo we should really be cloning and appending these elements dynamically (or however the react-y way to do this is that way you can have mulitiple edits)
-			// canvasContainer.appendChild(highlightElem);
 		}
 	};
-	// when mouse move, set width and height (based on boundingClientRect) of the element to hide things
+
+	// when the mouse is moving after clicking but before unclicking,
+	// set width and height of the hidden element based on the mouse position
+	// heavily inspired by https://github.com/puffinsoft/feedbackplus/blob/674c4cd5a23684030a77fa2cbae033c13e567026/src/feedbackplus.js#L171
 	const onMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
 		if (isInEditMode && isInTheMiddleOfHiding) {
 			const highlightElem = hideToolRef.current;
@@ -144,34 +121,61 @@ export const ScreenShotEditModal = ({
 		}
 	};
 
+	// 
 	const onMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
 		setIsInTheMiddleOfHiding(false);
 		setStartX(0);
 		setStartY(0);
 	};
 
-	useEffect(() => {
-		drawImage({ bitmap: formData.bitmap, width: formData.width, height: formData.height }, canvasRef);
-	}, [formData, drawImage, feedbackPlus]);
-
-	const save = () => {
+	// save the edited (or not edited) screenshot to the feedback form
+	const save = async () => {
 		if (canvasRef.current) {
 			const canvas = canvasRef.current;
 			const ctx = canvas.getContext('2d');
 			if (ctx) {
 				const dataURL = canvas.toDataURL('image/png');
 				const imageData = extractImageTypeAndData(dataURL);
+				const newBitmap = await createImageBitmap(canvas);
 				if (imageData) {
-					setFormData({ ...formData, screenshot: imageData.data, imageType: imageData.type });
+					setFormData({
+						...formData,
+						screenshot: imageData.data,
+						imageType: imageData.type,
+						bitmap: newBitmap,
+						width: canvas.width,
+						height: canvas.height,
+					});
 				}
 			}
 		}
 		setIsScreenshotEditModalOpen(false);
-		setIsDropdownOpen(true);
+		setIsDrawerOpen(true);
 	};
 
+	// draw the screenshot onto the canvas
+	useEffect(() => {
+		const canvas = canvasRef.current;
+
+		if (canvas && isCanvas(canvas)) {
+			const ctx = canvas.getContext('2d');
+			if (ctx) {
+				const fixedWidth = 650;
+				const aspectRatio = formData.height / formData.width;
+				const proportionalHeight = fixedWidth * aspectRatio;
+				canvas.width = fixedWidth;
+				canvas.height = proportionalHeight;
+				pica().resize(formData.bitmap, canvas);
+			}
+		}
+	}, [formData, feedbackPlus]);
+
 	return (
-		<Modal title="Edit Screenshot" isOpen={isOpen}>
+		<Modal
+			title="Edit Screenshot"
+			isOpen={isScreenshotEditModalOpen}
+			onDismiss={() => setIsScreenshotEditModalOpen(false)}
+		>
 			<div>
 				{isInEditMode
 					? 'Click and drag to hide sensitive information then press Finished Editing'
@@ -196,4 +200,3 @@ export const ScreenShotEditModal = ({
 		</Modal>
 	);
 };
-

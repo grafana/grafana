@@ -9410,6 +9410,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/pica@npm:^9":
+  version: 9.0.4
+  resolution: "@types/pica@npm:9.0.4"
+  checksum: 10/fd1954400cb45a191a8f05da5009ebfafe4b5e173cc1ed2806d263de48250e303cfa06207d8da36091a834a29b34ffe65d386a35788831e9f906b7f6670ce9c3
+  languageName: node
+  linkType: hard
+
 "@types/pluralize@npm:^0.0.33":
   version: 0.0.33
   resolution: "@types/pluralize@npm:0.0.33"
@@ -17169,6 +17176,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"glur@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "glur@npm:1.1.2"
+  checksum: 10/3d991f38cb352886723a84b00310673312c01573c928ef49a52e74ec693cedaa95117ef6f7e0dd5167b40a3383355042ed721cfaabd54b0e9532d01d7ff72861
+  languageName: node
+  linkType: hard
+
 "gopd@npm:^1.0.1":
   version: 1.0.1
   resolution: "gopd@npm:1.0.1"
@@ -17297,6 +17311,7 @@ __metadata:
     "@types/node": "npm:20.16.15"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
+    "@types/pica": "npm:^9"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
@@ -17442,6 +17457,7 @@ __metadata:
     nx: "npm:19.8.2"
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.24"
+    pica: "npm:^9.0.1"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.4.49"
     postcss-loader: "npm:8.1.1"
@@ -21906,6 +21922,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"multimath@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "multimath@npm:2.0.0"
+  dependencies:
+    glur: "npm:^1.1.2"
+    object-assign: "npm:^4.1.1"
+  checksum: 10/4e795c8a5d73e8c8c60a0575f08aa75f9cd4dc1acc90b7160388606e4571ac737e7ece12912153ca375318749e3fc429f85359f5be2dc8a86b1da63c4ccd5613
+  languageName: node
+  linkType: hard
+
 "mutationobserver-shim@npm:0.3.7":
   version: 0.3.7
   resolution: "mutationobserver-shim@npm:0.3.7"
@@ -23413,6 +23439,18 @@ __metadata:
   version: 2.1.0
   resolution: "performance-now@npm:2.1.0"
   checksum: 10/534e641aa8f7cba160f0afec0599b6cecefbb516a2e837b512be0adbe6c1da5550e89c78059c7fabc5c9ffdf6627edabe23eb7c518c4500067a898fa65c2b550
+  languageName: node
+  linkType: hard
+
+"pica@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "pica@npm:9.0.1"
+  dependencies:
+    glur: "npm:^1.1.2"
+    multimath: "npm:^2.0.0"
+    object-assign: "npm:^4.1.1"
+    webworkify: "npm:^1.5.0"
+  checksum: 10/5053c607c8aee02f22b43d97d102eb95da673b9080bb2d3973072d60dd849644093c0d3899afed4b5001a4742b5d504a833352adabfb0e4d33aa7b59448c1c4b
   languageName: node
   linkType: hard
 
@@ -30253,6 +30291,13 @@ __metadata:
   version: 0.1.4
   resolution: "websocket-extensions@npm:0.1.4"
   checksum: 10/b5399b487d277c78cdd2aef63764b67764aa9899431e3a2fa272c6ad7236a0fb4549b411d89afa76d5afd664c39d62fc19118582dc937e5bb17deb694f42a0d1
+  languageName: node
+  linkType: hard
+
+"webworkify@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "webworkify@npm:1.5.0"
+  checksum: 10/2ee5b8e418da45657544bfb397599d60abc009c59d1b92f73c46a6beb9a1e08d6fabab36cd823bc4e8da0c2e498b4cf883aa5d3704d98cafe1b5faa23b92ffcc
   languageName: node
   linkType: hard
 
