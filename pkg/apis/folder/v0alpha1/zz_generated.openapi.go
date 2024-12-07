@@ -226,7 +226,7 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref common.ReferenceCallback
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"items": {
+					"infoItems": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-map-keys": []interface{}{
