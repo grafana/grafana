@@ -123,7 +123,7 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	_, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
