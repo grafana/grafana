@@ -1,12 +1,17 @@
 package api
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -61,4 +66,70 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 
 	metrics.MApiLoginOAuth.Inc()
 	authn.HandleLoginRedirect(reqCtx.Req, reqCtx.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
+}
+
+func (hs *HTTPServer) CreateOAuthUser(reqCtx *contextmodel.ReqContext) {
+	var dto user.CreateUserCommand
+	if err := web.Bind(reqCtx.Req, &dto); err != nil {
+		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not valid DTO", err)
+		return
+	}
+
+	_, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "request failed on fetching user", err)
+		return
+	} else if err != nil {
+		_, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
+		if err != nil {
+			reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "user could not be created", err)
+			return
+		}
+	}
+
+	reqCtx.Resp.WriteHeader(http.StatusCreated)
+}
+
+type UpsertAuthInfoDTO struct {
+	AuthModule string
+	AuthId     string
+	UserId     int64
+}
+
+func (hs *HTTPServer) UpsertAuthInfo(reqCtx *contextmodel.ReqContext) {
+	var dto UpsertAuthInfoDTO
+	if err := web.Bind(reqCtx.Req, &dto); err != nil {
+		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not valid DTO", err)
+		return
+	}
+
+	ai, err := hs.authInfoService.GetAuthInfo(reqCtx.Req.Context(), &login.GetAuthInfoQuery{
+		UserId:     dto.UserId,
+		AuthId:     dto.AuthId,
+		AuthModule: dto.AuthModule,
+	})
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "auth info failed fetching", err)
+		return
+	}
+
+	if ai != nil {
+		err = hs.authInfoService.UpdateAuthInfo(reqCtx.Req.Context(), &login.UpdateAuthInfoCommand{
+			AuthModule: dto.AuthModule,
+			AuthId:     dto.AuthId,
+			UserId:     dto.UserId,
+		})
+	} else {
+		err = hs.authInfoService.SetAuthInfo(reqCtx.Req.Context(), &login.SetAuthInfoCommand{
+			AuthModule: dto.AuthModule,
+			AuthId:     dto.AuthId,
+			UserId:     dto.UserId,
+		})
+	}
+	if err != nil {
+		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "auth info failed upsert", err)
+		return
+	}
+
+	reqCtx.Resp.WriteHeader(http.StatusCreated)
 }
