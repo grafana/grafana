@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
-import { useStyles2, useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../..';
+import { useStyles2, useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
+import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from '../utils';
 
 import { FilterList } from './FilterList';
 import { TableStyles } from './styles';
-import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 interface Props {
   column: any;

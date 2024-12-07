@@ -9,8 +9,8 @@ import { Observable } from 'rxjs';
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
-import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { TableCell } from '@grafana/ui/src/components/Table/Cells/TableCell';
+import { useTableStyles } from '@grafana/ui/src/components/Table/TableRT/styles';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
