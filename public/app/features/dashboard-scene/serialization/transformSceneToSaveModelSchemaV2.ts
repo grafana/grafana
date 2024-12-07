@@ -248,7 +248,7 @@ function getElements(state: DashboardSceneState) {
 function getPanelLinks(panel: VizPanel): DataLink[] {
   const vizLinks = dashboardSceneGraph.getPanelLinks(panel);
   if (vizLinks) {
-    return (vizLinks.state.rawLinks as DataLink[]) ?? [];
+    return vizLinks.state.rawLinks ?? [];
   }
   return [];
 }
