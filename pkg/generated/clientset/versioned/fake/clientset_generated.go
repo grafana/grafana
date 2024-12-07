@@ -7,8 +7,6 @@ package fake
 import (
 	applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
-	fakenotificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1/fake"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1"
 	fakeservicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,11 +101,6 @@ var (
 	_ clientset.Interface = &Clientset{}
 	_ testing.FakeClient  = &Clientset{}
 )
-
-// NotificationsV0alpha1 retrieves the NotificationsV0alpha1Client
-func (c *Clientset) NotificationsV0alpha1() notificationsv0alpha1.NotificationsV0alpha1Interface {
-	return &fakenotificationsv0alpha1.FakeNotificationsV0alpha1{Fake: &c.Fake}
-}
 
 // ServiceV0alpha1 retrieves the ServiceV0alpha1Client
 func (c *Clientset) ServiceV0alpha1() servicev0alpha1.ServiceV0alpha1Interface {
