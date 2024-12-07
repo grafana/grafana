@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -56,16 +58,30 @@ export const DashboardPicker = ({
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
       const res = await getDashboardAPI().getDashboardDTO(value);
-      if (res.dashboard) {
+
+
+      if (isDashboardResource(res)) {
         setCurrent({
           value: {
-            uid: res.dashboard.uid,
-            title: res.dashboard.title,
-            folderTitle: res.meta.folderTitle,
-            folderUid: res.meta.folderUid,
+            uid: res.metadata.name,
+            title: res.spec.title,
+            folderTitle: res.metadata.annotations?.[AnnoKeyFolderTitle],
+            folderUid: res.metadata.annotations?.[AnnoKeyFolder],
           },
-          label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+          label: formatLabel(res.metadata.annotations?.[AnnoKeyFolder], res.spec.title),
         });
+      } else {
+        if (res.dashboard) {
+          setCurrent({
+            value: {
+              uid: res.dashboard.uid,
+              title: res.dashboard.title,
+              folderTitle: res.meta.folderTitle,
+              folderUid: res.meta.folderUid,
+            },
+            label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+          });
+        }
       }
     })();
     // we don't need to rerun this effect every time `current` changes

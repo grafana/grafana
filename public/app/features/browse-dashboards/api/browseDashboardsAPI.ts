@@ -6,11 +6,11 @@ import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runt
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
-  DashboardDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -261,14 +261,17 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
-          await getDashboardAPI().saveDashboard({
-            dashboard: fullDash.dashboard,
+          const options: SaveDashboardCommand = {
             folderUid: destinationUID,
             overwrite: false,
             message: '',
-          });
+            // TODO[schema v2]: save commmand should accept either v1 or v2
+            dashboard: ResponseTransformers.transformV2ToV1(dashDto).dashboard,
+          };
+
+          await getDashboardAPI().saveDashboard(options);
         }
 
         return { data: undefined };
