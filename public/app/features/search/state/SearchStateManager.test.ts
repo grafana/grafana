@@ -1,7 +1,8 @@
 import { DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { DashboardQueryResult, getGrafanaSearcher } from '../service';
+import { getGrafanaSearcher } from '../service/searcher';
+import { DashboardQueryResult } from '../service/types';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
