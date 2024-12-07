@@ -2771,7 +2771,7 @@ __metadata:
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
-    "@kusto/monaco-kusto": "npm:^10.0.0"
+    "@kusto/monaco-kusto": "npm:^12.0.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.0.1"
@@ -4549,34 +4549,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:11.5.3":
-  version: 11.5.3
-  resolution: "@kusto/language-service-next@npm:11.5.3"
-  checksum: 10/22b8944a3cc6916695f42e4a3fdf972525979c5bba1d9a59815e1cf5bd522635bfad04b2d76e0872ec8c7f042159e0858967c35d494a2ca28ee2c90eabf660b7
+"@kusto/language-service-next@npm:11.7.3":
+  version: 11.7.3
+  resolution: "@kusto/language-service-next@npm:11.7.3"
+  checksum: 10/441bebf625c431e71e3c226c261444c43a4a8a7a1034e46b83de51e9c7985086633f21182a7d2e027eea5c7726c68a31f325b0bf2b38e425a59fffc288192071
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.278":
-  version: 0.0.278
-  resolution: "@kusto/language-service@npm:0.0.278"
-  checksum: 10/5a84f169e2669feaa1cbc071ec12a154afe2b3a1adb9e3687d95d10a7087fd04d9c2238fb58f783a2cd320fffd6ace4c052caf63be563189f3aee9ad3a241395
+"@kusto/language-service@npm:0.0.279":
+  version: 0.0.279
+  resolution: "@kusto/language-service@npm:0.0.279"
+  checksum: 10/d75f5ab9a94ce95a4a5e1fdf766e70b2a270fbb243e1a9dc09e107ab0f8d62d2bd1c371e9b16962b67695d9a4d8d39a20a20ab507252543d298009dfc3c890a4
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:^10.0.0":
-  version: 10.0.22
-  resolution: "@kusto/monaco-kusto@npm:10.0.22"
+"@kusto/monaco-kusto@npm:^12.0.0":
+  version: 12.0.13
+  resolution: "@kusto/monaco-kusto@npm:12.0.13"
   dependencies:
-    "@kusto/language-service": "npm:0.0.278"
-    "@kusto/language-service-next": "npm:11.5.3"
+    "@kusto/language-service": "npm:0.0.279"
+    "@kusto/language-service-next": "npm:11.7.3"
     lodash-es: "npm:^4.17.21"
     vscode-languageserver-types: "npm:^3.17.4"
     xregexp: "npm:^5.1.1"
   peerDependencies:
-    monaco-editor: ^0.46.0
+    monaco-editor: 0.49.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 10/4d6393049e7efe9fbaf0ce1e4f902773ac8700dc27000335c128162b418df8187f81d34110ad5190dd520ed80e8bd738aef4e01371e35fc93b0906780451e02a
+  checksum: 10/b80bc47363baa8057f442a8d3d13b51f465b1e9966e4e6bed29c77b7e3ae75071f0f6c59ca8499c5ccf10e3de2447865d22a7ca97cc2a086286271115d5a18a4
   languageName: node
   linkType: hard
 
@@ -17213,7 +17213,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:17.0.0"
-    "@kusto/monaco-kusto": "npm:^10.0.0"
+    "@kusto/monaco-kusto": "npm:^12.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.17"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
