@@ -18,6 +18,7 @@ type Spec struct {
 
 	// Describe the feature toggle
 	Description string `json:"description,omitempty"`
+	Version     int    `json:"version,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
