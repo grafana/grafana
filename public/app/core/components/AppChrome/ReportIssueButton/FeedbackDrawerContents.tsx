@@ -1,3 +1,4 @@
+import pica from 'pica';
 import { ChangeEvent, useRef, MouseEvent, useEffect } from 'react';
 
 import { Button, InlineSwitch, Stack, TextArea, Field, Input } from '@grafana/ui';
@@ -42,12 +43,10 @@ export const DrawerContents = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDrawerOpen(false);
-    feedbackPlus
-      .capture()
-      .then(({ bitmap, width, height }: { bitmap: HTMLImageElement; width: number; height: number }) => {
-        setFormData({ ...formData, bitmap, width, height });
-        setIsScreenshotEditModalOpen(true);
-      });
+    feedbackPlus.capture().then(({ bitmap, width, height }: { bitmap: ImageBitmap; width: number; height: number }) => {
+      setFormData({ ...formData, bitmap, width, height });
+      setIsScreenshotEditModalOpen(true);
+    });
   };
 
   const onAccessChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +83,7 @@ export const DrawerContents = ({
         contactChecked: false,
         width: 0,
         height: 0,
-        bitmap: {} as HTMLImageElement,
+        bitmap: {} as ImageBitmap,
       });
     }
   };
@@ -95,22 +94,25 @@ export const DrawerContents = ({
     if (canvas && isCanvas(canvas) && formData.screenshot) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        const fixedWidth = 200;
-        const aspectRatio = formData.height / formData.width;
-        const proportionalHeight = fixedWidth * aspectRatio;
-        canvas.width = fixedWidth;
-        canvas.height = proportionalHeight;
+        // const fixedWidth = 200;
+        // const aspectRatio = formData.height / formData.width;
+        // const proportionalHeight = fixedWidth * aspectRatio;
+        // canvas.width = fixedWidth;
+        // canvas.height = proportionalHeight;
 
-        const image = new Image();
-        image.onload = function () {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(image, 0, 0, fixedWidth, proportionalHeight);
-        };
-        image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
+        // const image = new Image();
+        // image.onload = function () {
+        //   ctx.imageSmoothingEnabled = true;
+        //   ctx.imageSmoothingQuality = 'high';
+        //   ctx.drawImage(image, 0, 0, fixedWidth, proportionalHeight);
+        // };
+        // image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
+        canvas.width = formData.width;
+        canvas.height = formData.height;
+        pica().resize(formData.bitmap, canvas);
       }
     }
-  }, [formData.height, formData.imageType, formData.screenshot, formData.width]);
+  }, [formData.bitmap, formData.height, formData.imageType, formData.screenshot, formData.width]);
 
   return (
     <Stack direction={'column'}>
