@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,13 @@ type DualWriterMode3 struct {
 	*dualWriterMetrics
 	resource string
 	Log      klog.Logger
+}
+
+// Public version (used by dashboards v2 to force mode3)
+func NewDualWriterMode3(legacy LegacyStorage, storage Storage, reg prometheus.Registerer, resource string) *DualWriterMode3 {
+	metrics := &dualWriterMetrics{}
+	metrics.init(reg)
+	return newDualWriterMode3(legacy, storage, metrics, resource)
 }
 
 // newDualWriterMode3 returns a new DualWriter in mode 3.
