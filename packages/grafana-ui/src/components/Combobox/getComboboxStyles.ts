@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { tempThemeExtras } from './themeExtras';
+
 // We need a px font size to accurately measure the width of items.
 // This should be in sync with the body font size in the theme.
 export const MENU_ITEM_FONT_SIZE = 14;
@@ -21,10 +23,16 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menu: css({
       label: 'combobox-menu',
       background: theme.components.dropdown.background,
-      boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
       position: 'relative',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: tempThemeExtras.controlMenuBorderRadius,
+      border: `1px solid ${theme.colors.border.medium}`,
+
+      boxShadow: tempThemeExtras.dropShadow,
+      padding: tempThemeExtras.menuOptionGap,
+
+      // shitty hacky workaround just to get the vibe of the changes
+      overflow: 'clip',
     }),
     menuUlContainer: css({
       label: 'combobox-menu-ul-container',
@@ -42,6 +50,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       overflow: 'hidden',
       cursor: 'pointer',
+      borderRadius: tempThemeExtras.controlOptionBorderRadius,
+
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {

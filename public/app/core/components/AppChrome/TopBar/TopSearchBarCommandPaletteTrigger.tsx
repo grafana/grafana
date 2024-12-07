@@ -10,8 +10,10 @@ import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
+import { useCommandPalette } from 'app/features/command-palette-2/context';
 
 export function TopSearchBarCommandPaletteTrigger() {
+  const ctx = useCommandPalette();
   const theme = useTheme2();
   const isSingleTopNav = config.featureToggles.singleTopNav;
   const { query: kbar } = useKBar((kbarState) => ({
@@ -31,7 +33,7 @@ export function TopSearchBarCommandPaletteTrigger() {
   });
 
   const onOpenSearch = () => {
-    kbar.toggle();
+    ctx.toggle();
   };
 
   if (isSmallScreen) {
