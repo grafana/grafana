@@ -11,7 +11,9 @@ describe('toUrlParams', () => {
       isNull: null,
       isUndefined: undefined,
     });
-    expect(url).toBe('server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=');
+    expect(url).toBe(
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined='
+    );
   });
   it('should encode the same way as angularjs', () => {
     const url = urlUtil.toUrlParams({
@@ -45,7 +47,7 @@ describe('toUrlParams', () => {
       oneMore: false,
     });
     expect(params).toBe(
-      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=&oneMore=false'
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined=&oneMore=false'
     );
   });
 

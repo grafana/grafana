@@ -63,7 +63,7 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
     if (typeof v !== 'boolean') {
       s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
     } else {
-      const valueQueryPart = v ? (k === 'true' ? '' : '=true') : '=' + encodingFunction('false', true);
+      const valueQueryPart = v ? '=true' : '=' + encodingFunction('false', true);
       s[s.length] = encodingFunction(k, true) + valueQueryPart;
     }
   };
