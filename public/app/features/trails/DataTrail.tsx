@@ -176,11 +176,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
         // fresh check for otel experience
         this.checkDataSourceForOTelResources();
-        // clear filters on resetting the data source
-        const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-        if (adhocVariable instanceof AdHocFiltersVariable) {
-          adhocVariable.setState({ filters: [] });
-        }
       }
 
       // update otel variables when changed
