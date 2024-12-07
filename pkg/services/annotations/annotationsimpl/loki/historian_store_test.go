@@ -898,11 +898,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "loki",
 			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiOnly,
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
+			features := featuremgmt.WithFeatures()
 			use := useStore(cfg, features)
 			require.True(t, use)
 		})
