@@ -148,7 +148,3 @@ func (b *DatasetAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, 
 func (b *DatasetAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return dataset.GetOpenAPIDefinitions
 }
-
-func (b *DatasetAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
