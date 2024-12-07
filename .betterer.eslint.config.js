@@ -6,6 +6,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const reactRefresh = require('eslint-plugin-react-refresh');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
@@ -109,6 +110,16 @@ module.exports = [
     ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
+    },
+  },
+  {
+    name: 'grafana/alerting-betterer',
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    plugins: {
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      'react-refresh/only-export-components': 'error',
     },
   },
 ];
