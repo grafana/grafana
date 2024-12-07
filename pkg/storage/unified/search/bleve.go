@@ -2,7 +2,6 @@ package search
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -447,9 +446,6 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 			Desc: false,
 		})
 	}
-
-	jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
-	fmt.Printf("SORT: %+v\n", string(jj))
 
 	return searchrequest, nil
 }
