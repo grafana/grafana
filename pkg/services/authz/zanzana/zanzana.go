@@ -13,6 +13,7 @@ import (
 const (
 	TypeUser           = common.TypeUser
 	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
 	TypeTeam           = common.TypeTeam
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder

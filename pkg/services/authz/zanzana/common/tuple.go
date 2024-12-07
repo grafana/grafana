@@ -12,6 +12,7 @@ import (
 const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"
+	TypeRenderService  string = "render"
 	TypeTeam           string = "team"
 	TypeRole           string = "role"
 	TypeFolder         string = "folder"
@@ -66,6 +67,8 @@ var FolderRelations = append(
 	RelationFolderResourcePermissionsRead,
 	RelationFolderResourcePermissionsWrite,
 )
+
+const RenderUser string = "render:0"
 
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
@@ -244,4 +247,19 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 		result = append(result, ToOpenFGATuple(t))
 	}
 	return result
+}
+
+func AddRenderContext(req *openfgav1.CheckRequest) {
+	if req.ContextualTuples == nil {
+		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
+	}
+	if req.ContextualTuples.TupleKeys == nil {
+		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
+	}
+
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
+		User:     RenderUser,
+		Relation: "view",
+		Object:   NewNamespaceResourceIdent("dashboard.grafana.app", "dashboards"),
+	})
 }
