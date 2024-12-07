@@ -7,6 +7,7 @@ export const GRAFANA_ONCALL_INTEGRATION_TYPE = 'grafana_alerting';
 
 export enum ReceiverTypes {
   OnCall = 'oncall',
+  OnCallEscalationChain = 'oncall-ng',
 }
 
 export const isInOnCallIntegrations = (url: string, integrationsUrls: string[]) => {

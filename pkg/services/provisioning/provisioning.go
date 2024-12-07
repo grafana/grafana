@@ -271,7 +271,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.alertingStore,
 		ps.alertingStore,
 		ps.folderService,
-		//ps.dashboardService,
+		// ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -292,6 +292,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		ps.resourcePermissions,
 		ps.tracer,
+		nil, // TODO Figure out if we need plugin context provider here
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)

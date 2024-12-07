@@ -71,7 +71,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	ng, err := ngalert.ProvideService(
 		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), nil,
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{
