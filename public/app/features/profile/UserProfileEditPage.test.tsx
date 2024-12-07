@@ -1,14 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
-import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
+import { OrgRole, PluginExtensionComponent, PluginExtensionTypes, TeamPermissionLevel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
 import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
-import { TeamPermissionLevel } from '../../types';
 import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
