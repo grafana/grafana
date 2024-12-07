@@ -216,10 +216,10 @@ describe('AlertingQueryRunner', () => {
     });
   });
 
-  it('should skip hidden queries', async () => {
+  it('should skip hidden queries and descendant nodes', async () => {
     const results = createFetchResponse<AlertingQueryResponse>({
       results: {
-        B: { frames: [createDataFrameJSON([1, 2, 3])] },
+        C: { frames: [createDataFrameJSON([1, 2, 3])] },
       },
     });
 
@@ -239,7 +239,17 @@ describe('AlertingQueryRunner', () => {
             hide: true,
           },
         }),
-        createQuery('B'),
+        createQuery('B', {
+          model: {
+            expression: 'A', // depends on A
+            refId: 'B',
+          },
+        }),
+        createQuery('C', {
+          model: {
+            refId: 'C',
+          },
+        }),
       ],
       'B'
     );
@@ -248,7 +258,8 @@ describe('AlertingQueryRunner', () => {
       const [loading, _data] = values;
 
       expect(loading.A).toBeUndefined();
-      expect(loading.B.state).toEqual(LoadingState.Done);
+      expect(loading.B).toBeUndefined();
+      expect(loading.C.state).toEqual(LoadingState.Done);
     });
   });
 });
