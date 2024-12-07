@@ -46,12 +46,12 @@
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
     "@types/node": "20.16.15",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.2.25",
+    "@types/react": "19.0.1",
+    "@types/react-dom": "19.0.1",
     "esbuild": "0.24.0",
     "prettier": "3.3.3",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
@@ -61,7 +61,7 @@
     "typescript": "5.5.4"
   },
   "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
+    "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
   }
 }
