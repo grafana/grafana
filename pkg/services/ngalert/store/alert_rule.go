@@ -619,6 +619,51 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return f[0], nil
 }
 
+// GetNamespaceByFullpath gets namespace by its fullpath.
+func (st DBstore) GetNamespaceByFullpath(ctx context.Context, fullpath string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		WithFullpath: true,
+		SignedInUser: user,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, folder := range folders {
+		if folder.Fullpath == fullpath {
+			return folder, nil
+		}
+	}
+
+	return nil, dashboards.ErrFolderNotFound
+}
+
+// GetOrCreateNamespaceByTitle gets or creates a namespace by title in the _root_ folder.
+func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	var f *folder.Folder
+	var err error
+
+	f, err = st.GetNamespaceByFullpath(ctx, title, orgID, user)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
+		return nil, err
+	}
+
+	if f == nil {
+		cmd := &folder.CreateFolderCommand{
+			OrgID:        orgID,
+			Title:        title,
+			SignedInUser: user,
+		}
+		f, err = st.FolderService.Create(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
+
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {

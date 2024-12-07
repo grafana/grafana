@@ -258,6 +258,40 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:       rand.Int63(), // nolint:staticcheck
+		UID:      util.GenerateShortUID(),
+		Title:    title,
+		Fullpath: "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder, nil
+}
+
+func (f *RuleStore) GetNamespaceByFullpath(ctx context.Context, fullpath string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.Fullpath == fullpath {
+			return folder, nil
+		}
+	}
+
+	return nil, fmt.Errorf("namespace with fullpath '%s' not found", fullpath)
+}
+
 func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -269,15 +303,17 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 }
 
 func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	for _, rule := range q {
+		if rule.UID == "" {
+			rule.UID = util.GenerateShortUID()
+		}
 		ids = append(ids, models.AlertRuleKeyWithId{
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
 		})
+		f.PutRule(context.Background(), &rule)
 	}
 	if err := f.Hook(q); err != nil {
 		return ids, err

@@ -22,13 +22,16 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana Paths
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
-		http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+		http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}",
+		http.MethodDelete + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}",
+		http.MethodDelete + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
-	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
+		http.MethodGet + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
@@ -39,7 +42,8 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))),
 		)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
-		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
+		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules",
+		http.MethodGet + "/api/ruler/grafana/prometheus/config/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}":
 		eval = ac.EvalAll(
@@ -52,9 +56,21 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
 		)
-	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}",
+		http.MethodPost + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
+			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
+				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
+			),
+		)
+	case http.MethodPost + "/api/ruler/{DatasourceUID}/api/v1/rules/convert":
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID"))
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
