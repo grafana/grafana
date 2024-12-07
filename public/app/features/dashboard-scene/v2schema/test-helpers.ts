@@ -4,6 +4,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneDataTransformer,
+  SceneObject,
   SceneQueryRunner,
   SceneVariable,
   SceneVariableState,
@@ -12,6 +13,7 @@ import {
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks } from '../scene/PanelLinks';
 import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -82,6 +84,10 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   expect(queryRunner.state.cacheTimeout).toBe('1m');
   expect(queryRunner.state.queryCachingTTL).toBe(60);
   expect(queryRunner.state.minInterval).toBe('1m');
+  const titleItems = vizPanel.state.titleItems as SceneObject[];
+  const vizPanelLinks = titleItems[0] as VizPanelLinks;
+  expect(vizPanelLinks.state.rawLinks).toHaveLength(dash.elements['test-panel-uid'].spec.links.length);
+  expect(vizPanelLinks.state.rawLinks).toEqual(dash.elements['test-panel-uid'].spec.links);
   // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
   // will be fixed once scenes package is updated to support string panel ID
   // expect(queryRunner.state.dataLayerFilter?.panelId).toBe(0);
