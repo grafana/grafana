@@ -202,7 +202,7 @@ jobs:
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+            const { default: script } = await import ('${{ github.workspace }}/.github/workflows/scripts/json-file-to-job-output.js')
             await script({ core, filePath });
 
       # Check if label exists

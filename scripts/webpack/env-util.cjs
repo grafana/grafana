@@ -2,6 +2,8 @@ const { parse } = require('ini');
 const { readFileSync, existsSync } = require('node:fs');
 const path = require('path');
 
+const initialValue = {};
+
 const getEnvConfig = () => {
   const grafanaRoot = path.join(__dirname, '../..');
   const defaultSettings = readFileSync(`${grafanaRoot}/conf/defaults.ini`, {
@@ -25,7 +27,7 @@ const getEnvConfig = () => {
       ...acc,
       [`frontend_dev_${key}`]: value,
     };
-  }, {});
+  }, initialValue);
 };
 
 module.exports = getEnvConfig;

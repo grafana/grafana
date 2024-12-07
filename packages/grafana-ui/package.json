@@ -38,9 +38,7 @@
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js"
   },
   "browserslist": [
     "defaults",

@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 
 import {
   textUtil,

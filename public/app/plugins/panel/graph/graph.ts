@@ -8,7 +8,7 @@ import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
-import $ from 'jquery';
+import 'jquery';
 import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
 import { createElement } from 'react';
 import { createRoot, Root } from 'react-dom/client';

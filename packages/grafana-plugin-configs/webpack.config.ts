@@ -227,6 +227,8 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
 
     stats: 'minimal',
 
+    target: 'web',
+
     watchOptions: {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
