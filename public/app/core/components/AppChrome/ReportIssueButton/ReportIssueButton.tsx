@@ -81,8 +81,11 @@ export const ReportIssueButton = () => {
 
 /*
   TODO:
-  - make this file easier to look at without crying, add prop types, fix "any" types
-    - move the complicated annotation logic to a separate file and link to feedbackplus
+  - fix "any" types
+  - move the complicated annotation logic to a separate file
+  - add tests
+  - uninstall html2canvas since we're not using it anymore
+  - we're saving the screenshot data in state as a string, and as a bitmap, probably we should just use bitmap and convert it when we make the network request
   - add a highlight feature
   - let user make multiple edits to a screenshot (you can kind of do this already by saving and editing multiple times)
 */

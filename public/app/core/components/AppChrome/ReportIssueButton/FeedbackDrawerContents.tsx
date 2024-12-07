@@ -94,19 +94,6 @@ export const DrawerContents = ({
     if (canvas && isCanvas(canvas) && formData.screenshot) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // const fixedWidth = 200;
-        // const aspectRatio = formData.height / formData.width;
-        // const proportionalHeight = fixedWidth * aspectRatio;
-        // canvas.width = fixedWidth;
-        // canvas.height = proportionalHeight;
-
-        // const image = new Image();
-        // image.onload = function () {
-        //   ctx.imageSmoothingEnabled = true;
-        //   ctx.imageSmoothingQuality = 'high';
-        //   ctx.drawImage(image, 0, 0, fixedWidth, proportionalHeight);
-        // };
-        // image.src = 'data:image/' + formData.imageType + ';base64,' + formData.screenshot;
         canvas.width = formData.width;
         canvas.height = formData.height;
         pica().resize(formData.bitmap, canvas);
