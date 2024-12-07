@@ -8,7 +8,9 @@ import {
   CustomVariable,
   SceneComponentProps,
   SceneObjectBase,
+  SceneObjectState,
   TextBoxVariable,
+  VariableDependencyConfig,
   VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
@@ -489,14 +491,57 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+export interface HistoryEventsListObjectState extends SceneObjectState {
+  valueInLabelFilter: VariableValue;
+  valueInStateToFilter: VariableValue;
+  valueInStateFromFilter: VariableValue;
+}
+
 /**
  * This is a scene object that displays a list of history events.
  */
 
-export class HistoryEventsListObject extends SceneObjectBase {
+export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsListObjectState> {
   public static Component = HistoryEventsListObjectRenderer;
-  public constructor() {
-    super({});
+  private _onAnyVariableChanged(): void {
+    this.forceRender();
+  }
+  public _onActivate() {
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, this);
+    if (stateToFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateToFilter: stateToFilterVariable.state.value });
+      this._subs.add(
+        stateToFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateToFilter: newState.value });
+        })
+      );
+    }
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, this);
+    if (stateFromFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateFromFilter: stateFromFilterVariable.state.value });
+      this._subs.add(
+        stateFromFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateFromFilter: newState.value });
+        })
+      );
+    }
+    const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, this);
+    if (labelsFilterVariable instanceof TextBoxVariable) {
+      this.setState({ ...this.state, valueInLabelFilter: labelsFilterVariable.state.value });
+      this._subs.add(
+        labelsFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInLabelFilter: newState.value });
+        })
+      );
+    }
+  }
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
+    onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
+  });
+  public constructor(state: HistoryEventsListObjectState) {
+    super(state);
+    this.addActivationHandler(this._onActivate.bind(this));
   }
 }
 
@@ -504,6 +549,7 @@ export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
+
   // eslint-disable-next-line
   const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
   // eslint-disable-next-line
@@ -511,21 +557,28 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
   // eslint-disable-next-line
   const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
 
-  const valueInfilterTextBox: VariableValue = labelsFiltersVariable.getValue();
-  const valueInStateToFilter = stateToFilterVariable.getValue();
-  const valueInStateFromFilter = stateFromFilterVariable.getValue();
+  const labelsFiltersVariableState = model.useState().valueInLabelFilter;
+  const stateToFilterVariableState = model.useState().valueInStateToFilter;
+  const stateFromFilterVariableState = model.useState().valueInStateFromFilter;
+
+  const valueInfilterTextBox = labelsFiltersVariableState;
+  const valueInStateToFilter = stateToFilterVariableState;
+  const valueInStateFromFilter = stateFromFilterVariableState;
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
     trackUseCentralHistoryFilterByClicking({ type, key, value });
     if (type === 'stateTo') {
+      model.setState({ ...model.state, valueInStateToFilter: value });
       stateToFilterVariable.changeValueTo(value);
     }
     if (type === 'stateFrom') {
+      model.setState({ ...model.state, valueInStateFromFilter: value });
       stateFromFilterVariable.changeValueTo(value);
     }
     const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
     if (type === 'label') {
+      model.setState({ ...model.state, valueInLabelFilter: finalFilter });
       labelsFiltersVariable.setValue(finalFilter);
     }
   };

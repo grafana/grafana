@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import {
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
+  SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneObjectBase,
+  SceneObjectState,
   SceneQueryRunner,
   SceneReactObject,
   SceneRefreshPicker,
@@ -16,7 +19,9 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   TextBoxVariable,
+  VariableValue,
   VariableValueSelectors,
+  sceneGraph,
   useUrlSync,
 } from '@grafana/scenes';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
@@ -39,7 +44,7 @@ import { LogMessages, logInfo } from '../../../Analytics';
 import { DataSourceInformation } from '../../../home/Insights';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
-import { HistoryEventsListObject } from './EventListSceneObject';
+import { HistoryEventsListObject, HistoryEventsListObjectState } from './EventListSceneObject';
 
 export const LABELS_FILTER = 'labelsFilter';
 export const STATE_FILTER_TO = 'stateFilterTo';
@@ -67,74 +72,77 @@ export const CentralAlertHistoryScene = () => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
   }, []);
 
-  // create the variables for the filters
-  // textbox variable for filtering by labels
-  const labelsFilterVariable = new TextBoxVariable({
-    name: LABELS_FILTER,
-    label: 'Labels: ',
-  });
-  //custom variable for filtering by the current state
-  const transitionsToFilterVariable = new CustomVariable({
-    name: STATE_FILTER_TO,
-    value: StateFilterValues.all,
-    label: 'End state:',
-    hide: VariableHide.dontHide,
-    query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
-  });
-  //custom variable for filtering by the previous state
-  const transitionsFromFilterVariable = new CustomVariable({
-    name: STATE_FILTER_FROM,
-    value: StateFilterValues.all,
-    label: 'Start state:',
-    hide: VariableHide.dontHide,
-    query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
-  });
-
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
-  const scene = new EmbeddedScene({
-    controls: [
-      new SceneReactObject({
-        component: LabelFilter,
-      }),
-      new SceneReactObject({
-        component: FilterInfo,
-      }),
-      new VariableValueSelectors({}),
-      new SceneReactObject({
-        component: ClearFilterButton,
-        props: {
-          labelsFilterVariable,
-          transitionsToFilterVariable,
-          transitionsFromFilterVariable,
-        },
-      }),
-      new SceneControlsSpacer(),
-      new SceneTimePicker({}),
-      new SceneRefreshPicker({}),
-    ],
-    // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
-    // and using a wider time range might lead to showing gaps in the events list and the chart.
-    $timeRange: new SceneTimeRange({
-      from: 'now-1h',
-      to: 'now',
-    }),
-    $variables: new SceneVariableSet({
-      variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
-    }),
-    body: new SceneFlexLayout({
-      direction: 'column',
-      children: [
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getEventsSceneObject(alertStateHistoryDatasource),
+  const scene = useMemo(() => {
+    // create the variables for the filters
+    // textbox variable for filtering by labels
+    const labelsFilterVariable = new TextBoxVariable({
+      name: LABELS_FILTER,
+      label: 'Labels: ',
+    });
+
+    //custom variable for filtering by the current state
+    const transitionsToFilterVariable = new CustomVariable({
+      name: STATE_FILTER_TO,
+      value: StateFilterValues.all,
+      label: 'End state:',
+      hide: VariableHide.dontHide,
+      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
+    });
+    //custom variable for filtering by the previous state
+    const transitionsFromFilterVariable = new CustomVariable({
+      name: STATE_FILTER_FROM,
+      value: StateFilterValues.all,
+      label: 'Start state:',
+      hide: VariableHide.dontHide,
+      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
+    });
+    return new EmbeddedScene({
+      controls: [
+        new SceneReactObject({
+          component: LabelFilter,
         }),
-        new SceneFlexItem({
-          body: new HistoryEventsListObject(),
+        new SceneReactObject({
+          component: FilterInfo,
         }),
+        new VariableValueSelectors({}),
+        new ClearFilterButtonScenesObject({
+          valueInLabelFilter: labelsFilterVariable.getValue(),
+          valueInStateToFilter: transitionsToFilterVariable.getValue(),
+          valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
+        }),
+        new SceneControlsSpacer(),
+        new SceneTimePicker({}),
+        new SceneRefreshPicker({}),
       ],
-    }),
-  });
+      // use default time range as from 1 hour ago to now, as the limit of the history api is 5000 events,
+      // and using a wider time range might lead to showing gaps in the events list and the chart.
+      $timeRange: new SceneTimeRange({
+        from: 'now-1h',
+        to: 'now',
+      }),
+      $variables: new SceneVariableSet({
+        variables: [labelsFilterVariable, transitionsFromFilterVariable, transitionsToFilterVariable],
+      }),
+      body: new SceneFlexLayout({
+        direction: 'column',
+        children: [
+          new SceneFlexItem({
+            ySizing: 'content',
+            body: getEventsSceneObject(alertStateHistoryDatasource),
+          }),
+          new SceneFlexItem({
+            body: new HistoryEventsListObject({
+              valueInLabelFilter: labelsFilterVariable.getValue(),
+              valueInStateToFilter: transitionsToFilterVariable.getValue(),
+              valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
+            }),
+          }),
+        ],
+      }),
+    });
+  }, []);
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
 
@@ -218,6 +226,7 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       .build(),
   });
 }
+
 /*
  * This component shows a button to clear the filters.
  * It is shown when the filters are active.
@@ -226,33 +235,79 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
  * transitionsToFilterVariable: the custom variable for filtering by the current state
  * transitionsFromFilterVariable: the custom variable for filtering by the previous state
  */
+export interface ClearFilterButtonScenesObjectState extends SceneObjectState {
+  valueInLabelFilter: VariableValue;
+  valueInStateToFilter: VariableValue;
+  valueInStateFromFilter: VariableValue;
+}
 
-function ClearFilterButton({
-  labelsFilterVariable,
-  transitionsToFilterVariable,
-  transitionsFromFilterVariable,
-}: {
-  labelsFilterVariable: TextBoxVariable;
-  transitionsToFilterVariable: CustomVariable;
-  transitionsFromFilterVariable: CustomVariable;
-}) {
-  // get the current values of the filters
-  const valueInLabelsFilter = labelsFilterVariable.getValue();
-  //todo: use parsePromQLStyleMatcherLooseSafe to validate the label filter and check the lenghtof the result
-  const valueInTransitionsFilter = transitionsToFilterVariable.getValue();
-  const valueInTransitionsFromFilter = transitionsFromFilterVariable.getValue();
+export class ClearFilterButtonScenesObject extends SceneObjectBase<ClearFilterButtonScenesObjectState> {
+  public static Component = ClearFilterButtonObjectRenderer;
+
+  public _onActivate() {
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, this);
+    if (stateToFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateToFilter: stateToFilterVariable.state.value });
+      this._subs.add(
+        stateToFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateToFilter: newState.value });
+        })
+      );
+    }
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, this);
+    if (stateFromFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateFromFilter: stateFromFilterVariable.state.value });
+      this._subs.add(
+        stateFromFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateFromFilter: newState.value });
+        })
+      );
+    }
+    const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, this);
+    if (labelsFilterVariable instanceof TextBoxVariable) {
+      this.setState({ ...this.state, valueInLabelFilter: labelsFilterVariable.state.value });
+      this._subs.add(
+        labelsFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInLabelFilter: newState.value });
+        })
+      );
+    }
+  }
+
+  public constructor(state: HistoryEventsListObjectState) {
+    super(state);
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+}
+
+export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
+  // eslint-disable-next-line
+  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
+  // eslint-disable-next-line
+  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
+  // eslint-disable-next-line
+  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
+
+  const labelsFiltersVariableState = model.useState().valueInLabelFilter;
+  const stateToFilterVariableState = model.useState().valueInStateToFilter;
+  const stateFromFilterVariableState = model.useState().valueInStateFromFilter;
+
+  const valueInfilterTextBox = labelsFiltersVariableState;
+  const valueInStateToFilter = stateToFilterVariableState;
+  const valueInStateFromFilter = stateFromFilterVariableState;
+
   // if no filter is active, return null
   if (
-    !valueInLabelsFilter &&
-    valueInTransitionsFilter === StateFilterValues.all &&
-    valueInTransitionsFromFilter === StateFilterValues.all
+    !valueInfilterTextBox &&
+    valueInStateToFilter === StateFilterValues.all &&
+    valueInStateFromFilter === StateFilterValues.all
   ) {
     return null;
   }
   const onClearFilter = () => {
-    labelsFilterVariable.setValue('');
-    transitionsToFilterVariable.changeValueTo(StateFilterValues.all);
-    transitionsFromFilterVariable.changeValueTo(StateFilterValues.all);
+    labelsFiltersVariable.setValue('');
+    stateToFilterVariable.changeValueTo(StateFilterValues.all);
+    stateFromFilterVariable.changeValueTo(StateFilterValues.all);
   };
   return (
     <Tooltip content="Clear filter">
