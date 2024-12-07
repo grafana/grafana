@@ -68,3 +68,15 @@ func TestAddMetadataToMultiFrame(t *testing.T) {
 		assert.Equal(t, "yMin", result.Frames[0].Fields[1].Name)
 	})
 }
+
+func TestJsonParse(t *testing.T) {
+	t.Run("when you have non-json response", func(t *testing.T) {
+		qd := QueryData{exemplarSampler: exemplar.NewStandardDeviationSampler}
+		resBody := `<!DOCTYPE html><html lang="en-US"><body><div>Authentication error</div></body></html>`
+		res := &http.Response{Body: io.NopCloser(bytes.NewBufferString(resBody))}
+		result := qd.parseResponse(context.Background(), &models.Query{}, res)
+		assert.Error(t, result.Error)
+		assert.Len(t, result.Frames, 1)
+		assert.Nil(t, result.Frames[0].Fields)
+	})
+}
