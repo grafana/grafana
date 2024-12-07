@@ -15191,6 +15191,7 @@
             " googlechat",
             " kafka",
             " line",
+            " messagebird",
             " opsgenie",
             " pagerduty",
             " pushover",

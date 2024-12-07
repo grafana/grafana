@@ -85,6 +85,17 @@ type LineIntegration struct {
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
 }
 
+type MessageBirdIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	AccessKey Secret `json:"token" yaml:"token" hcl:"token"`
+
+	Originator *string  `json:"originator" yaml:"originator" hcl:"originator"`
+	Recipients []*string  `json:"recipients" yaml:"recipients" hcl:"recipients"`
+
+	Body *string `json:"body" yaml:"body" hcl:"body"`
+}
+
 type TLSConfig struct {
 	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
 	TLSCACertificate     *Secret `json:"caCertificate,omitempty" yaml:"caCertificate,omitempty" hcl:"ca_certificate"`
@@ -322,6 +333,7 @@ type ContactPoint struct {
 	Googlechat   []GooglechatIntegration   `json:"googlechat" yaml:"googlechat" hcl:"googlechat,block"`
 	Kafka        []KafkaIntegration        `json:"kafka" yaml:"kafka" hcl:"kafka,block"`
 	Line         []LineIntegration         `json:"line" yaml:"line" hcl:"line,block"`
+	MessageBird  []MessageBirdIntegration  `json:"messagebird" yaml:"messagebird" hcl:"messagebird,block"`
 	Mqtt         []MqttIntegration         `json:"mqtt" yaml:"mqtt" hcl:"mqtt,block"`
 	Opsgenie     []OpsgenieIntegration     `json:"opsgenie" yaml:"opsgenie" hcl:"opsgenie,block"`
 	Pagerduty    []PagerdutyIntegration    `json:"pagerduty" yaml:"pagerduty" hcl:"pagerduty,block"`
