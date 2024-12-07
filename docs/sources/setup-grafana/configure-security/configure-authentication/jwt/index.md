@@ -199,7 +199,8 @@ expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 
 Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `None`, `Viewer`, `Editor` or `Admin`.
 
-The organization that the role is assigned to can be configured using the `X-Grafana-Org-Id` header.
+To assign the role to a specific organization include the `X-Grafana-Org-Id` header along with your JWT when making API requests to Grafana.
+To learn more about the header, please refer to the [documentation]({{< relref "../../../../developers/http_api#x-grafana-org-id-header" >}}).
 
 ### JMESPath examples
 
