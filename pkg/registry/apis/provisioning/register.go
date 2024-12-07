@@ -193,6 +193,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		resourceClient: b.client,
 		logger:         b.logger.With("connector", "webhook"),
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
+		getter: b,
+		logger: b.logger.With("connector", "test"),
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
@@ -232,7 +236,10 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
 	}
+	return b.AsRepository(ctx, r)
+}
 
+func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
@@ -461,7 +468,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	}
 
 	// Reserved names (for now)
-	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file"}
+	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file", "new", "create", "update", "delete"}
 	if slices.Contains(reserved, cfg.Name) {
 		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
 	}
@@ -506,6 +513,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
 
 	// TODO: we might want to register some extras for subresources here.
 	sub := oas.Paths.Paths[repoprefix+"/hello"]
@@ -520,6 +528,23 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 					Description: "Who should get the nice greeting?",
 					Schema:      spec.StringProperty(),
 					Required:    false,
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/test"]
+	if sub != nil {
+		repoSchema := defs[defsBase+"Repository"].Schema
+		sub.Post.Description = "Check if the configuration is valid"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": &spec3.MediaType{
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &repoSchema,
+						},
+					},
 				},
 			},
 		}
@@ -591,7 +616,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList"].Schema
+		s := defs[defsBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 

@@ -1,17 +1,19 @@
+import { Resource } from 'app/features/apiserver/types';
+
 import { baseAPI as api } from './baseAPI';
 import {
   RepositoryList,
   RepositoryResource,
   RequestArg,
   UpdateRequestArg,
-  HelloWorld,
   RepositoryForCreate,
-  WebhookResponse,
   ResourceWrapper,
   FileOperationArg,
   GetFileArg,
   ListFilesApiResponse,
   HistoryListResponse,
+  TestResponse,
+  RepositorySpec,
 } from './types';
 
 const BASE_PATH = '/repositories';
@@ -105,12 +107,6 @@ const injectedRtkApi = api.injectEndpoints({
         method: 'DELETE',
       }),
     }),
-    getRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
-      query: ({ name, whom }) => ({
-        url: `${BASE_PATH}/${name}/hello`,
-        params: { whom },
-      }),
-    }),
     createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref?: string }>({
       query: ({ name, ref }) => ({
         url: `${BASE_PATH}/${name}/import`,
@@ -138,14 +134,15 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
     }),
-    getRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
+    testRepository: build.query<TestResponse, { name: string;}>({
       query: ({ name }) => ({
-        url: `${BASE_PATH}/${name}/webhook`,
+        url: `${BASE_PATH}/${name}/test`,
+        method: 'POST', // tests the existing configuration
       }),
     }),
-    createRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
-      query: ({ name }) => ({
-        url: `${BASE_PATH}/${name}/webhook`,
+    testRepositoryConfig: build.mutation<TestResponse, Resource<RepositorySpec>>({
+      query: ({ metadata }) => ({
+        url: `${BASE_PATH}/${metadata.name ?? 'new'}/test`,
         method: 'POST',
       }),
     }),
@@ -169,11 +166,10 @@ export const {
   useUpdateRepositoryFilesMutation,
   useCreateRepositoryFilesMutation,
   useDeleteRepositoryFilesMutation,
-  useGetRepositoryHelloQuery,
   useCreateRepositoryImportMutation,
   useGetRepositoryStatusQuery,
   useUpdateRepositoryStatusMutation,
   usePatchRepositoryStatusMutation,
-  useGetRepositoryWebhookQuery,
-  useCreateRepositoryWebhookMutation,
+  useTestRepositoryQuery,
+  useTestRepositoryConfigMutation,
 } = injectedRtkApi;
