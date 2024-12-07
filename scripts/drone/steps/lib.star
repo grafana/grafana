@@ -914,6 +914,25 @@ def playwright_e2e_tests_step():
         ],
     }
 
+def bench_frontend_tests_step():
+    return {
+        "environment": {
+            "GRAFANA_URL": "http://grafana-server:3001",
+            "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
+        },
+        "name": "bench-playwright-plugin-e2e",
+        "image": images["node_deb"],
+        "depends_on": [
+            "grafana-server",
+            "build-test-plugins",
+        ],
+        "commands": [
+            "npx wait-on@7.0.1 $GRAFANA_URL",
+            "yarn playwright install --with-deps chromium",
+            "cd bench/frontend && yarn playwright test",
+        ],
+    }
+
 def build_docs_website_step():
     return {
         "name": "build-docs-website",

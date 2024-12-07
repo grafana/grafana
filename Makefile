@@ -440,7 +440,7 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 .PHONY: drone
-drone: $(DRONE)
+drone: $(DRONE) format-drone
 	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
