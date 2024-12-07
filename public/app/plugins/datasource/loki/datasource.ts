@@ -42,6 +42,7 @@ import {
   LogsSampleOptions,
   QueryVariableModel,
   CustomVariableModel,
+  DataSourceWithLabelTypeSupport,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -142,7 +143,8 @@ export class LokiDatasource
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>,
     DataSourceWithToggleableQueryFiltersSupport<LokiQuery>,
-    DataSourceWithQueryModificationSupport<LokiQuery>
+    DataSourceWithQueryModificationSupport<LokiQuery>,
+    DataSourceWithLabelTypeSupport
 {
   private streams = new LiveStreams();
   private logContextProvider: LogContextProvider;
@@ -1209,6 +1211,19 @@ export class LokiDatasource
       ...defaults,
       queryType: LokiQueryType.Range,
     };
+  }
+
+  getNameForLabelType(labelType: string) {
+    switch (labelType) {
+      case 'I':
+        return 'Indexed';
+      case 'S':
+        return 'Structured metadata';
+      case 'P':
+        return 'Parsed label';
+      default:
+        return null;
+    }
   }
 }
 

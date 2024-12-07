@@ -14,7 +14,10 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  DataSourceWithLabelTypeSupport,
 } from '@grafana/data';
+
+import { getDatasourceSrv } from '../plugins/datasource_srv';
 
 import { getDataframeFields } from './components/logParser';
 
@@ -342,4 +345,50 @@ export function createLogRowsMap() {
     logRowsSet.add(id);
     return false;
   };
+}
+
+function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  return typeField[labelKey] ?? null;
+}
+
+export async function getLabelTypeFromRow(label: string, row: LogRowModel) {
+  if (!row.datasourceType) {
+    return null;
+  }
+  const idField = row.dataFrame.fields.find((field) => field.name === 'id');
+  if (!idField) {
+    return null;
+  }
+  const rowIndex = idField.values.findIndex((id) => id === row.rowId);
+  if (rowIndex < 0) {
+    return null;
+  }
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame, rowIndex);
+  if (!labelType) {
+    return null;
+  }
+  return resolveDataSourceLabelType(labelType, row.datasourceType);
+}
+
+async function resolveDataSourceLabelType(labelType: string, datasourceType: string) {
+  const datasourceSrv = getDatasourceSrv();
+  const dsList = datasourceSrv.getList();
+  const dsSettings = dsList.find((ds) => ds.type === datasourceType);
+  if (!dsSettings) {
+    return null;
+  }
+  const dsInstance = await datasourceSrv.get(dsSettings.uid);
+  if (!dsInstance) {
+    return null;
+  }
+
+  return supportsNameForLabelType(dsInstance) ? dsInstance.getNameForLabelType(labelType) : null;
+}
+
+function supportsNameForLabelType(dsInstance: unknown): dsInstance is DataSourceWithLabelTypeSupport {
+  return typeof dsInstance === 'object' && dsInstance != null && 'getNameForLabelType' in dsInstance;
 }
