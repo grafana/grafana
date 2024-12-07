@@ -3,7 +3,15 @@ package template_group
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
+	tmplhtml "html/template"
+	"slices"
+	"strings"
+	tmpltext "text/template"
+	"unsafe"
 
+	"github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/template"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -74,13 +83,27 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	defaultTemplate, err := s.defaultTemplate()
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToK8sResources(orgId, append([]definitions.NotificationTemplate{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
+
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if name == DefaultTemplateName || name == legacy_storage.NameToUid(DefaultTemplateName) {
+		dto, err := s.defaultTemplate()
+		if err != nil {
+			return nil, err
+		}
+		return convertToK8sResource(info.OrgID, dto, s.namespacer), nil
 	}
 
 	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
@@ -110,6 +133,9 @@ func (s *legacyStorage) Create(ctx context.Context,
 	}
 	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
+	}
+	if p.Spec.Title == DefaultTemplateName {
+		return nil, errors.NewBadRequest(fmt.Sprintf("template name '%s' is reserved", DefaultTemplateName))
 	}
 	out, err := s.service.CreateTemplate(ctx, info.OrgID, convertToDomainModel(p))
 	if err != nil {
@@ -153,6 +179,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 
+	if p.Spec.Title == DefaultTemplateName {
+		return nil, false, errors.NewBadRequest(fmt.Sprintf("template name '%s' is reserved", DefaultTemplateName))
+	}
+
 	domainModel := convertToDomainModel(p)
 	updated, err := s.service.UpdateTemplate(ctx, info.OrgID, domainModel)
 	if err != nil {
@@ -184,4 +214,63 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
 	return old, false, err                                                                                        // false - will be deleted async
+}
+
+func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
+	defaultTemplate, err := DefaultTemplate()
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	dto := definitions.NotificationTemplate{
+		Name:            DefaultTemplateName,
+		UID:             legacy_storage.NameToUid(DefaultTemplateName),
+		Provenance:      definitions.Provenance("system"),
+		Template:        defaultTemplate.Template,
+		ResourceVersion: calculateTemplateFingerprint(defaultTemplate.Template),
+	}
+
+	return dto, nil
+}
+
+// TODO: Copy of provisioning.calculateTemplateFingerprint.
+func calculateTemplateFingerprint(t string) string {
+	sum := fnv.New64()
+	_, _ = sum.Write(unsafe.Slice(unsafe.StringData(t), len(t))) //nolint:gosec
+	return fmt.Sprintf("%016x", sum.Sum64())
+}
+
+var DefaultTemplateName = "__default__" // TODO: Move to grafana/alerting.
+
+// DefaultTemplate returns a new Template with all default templates parsed. TODO: Move to grafana/alerting.
+func DefaultTemplate(options ...template.Option) (templates.TemplateDefinition, error) {
+	// Capture the underlying text template to create the combined template string. We cannot simply append the text
+	// of each default together as there can (and are) overlapping template names which override.
+	var newTextTmpl *tmpltext.Template
+	var captureTemplate template.Option = func(text *tmpltext.Template, _ *tmplhtml.Template) {
+		newTextTmpl = text
+	}
+
+	// Call FromContent without any user-provided templates to get the combined default template.
+	_, err := templates.FromContent(nil, captureTemplate)
+	if err != nil {
+		return templates.TemplateDefinition{}, err
+	}
+
+	var combinedTemplate strings.Builder
+	tmpls := newTextTmpl.Templates()
+	// sort for a consistent order.
+	slices.SortFunc(tmpls, func(a, b *tmpltext.Template) int {
+		return strings.Compare(a.Name(), b.Name())
+	})
+	for _, tmpl := range tmpls {
+		if tmpl.Name() != "" {
+			// Recreate the "define" blocks for all templates. Would be nice to have a more direct way to do this.
+			combinedTemplate.WriteString(fmt.Sprintf("{{ define \"%s\" }}%s{{ end }}\n\n", tmpl.Name(), tmpl.Tree.Root.String()))
+		}
+	}
+	return templates.TemplateDefinition{
+		Name:     DefaultTemplateName,
+		Template: combinedTemplate.String(),
+	}, nil
 }
