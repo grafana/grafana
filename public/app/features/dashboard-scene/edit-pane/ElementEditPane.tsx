@@ -1,21 +1,16 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
-
-import { DummySelectedObject } from './DummySelectedObject';
+import { EditableDashboardElement } from '../scene/types';
 
 export interface Props {
-  obj: SceneObject;
+  element: EditableDashboardElement;
 }
 
-export function ElementEditPane({ obj }: Props) {
-  const element = getEditableElementFor(obj);
+export function ElementEditPane({ element }: Props) {
   const categories = element.useEditPaneOptions();
   const styles = useStyles2(getStyles);
 
@@ -34,25 +29,6 @@ export function ElementEditPane({ obj }: Props) {
       {categories.map((cat) => cat.render())}
     </Stack>
   );
-}
-
-function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
-  if (isEditableDashboardElement(obj)) {
-    return obj;
-  }
-
-  for (const behavior of obj.state.$behaviors ?? []) {
-    if (isEditableDashboardElement(behavior)) {
-      return behavior;
-    }
-  }
-
-  // Temp thing to show somethin in edit pane
-  if (obj instanceof DashboardScene) {
-    return new DummySelectedObject(obj);
-  }
-
-  throw new Error("Can't find editable element for selected object");
 }
 
 function getStyles(theme: GrafanaTheme2) {

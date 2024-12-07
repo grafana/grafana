@@ -19,12 +19,14 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
+  SceneObjectState,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { DashboardEditPaneBehavior } from '../edit-pane/DashboardEditPaneBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -214,6 +216,32 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
+  const behaviorList: SceneObjectState['$behaviors'] = [
+    new behaviors.CursorSync({
+      sync: oldModel.graphTooltip,
+    }),
+    new behaviors.SceneQueryController(),
+    registerDashboardMacro,
+    registerPanelInteractionsReporter,
+    new DashboardEditPaneBehavior({}),
+    new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+    preserveDashboardSceneStateInLocalStorage,
+    addPanelsOnLoadBehavior,
+    new DashboardScopesFacade({
+      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      uid: oldModel.uid,
+    }),
+    new DashboardReloadBehavior({
+      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      uid: oldModel.uid,
+      version: oldModel.version,
+    }),
+  ];
+
+  if (config.featureToggles.dashboardNewLayouts) {
+    behaviorList.push(new DashboardEditPaneBehavior({}));
+  }
+
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
     editable: oldModel.editable,
@@ -242,28 +270,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
-    $behaviors: [
-      new behaviors.CursorSync({
-        sync: oldModel.graphTooltip,
-      }),
-      new behaviors.SceneQueryController(),
-      registerDashboardMacro,
-      registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
-      preserveDashboardSceneStateInLocalStorage,
-      addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange:
-          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-        uid: oldModel.uid,
-      }),
-      new DashboardReloadBehavior({
-        reloadOnParamsChange:
-          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-        uid: oldModel.uid,
-        version: oldModel.version,
-      }),
-    ],
+    $behaviors: behaviorList,
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
