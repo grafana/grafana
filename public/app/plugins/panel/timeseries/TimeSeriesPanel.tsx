@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { DashboardCursorSync, DataFrameType, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
+
+import { getOneClickLinks } from '../status-history/utils';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -106,6 +108,14 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
+                oneClick={(seriesIdx, dataIdxs) => {
+                  const field = alignedFrame.fields[seriesIdx!];
+                  if (field) {
+                    return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                  }
+
+                  return undefined;
+                }}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);

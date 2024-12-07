@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, InterpolateFunction } from '@grafana/data';
+import { DataFrame, InterpolateFunction, OneClickMode } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -93,12 +93,14 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const links = getDataLinks(yField, rowIndex);
     const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
     const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
 
-    footer = <VizTooltipFooter dataLinks={links} actions={actions} />;
+    if (isPinned || yField.config.oneClickMode !== OneClickMode.Off) {
+      footer = <VizTooltipFooter dataLinks={links} actions={actions} oneClickMode={yField.config.oneClickMode} />;
+    }
   }
 
   return (

@@ -20,6 +20,7 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { getOneClickLinks } from '../status-history/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
@@ -172,6 +173,14 @@ export const StateTimelinePanel = ({
                   queryZoom={onChangeTimeRange}
                   syncMode={cursorSync}
                   syncScope={eventsScope}
+                  oneClick={(seriesIdx, dataIdxs) => {
+                    const field = alignedFrame.fields[seriesIdx!];
+                    if (field) {
+                      return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                    }
+
+                    return undefined;
+                  }}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
                       setNewAnnotationRange(timeRange2);
