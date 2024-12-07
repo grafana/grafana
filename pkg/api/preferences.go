@@ -156,6 +156,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
+		CustomCommands:    dtoCmd.CustomCommands,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
