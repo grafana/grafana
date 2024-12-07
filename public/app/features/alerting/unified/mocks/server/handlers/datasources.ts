@@ -28,5 +28,9 @@ export const datasourceBuildInfoHandler = () =>
     }
   );
 
-const datasourcesHandlers = [datasourceBuildInfoHandler()];
+// TODO: Add more accurate endpoint responses as tests require
+const resourcesLabelsHandler = () =>
+  http.get('/api/datasources/uid/:datasourceUid/resources/labels', () => HttpResponse.json({ status: 'success' }));
+
+const datasourcesHandlers = [datasourceBuildInfoHandler(), resourcesLabelsHandler()];
 export default datasourcesHandlers;
