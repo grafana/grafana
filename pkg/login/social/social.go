@@ -14,6 +14,12 @@ const (
 	OfflineAccessScope = "offline_access"
 	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 
+	// Values for ClientAuthentication under OAuthInfo (based on oidc spec)
+	ClientSecretPost = "client_secret_post"
+	// Azure AD
+	ManagedIdentity = "managed_identity"
+	// Other providers...
+
 	AzureADProviderName      = "azuread"
 	GenericOAuthProviderName = "generic_oauth"
 	GitHubProviderName       = "github"
@@ -61,7 +67,10 @@ type OAuthInfo struct {
 	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style"`
 	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url"`
 	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
+	ClientAuthentication    string            `mapstructure:"client_authentication" toml:"client_authentication"`
 	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
+	ManagedIdentityClientID string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
+	Audience                string            `mapstructure:"audience" toml:"audience"`
 	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
 	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`

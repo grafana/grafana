@@ -70,7 +70,10 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 	section := s.cfg.Raw.Section("auth." + provider)
 
 	result := map[string]any{
+		"client_authentication":      section.Key("client_authentication").Value(),
 		"client_id":                  section.Key("client_id").Value(),
+		"managed_identity_client_id": section.Key("managed_identity_client_id").Value(),
+		"audience":                   section.Key("audience").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
 		"scopes":                     section.Key("scopes").Value(),
 		"empty_scopes":               section.Key("empty_scopes").MustBool(false),
