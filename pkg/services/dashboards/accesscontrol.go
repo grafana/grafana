@@ -138,7 +138,6 @@ func NewDashboardUIDScopeResolver(folderDB folder.FolderStore, ds DashboardServi
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewDashboardUIDScopeResolver")
 		span.End()
-
 		if !strings.HasPrefix(scope, prefix) {
 			return nil, ac.ErrInvalidScope
 		}

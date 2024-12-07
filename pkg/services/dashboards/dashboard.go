@@ -14,13 +14,10 @@ import (
 //
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
+	DashboardReadService
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	// GetDashboard fetches a dashboard.
-	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
-	// eg. util.Pointer("")
-	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
@@ -34,6 +31,13 @@ type DashboardService interface {
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
+}
+
+type DashboardReadService interface {
+	// GetDashboard fetches a dashboard.
+	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
+	// eg. util.Pointer("")
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
