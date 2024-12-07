@@ -889,13 +889,17 @@ export class PrometheusDatasource
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
+        // For regex matches, only escape quotes and backslashes, but preserve regex metacharacters
         value = prometheusRegularEscape(value);
+      } else {
+        // For exact matches, use the adhoc filter escaping
+        value = prometheusAdhocFilterEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
     }, expr);
+
     return finalQuery;
   }
-
   // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
@@ -1042,13 +1046,49 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
-// no way to reuse one in the another or vice versa.
+// NOTE: `prometheusRegularEscape` and `prometheusSpecialRegexEscape` are similar
+// to the escapeLabelValueIn* functions in language_utils.ts, but they are not exactly
+// the same algorithm, and we found no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return (
+    value
+      // escape backslashes
+      .replace(/\\/g, '\\\\')
+      // escape single quotes with double backslashes
+      .replace(/'/g, "\\\\'")
+  );
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return (
+    value
+      // escape backslashes with four backslashes since this is used in regex context
+      .replace(/\\/g, '\\\\\\\\')
+      // escape single quotes with double backslashes
+      .replace(/'/g, "\\\\'")
+      // escape special regex characters with double backslash
+      .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&')
+  );
+}
+
+export function prometheusAdhocFilterEscape<T>(value: T) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return (
+    value
+      // escape backslashes
+      .replace(/\\/g, '\\\\')
+      // escape double quotes
+      .replace(/"/g, '\\"')
+  );
 }
