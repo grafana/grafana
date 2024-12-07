@@ -165,11 +165,6 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return query.GetOpenAPIDefinitions
 }
 
-// Register additional routes with the server
-func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
-
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default is OK
 }

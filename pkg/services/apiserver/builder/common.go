@@ -39,9 +39,6 @@ type APIGroupBuilder interface {
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Get the API routes for each version
-	GetAPIRoutes() *APIRoutes
-
 	// Optionally add an authorization hook
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
@@ -58,6 +55,11 @@ type APIGroupValidation interface {
 	// Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate
 	// Context is used only for timeout/deadline/cancellation and tracing information.
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
+}
+
+type APIGroupRouteProvider interface {
+	// Support direct HTTP routes from an APIGroup
+	GetAPIRoutes() *APIRoutes
 }
 
 type APIGroupOptions struct {
