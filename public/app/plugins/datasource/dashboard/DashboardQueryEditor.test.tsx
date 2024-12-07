@@ -15,6 +15,7 @@ import {
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { DashboardDatasource } from './datasource';
 import { SHARED_DASHBOARD_QUERY } from './types';
+import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -63,6 +64,21 @@ describe('DashboardQueryEditor', () => {
         }),
         createPanelSaveModel({
           datasource: {
+            uid: MIXED_DATASOURCE_NAME,
+          },
+          targets: [
+            {
+              datasource: {
+                uid: SHARED_DASHBOARD_QUERY,
+              },
+            },
+          ],
+          id: 3,
+          type: 'timeseries',
+          title: 'A mixed DS with dashboard DS query panel',
+        }),
+        createPanelSaveModel({
+          datasource: {
             uid: SHARED_DASHBOARD_QUERY,
           },
           targets: [],
@@ -96,6 +112,30 @@ describe('DashboardQueryEditor', () => {
     expect(anotherPanel).toBeInTheDocument();
 
     expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+  });
+
+  it('does not show a panel with either SHARED_DASHBOARD_QUERY datasource or MixedDS with SHARED_DASHBOARD_QUERY as an option in the dropdown', async () => {
+    render(
+      <DashboardQueryEditor
+        datasource={{} as DashboardDatasource}
+        query={mockQueries[0]}
+        data={mockPanelData}
+        onChange={mockOnChange}
+        onRunQuery={mockOnRunQueries}
+      />
+    );
+    const select = screen.getByText('Choose panel');
+
+    await userEvent.click(select);
+
+    const myFirstPanel = await screen.findByText('My first panel');
+    expect(myFirstPanel).toBeInTheDocument();
+
+    const anotherPanel = await screen.findByText('Another panel');
+    expect(anotherPanel).toBeInTheDocument();
+
+    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A mixed DS with dashboard DS query panel')).not.toBeInTheDocument();
   });
 
   it('does not show the current panelInEdit as an option in the dropdown', async () => {

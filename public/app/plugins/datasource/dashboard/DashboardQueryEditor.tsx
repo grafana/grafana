@@ -14,6 +14,8 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
+import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
+
 import { DashboardDatasource } from './datasource';
 import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
@@ -103,6 +105,13 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     [query, onUpdateQuery]
   );
 
+  const isMixedDSWithDashboardQueries = (panel: PanelModel) => {
+    return (
+      panel.datasource?.uid === MIXED_DATASOURCE_NAME &&
+      panel.targets.some((t) => t.datasource?.uid === SHARED_DASHBOARD_QUERY)
+    );
+  };
+
   const getPanelDescription = useCallback(
     (panel: PanelModel): string => {
       const datasource = panel.datasource ?? defaultDatasource;
@@ -123,7 +132,8 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
             config.panels[panel.type] &&
             panel.targets &&
             !isPanelInEdit(panel.id, dashboard.panelInEdit?.id) &&
-            panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
+            panel.datasource?.uid !== SHARED_DASHBOARD_QUERY &&
+            !isMixedDSWithDashboardQueries(panel)
         )
         .map((panel) => ({
           value: panel.id,

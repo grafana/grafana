@@ -2,6 +2,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   findVizPanelByKey,
@@ -32,7 +33,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (dashboardDsQueryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (!this.isDashboardDS(dashboardDsQueryRunner)) {
       return;
     }
 
@@ -82,6 +83,21 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         libraryPanelSub.unsubscribe();
       }
     };
+  }
+
+  private isDashboardDS(queryRunner: SceneQueryRunner): boolean {
+    if (queryRunner.state.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+      return true;
+    }
+
+    if (
+      queryRunner.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+      queryRunner.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY)
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private handleLibPanelStateUpdates(
