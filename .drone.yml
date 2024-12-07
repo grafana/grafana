@@ -1243,7 +1243,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -2798,7 +2797,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -3383,7 +3381,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -3826,6 +3823,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4915,6 +4914,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  path: /github-app
 ---
 clone:
   retries: 3
@@ -5124,7 +5125,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -5740,6 +5740,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9b3538ec1bc7180fe775bfab88591c4afb390e2620a279aab6cfe0034d288754
+hmac: e97f7a0c3923b506dad6bf861bb1ea440a8f072ee3744742eec35e7278c3581c
 
 ...
