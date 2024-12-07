@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -644,6 +645,7 @@ type folderK8sHandler struct {
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
 	userService          user.Service
+	kvstore              *kvstore.NamespacedKVStore
 }
 
 //-----------------------------------------------------------------------------------------
@@ -657,6 +659,7 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
 		userService:          hs.userService,
+		kvstore:              kvstore.WithNamespace(hs.kvStore, 0, "storage.dualwriting"),
 	}
 }
 
@@ -774,8 +777,20 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+
+	ctx := c.Req.Context()
+
+	hasDependants, err := hasDependants(ctx, fk8s.kvstore)
 	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	if hasDependants {
+		fk8s.writeError(c, folder.ErrFolderNotEmpty.Errorf("this folder is not empty. Please make sure it does not contain any dashboards, alerts, library panels or SLOs"))
+		return
+	}
+	if err := client.Delete(ctx, uid, v1.DeleteOptions{}); err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
@@ -822,6 +837,40 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 //-----------------------------------------------------------------------------------------
 // Utility functions
 //-----------------------------------------------------------------------------------------
+
+func hasDependants(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+	// TODO: how can we check for alert rules and library panels?
+	var folderDependants = []string{
+		folderalpha1.RESOURCEGROUP,
+		"dashboards.dashboard.grafana.app",
+		"librarypanels.librarypanel.grafana.app",
+		"alertrules.alertmanager.grafana.app",
+	}
+	var hasDependants bool
+	for _, resource := range folderDependants {
+		item, found, err := kvstore.Get(ctx, resource)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			mode, err := strconv.Atoi(item)
+			if err != nil {
+				return false, err
+			}
+			// if dual writer mode > 2, it means the source of truth is unified store
+			if mode > 2 {
+				// call unified store count
+				fmt.Println("counting dependants in unified store")
+			}
+			// if not found or mode < 3 call legacy store count
+		} else {
+			fmt.Println("counting dependants in legacy store")
+		}
+	}
+
+	// TODO: also check for SLORules in another store
+	return hasDependants, nil
+}
 
 func (fk8s *folderK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
 	dyn, err := dynamic.NewForConfig(fk8s.clientConfigProvider.GetDirectRestConfig(c))
