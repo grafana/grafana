@@ -108,10 +108,6 @@ func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefin
 	return notificationsModels.GetOpenAPIDefinitions
 }
 
-func (t *NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
-
 // PostProcessOpenAPI is a hook to alter OpenAPI3 specification of the API server.
 func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description

@@ -4,11 +4,11 @@ import (
 	"maps"
 	"strings"
 
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -48,7 +48,6 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 			return s, nil
 		}
 		for _, b := range builders {
-			routes := b.GetAPIRoutes()
 			gv := b.GetGroupVersion()
 			prefix := "/apis/" + gv.String() + "/"
 			if s.Paths.Paths[prefix] != nil {
@@ -66,19 +65,22 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					Paths:        s.Paths,
 				}
 
-				if routes == nil {
-					routes = &APIRoutes{}
-				}
+				// Optionally include raw http handlers
+				provider, ok := b.(APIGroupRouteProvider)
+				if ok && provider != nil {
+					routes := provider.GetAPIRoutes()
+					if routes != nil {
+						for _, route := range routes.Root {
+							copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
+								PathProps: *route.Spec,
+							}
+						}
 
-				for _, route := range routes.Root {
-					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
-					}
-				}
-
-				for _, route := range routes.Namespace {
-					copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
+						for _, route := range routes.Namespace {
+							copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
+								PathProps: *route.Spec,
+							}
+						}
 					}
 				}
 
