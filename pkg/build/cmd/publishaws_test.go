@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -168,13 +168,13 @@ type mockAwsMarketplaceDocker struct {
 	ImagePushError error
 }
 
-func (m *mockAwsMarketplaceDocker) ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error) {
+func (m *mockAwsMarketplaceDocker) ImagePull(ctx context.Context, refStr string, options image.PullOptions) (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader([]byte(""))), m.ImagePullError
 }
 func (m *mockAwsMarketplaceDocker) ImageTag(ctx context.Context, source string, target string) error {
 	return m.ImageTagError
 }
-func (m *mockAwsMarketplaceDocker) ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error) {
+func (m *mockAwsMarketplaceDocker) ImagePush(ctx context.Context, image string, options image.PushOptions) (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader([]byte(""))), m.ImagePushError
 }
 
