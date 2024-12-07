@@ -89,6 +89,7 @@ require (
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.260.2-0.20241206141727-e04edc6a9f43 // @grafana/plugins-platform-backend
+  github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718  // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
@@ -476,8 +477,6 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
-
-require github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
