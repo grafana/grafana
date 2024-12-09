@@ -283,8 +283,7 @@
     },
     "export": {
       "subtitle": {
-        "formats": "Select the format and download the file or copy the contents to clipboard",
-        "one-format": "Download the file or copy the contents to clipboard"
+        "formats": "Select the format and download the file or copy the contents to clipboard"
       }
     },
     "folderAndGroup": {
