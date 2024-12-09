@@ -84,10 +84,7 @@ export const validMetricQueryCodeQuery: CloudWatchMetricsQuery = {
 
 export const validLogsQuery: CloudWatchLogsQuery = {
   queryMode: 'Logs',
-  logGroups: [
-    { arn: 'group-A', name: 'A' },
-    { arn: 'group-B', name: 'B' },
-  ],
+  logGroupNames: ['group-A', 'group-B'],
   hide: false,
   id: '',
   region: 'us-east-2',

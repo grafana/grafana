@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 import { AccessControlAction } from 'app/types';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';

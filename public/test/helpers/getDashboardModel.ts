@@ -1,4 +1,4 @@
-import { DashboardModel } from '../../app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from '../../app/features/dashboard/state';
 import { DashboardMeta } from '../../app/types/dashboard';
 
 export const getDashboardModel = (json: any, meta: DashboardMeta = {}) => {

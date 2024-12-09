@@ -145,17 +145,6 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 	options: {},
 });
 
-export interface DataLink {
-	title: string;
-	url: string;
-	targetBlank?: boolean;
-}
-
-export const defaultDataLink = (): DataLink => ({
-	title: "",
-	url: "",
-});
-
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
 // Each column within this structure is called a field. A field can represent a single time series or table column.
 // Field options allow you to change how the data is displayed in your visualizations.
@@ -697,7 +686,7 @@ export interface PanelSpec {
 	uid: string;
 	title: string;
 	description: string;
-	links: DataLink[];
+	links: DashboardLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
 }

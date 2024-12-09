@@ -2,7 +2,7 @@ import { createTwoFilesPatch } from 'diff';
 
 import { Dashboard } from '@grafana/schema';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state';
 
 export type JSONValue = null | boolean | number | string | JSONArray | JSONObject;
 

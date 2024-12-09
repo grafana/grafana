@@ -7,7 +7,7 @@ import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state';
 
 interface DashboardValidationProps {
   dashboard: DashboardModel;

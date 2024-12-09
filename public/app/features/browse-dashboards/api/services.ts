@@ -1,7 +1,6 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { NestedFolderDTO } from 'app/features/search/service/types';
+import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 

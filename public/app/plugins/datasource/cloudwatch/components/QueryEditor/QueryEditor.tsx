@@ -49,14 +49,7 @@ export const QueryEditor = (props: Props) => {
           extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(query) && (
-        <LogsQueryEditor
-          {...props}
-          query={query}
-          onChange={onChangeInternal}
-          extraHeaderElementLeft={setExtraHeaderElementLeft}
-        />
-      )}
+      {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} />}
     </>
   );
 };

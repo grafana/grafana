@@ -5,8 +5,7 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from '../../../../../store/configureStore';
 import { DashboardInitPhase } from '../../../../../types';
-import { DashboardModel } from '../../../state/DashboardModel';
-import { PanelModel } from '../../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../../state';
 import { createDashboardModelFixture } from '../../../state/__fixtures__/dashboardFixtures';
 import { ShareModal } from '../ShareModal';
 

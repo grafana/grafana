@@ -1,8 +1,6 @@
 package elasticsearch
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
@@ -24,7 +22,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
 			logger.Error("Failed to parse bucket aggs in query", "error", err, "model", string(q.JSON))
-			return nil, backend.DownstreamError(err)
+			return nil, err
 		}
 		metrics, err := parseMetrics(model)
 		if err != nil {
@@ -61,12 +59,12 @@ func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 
 		agg.Type, err = aggJSON.Get("type").String()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse bucket aggs type: %w", err)
+			return nil, err
 		}
 
 		agg.ID, err = aggJSON.Get("id").String()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse bucket aggs id: %w", err)
+			return nil, err
 		}
 
 		agg.Field = aggJSON.Get("field").MustString()

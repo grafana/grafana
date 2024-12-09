@@ -9,8 +9,7 @@ import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../state';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 import { PanelEditorQueries } from './PanelEditorQueries';

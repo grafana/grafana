@@ -116,13 +116,9 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 	return ds, nil
 }
 
-func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
+func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
-	errorBody := map[string]string{
-		"error": msg,
-	}
-	json, _ := json.Marshal(errorBody)
-	_, err := rw.Write(json)
+	_, err := rw.Write([]byte(msg))
 	if err != nil {
 		backend.Logger.Error("Unable to write HTTP response", "error", err)
 	}
@@ -134,20 +130,20 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusBadRequest, err.Error())
+			writeResponse(rw, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		dsInfo, err := s.getDataSourceFromHTTPReq(req)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
 
 		service := dsInfo.Services[subDataSource]
 		serviceURL, err := url.Parse(service.URL)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
 		req.URL.Path = newPath
@@ -156,7 +152,7 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		rw, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
 	}

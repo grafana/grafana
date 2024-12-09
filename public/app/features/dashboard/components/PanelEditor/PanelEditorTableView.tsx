@@ -7,8 +7,7 @@ import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../state';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { usePanelLatestData } from './usePanelLatestData';

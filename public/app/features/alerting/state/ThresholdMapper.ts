@@ -1,5 +1,5 @@
 import { config } from 'app/core/config';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export const hiddenReducerTypes = ['percent_diff', 'percent_diff_abs'];
 export class ThresholdMapper {

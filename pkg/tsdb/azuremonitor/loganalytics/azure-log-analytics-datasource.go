@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -141,12 +142,12 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	for _, query := range originalQueries {
 		logsQuery, err := e.buildQuery(ctx, query, dsInfo, fromAlert)
 		if err != nil {
-			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		res, err := e.executeQuery(ctx, logsQuery, dsInfo, client, url)
 		if err != nil {
-			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -251,7 +252,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 			cfg := backend.GrafanaConfigFromContext(ctx)
 			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
 			if !hasPromExemplarsToggle {
-				return nil, backend.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"))
+				return nil, errorsource.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"), false)
 			}
 		}
 		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
@@ -268,7 +269,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -279,7 +280,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, backend.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
+			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
 		}
 	}
 
@@ -300,7 +301,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, backend.DownstreamError(err)
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -596,11 +597,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 
 		defer func() {
@@ -610,7 +611,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
-			return AzureCorrelationAPIResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
+			return AzureCorrelationAPIResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 		}
 		var data AzureCorrelationAPIResponse
 		d := json.NewDecoder(bytes.NewReader(body))
@@ -674,7 +675,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
+		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureLogAnalyticsResponse

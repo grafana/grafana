@@ -216,12 +216,6 @@ export interface QueryEditorArrayExpression {
 
 export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
-export enum LogsQueryLanguage {
-  CWLI = 'CWLI',
-  PPL = 'PPL',
-  SQL = 'SQL',
-}
-
 /**
  * Shape of a CloudWatch Logs query
  */
@@ -239,10 +233,6 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    * Log groups to query
    */
   logGroups?: Array<LogGroup>;
-  /**
-   * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
-   */
-  queryLanguage?: LogsQueryLanguage;
   /**
    * Whether a query is a Metrics, Logs, or Annotations query
    */

@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
+import { DEFAULT_LOGS_QUERY_STRING } from '../../defaultQueries';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
 import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../../types';
@@ -36,11 +37,16 @@ const QueryHeader = ({
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value && value !== queryMode) {
+      // reset expression to a default string when the query mode changes
+      let expression = '';
+      if (value === 'Logs') {
+        expression = DEFAULT_LOGS_QUERY_STRING;
+      }
       onChange({
         ...datasource.getDefaultQuery(CoreApp.Unknown),
         ...query,
+        expression,
         queryMode: value,
-        expression: '',
       });
     }
   };

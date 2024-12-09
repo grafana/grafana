@@ -4,7 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { locationService, config, reportInteraction } from '@grafana/runtime';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
 import { Trans, t } from '../../../../core/internationalization';

@@ -3,7 +3,6 @@ package userstorage
 import (
 	"context"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,6 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -75,6 +76,10 @@ func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 func (b *UserStorageAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return userstorage.GetOpenAPIDefinitions
+}
+
+func (b *UserStorageAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil
 }
 
 func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {

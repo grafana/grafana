@@ -7,8 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { StoreState } from 'app/types';
 
 import { useGrafana } from '../../../core/context/GrafanaContext';

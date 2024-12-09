@@ -1,18 +1,11 @@
 import { lastValueFrom, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import {
-  DataFrameView,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  FieldType,
-} from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourcePluginMeta, FieldType } from '@grafana/data';
 import { BackendSrv, TemplateSrv } from '@grafana/runtime';
 
-import { addNodeGraphFramesToResponse, ZipkinDatasource } from './datasource';
-import mockJson from './mocks/mockJsonResponse.json';
-import { mockTraceDataFrame } from './mocks/mockTraceDataFrame';
+import { ZipkinDatasource } from './datasource';
+import mockJson from './mockJsonResponse.json';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { traceFrameFields, zipkinResponse } from './utils/testData';
 
@@ -86,35 +79,6 @@ describe('ZipkinDatasource', () => {
       const response = await ds.metadataRequest('services');
       expect(response).toEqual(['service 1', 'service 2']);
     });
-  });
-});
-
-describe('addNodeGraphFramesToResponse', () => {
-  it('transforms basic response into nodes and edges frame', () => {
-    const responseWithNodeFrames = addNodeGraphFramesToResponse({ data: mockTraceDataFrame });
-    let view = new DataFrameView(responseWithNodeFrames.data[1]);
-    expect(view.get(0)).toMatchObject({
-      id: '4322526419282105830',
-      title: 'service1',
-      subtitle: 'store.validateQueryTimeRange',
-      mainstat: '0ms (1.6%)',
-      secondarystat: '0ms (100%)',
-      color: 0.016,
-    });
-    expect(view.get(3)).toMatchObject({
-      id: '1853508259384889601',
-      title: 'service1',
-      subtitle: 'Shipper.Uploads.Query',
-      mainstat: '0.05ms (18.8%)',
-      secondarystat: '0.05ms (100%)',
-      color: 0.188,
-    });
-  });
-
-  it('handles empty response', () => {
-    const response = { data: [] };
-    const responseWithNodeFrames = addNodeGraphFramesToResponse(response);
-    expect(responseWithNodeFrames).toBe(response);
   });
 });
 

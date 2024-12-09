@@ -4,7 +4,7 @@ import { Observable, Subject } from 'rxjs';
 import { Field, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { QueryResponse } from '../service/types';
+import { QueryResponse } from '../service';
 
 export function useKeyNavigationListener() {
   const eventsRef = useRef(new Subject<React.KeyboardEvent>());

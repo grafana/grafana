@@ -8,9 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -42,7 +42,7 @@ func convertToK8sResources(
 		if err != nil {
 			return nil, err
 		}
-		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableFields(k8sResource)) {
+		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableReceiverFields(k8sResource)) {
 			continue
 		}
 		result.Items = append(result.Items, *k8sResource)
@@ -57,7 +57,7 @@ func convertToK8sResource(
 	metadata *ngmodels.ReceiverMetadata,
 	namespacer request.NamespaceMapper,
 ) (*model.Receiver, error) {
-	spec := model.Spec{
+	spec := model.ReceiverSpec{
 		Title: receiver.Name,
 	}
 	for _, integration := range receiver.Integrations {
@@ -65,12 +65,13 @@ func convertToK8sResource(
 			Uid:                   &integration.UID,
 			Type:                  integration.Config.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
-			Settings:              maps.Clone(integration.Settings),
+			Settings:              common.Unstructured{Object: maps.Clone(integration.Settings)},
 			SecureFields:          integration.SecureFields(),
 		})
 	}
 
 	r := &model.Receiver{
+		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
 			Name:            receiver.GetUID(),
@@ -100,7 +101,7 @@ func convertToK8sResource(
 		}
 		r.SetInUse(metadata.InUseByRoutes, rules)
 	}
-	r.UID = gapiutil.CalculateClusterWideUID(r)
+
 	return r, nil
 }
 
@@ -129,7 +130,7 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		grafanaIntegration := ngmodels.Integration{
 			Name:           receiver.Spec.Title,
 			Config:         config,
-			Settings:       maps.Clone(integration.Settings),
+			Settings:       maps.Clone(integration.Settings.UnstructuredContent()),
 			SecureSettings: make(map[string]string),
 		}
 		if integration.Uid != nil {

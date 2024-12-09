@@ -599,7 +599,7 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
-		"API_DB_PASS",
+		"GF_ENTITY_API_DB_PASS",
 		"ID_FORWARDING_TOKEN$",
 		"AUTHENTICATION_TOKEN$",
 		"AUTH_TOKEN$",

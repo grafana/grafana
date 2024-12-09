@@ -1,6 +1,6 @@
 import { DataSourceApi, dateTime, DataQuery } from '@grafana/data';
 
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state';
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
 import { TestQuery, getMockDataSource } from '../query/state/__mocks__/mockDataSource';
 

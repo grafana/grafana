@@ -97,7 +97,7 @@ export function getDatasourceForNewTrail(): string | undefined {
   const prevTrail = getTrailStore().recent[0];
   if (prevTrail) {
     const prevDataSource = sceneGraph.interpolate(prevTrail.resolve(), VAR_DATASOURCE_EXPR);
-    if (prevDataSource.length > 0) {
+    if (typeof prevDataSource === 'string' && prevDataSource.length > 0) {
       return prevDataSource;
     }
   }

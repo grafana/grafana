@@ -11,7 +11,7 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';

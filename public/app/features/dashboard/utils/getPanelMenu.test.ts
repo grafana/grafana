@@ -8,7 +8,7 @@ import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { PanelModel } from '../state/PanelModel';
+import { PanelModel } from '../state';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { getPanelMenu } from './getPanelMenu';
