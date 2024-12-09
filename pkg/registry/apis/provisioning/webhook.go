@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -96,9 +95,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				return
 			}
 		}
-		responder.Object(rsp.Code, &metav1.Status{
-			Message: rsp.Message,
-		})
+		responder.Object(rsp.Code, rsp)
 	}), nil
 }
 
