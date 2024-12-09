@@ -11,7 +11,7 @@
     "@grafana/sql": "11.5.0-pre",
     "@grafana/ui": "11.5.0-pre",
     "lodash": "4.17.21",
-    "react": "18.2.0",
+    "react": "19.0.0",
     "rxjs": "7.8.1",
     "tslib": "2.7.0"
   },
@@ -24,7 +24,7 @@
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.13",
     "@types/node": "20.16.15",
-    "@types/react": "18.3.3",
+    "@types/react": "19.0.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
     "webpack": "5.95.0"
