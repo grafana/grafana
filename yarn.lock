@@ -71,7 +71,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "@babel/code-frame@npm:7.25.7":
   version: 7.25.7
   resolution: "@babel/code-frame@npm:7.25.7"
@@ -82,8 +81,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-=======
->>>>>>> fae281280eb (reverse commit)
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.3, @babel/code-frame@npm:^7.10.4, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.16.7, @babel/code-frame@npm:^7.24.2, @babel/code-frame@npm:^7.25.9, @babel/code-frame@npm:^7.26.0":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -362,7 +359,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "@babel/highlight@npm:^7.25.7":
   version: 7.25.9
   resolution: "@babel/highlight@npm:7.25.9"
@@ -375,8 +371,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-=======
->>>>>>> fae281280eb (reverse commit)
 "@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.25.9, @babel/parser@npm:^7.26.0, @babel/parser@npm:^7.26.2":
   version: 7.26.2
   resolution: "@babel/parser@npm:7.26.2"
@@ -6795,7 +6789,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "@rsdoctor/client@npm:0.4.11":
   version: 0.4.11
   resolution: "@rsdoctor/client@npm:0.4.11"
@@ -6922,8 +6915,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-=======
->>>>>>> fae281280eb (reverse commit)
 "@rtk-query/codegen-openapi@npm:^1.2.0":
   version: 1.2.0
   resolution: "@rtk-query/codegen-openapi@npm:1.2.0"
@@ -11420,15 +11411,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.8":
   version: 1.7.9
   resolution: "axios@npm:1.7.9"
-=======
-"axios@npm:^1.4.0, axios@npm:^1.7.4":
-  version: 1.7.7
-  resolution: "axios@npm:1.7.7"
->>>>>>> fae281280eb (reverse commit)
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"

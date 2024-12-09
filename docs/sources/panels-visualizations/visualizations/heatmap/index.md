@@ -89,6 +89,7 @@ This setting determines how the Y-axis is split into buckets.
 ### Y Bucket scale
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 | Options | Description |
 | ------- | ----------- |
 | Placement | Set where the y-axis is displayed. Choose from: **Left**, **Right**, or **Hidden**. |
@@ -101,7 +102,11 @@ This setting determines how the Y-axis is split into buckets.
 | Reverse| When selected, the axis appears in reverse order. |
 =======
 Select one of the following Y-axis value scales:
->>>>>>> fae281280eb (reverse commit)
+
+> > > > > > > # fae281280eb (reverse commit)
+> > > > > > >
+> > > > > > > Select one of the following Y-axis value scales:
+> > > > > > > fae281280ebd4eed021effb2fa0c5ba2799471b1
 
 - **linear -** Linear scale.
 - **log (base 2) -** Logarithmic scale with base 2.
@@ -161,6 +166,7 @@ You can also change the color mode to Opacity. In this case, the color will not 
     - **Exponent -** value of the exponent, greater than `0`.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Use the following options to define the heatmap colors.
 
 - **Scheme** - Bucket value represented by cell color.
@@ -181,9 +187,16 @@ Set a value between `1` and `128`.
 Toggle the switch to reverse the color scheme. This option only applies the **Scheme** color mode.
 
 #### Start/end color scale from value
+
 =======
+
 ### Start/end color from value
->>>>>>> fae281280eb (reverse commit)
+
+> > > > > > > # fae281280eb (reverse commit)
+
+### Start/end color from value
+
+> > > > > > > fae281280ebd4eed021effb2fa0c5ba2799471b1
 
 By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
 
