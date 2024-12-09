@@ -17,8 +17,8 @@ func NewDashboardLinterFactory() *DashboardLinterFactory {
 	return &DashboardLinterFactory{}
 }
 
-func (f *DashboardLinterFactory) New() (Linter, error) {
-	return &DashboardLinter{rules: lint.NewRuleSet()}, nil
+func (f *DashboardLinterFactory) New() Linter {
+	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
 func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {

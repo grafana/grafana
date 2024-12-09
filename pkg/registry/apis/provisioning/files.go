@@ -18,7 +18,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -160,19 +159,22 @@ func (s *filesConnector) getParser(ctx context.Context, logger *slog.Logger, rep
 	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)
+
+		var linter lint.Linter
 		switch {
 		case err == nil:
 			logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
-		case errors.Is(err, github.ErrResourceNotFound):
-			logger.InfoContext(ctx, "no linter config found")
+			linter, err = linterFactory.NewFromConfig(cfg.Data)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create linter: %w", err)
+			}
+		case apierrors.IsNotFound(err):
+			logger.InfoContext(ctx, "no linter config found, using default")
+			linter = linterFactory.New()
 		default:
 			return nil, fmt.Errorf("failed to read linter config: %w", err)
 		}
 
-		linter, err := linterFactory.NewFromConfig(cfg.Data)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create linter: %w", err)
-		}
 		parser.SetLinter(linter)
 	}
 
