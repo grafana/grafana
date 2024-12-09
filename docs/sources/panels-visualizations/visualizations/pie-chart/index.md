@@ -19,6 +19,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  configure-legends:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-legend/
 ---
 
 # Pie chart
@@ -151,7 +156,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ### Legend options
 
-Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
+Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend](ref:configure-legends).
 
 <!-- prettier-ignore-start -->
 
