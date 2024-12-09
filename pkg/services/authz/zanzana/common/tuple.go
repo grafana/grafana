@@ -69,8 +69,6 @@ var FolderRelations = append(
 	RelationFolderResourcePermissionsWrite,
 )
 
-const RenderUserType string = "render"
-
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
 }

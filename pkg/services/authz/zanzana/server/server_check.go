@@ -51,7 +51,7 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 			Object:   common.NewNamespaceResourceIdent(group, resource),
 		},
 	}
-	if strings.HasPrefix(subject, fmt.Sprintf("%s:", common.RenderUserType)) {
+	if strings.HasPrefix(subject, fmt.Sprintf("%s:", common.TypeRenderService)) {
 		common.AddRenderContext(req)
 	}
 
