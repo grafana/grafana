@@ -42,7 +42,7 @@ func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLoo
 	}
 }
 
-type ParsedFile struct {
+type ParsedResource struct {
 	// Original file Info
 	Info *repository.FileInfo
 
@@ -78,8 +78,8 @@ type ParsedFile struct {
 	Errors []error
 }
 
-func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
-	parsed = &ParsedFile{
+func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+	parsed = &ParsedResource{
 		Info: info,
 	}
 
@@ -179,7 +179,7 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 	return parsed, nil
 }
 
-func (f *ParsedFile) ToSaveBytes() ([]byte, error) {
+func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	// TODO... should use the validated one?
 	obj := f.Obj.Object
 	delete(obj, "metadata")
@@ -198,7 +198,7 @@ func (f *ParsedFile) ToSaveBytes() ([]byte, error) {
 	}
 }
 
-func (f *ParsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
+func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	info := f.Info
 	res := provisioning.ResourceObjects{
 		Type: provisioning.ResourceType{

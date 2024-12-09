@@ -181,7 +181,7 @@ func (r *replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo
 	return true, nil
 }
 
-func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedFile, error) {
+func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
