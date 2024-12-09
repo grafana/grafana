@@ -77,7 +77,7 @@ The gauge visualization can support multiple fields in a dataset. <!-- In this c
 | ---------- | ------ | ------ | ------ |
 | Gauges     | 5      | 3      | 10     |
 
-![Gauge visualization with multiple numeric values in a single row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example3.png 'Gauge with multiple numeric values in a single row')
+![Gauge visualization with multiple numeric values in a single row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example3.png)
 
 When there are multiple values in the dataset, the visualization displays multiple gauges and automatically defines the minimum and maximum. In this case, those are 3 and 10. Because the minimum and maximum values are defined, each gauge is shaded in to show that value in relation to the minimum and maximum.
 
@@ -185,7 +185,7 @@ Adjust the sizes of the gauge text.
 
 Last, gauge colors and thresholds (the outer bar markers) of the gauge can be configured as described above.
 
-![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png 'Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11')
+![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
 
 ### Field overrides
 
