@@ -59,7 +59,6 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const { returnTo } = useReturnTo('/alerting/list');
 
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
-
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
 
   const onInvalid = (): void => {
