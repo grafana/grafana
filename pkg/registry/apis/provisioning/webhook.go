@@ -6,16 +6,14 @@ import (
 	"log/slog"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -33,14 +31,6 @@ func (*webhookConnector) New() runtime.Object {
 }
 
 func (*webhookConnector) Destroy() {}
-
-func (*webhookConnector) NamespaceScoped() bool {
-	return true
-}
-
-func (*webhookConnector) GetSingularName() string {
-	return "WebhookResponse"
-}
 
 func (*webhookConnector) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
@@ -74,23 +64,45 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-	webhook := repo.Webhook(ctx, s.logger, responder, factory)
-	if webhook == nil {
-		return nil, &errors.StatusError{
-			ErrStatus: v1.Status{
-				Message: fmt.Sprintf("webhook is not implemented for: %s", repo.Config().Spec.Type),
-				Code:    http.StatusNotImplemented,
-			},
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := s.logger.With("repo", name)
+		rsp, err := repo.Webhook(ctx, logger, r)
+		if err != nil {
+			responder.Error(err)
+			return
 		}
-	}
-	return webhook, nil
+		if rsp == nil {
+			responder.Error(fmt.Errorf("expecting a response"))
+			return
+		}
+		if rsp.Jobs != nil {
+			worker, ok := repo.(repository.JobProcessor)
+			if !ok {
+				responder.Error(fmt.Errorf("repo does not support processing jobs"))
+				return
+			}
+
+			// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
+			// TODO: Async process the jobs!!
+			ctx := identity.WithRequester(context.Background(), id)
+			ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+			defer cancel()
+
+			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
+			for _, job := range rsp.Jobs {
+				err := worker.Process(ctx, logger, job, factory)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+			}
+		}
+		responder.Object(rsp.Code, rsp)
+	}), nil
 }
 
 var (
-	_ rest.Storage              = (*webhookConnector)(nil)
-	_ rest.Connecter            = (*webhookConnector)(nil)
-	_ rest.Scoper               = (*webhookConnector)(nil)
-	_ rest.SingularNameProvider = (*webhookConnector)(nil)
-	_ rest.StorageMetadata      = (*webhookConnector)(nil)
+	_ rest.Storage         = (*webhookConnector)(nil)
+	_ rest.Connecter       = (*webhookConnector)(nil)
+	_ rest.StorageMetadata = (*webhookConnector)(nil)
 )

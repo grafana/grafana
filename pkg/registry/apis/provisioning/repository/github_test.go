@@ -1,9 +1,17 @@
 package repository
 
 import (
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestIsValidGitBranchName(t *testing.T) {
@@ -42,6 +50,92 @@ func TestIsValidGitBranchName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, isValidGitBranchName(tt.branch))
+		})
+	}
+}
+
+func TestParseWebhooks(t *testing.T) {
+	tests := []struct {
+		messageType string
+		name        string
+		expected    provisioning.WebhookResponse
+	}{
+		{"ping", "check", provisioning.WebhookResponse{
+			Code: http.StatusOK,
+		}},
+		{"pull_request", "opened", provisioning.WebhookResponse{
+			Code: http.StatusAccepted, // 202
+			Jobs: []provisioning.Job{
+				{
+					Action: provisioning.JobActionPullRequest,
+					Ref:    "dashboard/1733653266690",
+					Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+					PR:     12,
+					URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
+				},
+			},
+		}},
+		{"push", "ignored", provisioning.WebhookResponse{
+			Code: http.StatusOK, // parsed but nothing required
+		}},
+		{"push", "nested", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Jobs: []provisioning.Job{
+				{
+					Action: provisioning.JobActionMergeBranch,
+					Added: []provisioning.FileRef{
+						{
+							Ref:  "",
+							Path: "nested-1/dash-1.json",
+						},
+						{
+							Ref:  "",
+							Path: "nested-1/nested-2/dash-2.json",
+						},
+					},
+					Modified: []provisioning.FileRef{
+						{
+							Ref:  "72096e3adc646c5a5b8a91744f962b12bac06045",
+							Path: "first-dashboard.json",
+						},
+					},
+				},
+			},
+		}},
+		{"issue_comment", "created", provisioning.WebhookResponse{
+			Code: http.StatusNotImplemented,
+		}},
+	}
+
+	gh := &githubRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				GitHub: &provisioning.GitHubRepositoryConfig{
+					Repository: "git-ui-sync-demo",
+					Owner:      "grafana",
+					Branch:     "main",
+
+					GenerateDashboardPreviews: true,
+					PullRequestLinter:         true,
+				},
+			},
+		},
+		logger: slog.Default().With("logger", "github-repository"),
+		ignore: provisioning.IncludeYamlOrJSON,
+	}
+
+	for _, tt := range tests {
+		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
+		t.Run(name, func(t *testing.T) {
+			// nolint:gosec
+			payload, err := os.ReadFile(filepath.Join("github", "testdata", name))
+			require.NoError(t, err)
+
+			rsp, err := gh.parseWebhook(tt.messageType, payload)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expected.Code, rsp.Code)
+			require.Equal(t, tt.expected.Jobs, rsp.Jobs)
 		})
 	}
 }
