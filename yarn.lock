@@ -10279,13 +10279,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jsurl@npm:^1.2.28":
-  version: 1.2.30
-  resolution: "@types/jsurl@npm:1.2.30"
-  checksum: 10/c51ff0d159f9e97ca7069cb5aa934ab4f94b1738250cddd1f3e19d12bdb0f6bca7b7ed2579b5de274778d1c3b26b3a89b21f0c108814383cf32f150ff74ca15a
-  languageName: node
-  linkType: hard
-
 "@types/lodash.memoize@npm:^4.1.7":
   version: 4.1.7
   resolution: "@types/lodash.memoize@npm:4.1.7"
@@ -18251,7 +18244,6 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.32"
     "@types/js-yaml": "npm:^4.0.5"
-    "@types/jsurl": "npm:^1.2.28"
     "@types/lodash": "npm:4.17.15"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
@@ -18370,7 +18362,7 @@ __metadata:
     jsdom-testing-mocks: "npm:^1.13.1"
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
-    jsurl: "npm:^0.1.5"
+    jsurl2: "npm:^2.2.0"
     kbar: "npm:0.1.0-beta.45"
     lerna: "npm:8.1.8"
     leven: "npm:^4.0.0"
@@ -21144,10 +21136,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsurl@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "jsurl@npm:0.1.5"
-  checksum: 10/00065413460c5d4f85b775cb6a37ff30e733af66f546c3cb376e2268ba02874c5d53166011c9490cf275f11ee53c7c072d5055507bdf3de8dc7507f2c90f7e03
+"jsurl2@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "jsurl2@npm:2.2.0"
+  checksum: 10/eb54376c7af6881b2110eb5b71314f17f7165fb450d82b67cc5f28f66a8999439b140b7533354ed9d522236e08d2bd94730186464c1fc9b502e8977027fbc43c
   languageName: node
   linkType: hard
 
