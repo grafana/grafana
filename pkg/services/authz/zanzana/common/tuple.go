@@ -46,6 +46,13 @@ const (
 	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
+var NamespaceRelations = []string{
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
+	RelationDelete,
+}
+
 var ResourceRelations = []string{
 	RelationGet,
 	RelationUpdate,
@@ -60,6 +67,15 @@ var FolderRelations = append(
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
 )
+
+func IsNamespaceRelation(relation string) bool {
+	for _, r := range NamespaceRelations {
+		if r == relation {
+			return true
+		}
+	}
+	return false
+}
 
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
@@ -250,7 +266,7 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 
 	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
 		User:     req.TupleKey.User,
-		Relation: "view",
+		Relation: RelationSetView,
 		Object: NewNamespaceResourceIdent(
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
