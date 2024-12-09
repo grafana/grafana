@@ -71,8 +71,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
-=======
 "@babel/code-frame@npm:7.25.7":
   version: 7.25.7
   resolution: "@babel/code-frame@npm:7.25.7"
@@ -83,7 +81,6 @@ __metadata:
   languageName: node
   linkType: hard
 
->>>>>>> parent of bed6def0803 (reverse commit)
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.3, @babel/code-frame@npm:^7.10.4, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.16.7, @babel/code-frame@npm:^7.24.2, @babel/code-frame@npm:^7.25.9, @babel/code-frame@npm:^7.26.0":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -362,8 +359,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
-=======
 "@babel/highlight@npm:^7.25.7":
   version: 7.25.9
   resolution: "@babel/highlight@npm:7.25.9"
@@ -376,7 +371,6 @@ __metadata:
   languageName: node
   linkType: hard
 
->>>>>>> parent of bed6def0803 (reverse commit)
 "@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.25.9, @babel/parser@npm:^7.26.0, @babel/parser@npm:^7.26.2":
   version: 7.26.2
   resolution: "@babel/parser@npm:7.26.2"
@@ -6784,8 +6778,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
-=======
 "@rsdoctor/client@npm:0.4.11":
   version: 0.4.11
   resolution: "@rsdoctor/client@npm:0.4.11"
@@ -6912,7 +6904,6 @@ __metadata:
   languageName: node
   linkType: hard
 
->>>>>>> parent of bed6def0803 (reverse commit)
 "@rtk-query/codegen-openapi@npm:^1.2.0":
   version: 1.2.0
   resolution: "@rtk-query/codegen-openapi@npm:1.2.0"
@@ -11487,11 +11478,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
-"axios@npm:^1.4.0, axios@npm:^1.7.4":
-=======
 "axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.8":
->>>>>>> parent of bed6def0803 (reverse commit)
   version: 1.7.9
   resolution: "axios@npm:1.7.9"
   dependencies:
@@ -20422,6 +20409,13 @@ __metadata:
   version: 3.0.1
   resolution: "json-buffer@npm:3.0.1"
   checksum: 10/82876154521b7b68ba71c4f969b91572d1beabadd87bd3a6b236f85fbc7dc4695089191ed60bb59f9340993c51b33d479f45b6ba9f3548beb519705281c32c3c
+  languageName: node
+  linkType: hard
+
+"json-cycle@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "json-cycle@npm:1.5.0"
+  checksum: 10/4ce7594eb8f42e820c708ceaed12759168c4d29f91e0f8e213909331f7fd12b765a3b9c4a5e8f0e72bc25d5ed2a380211ff3ec95c3ba1cbb2cb5c68ea396ae9f
   languageName: node
   linkType: hard
 
