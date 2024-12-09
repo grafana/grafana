@@ -1,15 +1,6 @@
 import * as H from 'history';
 
-import {
-  AppEvents,
-  CoreApp,
-  DataQueryRequest,
-  NavIndex,
-  NavModelItem,
-  locationUtil,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-} from '@grafana/data';
+import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -18,6 +9,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneScopesBridge,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -34,7 +26,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -131,6 +122,7 @@ export interface DashboardSceneState extends SceneObjectState {
   panelsPerRow?: number;
   /** options pane */
   editPane: DashboardEditPane;
+  scopesBridge: SceneScopesBridge | undefined;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -163,14 +155,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _changeTracker: DashboardSceneChangeTracker;
 
   /**
-   * A reference to the scopes facade
-   */
-  private _scopesFacade: ScopesFacade | null;
-  /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
+
+  protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -182,9 +172,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane({}),
+      scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
     });
-
-    this._scopesFacade = getClosestScopesFacade(this);
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
 
@@ -192,6 +181,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    this.state.scopesBridge?.enable();
+
     let prevSceneContext = window.__grafanaSceneContext;
 
     window.__grafanaSceneContext = this;
@@ -223,6 +214,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Deactivation logic
     return () => {
+      this.state.scopesBridge?.disable();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -256,7 +248,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.state.body.editModeChanged(true);
 
     // Propagate edit mode to scopes
-    this._scopesFacade?.enterReadOnly();
+    this.state.scopesBridge?.enableReadOnly();
 
     this._changeTracker.startTrackingChanges();
   };
@@ -298,7 +290,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (!this.state.isDirty || skipConfirm) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
-      this._scopesFacade?.exitReadOnly();
+      this.state.scopesBridge?.disableReadOnly();
       return;
     }
 
@@ -310,7 +302,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         yesText: 'Discard',
         onConfirm: () => {
           this.exitEditModeConfirmed();
-          this._scopesFacade?.exitReadOnly();
+          this.state.scopesBridge?.disableReadOnly();
         },
       })
     );
@@ -623,13 +615,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
-      scopes: this._scopesFacade?.value,
-    };
-  }
-
-  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
-    return {
-      scopes: this._scopesFacade?.value,
     };
   }
 

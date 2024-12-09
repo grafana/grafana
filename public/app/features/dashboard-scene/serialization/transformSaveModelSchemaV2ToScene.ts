@@ -62,7 +62,6 @@ import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehavi
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -150,10 +149,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
-      }),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
         uid: dashboard.id?.toString(),

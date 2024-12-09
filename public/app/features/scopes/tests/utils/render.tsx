@@ -9,11 +9,9 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
-import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
-import { initialSelectorState } from '../../internal/ScopesSelectorScene';
+import { ScopesContextProvider } from '../../ScopesContextProvider';
 
-import { clearMocks } from './actions';
+import { getMock } from './mocks';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -182,8 +180,6 @@ export function renderDashboard(
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
-  clearMocks();
-  initializeScopes();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
@@ -191,7 +187,9 @@ export function renderDashboard(
   render(
     <KBarProvider>
       <AppChrome>
-        <scene.Component model={scene} />
+        <ScopesContextProvider>
+          <scene.Component model={scene} />
+        </ScopesContextProvider>
       </AppChrome>
     </KBarProvider>
   );
@@ -199,10 +197,10 @@ export function renderDashboard(
   return scene;
 }
 
-export async function resetScenes() {
+export async function resetScenes(spies: jest.SpyInstance[] = []) {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  scopesSelectorScene?.setState(initialSelectorState);
-  scopesDashboardsScene?.setState(getInitialDashboardsState());
+  getMock.mockClear();
+  spies.forEach((spy) => spy.mockClear());
   cleanup();
 }

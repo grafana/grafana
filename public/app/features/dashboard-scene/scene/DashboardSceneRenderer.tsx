@@ -27,6 +27,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelSearch,
     panelsPerRow,
     isEditing,
+    scopesBridge,
   } = model.useState();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -52,6 +53,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   if (editview) {
     return (
       <>
+        {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         <editview.Component model={editview} />
         {overlay && <overlay.Component model={overlay} />}
       </>
@@ -80,6 +82,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <DashboardEditPaneSplitter
