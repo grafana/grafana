@@ -474,8 +474,6 @@ require (
 
 require github.com/grafana/grafana/apps/feedback v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-operator-experience-squad
 
-replace github.com/grafana/grafana/apps/feedback v0.0.0-20241105090059-facca37f4d1f => ./apps/feedback
-
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
@@ -542,3 +540,5 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
+replace github.com/grafana/grafana/apps/feedback v0.0.0-20241105090059-facca37f4d1f => ./apps/feedback
