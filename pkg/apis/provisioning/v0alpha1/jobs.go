@@ -38,6 +38,23 @@ const (
 	JobActionExport JobAction = "export"
 )
 
+// +enum
+type JobState string
+
+const (
+	// Job has been submitted, but not processed yet
+	JobStatePending JobState = "pending"
+
+	// The job is running
+	JobStateWorking JobState = "working"
+
+	// Finished with success
+	JobStateFinished JobState = "success"
+
+	// Finished with errors
+	JobStateError JobState = "error"
+)
+
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
@@ -63,8 +80,9 @@ type FileRef struct {
 
 // The job status
 type JobStatus struct {
-	State   string      `json:"state,omitempty"` // pending, running, ...
 	Updated metav1.Time `json:"updated,omitempty"`
+	State   JobState    `json:"state,omitempty"`
+	Message string      `json:"message,omitempty"`
 	Errors  []string    `json:"errors,omitempty"`
 }
 

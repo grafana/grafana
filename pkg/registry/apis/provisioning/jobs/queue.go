@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -20,10 +21,12 @@ func NewJobQueue(capacity int) JobQueue {
 		rv:       1,
 		capacity: capacity,
 		jobs:     []provisioning.Job{},
+		logger:   slog.Default().With("logger", "job-queue"),
 	}
 }
 
 type jobStore struct {
+	logger   *slog.Logger
 	capacity int
 	workers  []Worker
 
@@ -62,16 +65,15 @@ func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error
 	if job.Status.State != "" {
 		return "", fmt.Errorf("must add jobs with empty state")
 	}
-	job.Status.State = "pending" // start pending
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.rv++
 	job.ResourceVersion = strconv.FormatInt(s.rv, 10)
+	job.Status.State = provisioning.JobStatePending
 	job.Labels["action"] = string(job.Spec.Action) // make it searchable
-	job.Labels["state"] = job.Status.State
-	job.Status.State = "pending" // it is queued
+	job.Labels["state"] = string(job.Status.State)
 	job.Name = "j" + uuid.NewString()
 	job.CreationTimestamp = metav1.NewTime(time.Now())
 
@@ -84,78 +86,80 @@ func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error
 		jobs = append(jobs, j)
 	}
 
+	// For now, start a thread processing each job
 	go func() {
 		time.Sleep(time.Millisecond * 100)
-		s.runWorkers()
+		s.drainPending()
 	}()
 
 	s.jobs = jobs // replace existing list
 	return job.Name, nil
 }
 
-func (s *jobStore) processPendingJob() bool {
-	for i, job := range s.jobs {
-		if job.Status.State == "pending" {
-			ctx, cancel := context.WithCancel(context.WithoutCancel(context.Background()))
-			defer cancel()
+// Reads the queue until no jobs remain
+func (s *jobStore) drainPending() {
+	var err error
+	for {
+		time.Sleep(time.Microsecond * 100)
+		ctx := context.Background()
 
-			for _, worker := range s.workers {
-				if worker.Supports(ctx, job) {
-					// TODO: checkout
-					s.mutex.Lock()
-					s.rv++
-					s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
-					s.jobs[i].Status.State = "running"
-					s.jobs[i].Status.Updated = metav1.NewTime(time.Now())
-					s.mutex.Unlock()
+		job := s.Checkout(ctx, nil)
+		if job == nil {
+			return // done
+		}
 
-					time.Sleep(time.Millisecond * 100)
-
-					status, err := worker.Process(ctx, job)
-					if err != nil {
-						status = &provisioning.JobStatus{
-							State:  "error",
-							Errors: []string{err.Error()},
-						}
-					}
-					status.Updated = metav1.NewTime(time.Now())
-
-					s.mutex.Lock()
-					s.rv++
-					s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
-					s.jobs[i].Status = *status
-					s.mutex.Unlock()
-					return true
-				}
+		var status *provisioning.JobStatus
+		var worker Worker
+		for _, w := range s.workers {
+			if w.Supports(ctx, job) {
+				worker = w
+				break
 			}
-
-			s.mutex.Lock()
-			s.rv++
-			s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
-			s.jobs[i].Status = provisioning.JobStatus{
-				State:   "error",
-				Updated: metav1.NewTime(time.Now()),
+		}
+		if worker == nil {
+			status = &provisioning.JobStatus{
+				State: provisioning.JobStateError,
 				Errors: []string{
-					"no workers registered support this job",
+					"no registered worker supports this job",
 				},
 			}
-			return true
+		} else {
+			status, err = worker.Process(ctx, *job)
+			if err != nil {
+				status = &provisioning.JobStatus{
+					State:  "error",
+					Errors: []string{err.Error()},
+				}
+			} else if status.State == "" {
+				status.State = provisioning.JobStateFinished
+			}
+		}
+
+		err = s.Complete(ctx, job.Namespace, job.Name, *status)
+		if err != nil {
+
 		}
 	}
-	return false
 }
 
-// Checkout implements JobQueue.
-func (s *jobStore) runWorkers() {
-	// TODO... there must be a better async strategy, but this is good enough for now
-	for s.processPendingJob() {
-		time.Sleep(time.Microsecond * 100)
+// Checkout the next "pending" job
+func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisioning.Job {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	// The oldest jobs should be checked out first
+	for i := len(s.jobs) - 1; i >= 0; i-- {
+		if s.jobs[i].Status.State == provisioning.JobStatePending {
+			s.rv++
+			s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
+			s.jobs[i].Status.State = provisioning.JobStateWorking
+			s.jobs[i].Labels["state"] = string(provisioning.JobStateWorking)
+			s.jobs[i].Status.Updated = metav1.NewTime(time.Now())
+			job := s.jobs[i]
+			return &job
+		}
 	}
-}
-
-// Checkout implements JobQueue.
-func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) (*provisioning.Job, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	return nil
 }
 
 // Complete implements JobQueue.
@@ -170,7 +174,7 @@ func (s *jobStore) Complete(ctx context.Context, namespace string, name string, 
 			status.Updated = metav1.NewTime(time.Now())
 			job.ResourceVersion = strconv.FormatInt(s.rv, 10)
 			job.Status = status
-			job.Labels["state"] = status.State
+			job.Labels["state"] = string(status.State)
 			s.jobs[idx] = job
 			return nil
 		}

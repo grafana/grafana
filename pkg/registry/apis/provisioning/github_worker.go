@@ -27,7 +27,7 @@ type GithubWorker struct {
 }
 
 // Supports implements jobs.Worker.
-func (g *GithubWorker) Supports(ctx context.Context, job provisioning.Job) bool {
+func (g *GithubWorker) Supports(ctx context.Context, job *provisioning.Job) bool {
 	t, ok := job.Labels["repository.type"]
 	if ok && t == "github" {
 		return true
