@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, Grid, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
   onCreateNewPanel,

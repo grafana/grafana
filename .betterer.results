@@ -2137,11 +2137,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/dashboard-scene/settings/DeleteDashboardButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2286,7 +2285,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/v2schema/test-helpers.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/dashboard/api/dashboard_api.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2525,10 +2526,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/dashboard/components/ShareModal/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./ShareModal\`)", "0"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
-    ],
     "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -2730,10 +2727,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard/state/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./DashboardModel\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PanelModel\`)", "1"]
     ],
     "public/app/features/dashboard/state/initDashboard.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3812,10 +3805,6 @@ exports[`better eslint`] = {
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/search/service/index.ts:5381": [
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./searcher\`)", "1"]
     ],
     "public/app/features/search/service/sql.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
