@@ -19,6 +19,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   TextBoxVariable,
+  VariableDependencyConfig,
   VariableValue,
   VariableValueSelectors,
   sceneGraph,
@@ -130,7 +131,12 @@ export const CentralAlertHistoryScene = () => {
         children: [
           new SceneFlexItem({
             ySizing: 'content',
-            body: getEventsSceneObject(alertStateHistoryDatasource),
+            body: getEventsSceneObject(
+              alertStateHistoryDatasource,
+              labelsFilterVariable,
+              transitionsToFilterVariable,
+              transitionsFromFilterVariable
+            ),
           }),
           new SceneFlexItem({
             body: new HistoryEventsListObject({
@@ -157,7 +163,12 @@ export const CentralAlertHistoryScene = () => {
  * The query uses a runtime datasource that fetches the events from the history api.
  * @param alertStateHistoryDataSource the datasource information for the runtime datasource
  */
-function getEventsSceneObject(alertStateHistoryDataSource: DataSourceInformation) {
+function getEventsSceneObject(
+  alertStateHistoryDataSource: DataSourceInformation,
+  labelsFilterVariable: TextBoxVariable,
+  transitionsToFilterVariable: CustomVariable,
+  transitionsFromFilterVariable: CustomVariable
+) {
   return new EmbeddedScene({
     controls: [],
     body: new SceneFlexLayout({
@@ -166,7 +177,14 @@ function getEventsSceneObject(alertStateHistoryDataSource: DataSourceInformation
         new SceneFlexItem({
           ySizing: 'content',
           body: new SceneFlexLayout({
-            children: [getEventsScenesFlexItem(alertStateHistoryDataSource)],
+            children: [
+              getEventsScenesFlexItem(
+                alertStateHistoryDataSource,
+                labelsFilterVariable,
+                transitionsToFilterVariable,
+                transitionsFromFilterVariable
+              ),
+            ],
           }),
         }),
       ],
@@ -197,34 +215,116 @@ function getSceneQuery(datasource: DataSourceInformation) {
  * This function creates a SceneFlexItem with a timeseries panel that shows the events.
  * The query uses a runtime datasource that fetches the events from the history api.
  */
-export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
+export function getEventsScenesFlexItem(
+  datasource: DataSourceInformation,
+  labelsFilterVariable: TextBoxVariable,
+  transitionsToFilterVariable: CustomVariable,
+  transitionsFromFilterVariable: CustomVariable
+) {
   return new SceneFlexItem({
     minHeight: 300,
-    body: PanelBuilders.timeseries()
-      .setTitle('Alert Events')
-      .setDescription(
-        'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
-      )
-      .setData(getSceneQuery(datasource))
-      .setColor({ mode: 'continuous-BlPu' })
-      .setCustomFieldConfig('fillOpacity', 100)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
-      .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
-      .setCustomFieldConfig('lineWidth', 1)
-      .setCustomFieldConfig('barAlignment', 0)
-      .setCustomFieldConfig('spanNulls', false)
-      .setCustomFieldConfig('insertNulls', false)
-      .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-      .setCustomFieldConfig('pointSize', 5)
-      .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
-      .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
-      .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
-      .setOption('tooltip', { mode: TooltipDisplayMode.Single })
-
-      .setNoValue('No events found')
-      .build(),
+    body: new EventsPanelScenesObject({
+      datasource: datasource,
+      valueInLabelFilter: labelsFilterVariable.getValue(),
+      valueInStateToFilter: transitionsToFilterVariable.getValue(),
+      valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
+    }),
   });
+}
+
+export class EventsPanelScenesObject extends SceneObjectBase<
+  FilterScenesObjectState & { datasource: DataSourceInformation }
+> {
+  public static Component = EventsPanelScenesObjectRenderer;
+  private _onAnyVariableChanged(): void {
+    this.forceRender();
+  }
+
+  public _onActivate() {
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, this);
+    if (stateToFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateToFilter: stateToFilterVariable.state.value });
+      this._subs.add(
+        stateToFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateToFilter: newState.value });
+          const query = getSceneQuery(this.state.datasource);
+          query.runQueries();
+        })
+      );
+    }
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, this);
+    if (stateFromFilterVariable instanceof CustomVariable) {
+      this.setState({ ...this.state, valueInStateFromFilter: stateFromFilterVariable.state.value });
+      this._subs.add(
+        stateFromFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInStateFromFilter: newState.value });
+          const query = getSceneQuery(this.state.datasource);
+          query.runQueries();
+        })
+      );
+    }
+    const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, this);
+    if (labelsFilterVariable instanceof TextBoxVariable) {
+      this.setState({ ...this.state, valueInLabelFilter: labelsFilterVariable.state.value });
+      this._subs.add(
+        labelsFilterVariable?.subscribeToState((newState, prevState) => {
+          this.setState({ ...prevState, valueInLabelFilter: newState.value });
+          const query = getSceneQuery(this.state.datasource);
+          query.runQueries();
+        })
+      );
+    }
+  }
+
+  public constructor(state: HistoryEventsListObjectState & { datasource: DataSourceInformation }) {
+    super(state);
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
+
+    onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
+  });
+}
+
+export function EventsPanelScenesObjectRenderer({
+  model,
+}: SceneComponentProps<EventsPanelScenesObject & { datasource: DataSourceInformation }>) {
+  const body = PanelBuilders.timeseries()
+    .setTitle('Alert Events')
+    .setDescription(
+      'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+    )
+    .setData(getSceneQuery(model.state.datasource))
+    .setColor({ mode: 'continuous-BlPu' })
+    .setCustomFieldConfig('fillOpacity', 100)
+    .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+    .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
+    .setCustomFieldConfig('lineWidth', 1)
+    .setCustomFieldConfig('barAlignment', 0)
+    .setCustomFieldConfig('spanNulls', false)
+    .setCustomFieldConfig('insertNulls', false)
+    .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+    .setCustomFieldConfig('pointSize', 5)
+    .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
+    .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
+    .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
+    .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+    .setOption('tooltip', { mode: TooltipDisplayMode.Single })
+    .setNoValue('No events found')
+    .build();
+
+  // we need to call this to sync the url with the scene state
+  const isUrlSyncInitialized = useUrlSync(model.getRoot());
+
+  if (!isUrlSyncInitialized) {
+    return null;
+  }
+
+  if (body) {
+    return <body.Component model={body} />;
+  }
+  return <></>;
 }
 
 /*
@@ -235,13 +335,13 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
  * transitionsToFilterVariable: the custom variable for filtering by the current state
  * transitionsFromFilterVariable: the custom variable for filtering by the previous state
  */
-export interface ClearFilterButtonScenesObjectState extends SceneObjectState {
+export interface FilterScenesObjectState extends SceneObjectState {
   valueInLabelFilter: VariableValue;
   valueInStateToFilter: VariableValue;
   valueInStateFromFilter: VariableValue;
 }
 
-export class ClearFilterButtonScenesObject extends SceneObjectBase<ClearFilterButtonScenesObjectState> {
+export class ClearFilterButtonScenesObject extends SceneObjectBase<FilterScenesObjectState> {
   public static Component = ClearFilterButtonObjectRenderer;
 
   public _onActivate() {
