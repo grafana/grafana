@@ -88,7 +88,7 @@ type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Re
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
   return {
-    id: item.metadata.uid || item.spec.title,
+    id: item.metadata.name || item.metadata.uid || item.spec.title,
     name: item.spec.title,
     provisioned: isK8sEntityProvisioned(item),
     grafana_managed_receiver_configs: item.spec.integrations,
