@@ -32,6 +32,7 @@ type Parser struct {
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
+	linter lint.Linter
 }
 
 func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
@@ -40,6 +41,10 @@ func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds Kinds
 		client: client,
 		kinds:  kinds,
 	}
+}
+
+func (r *Parser) SetLinter(l lint.Linter) {
+	r.linter = l
 }
 
 type ParsedResource struct {
@@ -139,7 +144,7 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 		return parsed, nil
 	}
 
-	if true { // lint
+	if r.linter != nil { // lint
 		raw := info.Data
 		if parsed.Classic == provisioning.ClassicDashboard {
 			raw, err = json.MarshalIndent(parsed.Obj, "", "  ") // indent so it is not all on one line
@@ -147,9 +152,7 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 				return parsed, err
 			}
 		}
-		linter := lint.NewDashboardLinter()
-		// TODO: pass the config file
-		parsed.Lint, err = linter.Lint(ctx, raw)
+		parsed.Lint, err = r.linter.Lint(ctx, raw)
 		if err != nil {
 			parsed.Errors = append(parsed.Errors, err)
 		}

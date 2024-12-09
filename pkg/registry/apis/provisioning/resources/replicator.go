@@ -37,6 +37,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 		return nil, fmt.Errorf("failed to get client for namespace %s: %w", f.namespace, err)
 	}
 
+	// The replicator does not need a linter
 	parser := NewParser(f.repo.Config(), dynamicClient, kinds)
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",

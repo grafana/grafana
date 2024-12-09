@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -106,6 +107,7 @@ spec:
 
 		// try to validate (and lint)
 		validate := true
+		parser.SetLinter(lint.NewDashboardLinter())
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)
