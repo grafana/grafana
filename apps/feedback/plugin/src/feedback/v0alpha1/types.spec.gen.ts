@@ -1,20 +1,10 @@
-// Code generated - EDITING IS FUTILE. DO NOT EDIT.
-
 export interface Spec {
-	message: string;
-	screenshot?: string;
-	imageType?: string;
-	screenshotUrl?: string;
-	githubIssueUrl?: string;
-	reporterEmail?: string;
-	canContactReporter: boolean;
-	canAccessInstance: boolean;
-	diagnosticData?: Record<string, any>;
+  canAccessInstance: boolean;
+  diagnosticData?: Record<string, unknown>;
+  githubIssueUrl?: string;
+  imageType?: string;
+  message: string;
+  reporterEmail?: string;
+  screenshot?: string;
+  screenshotUrl?: string;
 }
-
-export const defaultSpec = (): Spec => ({
-	message: "",
-	canContactReporter: false,
-	canAccessInstance: false,
-});
-

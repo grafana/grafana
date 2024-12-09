@@ -90,17 +90,18 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("message cannot be empty")
 						}
 
-						if feedback.Spec.ScreenshotUrl != nil && *feedback.Spec.ScreenshotUrl != "" && len(feedback.Spec.Screenshot) > 0 {
-							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
+						screenshot, err := feedback.Spec.Screenshot.Bytes()
+						if err != nil {
+							return fmt.Errorf("error reading screenshot data: %s", err)
 						}
 
-						if feedback.Spec.CanContactReporter && feedback.Spec.ReporterEmail == nil {
-							logging.FromContext(ctx).Warn("user requested we contact them, but email is missing")
+						if feedback.Spec.ScreenshotUrl != nil && *feedback.Spec.ScreenshotUrl != "" && len(screenshot) > 0 {
+							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
 						}
 
 						metrics.GetMetrics().FeedbackCollected.With(prometheus.Labels{
 							"slug":           feedbackCfg.GrafanaCfg.Slug,
-							"has_screenshot": strconv.FormatBool(len(feedback.Spec.Screenshot) > 0),
+							"has_screenshot": strconv.FormatBool(len(screenshot) > 0),
 						}).Inc()
 						return nil
 					},

@@ -16,10 +16,10 @@ import (
 
 // +k8s:openapi-gen=true
 type Feedback struct {
-	metav1.TypeMeta   `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              FeedbackSpec   `json:"spec" yaml:"spec"`
-	FeedbackStatus    FeedbackStatus `json:"status" yaml:"status"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              FeedbackSpec   `json:"spec"`
+	FeedbackStatus    FeedbackStatus `json:"status"`
 }
 
 func (o *Feedback) GetSpec() any {
@@ -224,9 +224,9 @@ var _ resource.Object = &Feedback{}
 
 // +k8s:openapi-gen=true
 type FeedbackList struct {
-	metav1.TypeMeta `json:",inline" yaml:",inline"`
-	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []Feedback `json:"items" yaml:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []Feedback `json:"items"`
 }
 
 func (o *FeedbackList) DeepCopyObject() runtime.Object {

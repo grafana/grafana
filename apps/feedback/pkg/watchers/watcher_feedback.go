@@ -77,8 +77,14 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	// Upload image to Github and create issue if needed
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("upload_to_github").MustBool(false) {
+
+		screenshot, err := object.Spec.Screenshot.Bytes()
+		if err != nil {
+			return fmt.Errorf("error reading screenshot data: %s", err)
+		}
+
 		// Update the screenshot part if it is present.
-		if object.Spec.ScreenshotUrl == nil && len(object.Spec.Screenshot) > 0 {
+		if object.Spec.ScreenshotUrl == nil && len(screenshot) > 0 {
 			imageUuid := uuid.NewString()
 
 			imageType := object.Spec.ImageType
@@ -87,7 +93,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 				imageType = &defaultImageType
 			}
 
-			screenshotUrl, err := s.gitClient.UploadImage(ctx, imageUuid, imageType, object.Spec.Screenshot)
+			screenshotUrl, err := s.gitClient.UploadImage(ctx, imageUuid, imageType, screenshot)
 			if err != nil {
 				return err
 			}
@@ -284,7 +290,6 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 		InstanceRunningVersion: instanceRunningVersion,
 		BrowserName:            diagnostic.Browser.UserAgent,
 		SnapshotURL:            snapshotURL,
-		CanContactReporter:     object.Spec.CanContactReporter,
 		CanAccessInstance:      object.Spec.CanAccessInstance,
 		UserEmail:              *userEmail,
 	}
