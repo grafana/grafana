@@ -1,6 +1,5 @@
-import { act, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { mockIntersectionObserver } from 'jsdom-testing-mocks';
-import { render } from 'test/test-utils';
+import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
