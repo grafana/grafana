@@ -71,13 +71,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/code-frame@npm:7.24.7":
-  version: 7.24.7
-  resolution: "@babel/code-frame@npm:7.24.7"
+"@babel/code-frame@npm:7.25.7":
+  version: 7.25.7
+  resolution: "@babel/code-frame@npm:7.25.7"
   dependencies:
-    "@babel/highlight": "npm:^7.24.7"
+    "@babel/highlight": "npm:^7.25.7"
     picocolors: "npm:^1.0.0"
-  checksum: 10/4812e94885ba7e3213d49583a155fdffb05292330f0a9b2c41b49288da70cf3c746a3fda0bf1074041a6d741c33f8d7be24be5e96f41ef77395eeddc5c9ff624
+  checksum: 10/000fb8299fb35b6217d4f6c6580dcc1fa2f6c0f82d0a54b8a029966f633a8b19b490a7a906b56a94e9d8bee91c3bc44c74c44c33fb0abaa588202f6280186291
   languageName: node
   linkType: hard
 
@@ -324,7 +324,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-validator-identifier@npm:^7.24.7, @babel/helper-validator-identifier@npm:^7.25.7, @babel/helper-validator-identifier@npm:^7.25.9":
+"@babel/helper-validator-identifier@npm:^7.24.7, @babel/helper-validator-identifier@npm:^7.25.9":
   version: 7.25.9
   resolution: "@babel/helper-validator-identifier@npm:7.25.9"
   checksum: 10/3f9b649be0c2fd457fa1957b694b4e69532a668866b8a0d81eabfa34ba16dbf3107b39e0e7144c55c3c652bf773ec816af8df4a61273a2bb4eb3145ca9cf478e
@@ -359,15 +359,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/highlight@npm:^7.24.7":
-  version: 7.25.7
-  resolution: "@babel/highlight@npm:7.25.7"
+"@babel/highlight@npm:^7.25.7":
+  version: 7.25.9
+  resolution: "@babel/highlight@npm:7.25.9"
   dependencies:
-    "@babel/helper-validator-identifier": "npm:^7.25.7"
+    "@babel/helper-validator-identifier": "npm:^7.25.9"
     chalk: "npm:^2.4.2"
     js-tokens: "npm:^4.0.0"
     picocolors: "npm:^1.0.0"
-  checksum: 10/823be2523d246dbf80aab3cc81c2a36c6111b16ac2949ef06789da54387824c2bfaa88c6627cdeb4ba7151d047a5d6765e49ebd0b478aba09759250111e65e08
+  checksum: 10/0d165283dd4eb312292cea8fec3ae0d376874b1885f476014f0136784ed5b564b2c2ba2d270587ed546ee92505056dab56493f7960c01c4e6394d71d1b2e7db6
   languageName: node
   linkType: hard
 
@@ -6768,22 +6768,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsdoctor/client@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/client@npm:0.4.6"
-  checksum: 10/182d402711c4c346cd7c3afc9dd2b03484fbf02ed36e8a960213b1f0d978aad2e55b3aab33f340023bf4c54afac1b78b303e8e4804226cc2b550a07f3e8ef255
+"@rsdoctor/client@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/client@npm:0.4.11"
+  checksum: 10/fc59005c40dfb11582b16e74de768ef5fe73a0e06db472908b9568db870380554db3b87867e3bf33ce0251e2f351c1249d0181c7e575eeef3c64c64592f9b179
   languageName: node
   linkType: hard
 
-"@rsdoctor/core@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/core@npm:0.4.6"
+"@rsdoctor/core@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/core@npm:0.4.11"
   dependencies:
-    "@rsdoctor/graph": "npm:0.4.6"
-    "@rsdoctor/sdk": "npm:0.4.6"
-    "@rsdoctor/types": "npm:0.4.6"
-    "@rsdoctor/utils": "npm:0.4.6"
-    axios: "npm:^1.7.7"
+    "@rsdoctor/graph": "npm:0.4.11"
+    "@rsdoctor/sdk": "npm:0.4.11"
+    "@rsdoctor/types": "npm:0.4.11"
+    "@rsdoctor/utils": "npm:0.4.11"
+    axios: "npm:^1.7.8"
     enhanced-resolve: "npm:5.12.0"
     filesize: "npm:^10.1.6"
     fs-extra: "npm:^11.1.1"
@@ -6792,49 +6792,50 @@ __metadata:
     semver: "npm:^7.6.3"
     source-map: "npm:^0.7.4"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/969395e3424dd2c709b38c0a98f0e7f83ed03a588023623d140e7f7baa7f10188f86c2d6754afe3e2cec30aebf1c44da8baef2455fd0e098e2b01b599e99afce
+  checksum: 10/b32242191ab4a202a997ffe290b3b62361942e052fe39803f2f458eb17b127516084c0b80705e4645edcf36a839f4e60f76a79c19f0068824bd32e9013b10788
   languageName: node
   linkType: hard
 
-"@rsdoctor/graph@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/graph@npm:0.4.6"
+"@rsdoctor/graph@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/graph@npm:0.4.11"
   dependencies:
-    "@rsdoctor/types": "npm:0.4.6"
-    "@rsdoctor/utils": "npm:0.4.6"
+    "@rsdoctor/types": "npm:0.4.11"
+    "@rsdoctor/utils": "npm:0.4.11"
     lodash: "npm:^4.17.21"
     socket.io: "npm:4.7.2"
     source-map: "npm:^0.7.4"
-  checksum: 10/742b9c6e4c44f46a0a9f202e1e4abb076fa791746cb71445783eefd18f9d4a58a89897ae8e71a3a47ad0961bc430150670b39dd522d5f9f194ba9c37cd5fc5a0
+  checksum: 10/ba828662d7b4889aeb806c14f88a9321e9d10a7a6e568675a65afcf3d6013958526ee023a430946315d4899dce853e2e014876c2a63fe1f9e3dd24de6564f7b4
   languageName: node
   linkType: hard
 
-"@rsdoctor/sdk@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/sdk@npm:0.4.6"
+"@rsdoctor/sdk@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/sdk@npm:0.4.11"
   dependencies:
-    "@rsdoctor/client": "npm:0.4.6"
-    "@rsdoctor/graph": "npm:0.4.6"
-    "@rsdoctor/types": "npm:0.4.6"
-    "@rsdoctor/utils": "npm:0.4.6"
+    "@rsdoctor/client": "npm:0.4.11"
+    "@rsdoctor/graph": "npm:0.4.11"
+    "@rsdoctor/types": "npm:0.4.11"
+    "@rsdoctor/utils": "npm:0.4.11"
     "@types/fs-extra": "npm:^11.0.4"
     body-parser: "npm:1.20.3"
     cors: "npm:2.8.5"
     dayjs: "npm:1.11.13"
     fs-extra: "npm:^11.1.1"
+    json-cycle: "npm:^1.5.0"
     lodash: "npm:^4.17.21"
     open: "npm:^8.4.2"
     serve-static: "npm:1.16.2"
     socket.io: "npm:4.7.2"
     source-map: "npm:^0.7.4"
     tapable: "npm:2.2.1"
-  checksum: 10/fc87021ec6ed9762418c6f79a102f7fbb2aed014edbe10d3a1cc4dd3855779b8d1b037b4ff01a2a1d7c8980d7a5475eece32468ec6a7d51effbb33efc7d0e3d0
+  checksum: 10/b66424c5fc61cbfd52d95c8dc5393715f73653a2d9b7acc04c825ed100b3185c9afe02dfc9450587454430e40a2cc21aa20225ae1b7927e43445d3440d599b47
   languageName: node
   linkType: hard
 
-"@rsdoctor/types@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/types@npm:0.4.6"
+"@rsdoctor/types@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/types@npm:0.4.11"
   dependencies:
     "@types/connect": "npm:3.4.38"
     "@types/estree": "npm:1.0.5"
@@ -6846,16 +6847,16 @@ __metadata:
   peerDependenciesMeta:
     "@rspack/core":
       optional: true
-  checksum: 10/9a96ecb5c146ae64f669ff64de7130da5d84b92348d3c05a5edc4e17c98f93ae8cea6a6433dfe8dea9882ddcfd489ccaf802e2629dda43d7325b6f3c97e51ba2
+  checksum: 10/d9b27f4aeb51c2b39eaeef9e1fdf3080aa13b1a98a54767f464f3d8ef08a91309263372909ce62980c49886868a33bf712d8dc8f9e13b511a3b84eb840b498d3
   languageName: node
   linkType: hard
 
-"@rsdoctor/utils@npm:0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/utils@npm:0.4.6"
+"@rsdoctor/utils@npm:0.4.11":
+  version: 0.4.11
+  resolution: "@rsdoctor/utils@npm:0.4.11"
   dependencies:
-    "@babel/code-frame": "npm:7.24.7"
-    "@rsdoctor/types": "npm:0.4.6"
+    "@babel/code-frame": "npm:7.25.7"
+    "@rsdoctor/types": "npm:0.4.11"
     "@types/estree": "npm:1.0.5"
     acorn: "npm:^8.10.0"
     acorn-import-assertions: "npm:1.9.0"
@@ -6872,24 +6873,24 @@ __metadata:
     lodash: "npm:^4.17.21"
     rslog: "npm:^1.2.3"
     strip-ansi: "npm:^6.0.1"
-  checksum: 10/1a147c78d4e0f48dd4b06d866a373f488bb5b7ae89f3954cfbac7b6fc6f52e88d3020c3d6a351e6b28b1f4fe648181dcf848c08a1b31f95f4e251e42ddb7f3a8
+  checksum: 10/dbeb86402f162a136ea6f95a8ef53f6f46ce39262d6a796cb0d642fbede15a81a7ed73fc9a48aa88bf39ca01bd277e42990b7cd2480159fd2a472205b1e5d05d
   languageName: node
   linkType: hard
 
 "@rsdoctor/webpack-plugin@npm:^0.4.6":
-  version: 0.4.6
-  resolution: "@rsdoctor/webpack-plugin@npm:0.4.6"
+  version: 0.4.11
+  resolution: "@rsdoctor/webpack-plugin@npm:0.4.11"
   dependencies:
-    "@rsdoctor/core": "npm:0.4.6"
-    "@rsdoctor/graph": "npm:0.4.6"
-    "@rsdoctor/sdk": "npm:0.4.6"
-    "@rsdoctor/types": "npm:0.4.6"
-    "@rsdoctor/utils": "npm:0.4.6"
+    "@rsdoctor/core": "npm:0.4.11"
+    "@rsdoctor/graph": "npm:0.4.11"
+    "@rsdoctor/sdk": "npm:0.4.11"
+    "@rsdoctor/types": "npm:0.4.11"
+    "@rsdoctor/utils": "npm:0.4.11"
     fs-extra: "npm:^11.1.1"
     lodash: "npm:^4.17.21"
   peerDependencies:
     webpack: 5.x
-  checksum: 10/6a3bd408d513f7e7ca338432af305676bbc30e3757ef9d7e46ff1200422020a3a195825f3ed0f38040e35d20743ab0ceb4f4d05157dfcd77fb1b2d5e205251ce
+  checksum: 10/c5c64d6731142fc0a5b0395434c7ac0dc13f743671a83d2a33bb88914f95438750cef5a47c923fc2dfb66f1258b8bd26c101f90c84895fd5f1cc9b2c789a888b
   languageName: node
   linkType: hard
 
@@ -11460,14 +11461,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.7":
-  version: 1.7.7
-  resolution: "axios@npm:1.7.7"
+"axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.8":
+  version: 1.7.9
+  resolution: "axios@npm:1.7.9"
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/7f875ea13b9298cd7b40fd09985209f7a38d38321f1118c701520939de2f113c4ba137832fe8e3f811f99a38e12c8225481011023209a77b0c0641270e20cde1
+  checksum: 10/b7a5f660ea53ba9c2a745bf5ad77ad8bf4f1338e13ccc3f9f09f810267d6c638c03dac88b55dae8dc98b79c57d2d6835be651d58d2af97c174f43d289a9fd007
   languageName: node
   linkType: hard
 
@@ -20373,6 +20374,13 @@ __metadata:
   version: 3.0.1
   resolution: "json-buffer@npm:3.0.1"
   checksum: 10/82876154521b7b68ba71c4f969b91572d1beabadd87bd3a6b236f85fbc7dc4695089191ed60bb59f9340993c51b33d479f45b6ba9f3548beb519705281c32c3c
+  languageName: node
+  linkType: hard
+
+"json-cycle@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "json-cycle@npm:1.5.0"
+  checksum: 10/4ce7594eb8f42e820c708ceaed12759168c4d29f91e0f8e213909331f7fd12b765a3b9c4a5e8f0e72bc25d5ed2a380211ff3ec95c3ba1cbb2cb5c68ea396ae9f
   languageName: node
   linkType: hard
 
