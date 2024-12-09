@@ -175,6 +175,39 @@ func schema_pkg_apis_feedback_v0alpha1_FeedbackSpec(ref common.ReferenceCallback
 				Description: "FeedbackSpec defines model for FeedbackSpec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"canAccessInstance": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"diagnosticData": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"githubIssueUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"imageType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -182,17 +215,29 @@ func schema_pkg_apis_feedback_v0alpha1_FeedbackSpec(ref common.ReferenceCallback
 							Format:  "",
 						},
 					},
+					"reporterEmail": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"screenshot": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Ref: ref("github.com/deepmap/oapi-codegen/pkg/types.File"),
+						},
+					},
+					"screenshotUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"message", "screenshot"},
+				Required: []string{"canAccessInstance", "message"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/deepmap/oapi-codegen/pkg/types.File"},
 	}
 }
 
