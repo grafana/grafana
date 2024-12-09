@@ -65,12 +65,14 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"pull_request", "opened", provisioning.WebhookResponse{
 			Code: http.StatusAccepted, // 202
-			Job: &provisioning.Job{
-				Action: provisioning.JobActionPullRequest,
-				Ref:    "dashboard/1733653266690",
-				Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
-				PR:     12,
-				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
+			Jobs: []provisioning.Job{
+				{
+					Action: provisioning.JobActionPullRequest,
+					Ref:    "dashboard/1733653266690",
+					Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+					PR:     12,
+					URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
+				},
 			},
 		}},
 		{"push", "ignored", provisioning.WebhookResponse{
@@ -78,15 +80,26 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
-			Job: &provisioning.Job{
-				Action: provisioning.JobActionMergeBranch,
-				Ref:    "main",
-				Added: []string{
-					"nested-1/dash-1.json",
-					"nested-1/nested-2/dash-2.json",
-				},
-				Modified: []string{
-					"first-dashboard.json",
+			Jobs: []provisioning.Job{
+				{
+					Action: provisioning.JobActionMergeBranch,
+					Ref:    "main",
+					Added: []provisioning.FileRef{
+						{
+							Ref:  "",
+							Path: "nested-1/dash-1.json",
+						},
+						{
+							Ref:  "",
+							Path: "nested-1/nested-2/dash-2.json",
+						},
+					},
+					Modified: []provisioning.FileRef{
+						{
+							Ref:  "",
+							Path: "first-dashboard.json",
+						},
+					},
 				},
 			},
 		}},
@@ -123,7 +136,7 @@ func TestParseWebhooks(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
-			require.Equal(t, tt.expected.Job, rsp.Job)
+			require.Equal(t, tt.expected.Jobs, rsp.Jobs)
 		})
 	}
 }

@@ -431,35 +431,54 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	// pushed to "main" branch
-	job := &provisioning.Job{
-		Action: provisioning.JobActionMergeBranch,
-		Ref:    r.config.Spec.GitHub.Branch, // checked above!
-	}
 	count := 0
+
+	jobs := make([]provisioning.Job, 0, len(event.Commits))
+
+	beforeRef := event.GetBefore()
 	for _, commit := range event.Commits {
+		job := provisioning.Job{
+			Action: provisioning.JobActionMergeBranch,
+			Ref:    commit.GetSHA(),
+		}
+
 		for _, file := range commit.Added {
 			if r.ignore(file) {
 				continue
 			}
-			job.Added = append(job.Added, file)
+
+			job.Added = append(job.Added, provisioning.FileRef{
+				Ref:  commit.GetSHA(),
+				Path: file,
+			})
 			count++
 		}
 		for _, file := range commit.Removed {
 			if r.ignore(file) {
 				continue
 			}
-			job.Removed = append(job.Removed, file)
+			job.Modified = append(job.Modified, provisioning.FileRef{
+				Ref:  commit.GetSHA(),
+				Path: file,
+			})
 			count++
 		}
 		for _, file := range commit.Modified {
 			if r.ignore(file) {
 				continue
 			}
-			job.Modified = append(job.Modified, file)
+
+			job.Modified = append(job.Modified, provisioning.FileRef{
+				Ref:  beforeRef,
+				Path: file,
+			})
 			count++
 		}
+
+		jobs = append(jobs, job)
+		beforeRef = commit.GetSHA()
 	}
+
 	if count == 0 {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
@@ -470,7 +489,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted,
 		Message: fmt.Sprintf("%d files", count),
-		Job:     job,
+		Jobs:    jobs,
 	}, nil
 }
 
@@ -510,12 +529,14 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
-		Job: &provisioning.Job{
-			Action: provisioning.JobActionPullRequest,
-			URL:    pr.GetHTMLURL(),
-			PR:     pr.GetNumber(),
-			Ref:    pr.GetHead().GetRef(),
-			Hash:   pr.GetHead().GetSHA(),
+		Jobs: []provisioning.Job{
+			{
+				Action: provisioning.JobActionPullRequest,
+				URL:    pr.GetHTMLURL(),
+				PR:     pr.GetNumber(),
+				Ref:    pr.GetHead().GetRef(),
+				Hash:   pr.GetHead().GetSHA(),
+			},
 		},
 	}, nil
 }
@@ -537,7 +558,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 
 	// NOT PR, this is processing the actual files
 	for _, v := range job.Added {
-		fileInfo, err := r.Read(ctx, logger, v, job.Ref)
+		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to read added resource", "file", v, "error", err)
 			continue
@@ -550,7 +571,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 		}
 	}
 	for _, v := range job.Modified {
-		fileInfo, err := r.Read(ctx, logger, v, job.Ref)
+		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to read Modified resource", "file", v, "error", err)
 			continue
@@ -564,10 +585,16 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 	}
 
 	for _, v := range job.Removed {
-		// Not sure how to remove yet...
-		// need to find existing thing with the same path?
-		// read the removed file and get the name from that?
-		logger.ErrorContext(ctx, "remove not yet supported", "file", v)
+		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to read Modified resource", "file", v, "error", err)
+			continue
+		}
+
+		if err := replicator.Delete(ctx, fileInfo); err != nil {
+			logger.ErrorContext(ctx, "failed to delete resource", "file", v, "error", err)
+			continue
+		}
 	}
 
 	return nil

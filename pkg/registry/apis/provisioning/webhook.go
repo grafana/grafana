@@ -75,7 +75,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Error(fmt.Errorf("expecting a response"))
 			return
 		}
-		if rsp.Job != nil {
+		if rsp.Jobs != nil {
 			worker, ok := repo.(repository.JobProcessor)
 			if !ok {
 				responder.Error(fmt.Errorf("repo does not support processing jobs"))
@@ -89,10 +89,12 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			defer cancel()
 
 			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			err := worker.Process(ctx, logger, *rsp.Job, factory)
-			if err != nil {
-				responder.Error(err)
-				return
+			for _, job := range rsp.Jobs {
+				err := worker.Process(ctx, logger, job, factory)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
 			}
 		}
 		responder.Object(rsp.Code, rsp)

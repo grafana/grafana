@@ -33,9 +33,14 @@ type Job struct {
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
 
-	Added    []string `json:"added,omitempty"`
-	Modified []string `json:"modified,omitempty"`
-	Removed  []string `json:"removed,omitempty"`
+	Added    []FileRef `json:"added,omitempty"`
+	Modified []FileRef `json:"modified,omitempty"`
+	Removed  []FileRef `json:"removed,omitempty"`
+}
+
+type FileRef struct {
+	Ref  string `json:"ref"`
+	Path string `json:"path"`
 }
 
 // Filter ignorable files
@@ -59,6 +64,6 @@ type WebhookResponse struct {
 	// Optional message
 	Message string `json:"added,omitempty"`
 
-	// The parsed job (should this be an array?)
-	Job *Job `json:"job,omitempty"`
+	// Jobs to be processed
+	Job []Job `json:"job,omitempty"`
 }
