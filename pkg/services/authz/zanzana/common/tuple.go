@@ -6,16 +6,19 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeResource  string = "resource"
-	TypeNamespace string = "namespace"
+	TypeUser           string = "user"
+	TypeServiceAccount string = "service-account"
+	TypeRenderService  string = "render"
+	TypeTeam           string = "team"
+	TypeRole           string = "role"
+	TypeFolder         string = "folder"
+	TypeResource       string = "resource"
+	TypeNamespace      string = "namespace"
 )
 
 const (
@@ -45,6 +48,25 @@ const (
 	RelationFolderResourceDelete           string = "resource_" + RelationDelete
 	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
 	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
+)
+
+var ResourceRelations = []string{
+	RelationRead,
+	RelationWrite,
+	RelationDelete,
+	RelationPermissionsRead,
+	RelationPermissionsWrite,
+}
+
+var FolderRelations = append(
+	ResourceRelations,
+	RelationCreate,
+	RelationFolderResourceRead,
+	RelationFolderResourceWrite,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+	RelationFolderResourcePermissionsRead,
+	RelationFolderResourcePermissionsWrite,
 )
 
 func FolderResourceRelation(relation string) string {
@@ -224,4 +246,22 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 		result = append(result, ToOpenFGATuple(t))
 	}
 	return result
+}
+
+func AddRenderContext(req *openfgav1.CheckRequest) {
+	if req.ContextualTuples == nil {
+		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
+	}
+	if req.ContextualTuples.TupleKeys == nil {
+		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
+	}
+
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
+		User:     req.TupleKey.User,
+		Relation: "view",
+		Object: NewNamespaceResourceIdent(
+			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
+			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+		),
+	})
 }

@@ -3,8 +3,9 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +16,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -54,8 +57,11 @@ func RegisterAPIService(cfg *setting.Cfg,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 ) *FolderAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) {
-		return nil // skip registration unless opting into Kubernetes folders or unless we want to customise registration when testing
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagKubernetesFolders,
+		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagProvisioning) {
+		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
 	builder := &FolderAPIBuilder{
@@ -140,10 +146,6 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
-}
-
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana folders"
@@ -187,9 +189,10 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
+	allowedVerbs := []string{utils.VerbCreate, utils.VerbDelete, utils.VerbList}
 	verb := attr.GetVerb()
 	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
+	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && slices.Contains(allowedVerbs, verb)) {
 		return nil, errNoResource
 	}
 
@@ -214,6 +217,8 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 		fallthrough
 	case utils.VerbDelete:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
+	case utils.VerbList:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead)
 	default:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}
@@ -237,6 +242,15 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	}
 
 	obj := a.GetObject()
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+
+	if f.Spec.Title == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
 
 	for i := 1; i <= folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)

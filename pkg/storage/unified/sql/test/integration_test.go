@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -56,7 +55,6 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 		Backend:     ret,
 		Diagnostics: ret,
 		Lifecycle:   ret,
-		Index:       resource.NewResourceIndexServer(cfg, tracing.NewNoopTracerService()),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)
@@ -99,6 +97,12 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
+
+		stats, err := backend.GetResourceStats(ctx, "", 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, int64(3), stats[0].Count)
+		require.Equal(t, rv3, stats[0].ResourceVersion)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {

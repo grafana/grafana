@@ -95,7 +95,15 @@ type StorageBackend interface {
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
-	Namespaces(ctx context.Context) ([]string, error)
+	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
+	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+}
+
+type ResourceStats struct {
+	NamespacedResource
+
+	Count           int64
+	ResourceVersion int64
 }
 
 // This interface is not exposed to end users directly
@@ -133,6 +141,9 @@ type SearchOptions struct {
 
 	// How many threads should build indexes
 	WorkerThreads int
+
+	// Skip building index on startup for small indexes
+	InitMinCount int
 }
 
 type ResourceServerOptions struct {
@@ -144,9 +155,6 @@ type ResourceServerOptions struct {
 
 	// The blob configuration
 	Blob BlobConfig
-
-	// Requests based on a search index
-	Index ResourceIndexServer
 
 	// Search options
 	Search SearchOptions
@@ -229,7 +237,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		tracer:      opts.Tracer,
 		log:         logger,
 		backend:     opts.Backend,
-		index:       opts.Index,
 		blob:        blobstore,
 		diagnostics: opts.Diagnostics,
 		access:      opts.AccessClient,
@@ -242,7 +249,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -259,7 +266,6 @@ type server struct {
 	backend      StorageBackend
 	blob         BlobSupport
 	search       *searchSupport
-	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
 	access       authz.AccessClient
 	writeHooks   WriteAccessHooks
@@ -923,11 +929,14 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 }
 
-func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-	return s.index.Search(ctx, req)
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+	return s.search.Search(ctx, req)
 }
 
 // History implements ResourceServer.
@@ -935,7 +944,7 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-	return s.index.History(ctx, req)
+	return s.search.History(ctx, req)
 }
 
 // Origin implements ResourceServer.
@@ -943,33 +952,7 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-	return s.index.Origin(ctx, req)
-}
-
-// Index returns the search index. If the index is not initialized, it will be initialized.
-func (s *server) Index(ctx context.Context) (*Index, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-
-	index := s.index.(*IndexServer)
-	if index.index == nil {
-		err := index.Init(ctx, s)
-		if err != nil {
-			return nil, err
-		}
-
-		err = index.Load(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		err = index.Watch(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return index.index, nil
+	return s.search.Origin(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

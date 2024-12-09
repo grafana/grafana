@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { getTimeZone, NavModelItem } from '@grafana/data';
+import { NavModelItem, getTimeZone } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -182,7 +182,12 @@ export const ServiceAccountPageUnconnected = ({
           <Stack justifyContent="space-between" height="auto">
             <h3>Tokens</h3>
             {!serviceAccount.isExternal && (
-              <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+              <Button
+                onClick={() => setIsTokenModalOpen(true)}
+                disabled={tokenActionsDisabled}
+                key="add-service-account-token"
+                icon="plus"
+              >
                 Add service account token
               </Button>
             )}

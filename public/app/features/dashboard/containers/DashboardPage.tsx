@@ -16,12 +16,11 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
-import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
@@ -33,7 +32,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { ShareModal } from '../components/ShareModal';
+import { ShareModal } from '../components/ShareModal/ShareModal';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -519,19 +518,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  if (props.route.routeName === DashboardRoutes.Path) {
-    sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.params.slug!);
-    if (pageNav?.parentItem) {
-      pageNav.parentItem = pageNav.parentItem;
-    }
-  } else {
-    sectionNav = getNavModel(
-      props.navIndex,
-      ID_PREFIX + dashboard.uid,
-      getNavModel(props.navIndex, 'dashboards/browse')
-    );
-  }
+  sectionNav = getNavModel(props.navIndex, ID_PREFIX + dashboard.uid, getNavModel(props.navIndex, 'dashboards/browse'));
 
   const { folderUid } = dashboard.meta;
   if (folderUid && pageNav && sectionNav.main.id !== 'starred') {

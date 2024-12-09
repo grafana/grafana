@@ -18,8 +18,7 @@ export interface SaveDashboardOptions {
   message?: string;
   /** The UID of the folder to save the dashboard in. Overrides `folderId`. */
   folderUid?: string;
-  /** Set to `true` if you want to overwrite existing dashboard with newer version,
-   *  same dashboard title in folder or same dashboard uid. */
+  /** Set to `true` if you want to overwrite an existing dashboard with a given dashboard UID. */
   overwrite?: boolean;
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
