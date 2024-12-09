@@ -348,9 +348,11 @@ function metricSupportsSharding(query: string) {
    * Allowed: sum(sum by (level) (avg_over_time({place="luna"}[1m])))
    */
   const vectorOps = getNodesFromQuery(query, [VectorOp]);
-  const supportedVectorOps = vectorOps.filter(node => getNodeString(query, node) === 'sum');
-  const unsupportedVectorOps = vectorOps.filter(node => getNodeString(query, node) !== 'sum');
-  const supportedWrappingVectorOpps = supportedVectorOps.filter(supportedOp => unsupportedVectorOps.every(unsupportedOp => supportedOp.from < unsupportedOp.from));
+  const supportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) === 'sum');
+  const unsupportedVectorOps = vectorOps.filter((node) => getNodeString(query, node) !== 'sum');
+  const supportedWrappingVectorOpps = supportedVectorOps.filter((supportedOp) =>
+    unsupportedVectorOps.every((unsupportedOp) => supportedOp.from < unsupportedOp.from)
+  );
   if (unsupportedVectorOps.length > 0) {
     return supportedWrappingVectorOpps.length > 0;
   }
