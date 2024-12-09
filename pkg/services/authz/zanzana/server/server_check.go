@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -49,7 +51,7 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 			Object:   common.NewNamespaceResourceIdent(group, resource),
 		},
 	}
-	if subject == common.RenderUser {
+	if strings.HasPrefix(subject, fmt.Sprintf("%s:", common.RenderUserType)) {
 		common.AddRenderContext(req)
 	}
 
