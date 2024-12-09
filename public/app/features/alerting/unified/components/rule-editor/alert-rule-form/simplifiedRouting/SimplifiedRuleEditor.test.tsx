@@ -7,12 +7,12 @@ import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import RuleEditor from 'app/features/alerting/unified/rule-editor/RuleEditor';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { buildInfoResponse } from 'app/features/alerting/unified/testSetup/featureDiscovery';
@@ -106,6 +106,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
     renderSimplifiedRuleEditor();
+
+    // Just to make sure all dropdowns have been loaded
+    await selectFolderAndGroup();
 
     expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument();
   });

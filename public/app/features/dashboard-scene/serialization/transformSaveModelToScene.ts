@@ -283,7 +283,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
       }
     : {};
 

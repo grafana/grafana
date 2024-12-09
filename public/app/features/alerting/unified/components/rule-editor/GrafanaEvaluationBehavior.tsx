@@ -22,14 +22,14 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
@@ -176,6 +176,7 @@ export function GrafanaEvaluationBehaviorStep({
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
     .find((ruleGroup) => ruleGroup.name === group);
+  const existingNamespaceName = Object.keys(rulerNamespace ?? {}).at(0);
 
   const isNewGroup = !existingGroup && !loadingGroups;
 
@@ -190,11 +191,6 @@ export function GrafanaEvaluationBehaviorStep({
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = loadingGroups || isNewGroup || !folderUid || !group;
-  const emptyNamespace: CombinedRuleNamespace = {
-    name: folderName,
-    rulesSource: GRAFANA_RULES_SOURCE_NAME,
-    groups: [],
-  };
   const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -301,11 +297,13 @@ export function GrafanaEvaluationBehaviorStep({
           )}
         </Stack>
 
-        {folderName && isEditingGroup && (
+        {(folderUid || existingNamespaceName) && isEditingGroup && (
           <EditRuleGroupModal
-            namespace={rulerNamespace ?? emptyNamespace}
-            group={existingGroup ?? emptyGroup}
-            folderUid={folderUid}
+            ruleGroupIdentifier={{
+              dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+              groupName: existingGroup?.name ?? emptyGroup.name,
+              namespaceName: folderUid ?? existingNamespaceName,
+            }}
             onClose={() => closeEditGroupModal()}
             intervalEditOnly
             hideFolder={true}
