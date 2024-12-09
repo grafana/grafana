@@ -114,7 +114,8 @@ The following options define the display of the y-axis.
 | Decimals | This setting determines decimal configuration. |
 | Min/Max value | These settings configure the axis range. |
 | Axis width | This setting configures the width for the axis. |
-| Axis value | This setting configures the axis value. |
+| Axis label | This setting configures the axis value. |
+| Tick alignment | Sets the alignment of the tick marks on the visualization. Choose from: **Auto**, **Top (LE)**, **Middle**, and **Bottom (GE)**. This option is only displayed when your **Calculate from data** setting is **No**. |
 | Reverse| When selected, the axis appears in reverse order. |
 
 <!-- prettier-ignore-end -->
@@ -148,7 +149,7 @@ Set a value between `1` and `128`.
 
 Toggle the switch to reverse the color scheme. This option only applies the **Scheme** color mode.
 
-#### Start/end color from value
+#### Start/end color scale from value
 
 By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
 
