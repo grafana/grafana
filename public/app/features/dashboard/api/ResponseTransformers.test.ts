@@ -56,7 +56,7 @@ describe('ResponseTransformers', () => {
         },
       };
 
-      const transformed = ResponseTransformers.transformV1ToV2(dashboardDTO);
+      const transformed = ResponseTransformers.ensureV2Response(dashboardDTO);
 
       expect(transformed.apiVersion).toBe('v2alpha1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
@@ -105,7 +105,7 @@ describe('ResponseTransformers', () => {
         meta: {},
       };
 
-      expect(ResponseTransformers.transformV2ToV1(dashboard)).toBe(dashboard);
+      expect(ResponseTransformers.ensureV1Response(dashboard)).toBe(dashboard);
     });
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
@@ -172,7 +172,7 @@ describe('ResponseTransformers', () => {
         },
       };
 
-      const transformed = ResponseTransformers.transformV2ToV1(dashboardV2);
+      const transformed = ResponseTransformers.ensureV1Response(dashboardV2);
 
       expect(transformed.meta.created).toBe(dashboardV2.metadata.creationTimestamp);
       expect(transformed.meta.createdBy).toBe(dashboardV2.metadata.annotations?.['grafana.app/createdBy']);

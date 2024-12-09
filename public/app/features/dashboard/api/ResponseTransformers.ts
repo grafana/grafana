@@ -9,7 +9,7 @@ import { DashboardDTO } from 'app/types';
 import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource } from './utils';
 
-export function transformV1ToV2(
+export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
   if (isDashboardResource(dto)) {
@@ -83,7 +83,7 @@ export function transformV1ToV2(
   };
 }
 
-export function transformV2ToV1(dashboard: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO): DashboardDTO {
+export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO): DashboardDTO {
   if (!isDashboardResource(dashboard)) {
     return dashboard;
   }
@@ -140,6 +140,6 @@ export function transformV2ToV1(dashboard: DashboardWithAccessInfo<DashboardV2Sp
 }
 
 export const ResponseTransformers = {
-  transformV1ToV2,
-  transformV2ToV1,
+  ensureV2Response,
+  ensureV1Response,
 };

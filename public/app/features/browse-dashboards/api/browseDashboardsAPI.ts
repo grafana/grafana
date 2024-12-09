@@ -6,8 +6,8 @@ import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runt
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
@@ -263,12 +263,16 @@ export const browseDashboardsAPI = createApi({
         for (const dashboardUID of selectedDashboards) {
           const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
+          // TODO: This will be removed when save dashboard is implemented for v2
+          if (isDashboardResource(dashDto)) {
+            throw new Error('v2 schema is not supported');
+          }
+
           const options: SaveDashboardCommand = {
             folderUid: destinationUID,
             overwrite: false,
             message: '',
-            // TODO[schema v2]: save commmand should accept either v1 or v2
-            dashboard: ResponseTransformers.transformV2ToV1(dashDto).dashboard,
+            dashboard: dashDto.dashboard,
           };
 
           await getDashboardAPI().saveDashboard(options);

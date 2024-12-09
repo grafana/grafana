@@ -32,7 +32,7 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
     const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
     // For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-    const result = ResponseTransformers.transformV1ToV2(dashboard);
+    const result = ResponseTransformers.ensureV2Response(dashboard);
 
     if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
       try {
