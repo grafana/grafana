@@ -29,7 +29,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/receivers`,
           method: 'POST',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -50,7 +50,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/receivers/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -80,7 +80,7 @@ const injectedRtkApi = api
   });
 export { injectedRtkApi as generatedReceiversApi };
 export type ListNamespacedReceiverApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1ReceiverList;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1ReceiverList;
 export type ListNamespacedReceiverApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -128,9 +128,9 @@ export type ListNamespacedReceiverApiArg = {
   watch?: boolean;
 };
 export type CreateNamespacedReceiverApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver
-  | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver
+  | /** status 202 Accepted */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 export type CreateNamespacedReceiverApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -142,10 +142,10 @@ export type CreateNamespacedReceiverApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 };
 export type ReadNamespacedReceiverApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 export type ReadNamespacedReceiverApiArg = {
   /** name of the Receiver */
   name: string;
@@ -155,8 +155,8 @@ export type ReadNamespacedReceiverApiArg = {
   pretty?: string;
 };
 export type ReplaceNamespacedReceiverApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 export type ReplaceNamespacedReceiverApiArg = {
   /** name of the Receiver */
   name: string;
@@ -170,7 +170,7 @@ export type ReplaceNamespacedReceiverApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 };
 export type DeleteNamespacedReceiverApiResponse = /** status 200 OK */
   | IoK8SApimachineryPkgApisMetaV1Status
@@ -274,27 +274,51 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApimachineryApisCommonV0Alpha1Unstructured = {
-  [key: string]: any;
-};
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Integration = {
-  SecureFields?: ComGithubGrafanaGrafanaPkgApimachineryApisCommonV0Alpha1Unstructured;
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Integration = {
   disableResolveMessage?: boolean;
-  settings: ComGithubGrafanaGrafanaPkgApimachineryApisCommonV0Alpha1Unstructured;
+  secureFields?: {
+    [key: string]: boolean;
+  };
+  settings: {
+    [key: string]: object;
+  };
   type: string;
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1ReceiverSpec = {
-  integrations: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Integration[];
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Spec = {
+  integrations: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Integration[];
   title: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1StatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Status = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1StatusOperatorState;
+  };
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1ReceiverSpec;
+  spec: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Spec;
+  status: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Status;
 };
 export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -306,10 +330,10 @@ export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1ReceiverList = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1ReceiverList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver[];
+  items: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ListMeta;

@@ -32,7 +32,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/routingtrees/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -47,7 +47,7 @@ const injectedRtkApi = api
   });
 export { injectedRtkApi as generatedRoutesApi };
 export type ListNamespacedRoutingTreeApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeList;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTreeList;
 export type ListNamespacedRoutingTreeApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -95,8 +95,8 @@ export type ListNamespacedRoutingTreeApiArg = {
   watch?: boolean;
 };
 export type ReplaceNamespacedRoutingTreeApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree;
 export type ReplaceNamespacedRoutingTreeApiArg = {
   /** name of the RoutingTree */
   name: string;
@@ -110,7 +110,7 @@ export type ReplaceNamespacedRoutingTreeApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree;
 };
 export type IoK8SApimachineryPkgApisMetaV1Time = string;
 export type IoK8SApimachineryPkgApisMetaV1FieldsV1 = object;
@@ -194,40 +194,65 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RouteDefaults = {
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
   receiver: string;
   repeat_interval?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Matcher = {
   label: string;
   type: string;
   value: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route = {
-  continue?: boolean;
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route = {
+  continue: boolean;
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
-  matchers?: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher[];
+  matchers?: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Matcher[];
   mute_time_intervals?: string[];
   receiver?: string;
   repeat_interval?: string;
-  routes?: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route[];
+  routes?: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route[];
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
-  defaults: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults;
-  routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route[];
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Spec = {
+  defaults: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RouteDefaults;
+  routes: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route[];
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1StatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Status = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [
+      key: string
+    ]: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1StatusOperatorState;
+  };
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec;
+  spec: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Spec;
+  status: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Status;
 };
 export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -239,10 +264,10 @@ export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeList = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTreeList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[];
+  items: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ListMeta;

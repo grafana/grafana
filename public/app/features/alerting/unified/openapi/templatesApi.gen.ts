@@ -35,7 +35,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/templategroups`,
           method: 'POST',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -62,7 +62,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/templategroups/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -95,7 +95,7 @@ const injectedRtkApi = api
   });
 export { injectedRtkApi as generatedTemplatesApi };
 export type ListNamespacedTemplateGroupApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroupList;
 export type ListNamespacedTemplateGroupApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -143,9 +143,9 @@ export type ListNamespacedTemplateGroupApiArg = {
   watch?: boolean;
 };
 export type CreateNamespacedTemplateGroupApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
-  | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup
+  | /** status 202 Accepted */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup;
 export type CreateNamespacedTemplateGroupApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -157,10 +157,10 @@ export type CreateNamespacedTemplateGroupApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup;
 };
 export type ReadNamespacedTemplateGroupApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup;
 export type ReadNamespacedTemplateGroupApiArg = {
   /** name of the TemplateGroup */
   name: string;
@@ -170,8 +170,8 @@ export type ReadNamespacedTemplateGroupApiArg = {
   pretty?: string;
 };
 export type ReplaceNamespacedTemplateGroupApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup;
 export type ReplaceNamespacedTemplateGroupApiArg = {
   /** name of the TemplateGroup */
   name: string;
@@ -185,7 +185,7 @@ export type ReplaceNamespacedTemplateGroupApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup;
 };
 export type DeleteNamespacedTemplateGroupApiResponse = /** status 200 OK */
   | IoK8SApimachineryPkgApisMetaV1Status
@@ -289,17 +289,42 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1Spec = {
   content: string;
   title: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1StatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1Status = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [
+      key: string
+    ]: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1StatusOperatorState;
+  };
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec;
+  spec: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1Spec;
+  status: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1Status;
 };
 export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -311,10 +336,10 @@ export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroupList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup[];
+  items: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ListMeta;
