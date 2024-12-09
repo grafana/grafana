@@ -25,7 +25,7 @@ import (
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
-type FileParser struct {
+type Parser struct {
 	// The target repository
 	repo repository.Repository
 
@@ -34,8 +34,8 @@ type FileParser struct {
 	kinds  KindsLookup
 }
 
-func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLookup) *FileParser {
-	return &FileParser{
+func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
+	return &Parser{
 		repo:   repo,
 		client: client,
 		kinds:  kinds,
@@ -78,7 +78,7 @@ type ParsedResource struct {
 	Errors []error
 }
 
-func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
 	parsed = &ParsedResource{
 		Info: info,
 	}

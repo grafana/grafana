@@ -147,7 +147,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) getParser(repo repository.Repository) (*resources.FileParser, error) {
+func (s *filesConnector) getParser(repo repository.Repository) (*resources.Parser, error) {
 	ns := repo.Config().Namespace
 	client, kinds, err := s.client.New(ns) // As system user
 	if err != nil {

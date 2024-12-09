@@ -56,7 +56,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 type replicator struct {
 	logger     *slog.Logger
 	client     *DynamicClient
-	parser     *FileParser
+	parser     *Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
