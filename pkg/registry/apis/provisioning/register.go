@@ -170,6 +170,13 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	b.jobs.Register(&GithubWorker{
+		getter:         b,
+		logger:         b.logger.With("worker", "github"),
+		resourceClient: b.client,
+		identities:     b.identities,
+	})
+
 	repositoryStorage.AfterCreate = b.afterCreate
 	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
 	repositoryStorage.BeginUpdate = b.beginUpdate
@@ -190,11 +197,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger:        b.logger.With("connector", "hello_world"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter:         b,
-		client:         b.identities,
-		resourceClient: b.client,
-		jobs:           b.jobs,
-		logger:         b.logger.With("connector", "webhook"),
+		getter: b,
+		client: b.identities,
+		jobs:   b.jobs,
+		logger: b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,

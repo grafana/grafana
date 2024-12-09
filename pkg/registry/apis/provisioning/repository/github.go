@@ -439,7 +439,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	for _, commit := range event.Commits {
 		job := provisioning.JobSpec{
 			Action: provisioning.JobActionMergeBranch,
-			Ref:    commit.GetSHA(),
+			Ref:    commit.GetID(),
 		}
 
 		for _, file := range commit.Added {
@@ -448,27 +448,29 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			}
 
 			job.Added = append(job.Added, provisioning.FileRef{
-				Ref:  commit.GetSHA(),
+				Ref:  commit.GetID(),
 				Path: file,
 			})
 			count++
 		}
-		for _, file := range commit.Removed {
-			if r.ignore(file) {
-				continue
-			}
-			job.Modified = append(job.Modified, provisioning.FileRef{
-				Ref:  commit.GetSHA(),
-				Path: file,
-			})
-			count++
-		}
+
 		for _, file := range commit.Modified {
 			if r.ignore(file) {
 				continue
 			}
-
 			job.Modified = append(job.Modified, provisioning.FileRef{
+				Ref:  commit.GetID(),
+				Path: file,
+			})
+			count++
+		}
+
+		for _, file := range commit.Removed {
+			if r.ignore(file) {
+				continue
+			}
+
+			job.Removed = append(job.Removed, provisioning.FileRef{
 				Ref:  beforeRef,
 				Path: file,
 			})
@@ -476,7 +478,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		}
 
 		jobs = append(jobs, job)
-		beforeRef = commit.GetSHA()
+		beforeRef = commit.GetID()
 	}
 
 	if count == 0 {
@@ -568,20 +570,20 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 
 		err = replicator.Replicate(ctx, fileInfo)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to replicate addded resource", "file", v, "error", err)
+			logger.ErrorContext(ctx, "failed to replicate added resource", "file", v, "error", err)
 			continue
 		}
 	}
 	for _, v := range job.Modified {
 		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to read Modified resource", "file", v, "error", err)
+			logger.ErrorContext(ctx, "failed to read modified resource", "file", v, "error", err)
 			continue
 		}
 
 		err = replicator.Replicate(ctx, fileInfo)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to replicate Modified resource", "file", v, "error", err)
+			logger.ErrorContext(ctx, "failed to replicate modified resource", "file", v, "error", err)
 			continue
 		}
 	}
@@ -589,7 +591,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 	for _, v := range job.Removed {
 		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to read Modified resource", "file", v, "error", err)
+			logger.ErrorContext(ctx, "failed to read removed resource", "file", v, "error", err)
 			continue
 		}
 

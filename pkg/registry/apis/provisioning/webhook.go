@@ -15,21 +15,17 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client         auth.BackgroundIdentityService
-	getter         RepoGetter
-	logger         *slog.Logger
-	resourceClient *resources.ClientFactory
-	jobs           jobs.JobQueue
+	client auth.BackgroundIdentityService
+	getter RepoGetter
+	logger *slog.Logger
+	jobs   jobs.JobQueue
 }
 
 func (*webhookConnector) New() runtime.Object {
-	// This is added as the "ResponseType" regardless what ProducesObject() returns
 	return &provisioning.WebhookResponse{}
 }
 
@@ -80,13 +76,13 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 		if rsp.Jobs != nil {
 			// Add the job to the job queue
-			jobs := []provisioning.Job{}
 			for _, spec := range rsp.Jobs {
 				job := provisioning.Job{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: namespace,
 						Labels: map[string]string{
-							"repository": name,
+							"repository":      name,
+							"repository.type": string(repo.Config().Spec.Type),
 						},
 					},
 					Spec: spec,
@@ -97,41 +93,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 					return
 				}
 				job.Name = id
-				jobs = append(jobs, job)
 				rsp.IDs = append(rsp.IDs, id)
-			}
-
-			// TODO, create worker from job queue
-			worker, ok := repo.(repository.JobProcessor)
-			if !ok {
-				responder.Error(fmt.Errorf("repo does not support processing jobs"))
-				return
-			}
-
-			// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
-			// TODO: Async process the jobs!!
-			ctx := identity.WithRequester(context.Background(), id)
-			ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
-			defer cancel()
-
-			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			for _, job := range jobs {
-				err = worker.Process(ctx, logger, job, factory)
-				if err != nil {
-					_ = s.jobs.Complete(ctx, namespace, job.Name, provisioning.JobStatus{
-						State: "error",
-						Errors: []string{
-							err.Error(),
-						},
-					})
-					responder.Error(err)
-					return
-				}
-
-				// Finished the job
-				_ = s.jobs.Complete(ctx, namespace, job.Name, provisioning.JobStatus{
-					State: "finished",
-				})
 			}
 		}
 		responder.Object(rsp.Code, rsp)
