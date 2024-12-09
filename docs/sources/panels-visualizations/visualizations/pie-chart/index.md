@@ -19,13 +19,18 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  configure-legends:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-legend/
 ---
 
 # Pie chart
 
 A pie chart is a graph that displays data as segments of a circle proportional to the whole, making it look like a sliced pie. Each slice corresponds to a value or measurement.
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="1200px" lightbox="true" alt="Pie charts" >}}
+![Pie chart visualizations](/media/docs/grafana/panels-visualizations/screenshot-pie-chart-v11.4.png)
 
 The pie chart visualization is ideal when you have data that adds up to a total and you want to show the proportion of each value compared to other slices, as well as to the whole of the pie.
 
@@ -98,116 +103,85 @@ If you want to display only the values from a given field (or column), once the 
 
 ![Pie chart visualization with multiple rows and columns showing values from one column](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-pie-example6.png)
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value options
+### Value options
 
 Use the following options to refine the value in your visualization.
 
-### Show
+<!-- prettier-ignore-start -->
 
-Choose how much information to show.
+| Option | Description |
+| ------ | ----------- |
+| Show | Set how much information to show. Choose from:<ul><li>**Calculate** - Reduces each value to a single value per series.</li><li>**All values** - Displays every value from a single series.</li></ul> |
+| Calculation | If you chose **Calculate** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
+| Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
+| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
 
-- **Calculate -** Reduces each value to a single value per series.
-- **All values -** Displays every value from a single series.
+<!-- prettier-ignore-end -->
 
-### Calculation
-
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
-
-### Limit
-
-When displaying every value from a single series, this limits the number of values displayed.
-
-### Fields
-
-Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:
-
-- **Numeric fields -** All fields with numerical values.
-- **All fields -** All fields that are not removed by transformations.
-- **Time -** All fields with time values.
-
-## Pie chart options
+### Pie chart options
 
 Use these options to refine how your visualization looks.
 
-### Pie chart type
+#### Pie chart type
 
-Select the pie chart display style.
+Select the pie chart display style. Choose from **Pie** or **Donut**.
 
-### Pie
+![Pie chart types](/media/docs/grafana/panels-visualizations/screenshot-pie-chart-types.png)
 
-![Pie type chart](/static/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
-
-### Donut
-
-![Donut type chart](/static/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
-
-### Labels
+#### Labels
 
 Select labels to display on the pie chart. You can select more than one.
 
-- **Name -** The series or field name.
-- **Percent -** The percentage of the whole.
-- **Value -** The raw numerical value.
+- **Name** - The series or field name.
+- **Percent** - The percentage of the whole.
+- **Value** - The raw numerical value.
 
 Labels are displayed in white over the body of the chart. You might need to select darker chart colors to make them more visible. Long names or numbers might be clipped.
 
-The following example shows a pie chart with **Name** and **Percent** labels displayed.
+The following example shows a pie chart with **Name** and **Percent** labels displayed:
 
-![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png" alt="Pie chart labels" max-width="350px" >}}
 
-## Tooltip options
+### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-## Legend options
+### Legend options
 
-Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
+Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend](ref:configure-legends).
 
-### Visibility
+<!-- prettier-ignore-start -->
 
-Toggle the switch to turn the legend on or off.
+| Option | Description |
+| ------ | ----------- |
+| Visibility | Toggle the switch to turn the legend on or off. |
+| Mode | Use these settings to define how the legend appears in your visualization. Choose from:<ul><li>**List** - Displays the legend as a list. This is a default display mode of the legend.</li><li>**Table** - Displays the legend as a table.</li></ul> |
+| Placement | Select where to display the legend. Choose **Bottom** or **Right**. |
+| Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
+| Legend values | Select values to display in the legend. You can select more than one:<ul><li>**Percent** - The percentage of the whole.</li><li>**Value** - The raw numerical value.</li></ul> |
 
-### Mode
+<!-- prettier-ignore-end -->
 
-Use these settings to define how the legend appears in your visualization.
-
-- **List -** Displays the legend as a list. This is a default display mode of the legend.
-- **Table -** Displays the legend as a table.
-
-### Placement
-
-Choose where to display the legend.
-
-- **Bottom -** Below the graph.
-- **Right -** To the right of the graph.
-
-#### Width
-
-Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
-
-### Values
-
-Select values to display in the legend. You can select more than one.
-
-- **Percent:** The percentage of the whole.
-- **Value:** The raw numerical value.
-
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
