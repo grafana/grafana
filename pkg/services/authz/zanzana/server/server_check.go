@@ -92,10 +92,9 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 
 // checkGeneric check our generic "resource" type.
 func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
-
 	var (
-		folderRelation = common.FolderResourceRelation(relation)
 		resourceCtx    = common.NewResourceContext(group, resource)
+		folderRelation = common.FolderResourceRelation(relation)
 	)
 
 	if folder != "" && common.IsFolderRelation(folderRelation) {

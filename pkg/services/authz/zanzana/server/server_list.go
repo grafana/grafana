@@ -72,37 +72,51 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, info c
 }
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzextv1.ListResponse, error) {
-	resourceCtx := common.NewResourceContext(group, resource)
+	var (
+		resourceCtx    = common.NewResourceContext(group, resource)
+		folderRelation = common.FolderResourceRelation(relation)
+	)
 
 	// 1. List all folders subject has access to resource type in
-	folders, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Type:                 common.TypeFolder,
-		Relation:             common.FolderResourceRelation(relation),
-		User:                 subject,
-		Context:              resourceCtx,
-	})
-	if err != nil {
-		return nil, err
+	var folders []string
+	if common.IsFolderRelation(folderRelation) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             folderRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		folders = res.GetObjects()
 	}
 
 	// 2. List all resource directly assigned to subject
-	direct, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Type:                 common.TypeResource,
-		Relation:             relation,
-		User:                 subject,
-		Context:              resourceCtx,
-	})
-	if err != nil {
-		return nil, err
+	var resources []string
+	if common.IsResourceRelation(relation) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeResource,
+			Relation:             relation,
+			User:                 subject,
+			Context:              resourceCtx,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		resources = res.GetObjects()
 	}
 
 	return &authzextv1.ListResponse{
-		Folders: folderObject(folders.GetObjects()),
-		Items:   directObjects(group, resource, direct.GetObjects()),
+		Folders: folderObject(folders),
+		Items:   directObjects(group, resource, resources),
 	}, nil
 }
 
