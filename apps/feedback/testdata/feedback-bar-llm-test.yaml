@@ -1,0 +1,7 @@
+apiVersion: feedback.grafana.app/v0alpha1
+kind: Feedback
+metadata:
+  name: bar
+spec:
+  message: I was using the explore view to view Cloudwatch metrics, when suddenly the webpage crashed
+  
