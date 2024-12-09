@@ -188,6 +188,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	}
 
 	if err != nil {
+		b.log.Debug("error in query phase, skipping expressions", "error", err)
 		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
 	}
 
