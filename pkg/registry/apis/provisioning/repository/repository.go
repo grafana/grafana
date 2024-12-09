@@ -55,33 +55,6 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
-type Job struct {
-	Action string // enum?
-	Ref    string // The branch name
-	Hash   string // optional SHA
-
-	// Pull request number (when appropriate)
-	PR int64
-
-	// URL to the originator (eg, PR URL)
-	URL string
-
-	Added    []string
-	Modified []string
-	Removed  []string
-}
-
-type WebhookResponse struct {
-	// HTTP Status code
-	Code int
-
-	// Optional message (returned as status)
-	Message string
-
-	// The parsed job (should this be an array?)
-	Job *Job
-}
-
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -120,10 +93,10 @@ type Repository interface {
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
 
 	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error)
+	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
 
 	// Temporary... likely want this as its own thing... eg GithubWorker or similar
-	Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error
+	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error
 
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error

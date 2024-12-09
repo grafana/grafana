@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -17,7 +18,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
@@ -31,6 +31,7 @@ type githubRepository struct {
 	baseURL       *url.URL
 	linterFactory lint.LinterFactory
 	renderer      PreviewRenderer
+	ignore        provisioning.IgnoreFile
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -50,6 +51,13 @@ func NewGitHub(
 		baseURL:       baseURL,
 		linterFactory: linterFactory,
 		renderer:      renderer,
+		ignore: func(p string) bool { // TODO, get config?
+			ext := filepath.Ext(p)
+			if ext == "yaml" || ext == "json" {
+				return false
+			}
+			return true
+		},
 	}
 }
 
@@ -382,193 +390,17 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 }
 
 // Webhook implements Repository.
-func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
+func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
 	payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	eventType := github.WebHookType(req)
-	event, err := github.ParseWebHook(github.WebHookType(req), payload)
-	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid payload")
-	}
-
-	switch event := event.(type) {
-	case *github.PushEvent:
-		return r.getJobsFromPushEvent(ctx, logger, event, ignorable)
-	case *github.PullRequestEvent:
-		return r.getJobsFromPR(ctx, logger, event, ignorable)
-	case *github.PingEvent:
-		return &WebhookResponse{
-			Code:    http.StatusOK,
-			Message: "ping received",
-		}, nil
-	}
-
-	return nil, apierrors.NewBadRequest("unsupported event type: " + eventType)
-}
-
-func (r *githubRepository) getJobsFromPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, ignorable func(string) bool) (*WebhookResponse, error) {
-	if event.GetRepo() == nil {
-		return nil, fmt.Errorf("missing repository in push event")
-	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository) {
-		return nil, fmt.Errorf("repository mismatch")
-	}
-	// Skip silently if the event is not for the main/master branch
-	// as we cannot configure the webhook to only publish events for the main branch
-	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
-		logger.DebugContext(ctx, "ignoring push event as it is not for the configured branch")
-		return &WebhookResponse{Code: http.StatusOK}, nil
-	}
-
-	// pushed to "main" branch
-	job := &Job{
-		Action: "push",
-		Ref:    r.config.Spec.GitHub.Branch, // checked above!
-	}
-	count := 0
-	for _, commit := range event.Commits {
-		logger := logger.With("commit", commit.GetID(), "message", commit.GetMessage())
-		logger.InfoContext(ctx, "process commit")
-
-		for _, file := range commit.Added {
-			if ignorable(file) {
-				continue
-			}
-			job.Added = append(job.Added, file)
-			count++
-		}
-		for _, file := range commit.Removed {
-			if ignorable(file) {
-				continue
-			}
-			job.Removed = append(job.Removed, file)
-			count++
-		}
-		for _, file := range commit.Modified {
-			if ignorable(file) {
-				continue
-			}
-			job.Modified = append(job.Modified, file)
-			count++
-		}
-	}
-	if count == 0 {
-		return &WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no files require updates",
-		}, nil
-	}
-
-	return &WebhookResponse{
-		Code:    http.StatusAccepted,
-		Message: fmt.Sprintf("%d files", count),
-		Job:     job,
-	}, nil
-}
-
-func (r *githubRepository) getJobsFromPR(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, ignorable func(string) bool) (*WebhookResponse, error) {
-	if event.GetRepo() == nil {
-		return nil, fmt.Errorf("missing repository in pull request event")
-	}
-
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository) {
-		return nil, fmt.Errorf("repository mismatch")
-	}
-	pr := event.GetPullRequest()
-	if pr == nil {
-		return nil, fmt.Errorf("expected PR in event")
-	}
-	if pr.Number == nil {
-		return nil, fmt.Errorf("expected PR number in event")
-	}
-
-	action := event.GetAction()
-	logger = logger.With("pull_request", event.GetNumber(), "action", action, "number", event.GetNumber())
-	logger.InfoContext(
-		ctx,
-		"processing pull request event",
-		"linter",
-		r.Config().Spec.GitHub.PullRequestLinter,
-		"previews",
-		r.Config().Spec.GitHub.GenerateDashboardPreviews,
-	)
-
-	if !r.Config().Spec.GitHub.PullRequestLinter && !r.Config().Spec.GitHub.GenerateDashboardPreviews {
-		return &WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no action required on pull request event",
-		}, nil
-	}
-
-	if action != "opened" && action != "reopened" && action != "synchronize" {
-		logger.InfoContext(ctx, "ignore pull request event", "action", action)
-		return &WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: fmt.Sprintf("ignore pull request event: %s", action),
-		}, nil
-	}
-
-	// Get the files changed in the pull request
-	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber())
-	if err != nil {
-		return nil, fmt.Errorf("list pull request files: %w", err)
-	}
-
-	job := &Job{
-		Action: action,
-		Ref:    pr.GetBase().GetRef(),
-		Hash:   pr.GetHead().GetSHA(),
-		URL:    *pr.URL,
-		PR:     *pr.ID, // verified above
-	}
-	count := 0
-	for _, f := range files {
-		if ignorable(f.GetFilename()) {
-			continue
-		}
-
-		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
-		switch f.GetStatus() {
-		case "added":
-			job.Added = append(job.Added, f.GetFilename())
-			count++
-		case "modified", "changed":
-			job.Modified = append(job.Modified, f.GetFilename())
-			count++
-		case "removed":
-			job.Removed = append(job.Removed, f.GetFilename())
-			count++
-		case "renamed":
-			job.Added = append(job.Added, f.GetFilename())
-			job.Removed = append(job.Removed, f.GetPreviousFilename())
-			count++
-		case "unchanged":
-			logger.InfoContext(ctx, "ignore unchanged file")
-			continue
-		default:
-			logger.ErrorContext(ctx, "unhandled pull request file")
-			continue
-		}
-	}
-	if count == 0 {
-		return &WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no actions required",
-		}, nil
-	}
-
-	return &WebhookResponse{
-		Code:    http.StatusAccepted, // Nothing needed
-		Message: fmt.Sprintf("%d files to process in the PR", count),
-		Job:     job,
-	}, nil
+	return r.parseWebhook(github.WebHookType(req), payload)
 }
 
 // Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error {
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error {
 	// TODO... verify added vs removed vs modified... should not process 2x!
 	replicator, err := factory.New()
 	if err != nil {
@@ -576,74 +408,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 	}
 
 	if job.PR > 0 {
-		changedResources := make([]changedResource, 0)
-		for _, fpath := range job.Added {
-			f, err := r.Read(ctx, logger, fpath, job.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read file", "file", fpath, "error", err)
-				continue
-			}
-
-			ok, err := replicator.Validate(ctx, f)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to validate file", "file", fpath, "error", err)
-				continue
-			}
-			if !ok {
-				logger.InfoContext(ctx, "ignore file as it is not a valid resource")
-				continue
-			}
-
-			logger.InfoContext(ctx, "resource added")
-			changedResources = append(changedResources, changedResource{
-				Filename:   path.Base(fpath),
-				Path:       fpath,
-				Data:       f.Data,
-				Action:     "added",
-				Type:       "dashboard", // TODO: get this from the resource
-				Ref:        job.Ref,
-				PreviewURL: r.previewURL(job.Ref, fpath, job.URL),
-			})
-		}
-
-		for _, fpath := range job.Modified {
-			f, err := r.Read(ctx, logger, fpath, job.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read file", "file", fpath, "error", err)
-				continue
-			}
-
-			ok, err := replicator.Validate(ctx, f)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to validate file", "file", fpath, "error", err)
-				continue
-			}
-			if !ok {
-				logger.InfoContext(ctx, "ignore file as it is not a valid resource")
-				continue
-			}
-
-			changedResources = append(changedResources, changedResource{
-				Filename:    path.Base(fpath),
-				Path:        fpath,
-				Data:        f.Data,
-				Action:      "added",
-				Type:        "dashboard", // TODO: get this from the resource
-				Ref:         job.Ref,
-				PreviewURL:  r.previewURL(job.Ref, fpath, job.URL),
-				OriginalURL: r.previewURL("", fpath, job.URL), // TODO!! should be based on the referenced name/grafana UID
-			})
-		}
-
-		if err := r.previewPullRequest(ctx, logger, int(job.PR), changedResources); err != nil {
-			logger.ErrorContext(ctx, "failed to comment previews", "error", err)
-		}
-
-		if err := r.lintPullRequest(ctx, logger, int(job.PR), job.Hash, changedResources); err != nil {
-			logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
-		}
-
-		return nil
+		return r.processPR(ctx, logger, job, replicator)
 	}
 
 	// ???????
@@ -687,58 +452,92 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 	return nil
 }
 
-func (r *githubRepository) WebhookXXX(logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		// We don't want GitHub's request to cause a cancellation for us, but we also want the request context's data (primarily for logging).
-		// This means we will just ignore when GH closes their connection to us. If we respond in time, fantastic. Otherwise, we'll still do the work.
-		// The cancel we do here is mainly just to make sure that no goroutines can accidentally stay living forever.
-		//
-		// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
-		ctx, cancel := context.WithCancel(context.WithoutCancel(req.Context()))
-		defer cancel()
-
-		payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
-		if err != nil {
-			responder.Error(apierrors.NewUnauthorized("invalid signature"))
-			return
-		}
-
-		eventType := github.WebHookType(req)
-		event, err := github.ParseWebHook(github.WebHookType(req), payload)
-		if err != nil {
-			responder.Error(apierrors.NewBadRequest("invalid payload"))
-			return
-		}
-
-		switch event := event.(type) {
-		case *github.PushEvent:
-			if err := r.onPushEvent(ctx, logger, event, factory); err != nil {
-				responder.Error(err)
-				return
-			}
-
-			responder.Object(200, &metav1.Status{
-				Message: "push event processed",
-				Code:    http.StatusOK,
-			})
-		case *github.PullRequestEvent:
-			if err := r.onPullRequestEvent(ctx, logger, event, factory); err != nil {
-				responder.Error(err)
-				return
-			}
-			responder.Object(200, &metav1.Status{
-				Message: "pull request event processed",
-				Code:    http.StatusOK,
-			})
-		case *github.PingEvent:
-			responder.Object(200, &metav1.Status{
-				Message: "ping received",
-				Code:    http.StatusOK,
-			})
-		default:
-			responder.Error(apierrors.NewBadRequest("unsupported event type: " + eventType))
-		}
+// Process a pull request
+func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.Job, replicator FileReplicator) error {
+	// Get the files changed in the pull request
+	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, int(job.PR))
+	if err != nil {
+		return fmt.Errorf("list pull request files: %w", err)
 	}
+
+	changedResources := make([]changedResource, 0)
+
+	baseBranch := job.Ref
+	mainBranch := r.config.Spec.GitHub.Branch
+	prURL := job.URL
+
+	for _, file := range files {
+		resource := changedResource{
+			Filename: path.Base(file.GetFilename()),
+			Path:     file.GetFilename(),
+			Action:   file.GetStatus(),
+			Type:     "dashboard", // TODO: get this from the resource
+			Ref:      job.Ref,
+		}
+
+		path := file.GetFilename()
+		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
+
+		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+		switch file.GetStatus() {
+		case "added":
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
+		case "modified":
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
+		case "removed":
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.Ref = baseBranch
+		case "renamed":
+			resource.OriginalURL = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
+		case "changed":
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
+		case "unchanged":
+			logger.InfoContext(ctx, "ignore unchanged file")
+			continue
+		default:
+			logger.ErrorContext(ctx, "unhandled pull request file")
+			continue
+		}
+
+		f, err := r.Read(ctx, logger, path, resource.Ref)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to read file", "error", err)
+			continue
+		}
+
+		// TODO: how does this validation works vs linting?
+		ok, err := replicator.Validate(ctx, f)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to validate file", "error", err)
+			continue
+		}
+		if !ok {
+			logger.InfoContext(ctx, "ignore file as it is not a valid resource")
+			continue
+		}
+
+		resource.Data = f.Data
+		logger.InfoContext(ctx, "resource changed")
+		changedResources = append(changedResources, resource)
+	}
+
+	if err := r.previewPullRequest(ctx, logger, job.PR, changedResources); err != nil {
+		logger.ErrorContext(ctx, "failed to comment previews", "error", err)
+	}
+
+	headSha := job.Hash
+	if err := r.lintPullRequest(ctx, logger, job.PR, headSha, changedResources); err != nil {
+		logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
+	}
+
+	return nil
 }
 
 func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, replicatorFactory FileReplicatorFactory) error {

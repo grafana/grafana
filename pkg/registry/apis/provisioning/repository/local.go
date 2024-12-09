@@ -276,12 +276,12 @@ func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path
 }
 
 // Process implements Repository.
-func (r *localRepository) Process(ctx context.Context, logger *slog.Logger, job Job, factory FileReplicatorFactory) error {
+func (r *localRepository) Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error {
 	return fmt.Errorf("not implemented yet")
 }
 
 // Webhook implements Repository.
-func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, ignorable func(string) bool, req *http.Request) (*WebhookResponse, error) {
+func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Code:    http.StatusNotImplemented,

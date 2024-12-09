@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,17 +64,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	ignorable := func(p string) bool {
-		ext := filepath.Ext(p)
-		if ext == "yaml" || ext == "json" {
-			return false
-		}
-		return true
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := s.logger.With("repo", name)
-		rsp, err := repo.Webhook(ctx, logger, ignorable, r)
+		rsp, err := repo.Webhook(ctx, logger, r)
 		if err != nil {
 			responder.Error(err)
 			return
