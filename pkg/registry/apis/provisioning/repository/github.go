@@ -519,6 +519,13 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
+	if pr.GetBase().GetRef() != cfg.Branch {
+		return &provisioning.WebhookResponse{
+			Code:    http.StatusOK,
+			Message: "ignoring pull request event as it is not for the configured branch",
+		}, nil
+	}
+
 	action := event.GetAction()
 	if action != "opened" && action != "reopened" && action != "synchronize" {
 		return &provisioning.WebhookResponse{
