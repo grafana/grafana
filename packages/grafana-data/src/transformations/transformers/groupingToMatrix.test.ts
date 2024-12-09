@@ -105,7 +105,7 @@ describe('Grouping to Matrix', () => {
     });
   });
 
-  it.only.each([
+  it.each([
     [undefined, ''],
     [SpecialValue.Null, null],
     [SpecialValue.False, false],
