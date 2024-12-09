@@ -83,7 +83,6 @@ func TestParseWebhooks(t *testing.T) {
 			Jobs: []provisioning.Job{
 				{
 					Action: provisioning.JobActionMergeBranch,
-					Ref:    "main",
 					Added: []provisioning.FileRef{
 						{
 							Ref:  "",
@@ -96,7 +95,7 @@ func TestParseWebhooks(t *testing.T) {
 					},
 					Modified: []provisioning.FileRef{
 						{
-							Ref:  "",
+							Ref:  "72096e3adc646c5a5b8a91744f962b12bac06045",
 							Path: "first-dashboard.json",
 						},
 					},
