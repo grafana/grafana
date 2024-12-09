@@ -22,15 +22,18 @@ export function ScopesDashboards() {
   if (
     !scopes ||
     !scopesDashboardsService ||
-    !scopes.state.isEnabled ||
-    !scopes.state.isDrawerOpened ||
-    scopes.state.isReadOnly
+    !scopes.state.enabled ||
+    !scopes.state.drawerOpened ||
+    scopes.state.readOnly
   ) {
     return null;
   }
 
-  if (!scopesDashboardsService.state.isLoading) {
-    if (scopesDashboardsService.state.forScopeNames.length === 0) {
+  const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
+  const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
+
+  if (!loading) {
+    if (forScopeNames.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -39,7 +42,7 @@ export function ScopesDashboards() {
           <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
-    } else if (scopesDashboardsService.state.dashboards.length === 0) {
+    } else if (dashboards.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -53,25 +56,17 @@ export function ScopesDashboards() {
 
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
-      <ScopesDashboardsTreeSearch
-        disabled={scopesDashboardsService.state.isLoading}
-        query={scopesDashboardsService.state.searchQuery}
-        onChange={scopesDashboardsService.changeSearchQuery}
-      />
+      <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
 
-      {scopesDashboardsService.state.isLoading ? (
+      {loading ? (
         <LoadingPlaceholder
           className={styles.loadingIndicator}
           text={t('scopes.dashboards.loading', 'Loading dashboards')}
           data-testid="scopes-dashboards-loading"
         />
-      ) : scopesDashboardsService.state.filteredFolders[''] ? (
+      ) : filteredFolders[''] ? (
         <ScrollContainer>
-          <ScopesDashboardsTree
-            folders={scopesDashboardsService.state.filteredFolders}
-            folderPath={['']}
-            onFolderUpdate={scopesDashboardsService.updateFolder}
-          />
+          <ScopesDashboardsTree folders={filteredFolders} folderPath={['']} onFolderUpdate={updateFolder} />
         </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
@@ -79,7 +74,7 @@ export function ScopesDashboards() {
 
           <Button
             variant="secondary"
-            onClick={scopesDashboardsService.clearSearchQuery}
+            onClick={clearSearchQuery}
             data-testid="scopes-dashboards-notFoundForFilter-clear"
           >
             <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>

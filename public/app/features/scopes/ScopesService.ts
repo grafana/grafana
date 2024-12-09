@@ -8,12 +8,14 @@ import { ScopesSelectorService } from './selector/ScopesSelectorService';
 export class ScopesService extends ScopesServiceBase<ScopesContextValue['state']> implements ScopesContextValue {
   static #instance: ScopesService | undefined = undefined;
 
+  private _selectorService: ScopesSelectorService = ScopesSelectorService.instance!;
+
   private constructor() {
     super({
-      isDrawerOpened: false,
-      isEnabled: false,
-      isLoading: false,
-      isReadOnly: false,
+      drawerOpened: false,
+      enabled: false,
+      loading: false,
+      readOnly: false,
       value: [],
     });
   }
@@ -26,55 +28,47 @@ export class ScopesService extends ScopesServiceBase<ScopesContextValue['state']
     return ScopesService.#instance;
   }
 
-  public changeScopes = (scopeNames: string[]) => {
-    return ScopesSelectorService.instance?.applyNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
-  };
+  public changeScopes = (scopeNames: string[]) => this._selectorService.changeScopes(scopeNames);
 
-  public setScopes = (scopes: Scope[]) => {
-    this.updateState({ value: scopes });
-  };
+  public enableReadOnly = () => {
+    if (!this.state.readOnly) {
+      this.updateState({ readOnly: true });
+    }
 
-  public enterLoadingMode = () => {
-    if (!this.state.isLoading) {
-      this.updateState({ isLoading: true });
+    if (this._selectorService.state.opened) {
+      this._selectorService.closeAndReset();
     }
   };
 
-  public exitLoadingMode = () => {
-    if (this.state.isLoading) {
-      this.updateState({ isLoading: false });
+  public disableReadOnly = () => {
+    if (this.state.readOnly) {
+      this.updateState({ readOnly: false });
     }
-  };
-
-  public enterReadOnly = () => {
-    if (!this.state.isReadOnly) {
-      this.updateState({ isReadOnly: true });
-    }
-
-    if (ScopesSelectorService.instance?.state.isOpened) {
-      ScopesSelectorService.instance?.closePicker();
-    }
-  };
-
-  public exitReadOnly = () => {
-    if (this.state.isReadOnly) {
-      this.updateState({ isReadOnly: false });
-    }
-  };
-
-  public toggleDrawer = () => {
-    this.updateState({ isDrawerOpened: !this.state.isDrawerOpened });
   };
 
   public enable = () => {
-    if (!this.state.isEnabled) {
-      this.updateState({ isEnabled: true });
+    if (!this.state.enabled) {
+      this.updateState({ enabled: true });
     }
   };
 
   public disable = () => {
-    if (this.state.isEnabled) {
-      this.updateState({ isEnabled: false });
+    if (this.state.enabled) {
+      this.updateState({ enabled: false });
+    }
+  };
+
+  public setScopes = (scopes: Scope[]) => this.updateState({ value: scopes });
+
+  public setLoading = (loading: boolean) => {
+    if (this.state.loading !== loading) {
+      this.updateState({ loading });
+    }
+  };
+
+  public setDrawerOpened = (drawerOpened: boolean) => {
+    if (this.state.drawerOpened !== drawerOpened) {
+      this.updateState({ drawerOpened });
     }
   };
 }

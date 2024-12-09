@@ -8,7 +8,7 @@ export interface SuggestedDashboard {
 
 export interface SuggestedDashboardsFolder {
   title: string;
-  isExpanded: boolean;
+  expanded: boolean;
   folders: SuggestedDashboardsFoldersMap;
   dashboards: SuggestedDashboardsMap;
 }
@@ -16,4 +16,4 @@ export interface SuggestedDashboardsFolder {
 export type SuggestedDashboardsMap = Record<string, SuggestedDashboard>;
 export type SuggestedDashboardsFoldersMap = Record<string, SuggestedDashboardsFolder>;
 
-export type OnFolderUpdate = (path: string[], isExpanded: boolean) => void;
+export type OnFolderUpdate = (path: string[], expanded: boolean) => void;

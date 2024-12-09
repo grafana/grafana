@@ -40,8 +40,8 @@ describe('View mode', () => {
 
   it('Enters view mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(ScopesService.instance?.state.isReadOnly).toEqual(true);
-    expect(ScopesService.instance?.state.isDrawerOpened).toEqual(false);
+    expect(ScopesService.instance?.state.readOnly).toEqual(true);
+    expect(ScopesService.instance?.state.drawerOpened).toEqual(false);
   });
 
   it('Closes selector on enter', async () => {

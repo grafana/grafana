@@ -11,7 +11,7 @@ import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 
 interface ScopesSelectorServiceState {
-  isOpened: boolean;
+  opened: boolean;
   loadingNodeName: string | undefined;
   nodes: NodesMap;
   selectedScopes: SelectedScope[];
@@ -23,9 +23,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   private _scopesCache = new Map<string, Promise<Scope>>();
 
+  private _scopesService: ScopesService = ScopesService.instance!;
+
   private constructor() {
     super({
-      isOpened: false,
+      opened: false,
       loadingNodeName: undefined,
       nodes: {
         '': {
@@ -33,9 +35,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           reason: NodeReason.Result,
           nodeType: 'container',
           title: '',
-          isExpandable: true,
-          isSelectable: false,
-          isExpanded: true,
+          expandable: true,
+          selectable: false,
+          expanded: true,
           query: '',
           nodes: {},
         },
@@ -53,7 +55,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return ScopesSelectorService.#instance;
   }
 
-  public updateNode = async (path: string[], isExpanded: boolean, query: string) => {
+  public updateNode = async (path: string[], expanded: boolean, query: string) => {
     this._fetchSub?.unsubscribe();
 
     let nodes = { ...this.state.nodes };
@@ -66,12 +68,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const loadingNodeName = path[path.length - 1];
     const currentNode = currentLevel[loadingNodeName];
 
-    const isDifferentQuery = currentNode.query !== query;
+    const differentQuery = currentNode.query !== query;
 
-    currentNode.isExpanded = isExpanded;
+    currentNode.expanded = expanded;
     currentNode.query = query;
 
-    if (isExpanded || isDifferentQuery) {
+    if (expanded || differentQuery) {
       this.updateState({ nodes, loadingNodeName });
 
       this._fetchSub = from(this.fetchNodeApi(loadingNodeName, query))
@@ -147,7 +149,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  public applyNewScopes = async (treeScopes = this.state.treeScopes) => {
+  public changeScopes = (scopeNames: string[]) =>
+    this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
+
+  public setNewScopes = async (treeScopes = this.state.treeScopes) => {
     if (isEqual(treeScopes, this.getTreeScopesFromSelectedScopes(this.state.selectedScopes))) {
       return;
     }
@@ -157,25 +162,19 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       path,
     }));
     this.updateState({ selectedScopes, treeScopes });
-    ScopesService.instance?.enterLoadingMode();
+    this._scopesService.setLoading(true);
     ScopesDashboardsService.instance?.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.fetchScopesApi(treeScopes);
     this.updateState({ selectedScopes });
-    ScopesService.instance?.setScopes(selectedScopes.map(({ scope }) => scope));
-    ScopesService.instance?.exitLoadingMode();
+    this._scopesService.setScopes(selectedScopes.map(({ scope }) => scope));
+    this._scopesService.setLoading(false);
   };
 
-  public dismissNewScopes = () => {
-    this.updateState({ treeScopes: this.getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
-  };
+  public removeAllScopes = () => this.setNewScopes([]);
 
-  public removeAllScopes = () => {
-    this.applyNewScopes([]);
-  };
-
-  public openPicker = async () => {
-    if (!ScopesService.instance?.state.isReadOnly) {
+  public open = async () => {
+    if (!this._scopesService.state.readOnly) {
       if (Object.keys(this.state.nodes[''].nodes).length === 0) {
         await this.updateNode([''], true, '');
       }
@@ -192,19 +191,27 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // Expand the nodes to the selected scope
       nodes = this.expandNodes(nodes, path);
 
-      this.updateState({ nodes, isOpened: true });
+      this.updateState({ nodes, opened: true });
     }
   };
 
-  public closePicker = () => {
-    this.updateState({ isOpened: false });
+  public closeAndReset = () => {
+    this.updateState({ opened: false });
+    this.updateState({ treeScopes: this.getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
   };
+
+  public closeAndApply = () => {
+    this.updateState({ opened: false });
+    this.setNewScopes();
+  };
+
+  public toggleDrawer = () => this._scopesService.setDrawerOpened(!this._scopesService.state.drawerOpened);
 
   public closeNodes = (nodes: NodesMap): NodesMap => {
     return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
       acc[id] = {
         ...node,
-        isExpanded: false,
+        expanded: false,
         nodes: this.closeNodes(node.nodes),
       };
 
@@ -221,7 +228,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       currentNodes[nodeId] = {
         ...currentNodes[nodeId],
-        isExpanded: true,
+        expanded: true,
       };
       currentNodes = currentNodes[nodeId].nodes;
     }
@@ -266,9 +273,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // We search for the path of each scope name without a path
     const scopeNamesWithPaths = scopeNamesWithoutPaths.reduce<Record<string, string[]>>((acc, scopeName) => {
-      const possibleParent = childNodesArr.find(
-        (childNode) => childNode.isSelectable && childNode.linkId === scopeName
-      );
+      const possibleParent = childNodesArr.find((childNode) => childNode.selectable && childNode.linkId === scopeName);
 
       if (possibleParent) {
         acc[scopeName] = [...path, possibleParent.name];
@@ -318,9 +323,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         acc[name] = {
           name,
           ...spec,
-          isExpandable: spec.nodeType === 'container',
-          isSelectable: spec.linkType === 'scope',
-          isExpanded: false,
+          expandable: spec.nodeType === 'container',
+          selectable: spec.linkType === 'scope',
+          expanded: false,
           query: '',
           reason: NodeReason.Result,
           nodes: {},

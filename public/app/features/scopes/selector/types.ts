@@ -8,9 +8,9 @@ export enum NodeReason {
 export interface Node extends ScopeNodeSpec {
   name: string;
   reason: NodeReason;
-  isExpandable: boolean;
-  isSelectable: boolean;
-  isExpanded: boolean;
+  expandable: boolean;
+  selectable: boolean;
+  expanded: boolean;
   query: string;
   nodes: NodesMap;
 }
@@ -27,5 +27,5 @@ export interface TreeScope {
   path: string[];
 }
 
-export type OnNodeUpdate = (path: string[], isExpanded: boolean, query: string) => void;
+export type OnNodeUpdate = (path: string[], expanded: boolean, query: string) => void;
 export type OnNodeSelectToggle = (path: string[]) => void;

@@ -24,13 +24,18 @@ export const ScopesSelector = () => {
 
   useObservable(scopesSelectorService?.stateObservable ?? new Observable(), scopesSelectorService?.state);
 
-  if (!scopes || !scopesSelectorService || !scopes.state.isEnabled) {
+  if (!scopes || !scopesSelectorService || !scopes.state.enabled) {
     return null;
   }
 
-  const dashboardsIconLabel = scopes.state.isReadOnly
+  const { readOnly, drawerOpened, loading } = scopes.state;
+  const { nodes, selectedScopes, opened, loadingNodeName, treeScopes } = scopesSelectorService.state;
+  const { toggleDrawer, open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } =
+    scopesSelectorService;
+
+  const dashboardsIconLabel = readOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
-    : scopes.state.isDrawerOpened
+    : drawerOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
       : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
 
@@ -42,63 +47,42 @@ export const ScopesSelector = () => {
         aria-label={dashboardsIconLabel}
         tooltip={dashboardsIconLabel}
         data-testid="scopes-dashboards-expand"
-        disabled={scopes.state.isReadOnly}
-        onClick={scopes.toggleDrawer}
+        disabled={readOnly}
+        onClick={toggleDrawer}
       />
 
       <ScopesInput
-        nodes={scopesSelectorService.state.nodes}
-        scopes={scopesSelectorService.state.selectedScopes}
-        isDisabled={scopes.state.isReadOnly}
-        isLoading={scopes.state.isLoading}
-        onInputClick={scopesSelectorService.openPicker}
-        onRemoveAllClick={scopesSelectorService.removeAllScopes}
+        nodes={nodes}
+        scopes={selectedScopes}
+        disabled={readOnly}
+        loading={loading}
+        onInputClick={open}
+        onRemoveAllClick={removeAllScopes}
       />
 
-      {scopesSelectorService.state.isOpened && (
-        <Drawer
-          title={t('scopes.selector.title', 'Select scopes')}
-          size="sm"
-          onClose={() => {
-            scopesSelectorService!.closePicker();
-            scopesSelectorService!.dismissNewScopes();
-          }}
-        >
+      {opened && (
+        <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
           <div className={styles.drawerContainer}>
             <div className={styles.treeContainer}>
-              {scopes.state.isLoading ? (
+              {loading ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <ScopesTree
-                  nodes={scopesSelectorService.state.nodes}
+                  nodes={nodes}
                   nodePath={['']}
-                  loadingNodeName={scopesSelectorService.state.loadingNodeName}
-                  scopes={scopesSelectorService.state.treeScopes}
-                  onNodeUpdate={scopesSelectorService.updateNode}
-                  onNodeSelectToggle={scopesSelectorService.toggleNodeSelect}
+                  loadingNodeName={loadingNodeName}
+                  scopes={treeScopes}
+                  onNodeUpdate={updateNode}
+                  onNodeSelectToggle={toggleNodeSelect}
                 />
               )}
             </div>
 
             <div className={styles.buttonsContainer}>
-              <Button
-                variant="primary"
-                data-testid="scopes-selector-apply"
-                onClick={() => {
-                  scopesSelectorService!.closePicker();
-                  scopesSelectorService!.applyNewScopes();
-                }}
-              >
+              <Button variant="primary" data-testid="scopes-selector-apply" onClick={closeAndApply}>
                 <Trans i18nKey="scopes.selector.apply">Apply</Trans>
               </Button>
-              <Button
-                variant="secondary"
-                data-testid="scopes-selector-cancel"
-                onClick={() => {
-                  scopesSelectorService!.closePicker();
-                  scopesSelectorService!.dismissNewScopes();
-                }}
-              >
+              <Button variant="secondary" data-testid="scopes-selector-cancel" onClick={closeAndReset}>
                 <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
               </Button>
             </div>

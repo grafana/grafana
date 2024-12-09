@@ -282,7 +282,7 @@ describe('Dashboards list', () => {
       expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithoutFolder])).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {},
           dashboards: {
             [dashboardWithoutFolder.spec.dashboard]: {
@@ -299,7 +299,7 @@ describe('Dashboards list', () => {
       expect(ScopesDashboardsService.instance?.groupDashboards([dashboardWithRootFolder])).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {},
           dashboards: {
             [dashboardWithRootFolder.spec.dashboard]: {
@@ -318,11 +318,11 @@ describe('Dashboards list', () => {
       ).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {
             'Folder 1': {
               title: 'Folder 1',
-              isExpanded: false,
+              expanded: false,
               folders: {},
               dashboards: {
                 [dashboardWithOneFolder.spec.dashboard]: {
@@ -339,7 +339,7 @@ describe('Dashboards list', () => {
             },
             'Folder 2': {
               title: 'Folder 2',
-              isExpanded: false,
+              expanded: false,
               folders: {},
               dashboards: {
                 [dashboardWithTwoFolders.spec.dashboard]: {
@@ -361,11 +361,11 @@ describe('Dashboards list', () => {
       ).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {
             'Folder 1': {
               title: 'Folder 1',
-              isExpanded: false,
+              expanded: false,
               folders: {},
               dashboards: {
                 [dashboardWithTwoFolders.spec.dashboard]: {
@@ -377,7 +377,7 @@ describe('Dashboards list', () => {
             },
             'Folder 2': {
               title: 'Folder 2',
-              isExpanded: false,
+              expanded: false,
               folders: {},
               dashboards: {
                 [dashboardWithTwoFolders.spec.dashboard]: {
@@ -438,7 +438,7 @@ describe('Dashboards list', () => {
                 },
               },
               folders: {},
-              isExpanded: false,
+              expanded: false,
               title: 'Folder 1',
             },
             'Folder 2': {
@@ -450,7 +450,7 @@ describe('Dashboards list', () => {
                 },
               },
               folders: {},
-              isExpanded: false,
+              expanded: false,
               title: 'Folder 2',
             },
             'Folder 3': {
@@ -462,11 +462,11 @@ describe('Dashboards list', () => {
                 },
               },
               folders: {},
-              isExpanded: false,
+              expanded: false,
               title: 'Folder 3',
             },
           },
-          isExpanded: true,
+          expanded: true,
           title: '',
         },
       });
@@ -480,11 +480,11 @@ describe('Dashboards list', () => {
           {
             '': {
               title: '',
-              isExpanded: true,
+              expanded: true,
               folders: {
                 'Folder 1': {
                   title: 'Folder 1',
-                  isExpanded: false,
+                  expanded: false,
                   folders: {},
                   dashboards: {
                     'Dashboard ID': {
@@ -496,7 +496,7 @@ describe('Dashboards list', () => {
                 },
                 'Folder 2': {
                   title: 'Folder 2',
-                  isExpanded: true,
+                  expanded: true,
                   folders: {},
                   dashboards: {
                     'Dashboard ID': {
@@ -521,11 +521,11 @@ describe('Dashboards list', () => {
       ).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {
             'Folder 1': {
               title: 'Folder 1',
-              isExpanded: true,
+              expanded: true,
               folders: {},
               dashboards: {
                 'Dashboard ID': {
@@ -537,7 +537,7 @@ describe('Dashboards list', () => {
             },
             'Folder 2': {
               title: 'Folder 2',
-              isExpanded: true,
+              expanded: true,
               folders: {},
               dashboards: {
                 'Dashboard ID': {
@@ -559,11 +559,11 @@ describe('Dashboards list', () => {
           {
             '': {
               title: '',
-              isExpanded: true,
+              expanded: true,
               folders: {
                 'Folder 1': {
                   title: 'Folder 1',
-                  isExpanded: false,
+                  expanded: false,
                   folders: {},
                   dashboards: {
                     'Dashboard ID': {
@@ -575,7 +575,7 @@ describe('Dashboards list', () => {
                 },
                 'Folder 2': {
                   title: 'Folder 2',
-                  isExpanded: true,
+                  expanded: true,
                   folders: {},
                   dashboards: {
                     'Random ID': {
@@ -605,11 +605,11 @@ describe('Dashboards list', () => {
       ).toEqual({
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {
             'Folder 1': {
               title: 'Folder 1',
-              isExpanded: true,
+              expanded: true,
               folders: {},
               dashboards: {
                 'Dashboard ID': {

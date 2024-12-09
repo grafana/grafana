@@ -16,7 +16,7 @@ interface ScopesDashboardsServiceState {
   // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
   folders: SuggestedDashboardsFoldersMap;
   forScopeNames: string[];
-  isLoading: boolean;
+  loading: boolean;
   searchQuery: string;
 }
 
@@ -29,7 +29,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       filteredFolders: {},
       folders: {},
       forScopeNames: [],
-      isLoading: false,
+      loading: false,
       searchQuery: '',
     });
   }
@@ -42,7 +42,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     return ScopesDashboardsService.#instance;
   }
 
-  public updateFolder = (path: string[], isExpanded: boolean) => {
+  public updateFolder = (path: string[], expanded: boolean) => {
     let folders = { ...this.state.folders };
     let filteredFolders = { ...this.state.filteredFolders };
     let currentLevelFolders: SuggestedDashboardsFoldersMap = folders;
@@ -57,8 +57,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     const currentFolder = currentLevelFolders[name];
     const currentFilteredFolder = currentLevelFilteredFolders[name];
 
-    currentFolder.isExpanded = isExpanded;
-    currentFilteredFolder.isExpanded = isExpanded;
+    currentFolder.expanded = expanded;
+    currentFilteredFolder.expanded = expanded;
 
     this.updateState({ folders, filteredFolders });
   };
@@ -88,25 +88,25 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         filteredFolders: {},
         folders: {},
         forScopeNames: [],
-        isLoading: false,
+        loading: false,
       });
 
       return;
     }
 
-    this.updateState({ forScopeNames, isLoading: true });
+    this.updateState({ forScopeNames, loading: true });
 
     this._fetchSub = from(this.fetchDashboardsApi(forScopeNames))
       .pipe(
         finalize(() => {
-          this.updateState({ isLoading: false });
+          this.updateState({ loading: false });
         })
       )
       .subscribe((dashboards) => {
         const folders = this.groupDashboards(dashboards);
         const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
-        this.updateState({ dashboards, filteredFolders, folders, isLoading: false });
+        this.updateState({ dashboards, filteredFolders, folders, loading: false });
 
         this._fetchSub?.unsubscribe();
       });
@@ -122,7 +122,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
           if (group && !rootNode.folders[group]) {
             rootNode.folders[group] = {
               title: group,
-              isExpanded: false,
+              expanded: false,
               folders: {},
               dashboards: {},
             };
@@ -151,7 +151,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       {
         '': {
           title: '',
-          isExpanded: true,
+          expanded: true,
           folders: {},
           dashboards: {},
         },
@@ -167,7 +167,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       if (folder.title.toLowerCase().includes(query)) {
         acc[folderId] = {
           ...folder,
-          isExpanded: true,
+          expanded: true,
         };
 
         return acc;
@@ -181,7 +181,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       if (Object.keys(filteredFolders).length > 0 || filteredDashboards.length > 0) {
         acc[folderId] = {
           ...folder,
-          isExpanded: true,
+          expanded: true,
           folders: filteredFolders,
           dashboards: Object.fromEntries(filteredDashboards),
         };
