@@ -15,6 +15,10 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   });
   const [numItemsToShow, setNumItemsToShow] = useState(5);
 
+  const selectedTime = history.find((entry) => {
+    return entry.url === window.location.href || entry.views.some((view) => view.url === window.location.href);
+  })?.time;
+
   const hist = history.slice(0, numItemsToShow).reduce((acc: { [key: string]: HistoryEntry[] }, entry) => {
     const date = moment(entry.time);
     let key = '';
@@ -29,13 +33,6 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
     return acc;
   }, {});
 
-  console.info(hist);
-
-  const onClickHistory = (url: string) => {
-    window.location.href = url;
-    onClose();
-  };
-
   return (
     <Stack direction="column" alignItems="flex-start">
       <Box width="100%">
@@ -45,9 +42,16 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
               <Text color="secondary" variant="bodySmall">
                 {entries}
               </Text>
-              {hist[entries].map((entry, index) => (
-                <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} onClick={onClickHistory} />
-              ))}
+              {hist[entries].map((entry, index) => {
+                return (
+                  <HistoryEntryAppView
+                    key={index}
+                    entry={entry}
+                    isSelected={entry.time === selectedTime}
+                    onClick={() => onClose()}
+                  />
+                );
+              })}
             </Stack>
           );
         })}
@@ -62,15 +66,21 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
 }
 interface ItemProps {
   entry: HistoryEntry;
-  isFirst: boolean;
-  onClick: (url: string) => void;
+  isSelected: boolean;
+  onClick: () => void;
 }
 
-function HistoryEntryAppView({ entry, isFirst, onClick }: ItemProps) {
+function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const [isExpanded, setIsExpanded] = useState(isFirst && entry.views.length > 0);
+  const [isExpanded, setIsExpanded] = useState(isSelected && entry.views.length > 0);
   const { breadcrumbs, views, time, url, sparklineData } = entry;
+
+  const selectedViewTime =
+    isSelected &&
+    entry.views.find((entry) => {
+      return entry.url === window.location.href;
+    })?.time;
 
   return (
     <Stack direction="column" gap={1}>
@@ -87,9 +97,13 @@ function HistoryEntryAppView({ entry, isFirst, onClick }: ItemProps) {
         )}
 
         <Card
-          onClick={() => onClick(url)}
+          onClick={() => {
+            store.setObject('CLICKING_HISTORY', true);
+            onClick();
+          }}
+          href={url}
           isCompact={true}
-          className={url === window.location.href ? undefined : styles.card}
+          className={isSelected ? undefined : styles.card}
         >
           <Stack direction="column">
             <div>
@@ -131,23 +145,29 @@ function HistoryEntryAppView({ entry, isFirst, onClick }: ItemProps) {
       </Stack>
       {isExpanded && (
         <div className={styles.expanded}>
-          {views.map((view, index) => (
-            <Card
-              key={index}
-              onClick={() => onClick(view.url)}
-              isCompact={true}
-              className={view.url === window.location.href ? undefined : styles.card}
-            >
-              <Stack direction="column" gap={0}>
-                <Text variant="bodySmall">{view.name}</Text>
-                {view.description && (
-                  <Text color="secondary" variant="bodySmall">
-                    {view.description}
-                  </Text>
-                )}
-              </Stack>
-            </Card>
-          ))}
+          {views.map((view, index) => {
+            return (
+              <Card
+                key={index}
+                href={view.url}
+                onClick={() => {
+                  store.setObject('CLICKING_HISTORY', true);
+                  onClick();
+                }}
+                isCompact={true}
+                className={view.time === selectedViewTime ? undefined : styles.card}
+              >
+                <Stack direction="column" gap={0}>
+                  <Text variant="bodySmall">{view.name}</Text>
+                  {view.description && (
+                    <Text color="secondary" variant="bodySmall">
+                      {view.description}
+                    </Text>
+                  )}
+                </Stack>
+              </Card>
+            );
+          })}
         </div>
       )}
     </Stack>

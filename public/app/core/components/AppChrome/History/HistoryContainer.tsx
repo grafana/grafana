@@ -19,6 +19,11 @@ export function HistoryContainer() {
 
   useEffect(() => {
     const sub = appEvents.subscribe(HistoryChangedEvent, (ev) => {
+      const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
+      if (clickedHistory) {
+        store.setObject('CLICKING_HISTORY', false);
+        return;
+      }
       const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
       let lastEntry = history[0];
       const newUrl = ev.payload.url;
@@ -29,6 +34,7 @@ export function HistoryContainer() {
             name: ev.payload.name,
             description: ev.payload.description,
             url: newUrl,
+            time: Date.now(),
           },
           ...lastEntry.views,
         ];

@@ -149,6 +149,11 @@ export class AppChromeService {
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
     let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+    const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
+    if (clickedHistory) {
+      store.setObject('CLICKING_HISTORY', false);
+      return entries;
+    }
     if (!newPageNav) {
       return entries;
     }

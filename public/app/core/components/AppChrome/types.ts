@@ -10,6 +10,7 @@ export interface HistoryEntryView {
   name: string;
   description: string;
   url: string;
+  time: number;
 }
 
 export interface HistoryEntrySparkline {
