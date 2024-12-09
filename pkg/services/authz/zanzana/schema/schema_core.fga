@@ -1,21 +1,23 @@
 module core
 
+type user
+
+type service-account
+
+type render
+
 type namespace
   relations
-    define view: [user, service-account, team#member, role#assignee] or edit
+    define view: [user, service-account, render, team#member, role#assignee] or edit
     define edit: [user, service-account, team#member, role#assignee] or admin
     define admin: [user, service-account, team#member, role#assignee]
 
-    define read: [user, service-account, team#member, role#assignee] or view
+    define read: [user, service-account, render, team#member, role#assignee] or view
     define create: [user, service-account, team#member, role#assignee] or edit
     define write: [user, service-account, team#member, role#assignee] or edit
     define delete: [user, service-account, team#member, role#assignee] or edit
     define permissions_read: [user, service-account, team#member, role#assignee] or admin
     define permissions_write: [user, service-account, team#member, role#assignee] or admin
-
-type user
-
-type service-account
 
 type role
   relations
