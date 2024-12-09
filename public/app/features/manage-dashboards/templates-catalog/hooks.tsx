@@ -56,7 +56,7 @@ export function useOrgTemplates({}: UseOrgTemplatesOptions): UseOrgTemplatesResp
     error,
   } = useAsync(async () => {
     return await getBackendSrv().get<DashboardQueryResult>(
-      `/api/search?permission=View&sort=alpha-asc&useAsTemplate=true`
+      `/api/search?permission=View&sort=alpha-asc&tag=template&type=dash-db`
     );
   }, []);
 

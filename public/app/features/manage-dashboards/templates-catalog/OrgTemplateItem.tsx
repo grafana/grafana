@@ -19,15 +19,14 @@ export function OrgTemplateItem({ dashboard, compact = false, onClick }: OrgTemp
     <Card>
       <Card.Heading>{dashboard.title}</Card.Heading>
       <Card.Tags>
-        <TagList tags={dashboard.tags}></TagList>
+        <Stack>
+          <LinkButton href={dashboard.url} target="blank" variant="secondary" fill="text">
+            View
+          </LinkButton>
+          <Button onClick={onOpenTemplateDrawer}>Use as template</Button>
+        </Stack>
       </Card.Tags>
       <Card.Meta>{dashboard.folderTitle || 'General'}</Card.Meta>
-      <Card.Actions>
-        <LinkButton href={dashboard.url} variant="secondary" fill="text">
-          View
-        </LinkButton>
-        <Button onClick={onOpenTemplateDrawer}>Use as template</Button>
-      </Card.Actions>
     </Card>
   );
 }
