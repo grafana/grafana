@@ -40,10 +40,37 @@ The job only assign labels when the issue author is not a member of the Grafana 
 
 This bot is not responsible for assigning teams, the [commands](https://github.com/grafana/grafana/blob/main/.github/workflows/commands.yml) workflow is responsible for doing that
 
+### General diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant GH as GitHub
+    participant AT as Auto Triager Job
+    participant ATP as Auto Triager Program
+    participant LLM as LLM Service
+    participant CJ as Commands Job
+
+    User->>GH: Opens Issue
+    GH->>GH: Check if user in Grafana org
+    alt User not in Grafana org
+        GH->>AT: Trigger Auto Triager Job
+        AT->>ATP: Execute program
+        ATP->>LLM: Send issue content & categories
+        LLM-->>ATP: Return matching categories
+        ATP-->>GH: Assign labels to issue
+        GH->>CJ: Trigger Commands Job
+        CJ->>CJ: Read commands.json
+        CJ-->>GH: Assign teams based on labels
+    end
+```
+
 ### Team definitions
 
 The team associated with labels are defined [here](https://github.com/grafana/grafana/blob/main/.github/commands.json). 
-This bot is not responsible for assigning teams, the [commands](https://github.com/grafana/grafana/blob/main/.github/workflows/commands.yml) workflow is responsible for doing that
+This bot is not responsible for assigning teams, the [commands](https://github.com/grafana/grafana/blob/main/.github/workflows/commands.yml) workflow is responsible for doing that.
+
+The commands workflow code can be found [here](https://github.com/grafana/grafana-github-actions/tree/main/commands)
 
 ### Categories/Labels definitions
 
