@@ -4,28 +4,47 @@ import { Observable } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 
+export interface ScopesContextValueState {
+  drawerOpened: boolean;
+  enabled: boolean;
+  loading: boolean;
+  readOnly: boolean;
+  value: Scope[];
+}
+
 export interface ScopesContextValue {
-  state: {
-    isDrawerOpened: boolean;
-    isEnabled: boolean;
-    isLoading: boolean;
-    isReadOnly: boolean;
-    value: Scope[];
-  };
+  /**
+   * Current state.
+   */
+  state: ScopesContextValueState;
+
+  /**
+   * Observable that emits the current state.
+   */
   stateObservable: Observable<ScopesContextValue['state']>;
-  changeScopes: (scopeNames: string[]) => void;
-  enterReadOnly: () => void;
-  exitReadOnly: () => void;
-  toggleDrawer: () => void;
-  openDrawer: () => void;
-  closeDrawer: () => void;
-  enable: () => void;
-  disable: () => void;
+
+  /**
+   * Change the selected scopes. The service takes care about loading them and propagating the changes.
+   * @param scopeNames
+   */
+  changeScopes(scopeNames: string[]): void;
+
+  /**
+   * Set read-only mode.
+   * If `readOnly` is `true`, the selector will be set to read-only and the dashboards panel will be closed.
+   */
+  setReadOnly(readOnly: boolean): void;
+
+  /**
+   * Enable or disable the usage of scopes.
+   * This will hide the selector and the dashboards panel, and it will stop propagating the scopes to the query object.
+   */
+  setEnabled(enabled: boolean): void;
 }
 
 export const ScopesContext = createContext<ScopesContextValue | undefined>(undefined);
 
-export function useScopes() {
+export function useScopes(): ScopesContextValue | undefined {
   const context = useContext(ScopesContext);
 
   useObservable(context?.stateObservable ?? new Observable(), context?.state);
@@ -35,13 +54,8 @@ export function useScopes() {
         state: context.state,
         stateObservable: context.stateObservable,
         changeScopes: context.changeScopes,
-        enterReadOnly: context.enterReadOnly,
-        exitReadOnly: context.exitReadOnly,
-        toggleDrawer: context.toggleDrawer,
-        openDrawer: context.openDrawer,
-        closeDrawer: context.closeDrawer,
-        enable: context.enable,
-        disable: context.disable,
+        setReadOnly: context.setReadOnly,
+        setEnabled: context.setEnabled,
       }
     : undefined;
 }
