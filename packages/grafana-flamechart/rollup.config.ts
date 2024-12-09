@@ -1,3 +1,5 @@
+import commonjs from '@rollup/plugin-commonjs';
+import jsonPlugin from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import { createRequire } from 'node:module';
 import path from 'path';
@@ -19,6 +21,8 @@ export default [
     plugins: [
       nodeExternals({ deps: true, packagePath: './package.json' }),
       resolve(),
+      commonjs(),
+      jsonPlugin(),
       esbuild({
         target: 'es2018',
         tsconfig: 'tsconfig.build.json',
