@@ -60,7 +60,7 @@ We encourage you to locate the repository of the corresponding plugin and create
 
 ### Links
 
-- [Migrate Angular to React](https://grafana.com/developers/plugin-tools/migration-guides/migrate-angularjs-to-react)
+- [Migrate Angular to React](https://grafana.com/developers/plugin-tools/migration-guides/angular-react/)
 - [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
 - [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
 - [List of current Angular plugins]({{< relref "./angular-plugins/" >}})
