@@ -16,16 +16,6 @@ import (
 
 var (
 	legendFormat = regexp.MustCompile(`\$(\w+)|\[\[([\s\S]+?)\]\]`)
-
-	// cardinalityOptions hold all the cardinality query strings
-	// https://docs.influxdata.com/influxdb/v1/query_language/spec/#show-cardinality
-	cardinalityOptions = []string{
-		"show field key cardinality",
-		"show measurement cardinality",
-		"show series cardinality",
-		"show tag key cardinality",
-		"show tag values cardinality",
-	}
 )
 
 const (
@@ -176,15 +166,4 @@ func GetVisType(resFormat string) data.VisType {
 
 func ToPtr[T any](v T) *T {
 	return &v
-}
-
-func IsCardinalityQuery(queryString string) bool {
-	isCardinalityQuery := false
-	for _, option := range cardinalityOptions {
-		if strings.Contains(strings.ToLower(queryString), option) {
-			isCardinalityQuery = true
-			break
-		}
-	}
-	return isCardinalityQuery
 }

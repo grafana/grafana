@@ -66,22 +66,3 @@ func TestFormatFrameName(t *testing.T) {
 		})
 	}
 }
-
-func TestIsCardinalityQuery(t *testing.T) {
-	testcases := []struct {
-		name        string
-		queryString string
-		expected    bool
-	}{
-		{name: "show tag values cardinality", queryString: "show tag values cardinality", expected: true},
-		{name: "show tag values", queryString: "SHOW TAG VALUES FROM custom_influxdb_cardinality WITH KEY = \"database\"", expected: false},
-		{name: "show diagnostics", queryString: "SHOW DIAGNOSTICS", expected: false},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := IsCardinalityQuery(tc.queryString)
-			require.Equal(t, tc.expected, result)
-		})
-	}
-}
