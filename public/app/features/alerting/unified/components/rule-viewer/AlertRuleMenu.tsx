@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
@@ -18,9 +18,9 @@ interface Props {
   promRule: Rule;
   rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: RuleGroupIdentifierV2;
   handleSilence: () => void;
-  handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifier) => void;
+  handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
@@ -86,7 +86,7 @@ const AlertRuleMenu = ({
 
   const menuItems = (
     <>
-      {canPause && rulerRule && (
+      {canPause && rulerRule && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
       )}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
