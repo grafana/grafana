@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
@@ -67,11 +66,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
     padding: 0,
   }),
-  input: css`
-    margin: 0;
-    padding: 0;
-    input {
-      height: 25px;
+  input: css({
+    margin: 0,
+    padding: 0,
+    input: {
+      height: '25px',
     },
-  `,
+  }),
 });

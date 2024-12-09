@@ -14,25 +14,23 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    CopyIcon: css`
-      background-color: transparent;
-      border: none;
-      color: inherit;
-      height: 100%;
-      overflow: hidden;
-      &:focus {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: inherit;
-      }
-    `,
-  };
-};
+const getStyles = () => ({
+  CopyIcon: css({
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    height: '100%',
+    overflow: 'hidden',
+    '&:focus': {
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      color: 'inherit',
+    },
+  }),
+});
 
 type PropsType = {
   className?: string;
@@ -41,24 +39,19 @@ type PropsType = {
   tooltipTitle: string;
 };
 
-export default function CopyIcon(props: PropsType) {
+export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: PropsType) {
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
 
   const handleClick = () => {
-    navigator.clipboard.writeText(props.copyText);
+    navigator.clipboard.writeText(copyText);
     setHasCopied(true);
   };
 
   return (
-    <Tooltip content={hasCopied ? 'Copied' : props.tooltipTitle}>
-      <Button className={cx(styles.CopyIcon)} type="button" icon={props.icon} onClick={handleClick} />
+    <Tooltip content={hasCopied ? 'Copied' : tooltipTitle}>
+      <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
     </Tooltip>
   );
 }
-
-CopyIcon.defaultProps = {
-  icon: 'copy',
-  className: undefined,
-};

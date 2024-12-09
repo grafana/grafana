@@ -1,23 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { compact, uniqueId } from 'lodash';
-import React, { useCallback, useEffect } from 'react';
+import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, Alert, Box } from '@grafana/ui';
+import { Alert, Box, Button, useStyles2 } from '@grafana/ui';
 
-import {
-  AlertField,
-  TemplatePreviewErrors,
-  TemplatePreviewResponse,
-  TemplatePreviewResult,
-  usePreviewTemplateMutation,
-} from '../../api/templateApi';
+import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
 import { stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import type { TemplateFormValues } from './TemplateForm';
+import { usePreviewTemplate } from './usePreviewTemplate';
 
 export function TemplatePreview({
   payload,
@@ -38,22 +33,13 @@ export function TemplatePreview({
 
   const templateContent = watch('content');
 
-  const [trigger, { data, error: previewError, isLoading }] = usePreviewTemplateMutation();
-
+  const {
+    data,
+    isLoading,
+    onPreview,
+    error: previewError,
+  } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
   const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
-
-  const onPreview = useCallback(() => {
-    try {
-      const alertList: AlertField[] = JSON.parse(payload);
-      JSON.stringify([...alertList]); // check if it's iterable, in order to be able to add more data
-      trigger({ template: templateContent, alerts: alertList, name: templateName });
-      setPayloadFormatError(null);
-    } catch (e) {
-      setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
-    }
-  }, [templateContent, templateName, payload, setPayloadFormatError, trigger]);
-
-  useEffect(() => onPreview(), [onPreview]);
 
   return (
     <div className={cx(styles.container, className)}>
@@ -124,11 +110,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      height: 'inherit',
     }),
     box: css({
       display: 'flex',
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.medium}`,
+      height: 'inherit',
     }),
     header: css({
       fontSize: theme.typography.bodySmall.fontSize,

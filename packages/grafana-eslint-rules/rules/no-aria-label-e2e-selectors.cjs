@@ -39,7 +39,7 @@ const rule = createRule({
         const identifiers = findIdentifiers(node.value.expression);
 
         for (const identifier of identifiers) {
-          const scope = context.getScope();
+          const scope = context.sourceCode.getScope(node);
 
           // Find the actual "scoped variable" to inspect it's import
           // This is relatively fragile, and will fail to find the import if the variable is reassigned

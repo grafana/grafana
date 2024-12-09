@@ -8,6 +8,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  QueryVariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import {
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
 } from '../guard';
-import { QueryVariableModel } from '../types';
 import { getLegacyQueryOptions } from '../utils';
 
 export interface RunnerArgs {
@@ -60,6 +60,11 @@ export class QueryRunners {
     }
 
     throw new Error("Couldn't find a query runner that matches supplied arguments.");
+  }
+
+  //Check if datasource has a query runner associated with it
+  isQueryRunnerAvailableForDatasource(datasource: DataSourceApi) {
+    return this.runners.some((runner) => runner.canRun(datasource));
   }
 }
 

@@ -1,13 +1,15 @@
 import { map } from 'lodash';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { AzureCredentials } from '@grafana/azure-sdk';
+import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getCredentials } from '../credentials';
 import {
   AzureAPIResponse,
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureMonitorDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
@@ -21,10 +23,10 @@ import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
+  readonly credentials: AzureCredentials;
   resourcePath: string;
-  azurePortalUrl: string;
   declare applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -33,15 +35,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   firstWorkspace?: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private instanceSettings: AzureMonitorDataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
-    const cloud = getAzureCloud(instanceSettings);
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
   }
@@ -130,6 +131,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           // Workspace was removed in Grafana 8, but remains for backwards compat
           workspace,
           dashboardTime: item.dashboardTime,
+          basicLogsQuery: item.basicLogsQuery,
           timeColumn: this.templateSrv.replace(item.timeColumn, scopedVars),
         },
       };
@@ -224,17 +226,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',
@@ -251,5 +251,18 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   async getAzureLogAnalyticsCheatsheetQueries() {
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
+  }
+
+  async getBasicLogsQueryUsage(query: AzureMonitorQuery, table: string): Promise<number> {
+    const templateSrv = getTemplateSrv();
+
+    const data = {
+      table: table,
+      resource: templateSrv.replace(query.azureLogAnalytics?.resources?.[0]),
+      queryType: query.queryType,
+      from: templateSrv.replace('$__from'),
+      to: templateSrv.replace('$__to'),
+    };
+    return await this.postResource(`${this.resourcePath}/usage/basiclogs`, data);
   }
 }

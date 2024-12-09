@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
@@ -64,13 +64,13 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  root: css`
-    display: flex;
-  `,
-  queryItem: css`
-    flex-grow: 1;
-    margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
-  `,
+  root: css({
+    display: 'flex',
+  }),
+  queryItem: css({
+    flexGrow: 1,
+    margin: theme.spacing(0, 0.5, 0.5, 0),
+  }),
 });
 
 interface Props {

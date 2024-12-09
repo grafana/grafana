@@ -1,6 +1,7 @@
 import moment from 'moment';
-import React from 'react';
+import { Fragment } from 'react';
 
+import { Stack } from '@grafana/ui';
 import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import {
@@ -14,17 +15,18 @@ import {
 // https://github.com/prometheus/alertmanager/blob/9de8ef36755298a68b6ab20244d4369d38bdea99/timeinterval/timeinterval.go#L443
 const TIME_RANGE_REGEX = /^((([01][0-9])|(2[0-3])):[0-5][0-9])$|(^24:00$)/;
 
-const isvalidTimeFormat = (timeString: string): boolean => {
+export const isvalidTimeFormat = (timeString: string): boolean => {
   return timeString ? TIME_RANGE_REGEX.test(timeString) : true;
 };
 
-// merge both fields mute_time_intervals and time_intervals to support both old and new config
+/**
+ * Merges `mute_time_intervals` and `time_intervals` from alertmanager config to support both old and new config
+ */
 export const mergeTimeIntervals = (alertManagerConfig: AlertmanagerConfig) => {
   return [...(alertManagerConfig.mute_time_intervals ?? []), ...(alertManagerConfig.time_intervals ?? [])];
 };
 
-// Usage
-const isValidStartAndEndTime = (startTime?: string, endTime?: string): boolean => {
+export const isValidStartAndEndTime = (startTime?: string, endTime?: string): boolean => {
   // empty time range is perfactly valid for a mute timing
   if (!startTime && !endTime) {
     return true;
@@ -51,10 +53,10 @@ const isValidStartAndEndTime = (startTime?: string, endTime?: string): boolean =
   return false;
 };
 
-function renderTimeIntervals(muteTiming: MuteTimeInterval) {
+export function renderTimeIntervals(muteTiming: MuteTimeInterval) {
   const timeIntervals = muteTiming.time_intervals;
 
-  return timeIntervals.map((interval, index) => {
+  const intervals = timeIntervals.map((interval, index) => {
     const { times, weekdays, days_of_month, months, years, location } = interval;
     const timeString = getTimeString(times, location);
     const weekdayString = getWeekdayString(weekdays);
@@ -63,14 +65,20 @@ function renderTimeIntervals(muteTiming: MuteTimeInterval) {
     const yearsString = getYearsString(years);
 
     return (
-      <React.Fragment key={JSON.stringify(interval) + index}>
-        {`${timeString} ${weekdayString}`}
-        <br />
-        {[daysString, monthsString, yearsString].join(' | ')}
-        <br />
-      </React.Fragment>
+      <Fragment key={JSON.stringify(interval) + index}>
+        <div>
+          {`${timeString} ${weekdayString}`}
+          <br />
+          {[daysString, monthsString, yearsString].join(' | ')}
+          <br />
+        </div>
+      </Fragment>
     );
   });
-}
 
-export { isValidStartAndEndTime, isvalidTimeFormat, renderTimeIntervals };
+  return (
+    <Stack direction="column" gap={1}>
+      {intervals}
+    </Stack>
+  );
+}

@@ -25,6 +25,7 @@
   "unicons/bell-slash",
   "unicons/bolt",
   "unicons/book",
+  "unicons/bookmark",
   "unicons/book-open",
   "unicons/brackets-curly",
   "unicons/bug",
@@ -37,6 +38,7 @@
   "unicons/chart-line",
   "unicons/check",
   "unicons/check-circle",
+  "unicons/times-circle",
   "unicons/circle",
   "unicons/clipboard-alt",
   "unicons/clock-nine",
@@ -170,5 +172,6 @@
   "mono/heart-break",
   "mono/panel-add",
   "mono/library-panel",
-  "unicons/record-audio"
+  "unicons/record-audio",
+  "solid/bookmark"
 ]

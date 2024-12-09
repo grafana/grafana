@@ -30,6 +30,10 @@ export function getOnCallMetadata(
     return onCallReceiverMeta;
   }
 
+  if (!receiver.settings?.url) {
+    return onCallReceiverMeta;
+  }
+
   // oncall status is still loading
   if (onCallIntegrations === undefined) {
     return onCallReceiverMeta;

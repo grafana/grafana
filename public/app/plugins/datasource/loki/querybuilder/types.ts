@@ -33,7 +33,7 @@ export enum LokiVisualQueryOperationCategory {
   Formats = 'Formats',
   LineFilters = 'Line filters',
   LabelFilters = 'Label filters',
-  BinaryOps = BINARY_OPERATIONS_KEY,
+  BinaryOps = `${BINARY_OPERATIONS_KEY}`,
 }
 
 export enum LokiOperationId {

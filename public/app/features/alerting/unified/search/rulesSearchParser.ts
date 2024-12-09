@@ -21,6 +21,8 @@ export interface RulesFilter {
   labels: string[];
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
+  plugins?: 'hide';
+  contactPoint?: string | null;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
@@ -33,6 +35,8 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.type,
   FilterSupportedTerm.health,
   FilterSupportedTerm.dashboard,
+  FilterSupportedTerm.plugins,
+  FilterSupportedTerm.contactPoint,
 ];
 
 export enum RuleHealth {
@@ -56,6 +60,8 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
     [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
     [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
+    [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
+    [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
@@ -98,8 +104,14 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   if (filter.dashboardUid) {
     filterStateArray.push({ type: terms.DashboardToken, value: filter.dashboardUid });
   }
+  if (filter.plugins) {
+    filterStateArray.push({ type: terms.PluginsToken, value: filter.plugins });
+  }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
+  }
+  if (filter.contactPoint) {
+    filterStateArray.push({ type: terms.ContactPointToken, value: filter.contactPoint });
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);

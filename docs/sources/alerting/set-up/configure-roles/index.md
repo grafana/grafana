@@ -42,19 +42,17 @@ To assign roles, admins need to complete the following steps.
 
 ## Manage access using folder permissions
 
-You can further customize access for alert rules by assigning permissions to individual folders.
+You can extend the access provided by a role to alert rules and rule-specific silences by assigning permissions to individual folders.
 
-This prevents every user from having access to modify all alert rules and gives them access to the folders with the alert rules they're working on.
+This allows different users, teams, or service accounts to have customized access to modify or silence alert rules in specific folders.
 
-Details on the adding folder permissions as well as roles and the access that provides for Grafana Alerting is below.
+Refer to the following table for details on the additional access provided by folder permissions:
 
-| Role   | Folder permission | Access                                                                                                                               |
-| ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Admin  | -                 | Write access to alert rules in all folders.                                                                                          |
-| Editor | -                 | Write access to alert rules in all folders.                                                                                          |
-| Viewer | Admin             | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Admin permission is added.  |
-| Viewer | Editor            | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Editor permission is added. |
-| Viewer | Viewer            | Read access to alert rules in all folders.                                                                                           |
+| Folder permission | Additional Access                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| View              | No additional access: all permissions already contained in Viewer role.                                 |
+| Edit              | Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders. |
+| Admin             | Same additional access as Edit.                                                                         |
 
 {{< admonition type="note" >}}
 You can't use folders to customize access to notification resources.
@@ -65,4 +63,31 @@ To manage folder permissions, complete the following steps.
 1. In the left-side menu, click **Dashboards**.
 1. Hover your mouse cursor over a folder and click **Go to folder**.
 1. Click **Manage permissions** from the Folder actions menu.
+1. Update or add permissions as required.
+
+## Manage access using contact point permissions
+
+### Before you begin
+
+- Enable the `alertingApiServer` feature toggle.
+
+Extend or limit the access provided by a role to contact points by assigning permissions to individual contact point.
+
+This allows different users, teams, or service accounts to have customized access to read or modify specific contact points.
+
+Refer to the following table for details on the additional access provided by contact point permissions.
+
+| Folder permission | Additional Access                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| View              | View and export contact point as well as select it on the Alert rule edit page                                                                |
+| Edit              | Update or delete the contact point                                                                                                            |
+| Admin             | Same additional access as Edit and manage permissions for the contact point. User should have additional permissions to read users and teams. |
+
+### Steps
+
+To contact point permissions, complete the following steps.
+
+1. In the left-side menu, click **Contact points**.
+1. Hover your mouse cursor over a contact point and click **More**.
+1. Click **Manage permissions** from the actions menu.
 1. Update or add permissions as required.

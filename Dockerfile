@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.19.1
+ARG BASE_IMAGE=alpine:3.20
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.9-alpine
+ARG GO_IMAGE=golang:1.23.1-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -14,22 +14,23 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
+COPY LICENSE ./
+COPY conf/defaults.ini ./conf/defaults.ini
 
 RUN apk add --no-cache make build-base python3
 
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
-COPY public public
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
@@ -44,6 +45,7 @@ RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache \
           # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
           binutils-gold \
+          bash \
           # Install build dependencies
           gcc g++ make git; \
     fi
@@ -57,8 +59,14 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
+COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
+COPY pkg/semconv/go.* pkg/semconv/
+COPY pkg/aggregator/go.* pkg/aggregator/
+COPY apps/playlist/go.* apps/playlist/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
@@ -69,6 +77,7 @@ RUN if [[ "$BINGO" = "true" ]]; then \
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY kindsv2 kindsv2
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
@@ -77,7 +86,6 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
-COPY LICENSE ./
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
@@ -179,7 +187,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=go-src /tmp/grafana/LICENSE ./
+COPY --from=js-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 

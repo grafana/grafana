@@ -22,8 +22,13 @@ go mod download
 
 # the happy path
 ./hack/update-codegen.sh
-
+```
 
 Note that the script deletes existing openapi go code and regenerates in place so that you will temporarily see
 deleted files in your `git status`. After a successful run, you should see them restored.
-```
+
+If resource client is not generated for your resource make sure that it follows the k8s guidelines for structuring the resource definition
+
+- the directory is named after resource version, i.e. `<resource_name>/v<version>` (e.g. service/v0alpha1)
+- the resource directory contains file `types.go` that includes resource definitions
+- the resource definitions are annotated with comment `// +genclient`

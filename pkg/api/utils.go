@@ -11,6 +11,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
@@ -62,4 +63,10 @@ func ValidateAndNormalizeEmail(email string) (string, error) {
 	}
 
 	return e.Address, nil
+}
+
+func (hs *HTTPServer) injectSpan(c *contextmodel.ReqContext, name string) (*contextmodel.ReqContext, trace.Span) {
+	ctx, span := hs.tracer.Start(c.Req.Context(), name)
+	c.Req = c.Req.WithContext(ctx)
+	return c, span
 }

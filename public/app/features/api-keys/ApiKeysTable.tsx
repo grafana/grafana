@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Button, DeleteButton, HorizontalGroup, Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -50,7 +49,7 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
                 </td>
                 <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
                 <td>
-                  <HorizontalGroup justify="flex-end">
+                  <Stack justifyContent="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
                       Migrate to service account
                     </Button>
@@ -60,7 +59,7 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
                       onConfirm={() => onDelete(key)}
                       disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}
                     />
-                  </HorizontalGroup>
+                  </Stack>
                 </td>
               </tr>
             );
@@ -86,10 +85,11 @@ function formatDate(expiration: string | undefined, timeZone: TimeZone): string 
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (isExpired: boolean) => css`
-    color: ${isExpired ? theme.colors.text.secondary : theme.colors.text.primary};
-  `,
-  tooltipContainer: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  tableRow: (isExpired: boolean) =>
+    css({
+      color: isExpired ? theme.colors.text.secondary : theme.colors.text.primary,
+    }),
+  tooltipContainer: css({
+    marginLeft: theme.spacing(1),
+  }),
 });

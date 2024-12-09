@@ -4,9 +4,10 @@ import (
 	"os/exec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	goplugin "github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -34,12 +35,27 @@ var pluginSet = map[int]goplugin.PluginSet{
 		"resource":       &grpcplugin.ResourceGRPCPlugin{},
 		"data":           &grpcplugin.DataGRPCPlugin{},
 		"stream":         &grpcplugin.StreamGRPCPlugin{},
+		"admission":      &grpcplugin.AdmissionGRPCPlugin{},
+		"conversion":     &grpcplugin.ConversionGRPCPlugin{},
 		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
 		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
 	},
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger,
+type clientTracerProvider struct {
+	tracer trace.Tracer
+	embedded.TracerProvider
+}
+
+func (ctp *clientTracerProvider) Tracer(instrumentationName string, opts ...trace.TracerOption) trace.Tracer {
+	return ctp.tracer
+}
+
+func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
+	return &clientTracerProvider{tracer: tracer}
+}
+
+func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer trace.Tracer,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
@@ -54,13 +70,13 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 		Logger:           logWrapper{Logger: logger},
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		GRPCDialOptions: []grpc.DialOption{
-			grpc.WithChainUnaryInterceptor(
-				grpc_opentracing.UnaryClientInterceptor(),
-			),
-			grpc.WithChainStreamInterceptor(
-				grpc_opentracing.StreamClientInterceptor(),
-			),
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			// https://github.com/grafana/app-platform-wg/issues/140
+			// external plugins are loaded before k8s API server
+			// configures the tracing service thus failing to
+			// record trace span in the middleware.
+			// With code below we are passing the same tracer that k8s API server
+			// uses so that middleware is configured with tracer.
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
 		},
 	}
 }

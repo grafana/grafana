@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

@@ -51,9 +51,11 @@ func Test_punctuationCharFilter_Filter(t1 *testing.T) {
 func TestNgramIndexAnalyzer(t *testing.T) {
 	stream := ngramIndexAnalyzer.Analyze([]byte("x-rays.and.xRays, and НемногоКириллицы"))
 	expectedTerms := []string{"x", "r", "ra", "ray", "rays", "a", "an", "and", "x", "r", "ra", "ray", "rays", "a", "an", "and", "н", "не", "нем", "немн", "немно", "немног", "немного", "к", "ки", "кир", "кири", "кирил", "кирилл", "кирилли"}
-	var actualTerms []string
+
+	actualTerms := make([]string, 0, len(stream))
 	for _, t := range stream {
 		actualTerms = append(actualTerms, string(t.Term))
 	}
+
 	require.Equal(t, expectedTerms, actualTerms)
 }

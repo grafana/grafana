@@ -10,6 +10,10 @@ const (
 	ProvenanceFile Provenance = "file"
 )
 
+var (
+	KnownProvenances = []Provenance{ProvenanceNone, ProvenanceAPI, ProvenanceFile}
+)
+
 // Provisionable represents a resource that can be created through a provisioning mechanism, such as Terraform or config file.
 type Provisionable interface {
 	ResourceType() string

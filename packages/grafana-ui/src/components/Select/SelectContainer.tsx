@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';

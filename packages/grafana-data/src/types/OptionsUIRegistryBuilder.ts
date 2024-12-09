@@ -2,10 +2,10 @@ import { ComponentType } from 'react';
 
 import {
   NumberFieldConfigSettings,
-  SliderFieldConfigSettings,
   SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
   StringFieldConfigSettings,
-} from '../field';
+} from '../field/overrides/processors';
 import { RegistryItem, Registry } from '../utils/Registry';
 
 import { OptionEditorConfig } from './options';
@@ -59,11 +59,11 @@ interface OptionsUIRegistryBuilderAPI<
     config: OptionEditorConfig<TOptions, TSettings, TOption>
   ): this;
 
-  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;
+  addBooleanSwitch?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;
 
-  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
+  addUnitPicker?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
-  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
+  addColorPicker?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
   /**
    * Enables custom editor definition

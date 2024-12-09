@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -101,6 +99,8 @@ export const parallelogramItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -109,6 +109,7 @@ export const parallelogramItem: CanvasElementItem = {
 
     const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
@@ -117,8 +118,6 @@ export const parallelogramItem: CanvasElementItem = {
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     const { background, border } = elementOptions;
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
@@ -184,6 +183,25 @@ export const parallelogramItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    { x: -0.6, y: 1 }, // Angled Top Left
+    { x: -0.1, y: 1 }, // Top Middle
+    { x: 0.5, y: 1 }, // Angled Top Right
+    { x: 1, y: 1 }, // Top Right
+    { x: 0.925, y: 0.6 }, // Angled Right Top
+    { x: 0.84, y: 0.2 }, // Right Middle
+    { x: 0.76, y: -0.2 }, // Angled Right Bottom
+    { x: 0.675, y: -0.6 }, // Bottom Right
+    { x: -0.5, y: -1 }, // Angled Bottom Right
+    { x: 0.1, y: -1 }, // Bottom Middle
+    { x: 0.6, y: -1 }, // Angled Bottom Left
+    { x: -1, y: -1 }, // Bottom Left
+    { x: -0.925, y: -0.6 }, // Angled Left Bottom
+    { x: -0.84, y: -0.2 }, // Left Middle
+    { x: -0.76, y: 0.2 }, // Angled Left Top
+    { x: -0.675, y: 0.6 }, // Top Left 2
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {

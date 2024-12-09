@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
+import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export interface DashboardDTO {
@@ -63,11 +64,19 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
-  publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+
+  // When loaded from kubernetes, we stick the raw metadata here
+  // yes weird, but this means all the editor structures can exist unchanged
+  // until we use the resource as the main container
+  k8s?: Partial<ObjectMeta>;
+
+  // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
+  // This property is not persisted in the DB but its existence is controlled by the API
+  reloadOnParamsChange?: boolean;
 }
 
 export interface AnnotationActions {
@@ -92,7 +101,6 @@ export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
-  Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
@@ -130,3 +138,5 @@ export interface DashboardState {
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
 }
+
+export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';

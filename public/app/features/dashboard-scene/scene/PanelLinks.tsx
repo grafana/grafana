@@ -1,7 +1,12 @@
-import React from 'react';
-
 import { DataLink, LinkModel } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  VariableDependencyConfig,
+  VizPanel,
+} from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
 
 import { getPanelLinks } from './PanelMenuBehavior';
@@ -13,11 +18,20 @@ interface VizPanelLinksState extends SceneObjectState {
 }
 
 export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    onAnyVariableChanged: () => {
+      if (this.state.rawLinks && this.state.rawLinks.length > 0) {
+        this.forceRender();
+      }
+    },
+  });
+
   static Component = VizPanelLinksRenderer;
 }
 
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   const { menu, rawLinks } = model.useState();
+  sceneGraph.getTimeRange(model).useState();
 
   if (!(model.parent instanceof VizPanel)) {
     throw new Error('VizPanelLinks must be a child of VizPanel');

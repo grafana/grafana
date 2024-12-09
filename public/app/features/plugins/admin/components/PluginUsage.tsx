@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
@@ -86,12 +86,12 @@ export function PluginUsage({ plugin }: Props) {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrap: css`
-      width: 100%;
-      height: 100%;
-    `,
-    info: css`
-      padding-bottom: 30px;
-    `,
+    wrap: css({
+      width: '100%',
+      height: '90%',
+    }),
+    info: css({
+      paddingBottom: '30px',
+    }),
   };
 };

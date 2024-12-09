@@ -65,15 +65,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     app: {
       version: '1.0',
     },
+    allInstrumentationsEnabled: true,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: true,
     webVitalsInstrumentalizationEnabled: true,
+    tracingInstrumentalizationEnabled: true,
     customEndpoint: '/log-grafana-javascript-agent',
     user: {
       email: 'darth.vader@sith.glx',
       id: '504',
       orgId: 1,
     },
+    ignoreUrls: [],
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
@@ -88,6 +91,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[0].getIgnoreUrls()).toEqual([
+      /.*\/log-grafana-javascript-agent.*/,
+      /.*.google-analytics.com*.*/,
+      /.*.googletagmanager.com*.*/,
+      /frontend-metrics/,
+      /\/collect(?:\/[\w]*)?$/,
+    ]);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[1]).toBeInstanceOf(FetchTransport);
   });
 

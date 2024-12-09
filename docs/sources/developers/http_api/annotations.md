@@ -32,9 +32,12 @@ Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annot
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action           | Scope                   |
-| ---------------- | ----------------------- |
-| annotations:read | annotations:type:<type> |
+<!-- prettier-ignore-start -->
+| Action             | Scope                                                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `annotations:read` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+{ .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example Request**:
 
@@ -122,9 +125,12 @@ The format for `time` and `timeEnd` should be epoch numbers in millisecond resol
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action             | Scope                   |
-| ------------------ | ----------------------- |
-| annotations:create | annotations:type:<type> |
+<!-- prettier-ignore-start -->
+| Action               | Scope                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `annotations:create` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+{ .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Required JSON Body Fields**
 
@@ -174,9 +180,9 @@ format (string with multiple tags being separated by a space).
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action             | Scope                         |
-| ------------------ | ----------------------------- |
-| annotations:create | annotations:type:organization |
+| Action               | Scope                           |
+| -------------------- | ------------------------------- |
+| `annotations:create` | `annotations:type:organization` |
 
 **Example Request**:
 
@@ -215,9 +221,12 @@ Updates all properties of an annotation that matches the specified id. To only u
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action            | Scope                   |
-| ----------------- | ----------------------- |
-| annotations:write | annotations:type:<type> |
+<!-- prettier-ignore-start -->
+| Action              | Scope                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `annotations:write` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+{ .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example Request**:
 
@@ -248,8 +257,6 @@ Content-Type: application/json
 
 ## Patch Annotation
 
-> This is available in Grafana 6.0.0-beta2 and above.
-
 `PATCH /api/annotations/:id`
 
 Updates one or more properties of an annotation that matches the specified id.
@@ -260,9 +267,12 @@ This operation currently supports updating of the `text`, `tags`, `time` and `ti
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action            | Scope                   |
-| ----------------- | ----------------------- |
-| annotations:write | annotations:type:<type> |
+<!-- prettier-ignore-start -->
+| Action              | Scope                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `annotations:write` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+{ .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example Request**:
 
@@ -299,9 +309,12 @@ Deletes the annotation that matches the specified id.
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action             | Scope                   |
-| ------------------ | ----------------------- |
-| annotations:delete | annotations:type:<type> |
+<!-- prettier-ignore-start -->
+| Action               | Scope                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `annotations:delete` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+{ .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example Request**:
 
@@ -333,9 +346,9 @@ Find all the event tags created in the annotations.
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action           | Scope |
-| ---------------- | ----- |
-| annotations:read | N/A   |
+| Action             | Scope |
+| ------------------ | ----- |
+| `annotations:read` | N/A   |
 
 **Example Request**:
 

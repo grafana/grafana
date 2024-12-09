@@ -1,44 +1,67 @@
-import { cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
-import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
-import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
-import { TableCellProps } from './types';
+import { TableCellDisplayMode, TableCellProps } from './types';
+import { getCellOptions } from './utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 
 export const ImageCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps } = props;
-
+  const { field, cell, tableStyles, row, cellProps, actions } = props;
+  const cellOptions = getCellOptions(field);
+  const { title, alt } =
+    cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
-
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const hasActions = Boolean(actions?.length);
+
+  // The image element
+  const img = (
+    <img
+      style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
+      src={displayValue.text}
+      className={tableStyles.imageCell}
+      alt={alt}
+      title={title}
+    />
+  );
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
-      {hasLinks && (
+      {/* If there are data links/actions, we render them with image */}
+      {/* Otherwise we simply render the image */}
+      {hasLinks || hasActions ? (
         <DataLinksContextMenu
           style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
           links={() => getCellLinks(field, row) || []}
+          actions={actions}
         >
           {(api) => {
-            const img = <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
             if (api.openMenu) {
               return (
-                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                <div
+                  onClick={api.openMenu}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' && api.openMenu) {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+                      api.openMenu(e as any);
+                    }
+                  }}
+                >
                   {img}
-                </Button>
+                </div>
               );
             } else {
               return img;
             }
           }}
         </DataLinksContextMenu>
+      ) : (
+        img
       )}
     </div>
   );

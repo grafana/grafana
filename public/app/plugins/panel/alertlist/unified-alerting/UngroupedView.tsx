@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Icon, useStyles2, Stack } from '@grafana/ui';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -13,11 +12,11 @@ import {
   getFirstActiveAt,
   isAlertingRule,
 } from 'app/features/alerting/unified/utils/rules';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
-import { AlertingRule, AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { AlertInstanceTotalState, AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -64,7 +63,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
               ? getGrafanaInstancesTotal(ruleWithLocation.filteredInstanceTotals)
               : undefined;
 
-          const href = createUrl(
+          const href = createRelativeUrl(
             `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
             { returnTo: returnTo ?? '' }
           );
@@ -140,42 +139,25 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
 };
 
 const getStateTagStyles = (theme: GrafanaTheme2) => ({
-  common: css`
-    width: 70px;
-    text-align: center;
-    align-self: stretch;
-
-    display: inline-block;
-    color: white;
-    border-radius: ${theme.shape.radius.default};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-transform: capitalize;
-    line-height: 1.2;
-    flex-shrink: 0;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  `,
-  icon: css`
-    margin-top: ${theme.spacing(2.5)};
-    align-self: flex-start;
-  `,
-  good: css`
-    color: ${theme.colors.success.main};
-  `,
-  bad: css`
-    color: ${theme.colors.error.main};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.main};
-  `,
-  neutral: css`
-    color: ${theme.colors.secondary.main};
-  `,
-  info: css`
-    color: ${theme.colors.primary.main};
-  `,
+  icon: css({
+    marginTop: theme.spacing(2.5),
+    alignSelf: 'flex-start',
+  }),
+  good: css({
+    color: theme.colors.success.main,
+  }),
+  bad: css({
+    color: theme.colors.error.main,
+  }),
+  warning: css({
+    color: theme.colors.warning.main,
+  }),
+  neutral: css({
+    color: theme.colors.secondary.main,
+  }),
+  info: css({
+    color: theme.colors.primary.main,
+  }),
 });
 
 export default UngroupedModeView;

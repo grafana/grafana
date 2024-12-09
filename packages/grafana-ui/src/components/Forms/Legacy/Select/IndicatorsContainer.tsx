@@ -1,4 +1,3 @@
-import React from 'react';
 import { components, IndicatorsContainerProps } from 'react-select';
 
 import { Icon } from '../../../Icon/Icon';

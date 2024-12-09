@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -12,6 +11,7 @@ import {
   onCreateNewPanel,
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
+import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useDispatch, useSelector } from 'app/types';
@@ -31,13 +31,15 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
-      id = dashboard.onCreateNewPanel();
+      const panel = dashboard.onCreateNewPanel();
+      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+      locationService.partial({ firstPanel: true });
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
       dispatch(setInitialDatasource(undefined));
+      locationService.partial({ editPanel: id, firstPanel: true });
     }
 
-    locationService.partial({ editPanel: id, firstPanel: true });
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
   };
 
@@ -81,32 +83,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Stack>
           </Box>
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
-            {config.featureToggles.vizAndWidgetSplit && (
-              <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-                <Stack direction="column" alignItems="center" gap={1}>
-                  <Text element="h3" textAlignment="center" weight="medium">
-                    <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
-                  </Text>
-                  <Box marginBottom={2}>
-                    <Text element="p" textAlignment="center" color="secondary">
-                      <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
-                    </Text>
-                  </Box>
-                  <Button
-                    icon="plus"
-                    fill="outline"
-                    data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
-                    onClick={() => {
-                      DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_widget' });
-                      locationService.partial({ addWidget: true });
-                    }}
-                    disabled={!canCreate}
-                  >
-                    <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
-                  </Button>
-                </Stack>
-              </Box>
-            )}
             <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
@@ -138,8 +114,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or
-                      <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
                     </Trans>
                   </Text>
                 </Box>

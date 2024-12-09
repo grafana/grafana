@@ -1,25 +1,25 @@
 import { Property } from 'csstype';
-import { clone } from 'lodash';
+import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
-import { Row } from 'react-table';
+import { HeaderGroup, Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
   DataFrame,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
   Field,
+  fieldReducers,
   FieldType,
   formattedValueToString,
-  getFieldDisplayName,
-  SelectableValue,
-  fieldReducers,
   getDisplayProcessor,
-  reduceField,
+  getFieldDisplayName,
   GrafanaTheme2,
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
-  DisplayValueAlignmentFactors,
-  DisplayValue,
+  reduceField,
+  SelectableValue,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -30,6 +30,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../utils';
 
+import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
 import { DefaultCell } from './DefaultCell';
@@ -41,13 +42,13 @@ import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
 import { TableStyles } from './styles';
 import {
+  CellColors,
   CellComponent,
-  TableCellOptions,
-  TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
+  TableCellOptions,
+  TableFieldOptions,
   TableFooterCalc,
-  CellColors,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -191,6 +192,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return JSONViewCell;
     case TableCellDisplayMode.DataLinks:
       return DataLinksCell;
+    case TableCellDisplayMode.Actions:
+      return ActionsCell;
   }
 
   if (field.type === FieldType.geo) {
@@ -531,8 +534,9 @@ export function getAlignmentFactor(
 
   if (alignmentFactor) {
     // check if current alignmentFactor is still the longest
-    if (alignmentFactor.text.length < displayValue.text.length) {
-      alignmentFactor.text = displayValue.text;
+    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
+      alignmentFactor = { ...displayValue };
+      field.state!.alignmentFactors = alignmentFactor;
     }
     return alignmentFactor;
   } else {
@@ -542,7 +546,7 @@ export function getAlignmentFactor(
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
       const nextDisplayValue = field.display!(field.values[i]);
-      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
+      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
         alignmentFactor.text = displayValue.text;
       }
     }
@@ -632,4 +636,134 @@ export function getCellColors(
   }
 
   return { textColor, bgColor, bgHoverColor };
+}
+
+/**
+ * Calculate an estimated bounding box for a block
+ * of text using an offscreen canvas.
+ */
+export function guessTextBoundingBox(
+  text: string,
+  headerGroup: HeaderGroup,
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number,
+  padding = 0
+) {
+  const width = Number(headerGroup?.width ?? 300);
+  const LINE_SCALE_FACTOR = 1.17;
+  const LOW_LINE_PAD = 42;
+  const PADDING = padding * 2;
+
+  if (osContext !== null && typeof text === 'string') {
+    const words = text.split(/\s/);
+    const lines = [];
+    let currentLine = '';
+    let wordCount = 0;
+    let extraLines = 0;
+
+    // Let's just wrap the lines and see how well the measurement works
+    for (let i = 0; i < words.length; i++) {
+      const currentWord = words[i];
+      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
+
+      if (lineWidth < width - PADDING) {
+        currentLine += ' ' + currentWord;
+        wordCount++;
+      } else {
+        lines.push({
+          width: lineWidth,
+          line: currentLine,
+        });
+
+        currentLine = currentWord;
+        wordCount = 0;
+      }
+    }
+
+    // We can have extra long strings, for these
+    // we estimate if it overshoots the line by
+    // at least one other line
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].width > width) {
+        let extra = Math.floor(lines[i].width / width) - 1;
+        extraLines += extra;
+      }
+    }
+
+    // Estimated height would be lines multiplied
+    // by the line height
+    let lineNumber = lines.length + extraLines;
+    let height = 38;
+    if (lineNumber > 5) {
+      height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
+    } else {
+      height = lineNumber * lineHeight + LOW_LINE_PAD;
+    }
+    height += PADDING;
+
+    return { width, height };
+  }
+
+  return { width, height: defaultRowHeight };
+}
+
+/**
+ * A function to guess at which field has the longest text.
+ * To do this we either select a single record if there aren't many records
+ * or we select records at random and sample their size.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function guessLongestField(fieldConfig: any, data: DataFrame) {
+  let longestField = undefined;
+  const SAMPLE_SIZE = 3;
+
+  // If the default field option is set to allow text wrapping
+  // we determine the field to wrap text with here and then
+  // pass it to the RowsList
+  if (
+    fieldConfig !== undefined &&
+    fieldConfig.defaults.custom !== undefined &&
+    fieldConfig.defaults.custom.cellOptions.wrapText
+  ) {
+    const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
+
+    if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
+      const numValues = stringFields[0].values.length;
+      let longestLength = 0;
+
+      // If we have less than 30 values we assume
+      // that the first record is representative
+      // of the overall data
+      if (numValues <= 30) {
+        for (const field of stringFields) {
+          const fieldLength = field.values[0].length;
+          if (fieldLength > longestLength) {
+            longestLength = fieldLength;
+            longestField = field;
+          }
+        }
+      }
+      // Otherwise we randomly sample SAMPLE_SIZE values and take
+      // the mean length
+      else {
+        for (const field of stringFields) {
+          // This could result in duplicate values but
+          // that should be fairly unlikely. This could potentially
+          // be improved using a Set datastructure but
+          // going to leave that one as an exercise for
+          // the reader to contemplate and possibly code
+          const vals = sampleSize(field.values, SAMPLE_SIZE);
+          const meanLength = (vals[0]?.length + vals[1]?.length + vals[2]?.length) / 3;
+
+          if (meanLength > longestLength) {
+            longestLength = meanLength;
+            longestField = field;
+          }
+        }
+      }
+    }
+  }
+
+  return longestField;
 }

@@ -2,8 +2,8 @@ package validation
 
 import (
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,7 +26,7 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *Public
 	}
 
 	if pd.TimeSelectionEnabled {
-		timeRange := legacydata.NewDataTimeRange(req.TimeRange.From, req.TimeRange.To)
+		timeRange := gtime.NewTimeRange(req.TimeRange.From, req.TimeRange.To)
 
 		_, err := timeRange.ParseFrom()
 		if err != nil {

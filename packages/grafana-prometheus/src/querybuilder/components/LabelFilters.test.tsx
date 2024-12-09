@@ -1,14 +1,28 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilters.test.tsx
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
-import { selectOptionInTest } from '../../gcopypaste/test/helpers/selectOptionInTest';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
 import { getLabelSelects } from '../testUtils';
 
 import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, LabelFiltersProps } from './LabelFilters';
 
 describe('LabelFilters', () => {
+  it('truncates list of label names to 1000', async () => {
+    const manyMockValues = [...Array(1001).keys()].map((idx: number) => {
+      return { label: 'random_label' + idx };
+    });
+
+    setup({ onGetLabelNames: jest.fn().mockResolvedValue(manyMockValues) });
+
+    await openLabelNamesSelect();
+
+    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(1000));
+  });
+
   it('renders empty input without labels', async () => {
     setup();
     expect(screen.getAllByText('Select label')).toHaveLength(1);
@@ -59,7 +73,7 @@ describe('LabelFilters', () => {
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
     await selectOptionInTest(value, 'qux');
-    expect(onChange).toBeCalledWith([
+    expect(onChange).toHaveBeenCalledWith([
       { label: 'foo', op: '=', value: 'bar' },
       { label: 'baz', op: '=', value: 'qux' },
     ]);
@@ -68,7 +82,7 @@ describe('LabelFilters', () => {
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
     await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toBeCalledWith([]);
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 
   it('removes label but preserves a label with a value of empty string', async () => {
@@ -80,7 +94,7 @@ describe('LabelFilters', () => {
       ],
     });
     await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toBeCalledWith([
+    expect(onChange).toHaveBeenCalledWith([
       { label: 'lab', op: '=', value: 'bel' },
       { label: 'le', op: '=', value: '' },
     ]);
@@ -161,4 +175,9 @@ function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
 
 function getAddButton() {
   return screen.getByLabelText(/Add/);
+}
+
+async function openLabelNamesSelect() {
+  const select = screen.getByText('Select label').parentElement!;
+  await userEvent.click(select);
 }

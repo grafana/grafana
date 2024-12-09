@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Input } from '@grafana/ui';
 import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
 

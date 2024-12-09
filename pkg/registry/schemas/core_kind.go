@@ -93,15 +93,6 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: rolebindingCue,
 	})
 
-	teamCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/team/team_kind.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, CoreKind{
-		Name:    "team",
-		CueFile: teamCue,
-	})
-
 	return kinds, nil
 }
 

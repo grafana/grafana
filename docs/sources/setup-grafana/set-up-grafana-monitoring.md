@@ -81,9 +81,11 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
-1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
+1. In Grafana, click **Connections** in the left-side menu.
+1. Under your connections, click **Data Sources**.
 1. Select the **Prometheus** data source.
-1. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
+1. Under the name of your data source, click **Dashboards**.
+1. On the Dashboards tab, click **Import** in the _Grafana metrics_ row to import the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
 
 ### View Grafana metrics in Graphite
 
@@ -115,7 +117,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin](/developers/plugin-tools/introduction/backend-plugins) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 

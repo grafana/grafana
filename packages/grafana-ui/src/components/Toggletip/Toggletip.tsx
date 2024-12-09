@@ -13,7 +13,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
-import React, { useRef, useState } from 'react';
+import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -48,7 +48,7 @@ export interface ToggletipProps {
   onOpen?: () => void;
 }
 
-export const Toggletip = React.memo(
+export const Toggletip = memo(
   ({
     children,
     theme = 'info',
@@ -111,7 +111,7 @@ export const Toggletip = React.memo(
 
     return (
       <>
-        {React.cloneElement(children, {
+        {cloneElement(children, {
           ref: refs.setReference,
           tabIndex: 0,
           'aria-expanded': isOpen,
@@ -150,7 +150,7 @@ export const Toggletip = React.memo(
                 </div>
               )}
               <div className={style.body}>
-                {(typeof content === 'string' || React.isValidElement(content)) && content}
+                {(typeof content === 'string' || isValidElement(content)) && content}
                 {typeof content === 'function' && content({})}
               </div>
               {Boolean(footer) && <div className={style.footer}>{footer}</div>}

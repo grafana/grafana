@@ -2,7 +2,7 @@ import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
-import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
+import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -12,6 +12,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { getDashboardAPI } from '../api/dashboard_api';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -34,7 +35,12 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
+  loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    params?: UrlQueryMap
+  ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;
 
@@ -46,8 +52,6 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
-    } else if (type === 'ds' && slug) {
-      promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
@@ -76,13 +80,15 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      const cachedDashboard = stateManager.getFromCache(uid);
-      if (cachedDashboard) {
-        return Promise.resolve(cachedDashboard);
+      if (!params) {
+        const cachedDashboard = stateManager.getDashboardFromCache(uid);
+        if (cachedDashboard) {
+          return Promise.resolve(cachedDashboard);
+        }
       }
 
-      promise = backendSrv
-        .getDashboardByUid(uid)
+      promise = getDashboardAPI()
+        .getDashboardDTO(uid, params)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -91,7 +97,9 @@ export class DashboardLoaderSrv {
           return result;
         })
         .catch(() => {
-          return this._dashboardLoadFailed('Not found', true);
+          const dash = this._dashboardLoadFailed('Not found', true);
+          dash.dashboard.uid = '';
+          return dash;
         });
     } else {
       throw new Error('Dashboard uid or slug required');
@@ -135,44 +143,6 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Scripted dashboard');
         }
       );
-  }
-
-  /**
-   * This is a temporary solution to load dashboards dynamically from a datasource
-   * Eventually this should become a plugin type or a special handler in the dashboard
-   * loading code
-   */
-  async _loadFromDatasource(dsid: string) {
-    const ds = await getDatasourceSrv().get(dsid);
-    if (!ds) {
-      return Promise.reject('can not find datasource: ' + dsid);
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const path = params.get('path');
-    if (!path) {
-      return Promise.reject('expecting path parameter');
-    }
-
-    const queryParams: { [key: string]: string } = {};
-
-    params.forEach((value, key) => {
-      queryParams[key] = value;
-    });
-
-    return getBackendSrv()
-      .get(`/api/datasources/uid/${ds.uid}/resources/${path}`, queryParams)
-      .then((data) => {
-        return {
-          meta: {
-            fromScript: true,
-            canDelete: false,
-            canSave: false,
-            canStar: false,
-          },
-          dashboard: data,
-        };
-      });
   }
 
   _executeScript(result: any) {

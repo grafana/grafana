@@ -151,7 +151,7 @@ export function addLabelToQuery(
   value: string,
   labelType?: LabelType | null
 ): string {
-  if (!key || !value) {
+  if (!key) {
     throw new Error('Need label to add to query.');
   }
 
@@ -165,6 +165,16 @@ export function addLabelToQuery(
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
   // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
+
+  // If the label type wasn't passed in from the calling function, we can use lezer to figure out if this label is already in the stream selectors
+  if (!labelType) {
+    const identifierSelectorMatchers = getIdentifierInStreamPositions(query);
+    const indexedKeys = identifierSelectorMatchers.map((match) => match.getExpression(query));
+    if (indexedKeys.includes(key)) {
+      labelType = LabelType.Indexed;
+    }
+  }
+
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
@@ -229,14 +239,60 @@ export function addParserToQuery(query: string, parser: string): string {
   const lineFilterPositions = getLineFiltersPositions(query);
 
   if (lineFilterPositions.length) {
-    return addParser(query, lineFilterPositions, parser);
+    return appendToLogsQuery(query, lineFilterPositions, parser);
   } else {
     const streamSelectorPositions = getStreamSelectorPositions(query);
     if (!streamSelectorPositions.length) {
       return query;
     }
-    return addParser(query, streamSelectorPositions, parser);
+    return appendToLogsQuery(query, streamSelectorPositions, parser);
   }
+}
+
+/**
+ * Adds a drop statement to the query.
+ * It uses LogQL parser to find instances of stream selectors or line filters and adds parser after them.
+ *
+ * @param query
+ * @param parser
+ */
+export function addDropToQuery(query: string, labelsToDrop: string[]): string {
+  const lineFilterPositions = getLineFiltersPositions(query);
+
+  if (lineFilterPositions.length) {
+    return appendToLogsQuery(query, lineFilterPositions, `drop ${labelsToDrop.join(', ')}`);
+  } else {
+    const streamSelectorPositions = getStreamSelectorPositions(query);
+    if (!streamSelectorPositions.length) {
+      return query;
+    }
+    return appendToLogsQuery(query, streamSelectorPositions, `drop ${labelsToDrop.join(', ')}`);
+  }
+}
+
+/**
+ * Adds a statement after line filters or stream selectors
+ * @param query
+ * @param queryPartPositions
+ * @param parser
+ */
+function appendToLogsQuery(query: string, queryPartPositions: NodePosition[], statement: string): string {
+  let newQuery = '';
+  let prev = 0;
+
+  for (let i = 0; i < queryPartPositions.length; i++) {
+    // Splice on a string for each matched vector selector
+    const match = queryPartPositions[i];
+    const isLast = i === queryPartPositions.length - 1;
+
+    const start = query.substring(prev, match.to);
+    const end = isLast ? query.substring(match.to) : '';
+
+    // Add parser
+    newQuery += start + ` | ${statement}` + end;
+    prev = match.to;
+  }
+  return newQuery;
 }
 
 /**
@@ -485,31 +541,6 @@ export function addFilterAsLabelFilter(
 }
 
 /**
- * Add parser after line filter or stream selector
- * @param query
- * @param queryPartPositions
- * @param parser
- */
-function addParser(query: string, queryPartPositions: NodePosition[], parser: string): string {
-  let newQuery = '';
-  let prev = 0;
-
-  for (let i = 0; i < queryPartPositions.length; i++) {
-    // Splice on a string for each matched vector selector
-    const match = queryPartPositions[i];
-    const isLast = i === queryPartPositions.length - 1;
-
-    const start = query.substring(prev, match.to);
-    const end = isLast ? query.substring(match.to) : '';
-
-    // Add parser
-    newQuery += start + ` | ${parser}` + end;
-    prev = match.to;
-  }
-  return newQuery;
-}
-
-/**
  * Add filter as label filter after the parsers
  * @param query
  * @param logQueryPositions
@@ -616,6 +647,19 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
     enter: ({ node }): false | void => {
       if (node.type.id === Selector) {
         positions.push(...getAllPositionsInNodeByType(node, Matcher));
+      }
+    },
+  });
+  return positions;
+}
+
+export function getIdentifierInStreamPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const positions: NodePosition[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(node, Identifier));
       }
     },
   });

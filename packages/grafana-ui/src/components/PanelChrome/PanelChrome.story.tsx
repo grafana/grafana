@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState, ReactNode } from 'react';
+import { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
@@ -235,6 +235,11 @@ export const Examples = () => {
           {renderCollapsiblePanel('Collapsible panel', {
             title: 'Default title',
             collapsible: true,
+          })}
+          {renderPanel('Menu always visible', {
+            title: 'Menu always visible',
+            showMenuAlways: true,
+            menu,
           })}
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',

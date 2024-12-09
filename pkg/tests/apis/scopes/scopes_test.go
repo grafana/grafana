@@ -1,8 +1,9 @@
-package playlist
+package scopes
 
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,9 +28,9 @@ func TestIntegrationScopes(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
+		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagScopeApi, // Required to register the API
 		},
 	})
 
@@ -40,6 +41,7 @@ func TestIntegrationScopes(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
+		//fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
@@ -47,10 +49,55 @@ func TestIntegrationScopes(t *testing.T) {
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
 			  {
+				"name": "scope_dashboard_bindings",
+				"singularName": "FindScopeDashboardsResult",
+				"namespaced": true,
+				"kind": "FindScopeDashboardBindingsResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
+				"name": "scope_node_children",
+				"singularName": "FindScopeNodeChildrenResults",
+				"namespaced": true,
+				"kind": "FindScopeNodeChildrenResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
 				"name": "scopedashboardbindings",
 				"singularName": "scopedashboardbinding",
 				"namespaced": true,
 				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "create",
+				  "delete",
+				  "deletecollection",
+				  "get",
+				  "list",
+				  "patch",
+				  "update",
+				  "watch"
+				]
+			  },
+			  {
+				"name": "scopedashboardbindings/status",
+				"singularName": "",
+				"namespaced": true,
+				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "get",
+				  "patch",
+				  "update"
+				]
+			  },
+			  {
+				"name": "scopenodes",
+				"singularName": "scopenode",
+				"namespaced": true,
+				"kind": "ScopeNode",
 				"verbs": [
 				  "create",
 				  "delete",
@@ -113,9 +160,28 @@ func TestIntegrationScopes(t *testing.T) {
 		)
 		require.NoError(t, err)
 
+		// Name length test
+		scope3 := helper.LoadYAMLOrJSONFile("testdata/example-scope3.yaml")
+
+		// Name too long (>253)
+		scope3.SetName(strings.Repeat("0", 254))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
+			createOptions,
+		)
+		require.Error(t, err)
+
+		// Maximum allowed length for name (253)
+		scope3.SetName(strings.Repeat("0", 253))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
+			createOptions,
+		)
+		require.NoError(t, err)
+
 		// Field Selector test
 		found, err := scopeClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.category=fun",
+			FieldSelector: "spec.title=foo-scope",
 		})
 		require.NoError(t, err)
 		require.Len(t, found.Items, 1)

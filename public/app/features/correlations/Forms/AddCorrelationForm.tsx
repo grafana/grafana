@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PanelContainer, useStyles2 } from '@grafana/ui';
@@ -16,14 +16,14 @@ import { CorrelationsFormContextProvider } from './correlationsFormContext';
 import { FormDTO } from './types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  panelContainer: css`
-    position: relative;
-    padding: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  infoBox: css`
-    margin-top: 20px; // give space for close button
-  `,
+  panelContainer: css({
+    position: 'relative',
+    padding: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+  }),
+  infoBox: css({
+    marginTop: '20px', // give space for close button
+  }),
 });
 
 interface Props {
@@ -44,7 +44,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     }
   }, [error, loading, value, onCreated]);
 
-  const defaultValues: Partial<FormDTO> = { config: { type: 'query', target: {}, field: '' } };
+  const defaultValues: Partial<FormDTO> = { type: 'query', config: { target: {}, field: '' } };
 
   return (
     <PanelContainer className={styles.panelContainer}>

@@ -45,6 +45,12 @@ func ProvideSecretsMigrator(
 		jsonSecret{tableName: "plugin_setting"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.StdEncoding},
 		alertingSecret{},
+		ssoSettingsSecret{},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "access_token"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "id_token"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "refresh_token"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "session_id"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "name_id"}, encoding: base64.StdEncoding},
 	}
 
 	return &SecretsMigrator{
@@ -156,6 +162,8 @@ type jsonSecret struct {
 }
 
 type alertingSecret struct{}
+
+type ssoSettingsSecret struct{}
 
 func nowInUTC() string {
 	return time.Now().UTC().Format("2006-01-02 15:04:05")

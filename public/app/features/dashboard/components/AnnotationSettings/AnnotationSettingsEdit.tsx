@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -23,9 +24,11 @@ import {
   Select,
   useStyles2,
   Stack,
+  Alert,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -177,7 +180,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
       <FieldSet className={styles.settingsForm}>
         <Field label="Name">
           <Input
-            aria-label={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
             name="name"
             id="name"
             autoFocus={isNewAnnotation}
@@ -188,6 +191,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
+        {!ds?.meta.annotations && (
+          <Alert title="No annotation support for this data source" severity="error">
+            <Trans i18nKey="errors.dashboard-settings.annotations.datasource">
+              The selected data source does not support annotations. Please select a different data source.
+            </Trans>
+          </Alert>
+        )}
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
         </Field>
@@ -202,13 +212,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
-        <Field label="Show in" aria-label={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
+        <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>
             <Select
               options={panelFilters}
               value={panelFilter}
               onChange={onFilterTypeChange}
-              aria-label={selectors.components.Annotations.annotationsTypeInput}
+              data-testid={selectors.components.Annotations.annotationsTypeInput}
             />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
@@ -220,7 +230,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
-                aria-label={selectors.components.Annotations.annotationsChoosePanelInput}
+                data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
               />
             )}
           </>
@@ -265,9 +275,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(60),
       marginBottom: theme.spacing(2),
     }),
-    select: css`
-      margin-top: 8px;
-    `,
+    select: css({
+      marginTop: '8px',
+    }),
   };
 };
 

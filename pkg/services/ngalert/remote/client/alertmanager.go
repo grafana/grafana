@@ -9,6 +9,7 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
@@ -31,7 +32,7 @@ type Alertmanager struct {
 	logger     log.Logger
 }
 
-func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	// First, add the authentication middleware.
 	c := &http.Client{Transport: &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
@@ -40,14 +41,15 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 	}}
 
 	tc := client.NewTimedClient(c, metrics.RequestLatency)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
 	u := apiEndpoint.JoinPath(alertmanagerAPIMountPath, amclient.DefaultBasePath)
 
-	// Create an Alertmanager client using the timed client as the transport.
+	// Create an Alertmanager client using the instrumented client as the transport.
 	r := httptransport.New(u.Host, u.Path, []string{u.Scheme})
-	r.Transport = tc
+	r.Transport = trc
 
 	return &Alertmanager{
 		logger:          cfg.Logger,
@@ -69,7 +71,7 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	readyURL := am.url.JoinPath(am.url.Path, alertmanagerAPIMountPath, alertmanagerReadyPath)
+	readyURL := am.url.JoinPath(alertmanagerAPIMountPath, alertmanagerReadyPath)
 
 	attempt := func() (int, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL.String(), nil)

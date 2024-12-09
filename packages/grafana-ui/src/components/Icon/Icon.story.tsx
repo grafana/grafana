@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Meta } from '@storybook/react';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 
 import { toIconName, IconName } from '@grafana/data';
 import { Input, Field, Icon } from '@grafana/ui';

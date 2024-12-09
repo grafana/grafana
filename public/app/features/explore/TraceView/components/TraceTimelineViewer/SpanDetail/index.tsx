@@ -15,9 +15,17 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React from 'react';
+import * as React from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  TraceKeyValuePair,
+  TraceLog,
+} from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -30,7 +38,7 @@ import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -42,78 +50,89 @@ import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0 1rem;
-      margin-bottom: 0.25rem;
-    `,
-    listWrapper: css`
-      overflow: hidden;
-    `,
+    header: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: '0 1rem',
+      marginBottom: '0.25rem',
+    }),
+    listWrapper: css({
+      overflow: 'hidden',
+    }),
     list: css({
       textAlign: 'right',
     }),
     operationName: css({
       margin: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      flexBasis: '50%',
+      flexGrow: 0,
+      flexShrink: 0,
     }),
-    debugInfo: css`
-      label: debugInfo;
-      display: block;
-      letter-spacing: 0.25px;
-      margin: 0.5em 0 -0.75em;
-      text-align: right;
-    `,
-    debugLabel: css`
-      label: debugLabel;
-      &::before {
-        color: ${autoColor(theme, '#bbb')};
-        content: attr(data-label);
-      }
-    `,
-    debugValue: css`
-      label: debugValue;
-      background-color: inherit;
-      border: none;
-      color: ${autoColor(theme, '#888')};
-      cursor: pointer;
-      &:hover {
-        color: ${autoColor(theme, '#333')};
-      }
-    `,
-    AccordianWarnings: css`
-      label: AccordianWarnings;
-      background: ${autoColor(theme, '#fafafa')};
-      border: 1px solid ${autoColor(theme, '#e4e4e4')};
-      margin-bottom: 0.25rem;
-    `,
-    AccordianWarningsHeader: css`
-      label: AccordianWarningsHeader;
-      background: ${autoColor(theme, '#fff7e6')};
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#ffe7ba')};
-      }
-    `,
-    AccordianWarningsHeaderOpen: css`
-      label: AccordianWarningsHeaderOpen;
-      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-    `,
-    AccordianWarningsLabel: css`
-      label: AccordianWarningsLabel;
-      color: ${autoColor(theme, '#d36c08')};
-    `,
+    debugInfo: css({
+      label: 'debugInfo',
+      display: 'block',
+      letterSpacing: '0.25px',
+      margin: '0.5em 0 -0.75em',
+      textAlign: 'right',
+    }),
+    debugLabel: css({
+      label: 'debugLabel',
+      '&::before': {
+        color: autoColor(theme, '#bbb'),
+        content: 'attr(data-label)',
+      },
+    }),
+    debugValue: css({
+      label: 'debugValue',
+      backgroundColor: 'inherit',
+      border: 'none',
+      color: autoColor(theme, '#888'),
+      cursor: 'pointer',
+      '&:hover': {
+        color: autoColor(theme, '#333'),
+      },
+    }),
+    AccordianWarnings: css({
+      label: 'AccordianWarnings',
+      background: autoColor(theme, '#fafafa'),
+      border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
+      marginBottom: '0.25rem',
+    }),
+    AccordianWarningsHeader: css({
+      label: 'AccordianWarningsHeader',
+      background: autoColor(theme, '#fff7e6'),
+      padding: '0.25rem 0.5rem',
+      '&:hover': {
+        background: autoColor(theme, '#ffe7ba'),
+      },
+    }),
+    AccordianWarningsHeaderOpen: css({
+      label: 'AccordianWarningsHeaderOpen',
+      borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
+    }),
+    AccordianWarningsLabel: css({
+      label: 'AccordianWarningsLabel',
+      color: autoColor(theme, '#d36c08'),
+    }),
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
-    Textarea: css`
-      word-break: break-all;
-      white-space: pre;
-    `,
-    LinkIcon: css`
-      font-size: 1.5em;
-    `,
+    Textarea: css({
+      wordBreak: 'break-all',
+      whiteSpace: 'pre',
+    }),
+    LinkIcon: css({
+      fontSize: '1.5em',
+    }),
+    linkList: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px',
+    }),
   };
 };
 
@@ -303,6 +322,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
+  let sessionLinkButton: JSX.Element | null = null;
   if (createSpanLink) {
     const links = createSpanLink(span);
     const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
@@ -315,19 +335,33 @@ export default function SpanDetail(props: SpanDetailProps) {
     if (links && profilesLink && profilesLink.length > 0) {
       profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
     }
+    const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
+    if (links && sessionLink && sessionLink.length > 0) {
+      sessionLinkButton = createLinkButton(
+        sessionLink[0],
+        SpanLinkType.Session,
+        'Session for this span',
+        'frontend-observability'
+      );
+    }
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={styles.operationName}>{operationName}</h2>
+        <h2 className={styles.operationName} title={operationName}>
+          {operationName}
+        </h2>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
-      {profileLinkButton}
+      <div className={styles.linkList}>
+        {logLinkButton}
+        {profileLinkButton}
+        {sessionLinkButton}
+      </div>
       <Divider spacing={1} />
       <div>
         <div>

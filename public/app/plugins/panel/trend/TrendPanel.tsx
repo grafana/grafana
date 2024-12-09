@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable, prepareGraphableFields } from '../timeseries/utils';
+import { prepareGraphableFields } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -29,8 +29,7 @@ export const TrendPanel = ({
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
-    options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
-
+    options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
@@ -61,7 +60,7 @@ export const TrendPanel = ({
     } else {
       // first number field
       // Perhaps we can/should support any ordinal rather than an error here
-      xFieldIdx = frames[0].fields.findIndex((f) => f.type === FieldType.number);
+      xFieldIdx = frames[0] ? frames[0].fields.findIndex((f) => f.type === FieldType.number) : -1;
       if (xFieldIdx === -1) {
         return {
           warning: 'No numeric fields found for X axis',
@@ -123,15 +122,14 @@ export const TrendPanel = ({
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                   return (
                     <TimeSeriesTooltip
-                      frames={info.frames!}
-                      seriesFrame={alignedDataFrame}
+                      series={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
-                      scrollable={isTooltipScrollable(options.tooltip)}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}

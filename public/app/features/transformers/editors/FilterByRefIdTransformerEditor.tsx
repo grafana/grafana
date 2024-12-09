@@ -1,4 +1,4 @@
-import React from 'react';
+import { PureComponent } from 'react';
 
 import {
   DataTransformerID,
@@ -25,7 +25,7 @@ interface RefIdInfo {
   refId: string;
   count: number;
 }
-export class FilterByRefIdTransformerEditor extends React.PureComponent<
+export class FilterByRefIdTransformerEditor extends PureComponent<
   FilterByRefIdTransformerEditorProps,
   FilterByRefIdTransformerEditorState
 > {

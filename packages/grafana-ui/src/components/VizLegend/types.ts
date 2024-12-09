@@ -1,7 +1,7 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
@@ -12,6 +12,8 @@ export interface VizLegendBaseProps<T> {
   placement: LegendPlacement;
   className?: string;
   items: Array<VizLegendItem<T>>;
+  thresholdItems?: Array<VizLegendItem<T>>;
+  mappingItems?: Array<VizLegendItem<T>>;
   seriesVisibilityChangeBehavior?: SeriesVisibilityChangeBehavior;
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLButtonElement>) => void;
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
@@ -49,4 +51,5 @@ export interface VizLegendItem<T = any> {
   fieldIndex?: DataFrameFieldIndex;
   fieldName?: string;
   data?: T;
+  lineStyle?: LineStyle;
 }

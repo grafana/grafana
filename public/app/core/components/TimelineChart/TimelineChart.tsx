@@ -1,4 +1,4 @@
-import React from 'react';
+import { Component } from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
 import { VisibilityMode, TimelineValueAlignment, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
@@ -19,15 +19,17 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   colWidth?: number;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
+  // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
+  paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
 
-export class TimelineChart extends React.Component<TimelineProps> {
+export class TimelineChart extends Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
-    const field = this.props.frames[frameIdx].fields[fieldIdx];
+    const field = this.props.frames[frameIdx]?.fields[fieldIdx];
 
-    if (field.display) {
+    if (field?.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;
@@ -84,6 +86,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
         renderLegend={this.renderLegend}
+        omitHideFromViz={true}
       />
     );
   }

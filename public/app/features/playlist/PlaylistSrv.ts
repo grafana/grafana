@@ -12,6 +12,9 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
   autofitpanels: true,
   orgId: true,
+  '_dash.hideTimePicker': true,
+  '_dash.hideVariables': true,
+  '_dash.hideLinks': true,
 };
 
 export interface PlaylistSrvState {

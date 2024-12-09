@@ -1,6 +1,6 @@
 import { getByRole, render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
@@ -117,6 +117,10 @@ describe('QueryVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
+    const allowCustomValueCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
@@ -129,6 +133,8 @@ describe('QueryVariableEditor', () => {
     expect(getByRole(refreshSelect, 'radio', { name: 'On dashboard load' })).toBeChecked();
     expect(multiSwitch).toBeInTheDocument();
     expect(multiSwitch).toBeChecked();
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
     expect(includeAllSwitch).toBeInTheDocument();
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();

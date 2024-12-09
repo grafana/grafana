@@ -88,7 +88,7 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "google",
+                    "title": "${__data.fields.id}/${__field.name}/${__value.raw}",
                     "url": "google.com"
                   },
                   {
@@ -114,8 +114,8 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "datalink column 2",
-                    "url": "grafana.com"
+                    "title": "${__data.fields.id}/${__field.name}/${__value.raw}",
+                    "url": ""
                   }
                 ]
               },
@@ -906,6 +906,6 @@
   "timezone": "",
   "title": "Panel Tests - Bar Chart Tooltips & Legends",
   "uid": "ea33320b-bd97-4fe1-a27c-24bc61a48b41",
-  "version": 1,
+  "version": 5,
   "weekStart": ""
 }

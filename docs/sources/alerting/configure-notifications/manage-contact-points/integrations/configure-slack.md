@@ -13,10 +13,21 @@ labels:
     - oss
 menuTitle: Slack
 title: Configure Slack for Alerting
-weight: 300
+weight: 155
+refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
+  nested-policy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
 ---
 
-## Configure Slack for Alerting
+# Configure Slack for Alerting
 
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing.
 
@@ -30,9 +41,9 @@ There are two ways of integrating Slack into Grafana Alerting.
 
    Webhooks is the simpler way to post messages into Slack. Slack automatically creates a bot user with all the necessary permissions to post messages to one particular channel of your choice.
 
-{{< admonition type="note" >}}
-Grafana Alerting only allows one Slack channel per contact point.
-{{< /admonition >}}
+Note that you can only setup one Slack channel per contact point.
+
+You can customize the `title` and `body` of the Slack message using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with custom blocks.
 
 ## Before you begin
 
@@ -47,17 +58,12 @@ If you are using a Slack API Token, complete the following steps.
 1. Right click the channel you want to receive notifications in.
 1. Click View channel details.
 1. Scroll down and copy the Channel ID.
-   {{< admonition type="note" >}}
-   While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
-   {{< /admonition >}}
+
+   Note that while going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
 
 ### Webhook URL
 
-If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
-
-{{< admonition type="note" >}}
-Make sure you copy the Slack app Webhook URL. You will need this when setting up your contact point integration in Grafana Alerting.
-{{< /admonition >}}
+If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart), and copy the Slack app Webhook URL. You need this when setting up your contact point integration in Grafana Alerting.
 
 ## Procedure
 
@@ -72,22 +78,20 @@ To create your Slack integration in Grafana Alerting, complete the following ste
    - In the **Token** field, copy in the Bot User OAuth Token that starts with “xoxb-”.
 1. If you are using a Webhook URL, in the **Webhook** field, copy in your Slack app Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps
 
-To add the contact point and integration you created to your default notification policy, complete the following steps.
+The Slack contact point is ready to receive alert notifications.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
-1. Change the default policy to the contact point you created.
-1. Click **Update default policy**.
+To add this contact point to your alert, complete the following steps.
 
-**Note:**
-If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies][nested-policy].
-
-{{% docs/reference %}}
-[nested-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-
-[nested-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-{{% /docs/reference %}}
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.

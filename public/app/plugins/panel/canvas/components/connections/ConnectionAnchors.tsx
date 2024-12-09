@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { ConnectionCoordinates } from 'app/features/canvas';
+import { ConnectionCoordinates } from 'app/features/canvas/element';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
+  setAnchorsRef: (anchorsElement: HTMLDivElement) => void;
   handleMouseLeave: (
     event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
   ) => boolean;
@@ -15,13 +17,33 @@ type Props = {
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
 export const CONNECTION_ANCHOR_ALT = 'connection anchor';
 export const CONNECTION_ANCHOR_HIGHLIGHT_OFFSET = 8;
+// Unit is percentage from the middle of the element
+// 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+export const ANCHORS = [
+  { x: -1, y: 1 },
+  { x: -0.5, y: 1 },
+  { x: 0, y: 1 },
+  { x: 0.5, y: 1 },
+  { x: 1, y: 1 },
+  { x: 1, y: 0.5 },
+  { x: 1, y: 0 },
+  { x: 1, y: -0.5 },
+  { x: 1, y: -1 },
+  { x: 0.5, y: -1 },
+  { x: 0, y: -1 },
+  { x: -0.5, y: -1 },
+  { x: -1, y: -1 },
+  { x: -1, y: -0.5 },
+  { x: -1, y: 0 },
+  { x: -1, y: 0.5 },
+];
 
-const ANCHOR_PADDING = 3;
+export const ANCHOR_PADDING = 3;
+export const HALF_SIZE = 2.5;
 
-export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
+export const ConnectionAnchors = ({ setRef, setAnchorsRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
-  const halfSize = 2.5;
   const halfSizeHighlightEllipse = 5.5;
   const anchorImage =
     'data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI1cHgiIGhlaWdodD0iNXB4IiB2ZXJzaW9uPSIxLjEiPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2Utd2lkdGg9IjIiIHN0eWxlPSJzdHJva2Utb3BhY2l0eTowLjQiIHN0cm9rZT0iI2ZmZmZmZiIvPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2U9IiMyOWI2ZjIiLz48L3N2Zz4=';
@@ -54,35 +76,14 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
     }
   };
 
-  // Unit is percentage from the middle of the element
-  // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
-  const ANCHORS = [
-    { x: -1, y: 1 },
-    { x: -0.5, y: 1 },
-    { x: 0, y: 1 },
-    { x: 0.5, y: 1 },
-    { x: 1, y: 1 },
-    { x: 1, y: 0.5 },
-    { x: 1, y: 0 },
-    { x: 1, y: -0.5 },
-    { x: 1, y: -1 },
-    { x: 0.5, y: -1 },
-    { x: 0, y: -1 },
-    { x: -0.5, y: -1 },
-    { x: -1, y: -1 },
-    { x: -1, y: -0.5 },
-    { x: -1, y: 0 },
-    { x: -1, y: 0.5 },
-  ];
-
   const generateAnchors = (anchors: ConnectionCoordinates[] = ANCHORS) => {
     return anchors.map((anchor) => {
       const id = `${anchor.x},${anchor.y}`;
 
       // Convert anchor coords to relative percentage
       const style = {
-        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
-        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
+        top: `calc(${-anchor.y * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`,
+        left: `calc(${anchor.x * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`,
       };
 
       return (
@@ -114,7 +115,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
         className={styles.highlightElement}
         onMouseLeave={onMouseLeaveHighlightElement}
       />
-      {generateAnchors()}
+      <div ref={setAnchorsRef}>{generateAnchors()}</div>
     </div>
   );
 };

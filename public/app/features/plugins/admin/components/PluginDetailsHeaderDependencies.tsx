@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon, Stack } from '@grafana/ui';
@@ -50,21 +50,21 @@ export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: P
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    dependencyTitle: css`
-      margin-right: ${theme.spacing(0.5)};
+    dependencyTitle: css({
+      marginRight: theme.spacing(0.5),
 
-      &::after {
-        content: '';
-        padding: 0;
-      }
-    `,
+      '&::after': {
+        content: "''",
+        padding: 0,
+      },
+    }),
     depBadge: css({
       display: 'flex',
       alignItems: 'flex-start',
     }),
-    icon: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginRight: theme.spacing(0.5),
+    }),
   };
 };

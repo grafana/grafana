@@ -102,7 +102,7 @@ describe('Highlighting', () => {
       ['{span.http.status_code = 200} &&', 'Invalid spanset expression after spanset combining operator.'],
       [
         '{span.http.status_code = 200} && {span.http.status_code = 200} | foo() > 3',
-        'Invalid aggregation operator after pipepile operator.',
+        'Invalid aggregation operator after pipeline operator.',
       ],
       [
         '{span.http.status_code = 200} && {span.http.status_code = 200} | avg() > 3',
@@ -134,9 +134,9 @@ describe('Highlighting', () => {
       ['{ span. }', 'Invalid expression for spanset.'],
       ['{.foo=}', 'Invalid value after comparison or arithmetic operator.'],
       ['{.foo="}', 'Invalid value after comparison or arithmetic operator.'],
-      ['{.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
-      ['{.foo=300} && {.bar=200} |', 'Invalid aggregation operator after pipepile operator.'],
-      ['{.foo=300} && {.bar=300} && {.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
+      ['{.foo=300} |', 'Invalid aggregation operator after pipeline operator.'],
+      ['{.foo=300} && {.bar=200} |', 'Invalid aggregation operator after pipeline operator.'],
+      ['{.foo=300} && {.bar=300} && {.foo=300} |', 'Invalid aggregation operator after pipeline operator.'],
       ['{.foo=300} | avg(.value)', 'Invalid comparison operator after aggregator operator.'],
       ['{.foo=300} && {.foo=300} | avg(.value)', 'Invalid comparison operator after aggregator operator.'],
       ['{.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],

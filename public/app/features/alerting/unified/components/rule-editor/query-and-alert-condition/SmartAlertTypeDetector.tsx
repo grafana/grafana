@@ -1,9 +1,8 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceJsonData } from '@grafana/schema';
-import { RadioButtonGroup, Text, Stack } from '@grafana/ui';
+import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types';
@@ -98,7 +97,7 @@ export function SmartAlertTypeDetector({
     <Stack direction="column" gap={1} alignItems="flex-start">
       <Stack direction="column" gap={0}>
         <Text variant="h5">Rule type</Text>
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
             Select where the alert rule will be managed.
           </Text>
@@ -134,6 +133,7 @@ export function SmartAlertTypeDetector({
         disabledOptions={disabledOptions}
         value={ruleFormType}
         onChange={onClickSwitch}
+        data-testid="rule-type-radio-group"
       />
       {/* editing an existing rule, we just show "cannot be changed" */}
       {editingExistingRule && (

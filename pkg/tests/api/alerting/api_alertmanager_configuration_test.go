@@ -326,7 +326,6 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -420,7 +419,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -452,7 +450,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 			"route": {
 				"receiver": "slack.receiver"
 			},
-			"templates": null,
 			"receivers": [{
 				"name": "slack.receiver",
 				"grafana_managed_receiver_configs": [{
@@ -500,7 +497,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -534,7 +530,6 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{

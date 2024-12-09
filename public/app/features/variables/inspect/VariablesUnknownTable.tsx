@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -123,26 +123,26 @@ function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-top: ${theme.spacing(4)};
-    padding-top: ${theme.spacing(4)};
-  `,
-  infoIcon: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  defaultColumn: css`
-    width: 1%;
-  `,
-  firstColumn: css`
-    width: 1%;
-    vertical-align: top;
-    color: ${theme.colors.text.maxContrast};
-  `,
-  lastColumn: css`
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 100%;
-    text-align: right;
-  `,
+  container: css({
+    marginTop: theme.spacing(4),
+    paddingTop: theme.spacing(4),
+  }),
+  infoIcon: css({
+    marginLeft: theme.spacing(1),
+  }),
+  defaultColumn: css({
+    width: '1%',
+  }),
+  firstColumn: css({
+    width: '1%',
+    verticalAlign: 'top',
+    color: theme.colors.text.maxContrast,
+  }),
+  lastColumn: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    width: '100%',
+    textAlign: 'right',
+  }),
 });

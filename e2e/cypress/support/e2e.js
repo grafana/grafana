@@ -43,3 +43,11 @@ Cypress.on('uncaught:exception', (err) => {
 //   // failing the test
 //   return false;
 // });
+//
+
+beforeEach(() => {
+  if (Cypress.env('DISABLE_SCENES')) {
+    cy.logToConsole('disabling dashboardScene feature toggle in localstorage');
+    cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');
+  }
+});

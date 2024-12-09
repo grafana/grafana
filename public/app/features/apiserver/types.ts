@@ -33,13 +33,14 @@ export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
 export const AnnoKeyFolder = 'grafana.app/folder';
+export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
-const AnnoKeyOriginName = 'grafana.app/originName';
-const AnnoKeyOriginPath = 'grafana.app/originPath';
-const AnnoKeyOriginKey = 'grafana.app/originKey';
-const AnnoKeyOriginTimestamp = 'grafana.app/originTimestamp';
+export const AnnoKeyRepoName = 'grafana.app/repoName';
+export const AnnoKeyRepoPath = 'grafana.app/repoPath';
+export const AnnoKeyRepoHash = 'grafana.app/repoHash';
+const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
 type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
@@ -48,10 +49,10 @@ type GrafanaAnnotations = {
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
 
-  [AnnoKeyOriginName]?: string;
-  [AnnoKeyOriginPath]?: string;
-  [AnnoKeyOriginKey]?: string;
-  [AnnoKeyOriginTimestamp]?: string;
+  [AnnoKeyRepoName]?: string;
+  [AnnoKeyRepoPath]?: string;
+  [AnnoKeyRepoHash]?: string;
+  [AnnoKeyRepoTimestamp]?: string;
 
   // Any key value
   [key: string]: string | undefined;
@@ -63,7 +64,10 @@ export interface Resource<T = object, K = string> extends TypeMeta<K> {
 }
 
 export interface ResourceForCreate<T = object, K = string> extends Partial<TypeMeta<K>> {
-  metadata: Partial<ObjectMeta>;
+  metadata: Partial<ObjectMeta> & {
+    // When creating a resource, it must set a name or generateName to create a unique one on the server
+    generateName?: string;
+  };
   spec: T;
 }
 
@@ -138,10 +142,21 @@ export interface MetaStatus {
   details?: object;
 }
 
-export interface ResourceServer<T = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<void>;
+export interface ResourceClient<T = object, K = string> {
+  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   get(name: string): Promise<Resource<T, K>>;
+  subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;
+}
+
+export interface K8sAPIGroup {
+  name: string;
+  versions: Array<{ groupVersion: string; version: string }>;
+  preferredVersion: { groupVersion: string; version: string };
+}
+export interface K8sAPIGroupList {
+  kind: 'APIGroupList';
+  groups: K8sAPIGroup[];
 }

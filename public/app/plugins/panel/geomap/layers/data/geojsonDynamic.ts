@@ -2,7 +2,7 @@ import { FeatureLike } from 'ol/Feature';
 import OlMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
@@ -118,7 +118,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
 
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
       style: (feature: FeatureLike) => {
         const idx = idToIdx.get(feature.getId() as string);

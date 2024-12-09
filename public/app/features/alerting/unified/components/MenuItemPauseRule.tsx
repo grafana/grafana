@@ -1,13 +1,16 @@
-import { produce } from 'immer';
-import React from 'react';
-
 import { Menu } from '@grafana/ui';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
+import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
+import { isLoading } from '../hooks/useAsync';
+import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
-  rule: CombinedRule;
+  rule: RulerRuleDTO;
+  groupIdentifier: RuleGroupIdentifier;
   /**
    * Method invoked after the request to change the paused state has completed
    */
@@ -18,10 +21,11 @@ interface Props {
  * Menu item to display correct text for pausing/resuming an alert,
  * and triggering API call to do so
  */
-const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
-  const { group } = rule;
-  const [updateRule] = alertRuleApi.endpoints.updateRule.useMutation();
-  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
+  const notifyApp = useAppNotification();
+  const [pauseRule, updateState] = usePauseRuleInGroup();
+
+  const isPaused = isGrafanaRulerRule(rule) && isGrafanaRulerRulePaused(rule);
   const icon = isPaused ? 'play' : 'pause';
   const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
 
@@ -29,32 +33,18 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
    * Triggers API call to update the current rule to the new `is_paused` state
    */
   const setRulePause = async (newIsPaused: boolean) => {
-    if (!isGrafanaRulerRule(rule.rulerRule)) {
+    if (!isGrafanaRulerRule(rule)) {
       return;
     }
-    const ruleUid = rule.rulerRule.grafana_alert.uid;
 
-    // Parse the rules into correct format for API
-    const modifiedRules = group.rules.map((groupRule) => {
-      if (!(isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid)) {
-        return groupRule.rulerRule!;
-      }
+    try {
+      const ruleUID = rule.grafana_alert.uid;
 
-      return produce(groupRule.rulerRule, (updatedGroupRule) => {
-        updatedGroupRule.grafana_alert.is_paused = newIsPaused;
-      });
-    });
-
-    const payload = {
-      interval: group.interval!,
-      name: group.name,
-      rules: modifiedRules,
-    };
-
-    await updateRule({
-      nameSpaceUID: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
-      payload,
-    }).unwrap();
+      await pauseRule.execute(groupIdentifier, ruleUID, newIsPaused);
+    } catch (error) {
+      notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
+      return;
+    }
 
     onPauseChange?.();
   };
@@ -63,6 +53,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     <Menu.Item
       label={title}
       icon={icon}
+      disabled={isLoading(updateState)}
       onClick={() => {
         setRulePause(!isPaused);
       }}

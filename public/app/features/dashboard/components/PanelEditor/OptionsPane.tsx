@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,7 +25,7 @@ export const OptionsPane = ({
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (
-    <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
+    <div className={styles.wrapper} data-testid={selectors.components.PanelEditor.OptionsPane.content}>
       {!isVizPickerOpen && (
         <>
           <div className={styles.vizButtonWrapper}>
@@ -53,42 +52,40 @@ export const OptionsPane = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      height: 100%;
-      width: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      padding: 0;
-    `,
-    optionsWrapper: css`
-      flex-grow: 1;
-      min-height: 0;
-    `,
-    vizButtonWrapper: css`
-      padding: 0 ${theme.spacing(2, 2)} 0;
-    `,
-    legacyOptions: css`
-      label: legacy-options;
-      .panel-options-grid {
-        display: flex;
-        flex-direction: column;
-      }
-      .panel-options-group {
-        margin-bottom: 0;
-      }
-      .panel-options-group__body {
-        padding: ${theme.spacing(2)} 0;
-      }
-
-      .section {
-        display: block;
-        margin: ${theme.spacing(2)} 0;
-
-        &:first-child {
-          margin-top: 0;
-        }
-      }
-    `,
+    wrapper: css({
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      padding: 0,
+    }),
+    optionsWrapper: css({
+      flexGrow: 1,
+      minHeight: 0,
+    }),
+    vizButtonWrapper: css({
+      padding: `0 ${theme.spacing(2, 2)} 0`,
+    }),
+    legacyOptions: css({
+      label: 'legacy-options',
+      '.panel-options-grid': {
+        display: 'flex',
+        flexDirection: 'column',
+      },
+      '.panel-options-group': {
+        marginBottom: 0,
+      },
+      '.panel-options-group__body': {
+        padding: `${theme.spacing(2)} 0`,
+      },
+      '.section': {
+        display: 'block',
+        margin: `${theme.spacing(2)} 0`,
+        '&:first-child': {
+          marginTop: 0,
+        },
+      },
+    }),
   };
 };

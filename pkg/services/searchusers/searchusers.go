@@ -83,7 +83,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	searchQuery := c.Query("query")
-	filters := make([]user.Filter, 0)
+	filters := []user.Filter{}
 	for filterName := range s.searchUserFilter.GetFilterList() {
 		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
 		if filter != nil {
@@ -112,11 +112,9 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 
 	for _, user := range res.Users {
 		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
-		user.AuthLabels = make([]string, 0)
-		if user.AuthModule != nil && len(user.AuthModule) > 0 {
-			for _, authModule := range user.AuthModule {
-				user.AuthLabels = append(user.AuthLabels, login.GetAuthProviderLabel(authModule))
-			}
+		user.AuthLabels = make([]string, 0, len(user.AuthModule))
+		for _, authModule := range user.AuthModule {
+			user.AuthLabels = append(user.AuthLabels, login.GetAuthProviderLabel(authModule))
 		}
 	}
 

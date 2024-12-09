@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, FeatureState } from '@grafana/data';
@@ -12,7 +12,6 @@ import {
   CodeEditor,
   useStyles2,
   Field,
-  HorizontalGroup,
   InlineSwitch,
   Button,
   Spinner,
@@ -70,7 +69,7 @@ export function HelpWizard({ panel, onClose }: Props) {
 
   return (
     <Drawer
-      title={`Get help with this panel`}
+      title="Get help with this panel"
       size="lg"
       onClose={onClose}
       subtitle={
@@ -151,9 +150,9 @@ export function HelpWizard({ panel, onClose }: Props) {
         <>
           <Field
             label="Randomize data"
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            description="Modify the original data to hide sensitive information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
-            <HorizontalGroup>
+            <Stack>
               <InlineSwitch
                 label="Labels"
                 id="randomize-labels"
@@ -175,7 +174,7 @@ export function HelpWizard({ panel, onClose }: Props) {
                 value={Boolean(randomize.values)}
                 onChange={() => service.onToggleRandomize('values')}
               />
-            </HorizontalGroup>
+            </Stack>
           </Field>
 
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
@@ -193,11 +192,9 @@ export function HelpWizard({ panel, onClose }: Props) {
             </Stack>
           </Field>
 
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <div style={{ height, overflow: 'auto' }}>{scene && <scene.Component model={scene} />}</div>
-            )}
-          </AutoSizer>
+          <div style={{ height: '100%', overflow: 'auto', display: 'flex' }}>
+            {scene && <scene.Component model={scene} />}
+          </div>
         </>
       )}
     </Drawer>

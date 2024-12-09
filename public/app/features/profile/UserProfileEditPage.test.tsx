@@ -1,10 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginExtensionGetter, GetPluginExtensions } from '@grafana/runtime';
+import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
 import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
@@ -22,10 +21,17 @@ jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => [{}],
 }));
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
+}));
+
 const defaultProps: Props = {
   ...initialUserState,
   user: {
     id: 1,
+    uid: 'aaaaaa',
     name: 'Test User',
     email: 'test@test.com',
     login: 'test',
@@ -34,7 +40,7 @@ const defaultProps: Props = {
     orgId: 0,
   },
   teams: [
-    getMockTeam(0, {
+    getMockTeam(0, 'aaaaaa', {
       name: 'Team One',
       email: 'team.one@test.com',
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',
@@ -128,7 +134,7 @@ enum ExtensionPointComponentTabs {
   Two = '2',
 }
 
-const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const _createTabName = (tab: ExtensionPointComponentTabs) => tab;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
 const generalTabName = 'General';
@@ -170,9 +176,11 @@ async function getTestContext(overrides: Partial<Props & { extensions: PluginExt
     .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
-  const getter: GetPluginExtensions<PluginExtensionComponent> = jest.fn().mockReturnValue({ extensions });
+  const getter: UsePluginExtensions<PluginExtensionComponent> = jest
+    .fn()
+    .mockReturnValue({ extensions, isLoading: false });
 
-  setPluginExtensionGetter(getter);
+  setPluginExtensionsHook(getter);
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(

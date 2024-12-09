@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { StandardEditorProps, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -103,19 +103,19 @@ export const LocationModeEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    alert: css`
-      & div {
-        padding: 4px;
-      }
-      margin-bottom: 0px;
-      margin-top: 5px;
-      padding: 2px;
-    `,
+    alert: css({
+      '& div': {
+        padding: theme.spacing(0.5),
+      },
+      marginBottom: '0px',
+      marginTop: '5px',
+      padding: theme.spacing(0.25),
+    }),
     // TODO apply styling to horizontal group (currently not working)
-    hGroup: css`
-      & div {
-        width: 100%;
-      }
-    `,
+    hGroup: css({
+      '& div': {
+        width: '100%',
+      },
+    }),
   };
 };

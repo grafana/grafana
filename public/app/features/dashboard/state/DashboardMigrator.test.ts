@@ -1,6 +1,6 @@
 import { each, map } from 'lodash';
 
-import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { FieldConfigSource } from '@grafana/schema';
@@ -9,7 +9,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
@@ -2411,6 +2410,21 @@ describe('when migrating table cell display mode to cell options', () => {
   it('should migrate cell display modes without options', () => {
     const fieldConfig = model.panels[6].fieldConfig;
     expect(fieldConfig.defaults.custom.cellOptions).toEqual({ type: 'auto' });
+  });
+});
+
+describe('when migrating variable refresh to on dashboard load', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      //@ts-ignore
+      refresh: false,
+    });
+  });
+
+  it('should migrate to empty string', () => {
+    expect(model.refresh).toBe('');
   });
 });
 

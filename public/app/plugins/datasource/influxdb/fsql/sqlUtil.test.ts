@@ -78,4 +78,29 @@ describe('toRawSql', () => {
     const result = toRawSql(testQuery);
     expect(result).toEqual(expected);
   });
+
+  it('should not wrap * with quote', () => {
+    const expected = 'SELECT * FROM "TestValue" WHERE "time" >= $__timeFrom AND "time" <= $__timeTo LIMIT 50';
+    const testQuery: SQLQuery = {
+      refId: 'A',
+      sql: {
+        limit: 50,
+        columns: [
+          {
+            parameters: [
+              {
+                name: '*',
+                type: QueryEditorExpressionType.FunctionParameter,
+              },
+            ],
+            type: QueryEditorExpressionType.Function,
+          },
+        ],
+      },
+      dataset: 'iox',
+      table: 'TestValue',
+    };
+    const result = toRawSql(testQuery);
+    expect(result).toEqual(expected);
+  });
 });

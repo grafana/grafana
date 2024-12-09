@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ type Props = {
   sandwichedLabel?: string;
 };
 
-const FlameGraphMetadata = React.memo(
+const FlameGraphMetadata = memo(
   ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
     const styles = useStyles2(getStyles);
     const parts: ReactNode[] = [];
@@ -82,43 +82,42 @@ const FlameGraphMetadata = React.memo(
       );
     }
 
-    return <>{<div className={styles.metadata}>{parts}</div>}</>;
+    return <div className={styles.metadata}>{parts}</div>;
   }
 );
 
 FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  metadataPill: css`
-    label: metadataPill;
-    display: inline-flex;
-    align-items: center;
-    background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.borderRadius(8)};
-    padding: ${theme.spacing(0.5, 1)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    color: ${theme.colors.text.secondary};
-  `,
-
-  pillCloseButton: css`
-    label: pillCloseButton;
-    vertical-align: text-bottom;
-    margin: ${theme.spacing(0, 0.5)};
-  `,
-  metadata: css`
-    margin: 8px 0;
-    text-align: center;
-  `,
-  metadataPillName: css`
-    label: metadataPillName;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-left: ${theme.spacing(0.5)};
-  `,
+  metadataPill: css({
+    label: 'metadataPill',
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.borderRadius(8),
+    padding: theme.spacing(0.5, 1),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    color: theme.colors.text.secondary,
+  }),
+  pillCloseButton: css({
+    label: 'pillCloseButton',
+    verticalAlign: 'text-bottom',
+    margin: theme.spacing(0, 0.5),
+  }),
+  metadata: css({
+    margin: '8px 0',
+    textAlign: 'center',
+  }),
+  metadataPillName: css({
+    label: 'metadataPillName',
+    maxWidth: '200px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    marginLeft: theme.spacing(0.5),
+  }),
 });
 
 export default FlameGraphMetadata;

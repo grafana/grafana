@@ -1,4 +1,4 @@
-import { DashboardPage, expect, test } from '@grafana/plugin-e2e';
+import { expect, test } from '@grafana/plugin-e2e';
 
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
@@ -8,6 +8,7 @@ const PANEL_TITLE = 'Table panel E2E test';
 const TABLE_VIZ_NAME = 'Table';
 const STANDARD_OTIONS_CATEGORY = 'Standard options';
 const DISPLAY_NAME_LABEL = 'Display name';
+const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 
 test.describe('query editor query data', () => {
   test('query data response should be OK when query is valid', async ({ panelEditPage }) => {
@@ -83,4 +84,10 @@ test.describe('edit panel plugin settings', () => {
       formatExpectError('Expected section to be collapsed')
     ).toBeVisible();
   });
+});
+
+test('backToDashboard method should navigate to dashboard page', async ({ gotoPanelEditPage, page }) => {
+  const panelEditPage = await gotoPanelEditPage({ dashboard: REACT_TABLE_DASHBOARD, id: '4' });
+  await panelEditPage.backToDashboard();
+  await expect(page.url()).not.toContain('editPanel');
 });

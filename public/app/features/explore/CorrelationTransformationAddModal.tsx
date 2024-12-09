@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useState, useMemo, useEffect } from 'react';
+import { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -164,7 +164,7 @@ export const CorrelationTransformationAddModal = ({
           <pre>
             <Highlighter
               textToHighlight={exampleValue}
-              searchWords={[isExpValid ? getValues('expression') ?? '' : '']}
+              searchWords={[isExpValid ? (getValues('expression') ?? '') : '']}
               autoEscape={false}
             />
           </pre>

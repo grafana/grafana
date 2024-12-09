@@ -1,9 +1,9 @@
+/* eslint-disable @grafana/no-untranslated-strings */
+/** @jsxImportSource @emotion/react */
 /** @jsxRuntime classic */
-/** @jsx jsx */
 import { css, cx } from '@emotion/css';
-import { jsx } from '@emotion/react';
 import classnames from 'classnames';
-import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
+import React, { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

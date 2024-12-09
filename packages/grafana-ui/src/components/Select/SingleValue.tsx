@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { components, GroupBase, SingleValueProps } from 'react-select';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';

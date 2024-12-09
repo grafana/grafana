@@ -51,6 +51,10 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 
   origin?: DataLinkConfigOrigin;
+  meta?: {
+    correlationData?: ExploreCorrelationHelperData;
+    transformations?: DataLinkTransformationConfig[];
+  };
 }
 
 /**
@@ -78,10 +82,6 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
-  meta?: {
-    correlationData?: ExploreCorrelationHelperData;
-  };
-  transformations?: DataLinkTransformationConfig[];
   range?: TimeRange;
 }
 
@@ -127,4 +127,10 @@ export interface VariableSuggestion {
 
 export enum VariableSuggestionsScope {
   Values = 'values',
+}
+
+export enum OneClickMode {
+  Action = 'action',
+  Link = 'link',
+  Off = 'off',
 }

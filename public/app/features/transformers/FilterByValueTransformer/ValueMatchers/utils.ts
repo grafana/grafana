@@ -2,7 +2,7 @@ import { isString, isUndefined } from 'lodash';
 
 import { Field, FieldType } from '@grafana/data';
 
-export function convertToType(value: any, field: Field): any {
+export function convertToType(value: any, field: Field) {
   switch (field.type) {
     case FieldType.boolean:
       if (isUndefined(value)) {
@@ -27,7 +27,7 @@ export function convertToType(value: any, field: Field): any {
   }
 }
 
-const convertToBool = (value: any): boolean => {
+const convertToBool = (value: unknown): boolean => {
   if (isString(value)) {
     return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
   }

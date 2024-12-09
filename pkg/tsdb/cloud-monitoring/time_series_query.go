@@ -75,10 +75,13 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 				return err
 			}
 		}
+		// Ensure the time field is named correctly
+		timeField := frame.Fields[0]
+		timeField.Name = data.TimeSeriesTimeFieldName
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.parameters.GraphPeriod)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.parameters.GraphPeriod, logger)
 	}
 
 	queryRes.Frames = frames
@@ -106,6 +109,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 			"Failed to generate deep link: unable to parse metrics explorer URL",
 			"ProjectName", timeSeriesQuery.parameters.Query,
 			"error", err,
+			"statusSource", backend.ErrorSourcePlugin,
 		)
 	}
 

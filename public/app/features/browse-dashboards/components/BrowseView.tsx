@@ -1,7 +1,7 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { CallToActionCard } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
@@ -117,16 +117,32 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     return (
       <div style={{ width }}>
         {canSelect ? (
-          <EmptyListCTA
-            title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
-            buttonIcon="plus"
-            buttonTitle="Create Dashboard"
-            buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-            proTip={folderUID && 'Add/move dashboards to your folder at ->'}
-            proTipLink={folderUID && 'dashboards'}
-            proTipLinkTitle={folderUID && 'Browse dashboards'}
-            proTipTarget=""
-          />
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <LinkButton
+                href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+                icon="plus"
+                size="lg"
+              >
+                <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
+              </LinkButton>
+            }
+            message={
+              folderUID
+                ? t('browse-dashboards.empty-state.title-folder', "This folder doesn't have any dashboards yet")
+                : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
+            }
+          >
+            {folderUID && (
+              <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
+                Add/move dashboards to your folder at{' '}
+                <TextLink external={false} href="/dashboards">
+                  Browse dashboards
+                </TextLink>
+              </Trans>
+            )}
+          </EmptyState>
         ) : (
           <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
         )}

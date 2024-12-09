@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { CombinedRuleWithLocation } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';

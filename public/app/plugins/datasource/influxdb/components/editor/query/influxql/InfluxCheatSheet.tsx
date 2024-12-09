@@ -1,4 +1,7 @@
-import React from 'react';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 const CHEAT_SHEET_ITEMS = [
   {
@@ -8,14 +11,27 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-export const InfluxCheatSheet = () => (
-  <div>
-    <h2>InfluxDB Cheat Sheet</h2>
-    {CHEAT_SHEET_ITEMS.map((item) => (
-      <div className="cheat-sheet-item" key={item.title}>
-        <div className="cheat-sheet-item__title">{item.title}</div>
-        <div className="cheat-sheet-item__label">{item.label}</div>
-      </div>
-    ))}
-  </div>
-);
+export const InfluxCheatSheet = () => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div>
+      <h2>InfluxDB Cheat Sheet</h2>
+      {CHEAT_SHEET_ITEMS.map((item) => (
+        <div className={styles.cheatSheetItem} key={item.title}>
+          <div className={styles.cheatSheetItemTitle}>{item.title}</div>
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  cheatSheetItem: css({
+    margin: theme.spacing(3, 0),
+  }),
+  cheatSheetItemTitle: css({
+    fontSize: theme.typography.h3.fontSize,
+  }),
+});

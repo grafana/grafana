@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
@@ -28,9 +29,12 @@ function NotificationPreviewByAlertManager({
   );
 
   if (error) {
+    const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
+      alertmanager: alertManagerSource.name,
+    });
     return (
-      <Alert title="Cannot load Alertmanager configuration" severity="error">
-        {error.message}
+      <Alert title={title} severity="error">
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
@@ -47,8 +51,7 @@ function NotificationPreviewByAlertManager({
         <Stack direction="row" alignItems="center">
           <div className={styles.firstAlertManagerLine}></div>
           <div className={styles.alertManagerName}>
-            {' '}
-            Alertmanager:
+            <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
             <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
@@ -87,30 +90,30 @@ function NotificationPreviewByAlertManager({
 export default withErrorBoundary(NotificationPreviewByAlertManager);
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alertManagerRow: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    width: 100%;
-  `,
-  firstAlertManagerLine: css`
-    height: 1px;
-    width: ${theme.spacing(4)};
-    background-color: ${theme.colors.secondary.main};
-  `,
-  alertManagerName: css`
-    width: fit-content;
-  `,
-  secondAlertManagerLine: css`
-    height: 1px;
-    width: 100%;
-    flex: 1;
-    background-color: ${theme.colors.secondary.main};
-  `,
-  img: css`
-    margin-left: ${theme.spacing(2)};
-    width: ${theme.spacing(3)};
-    height: ${theme.spacing(3)};
-    margin-right: ${theme.spacing(1)};
-  `,
+  alertManagerRow: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    width: '100%',
+  }),
+  firstAlertManagerLine: css({
+    height: '1px',
+    width: theme.spacing(4),
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  alertManagerName: css({
+    width: 'fit-content',
+  }),
+  secondAlertManagerLine: css({
+    height: '1px',
+    width: '100%',
+    flex: 1,
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  img: css({
+    marginLeft: theme.spacing(2),
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    marginRight: theme.spacing(1),
+  }),
 });

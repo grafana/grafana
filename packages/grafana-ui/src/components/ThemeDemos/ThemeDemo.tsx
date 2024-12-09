@@ -1,5 +1,7 @@
+/* eslint-disable @grafana/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 

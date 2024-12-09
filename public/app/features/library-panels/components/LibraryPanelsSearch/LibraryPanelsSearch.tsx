@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
@@ -141,7 +141,7 @@ interface SearchControlsProps {
   variant?: LibraryPanelsSearchVariant;
 }
 
-const SearchControls = React.memo(
+const SearchControls = memo(
   ({
     variant = LibraryPanelsSearchVariant.Spacious,
     showSort,

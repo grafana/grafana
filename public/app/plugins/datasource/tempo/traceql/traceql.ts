@@ -28,7 +28,7 @@ export const keywordOperators = ['=', '!='];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = [
+export const intrinsicsV1 = [
   'duration',
   'kind',
   'name',
@@ -38,9 +38,35 @@ export const intrinsics = [
   'statusMessage',
   'traceDuration',
 ];
-export const scopes: string[] = ['resource', 'span'];
+export const intrinsics = intrinsicsV1.concat([
+  'event:name',
+  'event:timeSinceStart',
+  'instrumentation:name',
+  'instrumentation:version',
+  'link:spanID',
+  'link:traceID',
+  'span:duration',
+  'span:id',
+  'span:kind',
+  'span:name',
+  'span:status',
+  'span:statusMessage',
+  'trace:duration',
+  'trace:id',
+  'trace:rootName',
+  'trace:rootService',
+]);
+export const scopes: string[] = ['event', 'instrumentation', 'link', 'resource', 'span'];
 
-export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
+const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
+const functions = aggregatorFunctions.concat([
+  'by',
+  'count_over_time',
+  'histogram_over_time',
+  'quantile_over_time',
+  'rate',
+  'select',
+]);
 
 const keywords = intrinsics.concat(scopes);
 
@@ -172,13 +198,14 @@ export const traceqlGrammar: Grammar = {
     pattern: /\{[^}]*}/,
     inside: {
       filter: {
-        pattern: /([\w.\/-]+)?(\s*)(([!=+\-<>~]+)\s*("([^"\n&]+)?"?|([^"\n\s&|}]+))?)/g,
+        pattern:
+          /([\w:.\/-]+)\s*(=|!=|<=|>=|=~|!~|>|<)\s*("[^"]*"|[\w.\/-]+)(\s*(\&\&|\|\|)\s*([\w:.\/-]+)\s*(=|!=|<=|>=|=~|!~|>|<)\s*("[^"]*"|[\w.\/-]+))*/g,
         inside: {
           comment: {
             pattern: /#.*/,
           },
           'label-key': {
-            pattern: /[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/,
+            pattern: /[a-z_.][\w./_-]*(:[\w./_-]+)?(?=\s*(=|!=|>|<|>=|<=|=~|!~))/,
             alias: 'attr-name',
           },
           'label-value': {

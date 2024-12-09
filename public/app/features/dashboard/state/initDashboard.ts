@@ -6,6 +6,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -18,7 +19,15 @@ import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DASHBOARD_FROM_LS_KEY,
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -29,6 +38,8 @@ import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
+
+const INIT_DASHBOARD_MEASUREMENT = 'initDashboard';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -47,18 +58,11 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
-  // When creating new or adding panels to a dashboard from explore we load it from local storage
-  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-  if (model) {
-    removeDashboardToFetchFromLocalStorage();
-    return model;
-  }
-
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
         const stateManager = getDashboardScenePageStateManager();
-        const cachedDashboard = stateManager.getFromCache(HOME_DASHBOARD_CACHE_KEY);
+        const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
           return cachedDashboard;
@@ -122,10 +126,6 @@ async function fetchDashboard(
         }
         return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
-      case DashboardRoutes.Path: {
-        const path = args.urlSlug ?? '';
-        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
-      }
       default:
         throw { message: 'Unknown route ' + args.routeName };
     }
@@ -174,20 +174,21 @@ const getQueriesByDatasource = (
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const initStart = performance.now();
+    startMeasure(INIT_DASHBOARD_MEASUREMENT);
 
     // set fetching state
     dispatch(dashboardInitFetching());
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
-
     const versionBeforeMigration = dashDTO?.dashboard?.version;
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
     }
+
+    addPanelsFromLocalStorage(dashDTO);
 
     // set initializing state
     dispatch(dashboardInitServices());
@@ -287,20 +288,26 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
-    const duration = performance.now() - initStart;
-    trackDashboardLoaded(dashboard, duration, versionBeforeMigration);
+    const measure = stopMeasure(INIT_DASHBOARD_MEASUREMENT);
+    trackDashboardLoaded(dashboard, measure?.duration, versionBeforeMigration);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
 
-export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+function addPanelsFromLocalStorage(model: DashboardDTO) {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const fromLS = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (fromLS) {
+    if (fromLS.dashboard.panels) {
+      model.dashboard.panels = fromLS.dashboard.panels.concat(model.dashboard.panels);
+    }
 
-export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
-  store.setObject(DASHBOARD_FROM_LS_KEY, model);
-}
+    if (fromLS.dashboard.time) {
+      model.dashboard.time = fromLS.dashboard.time;
+    }
 
-export function removeDashboardToFetchFromLocalStorage() {
-  store.delete(DASHBOARD_FROM_LS_KEY);
+    store.delete(DASHBOARD_FROM_LS_KEY);
+  }
 }

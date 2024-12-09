@@ -1,8 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, TraceLog } from '@grafana/data';
 
-import { TraceLog } from './components/types/trace';
 import { useDetailState } from './useDetailState';
 
 const sampleFrame: DataFrame = {

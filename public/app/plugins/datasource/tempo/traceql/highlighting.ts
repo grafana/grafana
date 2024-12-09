@@ -5,11 +5,14 @@ import {
   And,
   AttributeField,
   ComparisonOp,
+  Event,
   FieldExpression,
   FieldOp,
   GroupOperation,
   Identifier,
+  Instrumentation,
   IntrinsicField,
+  Link,
   Or,
   Parent,
   parser,
@@ -52,17 +55,18 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
         case SpansetPipelineExpression:
           return 'Invalid spanset combining operator after spanset expression.';
         case Pipe:
-          return 'Invalid aggregation operator after pipepile operator.';
+          return 'Invalid aggregation operator after pipeline operator.';
         default:
           return 'Invalid spanset expression after spanset combining operator.';
       }
     case IntrinsicField:
     case Aggregate:
+      if (errorNode.parent?.parent?.parent?.type.id === GroupOperation) {
+        return 'Invalid expression for by operator.';
+      } else if (errorNode.parent?.parent?.parent?.parent?.type.id === SelectOperation) {
+        return 'Invalid expression for select operator.';
+      }
       return 'Invalid expression for aggregator operator.';
-    case GroupOperation:
-      return 'Invalid expression for by operator.';
-    case SelectOperation:
-      return 'Invalid expression for select operator.';
     case AttributeField:
       return 'Invalid expression for spanset.';
     case ScalarFilter:
@@ -115,7 +119,7 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
 };
 
 /**
- * Use red markers (squiggles) to highlight syntax errors in queries.
+ * Use markers (squiggles) to highlight syntax errors or warnings in queries.
  *
  */
 export const setMarkers = (
@@ -156,6 +160,9 @@ export const getWarningMarkers = (severity: number, model: monacoTypes.editor.IT
         // Make sure prevSibling is using the proper scope
         if (
           node.prevSibling?.type.id !== Parent &&
+          node.prevSibling?.type.id !== Event &&
+          node.prevSibling?.type.id !== Instrumentation &&
+          node.prevSibling?.type.id !== Link &&
           node.prevSibling?.type.id !== Resource &&
           node.prevSibling?.type.id !== Span
         ) {

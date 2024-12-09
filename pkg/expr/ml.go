@@ -124,7 +124,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		data = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{}}
 	}
 
-	dataFrames, err := getResponseFrame(data, m.refID)
+	dataFrames, err := getResponseFrame(logger, data, m.refID)
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(m.refID, "ml", err)
 	}

@@ -1,15 +1,13 @@
-import { render } from '@testing-library/react';
-import React from 'react';
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 
-import { TestProvider } from './TestProvider';
-
 export const ui = {
+  loadingIndicator: byText('Loading rule...'),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     alertType: byTestId('alert-type-picker'),
@@ -38,15 +36,20 @@ export const ui = {
 };
 
 export function renderRuleEditor(identifier?: string, recording = false) {
-  if (identifier) {
-    locationService.push(`/alerting/${identifier}/edit`);
-  } else {
-    locationService.push(`/alerting/new/${recording ? 'recording' : 'alerting'}`);
-  }
-
   return render(
-    <TestProvider>
-      <Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />
-    </TestProvider>
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
+        <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
+      </Routes>
+    </>,
+    {
+      historyOptions: {
+        initialEntries: [
+          identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ? 'recording' : 'alerting'}`,
+        ],
+      },
+    }
   );
 }

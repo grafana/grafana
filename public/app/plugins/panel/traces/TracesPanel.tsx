@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, createRef } from 'react';
+import { useMemo, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { Field, LinkModel, PanelProps } from '@grafana/data';
@@ -9,10 +9,10 @@ import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
 const styles = {
-  wrapper: css`
-    height: 100%;
-    overflow: scroll;
-  `,
+  wrapper: css({
+    height: '100%',
+    overflow: 'scroll',
+  }),
 };
 
 export interface TracesPanelOptions {

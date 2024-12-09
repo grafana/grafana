@@ -10,8 +10,6 @@ import {
   unquoteRouteMatchers,
 } from './notification-policies';
 
-import 'core-js/stable/structured-clone';
-
 const CATCH_ALL_ROUTE: Route = {
   receiver: 'ALL',
   object_matchers: [],
@@ -475,6 +473,22 @@ describe('matchLabels', () => {
 
     expect(result).toHaveProperty('matches', false);
     expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('does not match unanchored regular expressions', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, 'bar']], [['foo', 'barbarbar']]);
+    // This may seem unintuitive, but this is how Alertmanager matches, as it anchors the regex
+    expect(result.matches).toEqual(false);
+  });
+
+  it('matches regular expressions with wildcards', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
+
+  it('does match regular expressions with flags', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '(?i).*BAr.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
   });
 });
 

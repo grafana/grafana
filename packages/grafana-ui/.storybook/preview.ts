@@ -1,5 +1,6 @@
 import { Preview } from '@storybook/react';
 import 'jquery';
+import { getTimeZone, getTimeZones } from '@grafana/data';
 
 import '../../../public/vendor/flot/jquery.flot.js';
 import '../../../public/vendor/flot/jquery.flot.selection';
@@ -12,13 +13,14 @@ import '../../../public/vendor/flot/jquery.flot.dashes';
 import '../../../public/vendor/flot/jquery.flot.gauge';
 
 import { withTheme } from '../src/utils/storybook/withTheme';
+import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 // @ts-ignore
-import lightTheme from './grafana.light.scss';
+import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
-import darkTheme from './grafana.dark.scss';
-import { GrafanaLight, GrafanaDark } from './storybookTheme';
+import darkTheme from '../../../public/sass/grafana.dark.scss';
+import { GrafanaDark, GrafanaLight } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -31,7 +33,7 @@ const handleThemeChange = (theme: any) => {
 };
 
 const preview: Preview = {
-  decorators: [withTheme(handleThemeChange)],
+  decorators: [withTheme(handleThemeChange), withTimeZone()],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     darkMode: {
@@ -44,7 +46,6 @@ const preview: Preview = {
     knobs: {
       disable: true,
     },
-    layout: 'fullscreen',
     options: {
       // Sort stories first by Docs Overview, then alphabetically
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
@@ -66,6 +67,22 @@ const preview: Preview = {
       },
     },
   },
+  globalTypes: {
+    timeZone: {
+      description: 'Set the timezone for the storybook preview',
+      defaultValue: getTimeZone(),
+      toolbar: {
+        icon: 'globe',
+        items: getTimeZones(true)
+          .filter((timezone) => !!timezone)
+          .map((timezone) => ({
+            title: timezone,
+            value: timezone,
+          })),
+      },
+    },
+  },
+  tags: ['autodocs'],
 };
 
 export default preview;

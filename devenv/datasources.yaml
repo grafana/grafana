@@ -311,3 +311,21 @@ datasources:
           spanEndTimeShift: '-5m'
           customQuery: true
           query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
+      tracesToProfiles:
+        datasourceUid: gdev-pyroscope
+        profileTypeId: "process_cpu:cpu:nanoseconds:cpu:nanoseconds"
+
+  - name: gdev-pyroscope
+    type: grafana-pyroscope-datasource
+    uid: gdev-pyroscope
+    access: proxy
+    url: http://localhost:4040
+    editable: false
+
+
+  - name: gdev-e2etestdatasource
+    type: grafana-e2etest-datasource
+    uid: gdev-e2etest-datasource
+    access: proxy
+    url: http://localhost:4040
+    editable: false

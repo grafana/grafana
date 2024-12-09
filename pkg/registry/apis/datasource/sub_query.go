@@ -7,11 +7,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -53,7 +53,6 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if err != nil {
 		return nil, err
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
@@ -62,7 +61,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		queries, dsRef, err := legacydata.ToDataSourceQueries(dqr)
+		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -74,9 +73,11 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
+
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
+			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
 		if err != nil {
 			responder.Error(err)

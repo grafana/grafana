@@ -1,5 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import {
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  PercentChangeColorMode,
+} from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
@@ -94,6 +100,20 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
         defaultValue: defaultOptions.showPercentChange,
         category: mainCategory,
         showIf: (config) => !config.reduceOptions.values,
+      })
+      .addSelect({
+        path: 'percentChangeColorMode',
+        name: 'Percent change color mode',
+        defaultValue: defaultOptions.percentChangeColorMode,
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: PercentChangeColorMode.Standard, label: 'Standard' },
+            { value: PercentChangeColorMode.Inverted, label: 'Inverted' },
+            { value: PercentChangeColorMode.SameAsValue, label: 'Same as Value' },
+          ],
+        },
+        showIf: (config) => config.showPercentChange,
       });
   })
   .setNoPadding()

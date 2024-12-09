@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { TextBoxVariableModel } from '@grafana/data';
+
 import { getInstanceState } from '../state/selectors';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
-import { initialVariableModelState, TextBoxVariableModel } from '../types';
+import { initialVariableModelState } from '../types';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   ...initialVariableModelState,

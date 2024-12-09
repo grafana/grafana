@@ -33,6 +33,7 @@ export enum TestDataQueryType {
   Trace = 'trace',
   USA = 'usa',
   VariablesQuery = 'variables-query',
+  ErrorWithSource = 'error_with_source',
 }
 
 export interface StreamingQuery {
@@ -125,6 +126,7 @@ export interface TestDataDataQuery extends common.DataQuery {
   stream?: StreamingQuery;
   stringInput?: string;
   usa?: USAQuery;
+  errorSource?: 'plugin' | 'downstream';
 }
 
 export const defaultTestDataDataQuery: Partial<TestDataDataQuery> = {

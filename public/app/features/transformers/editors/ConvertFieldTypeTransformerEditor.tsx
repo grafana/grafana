@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -172,22 +172,21 @@ export const ConvertFieldTypeTransformerEditor = ({
                       <Input value={c.joinWith} placeholder={'JSON'} onChange={onJoinWithChange(idx)} width={9} />
                     </InlineField>
                   )}
-                  {c.dateFormat ||
-                    (targetField?.type === FieldType.time && (
-                      <>
-                        <InlineField label="Date format" tooltip="Specify the output format.">
-                          <Input
-                            value={c.dateFormat}
-                            placeholder={'e.g. YYYY-MM-DD'}
-                            onChange={onInputFormat(idx)}
-                            width={24}
-                          />
-                        </InlineField>
-                        <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
-                          <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
-                        </InlineField>
-                      </>
-                    ))}
+                  {targetField?.type === FieldType.time && (
+                    <>
+                      <InlineField label="Date format" tooltip="Specify the output format.">
+                        <Input
+                          value={c.dateFormat}
+                          placeholder={'e.g. YYYY-MM-DD'}
+                          onChange={onInputFormat(idx)}
+                          width={24}
+                        />
+                      </InlineField>
+                      <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
+                        <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
+                      </InlineField>
+                    </>
+                  )}
                 </>
               )}
               <Button

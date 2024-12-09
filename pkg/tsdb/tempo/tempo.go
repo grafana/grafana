@@ -66,7 +66,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		streamingClient, err := newGrpcClient(settings, opts)
+		streamingClient, err := newGrpcClient(ctx, settings, opts)
 		if err != nil {
 			ctxLogger.Error("Failed to get gRPC client", "error", err, "function", logEntrypoint())
 			return nil, err
@@ -109,8 +109,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
+	switch query.QueryType {
+	case string(dataquery.TempoQueryTypeTraceId):
 		return s.getTrace(ctx, pCtx, query)
+	case string(dataquery.TempoQueryTypeTraceql):
+		return s.runTraceQlQuery(ctx, pCtx, query)
 	}
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
 }

@@ -1,4 +1,5 @@
-import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
+import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import * as React from 'react';
 import { FieldValues } from 'react-hook-form';
 
 export type WizardContextProps<T> = {

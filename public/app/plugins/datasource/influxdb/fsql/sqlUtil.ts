@@ -26,7 +26,10 @@ export function toRawSql({ sql, table }: SQLQuery): string {
   }
 
   // wrapping the column name with quotes
-  const sc = sql.columns.map((c) => ({ ...c, parameters: c.parameters?.map((p) => ({ ...p, name: `"${p.name}"` })) }));
+  const sc = sql.columns.map((c) => ({
+    ...c,
+    parameters: c.parameters?.map((p) => ({ ...p, name: formatTableName(p.name) })),
+  }));
   rawQuery += createSelectClause(sc);
 
   if (table) {
@@ -64,6 +67,16 @@ export function toRawSql({ sql, table }: SQLQuery): string {
   }
 
   return rawQuery;
+}
+
+// When the column name is *, do not wrap the column name in double-quotes.
+// See: https://github.com/grafana/grafana/issues/88008
+function formatTableName(parameter: string | undefined): string {
+  if (parameter === '*') {
+    return parameter;
+  }
+
+  return `"${parameter}"`;
 }
 
 const isLimit = (limit: number | undefined): boolean => limit !== undefined && limit >= 0;

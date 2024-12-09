@@ -1,6 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
 
-import { Input } from '@grafana/ui/src/components/Input/Input';
+import { Input } from '@grafana/ui';
 
 type NumberInputProps = {
   value: number;
@@ -10,7 +10,7 @@ type NumberInputProps = {
 };
 
 export function NumberInput({ value, defaultValue, onChange, width }: NumberInputProps) {
-  const [isEmpty, setIsEmpty] = React.useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
   return (
     <Input
       type="number"

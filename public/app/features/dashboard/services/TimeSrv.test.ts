@@ -231,6 +231,24 @@ describe('timeSrv', () => {
         expect(time.raw.from).toBe('now');
         expect(time.raw.to).toBe('now-1h');
       });
+
+      it('should correctly handle timezones', () => {
+        locationService.push('/d/id?from=1718797457286&to=1718819057286');
+        _dashboard = {
+          time: { from: '1718797457286', to: '1718819057286' },
+          getTimezone: jest.fn(() => 'Africa/Cairo'),
+          refresh: '',
+          timeRangeUpdated: jest.fn(() => {}),
+          timepicker: {},
+        };
+
+        timeSrv = new TimeSrv(new ContextSrvStub());
+        timeSrv.init(_dashboard);
+
+        const time = timeSrv.timeRange();
+        expect(time.from.toString()).toBe('Wed Jun 19 2024 14:44:17 GMT+0300');
+        expect(time.to.toString()).toBe('Wed Jun 19 2024 20:44:17 GMT+0300');
+      });
     });
   });
 

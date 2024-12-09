@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -153,10 +153,12 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 			FolderUID:      folder.ParentUID,
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserID:         p.UserId,
+			UserID:         p.UserID,
+			UserUID:        p.UserUID,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamID:         p.TeamId,
+			TeamID:         p.TeamID,
+			TeamUID:        p.TeamUID,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
@@ -113,12 +113,16 @@ RadioButtonGroup.displayName = 'RadioButtonGroup';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     radioGroup: css({
+      backgroundColor: theme.colors.background.primary,
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
       padding: '2px',
+      '&:hover': {
+        borderColor: theme.components.input.borderHover,
+      },
     }),
     fullWidth: css({
       display: 'flex',

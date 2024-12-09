@@ -486,4 +486,52 @@ describe('fieldToTimeField', () => {
       ],
     });
   });
+
+  it('should properly parse Unix timestamps - in seconds', () => {
+    const numberTimeField: Field = {
+      config: {},
+      name: 'Unix second timestamps',
+      type: FieldType.number,
+      values: [1728397800, 1728397815, 1728397830],
+    };
+
+    expect(fieldToTimeField(numberTimeField, 'X')).toEqual({
+      config: {},
+      name: 'Unix second timestamps',
+      type: FieldType.time,
+      values: [1728397800000, 1728397815000, 1728397830000],
+    });
+  });
+
+  it('should properly parse Unix timestamps - in millseconds (with format)', () => {
+    const numberTimeField: Field = {
+      config: {},
+      name: 'Unix MS timestamps',
+      type: FieldType.number,
+      values: [1728397800000, 1728397815000, 1728397830000],
+    };
+
+    expect(fieldToTimeField(numberTimeField, 'x')).toEqual({
+      config: {},
+      name: 'Unix MS timestamps',
+      type: FieldType.time,
+      values: [1728397800000, 1728397815000, 1728397830000],
+    });
+  });
+
+  it('should properly parse Unix timestamps - in millseconds (without format)', () => {
+    const numberTimeField: Field = {
+      config: {},
+      name: 'Unix MS timestamps',
+      type: FieldType.number,
+      values: [1728397800000, 1728397815000, 1728397830000],
+    };
+
+    expect(fieldToTimeField(numberTimeField)).toEqual({
+      config: {},
+      name: 'Unix MS timestamps',
+      type: FieldType.time,
+      values: [1728397800000, 1728397815000, 1728397830000],
+    });
+  });
 });

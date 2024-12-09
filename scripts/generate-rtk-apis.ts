@@ -12,16 +12,29 @@ const config: ConfigFile = {
       apiFile: '../public/app/features/migrate-to-cloud/api/baseAPI.ts',
       apiImport: 'baseAPI',
       filterEndpoints: [
+        'getSessionList',
+        'getSession',
+        'deleteSession',
+        'createSession',
+
+        'getShapshotList',
+        'getSnapshot',
+        'uploadSnapshot',
+        'createSnapshot',
+        'cancelSnapshot',
+
         'createCloudMigrationToken',
-        'getMigrationList',
-        'getCloudMigration',
-        'createMigration',
-        'runCloudMigration',
-        'getCloudMigrationRun',
-        'getCloudMigrationRunList',
-        'deleteCloudMigration',
+        'deleteCloudMigrationToken',
+        'getCloudMigrationToken',
+
         'getDashboardByUid',
+        'getLibraryElementByUid',
       ],
+    },
+    '../public/app/features/preferences/api/user/endpoints.gen.ts': {
+      apiFile: '../public/app/features/preferences/api/user/baseAPI.ts',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
   },
 };

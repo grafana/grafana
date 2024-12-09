@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,11 +11,11 @@ export const Well = ({ children, className }: Props) => {
   return <div className={cx(styles.wrapper, className)}>{children}</div>;
 };
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    background-color: ${theme.components.panel.background};
-    border: solid 1px ${theme.components.input.borderColor};
-    border-radius: ${theme.shape.radius.default};
-    padding: ${theme.spacing(0.5, 1)};
-    font-family: ${theme.typography.fontFamilyMonospace};
-  `,
+  wrapper: css({
+    backgroundColor: theme.components.panel.background,
+    border: `solid 1px ${theme.components.input.borderColor}`,
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(0.5, 1),
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
 });

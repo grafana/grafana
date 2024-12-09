@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -77,4 +79,61 @@ func TestValidateInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidatePluginRepoConfig(t *testing.T) {
+	t.Run("Should use provided repo parameter for installation", func(t *testing.T) {
+		c, err := commandstest.NewCliContext(map[string]string{
+			"repo": "https://example.com",
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, "https://example.com", c.PluginRepoURL())
+	})
+
+	t.Run("Should use provided repo parameter even if config is set", func(t *testing.T) {
+		c, err := commandstest.NewCliContext(map[string]string{
+			"repo":   "https://example.com",
+			"config": "/tmp/config.ini",
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, "https://example.com", c.PluginRepoURL())
+	})
+
+	t.Run("Should use config parameter if it is set", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping integration test")
+		}
+		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			GrafanaComAPIURL: "https://grafana-dev.com",
+		})
+
+		c, err := commandstest.NewCliContext(map[string]string{
+			"config":   cfgPath,
+			"homepath": grafDir,
+		})
+		require.NoError(t, err)
+		repoURL := c.PluginRepoURL()
+		require.Equal(t, "https://grafana-dev.com/plugins", repoURL)
+	})
+
+	t.Run("Should use config overrides parameter if it is set alongside config parameter", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping integration test")
+		}
+
+		// GrafanaComApiUrl is set to the default path https://grafana.com/api
+		grafDir, cfgPath := testinfra.CreateGrafDir(t)
+
+		// overriding the GrafanaComApiUrl to https://grafana-dev.com
+		c, err := commandstest.NewCliContext(map[string]string{
+			"config":          cfgPath,
+			"homepath":        grafDir,
+			"configOverrides": "cfg:grafana_com.api_url=https://grafana-dev.com",
+		})
+		require.NoError(t, err)
+		repoURL := c.PluginRepoURL()
+		require.Equal(t, "https://grafana-dev.com/plugins", repoURL)
+	})
 }

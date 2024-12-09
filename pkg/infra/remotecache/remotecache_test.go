@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -20,7 +21,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore db.DB) CacheStorage {
 	t.Helper()
 
 	cfg := &setting.Cfg{
@@ -33,56 +34,24 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore d
 }
 
 func TestCachedBasedOnConfig(t *testing.T) {
-	cfg := setting.NewCfg()
+	db, cfg := sqlstore.InitTestDB(t)
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
+	client := createTestClient(t, cfg.RemoteCacheOptions, db)
 	runTestsForClient(t, client)
-	runCountTestsForClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, nil)
+	_, err := createClient(&setting.RemoteCacheSettings{Name: "invalid"}, nil, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
 func runTestsForClient(t *testing.T, client CacheStorage) {
 	canPutGetAndDeleteCachedObjects(t, client)
 	canNotFetchExpiredItems(t, client)
-}
-
-func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) {
-	client := createTestClient(t, opts, sqlstore)
-	expectError := false
-	if opts.Name == memcachedCacheType {
-		expectError = true
-	}
-
-	t.Run("can count items", func(t *testing.T) {
-		cacheableValue := []byte("hej hej")
-
-		err := client.Set(context.Background(), "pref-key1", cacheableValue, 0)
-		require.NoError(t, err)
-
-		err = client.Set(context.Background(), "pref-key2", cacheableValue, 0)
-		require.NoError(t, err)
-
-		err = client.Set(context.Background(), "key3-not-pref", cacheableValue, 0)
-		require.NoError(t, err)
-
-		n, errC := client.Count(context.Background(), "pref-")
-		if expectError {
-			require.ErrorIs(t, ErrNotImplemented, errC)
-			assert.Equal(t, int64(0), n)
-			return
-		}
-
-		require.NoError(t, errC)
-		assert.Equal(t, int64(2), n)
-	})
 }
 
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
@@ -125,7 +94,7 @@ func TestCollectUsageStats(t *testing.T) {
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
+	cfg.RemoteCacheOptions = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
 
 	remoteCache := &RemoteCache{
 		Cfg: cfg,

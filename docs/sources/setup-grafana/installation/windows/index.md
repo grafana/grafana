@@ -13,6 +13,10 @@ weight: 700
 
 # Install Grafana on Windows
 
+The following video demonstrates how to install Grafana using the Windows standalone installer as outlined in this document:
+
+{{< youtube id="js2bZijbhJM" >}}
+
 You install Grafana using the Windows installer or using the standalone Windows binary file.
 
 1. Navigate to the [Grafana download page](/grafana/download).

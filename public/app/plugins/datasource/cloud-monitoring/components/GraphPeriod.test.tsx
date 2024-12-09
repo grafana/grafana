@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { select } from 'react-select-event';
 
 import { GraphPeriod, Props } from './GraphPeriod';

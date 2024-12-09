@@ -10,10 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -25,8 +26,7 @@ type middlewareTestCase struct {
 }
 
 func TestMiddleware(t *testing.T) {
-	cfg := setting.NewCfg()
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	tests := []middlewareTestCase{
 		{
@@ -82,8 +82,7 @@ func TestMiddleware_forceLogin(t *testing.T) {
 		{url: "/endpoint"},
 	}
 
-	cfg := setting.NewCfg()
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	for _, tc := range tests {
 		t.Run(tc.url, func(t *testing.T) {

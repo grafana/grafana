@@ -1,35 +1,43 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values 1`] = `
+exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values for grafana alerting rule 1`] = `
 {
-  "annotations": {
-    "description": "",
-    "runbook_url": "",
-    "summary": "",
-  },
+  "annotations": {},
   "for": "1m",
   "grafana_alert": {
     "condition": "A",
     "data": [],
     "exec_err_state": "Error",
     "is_paused": false,
+    "metadata": undefined,
     "no_data_state": "NoData",
     "notification_settings": undefined,
     "title": "",
   },
-  "labels": {
-    "": "",
+  "labels": {},
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values for grafana recording rule 1`] = `
+{
+  "annotations": {},
+  "grafana_alert": {
+    "condition": "A",
+    "data": [],
+    "is_paused": false,
+    "record": {
+      "from": "A",
+      "metric": "",
+    },
+    "title": "",
   },
+  "labels": {},
 }
 `;
 
 exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range type queries 1`] = `
 {
-  "annotations": {
-    "description": "",
-    "runbook_url": "",
-    "summary": "",
-  },
+  "annotations": {},
   "for": "1m",
   "grafana_alert": {
     "condition": "A",
@@ -52,30 +60,23 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
     ],
     "exec_err_state": "Error",
     "is_paused": false,
+    "metadata": undefined,
     "no_data_state": "NoData",
     "notification_settings": undefined,
     "title": "",
   },
-  "labels": {
-    "": "",
-  },
+  "labels": {},
 }
 `;
 
 exports[`formValuesToRulerGrafanaRuleDTO should not set keep_firing_for if values are undefined 1`] = `
 {
   "alert": "",
-  "annotations": {
-    "description": "",
-    "runbook_url": "",
-    "summary": "",
-  },
+  "annotations": {},
   "expr": "",
   "for": "1m",
   "keep_firing_for": undefined,
-  "labels": {
-    "": "",
-  },
+  "labels": {},
 }
 `;
 
@@ -100,17 +101,11 @@ exports[`formValuesToRulerGrafanaRuleDTO should parse keep_firing_for 1`] = `
 exports[`formValuesToRulerGrafanaRuleDTO should set keep_firing_for if values are populated 1`] = `
 {
   "alert": "",
-  "annotations": {
-    "description": "",
-    "runbook_url": "",
-    "summary": "",
-  },
+  "annotations": {},
   "expr": "",
   "for": "1m",
   "keep_firing_for": "1m",
-  "labels": {
-    "": "",
-  },
+  "labels": {},
 }
 `;
 

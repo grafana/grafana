@@ -1,4 +1,4 @@
-import { DataFrame, FieldType } from '../../../types';
+import { DataFrame, FieldType } from '../../../types/dataFrame';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 

@@ -1,3 +1,4 @@
+import ansicolor from 'ansicolor';
 import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
@@ -41,8 +42,9 @@ import {
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { ansicolor, colors } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
@@ -52,8 +54,8 @@ export const COMMON_LABELS = 'Common labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
-  [LogLevel.warning]: colors[1],
   [LogLevel.error]: colors[4],
+  [LogLevel.warning]: colors[1],
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
@@ -201,8 +203,6 @@ function isLogsData(series: DataFrame) {
   return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
-export const infiniteScrollRefId = 'infinite-scroll-';
-
 /**
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
@@ -215,31 +215,15 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
-  queries?: DataQuery[]
+  queries?: DataQuery[],
+  deduplicateResults?: boolean
 ): LogsModel {
-  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
-  let infiniteScrollingResults = false;
-  queries = queries?.map((query) => {
-    if (query.refId.includes(infiniteScrollRefId)) {
-      infiniteScrollingResults = true;
-      return {
-        ...query,
-        refId: query.refId.replace(infiniteScrollRefId, ''),
-      };
-    }
-    return query;
-  });
-  if (infiniteScrollingResults) {
-    dataFrame = dataFrame.map((frame) => ({
-      ...frame,
-      refId: frame.refId?.replace(infiniteScrollRefId, ''),
-    }));
-  }
-
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries, infiniteScrollingResults);
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  const logsModel = logSeriesToLogsModel(logSeries, queries, Boolean(deduplicateResults));
 
   if (logsModel) {
+    logsModel.queries = queries;
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
@@ -258,7 +242,6 @@ export function dataFrameToLogsModel(
     } else {
       logsModel.series = [];
     }
-    logsModel.queries = queries;
     return logsModel;
   }
 
@@ -443,8 +426,8 @@ export function logSeriesToLogsModel(
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
-      if (logLevelKey) {
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.level ?? labels?.detected_level);
+      if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);
@@ -574,11 +557,19 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
     let metaLimitValue;
 
     if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
-      const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
+      metaLimitValue = `${limit} reached`;
 
-      metaLimitValue = `${limit} reached, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
-        visibleRangeMs
-      )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+      // Scan is a special Loki query direction which potentially returns fewer logs than expected.
+      const canShowCoverage = !logsModel.queries?.some(
+        (query) => 'direction' in query && query.direction === LokiQueryDirection.Scan
+      );
+
+      if (canShowCoverage) {
+        const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
+        metaLimitValue += `, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
+          visibleRangeMs
+        )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+      }
     } else {
       const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
       metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
@@ -652,7 +643,7 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
 }
 
 function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const level = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  const level = labels['level'] ?? labels['detected_level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
   return level ? getLogLevelFromKey(level) : LogLevel.unknown;
 }
 
@@ -701,7 +692,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           observer.next({
             state: LoadingState.Error,
             error,
-            data: [],
+            data: dataQueryResponse.data,
           });
           observer.error(error);
         } else {

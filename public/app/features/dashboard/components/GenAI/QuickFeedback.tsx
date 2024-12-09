@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -7,7 +6,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { QuickFeedbackType } from './utils';
 
 interface QuickActionsProps {
-  onSuggestionClick: (suggestion: QuickFeedbackType) => void;
+  onSuggestionClick: (suggestion: string) => void;
   isGenerating: boolean;
 }
 
@@ -41,7 +40,7 @@ export const QuickFeedback = ({ onSuggestionClick, isGenerating }: QuickActionsP
         variant="secondary"
         disabled={isGenerating}
       >
-        {QuickFeedbackType.Regenerate}
+        {'Regenerate'}
       </Button>
     </div>
   );

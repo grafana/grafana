@@ -2,14 +2,12 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/go-openapi/runtime"
-	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -91,14 +89,12 @@ func TestIntegrationCreateFolder(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.Code())
 
-		t.Run("create folder with same name under root should fail", func(t *testing.T) {
+		t.Run("create folder with same name under root should succeed", func(t *testing.T) {
 			_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: "folder",
 			})
-			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict
-			assert.True(t, errors.As(err, &conflict))
-			assert.Equal(t, http.StatusConflict, conflict.Code())
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, resp.Code())
 		})
 	})
 }
@@ -132,14 +128,12 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.Code())
 
-		t.Run("create folder with same name under root should fail", func(t *testing.T) {
+		t.Run("create folder with same name under root should succeed", func(t *testing.T) {
 			_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: "folder",
 			})
-			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict
-			assert.True(t, errors.As(err, &conflict))
-			assert.Equal(t, http.StatusConflict, conflict.Code())
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, resp.Code())
 		})
 	})
 
@@ -158,15 +152,13 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.Code())
 
-		t.Run("create subfolder with same name should fail", func(t *testing.T) {
+		t.Run("create subfolder with same name should succeed", func(t *testing.T) {
 			resp, err = adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title:     "subfolder",
 				ParentUID: parentUID,
 			})
-			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict
-			assert.True(t, errors.As(err, &conflict))
-			assert.Equal(t, http.StatusConflict, conflict.Code())
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, resp.Code())
 		})
 
 		t.Run("create subfolder with same name under other folder should succeed", func(t *testing.T) {
@@ -186,14 +178,13 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 			assert.Equal(t, other, resp.Payload.ParentUID)
 			subfolderUnderOther := resp.Payload.UID
 
-			t.Run("move subfolder to other folder containing folder with that name should fail", func(t *testing.T) {
-				_, err := adminClient.Folders.MoveFolder(subfolderUnderOther, &models.MoveFolderCommand{
+			t.Run("move subfolder to other folder containing folder with the same name should be ok", func(t *testing.T) {
+				resp, err := adminClient.Folders.MoveFolder(subfolderUnderOther, &models.MoveFolderCommand{
 					ParentUID: parentUID,
 				})
-				require.Error(t, err)
-				var apiError *runtime.APIError
-				assert.True(t, errors.As(err, &apiError))
-				assert.Equal(t, http.StatusConflict, apiError.Code)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusOK, resp.Code())
+				assert.Equal(t, parentUID, resp.Payload.ParentUID)
 			})
 
 			t.Run("move subfolder to root should succeed", func(t *testing.T) {
@@ -215,7 +206,10 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	quotaService := quotaimpl.ProvideService(db, cfg)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(db, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	u, err := usrSvc.Create(context.Background(), &cmd)

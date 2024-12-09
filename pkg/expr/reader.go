@@ -1,17 +1,16 @@
 package expr
 
 import (
-	"embed"
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // Once we are comfortable with the parsing logic, this struct will
@@ -75,6 +74,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 		if err == nil && q.Settings != nil {
 			switch q.Settings.Mode {
+			case ReduceModeStrict:
+				mapper = nil
 			case ReduceModeDrop:
 				mapper = mathexp.DropNonNumber{}
 			case ReduceModeReplace:
@@ -102,7 +103,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			referenceVar, err = getReferenceVar(q.Expression, common.RefID)
 		}
 		if err == nil {
-			tr := legacydata.NewDataTimeRange(common.TimeRange.From, common.TimeRange.To)
+			tr := gtime.NewTimeRange(common.TimeRange.From, common.TimeRange.To)
 			eq.Properties = q
 			eq.Command, err = NewResampleCommand(common.RefID,
 				q.Window,
@@ -125,6 +126,10 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 
 	case QueryTypeSQL:
+		enabled := enableSqlExpressions(h)
+		if !enabled {
+			return eq, fmt.Errorf("sqlExpressions is not implemented")
+		}
 		q := &SQLExpression{}
 		err = iter.ReadVal(q)
 		if err == nil {
@@ -178,17 +183,18 @@ func (h *ExpressionQueryReader) ReadQuery(
 	return eq, err
 }
 
-//go:embed query.types.json
-var f embed.FS
-
-func (h *ExpressionQueryReader) QueryTypeDefinitionListJSON() ([]byte, error) {
-	return f.ReadFile("query.types.json")
-}
-
 func getReferenceVar(exp string, refId string) (string, error) {
 	exp = strings.TrimPrefix(exp, "$")
 	if exp == "" {
 		return "", fmt.Errorf("no variable specified to reference for refId %v", refId)
 	}
 	return exp, nil
+}
+
+func enableSqlExpressions(h *ExpressionQueryReader) bool {
+	enabled := !h.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions)
+	if enabled {
+		return false
+	}
+	return false
 }

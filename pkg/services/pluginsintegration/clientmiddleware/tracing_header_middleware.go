@@ -5,26 +5,25 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
 )
 
-// NewTracingHeaderMiddleware creates a new plugins.ClientMiddleware that will
-// populate useful tracing headers on outgoing plugins.Client and HTTP
+// NewTracingHeaderMiddleware creates a new backend.HandlerMiddleware that will
+// populate useful tracing headers on outgoing backend.Handler and HTTP
 // requests.
 // Tracing headers are X-Datasource-Uid, X-Dashboard-Uid,
 // X-Panel-Id, X-Grafana-Org-Id.
-func NewTracingHeaderMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewTracingHeaderMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &TracingHeaderMiddleware{
-			next: next,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type TracingHeaderMiddleware struct {
-	next plugins.Client
+	backend.BaseHandler
 }
 
 func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
@@ -47,38 +46,22 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 
 func (m *TracingHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	m.applyHeaders(ctx, req)
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *TracingHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *TracingHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return m.next.CheckHealth(ctx, req)
+		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
 	m.applyHeaders(ctx, req)
-	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *TracingHeaderMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *TracingHeaderMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *TracingHeaderMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }

@@ -1,8 +1,8 @@
 package annotations
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type ItemQuery struct {
@@ -21,6 +21,7 @@ type ItemQuery struct {
 	SignedInUser identity.Requester
 
 	Limit int64 `json:"limit"`
+	Page  int64
 }
 
 // TagsQuery is the query for a tags search.

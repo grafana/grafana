@@ -8,7 +8,8 @@ import (
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -38,6 +39,7 @@ type cachingLegacyDataSourceLookup struct {
 	retriever DataSourceRetriever
 	cache     map[string]cachedValue
 	cacheMu   sync.Mutex
+	log       log.Logger
 }
 
 type cachedValue struct {
@@ -49,18 +51,21 @@ func ProvideLegacyDataSourceLookup(p *Service) LegacyDataSourceLookup {
 	return &cachingLegacyDataSourceLookup{
 		retriever: p,
 		cache:     make(map[string]cachedValue),
+		log:       log.New("legacy-datasource-lookup"),
 	}
 }
 
 func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*data.DataSourceRef, error) {
 	if id == 0 && name == "" {
+		s.log.Error("missing id and name in GetDataSourceFromDeprecatedFields")
 		return nil, fmt.Errorf("either name or ID must be set")
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
+		s.log.Error("failed to get user from context after getRequester", "error", err)
 		return nil, err
 	}
-	key := fmt.Sprintf("%d/%s/%d", user.OrgID, name, id)
+	key := fmt.Sprintf("%d/%s/%d", user.GetOrgID(), name, id)
 	s.cacheMu.Lock()
 	defer s.cacheMu.Unlock()
 
@@ -70,13 +75,16 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 	}
 
 	ds, err := s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-		OrgID: user.OrgID,
+		OrgID: user.GetOrgID(),
 		Name:  name,
 		ID:    id,
 	})
+	if err != nil {
+		s.log.Error("failed to get datasource from retriever", "error", err)
+	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) && name != "" {
 		ds, err = s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-			OrgID: user.OrgID,
+			OrgID: user.GetOrgID(),
 			UID:   name, // Sometimes name is actually the UID :(
 		})
 	}

@@ -9,6 +9,7 @@ export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   },
 };
 
@@ -19,6 +20,7 @@ export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
     userIdentityEnabled: false,
     cloud: 'AzureCloud',
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   },
 };
 
@@ -48,5 +50,5 @@ export const dataSourceSettingsWithClientSecretInSecureJSONData: Partial<
   DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>
 > = {
   ...basicJSONData,
-  secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
+  secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX', password: undefined },
 };

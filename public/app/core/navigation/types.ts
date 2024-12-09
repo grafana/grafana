@@ -1,14 +1,15 @@
-import React from 'react';
-import { RouteComponentProps } from 'react-router';
+import { Location } from 'history';
+import { ComponentType } from 'react';
 
 import { UrlQueryMap } from '@grafana/data';
 
-export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> extends RouteComponentProps<T> {
+export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> {
   route: RouteDescriptor;
   queryParams: Q;
+  location: Location;
 }
 
-export type GrafanaRouteComponent<T extends {} = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
+export type GrafanaRouteComponent<T extends {} = any> = ComponentType<GrafanaRouteComponentProps<T>>;
 
 export interface RouteDescriptor {
   path: string;
@@ -18,6 +19,5 @@ export interface RouteDescriptor {
   /** Can be used like an id for the route if the same component is used by many routes */
   routeName?: string;
   chromeless?: boolean;
-  exact?: boolean;
   sensitive?: boolean;
 }

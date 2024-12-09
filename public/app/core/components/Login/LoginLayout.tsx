@@ -1,8 +1,10 @@
 import { cx, css, keyframes } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { handleReducedMotion, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -43,7 +45,9 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
             <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
             <div className={loginStyles.titleWrapper}>
               {isChangingPassword ? (
-                <h1 className={loginStyles.mainTitle}>Update your password</h1>
+                <h1 className={loginStyles.mainTitle}>
+                  <Trans i18nKey="login.layout.update-password">Update your password</Trans>
+                </h1>
               ) : (
                 <>
                   <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
@@ -85,6 +89,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      flex: 1,
       minWidth: '100%',
       marginLeft: 0,
       display: 'flex',
@@ -148,7 +153,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      transition: 'opacity 0.5s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.5s ease-in-out',
+      },
 
       [theme.breakpoints.up('sm')]: {
         minHeight: theme.spacing(40),
@@ -171,12 +178,14 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       maxWidth: 415,
       width: '100%',
       transform: 'translate(0px, 0px)',
-      transition: '0.25s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.25s ease',
+      },
     }),
     enterAnimation: css({
-      ...handleReducedMotion({
+      [theme.transitions.handleMotion('no-preference')]: {
         animation: `${flyInAnimation} ease-out 0.2s`,
-      }),
+      },
     }),
   };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { rangeUtil } from '@grafana/data';
 import { Input } from '@grafana/ui';

@@ -2,6 +2,7 @@ package loginattemptimpl
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -10,10 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	maxInvalidLoginAttempts int64 = 5
-	loginAttemptsWindow           = time.Minute * 5
-)
+const loginAttemptsWindow = time.Minute * 5
 
 func ProvideService(db db.DB, cfg *setting.Cfg, lock *serverlock.ServerLockService) *Service {
 	return &Service{
@@ -54,14 +52,14 @@ func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 	}
 
 	_, err := s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
-		Username:  username,
+		Username:  strings.ToLower(username),
 		IpAddress: IPAddress,
 	})
 	return err
 }
 
 func (s *Service) Reset(ctx context.Context, username string) error {
-	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{username})
+	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{strings.ToLower(username)})
 }
 
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
@@ -70,7 +68,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	}
 
 	loginAttemptCountQuery := GetUserLoginAttemptCountQuery{
-		Username: username,
+		Username: strings.ToLower(username),
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
@@ -79,7 +77,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 		return false, err
 	}
 
-	if count >= maxInvalidLoginAttempts {
+	if count >= s.cfg.BruteForceLoginProtectionMaxAttempts {
 		return false, nil
 	}
 

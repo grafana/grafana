@@ -1,25 +1,27 @@
 import { set, cloneDeep } from 'lodash';
 
 import {
+  FieldNamePickerConfigSettings,
+  NumberFieldConfigSettings,
+  SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
+  StringFieldConfigSettings,
+  UnitFieldConfigSettings,
+  booleanOverrideProcessor,
+  identityOverrideProcessor,
   numberOverrideProcessor,
   selectOverrideProcessor,
   stringOverrideProcessor,
-  booleanOverrideProcessor,
-  standardEditorsRegistry,
-  SelectFieldConfigSettings,
-  StandardEditorProps,
-  StringFieldConfigSettings,
-  NumberFieldConfigSettings,
-  SliderFieldConfigSettings,
-  identityOverrideProcessor,
-  UnitFieldConfigSettings,
   unitOverrideProcessor,
-  FieldNamePickerConfigSettings,
+} from '../field/overrides/processors';
+import {
   StandardEditorContext,
-} from '../field';
+  StandardEditorProps,
+  standardEditorsRegistry,
+} from '../field/standardFieldConfigEditorRegistry';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
-import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { isObject } from '../types/data';
 import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 
@@ -28,7 +30,7 @@ import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel
  */
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
-  StandardEditorProps<any, any>,
+  StandardEditorProps,
   FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
@@ -82,7 +84,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addRadio<TOption, TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
+  addRadio<TOption, TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -95,7 +97,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean>) {
+  addBooleanSwitch<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -107,7 +109,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, string>) {
+  addColorPicker<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, string>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -119,9 +121,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addUnitPicker<TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>
-  ) {
+  addUnitPicker<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -133,7 +133,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addFieldNamePicker<TSettings = any>(
+  addFieldNamePicker<TSettings>(
     config: FieldConfigEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
   ): this {
     return this.addCustomEditor({
@@ -147,7 +147,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addGenericEditor<TSettings = any>(
+  addGenericEditor<TSettings>(
     config: FieldConfigEditorConfig<TOptions, TSettings & any>, // & any... i give up!
     editor: (props: StandardEditorProps<TSettings>) => JSX.Element
   ): this {
@@ -166,7 +166,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
 export interface NestedValueAccess {
   getValue: (path: string) => any;
   onChange: (path: string, value: any) => void;
-  getContext?: (parent: StandardEditorContext<any, any>) => StandardEditorContext<any, any>;
+  getContext?: (parent: StandardEditorContext<any>) => StandardEditorContext<any>;
 }
 export interface NestedPanelOptions<TSub = any> {
   path: string;
@@ -305,7 +305,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addBooleanSwitch<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, boolean>) {
+  addBooleanSwitch<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings, boolean>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -313,7 +313,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addColorPicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
+  addColorPicker<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -322,7 +322,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addTimeZonePicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
+  addTimeZonePicker<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -331,7 +331,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addUnitPicker<TSettings = any>(
+  addUnitPicker<TSettings>(
     config: PanelOptionsEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>
   ): this {
     return this.addCustomEditor({
@@ -341,7 +341,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addFieldNamePicker<TSettings = any>(
+  addFieldNamePicker<TSettings>(
     config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
   ): this {
     return this.addCustomEditor({
@@ -351,7 +351,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addDashboardPicker<TSettings = any>(
+  addDashboardPicker<TSettings>(
     config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
   ): this {
     return this.addCustomEditor({

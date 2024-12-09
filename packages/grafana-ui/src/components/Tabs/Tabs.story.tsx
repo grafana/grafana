@@ -1,5 +1,5 @@
-import { Meta, Story } from '@storybook/react';
-import React, { useState } from 'react';
+import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
 
 import { TabsBar, Tab, TabContent, Counter as TabCounter } from '@grafana/ui';
 
@@ -23,7 +23,7 @@ const tabs = [
   { label: '3rd child', key: 'third', active: false },
 ];
 
-export const Simple: Story = () => {
+export const Simple: StoryFn = () => {
   const [state, updateState] = useState(tabs);
   return (
     <DashboardStoryCanvas>
@@ -49,7 +49,7 @@ export const Simple: Story = () => {
   );
 };
 
-export const Counter: Story<CounterProps> = (args) => {
+export const Counter: StoryFn<CounterProps> = (args) => {
   return <TabCounter {...args} />;
 };
 

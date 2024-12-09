@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -47,7 +48,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 				a.service = &satests.FakeServiceAccountService{}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
 
@@ -116,7 +117,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				}
 			})
 			req := server.NewRequest(http.MethodPost, fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id), strings.NewReader(tt.body))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
@@ -168,7 +169,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			})
 
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", tt.saID, tt.apikeyID), nil)
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 

@@ -1,6 +1,7 @@
-import React from 'react';
+import * as React from 'react';
 
-import { DataFrame, DataTransformerInfo } from '../types';
+import { DataFrame } from '../types/dataFrame';
+import { DataTransformerInfo } from '../types/transformations';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
@@ -15,7 +16,7 @@ export interface TransformerUIProps<T> {
   onChange: (options: T) => void;
 }
 
-export interface TransformerRegistryItem<TOptions> extends RegistryItem {
+export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
   /**
    * Object describing transformer configuration
    */
@@ -49,4 +50,4 @@ export enum TransformerCategory {
  * Registry of transformation options that can be driven by
  * stored configuration files.
  */
-export const standardTransformersRegistry = new Registry<TransformerRegistryItem<any>>();
+export const standardTransformersRegistry = new Registry<TransformerRegistryItem>();

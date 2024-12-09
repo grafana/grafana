@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Button } from '@grafana/ui';
 
@@ -17,9 +16,9 @@ interface Props {
 export const AddRemove = ({ index, onAdd, onRemove, elements }: Props) => {
   return (
     <div
-      className={css`
-        display: flex;
-      `}
+      className={css({
+        display: 'flex',
+      })}
     >
       {index === 0 && (
         <Button variant="secondary" fill="text" icon="plus" onClick={onAdd} tooltip="Add" aria-label="Add" />

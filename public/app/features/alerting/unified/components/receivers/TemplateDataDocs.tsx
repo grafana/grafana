@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 
 import {
   AlertTemplateData,
@@ -31,17 +31,21 @@ export function TemplateDataDocs() {
   return (
     <Stack gap={2}>
       <TemplateDataTable
-        caption={<h4 className={styles.header}>Template Data</h4>}
+        caption={
+          <h4 className={styles.header}>
+            Notification template data <span>Available in the context of a notification.</span>{' '}
+          </h4>
+        }
         dataItems={GlobalTemplateData}
         typeRenderer={(type) =>
           type === '[]Alert' ? (
-            <HoverCard content={AlertTemplateDataTable}>
+            <PopupCard content={AlertTemplateDataTable}>
               <div className={styles.interactiveType}>{type}</div>
-            </HoverCard>
+            </PopupCard>
           ) : type === 'KeyValue' ? (
-            <HoverCard content={<KeyValueTemplateDataTable />}>
+            <PopupCard content={<KeyValueTemplateDataTable />}>
               <div className={styles.interactiveType}>{type}</div>
-            </HoverCard>
+            </PopupCard>
           ) : (
             type
           )
@@ -51,18 +55,18 @@ export function TemplateDataDocs() {
   );
 }
 
-const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
-  header: css`
-    color: ${theme.colors.text.primary};
+export const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    color: theme.colors.text.primary,
 
-    span {
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    }
-  `,
-  interactiveType: css`
-    color: ${theme.colors.text.link};
-  `,
+    span: {
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+  }),
+  interactiveType: css({
+    color: theme.colors.text.link,
+  }),
 });
 
 interface TemplateDataTableProps {
@@ -131,34 +135,33 @@ function KeyValueTemplateDataTable() {
   );
 }
 
-const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    border-collapse: collapse;
-    width: 100%;
+export const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
+  table: css({
+    borderCollapse: 'collapse',
+    width: '100%',
 
-    caption {
-      caption-side: top;
-    }
+    caption: {
+      captionSide: 'top',
+    },
 
-    td,
-    th {
-      padding: ${theme.spacing(1, 1)};
-    }
+    'td, th': {
+      padding: theme.spacing(1, 1),
+    },
 
-    thead {
-      font-weight: ${theme.typography.fontWeightBold};
-    }
+    thead: {
+      fontWeight: theme.typography.fontWeightBold,
+    },
 
-    tbody tr:nth-child(2n + 1) {
-      background-color: ${theme.colors.background.secondary};
-    }
+    'tbody tr:nth-child(2n + 1)': {
+      backgroundColor: theme.colors.background.secondary,
+    },
 
-    tbody td:nth-child(1) {
-      font-weight: ${theme.typography.fontWeightBold};
-    }
+    'tbody td:nth-child(1)': {
+      fontWeight: theme.typography.fontWeightBold,
+    },
 
-    tbody td:nth-child(2) {
-      font-style: italic;
-    }
-  `,
+    'tbody td:nth-child(2)': {
+      fontStyle: 'italic',
+    },
+  }),
 });

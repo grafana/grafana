@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -114,13 +114,13 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    modal: css`
-      width: 95vw;
-      height: 95vh;
-    `,
-    modalContent: css`
-      height: 100%;
-      padding-top: 0;
-    `,
+    modal: css({
+      width: '95vw',
+      height: '95vh',
+    }),
+    modalContent: css({
+      height: '100%',
+      paddingTop: 0,
+    }),
   };
 }

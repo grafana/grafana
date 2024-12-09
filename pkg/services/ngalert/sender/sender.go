@@ -37,8 +37,9 @@ type ExternalAlertmanager struct {
 
 	manager *Manager
 
-	sdCancel  context.CancelFunc
-	sdManager *discovery.Manager
+	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
+	sdCancel           context.CancelFunc
+	sdManager          *discovery.Manager
 }
 
 type ExternalAMcfg struct {
@@ -54,6 +55,20 @@ type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, 
 func WithDoFunc(doFunc doFunc) Option {
 	return func(s *ExternalAlertmanager) {
 		s.manager.opts.Do = doFunc
+	}
+}
+
+// WithUTF8Labels skips sanitizing labels and annotations before sending alerts to the external Alertmanager(s).
+// It assumes UTF-8 label names are supported by the Alertmanager(s).
+func WithUTF8Labels() Option {
+	return func(s *ExternalAlertmanager) {
+		s.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
+			ls := make(labels.Labels, 0, len(lbls))
+			for k, v := range lbls {
+				ls = append(ls, labels.Label{Name: k, Value: v})
+			}
+			return ls
+		}
 	}
 }
 
@@ -80,28 +95,36 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
-	l := log.New("ngalert.sender.external-alertmanager")
+func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
 		sdCancel: sdCancel,
 	}
 
+	s.sanitizeLabelSetFn = s.sanitizeLabelSet
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
 		s.logger,
 	)
+	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
+	if err != nil {
+		s.logger.Error("failed to register service discovery metrics", "error", err)
+		return nil, err
+	}
+	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
 
-	s.sdManager = discovery.NewManager(sdCtx, s.logger)
+	if s.sdManager == nil {
+		return nil, errors.New("failed to create new discovery manager")
+	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
-	return s
+	return s, nil
 }
 
 // ApplyConfig syncs a configuration with the sender.
@@ -233,8 +256,8 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.sanitizeLabelSet(alert.Alert.Labels),
-		Annotations:  s.sanitizeLabelSet(alert.Annotations),
+		Labels:       s.sanitizeLabelSetFn(alert.Alert.Labels),
+		Annotations:  s.sanitizeLabelSetFn(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
 		GeneratorURL: alert.Alert.GeneratorURL.String(),

@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
-import React from 'react';
 import { Provider } from 'react-redux';
 
 import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';

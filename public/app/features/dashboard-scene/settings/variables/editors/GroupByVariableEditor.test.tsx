@@ -1,6 +1,5 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -39,13 +38,18 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
 }));
 
 describe('GroupByVariableEditor', () => {
-  it('renders AdHocVariableForm with correct props', async () => {
+  it('renders GroupByVariableForm with correct props', async () => {
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
     );
     const infoText = renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText);
+    const allowCustomValueCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
 
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(infoText).toBeInTheDocument();

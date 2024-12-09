@@ -1,5 +1,4 @@
-import { Story } from '@storybook/react';
-import React from 'react';
+import { StoryFn } from '@storybook/react';
 import { ValidateResult } from 'react-hook-form';
 
 import {
@@ -145,7 +144,7 @@ export const DefaultValues = () => {
   return <>{renderForm(defaultValues[0])}</>;
 };
 
-export const AsyncValidation: Story = ({ passAsyncValidation }) => {
+export const AsyncValidation: StoryFn = ({ passAsyncValidation }) => {
   return (
     <>
       <Form

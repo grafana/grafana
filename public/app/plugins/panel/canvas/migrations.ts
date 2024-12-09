@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, OneClickMode } from '@grafana/data';
 
 import { Options } from './panelcfg.gen';
 
@@ -36,6 +36,29 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
           if (element.config.width) {
             element.border.width = element.config.width;
             delete element.config.width;
+          }
+        }
+      }
+    }
+  }
+
+  if (parseFloat(pluginVersion) <= 11.3) {
+    const root = panel.options?.root;
+    if (root?.elements) {
+      for (const element of root.elements) {
+        // migrate oneClickLinks to oneClickMode
+        if (element.oneClickLinks) {
+          element.oneClickMode = OneClickMode.Link;
+          delete element.oneClickLinks;
+        }
+
+        // migrate action options to new format (fetch)
+        if (element.actions) {
+          for (const action of element.actions) {
+            if (action.options) {
+              action.fetch = { ...action.options };
+              delete action.options;
+            }
           }
         }
       }

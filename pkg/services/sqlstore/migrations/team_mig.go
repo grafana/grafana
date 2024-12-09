@@ -51,6 +51,7 @@ func addTeamMigrations(mg *Migrator) {
 			{Cols: []string{"org_id"}},
 			{Cols: []string{"org_id", "team_id", "user_id"}, Type: UniqueIndex},
 			{Cols: []string{"team_id"}},
+			{Cols: []string{"user_id", "org_id"}},
 		},
 	}
 
@@ -73,4 +74,5 @@ func addTeamMigrations(mg *Migrator) {
 	mg.AddMigration("Add column permission to team_member table", NewAddColumnMigration(teamMemberV1, &Column{
 		Name: "permission", Type: DB_SmallInt, Nullable: true,
 	}))
+	mg.AddMigration("add unique index team_member_user_id_org_id", NewAddIndexMigration(teamMemberV1, teamMemberV1.Indices[3]))
 }

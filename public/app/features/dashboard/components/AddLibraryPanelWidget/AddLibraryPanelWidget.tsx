@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -41,7 +41,7 @@ export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className={cx('panel-container', styles.callToAction)}>
+      <div className={styles.callToAction}>
         <div className={cx(styles.headerRow, 'grid-drag-handle')}>
           <span>
             <Trans i18nKey="library-panel.add-widget.title">Add panel from panel library</Trans>
@@ -90,7 +90,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       paddingLeft: `${theme.spacing(1)}`,
-      transition: 'background-color 0.1s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'background-color 0.1s ease-in-out',
+      },
       cursor: 'move',
 
       '&:hover': {
@@ -98,11 +100,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     callToAction: css({
-      overflow: 'hidden',
+      backgroundColor: theme.components.panel.background,
+      border: `1px solid ${theme.components.panel.borderColor}`,
+      borderRadius: theme.shape.radius.default,
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      height: '100%',
+      position: 'relative',
+      width: '100%',
       outline: '2px dotted transparent',
       outlineOffset: '2px',
-      boxShadow: '0 0 0 2px black, 0 0 0px 4px #1f60c4',
-      animation: `${pulsate} 2s ease infinite`,
+      overflow: 'hidden',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${pulsate} 2s ease infinite`,
+      },
     }),
   };
 };

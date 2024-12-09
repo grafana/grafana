@@ -31,18 +31,24 @@ cards:
       href: ./variables/
       description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards.
       height: 24
-    - title: Public dashboards
-      href: ./dashboard-public/
-      description: Make your Grafana dashboards public and share them with anyone without requiring access to your Grafana organization.
-      height: 24
     - title: Reporting
       href: ./create-reports/
       description: Automatically generate and share PDF reports from your Grafana dashboards.
       height: 24
     - title: Sharing
       href: ./share-dashboards-panels/
-      description: Share Grafana dashboards and panels within your organization using links, snapshots, and JSON exports.
+      description: Share Grafana dashboards and panels using links, snapshots, embeds, and exports.
       height: 24
+    - title: Shared dashboards
+      href: ./share-dashboards-panels/shared-dashboards/
+      description: Share your dashboards with anyone without requiring access to your Grafana organization.
+      height: 24
+refs:
+  panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview/
 ---
 
 {{< docs/hero-simple key="hero" >}}
@@ -51,7 +57,7 @@ cards:
 
 ## Overview
 
-A Grafana dashboard is a set of one or more [panels][], organized and arranged into one or more rows, that provide an at-a-glance view of related information. These panels are created using components that query and transform raw data from a data source into charts, graphs, and other visualizations.
+A Grafana dashboard is a set of one or more [panels](ref:panels), organized and arranged into one or more rows, that provide an at-a-glance view of related information. These panels are created using components that query and transform raw data from a data source into charts, graphs, and other visualizations.
 
 A data source can be an SQL database, Grafana Loki, Grafana Mimir, or a JSON-based API. It can even be a basic CSV file. Data source plugins take a query you want answered, retrieve the data from the data source, and reconcile the differences between the data model of the data source and the data model of Grafana dashboards.
 
@@ -64,8 +70,3 @@ With 150+ data source plugins, you can unify all your data sources into a single
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}
-
-{{% docs/reference %}}
-[panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-overview"
-[panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview"
-{{% /docs/reference %}}

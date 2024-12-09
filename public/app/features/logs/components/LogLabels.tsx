@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { memo, forwardRef, useMemo } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 // Levels are already encoded in color, filename is a Loki-ism
-const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
+const HIDDEN_LABELS = ['detected_level', 'level', 'lvl', 'filename'];
 
 interface Props {
   labels: Labels;
   emptyMessage?: string;
 }
 
-export const LogLabels = React.memo(({ labels, emptyMessage }: Props) => {
+export const LogLabels = memo(({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = useMemo(
     () =>
@@ -53,7 +53,7 @@ interface LogLabelsArrayProps {
   labels: string[];
 }
 
-export const LogLabelsList = React.memo(({ labels }: LogLabelsArrayProps) => {
+export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
   return (
     <span className={cx([styles.logsLabels])}>
@@ -73,43 +73,41 @@ interface LogLabelProps {
   children: JSX.Element | string;
 }
 
-const LogLabel = React.forwardRef<HTMLSpanElement, LogLabelProps>(
-  ({ styles, tooltip, children }: LogLabelProps, ref) => {
-    return (
-      <span className={cx([styles.logsLabel])} ref={ref}>
-        <span className={cx([styles.logsLabelValue])} title={tooltip}>
-          {children}
-        </span>
+const LogLabel = forwardRef<HTMLSpanElement, LogLabelProps>(({ styles, tooltip, children }: LogLabelProps, ref) => {
+  return (
+    <span className={cx([styles.logsLabel])} ref={ref}>
+      <span className={cx([styles.logsLabelValue])} title={tooltip}>
+        {children}
       </span>
-    );
-  }
-);
+    </span>
+  );
+});
 LogLabel.displayName = 'LogLabel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    logsLabels: css`
-      display: flex;
-      flex-wrap: wrap;
-      font-size: ${theme.typography.size.xs};
-    `,
-    logsLabel: css`
-      label: logs-label;
-      display: flex;
-      padding: ${theme.spacing(0, 0.25)};
-      background-color: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.radius.default};
-      margin: ${theme.spacing(0.125, 0.5, 0, 0)};
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    `,
-    logsLabelValue: css`
-      label: logs-label__value;
-      display: inline-block;
-      max-width: ${theme.spacing(25)};
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
+    logsLabels: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      fontSize: theme.typography.size.xs,
+    }),
+    logsLabel: css({
+      label: 'logs-label',
+      display: 'flex',
+      padding: theme.spacing(0, 0.25),
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(0.125, 0.5, 0, 0),
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+    }),
+    logsLabelValue: css({
+      label: 'logs-label__value',
+      display: 'inline-block',
+      maxWidth: theme.spacing(25),
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
   };
 };

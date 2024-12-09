@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, createRef, useState, useEffect } from 'react';
+import { memo, createRef, useState, useEffect } from 'react';
 
 import {
   rangeUtil,
@@ -23,7 +23,9 @@ import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
+import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
 export interface TimeRangePickerProps {
@@ -31,8 +33,19 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+
+  /**
+   * If you handle sync state between pickers yourself use this prop to pass the sync button component.
+   * Otherwise, a default one will show automatically if sync is possible.
+   */
   timeSyncButton?: JSX.Element;
+
+  // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
   isSynced?: boolean;
+
+  // Use to manually set the initial sync state for the time range picker. It will use the current value to sync.
+  initialIsSynced?: boolean;
+
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
@@ -45,6 +58,8 @@ export interface TimeRangePickerProps {
   widthOverride?: number;
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
+  weekStart?: WeekStart;
 }
 
 export interface State {
@@ -62,8 +77,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
-    timeSyncButton,
-    isSynced,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -71,10 +84,20 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     widthOverride,
     isOnCanvas,
     onToolbarTimePickerClick,
+    weekStart,
+    initialIsSynced,
   } = props;
 
+  const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
+    initialIsSynced,
+    value,
+    onChangeProp: props.onChange,
+    isSyncedProp: props.isSynced,
+    timeSyncButtonProp: props.timeSyncButton,
+  });
+
   const onChange = (timeRange: TimeRange) => {
-    props.onChange(timeRange);
+    onChangeWithSync(timeRange);
     setOpen(false);
   };
 
@@ -168,6 +191,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
                 onError={onError}
+                weekStart={weekStart}
               />
             </section>
           </FocusScope>
@@ -235,7 +259,7 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
   }
 
   return (
-    <span className={styles.container}>
+    <span className={styles.container} aria-live="polite" aria-atomic="true">
       <span>{formattedRange(value, timeZone)}</span>
       <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
     </span>

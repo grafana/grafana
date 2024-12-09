@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
@@ -247,8 +247,8 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    inlineLabel: css`
-      color: ${theme.colors.primary.text};
-    `,
+    inlineLabel: css({
+      color: theme.colors.primary.text,
+    }),
   };
 }

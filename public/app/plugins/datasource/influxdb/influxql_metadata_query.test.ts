@@ -1,21 +1,21 @@
 import config from 'app/core/config';
 
+import { getMockInfluxDS } from './__mocks__/datasource';
 import { getAllMeasurements, getAllPolicies, getFieldKeys, getTagKeys, getTagValues } from './influxql_metadata_query';
-import { getMockInfluxDS } from './mocks';
-import { InfluxQuery } from './types';
+import { InfluxQuery, InfluxVariableQuery } from './types';
 
 describe('influx_metadata_query', () => {
-  let query: string | undefined;
+  let query: InfluxVariableQuery;
   let target: InfluxQuery;
   const mockMetricFindQuery = jest.fn();
   const mockRunMetadataQuery = jest.fn();
-  mockMetricFindQuery.mockImplementation((q: string) => {
+  mockMetricFindQuery.mockImplementation((q: InfluxVariableQuery) => {
     query = q;
     return Promise.resolve([]);
   });
-  mockRunMetadataQuery.mockImplementation((t: InfluxQuery) => {
+  mockRunMetadataQuery.mockImplementation((t: InfluxVariableQuery) => {
     target = t;
-    query = t.query;
+    query = t;
     return Promise.resolve([]);
   });
 
@@ -42,7 +42,7 @@ describe('influx_metadata_query', () => {
       it('should call metricFindQuery with SHOW RETENTION POLICIES', () => {
         getAllPolicies(ds);
         frontendModeChecks();
-        expect(query).toMatch('SHOW RETENTION POLICIES');
+        expect(query.query).toMatch('SHOW RETENTION POLICIES');
       });
     });
 
@@ -50,19 +50,19 @@ describe('influx_metadata_query', () => {
       it('no tags specified', () => {
         getAllMeasurements(ds, []);
         frontendModeChecks();
-        expect(query).toBe('SHOW MEASUREMENTS LIMIT 100');
+        expect(query.query).toBe('SHOW MEASUREMENTS LIMIT 100');
       });
 
       it('with tags', () => {
         getAllMeasurements(ds, [{ key: 'key', value: 'val' }]);
         frontendModeChecks();
-        expect(query).toMatch('SHOW MEASUREMENTS WHERE "key"');
+        expect(query.query).toMatch('SHOW MEASUREMENTS WHERE "key"');
       });
 
       it('with measurement filter', () => {
         getAllMeasurements(ds, [{ key: 'key', value: 'val' }], 'measurementFilter');
         frontendModeChecks();
-        expect(query).toMatch('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)measurementFilter/ WHERE "key"');
+        expect(query.query).toMatch('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)measurementFilter/ WHERE "key"');
       });
     });
 
@@ -70,19 +70,19 @@ describe('influx_metadata_query', () => {
       it('no tags specified', () => {
         getTagKeys(ds);
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS');
+        expect(query.query).toBe('SHOW TAG KEYS');
       });
 
       it('with measurement', () => {
         getTagKeys(ds, 'test_measurement');
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS FROM "test_measurement"');
+        expect(query.query).toBe('SHOW TAG KEYS FROM "test_measurement"');
       });
 
       it('with retention policy', () => {
         getTagKeys(ds, 'test_measurement', 'rp');
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS FROM "rp"."test_measurement"');
+        expect(query.query).toBe('SHOW TAG KEYS FROM "rp"."test_measurement"');
       });
     });
 
@@ -90,13 +90,13 @@ describe('influx_metadata_query', () => {
       it('with key', () => {
         getTagValues(ds, [], 'test_key');
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
       });
 
       it('with key ends with ::tag', () => {
         getTagValues(ds, [], 'test_key::tag');
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
       });
 
       it('with key ends with ::field', async () => {
@@ -107,13 +107,13 @@ describe('influx_metadata_query', () => {
       it('with tags', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key');
         frontendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\'');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\'');
       });
 
       it('with measurement', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key', 'test_measurement');
         frontendModeChecks();
-        expect(query).toBe(
+        expect(query.query).toBe(
           'SHOW TAG VALUES FROM "test_measurement" WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\''
         );
       });
@@ -121,7 +121,7 @@ describe('influx_metadata_query', () => {
       it('with retention policy', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key', 'test_measurement', 'rp');
         frontendModeChecks();
-        expect(query).toBe(
+        expect(query.query).toBe(
           'SHOW TAG VALUES FROM "rp"."test_measurement" WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\''
         );
       });
@@ -131,19 +131,19 @@ describe('influx_metadata_query', () => {
       it('with no retention policy', () => {
         getFieldKeys(ds, 'test_measurement');
         frontendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS FROM "test_measurement"');
+        expect(query.query).toBe('SHOW FIELD KEYS FROM "test_measurement"');
       });
 
       it('with empty measurement', () => {
         getFieldKeys(ds, '');
         frontendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS');
+        expect(query.query).toBe('SHOW FIELD KEYS');
       });
 
       it('with retention policy', () => {
         getFieldKeys(ds, 'test_measurement', 'rp');
         frontendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS FROM "rp"."test_measurement"');
+        expect(query.query).toBe('SHOW FIELD KEYS FROM "rp"."test_measurement"');
       });
     });
   });
@@ -165,7 +165,7 @@ describe('influx_metadata_query', () => {
       it('should call metricFindQuery with SHOW RETENTION POLICIES', () => {
         getAllPolicies(ds);
         backendModeChecks();
-        expect(query).toMatch('SHOW RETENTION POLICIES');
+        expect(query.query).toMatch('SHOW RETENTION POLICIES');
       });
     });
 
@@ -173,19 +173,19 @@ describe('influx_metadata_query', () => {
       it('no tags specified', () => {
         getAllMeasurements(ds, []);
         backendModeChecks();
-        expect(query).toBe('SHOW MEASUREMENTS LIMIT 100');
+        expect(query.query).toBe('SHOW MEASUREMENTS LIMIT 100');
       });
 
       it('with tags', () => {
         getAllMeasurements(ds, [{ key: 'key', value: 'val' }]);
         backendModeChecks();
-        expect(query).toMatch('SHOW MEASUREMENTS WHERE "key"');
+        expect(query.query).toMatch('SHOW MEASUREMENTS WHERE "key"');
       });
 
       it('with measurement filter', () => {
         getAllMeasurements(ds, [{ key: 'key', value: 'val' }], 'measurementFilter');
         backendModeChecks();
-        expect(query).toMatch('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)measurementFilter/ WHERE "key"');
+        expect(query.query).toMatch('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)measurementFilter/ WHERE "key"');
       });
     });
 
@@ -193,19 +193,19 @@ describe('influx_metadata_query', () => {
       it('no tags specified', () => {
         getTagKeys(ds);
         backendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS');
+        expect(query.query).toBe('SHOW TAG KEYS');
       });
 
       it('with measurement', () => {
         getTagKeys(ds, 'test_measurement');
         backendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS FROM "test_measurement"');
+        expect(query.query).toBe('SHOW TAG KEYS FROM "test_measurement"');
       });
 
       it('with retention policy', () => {
         getTagKeys(ds, 'test_measurement', 'rp');
         backendModeChecks();
-        expect(query).toBe('SHOW TAG KEYS FROM "rp"."test_measurement"');
+        expect(query.query).toBe('SHOW TAG KEYS FROM "rp"."test_measurement"');
       });
     });
 
@@ -213,13 +213,13 @@ describe('influx_metadata_query', () => {
       it('with key', () => {
         getTagValues(ds, [], 'test_key');
         backendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
       });
 
       it('with key ends with ::tag', () => {
         getTagValues(ds, [], 'test_key::tag');
         backendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key"');
       });
 
       it('with key ends with ::field', async () => {
@@ -230,13 +230,13 @@ describe('influx_metadata_query', () => {
       it('with tags', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key');
         backendModeChecks();
-        expect(query).toBe('SHOW TAG VALUES WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\'');
+        expect(query.query).toBe('SHOW TAG VALUES WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\'');
       });
 
       it('with measurement', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key', 'test_measurement');
         backendModeChecks();
-        expect(query).toBe(
+        expect(query.query).toBe(
           'SHOW TAG VALUES FROM "test_measurement" WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\''
         );
       });
@@ -244,7 +244,7 @@ describe('influx_metadata_query', () => {
       it('with retention policy', () => {
         getTagValues(ds, [{ key: 'tagKey', value: 'tag_val' }], 'test_key', 'test_measurement', 'rp');
         backendModeChecks();
-        expect(query).toBe(
+        expect(query.query).toBe(
           'SHOW TAG VALUES FROM "rp"."test_measurement" WITH KEY = "test_key" WHERE "tagKey" = \'tag_val\''
         );
       });
@@ -254,19 +254,19 @@ describe('influx_metadata_query', () => {
       it('with no retention policy', () => {
         getFieldKeys(ds, 'test_measurement');
         backendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS FROM "test_measurement"');
+        expect(query.query).toBe('SHOW FIELD KEYS FROM "test_measurement"');
       });
 
       it('with empty measurement', () => {
         getFieldKeys(ds, '');
         backendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS');
+        expect(query.query).toBe('SHOW FIELD KEYS');
       });
 
       it('with retention policy', () => {
         getFieldKeys(ds, 'test_measurement', 'rp');
         backendModeChecks();
-        expect(query).toBe('SHOW FIELD KEYS FROM "rp"."test_measurement"');
+        expect(query.query).toBe('SHOW FIELD KEYS FROM "rp"."test_measurement"');
       });
     });
   });

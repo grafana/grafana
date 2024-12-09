@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { DecoratorFn } from '@storybook/react';
-import React from 'react';
+import { Args, Decorator } from '@storybook/react';
+import * as React from 'react';
 
 interface Props {
   width?: number;
@@ -43,13 +43,9 @@ const StoryContainer = ({ width, height, showBoundaries, children }: React.Props
   );
 };
 
-export const withStoryContainer: DecoratorFn = (story, context) => {
+export const withStoryContainer: Decorator<Args> = (story, { args }) => {
   return (
-    <StoryContainer
-      width={context.args.containerWidth}
-      height={context.args.containerHeight}
-      showBoundaries={context.args.showBoundaries}
-    >
+    <StoryContainer width={args.containerWidth} height={args.containerHeight} showBoundaries={args.showBoundaries}>
       {story()}
     </StoryContainer>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DashboardLink } from '@grafana/schema';
 import { DashboardLinkForm } from 'app/features/dashboard-scene/settings/links/DashboardLinkForm';

@@ -1,4 +1,4 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime, TimeRange, VariableRefresh } from '@grafana/data';
 import { config, DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
 
@@ -17,7 +17,6 @@ import { createIntervalVariableAdapter } from '../interval/adapter';
 import { createIntervalOptions } from '../interval/reducer';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { constantBuilder, intervalBuilder, queryBuilder, datasourceBuilder } from '../shared/testing/builders';
-import { VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';

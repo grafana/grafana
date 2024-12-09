@@ -1,12 +1,20 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "alwaysStrict": true,
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "allowJs": true,
+    "rootDirs": ["."],
+    "resolveJsonModule": true
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]
+  "include": [
+    "../../public/test/setupTests.ts",
+    "../../public/app/types/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "src/**/*.ts*"
+  ]
 }

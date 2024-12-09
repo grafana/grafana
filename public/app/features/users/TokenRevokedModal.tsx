@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
@@ -51,14 +50,14 @@ export const TokenRevokedModal = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infobox: css`
-    margin-bottom: 0;
-  `,
-  text: css`
-    margin: ${theme.spacing(1, 0, 2)};
-  `,
-  backdrop: css`
-    background-color: ${theme.colors.background.canvas};
-    opacity: 0.8;
-  `,
+  infobox: css({
+    marginBottom: 0,
+  }),
+  text: css({
+    margin: theme.spacing(1, 0, 2),
+  }),
+  backdrop: css({
+    backgroundColor: theme.colors.background.canvas,
+    opacity: 0.8,
+  }),
 });

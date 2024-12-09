@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Button, VerticalGroup } from '@grafana/ui';

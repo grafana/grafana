@@ -1,4 +1,5 @@
-import { AnnotationEvent, DataFrame } from '../types';
+import { AnnotationEvent } from '../types/annotations';
+import { DataFrame } from '../types/dataFrame';
 
 import { BusEventBase, BusEventWithPayload } from './types';
 
@@ -63,4 +64,8 @@ export class DataSourceTestSucceeded extends BusEventBase {
 
 export class DataSourceTestFailed extends BusEventBase {
   static type = 'datasource-test-failed';
+}
+
+export class SetPanelAttentionEvent extends BusEventWithPayload<{ panelId: string | number }> {
+  static type = 'set-panel-attention';
 }

@@ -1,108 +1,39 @@
-<!-- HTML for static distribution bundle build -->
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>Swagger UI</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui.css"
-      integrity="sha384-pzdBB6iZwPIzBHgXle+9cgvKuMgtWNrBopXkjrWnKCi3m4uJsPPdLQ4IPMqRDirS"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
-    <style>
-      html {
-        box-sizing: border-box;
-        overflow: -moz-scrollbars-vertical;
-        overflow-y: scroll;
-      }
+    [[ if and .CSPEnabled .IsDevelopmentEnv ]]
+    <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
+    <meta http-equiv="Content-Security-Policy" content="[[.CSPContent]]" />
+    [[ end ]]
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#000" />
 
-      *,
-      *:before,
-      *:after {
-        box-sizing: inherit;
-      }
+    <title>Grafana API Reference</title>
 
-      body {
-        margin: 0;
-        background: #fafafa;
-      }
+    [[range $asset := .Assets.SwaggerCSSFiles]]
+    <link rel="stylesheet" href="[[$asset.FilePath]]" />
+    [[end]]
 
-      .topbar-wrapper img {
-        content: url('public/img/grafana_icon.svg');
-      }
-    </style>
+    <link rel="stylesheet" href="[[.Assets.Light]]" />
+
+    <link rel="icon" type="image/png" href="[[.FavIcon]]" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
   </head>
 
   <body>
-    <div id="swagger-ui"></div>
-
-    <script
-      nonce="[[.Nonce]]"
-      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js"
-      charset="UTF-8"
-      integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-    <script
-      nonce="[[.Nonce]]"
-      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js"
-      charset="UTF-8"
-      integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-    <script nonce="[[.Nonce]]">
-      window.onload = async function () {
-        // the trailing slash breaks relative URL loading
-        if (window.location.pathname.endsWith('/')) {
-          const idx = window.location.href.lastIndexOf('/');
-          window.location.href = window.location.href.substring(0, idx);
-          return;
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const v2 = { name: 'Grafana API (OpenAPI v2)', url: 'public/api-merged.json' };
-        const v3 = { name: 'Grafana API (OpenAPI v3)', url: 'public/openapi3.json' };
-        const urls = urlParams.get('show') == 'v3' ? [v3, v2] : [v2, v3];
-        try {
-          const rsp = await fetch('openapi/v3');
-          const apis = await rsp.json();
-          for (const [key, value] of Object.entries(apis.paths)) {
-            const parts = key.split('/');
-            if (parts.length == 3) {
-              urls.push({
-                name: `${parts[1]}/${parts[2]}`,
-                url: value.serverRelativeURL.substring(1), // remove initial slash
-              });
-            }
-          }
-          urls.push({ name: 'Grafana apps (OpenAPI v2)', url: 'openapi/v2' });
-        } catch (err) {
-          // console.warn('Error loading k8s apis', err);
-        }
-
-        // Begin Swagger UI call region
-        const ui = SwaggerUIBundle({
-          urls,
-          dom_id: '#swagger-ui',
-          deepLinking: true,
-          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
-          layout: 'StandaloneLayout',
-          filter: true,
-          tagsSorter: 'alpha',
-          tryItOutEnabled: true,
-          queryConfigEnabled: true, // keeps the selected ?urls.primaryName=...
-        });
-
-        window.ui = ui;
-      };
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <script nonce="[[$.Nonce]]">
+      [[if .Assets.ContentDeliveryURL]]
+          window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+      [[end]]
     </script>
+    <div id="root"></div>
+    [[range $asset := .Assets.Swagger]]
+    <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript"></script>
+    [[end]]
+    <script></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { zip, fromPairs } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { EventsWithValidation } from '../../../../utils';
 
@@ -25,7 +25,7 @@ const meta: Meta = {
   },
 };
 
-const Wrapper: Story = (args) => {
+const Wrapper: StoryFn = (args) => {
   const [value, setValue] = useState('');
   const validations = {
     [args.validationEvents]: [

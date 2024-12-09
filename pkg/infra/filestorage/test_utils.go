@@ -275,7 +275,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		file, fileFound, err := fs.Get(ctx, inputPath, options)
 		require.NoError(t, err, "%s: should be able to get file %s", queryName, inputPath)
 
-		if q.checks != nil && len(q.checks) > 0 {
+		if len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
 			require.True(t, fileFound, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
@@ -289,7 +289,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		resp, err := fs.List(ctx, inputPath, q.input.paging, q.input.options)
 		require.NoError(t, err, "%s: should be able to list files in %s", queryName, inputPath)
 		require.NotNil(t, resp)
-		if q.list != nil && len(q.list) > 0 {
+		if len(q.list) > 0 {
 			runChecks(t, queryName, inputPath, resp, q.list)
 		} else {
 			require.NotNil(t, resp, "%s %s", queryName, inputPath)

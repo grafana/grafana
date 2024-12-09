@@ -1,4 +1,3 @@
-import React from 'react';
 import { FieldArrayWithId, useFormContext, Controller } from 'react-hook-form';
 
 import { Text, Stack } from '@grafana/ui';

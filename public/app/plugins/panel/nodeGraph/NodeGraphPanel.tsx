@@ -1,5 +1,5 @@
 import memoizeOne from 'memoize-one';
-import React, { useId } from 'react';
+import { useId } from 'react';
 
 import { PanelProps } from '@grafana/data';
 
@@ -28,6 +28,7 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         dataFrames={memoizedGetNodeGraphDataFrames(data.series, options)}
         getLinks={getLinks}
         panelId={panelId}
+        zoomMode={options.zoomMode}
       />
     </div>
   );

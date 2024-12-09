@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';

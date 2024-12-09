@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
@@ -14,10 +14,10 @@ type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   query: CloudWatchLogsQuery;
 };
 
-const labelClass = css`
-  margin-left: 3px;
-  flex-grow: 0;
-`;
+const labelClass = css({
+  marginLeft: '3px',
+  flexGrow: 0,
+});
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
   const { query, data, datasource } = props;

@@ -6,24 +6,24 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/plugins"
+
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const forwardPluginRequestHTTPHeaders = "forward-plugin-request-http-headers"
 
-// NewHTTPClientMiddleware creates a new plugins.ClientMiddleware
+// NewHTTPClientMiddleware creates a new backend.HandlerMiddleware
 // that will forward plugin request headers as outgoing HTTP headers.
-func NewHTTPClientMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewHTTPClientMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HTTPClientMiddleware{
-			next: next,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type HTTPClientMiddleware struct {
-	next plugins.Client
+	backend.BaseHandler
 }
 
 func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) context.Context {
@@ -66,46 +66,30 @@ func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) conte
 
 func (m *HTTPClientMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	ctx = m.applyHeaders(ctx, req)
 
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *HTTPClientMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return m.next.CallResource(ctx, req, sender)
+		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
 	ctx = m.applyHeaders(ctx, req)
 
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *HTTPClientMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return m.next.CheckHealth(ctx, req)
+		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
 	ctx = m.applyHeaders(ctx, req)
 
-	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }

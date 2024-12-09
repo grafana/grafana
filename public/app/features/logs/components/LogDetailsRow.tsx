@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useEffect, useState } from 'react';
+import { PureComponent, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,
@@ -14,7 +15,7 @@ import {
   LogRowModel,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 
@@ -37,6 +38,8 @@ export interface Props extends Themeable2 {
   row: LogRowModel;
   app?: CoreApp;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 interface State {
@@ -47,60 +50,60 @@ interface State {
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    wordBreakAll: css`
-      label: wordBreakAll;
-      word-break: break-all;
-    `,
-    copyButton: css`
-      & > button {
-        color: ${theme.colors.text.secondary};
-        padding: 0;
-        justify-content: center;
-        border-radius: ${theme.shape.radius.circle};
-        height: ${theme.spacing(theme.components.height.sm)};
-        width: ${theme.spacing(theme.components.height.sm)};
-        svg {
-          margin: 0;
-        }
+    wordBreakAll: css({
+      label: 'wordBreakAll',
+      wordBreak: 'break-all',
+    }),
+    copyButton: css({
+      '& > button': {
+        color: theme.colors.text.secondary,
+        padding: 0,
+        justifyContent: 'center',
+        borderRadius: theme.shape.radius.circle,
+        height: theme.spacing(theme.components.height.sm),
+        width: theme.spacing(theme.components.height.sm),
+        svg: {
+          margin: 0,
+        },
 
-        span > div {
-          top: -5px;
-          & button {
-            color: ${theme.colors.success.main};
-          }
-        }
-      }
-    `,
-    adjoiningLinkButton: css`
-      margin-left: ${theme.spacing(1)};
-    `,
-    wrapLine: css`
-      label: wrapLine;
-      white-space: pre-wrap;
-    `,
-    logDetailsStats: css`
-      padding: 0 ${theme.spacing(1)};
-    `,
-    logDetailsValue: css`
-      display: flex;
-      align-items: center;
-      line-height: 22px;
+        'span > div': {
+          top: '-5px',
+          '& button': {
+            color: theme.colors.success.main,
+          },
+        },
+      },
+    }),
+    adjoiningLinkButton: css({
+      marginLeft: theme.spacing(1),
+    }),
+    wrapLine: css({
+      label: 'wrapLine',
+      whiteSpace: 'pre-wrap',
+    }),
+    logDetailsStats: css({
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    logDetailsValue: css({
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: '22px',
 
-      .log-details-value-copy {
-        visibility: hidden;
-      }
-      &:hover {
-        .log-details-value-copy {
-          visibility: visible;
-        }
-      }
-    `,
-    buttonRow: css`
-      display: flex;
-      flex-direction: row;
-      gap: ${theme.spacing(0.5)};
-      margin-left: ${theme.spacing(0.5)};
-    `,
+      '.log-details-value-copy': {
+        visibility: 'hidden',
+      },
+      '&:hover': {
+        '.log-details-value-copy': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    buttonRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(0.5),
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 });
 
@@ -261,6 +264,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       disableActions,
       row,
+      app,
+      onPinLine,
+      pinLineButtonTooltipTitle,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
@@ -268,7 +274,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-    const refIdTooltip = row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const refIdTooltip = app === CoreApp.Explore && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -322,11 +328,32 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
               {singleVal && this.generateClipboardButton(parsedValues[0])}
               <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
-                {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`}>
-                    <DataLinkButton link={link} />
-                  </span>
-                ))}
+                {links?.map((link, i) => {
+                  if (link.onClick && onPinLine) {
+                    const originalOnClick = link.onClick;
+                    link.onClick = (e, origin) => {
+                      // Pin the line
+                      onPinLine(row, false);
+
+                      // Execute the link onClick function
+                      originalOnClick(e, origin);
+                    };
+                  }
+                  return (
+                    <span key={`${link.title}-${i}`}>
+                      <DataLinkButton
+                        buttonProps={{
+                          // Show tooltip message if max number of pinned lines has been reached
+                          tooltip:
+                            typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                              ? pinLineButtonTooltipTitle
+                              : undefined,
+                        }}
+                        link={link}
+                      />
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </td>

@@ -1,7 +1,5 @@
-import React from 'react';
-
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { HorizontalGroup, Icon, Tag, Tooltip } from '@grafana/ui/src';
+import { Icon, Stack, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -34,7 +32,7 @@ export const UserListPublicDashboardPage = () => {
                   'Earliest time user has been an active user to a dashboard'
                 )}
               >
-                <Icon name="question-circle" />
+                <Icon name="info-circle" />
               </Tooltip>
             </th>
             <th>
@@ -60,10 +58,17 @@ export const UserListPublicDashboardPage = () => {
               <td className="max-width-10">{user.firstSeenAtAge}</td>
               <td className="max-width-10">{user.lastSeenAtAge}</td>
               <td className="max-width-10">
-                <HorizontalGroup spacing="sm">
-                  <span>{user.totalDashboards} dashboard(s)</span>
+                <Stack gap={2}>
+                  <span>
+                    <Trans
+                      i18nKey="public-dashboard-users-access-list.table-body.dashboard-count"
+                      count={user.totalDashboards}
+                    >
+                      {{ count: user.totalDashboards }} dashboards
+                    </Trans>
+                  </span>
                   <DashboardsListModalButton email={user.email} />
-                </HorizontalGroup>
+                </Stack>
               </td>
               <td className="max-width-10">
                 <Tag name="Viewer" colorIndex={19} />

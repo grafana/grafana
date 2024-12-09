@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
+import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -32,8 +32,7 @@ interface TransformationPickerNgProps {
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onClose?: () => void;
   noTransforms: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  xforms: Array<TransformerRegistryItem<any>>;
+  xforms: TransformerRegistryItem[];
   search: string;
   suffix: ReactNode;
   data: DataFrame[];
@@ -84,6 +83,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           onKeyDown={onSearchKeyDown}
           suffix={suffix}
           ref={searchInputRef}
+          autoFocus={true}
         />
         <div className={styles.showImages}>
           <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
@@ -159,8 +159,7 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
 }
 
 interface TransformationsGridProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformations: Array<TransformerRegistryItem<any>>;
+  transformations: TransformerRegistryItem[];
   showIllustrations?: boolean;
   onClick: (id: string) => void;
   data: DataFrame[];
@@ -232,16 +231,16 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
 
 function getTransformationGridStyles(theme: GrafanaTheme2) {
   return {
-    // eslint-disable-next-line @emotion/syntax-preference
-    heading: css`
-            font-weight: 400,
-            > button: {
-                width: '100%',
-                display: 'flex',
-                justify-content: 'space-between',
-                align-items: 'center',
-                flex-wrap: 'no-wrap',
-        },`,
+    heading: css({
+      fontWeight: 400,
+      '> button': {
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'nowrap',
+      },
+    }),
     description: css({
       fontSize: '12px',
       display: 'flex',

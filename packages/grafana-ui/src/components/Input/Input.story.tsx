@@ -1,5 +1,5 @@
-import { Story, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { StoryFn, Meta } from '@storybook/react';
+import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
 import { Field, Button, Input } from '@grafana/ui';
@@ -10,12 +10,11 @@ import mdx from './Input.mdx';
 import { parseAccessory } from './storyUtils';
 
 const prefixSuffixOpts = {
-  None: null,
-  Text: '$',
+  $: 'Text',
   ...getAvailableIcons().reduce<KeyValue<string>>((prev, c) => {
     return {
       ...prev,
-      [`Icon: ${c}`]: `icon-${c}`,
+      [`icon-${c}`]: `Icon: ${c}`,
     };
   }, {}),
 };
@@ -43,27 +42,29 @@ const meta: Meta = {
     prefixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: [null, ...Object.keys(prefixSuffixOpts)],
     },
     suffixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: [null, ...Object.keys(prefixSuffixOpts)],
     },
     type: {
       control: {
         type: 'select',
-        options: ['text', 'number', 'password'],
       },
+      options: ['text', 'number', 'password'],
     },
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
 };
 
-export const Simple: Story = (args) => {
+export const Simple: StoryFn = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
   const prefix = parseAccessory(args.prefixVisible);
@@ -91,7 +92,7 @@ Simple.args = {
   placeholder: 'Enter your name here...',
 };
 
-export const WithFieldValidation: Story = (args) => {
+export const WithFieldValidation: StoryFn = (args) => {
   const [value, setValue] = useState('');
 
   return (

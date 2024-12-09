@@ -15,7 +15,6 @@ import {
   FieldDTO,
   FieldType,
   getDisplayProcessor,
-  Labels,
   MutableDataFrame,
   toDataFrame,
   TraceKeyValuePair,
@@ -28,15 +27,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import {
-  ProtoValue,
-  Span,
-  SpanAttributes,
-  Spanset,
-  TempoJsonData,
-  TraceqlMetricsResponse,
-  TraceSearchMetadata,
-} from './types';
+import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
   if (value.stringValue) {
@@ -48,11 +39,11 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
   }
 
   if (value.intValue !== undefined) {
-    return Number.parseInt(value.intValue as any, 10);
+    return Number.parseInt(String(value.intValue), 10);
   }
 
   if (value.doubleValue) {
-    return Number.parseFloat(value.doubleValue as any);
+    return Number.parseFloat(String(value.doubleValue));
   }
 
   if (value.arrayValue) {
@@ -132,7 +123,7 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
           fields.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
         }
       }
-      logs.push({ fields, timestamp: event.timeUnixNano / 1000000 });
+      logs.push({ fields, timestamp: event.timeUnixNano / 1000000, name: event.name });
     }
   }
 
@@ -364,7 +355,7 @@ function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trac
       timeUnixNano: log.timestamp * 1000000,
       attributes: [],
       droppedAttributesCount: 0,
-      name: '',
+      name: log.name || '',
     };
     for (const field of log.fields) {
       event.attributes!.push({
@@ -472,56 +463,6 @@ function transformToTraceData(data: TraceSearchMetadata) {
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
-}
-
-const metricsValueToString = (value: ProtoValue): string => {
-  if (value.stringValue) {
-    return `"${value.stringValue}"`;
-  }
-  return '' + (value.intValue || value.doubleValue || value.boolValue || '""');
-};
-
-export function formatTraceQLMetrics(query: string, data: TraceqlMetricsResponse) {
-  const frames = data.series.map((series, index) => {
-    const labels: Labels = {};
-    series.labels?.forEach((label) => {
-      labels[label.key] = metricsValueToString(label.value);
-    });
-    // If it's a single series, use the query as the displayName fallback
-    let name = data.series.length === 1 ? query : '';
-    if (series.labels) {
-      if (series.labels.length === 1) {
-        // For single label series, use the label value as the displayName to improve readability
-        name = metricsValueToString(series.labels[0].value);
-      } else {
-        // otherwise build a string using the label keys and values
-        name = `{${series.labels.map((label) => `${label.key}=${metricsValueToString(label.value)}`).join(', ')}}`;
-      }
-    }
-    return createDataFrame({
-      refId: name || `A${index}`,
-      fields: [
-        {
-          name: 'time',
-          type: FieldType.time,
-          values: series.samples.map((sample) => parseInt(sample.timestampMs, 10)),
-        },
-        {
-          name: name,
-          labels,
-          type: FieldType.number,
-          values: series.samples.map((sample) => sample.value),
-          config: {
-            displayNameFromDS: name,
-          },
-        },
-      ],
-      meta: {
-        preferredVisualisationType: 'graph',
-      },
-    });
-  });
-  return frames;
 }
 
 export function formatTraceQLResponse(

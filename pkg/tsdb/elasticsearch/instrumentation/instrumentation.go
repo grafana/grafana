@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -18,12 +19,8 @@ var (
 	}, []string{"status", "endpoint"})
 )
 
-const (
-	EndpointQueryData = "queryData"
-)
-
 func UpdatePluginParsingResponseDurationSeconds(ctx context.Context, duration time.Duration, status string) {
-	histogram := pluginParsingResponseDurationSeconds.WithLabelValues(status, EndpointQueryData)
+	histogram := pluginParsingResponseDurationSeconds.WithLabelValues(status, string(backend.EndpointQueryData))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(duration.Seconds(), prometheus.Labels{"traceID": traceID})

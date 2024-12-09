@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TransformerRegistryItem } from '@grafana/data';
 import { Drawer } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';

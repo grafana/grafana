@@ -9,16 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,11 +30,18 @@ const (
 	maxTestReceiversTimeout     = 30 * time.Second
 )
 
+type receiversAuthz interface {
+	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
+}
+
 type AlertmanagerSrv struct {
-	log    log.Logger
-	ac     accesscontrol.AccessControl
-	mam    *notifier.MultiOrgAlertmanager
-	crypto notifier.Crypto
+	log            log.Logger
+	ac             accesscontrol.AccessControl
+	mam            *notifier.MultiOrgAlertmanager
+	crypto         notifier.Crypto
+	silenceSvc     SilenceService
+	featureManager featuremgmt.FeatureToggles
+	receiverAuthz  receiversAuthz
 }
 
 type UnknownReceiverError struct {
@@ -50,7 +58,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	status := am.GetStatus()
+	status, err := am.GetStatus(c.Req.Context())
+	if err != nil {
+		srv.log.Error("Unable to get status for the alertmanager", "error", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
+	}
+
 	if !c.SignedInUser.HasRole(org.RoleAdmin) {
 		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
 	}
@@ -58,78 +71,14 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, status)
 }
 
-func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	err := postableSilence.Validate(strfmt.Default)
-	if err != nil {
-		srv.log.Error("Silence failed validation", "error", err)
-		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
-	}
-
-	action := accesscontrol.ActionAlertingInstanceUpdate
-	if postableSilence.ID == "" {
-		action = accesscontrol.ActionAlertingInstanceCreate
-	}
-	evaluator := accesscontrol.EvalPermission(action)
-	if !accesscontrol.HasAccess(srv.ac, c)(evaluator) {
-		errAction := "update"
-		if postableSilence.ID == "" {
-			errAction = "create"
-		}
-		return response.Err(authz.NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s silences", errAction), evaluator))
-	}
-
-	silenceID, err := srv.mam.CreateSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), &postableSilence)
-	if err != nil {
-		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
-
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-
-		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-
-		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
-	}
-	return response.JSON(http.StatusAccepted, apimodels.PostSilencesOKBody{
-		SilenceID: silenceID,
-	})
-}
-
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
+	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
 		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
-		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
-}
-
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	if err := srv.mam.DeleteSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), silenceID); err != nil {
-		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
@@ -207,40 +156,6 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilence, err := am.GetSilence(c.Req.Context(), silenceID)
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilence)
-}
-
-func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilences, err := am.ListSilences(c.Req.Context(), c.QueryStrings("filter"))
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilences)
-}
-
 func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
 	confId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -285,6 +200,18 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		if err != nil {
+			// Unclear if returning an error here is the right thing to do, preventing the user from posting a new config
+			// when the current one is legitimately invalid is not optimal, but we need to ensure receiver
+			// permissions are maintained and prevent potential access control bypasses. The workaround is to use the
+			// various new k8s API endpoints to fix the configuration.
+			return ErrResp(http.StatusInternalServerError, err, "")
+		}
+		if err := srv.k8sApiServiceGuard(currentConfig, body); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
 	err = srv.mam.SaveAndApplyAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
@@ -304,7 +231,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
@@ -317,7 +244,15 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to retrieve receivers")
 	}
-	return response.JSON(http.StatusOK, rcvs)
+	statuses := make([]ReceiverStatus, 0, len(rcvs))
+	for _, rcv := range rcvs { // TODO this is temporary so we can use authz filter logic.
+		statuses = append(statuses, ReceiverStatus(rcv))
+	}
+	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
+	if err != nil {
+		response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
+	}
+	return response.JSON(http.StatusOK, statuses)
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
@@ -344,7 +279,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return errResp
 	}
 
-	result, err := am.TestReceivers(ctx, body)
+	result, status, err := am.TestReceivers(ctx, body)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
@@ -352,7 +287,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return response.Error(http.StatusInternalServerError, "", err)
 	}
 
-	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
+	return response.JSON(status, newTestReceiversResult(result))
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
@@ -391,7 +326,7 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 	return ctx, cancelFunc, nil
 }
 
-func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestReceiversResult {
+func newTestReceiversResult(r *alertingNotify.TestReceiversResult) apimodels.TestReceiversResult {
 	v := apimodels.TestReceiversResult{
 		Alert: apimodels.TestReceiversConfigAlertParams{
 			Annotations: r.Alert.Annotations,
@@ -406,58 +341,12 @@ func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestRecei
 			configs[jx].Name = config.Name
 			configs[jx].UID = config.UID
 			configs[jx].Status = config.Status
-			if config.Error != nil {
-				configs[jx].Error = config.Error.Error()
-			}
+			configs[jx].Error = config.Error
 		}
 		v.Receivers[ix].Configs = configs
 		v.Receivers[ix].Name = next.Name
 	}
 	return v
-}
-
-// statusForTestReceivers returns the appropriate status code for the response
-// for the results.
-//
-// It returns an HTTP 200 OK status code if notifications were sent to all receivers,
-// an HTTP 400 Bad Request status code if all receivers contain invalid configuration,
-// an HTTP 408 Request Timeout status code if all receivers timed out when sending
-// a test notification or an HTTP 207 Multi Status.
-func statusForTestReceivers(v []notifier.TestReceiverResult) int {
-	var (
-		numBadRequests   int
-		numTimeouts      int
-		numUnknownErrors int
-	)
-	for _, receiver := range v {
-		for _, next := range receiver.Configs {
-			if next.Error != nil {
-				var (
-					invalidReceiverErr alertingNotify.IntegrationValidationError
-					receiverTimeoutErr alertingNotify.IntegrationTimeoutError
-				)
-				if errors.As(next.Error, &invalidReceiverErr) {
-					numBadRequests += 1
-				} else if errors.As(next.Error, &receiverTimeoutErr) {
-					numTimeouts += 1
-				} else {
-					numUnknownErrors += 1
-				}
-			}
-		}
-	}
-	if numBadRequests == len(v) {
-		// if all receivers contain invalid configuration
-		return http.StatusBadRequest
-	} else if numTimeouts == len(v) {
-		// if all receivers contain valid configuration but timed out
-		return http.StatusRequestTimeout
-	} else if numBadRequests+numTimeouts+numUnknownErrors > 0 {
-		return http.StatusMultiStatus
-	} else {
-		// all receivers were sent a notification without error
-		return http.StatusOK
-	}
 }
 
 func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
@@ -472,7 +361,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 		apiRes.Errors = append(apiRes.Errors, apimodels.TestTemplatesErrorResult{
 			Name:    e.Name,
 			Kind:    apimodels.TemplateErrorKind(e.Kind),
-			Message: e.Error.Error(),
+			Message: e.Error,
 		})
 	}
 	return apiRes
@@ -493,4 +382,10 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 
 	srv.log.Error("Unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
+}
+
+type ReceiverStatus apimodels.Receiver
+
+func (rs ReceiverStatus) GetUID() string {
+	return legacy_storage.NameToUid(rs.Name)
 }

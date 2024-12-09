@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert } from 'app/types/unified-alerting';
 
 import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';

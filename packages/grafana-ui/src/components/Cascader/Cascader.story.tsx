@@ -1,5 +1,5 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
+import { useState } from 'react';
 
 import { Cascader } from '@grafana/ui';
 
@@ -87,7 +87,7 @@ WithDisplayAllSelectedLevels.args = {
 };
 
 export const WithOptionsStateUpdate = () => {
-  const [updatedOptions, setOptions] = React.useState<CascaderOption[]>([
+  const [updatedOptions, setOptions] = useState<CascaderOption[]>([
     {
       label: 'Initial state option',
       value: 'initial',

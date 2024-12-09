@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -78,6 +79,12 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
                 ...options.jsonData.tracesToProfiles,
                 datasourceUid: ds.uid,
+              });
+            }}
+            onClear={() => {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
+                ...options.jsonData.tracesToProfiles,
+                datasourceUid: undefined,
               });
             }}
           />

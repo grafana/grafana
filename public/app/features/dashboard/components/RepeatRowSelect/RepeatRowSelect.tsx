@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
@@ -44,14 +44,14 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 };
 
 interface Props2 {
-  parent: SceneObject;
+  sceneContext: SceneObject;
   repeat: string | undefined;
   id?: string;
   onChange: (name?: string) => void;
 }
 
-export const RepeatRowSelect2 = ({ parent, repeat, id, onChange }: Props2) => {
-  const sceneVars = useMemo(() => sceneGraph.getVariables(parent), [parent]);
+export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
+  const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
 
   const variableOptions = useMemo(() => {

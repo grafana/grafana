@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { memo, Children, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +34,7 @@ export interface Props {
 }
 
 /** @alpha */
-export const PageToolbar = React.memo(
+export const PageToolbar = memo(
   ({
     title,
     section,
@@ -73,7 +73,12 @@ export const PageToolbar = React.memo(
     const titleEl = (
       <>
         <span className={styles.truncateText}>{title}</span>
-        {section && <span className={styles.pre}> / {section}</span>}
+        {section && (
+          <span className={styles.pre}>
+            {' / '}
+            {section}
+          </span>
+        )}
       </>
     );
 
@@ -109,7 +114,7 @@ export const PageToolbar = React.memo(
                 </Link>
                 {titleHref && (
                   <span className={cx(styles.titleText, styles.titleDivider)} aria-hidden>
-                    /
+                    {'/'}
                   </span>
                 )}
               </>
@@ -146,7 +151,7 @@ export const PageToolbar = React.memo(
           </nav>
         </div>
         <ToolbarButtonRow alignment={buttonOverflowAlignment}>
-          {React.Children.toArray(children).filter(Boolean)}
+          {Children.toArray(children).filter(Boolean)}
         </ToolbarButtonRow>
       </nav>
     );

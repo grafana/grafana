@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -14,14 +15,13 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -36,106 +36,102 @@ export class DashboardSceneChangeTracker {
     this._dashboard = dashboard;
   }
 
-  private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
+  static isUpdatingPersistedState({ payload }: SceneObjectStateChangedEvent) {
     // If there are no changes in the state, the check is not needed
     if (Object.keys(payload.partialUpdate).length === 0) {
-      return;
+      return false;
     }
 
     // Any change in the panel should trigger a change detection
-    // The VizPanelManager includes configuration for the panel like repeat
     // The PanelTimeRange includes the overrides configuration
     if (
       payload.changedObject instanceof VizPanel ||
       payload.changedObject instanceof DashboardGridItem ||
       payload.changedObject instanceof PanelTimeRange
     ) {
-      return this.detectSaveModelChanges();
-    }
-    // VizPanelManager includes the repeat configuration
-    if (payload.changedObject instanceof VizPanelManager) {
-      if (
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'maxPerRow')
-      ) {
-        return this.detectSaveModelChanges();
-      }
+      return true;
     }
     // SceneQueryRunner includes the DS configuration
     if (payload.changedObject instanceof SceneQueryRunner) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     // SceneDataTransformer includes the transformation configuration
     if (payload.changedObject instanceof SceneDataTransformer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof VizPanelLinks) {
-      return this.detectSaveModelChanges();
-    }
-    if (payload.changedObject instanceof LibraryVizPanel) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
-        return this.detectSaveModelChanges();
-      }
+      return true;
     }
     if (payload.changedObject instanceof SceneRefreshPicker) {
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
-        return this.detectSaveModelChanges();
+        return true;
+      }
+    }
+    if (payload.changedObject instanceof LibraryPanelBehavior) {
+      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
+        return true;
       }
     }
     if (payload.changedObject instanceof behaviors.CursorSync) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof SceneDataLayerSet) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardGridItem) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof SceneGridLayout) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardScene) {
       if (Object.keys(payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof SceneTimeRange) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardControls) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'hideTimeControls')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof SceneVariableSet) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof behaviors.LiveNowTimer) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (isSceneVariableInstance(payload.changedObject)) {
-      return this.detectSaveModelChanges();
+      return true;
     }
+    return false;
   }
 
   private detectSaveModelChanges() {
-    this._changesWorker?.postMessage({
-      changed: transformSceneToSaveModel(this._dashboard),
-      initial: this._dashboard.getInitialSaveModel(),
-    });
+    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const initialDashboard = this._dashboard.getInitialSaveModel();
+
+    // Objects must be stringify to ensure they are clonable, so they don't contain functions
+    const changed =
+      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
+    const initial =
+      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+
+    this._changesWorker?.postMessage({ initial, changed });
   }
 
   private hasMetadataChanges() {
@@ -164,13 +160,20 @@ export class DashboardSceneChangeTracker {
     if (!this._changesWorker) {
       this.init();
     }
+
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.updateIsDirty(e.data);
     };
 
+    const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
+
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
       SceneObjectStateChangedEvent,
-      this.onStateChanged.bind(this)
+      (event: SceneObjectStateChangedEvent) => {
+        if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+          performSaveModelDiff();
+        }
+      }
     );
   }
 
@@ -181,5 +184,17 @@ export class DashboardSceneChangeTracker {
   public terminate() {
     this.stopTrackingChanges();
     this._changesWorker?.terminate();
+    this._changesWorker = undefined;
   }
+}
+
+/**
+ * The debouncer makes unit tests slower and more complex so turning it off for unit tests
+ */
+function getChangeTrackerDebouncer(fn: () => void) {
+  if (process.env.NODE_ENV === 'test') {
+    return fn;
+  }
+
+  return debounce(fn, 250);
 }

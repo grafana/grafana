@@ -38,7 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
@@ -51,12 +51,12 @@ var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
 func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{ID: serviceAccountID, OrgID: cmd.OrgId})
 		if err != nil {
 			return nil, err
 		}
 
-		if isExternalServiceAccount(sa.Login) {
+		if serviceaccounts.IsExternalServiceAccount(sa.Login) {
 			s.log.Error("unable to create tokens for external service accounts", "serviceAccountID", serviceAccountID)
 			return nil, extsvcaccounts.ErrCannotCreateToken
 		}
@@ -77,12 +77,12 @@ func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID i
 
 func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{ID: serviceAccountID, OrgID: orgID})
 		if err != nil {
 			return err
 		}
 
-		if isExternalServiceAccount(sa.Login) {
+		if serviceaccounts.IsExternalServiceAccount(sa.Login) {
 			s.log.Error("unable to delete external service accounts", "serviceAccountID", serviceAccountID)
 			return extsvcaccounts.ErrCannotBeDeleted
 		}
@@ -92,12 +92,12 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 
 func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, orgID int64, serviceAccountID int64, tokenID int64) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return err
 		}
 
-		if isExternalServiceAccount(sa.Login) {
+		if serviceaccounts.IsExternalServiceAccount(sa.Login) {
 			s.log.Error("unable to delete tokens for external service accounts", "serviceAccountID", serviceAccountID)
 			return extsvcaccounts.ErrCannotDeleteToken
 		}
@@ -107,11 +107,11 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 
 func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return err
 		}
-		if isExternalServiceAccount(sa.Login) {
+		if serviceaccounts.IsExternalServiceAccount(sa.Login) {
 			s.log.Error("unable to enable/disable external service accounts", "serviceAccountID", serviceAccountID)
 			return extsvcaccounts.ErrCannotBeUpdated
 		}
@@ -131,14 +131,14 @@ func (s *ServiceAccountsProxy) MigrateApiKeysToServiceAccounts(ctx context.Conte
 	return s.proxiedService.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
 
-func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	if s.isProxyEnabled {
-		sa.IsExternal = isExternalServiceAccount(sa.Login)
+		sa.IsExternal = serviceaccounts.IsExternalServiceAccount(sa.Login)
 		sa.RequiredBy = strings.ReplaceAll(sa.Name, serviceaccounts.ExtSvcPrefix, "")
 	}
 
@@ -155,11 +155,11 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 			s.log.Error("Invalid service account name", "name", *saForm.Name)
 			return nil, extsvcaccounts.ErrInvalidName
 		}
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return nil, err
 		}
-		if isExternalServiceAccount(sa.Login) {
+		if serviceaccounts.IsExternalServiceAccount(sa.Login) {
 			s.log.Error("unable to update external service accounts", "serviceAccountID", serviceAccountID)
 			return nil, extsvcaccounts.ErrCannotBeUpdated
 		}
@@ -176,16 +176,12 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 
 	if s.isProxyEnabled {
 		for i := range sa.ServiceAccounts {
-			sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+			sa.ServiceAccounts[i].IsExternal = serviceaccounts.IsExternalServiceAccount(sa.ServiceAccounts[i].Login)
 		}
 	}
 	return sa, nil
 }
 
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, serviceaccounts.ExtSvcPrefix)
-}
-
-func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ExtSvcLoginPrefix)
+	return !strings.HasPrefix(name, strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-"))
 }

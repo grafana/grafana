@@ -1,15 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
+import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -30,6 +32,7 @@ const AnnotationsStep = () => {
     setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
+  const type = watch('type');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
@@ -90,9 +93,9 @@ const AnnotationsStep = () => {
 
   function getAnnotationsSectionDescription() {
     return (
-      <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
-          Add more context in your notification messages.
+          <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
           contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
@@ -103,9 +106,16 @@ const AnnotationsStep = () => {
       </Stack>
     );
   }
+  // when using Grafana managed rules, the annotations step is the 6th step, as we have an additional step for the configure labels and notifications
+  const step = isGrafanaManagedRuleByType(type) ? 6 : 5;
 
   return (
-    <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+    <RuleEditorSection
+      stepNo={step}
+      title={t('alerting.annotations.title', 'Configure notification message')}
+      description={getAnnotationsSectionDescription()}
+      fullWidth
+    >
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
@@ -205,50 +215,50 @@ const AnnotationsStep = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annotationValueInput: css`
-    width: 394px;
-  `,
-  textarea: css`
-    height: 76px;
-  `,
-  addAnnotationsButtonContainer: css`
-    margin-top: ${theme.spacing(1)};
-    gap: ${theme.spacing(1)};
-    display: flex;
-  `,
-  field: css`
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-  `,
-  flexRowItemMargin: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  deleteAnnotationButton: css`
-    display: inline-block;
-    margin-top: 10px;
-    margin-left: 10px;
-  `,
+  annotationValueInput: css({
+    width: '394px',
+  }),
+  textarea: css({
+    height: '76px',
+  }),
+  addAnnotationsButtonContainer: css({
+    marginTop: theme.spacing(1),
+    gap: theme.spacing(1),
+    display: 'flex',
+  }),
+  field: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  }),
+  flexRowItemMargin: css({
+    marginTop: theme.spacing(1),
+  }),
+  deleteAnnotationButton: css({
+    display: 'inline-block',
+    marginTop: '10px',
+    marginLeft: '10px',
+  }),
 
-  annotationTitle: css`
-    color: ${theme.colors.text.primary};
-    margin-bottom: 3px;
-  `,
+  annotationTitle: css({
+    color: theme.colors.text.primary,
+    marginBottom: '3px',
+  }),
 
-  annotationContainer: css`
-    margin-top: 5px;
-  `,
+  annotationContainer: css({
+    marginTop: '5px',
+  }),
 
-  annotationDescription: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  annotationDescription: css({
+    color: theme.colors.text.secondary,
+  }),
 
-  annotationValueContainer: css`
-    display: flex;
-  `,
+  annotationValueContainer: css({
+    display: 'flex',
+  }),
 });
 
 export default AnnotationsStep;

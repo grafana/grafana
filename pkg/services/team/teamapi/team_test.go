@@ -21,16 +21,14 @@ import (
 const (
 	searchTeamsURL          = "/api/teams/search"
 	createTeamURL           = "/api/teams/"
-	detailTeamURL           = "/api/teams/%d"
-	detailTeamPreferenceURL = "/api/teams/%d/preferences"
+	detailTeamURL           = "/api/teams/%v"
+	detailTeamPreferenceURL = "/api/teams/%v/preferences"
 	teamCmd                 = `{"name": "MyTestTeam%d"}`
 	teamPreferenceCmd       = `{"theme": "dark"}`
 )
 
 func TestTeamAPIEndpoint_CreateTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = teamtest.NewFakeService()
-	})
+	server := SetupAPITestServer(t, nil)
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
@@ -54,9 +52,7 @@ func TestTeamAPIEndpoint_CreateTeam(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = teamtest.NewFakeService()
-	})
+	server := SetupAPITestServer(t, nil)
 
 	t.Run("Access control prevents searching for teams with the incorrect permissions", func(t *testing.T) {
 		req := server.NewGetRequest(searchTeamsURL)
@@ -80,9 +76,7 @@ func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
-	})
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
 	url := fmt.Sprintf(detailTeamURL, 1)
 
@@ -96,6 +90,30 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 	})
 
 	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
+		req := server.NewGetRequest(url)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+		}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control prevents getting a team when missing permissions by UID", func(t *testing.T) {
+		url := fmt.Sprintf(detailTeamURL, "a00001")
+		req := server.NewGetRequest(url)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"},
+		}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control allows getting a team by UID with the correct permissions", func(t *testing.T) {
+		url := fmt.Sprintf(detailTeamURL, "a00001")
 		req := server.NewGetRequest(url)
 		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
@@ -122,11 +140,9 @@ func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
-	})
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
-	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewRequest(http.MethodPut, fmt.Sprintf(detailTeamURL, teamID), strings.NewReader(teamCmd))
 		req = webtest.RequestWithSignedInUser(req, user)
 		return server.SendJSON(req)
@@ -134,6 +150,15 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 
 	t.Run("Access control allows updating team with the correct permissions", func(t *testing.T) {
 		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control allows updating team by UID with the correct permissions", func(t *testing.T) {
+		res, err := request("a00001", authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -164,11 +189,9 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
-	})
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
-	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, teamID), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, user)
 		return server.Send(req)
@@ -191,17 +214,26 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("Access control allows deleting teams with the correct permissions by UID", func(t *testing.T) {
+		res, err := request("a00001", authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 }
 
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
 		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
 	})
 
-	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
+	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewGetRequest(fmt.Sprintf(detailTeamPreferenceURL, teamID))
 		req = webtest.RequestWithSignedInUser(req, user)
 		return server.Send(req)
@@ -209,6 +241,15 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 
 	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
 		res, err := request(1, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+		}))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Access control allows getting team preferences with the correct permissions by UID", func(t *testing.T) {
+		res, err := request("a00001", authedUserWithPermissions(1, 1, []accesscontrol.Permission{
 			{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
 		}))
 		require.NoError(t, err)
@@ -230,7 +271,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
+	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
 		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
 	})
 

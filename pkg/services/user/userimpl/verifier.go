@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -14,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -152,6 +154,6 @@ func (s *Verifier) Complete(ctx context.Context, cmd user.CompleteEmailVerifyCom
 	// remove the current token, so a new one can be generated with correct values.
 	return s.is.RemoveIDToken(
 		ctx,
-		&user.SignedInUser{UserID: usr.ID, OrgID: usr.OrgID, NamespacedID: authn.NamespacedID(authn.NamespaceUser, usr.ID)},
+		&authn.Identity{ID: strconv.FormatInt(usr.ID, 10), Type: claims.TypeUser, OrgID: usr.OrgID},
 	)
 }

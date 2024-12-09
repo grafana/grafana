@@ -1,7 +1,10 @@
 import { css } from '@emotion/css';
-import memoizeOne from 'memoize-one';
-import React from 'react';
+import { useRef } from 'react';
+import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 const transitionDuration = 500;
 // We add a bit of delay to the transition as another perf optimisation. As at the start we need to render
@@ -9,37 +12,41 @@ const transitionDuration = 500;
 // for react to first render them and then do the animation.
 const transitionDelay = 100;
 
-const getStyles = memoizeOne(() => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    logsEnter: css`
-      label: logsEnter;
-      position: absolute;
-      opacity: 0;
-      height: auto;
-      width: 100%;
-    `,
-    logsEnterActive: css`
-      label: logsEnterActive;
-      opacity: 1;
-      transition: opacity ${transitionDuration}ms ease-out ${transitionDelay}ms;
-    `,
-    logsExit: css`
-      label: logsExit;
-      position: absolute;
-      opacity: 1;
-      height: auto;
-      width: 100%;
-    `,
-    logsExitActive: css`
-      label: logsExitActive;
-      opacity: 0;
-      transition: opacity ${transitionDuration}ms ease-out ${transitionDelay}ms;
-    `,
+    logsEnter: css({
+      label: 'logsEnter',
+      position: 'absolute',
+      opacity: 0,
+      height: 'auto',
+      width: '100%',
+    }),
+    logsEnterActive: css({
+      label: 'logsEnterActive',
+      opacity: 1,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: `opacity ${transitionDuration}ms ease-out ${transitionDelay}ms`,
+      },
+    }),
+    logsExit: css({
+      label: 'logsExit',
+      position: 'absolute',
+      opacity: 1,
+      height: 'auto',
+      width: '100%',
+    }),
+    logsExitActive: css({
+      label: 'logsExitActive',
+      opacity: 0,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: `opacity ${transitionDuration}ms ease-out ${transitionDelay}ms`,
+      },
+    }),
   };
-});
+};
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
 };
 
@@ -49,7 +56,8 @@ type Props = {
  */
 export function LogsCrossFadeTransition(props: Props) {
   const { visible, children } = props;
-  const styles = getStyles();
+  const transitionRef = useRef(null);
+  const styles = useStyles2(getStyles);
   return (
     <CSSTransition
       in={visible}
@@ -62,8 +70,9 @@ export function LogsCrossFadeTransition(props: Props) {
         exit: styles.logsExit,
         exitActive: styles.logsExitActive,
       }}
+      nodeRef={transitionRef}
     >
-      {children}
+      <div ref={transitionRef}>{children}</div>
     </CSSTransition>
   );
 }

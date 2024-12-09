@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -77,5 +76,21 @@ describe('MenuItem', () => {
     fireEvent.keyDown(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')), { key: 'ArrowRight' });
 
     expect(await screen.findByTestId(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
+  });
+
+  it('renders with role="link" when URL is passed', async () => {
+    render(<MenuItem label="URL Item" url="/some-url" />);
+    expect(screen.getByRole('link', { name: 'URL Item' })).toBeInTheDocument();
+  });
+
+  it('renders with expected role when URL and role are passed', async () => {
+    render(<MenuItem label="URL Item" url="/some-url" role="menuitem" />);
+    expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
+  });
+
+  it('renders extra component if provided', async () => {
+    render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
+    expect(screen.getByText('main label')).toBeInTheDocument();
+    expect(screen.getByText('extra content')).toBeInTheDocument();
   });
 });

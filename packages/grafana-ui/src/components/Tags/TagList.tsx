@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, memo } from 'react';
+import { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -48,7 +48,10 @@ const TagListComponent = memo(
             </li>
           ))}
           {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-            <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
+            <span className={styles.moreTagsLabel}>
+              {'+ '}
+              {numTags - displayMax}
+            </span>
           )}
         </ul>
       );

@@ -109,6 +109,7 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 	tracingCfg.Sampler = o.SamplerType
 	tracingCfg.SamplerParam = o.SamplerParam
 	tracingCfg.SamplerRemoteURL = o.SamplingServiceURL
+	tracingCfg.ProfilingIntegration = true
 
 	ts, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
@@ -123,15 +124,8 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 	}
 
 	config.AddPostStartHookOrDie("grafana-tracing-service", func(hookCtx genericapiserver.PostStartHookContext) error {
-		ctx, cancel := context.WithCancel(context.Background())
-
 		go func() {
-			<-hookCtx.StopCh
-			cancel()
-		}()
-
-		go func() {
-			if err := ts.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			if err := ts.Run(hookCtx.Context); err != nil && !errors.Is(err, context.Canceled) {
 				o.logger.Error("failed to shutdown tracing service", "error", err)
 			}
 		}()

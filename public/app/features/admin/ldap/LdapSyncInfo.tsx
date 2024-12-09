@@ -1,7 +1,6 @@
-import React from 'react';
-
 import { dateTimeFormat } from '@grafana/data';
 import { InteractiveTable, Text } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { SyncInfo } from 'app/types';
 
 interface Props {
@@ -31,7 +30,9 @@ export const LdapSyncInfo = ({ ldapSyncInfo }: Props) => {
 
   return (
     <section>
-      <Text element="h3">LDAP Synchronization</Text>
+      <Text element="h3">
+        <Trans i18nKey="admin.ldap-sync-info.title">LDAP Synchronization</Trans>
+      </Text>
       <InteractiveTable data={data} columns={columns} getRowId={(sync) => sync.syncAttribute} />
     </section>
   );

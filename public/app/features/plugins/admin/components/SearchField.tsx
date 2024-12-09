@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
+import * as React from 'react';
 import { useDebounce } from 'react-use';
 
 import { FilterInput } from '@grafana/ui';

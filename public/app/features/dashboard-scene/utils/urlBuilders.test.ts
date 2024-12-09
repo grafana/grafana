@@ -28,7 +28,16 @@ describe('dashboard utils', () => {
     expect(url).toBe('/d/dash-1/dash-1-slug/panel-edit/2?orgId=1&filter=A');
   });
 
-  it('Can getUrl with params removed and addded', () => {
+  it('Can getURL without shareView param', async () => {
+    const url = getDashboardUrl({
+      uid: 'dash-1',
+      currentQueryParams: '?orgId=1&filter=A&shareView=link',
+    });
+
+    expect(url).toBe('/d/dash-1?orgId=1&filter=A');
+  });
+
+  it('Can getUrl with params removed and added', () => {
     const url = getDashboardUrl({
       uid: 'dash-1',
       currentQueryParams: '?orgId=1&filter=A',

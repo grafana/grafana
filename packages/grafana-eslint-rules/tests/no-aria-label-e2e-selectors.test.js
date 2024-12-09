@@ -3,11 +3,13 @@ import { RuleTester } from 'eslint';
 import noAriaLabelE2ESelector from '../rules/no-aria-label-e2e-selectors.cjs';
 
 RuleTester.setDefaultConfig({
-  parserOptions: {
+  languageOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
-    ecmaFeatures: {
-      jsx: true,
+    parserOptions: {
+      ecmaFeatures: {
+        jsx: true,
+      },
     },
   },
 });

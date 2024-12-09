@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { CellProps, HeaderProps } from 'react-table';
 
 import { IconButton } from '../../IconButton/IconButton';

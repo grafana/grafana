@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 

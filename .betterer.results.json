@@ -1657,7 +1657,7 @@
           "count": 1
         },
         {
-          "path": "/packages/grafana-ui/src/components/Table/TableCellInspectModal.tsx",
+          "path": "/packages/grafana-ui/src/components/Table/TableCellInspector.tsx",
           "count": 1
         },
         {
@@ -7003,10 +7003,6 @@
       "files": [
         {
           "path": "/e2e/utils/flows/addDataSource.ts",
-          "count": 1
-        },
-        {
-          "path": "/packages/grafana-e2e/src/flows/addDataSource.ts",
           "count": 1
         },
         {

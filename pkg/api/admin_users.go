@@ -8,12 +8,12 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -70,6 +70,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
+		UID:     usr.UID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -228,7 +229,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.teamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
+		if err := hs.TeamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -334,7 +335,7 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
-	isDisabled := true
+	isDisabled := false
 	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
@@ -361,20 +362,14 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
-	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	id := web.Params(c.Req)[":id"]
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
-		activeUserID, err := identity.IntIdentifier(namespace, identifier)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
-		}
-		if activeUserID == userID {
-			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
-		}
+	if c.SignedInUser.GetID() == claims.NewTypeID(claims.TypeUser, id) {
+		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)

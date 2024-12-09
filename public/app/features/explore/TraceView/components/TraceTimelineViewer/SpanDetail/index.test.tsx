@@ -16,7 +16,6 @@ jest.mock('../utils');
 
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { data } from '@grafana/flamegraph';

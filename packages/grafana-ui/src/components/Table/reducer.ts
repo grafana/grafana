@@ -2,25 +2,25 @@ import { useCallback } from 'react';
 
 import { getFieldDisplayName } from '@grafana/data';
 
-import { TableSortByFieldState, GrafanaTableColumn, GrafanaTableState, Props } from './types';
+import { TableSortByFieldState, GrafanaTableColumn, GrafanaTableState, TableStateReducerProps, Props } from './types';
 
 export interface ActionType {
   type: string;
   id: string | undefined;
 }
 
-export function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
+export function useTableStateReducer({ onColumnResize, onSortByChange, data }: TableStateReducerProps) {
   return useCallback(
     (newState: GrafanaTableState, action: ActionType) => {
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
-            const info = (newState.columnResizing.headerIdWidths as any)[0];
-            const columnIdString = info[0];
+            const info = (newState.columnResizing?.headerIdWidths as any)?.[0];
+            const columnIdString = info?.[0];
             const fieldIndex = parseInt(columnIdString, 10);
-            const width = Math.round(newState.columnResizing.columnWidths[columnIdString]);
+            const width = Math.round(newState.columnResizing.columnWidths?.[columnIdString]);
 
-            const field = data.fields[fieldIndex];
+            const field = data.fields?.[fieldIndex];
             if (!field) {
               return newState;
             }

@@ -43,8 +43,7 @@ interface TimelineRowCellProps extends React.HTMLAttributes<HTMLDivElement> {
   style?: {};
 }
 
-export default function TimelineRow(props: TTimelineRowProps) {
-  const { children, className = '', ...rest } = props;
+export default function TimelineRow({ children, className = '', ...rest }: TTimelineRowProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.row, className)} {...rest}>
@@ -53,12 +52,7 @@ export default function TimelineRow(props: TTimelineRowProps) {
   );
 }
 
-TimelineRow.defaultProps = {
-  className: '',
-};
-
-export function TimelineRowCell(props: TimelineRowCellProps) {
-  const { children, className = '', width, style, ...rest } = props;
+export function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
   const styles = useStyles2(getStyles);
@@ -68,7 +62,5 @@ export function TimelineRowCell(props: TimelineRowCellProps) {
     </div>
   );
 }
-
-TimelineRowCell.defaultProps = { className: '', style: {} };
 
 TimelineRow.Cell = TimelineRowCell;

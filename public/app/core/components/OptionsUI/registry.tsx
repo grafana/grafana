@@ -1,5 +1,4 @@
 import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
-import React from 'react';
 
 import {
   FieldConfigPropertyItem,
@@ -27,7 +26,10 @@ import {
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
+  Action,
 } from '@grafana/data';
+import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
+import { config } from '@grafana/runtime';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -35,6 +37,7 @@ import { ThresholdsValueEditor } from 'app/features/dimensions/editors/Threshold
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
 import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
+import { ActionsValueEditor } from './actions';
 import { ColorValueEditor, ColorValueEditorSettings } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
@@ -144,6 +147,13 @@ export const getAllOptionEditors = () => {
     editor: DataLinksValueEditor,
   };
 
+  const actions: StandardEditorsRegistryItem<Action[]> = {
+    id: 'actions',
+    name: 'Actions',
+    description: 'Allows defining actions',
+    editor: ActionsValueEditor,
+  };
+
   const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
@@ -195,6 +205,7 @@ export const getAllOptionEditors = () => {
     select,
     unit,
     links,
+    actions,
     statsPicker,
     strings,
     timeZone,
@@ -213,7 +224,7 @@ export const getAllOptionEditors = () => {
  */
 export const getAllStandardFieldConfigs = () => {
   const category = ['Standard options'];
-  const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  const displayName: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'displayName',
     path: 'displayName',
     name: 'Display name',
@@ -229,7 +240,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  const unit: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
@@ -247,7 +258,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
+  const fieldMinMax: FieldConfigPropertyItem<FieldConfig, boolean, BooleanFieldSettings> = {
     id: 'fieldMinMax',
     path: 'fieldMinMax',
     name: 'Field min/max',
@@ -258,13 +269,13 @@ export const getAllStandardFieldConfigs = () => {
     process: booleanOverrideProcessor,
 
     shouldApply: (field) => field.type === FieldType.number,
-    showIf: (options: FieldConfig) => {
+    showIf: (options) => {
       return options.min === undefined || options.max === undefined;
     },
     category,
   };
 
-  const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
+  const min: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
     name: 'Min',
@@ -281,7 +292,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const max: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
+  const max: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'max',
     path: 'max',
     name: 'Max',
@@ -299,7 +310,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const decimals: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
+  const decimals: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
@@ -319,7 +330,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  const noValue: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
     name: 'No value',
@@ -332,12 +343,14 @@ export const getAllStandardFieldConfigs = () => {
     settings: {
       placeholder: '-',
     },
-    // ??? any optionsUi with no value
+    // ??? FieldConfig optionsUi with no value
     shouldApply: () => true,
     category,
   };
 
-  const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
+  const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
+
+  const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
     name: 'Data links',
@@ -348,11 +361,27 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category: ['Data links'],
+    category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings> = {
+  const actions: FieldConfigPropertyItem<FieldConfig, Action[], StringFieldConfigSettings> = {
+    id: 'actions',
+    path: 'actions',
+    name: 'Actions',
+    editor: standardEditorsRegistry.get('actions').editor,
+    override: standardEditorsRegistry.get('actions').editor,
+    process: actionsOverrideProcessor,
+    settings: {
+      placeholder: '-',
+    },
+    shouldApply: () => true,
+    category: [dataLinksCategory],
+    getItemsCount: (value) => (value ? value.length : 0),
+    showIf: () => config.featureToggles.vizActions,
+  };
+
+  const color: FieldConfigPropertyItem<FieldConfig, FieldColor | undefined, FieldColorConfigSettings> = {
     id: 'color',
     path: 'color',
     name: 'Color scheme',
@@ -367,7 +396,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const mappings: FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> = {
+  const mappings: FieldConfigPropertyItem<FieldConfig, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     path: 'mappings',
     name: 'Value mappings',
@@ -383,7 +412,7 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value?) => (value ? value.length : 0),
   };
 
-  const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+  const thresholds: FieldConfigPropertyItem<FieldConfig, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
@@ -403,7 +432,7 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  const filterable: FieldConfigPropertyItem<{}, boolean | undefined, {}> = {
+  const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
     name: 'Ad-hoc filterable',
@@ -416,5 +445,19 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [
+    unit,
+    min,
+    max,
+    fieldMinMax,
+    decimals,
+    displayName,
+    color,
+    noValue,
+    links,
+    actions,
+    mappings,
+    thresholds,
+    filterable,
+  ];
 };

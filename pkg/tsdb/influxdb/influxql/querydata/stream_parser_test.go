@@ -1,13 +1,14 @@
 package querydata
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
@@ -18,6 +19,24 @@ const (
 	shouldUpdate = false
 	testPath     = "../testdata"
 )
+
+func readJsonFile(filePath string) io.ReadCloser {
+	bytes, err := os.ReadFile(filepath.Join(testPath, filepath.Clean(filePath)+".json"))
+	if err != nil {
+		panic(fmt.Sprintf("cannot read the file: %s", filePath))
+	}
+
+	return io.NopCloser(strings.NewReader(string(bytes)))
+}
+
+func generateQuery(query, resFormat, alias string) *models.Query {
+	return &models.Query{
+		RawQuery:     query,
+		UseRawQuery:  true,
+		Alias:        alias,
+		ResultFormat: resFormat,
+	}
+}
 
 var testFiles = []string{
 	"all_values_are_null",
@@ -55,26 +74,42 @@ func TestReadInfluxAsTable(t *testing.T) {
 
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
-		f, err := os.Open(path.Join(testPath, filepath.Clean(tf+".json")))
+		f := readJsonFile(tf)
+
+		query := generateQuery("Test raw query", resultFormat, "")
+
+		runQuery(t, f, tf, resultFormat, query)
+	}
+}
+
+func runQuery(t *testing.T, f io.ReadCloser, tf string, rf string, query *models.Query) {
+	rsp := ResponseParse(f, 200, query)
+
+	if strings.Contains(tf, "error") {
+		require.Error(t, rsp.Error)
+		return
+	}
+	require.NoError(t, rsp.Error)
+
+	fname := tf + "." + rf + ".golden"
+	experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
+}
+
+func TestParsingAsTimeSeriesWithoutTimeColumn(t *testing.T) {
+	t.Run("cardinality", func(t *testing.T) {
+		f, err := os.Open(path.Join(testPath, filepath.Clean("cardinality.json")))
 		require.NoError(t, err)
 
-		var rsp *backend.DataResponse
+		query := generateQuery(`SHOW TAG VALUES CARDINALITY with key = "host"`, "time_series", "")
 
-		query := &models.Query{
-			RawQuery:     "Test raw query",
-			UseRawQuery:  true,
-			ResultFormat: resultFormat,
-		}
+		runQuery(t, f, "cardinality", "time_series", query)
+	})
+}
 
-		rsp = ResponseParse(f, 200, query)
-
-		if strings.Contains(tf, "error") {
-			require.Error(t, rsp.Error)
-			return
-		}
-		require.NoError(t, rsp.Error)
-
-		fname := tf + "." + resultFormat + ".golden"
-		experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
-	}
+func TestInfluxDBStreamingParser(t *testing.T) {
+	t.Run("Influxdb response parser with error message", func(t *testing.T) {
+		result := ResponseParse(readJsonFile("invalid_response"), 400, generateQuery("Test raw query", "time_series", ""))
+		require.Nil(t, result.Frames)
+		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
+	})
 }

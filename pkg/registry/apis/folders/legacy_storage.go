@@ -11,11 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -66,35 +66,34 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	parentUID := ""
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
-	if err != nil {
-		return nil, err
-	}
-	if requirements.Folder != nil {
-		parentUID = *requirements.Folder
-	}
-	// Update the selector to remove the unneeded requirements
-	options.LabelSelector = newSelector
+	// // translate grafana.app/* label selectors into field requirements
+	// requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if requirements.Folder != nil {
+	// 	parentUID = *requirements.Folder
+	// }
+	// // Update the selector to remove the unneeded requirements
+	// options.LabelSelector = newSelector
 
 	paging, err := readContinueToken(options)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// When nested folders are not enabled, all folders are root folders
-	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
-		UID:          parentUID, // NOTE!  we should do a different query when nested folders are enabled!
+	// List must return all folders
+	hits, err := s.service.GetFolders(ctx, folder.GetFoldersQuery{
 		SignedInUser: user,
-		Limit:        paging.page,
 		OrgID:        orgId,
-		Page:         paging.limit,
+		// TODO: enable pagination
+		// Limit:        paging.page,
+		// Page:         paging.limit,
 	})
 	if err != nil {
 		return nil, err
@@ -102,7 +101,11 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 
 	list := &v0alpha1.FolderList{}
 	for _, v := range hits {
-		list.Items = append(list.Items, *convertToK8sResource(v, s.namespacer))
+		r, err := convertToK8sResource(v, s.namespacer)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, *r)
 	}
 	if len(list.Items) >= int(paging.limit) {
 		list.Continue = paging.GetNextPageToken()
@@ -116,7 +119,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +136,12 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	return convertToK8sResource(dto, s.namespacer), nil
+	r, err := convertToK8sResource(dto, s.namespacer)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -146,7 +154,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +174,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	parent := accessor.GetFolder()
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
@@ -177,9 +186,18 @@ func (s *legacyStorage) Create(ctx context.Context,
 		ParentUID:    parent,
 	})
 	if err != nil {
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
+	}
+	// #TODO can we directly convert instead of doing a Get? the result of the Create
+	// has more data than the one of Get so there is more we can include in the k8s resource
+	// this way
+
+	r, err := convertToK8sResource(out, s.namespacer)
+	if err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, out.UID, nil)
+	return r, nil
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -195,7 +213,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}
@@ -267,7 +285,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return v, false, err // includes the not-found error
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}
@@ -288,4 +306,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		ForceDeleteRules: false,
 	})
 	return p, true, err // true is instant delete
+}
+
+// GracefulDeleter
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
 }

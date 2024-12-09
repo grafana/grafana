@@ -8,6 +8,18 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID} ruler RouteGetRuleByUID
+//
+// Get rule by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableExtendedRuleNode
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -206,6 +218,12 @@ type PathGetRulesParams struct {
 	PanelID int64
 }
 
+// swagger:parameters RouteGetRuleByUID
+type PathGetRuleByUIDParams struct {
+	// in: path
+	RuleUID string
+}
+
 // swagger:model
 type RuleGroupConfigResponse struct {
 	GettableRuleGroupConfig
@@ -219,6 +237,14 @@ type PostableRuleGroupConfig struct {
 	Name     string                     `yaml:"name" json:"name"`
 	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
+
+	// fields below are used by Mimir/Loki rulers
+
+	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
 }
 
 func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -257,15 +283,26 @@ func (c *PostableRuleGroupConfig) validate() error {
 	if hasGrafRules && hasLotexRules {
 		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
 	}
+
+	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0) {
+		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval and limit are not supported for Grafana rules")
+	}
 	return nil
 }
 
 // swagger:model
 type GettableRuleGroupConfig struct {
-	Name          string                     `yaml:"name" json:"name"`
-	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+
+	// fields below are used by Mimir/Loki rulers
+
+	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -416,6 +453,17 @@ const (
 )
 
 // swagger:model
+type AlertRuleMetadata struct {
+	EditorSettings AlertRuleEditorSettings `json:"editor_settings" yaml:"editor_settings"`
+}
+
+// swagger:model
+type AlertRuleEditorSettings struct {
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section" yaml:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section" yaml:"simplified_notifications_section"`
+}
+
+// swagger:model
 type AlertRuleNotificationSettings struct {
 	// Name of the receiver to send notifications to.
 	// required: true
@@ -460,6 +508,18 @@ type AlertRuleNotificationSettings struct {
 }
 
 // swagger:model
+type Record struct {
+	// Name of the recorded metric.
+	// required: true
+	// example: grafana_alerts_ratio
+	Metric string `json:"metric" yaml:"metric"`
+	// Which expression node should be used as the input for the recorded metric.
+	// required: true
+	// example: A
+	From string `json:"from" yaml:"from"`
+}
+
+// swagger:model
 type PostableGrafanaRule struct {
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
@@ -469,6 +529,8 @@ type PostableGrafanaRule struct {
 	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
 	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+	Record               *Record                        `json:"record" yaml:"record"`
+	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 // swagger:model
@@ -489,6 +551,8 @@ type GettableGrafanaRule struct {
 	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
+	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
+	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

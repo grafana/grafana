@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { ChangeEvent, FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { IntervalVariable } from '@grafana/scenes';

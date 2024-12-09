@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 
 import { PanelData } from '@grafana/data';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import {
@@ -8,28 +10,22 @@ import {
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { VizPanelManager } from './VizPanelManager';
-import { getPanelFrameCategory2 } from './getPanelFrameOptions';
+import { getPanelFrameOptions } from './getPanelFrameOptions';
 
 interface Props {
-  vizManager: VizPanelManager;
+  panel: VizPanel;
   searchQuery: string;
   listMode: OptionFilter;
   data?: PanelData;
 }
 
-export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
-  const { panel, sourcePanel, repeat } = vizManager.useState();
-  const parent = sourcePanel.resolve().parent;
-  const { options, fieldConfig } = panel.useState();
+export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
+  const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const panelFrameOptions = useMemo(
-    () => getPanelFrameCategory2(vizManager, panel, repeat),
-    [vizManager, panel, repeat]
-  );
+  const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -42,17 +38,23 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       data,
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
-      instanceState: panel.getPanelContext().instanceState!,
+      instanceState: _pluginInstanceState,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options, fieldConfig]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
-    if (parent instanceof LibraryVizPanel) {
-      return getLibraryVizPanelOptionsCategory(parent);
+    if (panel instanceof VizPanel && isLibraryPanel(panel)) {
+      const behavior = getLibraryPanelBehavior(panel);
+
+      if (!(behavior instanceof LibraryPanelBehavior)) {
+        return;
+      }
+
+      return getLibraryVizPanelOptionsCategory(behavior);
     }
     return;
-  }, [parent]);
+  }, [panel]);
 
   const justOverrides = useMemo(
     () =>
@@ -62,13 +64,11 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
         data?.series ?? [],
         searchQuery,
         (newConfig) => {
-          panel.setState({
-            fieldConfig: newConfig,
-          });
+          panel.onFieldConfigChange(newConfig, true);
         }
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchQuery, panel, fieldConfig]
+    [data, searchQuery, panel, fieldConfig]
   );
 
   const isSearching = searchQuery.length > 0;

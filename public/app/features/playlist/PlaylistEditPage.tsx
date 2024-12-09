@@ -1,11 +1,10 @@
-import React from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';
 import { getPlaylistAPI } from './api';
@@ -15,11 +14,10 @@ export interface RouteParams {
   uid: string;
 }
 
-interface Props extends GrafanaRouteComponentProps<RouteParams> {}
-
-export const PlaylistEditPage = ({ match }: Props) => {
+export const PlaylistEditPage = () => {
+  const { uid = '' } = useParams();
   const api = getPlaylistAPI();
-  const playlist = useAsync(() => api.getPlaylist(match.params.uid), [match.params]);
+  const playlist = useAsync(() => api.getPlaylist(uid), [uid]);
 
   const onSubmit = async (playlist: Playlist) => {
     await api.updatePlaylist(playlist);

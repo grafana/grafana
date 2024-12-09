@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { LokiQuery, LokiQueryType } from '../../types';
 
@@ -90,6 +89,7 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: '{foo="bar"}' });
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
     expect(screen.queryByText(/step/i)).not.toBeInTheDocument();
   });
 
@@ -99,6 +99,7 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
     expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
+    expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
   });
 
   it('does not shows resolution field if resolution is not set', async () => {
@@ -151,6 +152,17 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
+
+  it('does not show instant type when using a log query', async () => {
+    setup({ expr: '{foo="bar"}', queryType: LokiQueryType.Instant });
+    expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
+  });
+
+  it('does not show instant type in the options when using a log query', async () => {
+    setup({ expr: '{foo="bar"}', step: '1m' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
   });
 });
 

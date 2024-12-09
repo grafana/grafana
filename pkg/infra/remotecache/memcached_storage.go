@@ -18,7 +18,7 @@ type memcachedStorage struct {
 	c *memcache.Client
 }
 
-func newMemcachedStorage(opts *setting.RemoteCacheOptions) *memcachedStorage {
+func newMemcachedStorage(opts *setting.RemoteCacheSettings) *memcachedStorage {
 	return &memcachedStorage{
 		c: memcache.New(opts.ConnStr),
 	}
@@ -55,10 +55,6 @@ func (s *memcachedStorage) Get(ctx context.Context, key string) ([]byte, error) 
 	}
 
 	return memcachedItem.Value, nil
-}
-
-func (s *memcachedStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	return 0, ErrNotImplemented
 }
 
 // Delete delete a key from the cache

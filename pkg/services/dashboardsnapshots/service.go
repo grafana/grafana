@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -26,6 +28,7 @@ type Service interface {
 	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
 	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) (*DashboardSnapshot, error)
 	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error)
+	ValidateDashboardExists(context.Context, int64, string) error
 }
 
 var client = &http.Client{
@@ -39,21 +42,31 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
+	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
+	user, err := identity.GetRequester(c.Req.Context())
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
+		return
+	}
+
+	err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
+			return
+		}
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
+		return
+	}
+
 	if cmd.DashboardCreateCommand.Name == "" {
 		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError,
-			"Failed to create external snapshot", err)
-		return
-	}
-
 	var snapshotUrl string
 	cmd.ExternalURL = ""
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = userID
+	cmd.OrgID = user.GetOrgID()
+	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)

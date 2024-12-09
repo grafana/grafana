@@ -195,7 +195,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     //
     createFunction({ id: PromOperationId.Exp }),
     createFunction({ id: PromOperationId.Floor }),
-    createFunction({ id: PromOperationId.Group }),
     createFunction({ id: PromOperationId.Hour }),
     createFunction({
       id: PromOperationId.LabelJoin,
@@ -229,12 +228,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({
       id: PromOperationId.Pi,
       renderer: (model) => `${model.id}()`,
-    }),
-    createFunction({
-      id: PromOperationId.Quantile,
-      params: [{ name: 'Value', type: 'number' }],
-      defaultParams: [1],
-      renderer: functionRendererLeft,
     }),
     createFunction({ id: PromOperationId.Rad }),
     createRangeFunction(PromOperationId.Resets),

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
-import { HoverCard } from './HoverCard';
+import { PopupCard } from './HoverCard';
 import { keywords as KEYWORDS, builtinFunctions as FUNCTIONS } from './receivers/editor/language';
 
 const VARIABLES = ['$', '.', '"'];
@@ -83,7 +83,7 @@ function Token({ content, description, type }: TokenProps) {
   const disableCard = Boolean(type) === false;
 
   return (
-    <HoverCard
+    <PopupCard
       placement="top-start"
       disabled={disableCard}
       content={
@@ -95,7 +95,7 @@ function Token({ content, description, type }: TokenProps) {
       <span>
         <Badge tabIndex={0} className={styles.token} text={content} color={'blue'} />
       </span>
-    </HoverCard>
+    </PopupCard>
   );
 }
 
@@ -127,27 +127,27 @@ function tokenType(input: string) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    white-space: pre-wrap;
-  `,
-  token: css`
-    cursor: default;
-    font-family: ${theme.typography.fontFamilyMonospace};
-  `,
-  popover: css`
-    border-radius: ${theme.shape.radius.default};
-    box-shadow: ${theme.shadows.z3};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+  wrapper: css({
+    whiteSpace: 'pre-wrap',
+  }),
+  token: css({
+    cursor: 'default',
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
+  popover: css({
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
 
-    padding: ${theme.spacing(1)};
-  `,
-  hoverTokenItem: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-  `,
+    padding: theme.spacing(1),
+  }),
+  hoverTokenItem: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
 });
 
 export { Tokenize, Token };

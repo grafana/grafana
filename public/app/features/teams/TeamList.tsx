@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -19,10 +19,9 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -40,6 +39,7 @@ export interface State {
 // this is dummy data to pass to the table while the real data is loading
 const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
+  uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,
@@ -104,7 +104,7 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
               {value}
             </TextLink>
           );
@@ -182,7 +182,7 @@ export const TeamList = ({
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <LinkButton
-                  href={`org/teams/edit/${original.id}`}
+                  href={`org/teams/edit/${original.uid}`}
                   aria-label={`Edit team ${original.name}`}
                   icon="pen"
                   size="sm"
@@ -194,7 +194,7 @@ export const TeamList = ({
                 aria-label={`Delete team ${original.name}`}
                 size="sm"
                 disabled={!canDelete}
-                onConfirm={() => deleteTeam(original.id)}
+                onConfirm={() => deleteTeam(original.uid)}
               />
             </Stack>
           );
@@ -208,24 +208,31 @@ export const TeamList = ({
     <Page
       navId="teams"
       actions={
-        <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-          New Team
-        </LinkButton>
+        !noTeams ? (
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+            New Team
+          </LinkButton>
+        ) : undefined
       }
     >
       <Page.Contents>
         {noTeams ? (
-          <EmptyListCTA
-            title="You haven't created any teams yet."
-            buttonIcon="users-alt"
-            buttonLink="org/teams/new"
-            buttonTitle=" New team"
-            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
-          />
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <LinkButton disabled={!canCreate} href="org/teams/new" icon="users-alt" size="lg">
+                <Trans i18nKey="teams.empty-state.button-title">New team</Trans>
+              </LinkButton>
+            }
+            message={t('teams.empty-state.title', "You haven't created any teams yet")}
+          >
+            <Trans i18nKey="teams.empty-state.pro-tip">
+              Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+              <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                Learn more
+              </TextLink>
+            </Trans>
+          </EmptyState>
         ) : (
           <>
             <div className="page-action-bar">

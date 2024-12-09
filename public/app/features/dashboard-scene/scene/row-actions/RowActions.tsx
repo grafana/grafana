@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
-  SceneGridLayout,
+  sceneGraph,
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
@@ -16,40 +15,16 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
 
 export interface RowActionsState extends SceneObjectState {}
 
 export class RowActions extends SceneObjectBase<RowActionsState> {
-  private updateLayout(rowClone: SceneGridRow): void {
-    const row = this.getParent();
-
-    const layout = this.getDashboard().state.body;
-
-    if (!(layout instanceof SceneGridLayout)) {
-      throw new Error('Layout is not a SceneGridLayout');
-    }
-
-    // remove the repeated rows
-    const children = layout.state.children.filter((child) => !child.state.key?.startsWith(`${row.state.key}-clone-`));
-
-    // get the index to replace later
-    const index = children.indexOf(row);
-
-    if (index === -1) {
-      throw new Error('Parent row not found in layout children');
-    }
-
-    // replace the row with the clone
-    layout.setState({
-      children: [...children.slice(0, index), rowClone, ...children.slice(index + 1)],
-    });
-  }
-
   public getParent(): SceneGridRow {
     if (!(this.parent instanceof SceneGridRow)) {
       throw new Error('RowActions must have a SceneGridRow parent');
@@ -62,41 +37,39 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     return getDashboardSceneFor(this);
   }
 
+  public removeRow(removePanels?: boolean) {
+    const manager = sceneGraph.getAncestor(this, DefaultGridLayoutManager);
+    manager.removeRow(this.getParent(), removePanels);
+  }
+
   public onUpdate = (title: string, repeat?: string | null): void => {
     const row = this.getParent();
+    let repeatBehavior: RowRepeaterBehavior | undefined;
 
-    // return early if there is no repeat
-    if (!repeat) {
-      const clone = row.clone();
-
-      // remove the row repeater behaviour, leave the rest
-      clone.setState({
-        title,
-        $behaviors: row.state.$behaviors?.filter((b) => !(b instanceof RowRepeaterBehavior)) ?? [],
-      });
-
-      this.updateLayout(clone);
-
-      return;
+    if (row.state.$behaviors) {
+      for (let b of row.state.$behaviors) {
+        if (b instanceof RowRepeaterBehavior) {
+          repeatBehavior = b;
+        }
+      }
     }
 
-    const children = row.state.children.map((child) => child.clone());
+    if (title !== row.state.title) {
+      row.setState({ title });
+    }
 
-    const newBehaviour = new RowRepeaterBehavior({
-      variableName: repeat,
-      sources: children,
-    });
+    if (repeat) {
+      // Remove repeat behavior if it exists
+      // to retrigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
+      }
 
-    // get rest of behaviors except the old row repeater, if any, and push new one
-    const behaviors = row.state.$behaviors?.filter((b) => !(b instanceof RowRepeaterBehavior)) ?? [];
-    behaviors.push(newBehaviour);
-
-    row.setState({
-      title,
-      $behaviors: behaviors,
-    });
-
-    newBehaviour.activate();
+      repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
+      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+    } else {
+      repeatBehavior?.removeBehavior();
+    }
   };
 
   public onDelete = () => {
@@ -106,12 +79,8 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',
-        onConfirm: () => {
-          this.getDashboard().removeRow(this.getParent(), true);
-        },
-        onAltAction: () => {
-          this.getDashboard().removeRow(this.getParent());
-        },
+        onConfirm: () => this.removeRow(true),
+        onAltAction: () => this.removeRow(),
       })
     );
   };

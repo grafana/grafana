@@ -19,6 +19,7 @@ import {
   AdHocVariableFilter,
 } from '@grafana/data';
 
+import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 import {
   BackendSrvRequest,
@@ -137,7 +138,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
-    const queries = targets.map((q) => {
+    const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
@@ -201,7 +202,7 @@ class DataSourceWithBackend<
       });
     }
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 
@@ -231,9 +232,9 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
-    }
-    if (request.panelId) {
-      headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      if (request.panelId) {
+        headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
     }
     if (request.panelPluginId) {
       headers[PluginRequestHeaders.PanelPluginId] = `${request.panelPluginId}`;
@@ -255,7 +256,7 @@ class DataSourceWithBackend<
       })
       .pipe(
         switchMap((raw) => {
-          const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
+          const rsp = toDataQueryResponse(raw, queries);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
             return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
@@ -355,8 +356,17 @@ class DataSourceWithBackend<
         headers: this.getRequestHeaders(),
       })
     )
-      .then((v: FetchResponse) => v.data)
-      .catch((err) => err.data);
+      .then((v: FetchResponse<HealthCheckResult>) => v.data)
+      .catch((err) => {
+        let properties: Record<string, string> = {
+          plugin_id: this.meta?.id || '',
+          plugin_version: this.meta?.info?.version || '',
+          datasource_healthcheck_status: err?.data?.status || 'error',
+          datasource_healthcheck_message: err?.data?.message || '',
+        };
+        reportInteraction('datasource_health_check_completed', properties);
+        return err.data;
+      });
   }
 
   /**

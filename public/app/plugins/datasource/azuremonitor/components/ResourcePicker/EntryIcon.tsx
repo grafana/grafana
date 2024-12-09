@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon } from '@grafana/ui';
 
 import { ResourceRow, ResourceRowType } from './types';

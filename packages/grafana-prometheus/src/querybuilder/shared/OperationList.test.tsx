@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationList.test.tsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
@@ -42,7 +41,7 @@ describe('OperationList', () => {
     const removeOperationButtons = screen.getAllByTitle('Remove operation');
     expect(removeOperationButtons).toHaveLength(2);
     await userEvent.click(removeOperationButtons[1]);
-    expect(onChange).toBeCalledWith({
+    expect(onChange).toHaveBeenCalledWith({
       labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
       metric: 'random_metric',
       operations: [{ id: 'rate', params: ['auto'] }],
@@ -52,7 +51,7 @@ describe('OperationList', () => {
   it('adds an operation', async () => {
     const { onChange } = setup();
     await addOperationInQueryBuilder('Aggregations', 'Min');
-    expect(onChange).toBeCalledWith({
+    expect(onChange).toHaveBeenCalledWith({
       labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
       metric: 'random_metric',
       operations: [

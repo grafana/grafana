@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 
@@ -20,15 +20,10 @@ type Props = {
   logGroups?: LogGroup[];
   region: string;
   maxNoOfVisibleLogGroups?: number;
-  newFormStylingEnabled?: boolean;
   onBeforeOpen?: () => void;
 };
 
-const rowGap = css({
-  gap: 3,
-});
-
-const logGroupNewStyles = css({
+const logGroupStyles = css({
   display: 'flex',
   flexDirection: 'column',
   marginTop: 8,
@@ -44,7 +39,6 @@ export const LogGroupsField = ({
   logGroups,
   region,
   maxNoOfVisibleLogGroups,
-  newFormStylingEnabled,
   onBeforeOpen,
 }: Props) => {
   const accountState = useAccountOptions(datasource?.resources, region);
@@ -84,7 +78,7 @@ export const LogGroupsField = ({
   }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroupsStarted]);
 
   return (
-    <div className={newFormStylingEnabled ? logGroupNewStyles : `gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
+    <div className={logGroupStyles}>
       <LogGroupsSelector
         fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
           datasource?.resources.getLogGroups({ region: region, ...params }) ?? []
@@ -114,7 +108,6 @@ type WrapperProps = {
   region: string;
   maxNoOfVisibleLogGroups?: number;
   onBeforeOpen?: () => void;
-  newFormStylingEnabled?: boolean;
 
   // Legacy Props, can remove once we remove support for Legacy Log Group Selector
   legacyOnChange: (logGroups: string[]) => void;

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, useStyles2 } from '@grafana/ui';
@@ -55,12 +55,12 @@ export const QueryEditorRow = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    iconWrapper: css`
-      display: flex;
-    `,
-    icon: css`
-      color: ${theme.colors.text.secondary};
-      margin-left: ${theme.spacing(0.25)};
-    `,
+    iconWrapper: css({
+      display: 'flex',
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.25),
+    }),
   };
 };

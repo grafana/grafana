@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 
 export interface TopSearchBarSectionProps {
-  children: React.ReactNode;
+  children: ReactNode;
   align?: 'left' | 'center' | 'right';
 }
 

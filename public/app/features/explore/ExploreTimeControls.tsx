@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 import { TimeRange, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

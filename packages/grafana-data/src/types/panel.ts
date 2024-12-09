@@ -1,8 +1,8 @@
 import { defaultsDeep } from 'lodash';
 
-import { EventBus } from '../events';
-import { StandardEditorProps } from '../field';
-import { Registry } from '../utils';
+import { EventBus } from '../events/types';
+import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';
@@ -169,7 +169,7 @@ export interface PanelMenuItem {
   type?: 'submenu' | 'divider' | 'group';
   text: string;
   iconClassName?: IconName;
-  onClick?: (event: React.MouseEvent<any>) => void;
+  onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;
   href?: string;
   subMenu?: PanelMenuItem[];

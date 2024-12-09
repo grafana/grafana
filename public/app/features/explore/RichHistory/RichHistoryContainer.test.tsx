@@ -1,10 +1,8 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SortOrder } from 'app/core/utils/richHistory';
 
-import { Tabs } from './RichHistory';
 import { RichHistoryContainer, Props } from './RichHistoryContainer';
 
 jest.mock('@grafana/runtime', () => ({
@@ -27,7 +25,6 @@ jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockRetu
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     richHistory: [],
-    firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     initRichHistory: jest.fn(),
     loadRichHistory: jest.fn(),

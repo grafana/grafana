@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -39,13 +39,13 @@ const getStyles = (theme: GrafanaTheme2, borderTop?: string) => {
   const themeBackgroundColor = theme.colors.background.secondary;
 
   return {
-    wrapper: css`
-      padding: ${theme.spacing(2)};
-      border: 2px solid ${themeBackgroundColor};
-      border-top: ${borderTop ? borderTop + themeBackgroundColor : 'none'};
-      border-radius: 0 0 ${borderRadius} ${borderRadius};
-      position: relative;
-      top: -4px;
-    `,
+    wrapper: css({
+      padding: theme.spacing(2),
+      border: `2px solid ${themeBackgroundColor}`,
+      borderTop: borderTop ? borderTop + themeBackgroundColor : 'none',
+      borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+      position: 'relative',
+      top: '-4px',
+    }),
   };
 };

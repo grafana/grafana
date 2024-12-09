@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocFilterKey } from './AdHocFilterKey';

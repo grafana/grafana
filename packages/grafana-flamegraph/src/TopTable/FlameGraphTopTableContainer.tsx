@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -22,9 +22,10 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
+import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
-import { TableData } from '../types';
+import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -37,10 +38,21 @@ type Props = {
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
+  colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
-const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, search, matchedLabels, onSearch, sandwichItem, onSandwich, onTableSort }: Props) => {
+const FlameGraphTopTableContainer = memo(
+  ({
+    data,
+    onSymbolClick,
+    search,
+    matchedLabels,
+    onSearch,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    colorScheme,
+  }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
@@ -51,7 +63,7 @@ const FlameGraphTopTableContainer = React.memo(
         const self = data.getSelf(i);
         const label = data.getLabel(i);
 
-        // If user is doing text search we filter out labels in the same way we highlight them in flamegraph.
+        // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
         if (!matchedLabels || matchedLabels.has(label)) {
           filteredTable[label] = filteredTable[label] || {};
           filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
@@ -85,6 +97,7 @@ const FlameGraphTopTableContainer = React.memo(
               onSearch,
               onSandwich,
               theme,
+              colorScheme,
               search,
               sandwichItem
             );
@@ -119,6 +132,7 @@ function buildTableDataFrame(
   onSearch: (str: string) => void,
   onSandwich: (str?: string) => void,
   theme: GrafanaTheme2,
+  colorScheme: ColorScheme | ColorSchemeDiff,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
@@ -153,11 +167,17 @@ function buildTableDataFrame(
     const comparisonField = createNumberField('Comparison', 'percent');
     const diffField = createNumberField('Diff', 'percent');
     diffField.config.custom.cellOptions.type = TableCellDisplayMode.ColorText;
+
+    const [removeColor, addColor] =
+      colorScheme === ColorSchemeDiff.DiffColorBlind
+        ? [diffColorBlindColors[0], diffColorBlindColors[2]]
+        : [diffDefaultColors[0], diffDefaultColors[2]];
+
     diffField.config.mappings = [
-      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: 'red' } } },
-      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: 'green' } } },
-      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: 'red' } } },
-      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: 'green' } } },
+      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: addColor } } },
+      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: removeColor } } },
+      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: addColor } } },
+      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: removeColor } } },
     ];
 
     // For this we don't really consider sandwich view even though you can switch it on.
@@ -332,17 +352,16 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const getStylesActionCell = () => {
   return {
-    actionCellWrapper: css`
-      label: actionCellWrapper;
-      display: flex;
-      height: 24px;
-    `,
-
-    actionCellButton: css`
-      label: actionCellButton;
-      margin-right: 0;
-      width: 24px;
-    `,
+    actionCellWrapper: css({
+      label: 'actionCellWrapper',
+      display: 'flex',
+      height: '24px',
+    }),
+    actionCellButton: css({
+      label: 'actionCellButton',
+      marginRight: 0,
+      width: '24px',
+    }),
   };
 };
 

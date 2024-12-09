@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
@@ -111,7 +111,7 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  range: css`
-    padding-top: 8px;
-  `,
+  range: css({
+    paddingTop: theme.spacing(1),
+  }),
 });

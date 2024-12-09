@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { AlertState } from '@grafana/data';
 import { Icon, Tooltip } from '@grafana/ui';
@@ -13,7 +13,7 @@ interface Props {
   muted?: boolean;
 }
 
-export const AlertStateTag = React.memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => {
+export const AlertStateTag = memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => {
   if (isPaused) {
     return (
       <Tooltip content={'Alert evaluation is currently paused'} placement="top">

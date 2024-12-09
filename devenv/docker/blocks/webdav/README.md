@@ -1,6 +1,6 @@
 # README for the image storage WebDAV docker block
 
-This block is used for testing the [WebDAV](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storagewebdav) option for external image storage which is used in [alert notifications](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/). This uses the simplest WebDav server that is still being maintained, a project called [Dufs](https://github.com/sigoden/dufs).
+This block is used for testing the [WebDAV](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storagewebdav) option for external image storage which is used in [alert notifications](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/images-in-notifications/). This uses the simplest WebDav server that is still being maintained, a project called [Dufs](https://github.com/sigoden/dufs).
 
 ## Using Dufs
 

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { getAllByTestId, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';

@@ -1,28 +1,32 @@
-import React, { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import * as React from 'react';
 import uPlot from 'uplot';
 
 import {
+  ActionModel,
   DataFrameType,
   Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  InterpolateFunction,
   LinkModel,
   PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { getDataLinks } from '../status-history/utils';
-import { getStyles } from '../timeseries/TimeSeriesTooltip';
+import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -39,8 +43,9 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
-  scrollable?: boolean;
   maxHeight?: number;
+  maxWidth?: number;
+  replaceVariables: InterpolateFunction;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -58,6 +63,9 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   return <HeatmapHoverCell {...props} />;
 };
 
+const defaultHistogramWidth = 264;
+const defaultHistogramHeight = 64;
+
 const HeatmapHoverCell = ({
   dataIdxs,
   dataRef,
@@ -66,8 +74,9 @@ const HeatmapHoverCell = ({
   showColorScale = false,
   mode,
   annotate,
-  scrollable,
   maxHeight,
+  maxWidth,
+  replaceVariables,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -286,6 +295,7 @@ const HeatmapHoverCell = ({
 
   if (isPinned) {
     let links: Array<LinkModel<Field>> = [];
+    let actions: Array<ActionModel<Field>> = [];
 
     const linksField = data.series?.fields[yValueIdx + 1];
 
@@ -296,15 +306,20 @@ const HeatmapHoverCell = ({
       if (visible && hasLinks) {
         links = getDataLinks(linksField, xValueIdx);
       }
+
+      actions = getFieldActions(data.series!, linksField, replaceVariables, xValueIdx);
     }
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
   }
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 264;
-  let histCssHeight = 64;
+  const theme = useTheme2();
+  const themeSpacing = parseInt(theme.spacing(1), 10);
+
+  let histCssWidth = Math.min(defaultHistogramWidth, maxWidth ? maxWidth - themeSpacing * 2 : defaultHistogramWidth);
+  let histCssHeight = defaultHistogramHeight;
   let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
   let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
@@ -352,13 +367,15 @@ const HeatmapHoverCell = ({
     }
   }
 
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight}>
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      >
         {customContent?.map((content, i) => (
           <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
             {content}
@@ -366,6 +383,6 @@ const HeatmapHoverCell = ({
         ))}
       </VizTooltipContent>
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };

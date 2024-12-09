@@ -55,6 +55,7 @@ describe('filterSpans', () => {
     ],
     logs: [
       {
+        name: 'logName0',
         fields: [
           {
             key: 'logFieldKey0',
@@ -199,6 +200,7 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([spanID2]));
+
     expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
@@ -315,6 +317,10 @@ describe('filterSpans', () => {
     ).toEqual(new Set([spanID0]));
   });
 
+  it('it should return logs have a name which matches the filter', () => {
+    expect(filterSpans({ ...defaultFilters, query: 'logName0' }, spans)).toEqual(new Set([spanID0]));
+  });
+
   it('should return no spans when logs is null', () => {
     const nullSpan = { ...span0, logs: null };
     expect(
@@ -330,10 +336,34 @@ describe('filterSpans', () => {
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '=' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpans(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '=~', value: 'tagValue' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!~', value: 'tagValue1' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!~', value: 'tag' }] },
+        spans
+      )
+    ).toEqual(new Set([]));
   });
 
   it("should not return spans whose tags' kv.key match a filter but kv.value/operator does not match", () => {

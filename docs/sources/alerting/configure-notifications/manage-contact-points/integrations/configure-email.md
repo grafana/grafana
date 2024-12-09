@@ -13,12 +13,20 @@ labels:
     - oss
 menuTitle: Email
 title: Configure email for Alerting
-weight: 300
+weight: 110
+refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
-## Configure email for Alerting
+# Configure email for Alerting
 
 Use the Grafana Alerting - email integration to send email notifications when your alerts are firing. An email is sent when an alert fires and when an alert gets resolved.
+
+Note that you can customize the `subject` and `message` of the email using [notification templates](ref:notification-templates). However, you cannot add HTML and CSS to email notifications for visual changes.
 
 ## Before you begin
 
@@ -75,18 +83,24 @@ To set up email integration, complete the following steps.
 1. Enter a contact point name.
 1. From the Integration list, select **Email**.
 1. Enter the email addresses you want to send notifications to.
+
+   E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
+
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps
 
-To add the contact point and integration you created to your default notification policy, complete the following steps.
+The email contact point is ready to receive alert notifications.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
-1. Change the default policy to the contact point you created.
-1. Click **Update default policy**.
+To add this contact point to your alert, complete the following steps.
 
-{{% admonition type="note" %}}
-If you have more than one contact point, add a new child notification policy rather than edit the default one, so you can route specific alerts to one or multiple email addresses.
-{{% /admonition %}}
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.

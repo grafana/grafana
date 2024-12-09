@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 

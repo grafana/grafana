@@ -3,6 +3,7 @@
 import './global-jquery-shim';
 
 import angular from 'angular';
+import { TransformStream } from 'node:stream/web';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
@@ -27,6 +28,7 @@ global.$ = global.jQuery = $;
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
   angularSupportEnabled: true,
+  featureToggles: {},
 };
 global.grafanaBootData = {
   settings,
@@ -34,19 +36,15 @@ global.grafanaBootData = {
   navTree: [],
 };
 
-// https://jestjs.io/docs/manual-mocks#mocking-methods-which-are-not-implemented-in-jsdom
-Object.defineProperty(global, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+window.matchMedia = (query) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: jest.fn(), // Deprecated
+  removeListener: jest.fn(), // Deprecated
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  dispatchEvent: jest.fn(),
 });
 
 angular.module('grafana', ['ngRoute']);
@@ -71,6 +69,9 @@ global.IntersectionObserver = mockIntersectionObserver;
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+global.TransformStream = TransformStream;
+// add scrollTo interface since it's not implemented in jsdom
+Element.prototype.scrollTo = () => {};
 
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
@@ -89,31 +90,59 @@ throwUnhandledRejections();
 
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
-  //callback: ResizeObserverCallback;
+  static #observationEntry: ResizeObserverEntry = {
+    contentRect: {
+      x: 1,
+      y: 2,
+      width: 500,
+      height: 500,
+      top: 100,
+      bottom: 0,
+      left: 100,
+      right: 0,
+    },
+    target: {
+      // Needed for react-virtual to work in tests
+      getAttribute: () => 1,
+    },
+  } as unknown as ResizeObserverEntry;
+
+  #isObserving = false;
+  #callback: ResizeObserverCallback;
 
   constructor(callback: ResizeObserverCallback) {
+    this.#callback = callback;
+  }
+
+  #emitObservation() {
     setTimeout(() => {
-      callback(
-        [
-          {
-            contentRect: {
-              x: 1,
-              y: 2,
-              width: 500,
-              height: 500,
-              top: 100,
-              bottom: 0,
-              left: 100,
-              right: 0,
-            },
-            target: {},
-          } as ResizeObserverEntry,
-        ],
-        this
-      );
+      if (!this.#isObserving) {
+        return;
+      }
+
+      this.#callback([ResizeObserver.#observationEntry], this);
     });
   }
-  observe() {}
-  disconnect() {}
-  unobserve() {}
+
+  observe() {
+    this.#isObserving = true;
+    this.#emitObservation();
+  }
+
+  disconnect() {
+    this.#isObserving = false;
+  }
+
+  unobserve() {
+    this.#isObserving = false;
+  }
+};
+
+global.BroadcastChannel = class BroadcastChannel {
+  onmessage() {}
+  onmessageerror() {}
+  postMessage(data: unknown) {}
+  close() {}
+  addEventListener() {}
+  removeEventListener() {}
 };

@@ -1,5 +1,4 @@
 import { debounce, sortBy } from 'lodash';
-import React from 'react';
 import { Editor, Plugin as SlatePlugin } from 'slate-react';
 
 import { BootData } from '@grafana/data';

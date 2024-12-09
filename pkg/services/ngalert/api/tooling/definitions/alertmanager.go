@@ -2,18 +2,19 @@ package definitions
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/definition"
 	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/alerting/definition"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
@@ -182,7 +183,7 @@ import (
 // get silences
 //
 //     Responses:
-//       200: gettableSilences
+//       200: gettableGrafanaSilences
 //       400: ValidationError
 
 // swagger:route GET /alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteGetSilences
@@ -216,7 +217,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: gettableSilence
+//       200: gettableGrafanaSilence
 //       400: ValidationError
 
 // swagger:route GET /alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
@@ -389,6 +390,14 @@ type GetDeleteSilenceParams struct {
 type GetSilencesParams struct {
 	// in:query
 	Filter []string `json:"filter"`
+	// Return rule metadata with silence.
+	// in:query
+	// required:false
+	RuleMetadata bool `json:"ruleMetadata"`
+	// Return access control metadata with silence.
+	// in:query
+	// required:false
+	AccessControl bool `json:"accesscontrol"`
 }
 
 // swagger:model
@@ -464,7 +473,6 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	}
 }
 
-// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model postSilencesOKBody
@@ -476,32 +484,76 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
+
+// swagger:model gettableGrafanaSilence
+type GettableGrafanaSilence struct {
+	*GettableSilence `json:",inline"`
+	Metadata         *SilenceMetadata `json:"metadata,omitempty"`
+	// example: {"read": true, "write": false, "create": false}
+	Permissions map[SilencePermission]bool `json:"accessControl,omitempty"`
+}
+
+type SilenceMetadata struct {
+	RuleUID   string `json:"rule_uid,omitempty"`
+	RuleTitle string `json:"rule_title,omitempty"`
+	FolderUID string `json:"folder_uid,omitempty"`
+}
+
+type SilencePermission string
+
+const (
+	SilencePermissionRead   SilencePermission = "read"
+	SilencePermissionCreate SilencePermission = "create"
+	SilencePermissionWrite  SilencePermission = "write"
+)
+
+// Correctly embed the GettableSilence into the GettableGrafanaSilence struct. This is needed because GettableSilence
+// has a custom UnmarshalJSON method.
+func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
+	gettable, err := json.Marshal(s.GettableSilence)
+	if err != nil {
+		return nil, err
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(gettable, &data); err != nil {
+		return nil, err
+	}
+
+	if s.Metadata != nil {
+		data["metadata"] = s.Metadata
+	}
+
+	if s.Permissions != nil {
+		data["accessControl"] = s.Permissions
+	}
+
+	return json.Marshal(data)
+}
+
+// swagger:model gettableGrafanaSilences
+type GettableGrafanaSilences []*GettableGrafanaSilence
 
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model receiver
-type Receiver = amv2.Receiver
+type Receiver = alertingmodels.Receiver
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []amv2.Receiver
+	Body []alertingmodels.Receiver
 }
 
-// swagger:model integration
-type Integration = amv2.Integration
+type Integration = alertingmodels.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -627,19 +679,11 @@ func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, err
 	// Iterate through receivers and decrypt secure settings.
 	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
 		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			for k, v := range gmr.SecureSettings {
-				decoded, err := base64.StdEncoding.DecodeString(v)
-				if err != nil {
-					return PostableUserConfig{}, fmt.Errorf("failed to decode value for key '%s': %w", k, err)
-				}
-
-				decrypted, err := decryptFn(decoded)
-				if err != nil {
-					return PostableUserConfig{}, fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
-				}
-
-				gmr.SecureSettings[k] = string(decrypted)
+			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
+			if err != nil {
+				return PostableUserConfig{}, err
 			}
+			gmr.SecureSettings = decrypted
 		}
 	}
 	return *newCfg, nil
@@ -813,6 +857,26 @@ func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	}
 
 	if err := json.Unmarshal(b, &overrides{Receivers: &c.Receivers}); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
+	type plain GettableApiAlertingConfig
+	if err := value.Decode((*plain)(c)); err != nil {
+		return err
+	}
+
+	// Since Config implements yaml.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the yaml decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to slices in order to reference the intended target.
+	type overrides struct {
+		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty"`
+	}
+
+	if err := value.Decode(&overrides{Receivers: &c.Receivers}); err != nil {
 		return err
 	}
 

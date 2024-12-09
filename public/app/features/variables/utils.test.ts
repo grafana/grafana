@@ -1,7 +1,6 @@
-import { UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { VariableRefresh } from './types';
 import {
   containsVariable,
   ensureStringValues,

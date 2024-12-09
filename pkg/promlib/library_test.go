@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +61,7 @@ func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *sdkhttpclient.Provid
 	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{mid}})
 }
 
-func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+func mockExtendTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error {
 	return nil
 }
 
@@ -103,7 +104,7 @@ func TestService(t *testing.T) {
 	t.Run("extendOptions function provided", func(t *testing.T) {
 		f := &fakeHTTPClientProvider{}
 		httpProvider := getMockPromTestSDKProvider(f)
-		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error {
+		service := NewService(httpProvider, backend.NewLoggerWith("logger", "test"), func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error {
 			fmt.Println(ctx, settings, clientOpts)
 			require.NotNil(t, ctx)
 			require.NotNil(t, settings)
@@ -115,6 +116,19 @@ func TestService(t *testing.T) {
 		sender := &fakeSender{}
 		err := service.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
+	})
+
+	t.Run("suggest resource", func(t *testing.T) {
+		f := &fakeHTTPClientProvider{}
+		httpProvider := getMockPromTestSDKProvider(f)
+		l := backend.NewLoggerWith("logger", "test")
+		service := NewService(httpProvider, l, mockExtendTransportOptions)
+
+		req := mockSuggestResource()
+		sender := &fakeSender{}
+		err := service.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		require.Equal(t, `http://localhost:9090/api/v1/labels?end=2022-06-01T12%3A00%3A00Z&limit=10&match%5B%5D=go_cgo_go_to_c_calls_calls_total%7Bjob%3D~%22.%2B%22%7D&match%5B%5D=up%7Bjob%3D~%22.%2B%22%7D&start=2022-06-01T00%3A00%3A00Z`, f.Roundtripper.Req.URL.String())
 	})
 }
 
@@ -143,5 +157,44 @@ func mockRequest() *backend.CallResourceRequest {
 		Method: http.MethodPost,
 		URL:    "/api/v1/series",
 		Body:   []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
+	}
+}
+
+func mockSuggestResource() *backend.CallResourceRequest {
+	return &backend.CallResourceRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:               0,
+			PluginID:            "prometheus",
+			User:                nil,
+			AppInstanceSettings: nil,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				ID:               0,
+				UID:              "",
+				Type:             "prometheus",
+				Name:             "test-prom",
+				URL:              "http://localhost:9090",
+				User:             "",
+				Database:         "",
+				BasicAuthEnabled: true,
+				BasicAuthUser:    "admin",
+				Updated:          time.Time{},
+				JSONData:         []byte("{}"),
+			},
+		},
+		Path:   "suggestions",
+		URL:    "suggestions",
+		Method: http.MethodPost,
+		Body: []byte(`
+			{
+				"queries": ["up + 1", "go_cgo_go_to_c_calls_calls_total + 2"],
+				"scopes": [{
+					"key": "job",
+					"value": ".+",
+					"operator": "regex-match"
+				}],
+				"start": "2022-06-01T00:00:00Z",
+				"end": "2022-06-01T12:00:00Z",
+				"limit": 10
+			}`),
 	}
 }

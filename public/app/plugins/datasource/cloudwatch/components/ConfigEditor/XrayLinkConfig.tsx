@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, DataSourceInstanceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
@@ -7,10 +6,10 @@ import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Field, InlineField, useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
+  infoText: css({
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
 });
 
 interface Props {

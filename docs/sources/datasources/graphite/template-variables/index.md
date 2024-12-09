@@ -16,6 +16,22 @@ labels:
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300
+refs:
+  add-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  variable-syntax-advanced-variable-format-options:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
 ---
 
 # Graphite template variables
@@ -24,7 +40,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
+For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
 
 ## Select a query type
 
@@ -57,7 +73,7 @@ For details, refer to the [Graphite docs on the autocomplete API for tags](http:
 
 ### Use multi-value variables in tag queries
 
-Multi-value variables in tag queries use the advanced formatting syntax for variables introduced in Grafana v5.0: `{var:regex}`.
+Multi-value variables in tag queries use the advanced formatting syntax for variables: `{var:regex}`.
 Non-tag queries use the default glob formatting for multi-value variables.
 
 #### Tag expression example
@@ -68,7 +84,7 @@ Non-tag queries use the default glob formatting for multi-value variables.
 server=~${servers:regex}
 ```
 
-For more information, refer to [Advanced variable format options][variable-syntax-advanced-variable-format-options].
+For more information, refer to [Advanced variable format options](ref:variable-syntax-advanced-variable-format-options).
 
 ## Use other query variables
 
@@ -109,10 +125,6 @@ For example, `apps.$app.servers.*` uses the variable `$app` in its query definit
 
 ### Use `__searchFilter` to filter query variable results
 
-{{% admonition type="note" %}}
-Available in Grafana v6.5 and higher.
-{{% /admonition %}}
-
 You can use `__searchFilter` in the query field to filter the query result based on what the user types in the dropdown select box.
 The default value for `__searchFilter` is `*` if you've not entered anything, and `` when used as part of a regular expression.
 
@@ -144,14 +156,3 @@ The Graphite data source supports two variable syntaxes for use in the **Query**
 ### Templated dashboard example
 
 To view an example templated dashboard, refer to [Graphite Templated Nested dashboard](https://play.grafana.org/d/cvDFGseGz/graphite-templated-nested).
-
-{{% docs/reference %}}
-[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-
-[variable-syntax-advanced-variable-format-options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
-[variable-syntax-advanced-variable-format-options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
-
-[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-{{% /docs/reference %}}

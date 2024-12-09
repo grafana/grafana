@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Props } from 'react-virtualized-auto-sizer';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -41,8 +40,8 @@ const mocks = {
 
 function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
   mocks.useHasRuler.mockReturnValue({
-    hasRuler: () => hasRuler,
-    rulerRulesLoaded: () => rulerRulesLoaded,
+    hasRuler,
+    rulerRulesLoaded,
   });
 }
 
@@ -60,7 +59,6 @@ const ui = {
     header: byText('Delete group'),
     confirmButton: byText('Delete'),
   },
-  moreActionsButton: byRole('button', { name: 'More' }),
   export: {
     dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
@@ -69,7 +67,6 @@ const ui = {
     copyCodeButton: byRole('button', { name: 'Copy code' }),
     downloadButton: byRole('button', { name: 'Download' }),
   },
-  loadingSpinner: byTestId('spinner'),
 };
 
 const server = setupMswServer();

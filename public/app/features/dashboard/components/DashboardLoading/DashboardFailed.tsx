@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Alert } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -24,10 +23,10 @@ export const DashboardFailed = ({ initError }: Props) => {
 };
 
 export const styles = {
-  dashboardLoading: css`
-    height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
+  dashboardLoading: css({
+    height: '60vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
 };

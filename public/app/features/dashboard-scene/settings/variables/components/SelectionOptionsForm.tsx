@@ -1,29 +1,33 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { ChangeEvent, FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VerticalGroup } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { VariableCheckboxField } from 'app/features/dashboard-scene/settings/variables/components/VariableCheckboxField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
 interface SelectionOptionsFormProps {
   multi: boolean;
   includeAll: boolean;
+  allowCustomValue?: boolean;
   allValue?: string | null;
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function SelectionOptionsForm({
   multi,
+  allowCustomValue,
   includeAll,
   allValue,
   onMultiChange,
+  onAllowCustomValueChange,
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
   return (
-    <VerticalGroup spacing="md" height="inherit">
+    <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField
         value={multi}
         name="Multi-value"
@@ -31,6 +35,15 @@ export function SelectionOptionsForm({
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
+      {onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
+        <VariableCheckboxField
+          value={allowCustomValue ?? true}
+          name="Allow custom values"
+          description="Enables users to add custom values to the list"
+          onChange={onAllowCustomValueChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+        />
+      )}
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"
@@ -47,6 +60,6 @@ export function SelectionOptionsForm({
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
         />
       )}
-    </VerticalGroup>
+    </Stack>
   );
 }

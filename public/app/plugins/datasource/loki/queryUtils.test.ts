@@ -1,6 +1,5 @@
 import { String } from '@grafana/lezer-logql';
 
-import { createLokiDatasource } from './__mocks__/datasource';
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
@@ -17,8 +16,8 @@ import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
-  formatLogqlQuery,
   getLogQueryFromMetricsQueryAtPosition,
+  interpolateShardingSelector,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -135,7 +134,7 @@ describe('getNormalizedLokiQuery', () => {
   it('removes deprecated instant property', () => {
     const input: LokiQuery = { refId: 'A', expr: 'test1', instant: true };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
   });
 
   it('removes deprecated range property', () => {
@@ -492,26 +491,102 @@ describe('getNodePositionsFromQuery', () => {
   });
 });
 
-describe('formatLogqlQuery', () => {
-  const ds = createLokiDatasource();
-
-  it('formats a logs query', () => {
-    expect(formatLogqlQuery('{job="grafana"}', ds)).toBe('{job="grafana"}');
+describe('interpolateShardingSelector', () => {
+  let queries: LokiQuery[] = [];
+  beforeEach(() => {
+    queries = [
+      {
+        refId: 'A',
+        expr: '{job="grafana"}',
+      },
+    ];
   });
 
-  it('formats a metrics query', () => {
-    expect(formatLogqlQuery('count_over_time({job="grafana"}[1m])', ds)).toBe(
-      'count_over_time(\n  {job="grafana"}\n  [1m]\n)'
-    );
+  it('returns the original query when there are no shards to interpolate', () => {
+    expect(interpolateShardingSelector(queries, [])).toEqual(queries);
   });
 
-  it('formats a metrics query with variables', () => {
-    // mock the interpolateString return value so it passes the isValid check
-    ds.interpolateString = jest.fn(() => 'rate({job="grafana"}[1s])');
+  it('adds the empty shard to the query when -1 is passed', () => {
+    expect(interpolateShardingSelector(queries, [-1])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__=""}',
+      },
+    ]);
+  });
 
-    expect(formatLogqlQuery('rate({job="grafana"}[$__range])', ds)).toBe('rate(\n  {job="grafana"}\n  [$__range]\n)');
-    expect(formatLogqlQuery('rate({job="grafana"}[$__interval])', ds)).toBe(
-      'rate(\n  {job="grafana"}\n  [$__interval]\n)'
-    );
+  it('uses an equality filter when a single shard is passed', () => {
+    expect(interpolateShardingSelector(queries, [13])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__="13"}',
+      },
+    ]);
+  });
+
+  it('supports multiple shard values', () => {
+    expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="grafana", __stream_shard__=~"1|13|667"}',
+      },
+    ]);
+  });
+
+  describe('For metric queries', () => {
+    let queries: LokiQuery[] = [];
+    beforeEach(() => {
+      queries = [
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana"} [5m])',
+        },
+      ];
+    });
+    it('returns the original query when there are no shards to interpolate', () => {
+      expect(interpolateShardingSelector(queries, [])).toEqual(queries);
+    });
+
+    it('adds the empty shard to the query when -1 is passed', () => {
+      expect(interpolateShardingSelector(queries, [-1])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=""} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('uses an equality filter when a single shard is passed', () => {
+      expect(interpolateShardingSelector(queries, [13])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__="13"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('supports multiple shard values', () => {
+      expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
+
+    it('supports multiple metric queries values', () => {
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana"} [5m]) + count_over_time({job="grafana"} [5m])',
+        },
+      ];
+      expect(interpolateShardingSelector(queries, [1, 13, 667])).toEqual([
+        {
+          refId: 'A',
+          expr: 'count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m]) + count_over_time({job="grafana", __stream_shard__=~"1|13|667"} | drop __stream_shard__ [5m])',
+        },
+      ]);
+    });
   });
 });

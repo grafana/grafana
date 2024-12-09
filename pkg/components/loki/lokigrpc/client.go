@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 
-	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -60,7 +60,7 @@ func (c *Client) init() error {
 	}
 
 	opts := append(c.opts, c.grpcTLSOption(), c.grpcRetryOption())
-	conn, err := grpc.Dial(c.cfg.URL, opts...)
+	conn, err := grpc.NewClient(c.cfg.URL, opts...)
 	if err != nil {
 		return err
 	}

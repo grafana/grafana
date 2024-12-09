@@ -1,6 +1,6 @@
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 
-import { Button, Icon, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { Box, Button, Icon, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import MappingsHelp from './MappingsHelp';
 
@@ -27,7 +27,7 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
       )}
       {props.showHelp && <MappingsHelp onDismiss={props.onDismiss} />}
 
-      <div className="gf-form-group">
+      <Box marginBottom={5}>
         {mappings.map((mapping, i) => (
           <InlineFieldRow key={i}>
             <InlineField label={`Mapping (${i + 1})`}>
@@ -71,7 +71,7 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
         >
           Add label mapping
         </Button>
-      </div>
+      </Box>
     </div>
   );
 };

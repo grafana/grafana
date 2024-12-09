@@ -1,6 +1,6 @@
 // mostly copy/pasted from: public/app/core/components/CloseButton/CloseButton.tsx
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -24,6 +24,6 @@ const getStyles = (theme: GrafanaTheme2) =>
   css({
     position: 'absolute',
     margin: '0px',
-    right: theme.spacing(1),
-    top: theme.spacing(1.25),
+    right: 5,
+    top: 6,
   });

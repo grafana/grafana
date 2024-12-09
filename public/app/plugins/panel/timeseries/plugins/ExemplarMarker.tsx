@@ -9,7 +9,8 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -307,7 +308,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     marble: css({
       display: 'block',
       opacity: 0.5,
-      transition: 'transform 0.15s ease-out',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'transform 0.15s ease-out',
+      },
     }),
     activeMarble: css({
       transform: 'scale(1.3)',

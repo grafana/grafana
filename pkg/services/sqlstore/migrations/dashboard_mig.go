@@ -172,6 +172,7 @@ func addDashboardMigration(mg *Migrator) {
 		{Name: "title", Type: DB_NVarchar, Length: 189, Nullable: false},
 	}))
 
+	// This gets removed later in AddDashboardFolderMigrations
 	mg.AddMigration("Add unique index for dashboard_org_id_title_folder_id", NewAddIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "folder_id", "title"}, Type: UniqueIndex,
 	}))
@@ -233,5 +234,14 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add deleted for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "deleted", Type: DB_DateTime, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for deleted", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"deleted"},
+		Type: IndexType,
 	}))
 }

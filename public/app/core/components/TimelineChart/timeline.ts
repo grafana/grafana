@@ -311,7 +311,7 @@ export function getConfig(opts: TimelineCoreOptions) {
               let discrete = isDiscrete(sidx);
               let mappedNull = discrete && hasMappedNull(sidx);
 
-              let y = round(yOff + yMids[sidx - 1]);
+              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null || mappedNull) {
@@ -321,7 +321,11 @@ export function getConfig(opts: TimelineCoreOptions) {
                     continue;
                   }
 
-                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
+                  // if x placement is negative, rect is left truncated, remove it from width for calculating how many chars will display
+                  // right truncation happens automatically
+                  const displayedBoxWidth = boxRect.x < 0 ? boxRect?.w + boxRect.x : boxRect?.w;
+
+                  let maxChars = Math.floor(displayedBoxWidth / pxPerChar);
 
                   if (showValue === VisibilityMode.Auto && maxChars < 2) {
                     continue;
@@ -333,7 +337,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
                   if (mode === TimelineMode.Changes) {
                     if (alignValue === 'left') {
-                      x = round(boxRect.x + xOff + strokeWidth + textPadding);
+                      x = round(Math.max(boxRect.x, 0) + xOff + strokeWidth + textPadding);
                     } else if (alignValue === 'right') {
                       x = round(boxRect.x + xOff + boxRect.w - strokeWidth - textPadding);
                     }
@@ -447,7 +451,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
   };
 
-  const yMids: number[] = Array(numSeries).fill(0);
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
@@ -502,8 +505,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     ySplits: (u: uPlot) => {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
-        yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy] / uPlot.pxRatio, FIXED_UNIT);
+        let yMid = round(y0 + hgt / 2);
+        ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
       });
 
       return ySplits;

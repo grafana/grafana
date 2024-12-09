@@ -2,12 +2,14 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString } from 'lodash';
 
-import { containsSearchFilter } from '@grafana/data';
+import { containsSearchFilter, VariableOption, VariableWithOptions } from '@grafana/data';
 
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
 import { isMulti, isQuery } from '../../guard';
-import { VariableOption, VariableWithOptions } from '../../types';
+
+// https://catonmat.net/my-favorite-regex :)
+const REGEXP_NON_ASCII = /[^ -~]/gm;
 
 export interface ToggleOption {
   option?: VariableOption;
@@ -252,6 +254,8 @@ const optionsPickerSlice = createSlice({
 
       if (needle === '') {
         opts = action.payload;
+      } else if (REGEXP_NON_ASCII.test(needle)) {
+        opts = action.payload.filter((o) => o.text.includes(needle));
       } else {
         // with current API, not seeing a way to cache this on state using action.payload's uniqueness
         // since it's recreated and includes selected state on each item :(

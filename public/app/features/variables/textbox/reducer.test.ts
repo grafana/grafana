@@ -1,9 +1,10 @@
 import { cloneDeep } from 'lodash';
 
+import { TextBoxVariableModel } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';
 import { VariablesState } from '../state/types';
-import { TextBoxVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createTextBoxVariableAdapter } from './adapter';

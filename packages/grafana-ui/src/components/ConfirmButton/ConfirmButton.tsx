@@ -1,10 +1,12 @@
 import { cx, css } from '@emotion/css';
-import React, { ReactElement, useEffect, useRef, useState } from 'react';
+import { ReactElement, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
+import { Trans } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 
 export interface Props {
@@ -114,7 +116,7 @@ export const ConfirmButton = ({
             {confirmText}
           </Button>
           <Button size={size} fill="text" onClick={onClickCancel}>
-            Cancel
+            <Trans i18nKey="grafana-ui.confirm-button.cancel">Cancel</Trans>
           </Button>
         </span>
       </div>
@@ -133,18 +135,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     mainButton: css({
       opacity: 1,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeOut,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
       zIndex: 2,
     }),
     mainButtonHide: css({
       opacity: 0,
-      transition: theme.transitions.create(['opacity', 'visibility'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeIn,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'visibility'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
+      },
       visibility: 'hidden',
       zIndex: 0,
     }),
@@ -164,19 +170,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       opacity: 1,
       transform: 'translateX(0)',
-      transition: theme.transitions.create(['opacity', 'transform'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeOut,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'transform'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
       zIndex: 1,
     }),
     confirmButtonHide: css({
       opacity: 0,
       transform: 'translateX(100%)',
-      transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeIn,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
+      },
       visibility: 'hidden',
     }),
   };

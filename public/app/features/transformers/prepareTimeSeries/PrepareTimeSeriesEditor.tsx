@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 
 import {
   GrafanaTheme2,
@@ -109,9 +110,9 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  info: css`
-    margin-left: 20px;
-  `,
+  info: css({
+    marginLeft: '20px',
+  }),
 });
 
 export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<PrepareTimeSeriesOptions> = {

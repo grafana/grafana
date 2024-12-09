@@ -3,8 +3,8 @@ package grpcplugin
 import (
 	"context"
 	"errors"
-	"sync"
 
+	trace "go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	errClientNotStarted = errors.New("plugin client has not been started")
+	errClientNotAvailable = errors.New("plugin client not available")
 )
 
 var _ ProtoClient = (*protoClient)(nil)
@@ -25,24 +25,18 @@ type ProtoClient interface {
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
+	pluginv2.AdmissionControlClient
+	pluginv2.ResourceConversionClient
 
 	PID(context.Context) (string, error)
 	PluginID() string
 	PluginVersion() string
-	PluginJSON() plugins.JSONData
 	Backend() backendplugin.Plugin
-	Logger() log.Logger
-	Start(context.Context) error
-	Stop(context.Context) error
-	Running(context.Context) bool
 }
 
 type protoClient struct {
-	plugin        *grpcPlugin
-	pluginVersion string
-	pluginJSON    plugins.JSONData
-
-	mu sync.RWMutex
+	plugin     *grpcPlugin
+	pluginJSON plugins.JSONData
 }
 
 type ProtoClientOpts struct {
@@ -51,6 +45,7 @@ type ProtoClientOpts struct {
 	ExecutableArgs []string
 	Env            []string
 	Logger         log.Logger
+	Tracer         trace.Tracer
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -63,15 +58,16 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			versionedPlugins: pluginSet,
 		},
 		opts.Logger,
+		opts.Tracer,
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON}, nil
+	return &protoClient{plugin: p, pluginJSON: opts.PluginJSON}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
 	if _, exists := r.client(ctx); !exists {
-		return "", errClientNotStarted
+		return "", errClientNotAvailable
 	}
 	return r.plugin.client.ID(), nil
 }
@@ -81,11 +77,7 @@ func (r *protoClient) PluginID() string {
 }
 
 func (r *protoClient) PluginVersion() string {
-	return r.pluginVersion
-}
-
-func (r *protoClient) PluginJSON() plugins.JSONData {
-	return r.pluginJSON
+	return r.pluginJSON.Info.Version
 }
 
 func (r *protoClient) Backend() backendplugin.Plugin {
@@ -96,43 +88,14 @@ func (r *protoClient) Logger() log.Logger {
 	return r.plugin.logger
 }
 
-func (r *protoClient) Start(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.plugin.Start(ctx)
-}
-
-func (r *protoClient) Stop(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.plugin.Stop(ctx)
-}
-
-func (r *protoClient) Running(_ context.Context) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return !r.plugin.Exited()
-}
-
 func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
-	if !r.Running(ctx) {
-		return nil, false
-	}
-
-	r.mu.RLock()
-	if r.plugin.pluginClient == nil {
-		r.mu.RUnlock()
-		return nil, false
-	}
-	pc := r.plugin.pluginClient
-	r.mu.RUnlock()
-	return pc, true
+	return r.plugin.getPluginClient(ctx)
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.DataClient.QueryData(ctx, in, opts...)
 }
@@ -140,7 +103,7 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.ResourceClient.CallResource(ctx, in, opts...)
 }
@@ -148,7 +111,7 @@ func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourc
 func (r *protoClient) CheckHealth(ctx context.Context, in *pluginv2.CheckHealthRequest, opts ...grpc.CallOption) (*pluginv2.CheckHealthResponse, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.DiagnosticsClient.CheckHealth(ctx, in, opts...)
 }
@@ -156,7 +119,7 @@ func (r *protoClient) CheckHealth(ctx context.Context, in *pluginv2.CheckHealthR
 func (r *protoClient) CollectMetrics(ctx context.Context, in *pluginv2.CollectMetricsRequest, opts ...grpc.CallOption) (*pluginv2.CollectMetricsResponse, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.DiagnosticsClient.CollectMetrics(ctx, in, opts...)
 }
@@ -164,7 +127,7 @@ func (r *protoClient) CollectMetrics(ctx context.Context, in *pluginv2.CollectMe
 func (r *protoClient) SubscribeStream(ctx context.Context, in *pluginv2.SubscribeStreamRequest, opts ...grpc.CallOption) (*pluginv2.SubscribeStreamResponse, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.StreamClient.SubscribeStream(ctx, in, opts...)
 }
@@ -172,7 +135,7 @@ func (r *protoClient) SubscribeStream(ctx context.Context, in *pluginv2.Subscrib
 func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamRequest, opts ...grpc.CallOption) (pluginv2.Stream_RunStreamClient, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.StreamClient.RunStream(ctx, in, opts...)
 }
@@ -180,7 +143,31 @@ func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamReque
 func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStreamRequest, opts ...grpc.CallOption) (*pluginv2.PublishStreamResponse, error) {
 	c, exists := r.client(ctx)
 	if !exists {
-		return nil, errClientNotStarted
+		return nil, errClientNotAvailable
 	}
 	return c.StreamClient.PublishStream(ctx, in, opts...)
+}
+
+func (r *protoClient) ValidateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.ValidationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.AdmissionClient.ValidateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) MutateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.MutationResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.AdmissionClient.MutateAdmission(ctx, in, opts...)
+}
+
+func (r *protoClient) ConvertObjects(ctx context.Context, in *pluginv2.ConversionRequest, opts ...grpc.CallOption) (*pluginv2.ConversionResponse, error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.ConversionClient.ConvertObjects(ctx, in, opts...)
 }

@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { Input } from '../Input/Input';
 
@@ -87,7 +89,7 @@ export const TagsInput = ({
             size="md"
             disabled={newTagName.length <= 0}
           >
-            Add
+            <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
           </Button>
         }
       />

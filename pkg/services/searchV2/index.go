@@ -846,10 +846,11 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				attribute.Int64("lastID", lastID),
 			))
 
-			rows := make([]*dashboardQueryResult, 0)
+			rows := make([]*dashboardQueryResult, 0, limit)
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
 				sess.Table("dashboard").
-					Where("org_id = ?", orgID)
+					Where("org_id = ?", orgID).
+					Where("deleted IS NULL") // don't index soft delete files
 
 				if lastID > 0 {
 					sess.Where("id > ?", lastID)

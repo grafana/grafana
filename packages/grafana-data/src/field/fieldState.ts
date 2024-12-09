@@ -1,12 +1,12 @@
-import { getFieldMatcher } from '../transformations';
+import { getFieldMatcher } from '../transformations/matchers';
 import {
   DataFrame,
-  Field,
-  TIME_SERIES_VALUE_FIELD_NAME,
   FieldType,
+  Field,
   TIME_SERIES_TIME_FIELD_NAME,
-  FieldConfigSource,
-} from '../types';
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
+import { FieldConfigSource } from '../types/fieldOverrides';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -64,7 +64,7 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
  * moves each field's config.custom.hideFrom to field.state.hideFrom
  * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
  */
-export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource<any>) {
+export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       const hideFrom = {

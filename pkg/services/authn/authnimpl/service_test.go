@@ -3,23 +3,26 @@ package authnimpl
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,26 +43,113 @@ func TestService_Authenticate(t *testing.T) {
 		{
 			desc: "should succeed with authentication for configured client",
 			clients: []authn.Client{
-				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:1"}},
+				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "1", Type: claims.TypeUser}},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:1"},
+			expectedIdentity: &authn.Identity{ID: "1", Type: claims.TypeUser},
+		},
+		{
+			desc: "should succeed with authentication for configured client for identity with fetch permissions params",
+			clients: []authn.Client{
+				&authntest.FakeClient{
+					ExpectedTest: true,
+					ExpectedIdentity: &authn.Identity{
+						ID:   "2",
+						Type: claims.TypeUser,
+						ClientParams: authn.ClientParams{
+							FetchPermissionsParams: authn.FetchPermissionsParams{
+								RestrictedActions: []string{
+									"datasources:read",
+									"datasources:query",
+								},
+								Roles: []string{
+									"fixed:datasources:reader",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID:   "2",
+				Type: claims.TypeUser,
+				ClientParams: authn.ClientParams{
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{
+							"datasources:read",
+							"datasources:query",
+						},
+						Roles: []string{
+							"fixed:datasources:reader",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "should succeed with authentication for client with fetch permissions params made of roles and actions",
+			clients: []authn.Client{
+				&authntest.FakeClient{
+					ExpectedTest: true,
+					ExpectedIdentity: &authn.Identity{
+						ID:   "2",
+						Type: claims.TypeUser,
+						ClientParams: authn.ClientParams{
+							FetchPermissionsParams: authn.FetchPermissionsParams{
+								RestrictedActions: []string{
+									"datasources:read",
+									"datasources:query",
+								},
+								AllowedActions: []string{
+									"datasources:write",
+								},
+								Roles: []string{
+									"fixed:datasources:writer",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID:   "2",
+				Type: claims.TypeUser,
+				ClientParams: authn.ClientParams{
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{
+							"datasources:read",
+							"datasources:query",
+						},
+						AllowedActions: []string{
+							"datasources:write",
+						},
+						Roles: []string{
+							"fixed:datasources:writer",
+						},
+					},
+				},
+			},
 		},
 		{
 			desc: "should succeed with authentication for second client when first test fail",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1, ExpectedTest: false},
-				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:2"}},
+				&authntest.FakeClient{
+					ExpectedName:     "2",
+					ExpectedPriority: 2,
+					ExpectedTest:     true,
+					ExpectedIdentity: &authn.Identity{ID: "2", Type: claims.TypeUser, AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
+				},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:2"},
+			expectedIdentity: &authn.Identity{ID: "2", Type: claims.TypeUser, AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
 		},
 		{
 			desc: "should succeed with authentication for third client when error happened in first",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
 				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: errors.New("some error")},
-				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:3"}},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "3", Type: claims.TypeUser}},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:3"},
+			expectedIdentity: &authn.Identity{ID: "3", Type: claims.TypeUser},
 		},
 		{
 			desc: "should return error when no client could authenticate the request",
@@ -90,16 +180,76 @@ func TestService_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
+
 			svc := setupTests(t, func(svc *Service) {
+				svc.tracer = tracer
+
 				for _, c := range tt.clients {
 					svc.RegisterClient(c)
 				}
 			})
 
 			identity, err := svc.Authenticate(context.Background(), &authn.Request{})
+			spans := spanRecorder.Ended()
 			if len(tt.expectedErrors) == 0 {
 				assert.NoError(t, err)
 				assert.EqualValues(t, tt.expectedIdentity, identity)
+
+				matchedClients := make([]*authntest.FakeClient, 0)
+				for _, client := range tt.clients {
+					fakeClient, _ := client.(*authntest.FakeClient)
+					if fakeClient.ExpectedTest {
+						matchedClients = append(matchedClients, fakeClient)
+					}
+				}
+				require.Len(t, spans, 1+len(matchedClients), "must have spans 1+ number of clients tried")
+
+				spansTested := make([]sdktrace.ReadOnlySpan, 0)
+				for _, span := range spans {
+					if span.Name() != "authn.Authenticate" {
+						spansTested = append(spansTested, span)
+					}
+				}
+
+				assert.Len(t, spansTested, len(matchedClients), "expected spans with name authn.authenticate to match number of clients tested")
+
+				// since this is a success case, at least one span should have all 3 attributes
+				passedAuthnIndex := slices.IndexFunc(spansTested, func(span sdktrace.ReadOnlySpan) bool {
+					return len(span.Attributes()) >= 3 // more than 3 when there are ClientParams in the identity
+				})
+				require.NotEqual(t, -1, passedAuthnIndex, "no spans found all 3 attributes - passed case should have authn attributes set")
+				passedAuthnSpan := spansTested[passedAuthnIndex]
+				for _, attr := range passedAuthnSpan.Attributes() {
+					switch attr.Key {
+					case "identity.ID":
+						assert.Equal(t, tt.expectedIdentity.GetID(), attr.Value.AsString())
+					case "identity.AuthID":
+						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
+					case "identity.AuthenticatedBy":
+						assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, attr.Value.AsString())
+					case "identity.ClientParams.FetchPermissionsParams.RestrictedActions":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions, attr.Value.AsStringSlice())
+						}
+					case "identity.ClientParams.FetchPermissionsParams.AllowedActions":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions, attr.Value.AsStringSlice())
+						}
+					case "identity.ClientParams.FetchPermissionsParams.Roles":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles, attr.Value.AsStringSlice())
+						}
+					}
+				}
+
+				if len(matchedClients) > 1 {
+					failedAuthnIndex := slices.IndexFunc(spansTested, func(span sdktrace.ReadOnlySpan) bool {
+						return span.Status().Code == codes.Error
+					})
+					assert.NotEqual(t, -1, failedAuthnIndex, "no spans found for the error case - at least one client in multi client test must have failed")
+				}
 			} else {
 				for _, e := range tt.expectedErrors {
 					assert.ErrorIs(t, err, e)
@@ -214,10 +364,12 @@ func TestService_Login(t *testing.T) {
 			client:           "fake",
 			expectedClientOK: true,
 			expectedClientIdentity: &authn.Identity{
-				ID: "user:1",
+				ID:   "1",
+				Type: claims.TypeUser,
 			},
 			expectedIdentity: &authn.Identity{
-				ID:           "user:1",
+				ID:           "1",
+				Type:         claims.TypeUser,
 				SessionToken: &auth.UserToken{UserId: 1},
 			},
 		},
@@ -230,7 +382,7 @@ func TestService_Login(t *testing.T) {
 			desc:                   "should not login non user identity",
 			client:                 "fake",
 			expectedClientOK:       true,
-			expectedClientIdentity: &authn.Identity{ID: "apikey:1"},
+			expectedClientIdentity: &authn.Identity{ID: "1", Type: claims.TypeAPIKey},
 			expectedErr:            authn.ErrUnsupportedIdentity,
 		},
 	}
@@ -245,11 +397,11 @@ func TestService_Login(t *testing.T) {
 					ExpectedIdentity: tt.expectedClientIdentity,
 				})
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
-					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+					CreateTokenProvider: func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 						if tt.expectedSessionErr != nil {
 							return nil, tt.expectedSessionErr
 						}
-						return &auth.UserToken{UserId: user.ID}, nil
+						return &auth.UserToken{UserId: cmd.User.ID}, nil
 					},
 				}
 			})
@@ -308,7 +460,8 @@ func TestService_Logout(t *testing.T) {
 		identity     *authn.Identity
 		sessionToken *usertoken.UserToken
 
-		client authn.Client
+		client             authn.Client
+		signoutRedirectURL string
 
 		expectedErr          error
 		expectedTokenRevoked bool
@@ -318,35 +471,43 @@ func TestService_Logout(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:             "should redirect to default redirect url when identity is not a user",
-			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceServiceAccount, 1)},
+			identity:         &authn.Identity{ID: "1", Type: claims.TypeServiceAccount},
 			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
 		},
 		{
 			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			identity:             &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
+			identity:             &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
+			desc:                 "should use signout redirect url if configured",
+			identity:             &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "some-url"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			signoutRedirectURL:   "some-url",
+			expectedTokenRevoked: true,
+		},
+		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:         &authn.Identity{ID: "1", Type: claims.TypeUser, AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},
@@ -372,6 +533,10 @@ func TestService_Logout(t *testing.T) {
 						return nil
 					},
 				}
+
+				if tt.signoutRedirectURL != "" {
+					svc.cfg.SignoutRedirectUrl = tt.signoutRedirectURL
+				}
 			})
 
 			redirect, err := s.Logout(context.Background(), tt.identity, tt.sessionToken)
@@ -387,7 +552,7 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
 		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
-		assert.ErrorIs(t, err, authn.ErrInvalidNamepsaceID)
+		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {
@@ -413,8 +578,8 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
 		svc := setupTests(t, func(svc *Service) {
 			svc.RegisterClient(&authntest.MockClient{
-				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
-				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+				IdentityTypeFunc: func() claims.IdentityType { return claims.TypeAPIKey },
+				ResolveIdentityFunc: func(_ context.Context, _ int64, _ claims.IdentityType, _ string) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
 				},
 			})
@@ -447,6 +612,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

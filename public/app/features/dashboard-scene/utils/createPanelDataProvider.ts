@@ -24,6 +24,7 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.cacheTimeout,
     queryCachingTTL: panel.queryCachingTTL,
+    minInterval: panel.interval ?? undefined,
     dataLayerFilter: {
       panelId: panel.id,
     },

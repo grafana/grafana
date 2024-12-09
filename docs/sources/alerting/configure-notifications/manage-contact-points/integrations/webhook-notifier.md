@@ -19,14 +19,22 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Webhook notifier
+menuTitle: Webhook
 title: Configure the webhook notifier for Alerting
-weight: 200
+weight: 165
+refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
-### Configure the webhook notifier for Alerting
+# Configure the webhook notifier for Alerting
 
-Example JSON body:
+The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint. Using this notification you could integrate Grafana into a system of your choosing.
+
+## Webhook JSON payload
 
 ```json
 {
@@ -98,9 +106,9 @@ Example JSON body:
 }
 ```
 
-### Webhook fields
+## Webhook fields
 
-## Body
+### Body
 
 | Key               | Type                      | Description                                                                     |
 | ----------------- | ------------------------- | ------------------------------------------------------------------------------- |
@@ -115,9 +123,9 @@ Example JSON body:
 | version           | string                    | Version of the payload                                                          |
 | groupKey          | string                    | Key that is used for grouping                                                   |
 | truncatedAlerts   | number                    | Number of alerts that were truncated                                            |
-| title             | string                    | **Will be deprecated soon**                                                     |
-| state             | string                    | **Will be deprecated soon**                                                     |
-| message           | string                    | **Will be deprecated soon**                                                     |
+| title             | string                    | Custom title                                                                    |
+| state             | string                    | State of the alert group (either `alerting` or `ok`)                            |
+| message           | string                    | Custom message                                                                  |
 
 ### Alert
 
@@ -132,22 +140,42 @@ Example JSON body:
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Will be deprecated soon**                                                        |
-| panelURL     | string | **Will be deprecated soon**                                                        |
+| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation        |
+| panelURL     | string | A link to the panel if the alert has a Panel ID annotation                         |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
-### Removed fields related to dashboards
+{{< admonition type="note" >}}
 
-Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+You can customize the `title` and `message` fields using [notification templates](ref:notification-templates).
 
-## WeCom
+However, you cannot customize webhook data structure or format, including JSON fields or sending data in XML, nor can you change the webhook HTTP headers.
 
-WeCom contact points need a Webhook URL. These are obtained by setting up a WeCom robot on the corresponding group chat. To obtain a Webhook URL using the WeCom desktop Client please follow these steps:
+{{< /admonition >}}
 
-1. Click the "..." in the top right corner of a group chat that you want your alerts to be delivered to
-2. Click "Add Group Robot", select "New Robot" and give your robot a name. Click "Add Robot"
-3. There should be a Webhook URL in the panel.
+## Procedure
 
-| Setting | Description        |
-| ------- | ------------------ |
-| Url     | WeCom webhook URL. |
+To create your Webhook integration in Grafana Alerting, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Click **+ Add contact point**.
+1. Enter a contact point name.
+1. From the Integration list, select **Webhook**.
+1. In the **URL** field, copy in your Webhook URL.
+1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
+1. Click **Save contact point**.
+
+## Next steps
+
+The Webhook contact point is ready to receive alert notifications.
+
+To add this contact point to your alert, complete the following steps.
+
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications, click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.

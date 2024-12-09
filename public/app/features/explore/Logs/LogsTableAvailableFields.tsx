@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useTheme2 } from '@grafana/ui/src';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';

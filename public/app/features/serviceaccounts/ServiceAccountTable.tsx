@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -122,7 +122,7 @@ const getCellContent = (
   if (isLoading) {
     return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
   }
-  const href = `/org/serviceaccounts/${original.id}`;
+  const href = `/org/serviceaccounts/${original.uid}`;
   const ariaLabel = `Edit service account's ${name} details`;
   switch (columnName) {
     case 'avatarUrl':

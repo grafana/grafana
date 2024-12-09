@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
@@ -33,6 +32,8 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
+  isManaged: false,
+  isPreinstalled: { found: false, withVersion: false },
 };
 
 describe('GetStartedWithDataSource', () => {

@@ -514,7 +514,7 @@ describe('buildVisualQueryFromString', () => {
           text: 'afe}',
           from: 14,
           to: 18,
-          parentType: 'LabelMatcher',
+          parentType: 'UnquotedLabelMatcher',
         },
       ],
       query: {
@@ -745,6 +745,58 @@ describe('buildVisualQueryFromString', () => {
         ],
       },
     });
+  });
+
+  it('strips enclosing quotes', () => {
+    expect(buildVisualQueryFromString("counters_logins{app='frontend', host=`localhost`}")).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+          {
+            op: '=',
+            value: 'localhost',
+            label: 'host',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
+
+  it('leaves escaped quotes inside string', () => {
+    expect(buildVisualQueryFromString('counters_logins{app="fron\\"\\"tend"}')).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [
+          {
+            op: '=',
+            value: 'fron\\"\\"tend',
+            label: 'app',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
+
+  it('parses the group function as an aggregation', () => {
+    expect(buildVisualQueryFromString('group by (job) (go_goroutines)')).toEqual(
+      noErrors({
+        metric: 'go_goroutines',
+        labels: [],
+        operations: [
+          {
+            id: '__group_by',
+            params: ['job'],
+          },
+        ],
+      })
+    );
   });
 });
 

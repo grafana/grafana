@@ -1,0 +1,20 @@
+name: Bump version
+description: Updates package.json versions in Grafana and subpackages and regenerates schemas
+inputs:
+  version:
+    description: The new version (ex. 1.2.3)
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+    - name: Bump versions
+      uses: dagger/dagger-for-github@v5
+      with:
+        verb: run
+        args: go run ./pkg/build/actions/bump-version -version=${{ inputs.version }}
+    - name: make gen-cue
+      shell: bash
+      run: make gen-cue

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceSettings } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { Alert } from '@grafana/ui';

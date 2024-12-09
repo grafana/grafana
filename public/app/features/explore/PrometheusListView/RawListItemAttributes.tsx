@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { useStyles2 } from '@grafana/ui/';
@@ -12,16 +11,16 @@ const getStyles = (theme: GrafanaTheme2) => {
   const greenish = theme.isDark ? '#73bf69' : '#56a64b';
 
   return {
-    metricName: css`
-      color: ${greenish};
-    `,
-    metricValue: css`
-      color: ${reddish};
-    `,
-    expanded: css`
-      display: block;
-      text-indent: 1em;
-    `,
+    metricName: css({
+      color: greenish,
+    }),
+    metricValue: css({
+      color: reddish,
+    }),
+    expanded: css({
+      display: 'block',
+      textIndent: '1em',
+    }),
   };
 };
 

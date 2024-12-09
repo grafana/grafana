@@ -17,12 +17,23 @@ labels:
 menuTitle: Alertmanager
 title: Alertmanager data source
 weight: 150
+refs:
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
 ---
 
 # Alertmanager data source
 
 Grafana includes built-in support for Alertmanager implementations in Prometheus and Mimir.
-Once you add it as a data source, you can use the [Grafana Alerting UI][alerting] to manage silences, contact points, and notification policies.
+Once you add it as a data source, you can use the [Grafana Alerting UI](ref:alerting) to manage silences, contact points, and notification policies.
 To switch between Grafana and any configured Alertmanager data sources, you can select your preference from a drop-down option in those databases' data source settings pages.
 
 ## Alertmanager implementations
@@ -56,7 +67,7 @@ To configure basic settings for the data source, complete the following steps:
 ## Provision the Alertmanager data source
 
 You can provision Alertmanager data sources by updating Grafana's configuration files.
-For more information on provisioning, and common settings available, refer to the [provisioning docs page][data-sources].
+For more information on provisioning, and common settings available, refer to the [provisioning docs page](ref:data-sources).
 
 Here is an example for provisioning the Alertmanager data source:
 
@@ -79,11 +90,3 @@ datasources:
     secureJsonData:
       basicAuthPassword: test_password
 ```
-
-{{% docs/reference %}}
-[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
-
-[data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-[data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-{{% /docs/reference %}}

@@ -11,7 +11,6 @@ export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
 export { SearchFunctionType } from './searchFunctions';
-export { ansicolor } from 'ansicolor';
 
 export { DOMUtil };
 
@@ -19,6 +18,6 @@ export { createLogger } from './logger';
 export { attachDebugger } from './debug';
 export * from './nodeGraph';
 export { fuzzyMatch } from './fuzzy';
-export { handleReducedMotion } from './handleReducedMotion';
+export { logOptions } from './logOptions';
 
 export { ReactUtils };

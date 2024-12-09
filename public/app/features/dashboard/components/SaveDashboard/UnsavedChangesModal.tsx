@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Button, Modal } from '@grafana/ui';
 
@@ -21,9 +20,9 @@ export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDis
       title="Unsaved changes"
       onDismiss={onDismiss}
       icon="exclamation-triangle"
-      className={css`
-        width: 500px;
-      `}
+      className={css({
+        width: '500px',
+      })}
     >
       <h5>Do you want to save your changes?</h5>
       <Modal.ButtonRow>

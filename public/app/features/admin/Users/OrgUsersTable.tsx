@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   Avatar,
   Box,
@@ -19,9 +20,11 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
@@ -48,12 +51,14 @@ export interface Props {
   page: number;
   totalPages: number;
   rolesLoading?: boolean;
+  onUserRolesChange?: () => void;
 }
 
 export const OrgUsersTable = ({
   users,
   orgId,
   onRoleChange,
+  onUserRolesChange,
   onRemoveUser,
   fetchData,
   changePage,
@@ -109,7 +114,21 @@ export const OrgUsersTable = ({
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+          return (
+            <>
+              {value && (
+                <>
+                  {value === '10 years' ? (
+                    <Text color={'disabled'}>
+                      <Trans i18nKey="admin.org-uers.last-seen-never">Never</Trans>
+                    </Text>
+                  ) : (
+                    value
+                  )}
+                </>
+              )}
+            </>
+          );
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
@@ -118,10 +137,23 @@ export const OrgUsersTable = ({
         header: 'Role',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const basicRoleDisabled = getBasicRoleDisabled(original);
+          const onUserRolesUpdate = async (newRoles: Role[], userId: number, orgId: number | undefined) => {
+            await updateUserRoles(newRoles, userId, orgId);
+            if (onUserRolesChange) {
+              onUserRolesChange();
+            }
+          };
+
+          if (config.featureToggles.rolePickerDrawer) {
+            return <RolePickerBadges disabled={basicRoleDisabled} user={original} />;
+          }
+
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
-              roles={original.roles || []}
+              roles={original.roles}
+              apply={true}
+              onApplyRoles={onUserRolesUpdate}
               isLoading={rolesLoading}
               orgId={orgId}
               roleOptions={roleOptions}
@@ -153,18 +185,20 @@ export const OrgUsersTable = ({
                   interactive={true}
                   content={
                     <div>
-                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-                      the&nbsp;
-                      <a
-                        href={
-                          'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
-                        }
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        Grafana authentication docs
-                      </a>
-                      &nbsp;for details.
+                      <Trans i18nKey="admin.org-users.not-editable">
+                        This user&apos;s role is not editable because it is synchronized from your auth provider. Refer
+                        to the&nbsp;
+                        <a
+                          href={
+                            'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
+                          }
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          Grafana authentication docs
+                        </a>
+                        &nbsp;for details.
+                      </Trans>
                     </div>
                   }
                 >
@@ -207,7 +241,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [rolesLoading, orgId, roleOptions, onRoleChange]
+    [rolesLoading, orgId, roleOptions, onUserRolesChange, onRoleChange]
   );
 
   return (

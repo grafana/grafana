@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { unaryOperators, SelectableValue, UnaryOperationID } from '@grafana/data';
 import {
   UnaryOptions,

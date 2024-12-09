@@ -1,6 +1,5 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { dateTime } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -8,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
+import { LokiQueryBuilder, Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
@@ -49,26 +48,26 @@ describe('LokiQueryBuilder', () => {
   afterEach(() => {
     config.featureToggles.lokiQueryHints = originalLokiQueryHints;
   });
-  it('tries to load labels when no labels are selected', async () => {
+  it('tries to load label names', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['a'], instance: ['b'] });
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockReturnValue(['job', 'instance']);
 
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    expect(props.datasource.languageProvider.fetchSeriesLabels).toBeCalledWith('{baz="bar"}', {
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({
+      streamSelector: '{baz="bar"}',
       timeRange: mockTimeRange,
     });
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
-  it('uses fetchLabelValues preselected labels have no equality matcher', async () => {
+  it('uses fetchLabelValues if preselected labels have no equality matcher', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn();
     props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
 
     const query: LokiVisualQuery = {
@@ -82,14 +81,14 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', { timeRange: mockTimeRange });
-    expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
   });
 
-  it('uses fetchLabelValues preselected label have regex equality matcher with match everything value (.*)', async () => {
+  it('no streamSelector in fetchLabelValues if preselected label have regex equality matcher with match everything value (.*)', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn();
     props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
 
     const query: LokiVisualQuery = {
@@ -103,14 +102,14 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', { timeRange: mockTimeRange });
-    expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
   });
 
-  it('uses fetchLabels preselected label have regex equality matcher with match everything value (.*)', async () => {
+  it('no streamSelector in fetchLabels if preselected label have regex equality matcher with match everything value (.*)', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn();
     props.datasource.languageProvider.fetchLabels = jest.fn().mockReturnValue(['a', 'b']);
 
     const query: LokiVisualQuery = {
@@ -124,15 +123,13 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    expect(props.datasource.languageProvider.fetchLabels).toBeCalledWith({ timeRange: mockTimeRange });
-    expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({ timeRange: mockTimeRange });
   });
 
-  it('uses fetchSeriesLabels preselected label have regex equality matcher', async () => {
+  it('uses streamSelector in fetchLabelValues if preselected label have regex equality matcher', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['a'], instance: ['b'] });
-    props.datasource.languageProvider.fetchLabelValues = jest.fn();
+    props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
 
     const query: LokiVisualQuery = {
       labels: [
@@ -145,18 +142,17 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchSeriesLabels).toBeCalledWith('{cluster=~"cluster1|cluster2"}', {
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      streamSelector: '{cluster=~"cluster1|cluster2"}',
       timeRange: mockTimeRange,
     });
-    expect(props.datasource.languageProvider.fetchLabelValues).not.toBeCalled();
   });
 
   it('does refetch label values with the correct time range', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest
-      .fn()
-      .mockReturnValue({ job: ['a'], instance: ['b'], baz: ['bar'] });
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockReturnValue(['job', 'instance', 'baz']);
+    props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b', 'c']);
 
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
@@ -166,7 +162,12 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
     await userEvent.click(screen.getByText('job'));
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchSeriesLabels).toHaveBeenNthCalledWith(2, '{baz="bar"}', {
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({
+      streamSelector: '{baz="bar"}',
+      timeRange: mockTimeRange,
+    });
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      streamSelector: '{baz="bar"}',
       timeRange: mockTimeRange,
     });
   });
@@ -174,9 +175,7 @@ describe('LokiQueryBuilder', () => {
   it('does not show already existing label names as option in label filter', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest
-      .fn()
-      .mockReturnValue({ job: ['a'], instance: ['b'], baz: ['bar'] });
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockReturnValue(['job', 'instance', 'baz']);
 
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
@@ -316,6 +315,68 @@ describe('LokiQueryBuilder', () => {
 
     await waitFor(() => {
       expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Disabling operations', () => {
+    let props: Omit<Props, 'query'>;
+    beforeEach(() => {
+      props = createDefaultProps();
+      props.datasource.getDataSamples = jest.fn().mockReturnValue(new Promise(() => {}));
+      props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
+    });
+    it('Allows to disable operations', async () => {
+      const onChange = jest.fn();
+
+      const query: LokiVisualQuery = {
+        labels: [{ op: '=', label: 'job', value: 'grafana' }],
+        operations: [
+          {
+            id: LokiOperationId.Logfmt,
+            params: [],
+          },
+        ],
+      };
+      render(<LokiQueryBuilder {...props} onChange={onChange} query={query} />);
+
+      expect(screen.getByText('Logfmt')).toBeInTheDocument();
+      await userEvent.click(screen.getByTitle('Disable operation'));
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        operations: [
+          {
+            ...query.operations[0],
+            disabled: true,
+          },
+        ],
+      });
+    });
+
+    it('Allows to enable operations', async () => {
+      const onChange = jest.fn();
+      const query: LokiVisualQuery = {
+        labels: [{ op: '=', label: 'job', value: 'grafana' }],
+        operations: [
+          {
+            id: LokiOperationId.Logfmt,
+            params: [],
+            disabled: true,
+          },
+        ],
+      };
+      render(<LokiQueryBuilder {...props} onChange={onChange} query={query} />);
+
+      expect(screen.getByText('Logfmt')).toBeInTheDocument();
+      await userEvent.click(screen.getByTitle('Enable operation'));
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        operations: [
+          {
+            ...query.operations[0],
+            disabled: false,
+          },
+        ],
+      });
     });
   });
 });

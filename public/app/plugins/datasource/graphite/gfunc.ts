@@ -17,7 +17,7 @@ export interface FuncDef {
   params: ParamDef[];
   defaultParams: Array<string | number>;
   category?: string;
-  shortName?: any;
+  shortName?: string;
   fake?: boolean;
   version?: string;
   description?: string;
@@ -990,7 +990,7 @@ function isVersionRelatedFunction(obj: { version?: string }, graphiteVersion: st
 export class FuncInstance {
   def: FuncDef;
   params: Array<string | number>;
-  text: any;
+  text = '';
   /**
    * True if this function was just added and not edited yet. It's used to focus on first
    * function param to edit it straight away after adding a function.
@@ -1004,7 +1004,7 @@ export class FuncInstance {
    */
   hidden?: boolean;
 
-  constructor(funcDef: FuncDef, options?: { withDefaultParams: any }) {
+  constructor(funcDef: FuncDef, options?: { withDefaultParams: boolean }) {
     this.def = funcDef;
     this.params = [];
 
@@ -1109,21 +1109,25 @@ export class FuncInstance {
   }
 }
 
-function createFuncInstance(funcDef: FuncDef | string, options?: { withDefaultParams: any }, idx?: any): FuncInstance {
+function createFuncInstance(
+  funcDef: FuncDef | string,
+  options?: { withDefaultParams: boolean },
+  idx?: FuncDefs | null
+): FuncInstance {
   if (isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
   }
   return new FuncInstance(funcDef, options);
 }
 
-function getFuncDef(name: string, idx?: any): FuncDef {
+function getFuncDef(name: string, idx?: FuncDefs | null): FuncDef {
   if (!(idx || index)[name]) {
     return { name: name, params: [{ name: '', type: '', multiple: true }], defaultParams: [''], unknown: true };
   }
   return (idx || index)[name];
 }
 
-function getFuncDefs(graphiteVersion: string, idx?: any): FuncDefs {
+function getFuncDefs(graphiteVersion: string, idx?: FuncDefs | null): FuncDefs {
   const funcs: FuncDefs = {};
   forEach(idx || index, (funcDef: FuncDef) => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
@@ -1181,7 +1185,7 @@ function parseFuncDefs(rawDefs: any): FuncDefs {
     }
 
     forEach(funcDef.params, (rawParam) => {
-      const param: any = {
+      const param: ParamDef = {
         name: rawParam.name,
         type: 'string',
         optional: !rawParam.required,

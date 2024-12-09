@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, clearButtonStyles, useStyles2 } from '@grafana/ui';
+
+import { RuleFormValues } from '../../types/rule-form';
+import { isGrafanaRecordingRuleByType } from '../../utils/rules';
 
 interface AlertConditionProps {
   isCondition?: boolean;
@@ -11,9 +14,14 @@ interface AlertConditionProps {
 
 export const ExpressionStatusIndicator = ({ isCondition, onSetCondition }: AlertConditionProps) => {
   const styles = useStyles2(getStyles);
+  const { watch } = useFormContext<RuleFormValues>();
+  const type = watch('type');
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
+  const conditionText = isGrafanaRecordingRule ? 'Recording rule output' : 'Alert condition';
+  const makeConditionText = isGrafanaRecordingRule ? 'Set as recording rule output' : 'Set as alert condition';
 
   if (isCondition) {
-    return <Badge key="condition" color="green" icon="check" text="Alert condition" />;
+    return <Badge key="condition" color="green" icon="check" text={conditionText} />;
   } else {
     return (
       <button
@@ -22,7 +30,7 @@ export const ExpressionStatusIndicator = ({ isCondition, onSetCondition }: Alert
         className={styles.actionLink}
         onClick={() => onSetCondition && onSetCondition()}
       >
-        Set as alert condition
+        {makeConditionText}
       </button>
     );
   }
@@ -32,14 +40,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    actionLink: css`
-      ${clearButton};
-      color: ${theme.colors.text.link};
-      cursor: pointer;
+    actionLink: css(clearButton, {
+      color: theme.colors.text.link,
+      cursor: 'pointer',
 
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
   };
 };

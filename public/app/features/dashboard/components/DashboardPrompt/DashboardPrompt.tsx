@@ -1,12 +1,12 @@
 import * as H from 'history';
 import { find } from 'lodash';
-import React, { useContext, useEffect, useState } from 'react';
-import { Prompt } from 'react-router-dom';
+import { memo, useContext, useEffect, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { ModalsContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
+export const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;

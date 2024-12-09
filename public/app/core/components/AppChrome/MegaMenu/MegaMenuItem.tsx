@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
-import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
@@ -18,11 +20,13 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
+  onPin: (item: NavModelItem) => void;
+  isPinned: (id?: string) => boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
+export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -36,6 +40,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const styles = useStyles2(getStyles);
 
@@ -59,27 +64,51 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     return null;
   }
 
+  let iconElement: React.JSX.Element | null = null;
+
+  if (link.icon) {
+    iconElement = <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />;
+  } else if (link.img) {
+    iconElement = (
+      <Stack width={3} justifyContent="center">
+        <img className={styles.img} src={link.img} alt="" />
+      </Stack>
+    );
+  }
+
+  function getIconName(isExpanded: boolean) {
+    if (isSingleTopNav) {
+      return isExpanded ? 'angle-up' : 'angle-down';
+    } else {
+      return isExpanded ? 'angle-down' : 'angle-right';
+    }
+  }
+
+  const collapseIcon = (
+    <div className={styles.collapseButtonWrapper}>
+      {showExpandButton && (
+        <IconButton
+          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+          className={styles.collapseButton}
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+          name={getIconName(Boolean(sectionExpanded))}
+          size="md"
+          variant="secondary"
+        />
+      )}
+    </div>
+  );
+
   return (
     <li ref={item} className={styles.listItem}>
       <div
         className={cx(styles.menuItem, {
-          [styles.menuItemWithIcon]: Boolean(level === 0 && link.icon),
+          [styles.menuItemWithIcon]: Boolean(level === 0 && iconElement),
         })}
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
-        <div className={styles.collapseButtonWrapper}>
-          {showExpandButton && (
-            <IconButton
-              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-              className={styles.collapseButton}
-              onClick={() => setSectionExpanded(!sectionExpanded)}
-              name={sectionExpanded ? 'angle-down' : 'angle-right'}
-              size="md"
-              variant="secondary"
-            />
-          )}
-        </div>
+        {!isSingleTopNav && collapseIcon}
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -89,22 +118,21 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             }}
             target={link.target}
             url={link.url}
+            onPin={() => onPin(link)}
+            isPinned={isPinned(link.url)}
           >
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && link.icon),
+                [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
             >
-              {level === 0 && link.icon && (
-                <FeatureHighlightWrapper>
-                  <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
-                </FeatureHighlightWrapper>
-              )}
+              {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
         </div>
+        {isSingleTopNav && collapseIcon}
       </div>
       {showExpandButton && sectionExpanded && (
         <ul className={styles.children}>
@@ -118,6 +146,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
                   activeItem={activeItem}
                   onClick={onClick}
                   level={level + 1}
+                  onPin={onPin}
+                  isPinned={isPinned}
                 />
               ))
           ) : (
@@ -134,6 +164,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     width: theme.spacing(3),
+  }),
+  img: css({
+    height: theme.spacing(2),
+    width: theme.spacing(2),
   }),
   listItem: css({
     flex: 1,

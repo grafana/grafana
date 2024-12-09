@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack } from '@grafana/ui';
 
@@ -67,11 +67,11 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
 };
 
 const styles = {
-  json: css`
-    height: 400px;
-    width: 100%;
-    overflow: auto;
-    resize: none;
-    font-family: monospace;
-  `,
+  json: css({
+    height: '400px',
+    width: '100%',
+    overflow: 'auto',
+    resize: 'none',
+    fontFamily: 'monospace',
+  }),
 };

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 
 import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
@@ -35,6 +36,8 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
       paddingLeft: EXPANDER_WIDTH,
       position: 'absolute',
       top,
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
     };
 
     top += height + theme.spacing.gridSize;

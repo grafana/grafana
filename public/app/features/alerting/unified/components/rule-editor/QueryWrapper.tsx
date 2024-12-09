@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, useState } from 'react';
+import * as React from 'react';
+import { ChangeEvent, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
@@ -12,11 +14,14 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
@@ -76,10 +81,38 @@ export const QueryWrapper = ({
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
+  const { getValues } = useFormContext<RuleFormValues>();
+  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+
   const queryWithDefaults = {
     ...defaults,
     ...cloneDeep(query.model),
   };
+
+  if (queryWithDefaults.datasource && queryWithDefaults.datasource?.uid !== query.datasourceUid) {
+    logInfo('rule query datasource and datasourceUid mismatch', {
+      queryModelDatasourceUid: queryWithDefaults.datasource?.uid || '',
+      queryDatasourceUid: query.datasourceUid,
+      datasourceType: query.model.datasource?.type || 'unknown type',
+    });
+    // There are occasions when the rule query model datasource UID and the datasourceUid do not match
+    // It's unclear as to why this happens, but we need better visibility on why this happens,
+    // so we log when it does, and make the query model datasource UID match the datasource UID
+    // We already elsewhere work under the assumption that the datasource settings are fetched from the datasourceUid property
+
+    // This check is necessary for some few cases where the datasource might be an string instead of an object
+    // see: https://github.com/grafana/grafana/issues/96040 for more context
+    if (typeof queryWithDefaults.datasource === 'object' && Boolean(queryWithDefaults.datasource)) {
+      queryWithDefaults.datasource.uid = query.datasourceUid;
+    } else {
+      // if the datasource is a string, we need to convert it to an object, and populate the fields from the query model
+      queryWithDefaults.datasource = {};
+      queryWithDefaults.datasource.uid = query.datasourceUid;
+      queryWithDefaults.datasource.type = query.model.datasource?.type;
+      queryWithDefaults.datasource.apiVersion = query.model.datasource?.apiVersion;
+    }
+  }
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -108,7 +141,17 @@ export const QueryWrapper = ({
   }
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
+  function HeaderExtras({
+    query,
+    error,
+    index,
+    isAdvancedMode = true,
+  }: {
+    query: AlertQuery<AlertDataQuery>;
+    error?: Error;
+    index: number;
+    isAdvancedMode?: boolean;
+  }) {
     const queryOptions: AlertQueryOptions = {
       maxDataPoints: query.model.maxDataPoints,
       minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
@@ -130,7 +173,12 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
+        {isAdvancedMode && (
+          <ExpressionStatusIndicator
+            onSetCondition={() => onSetCondition(query.refId)}
+            isCondition={isAlertCondition}
+          />
+        )}
       </Stack>
     );
   }
@@ -143,8 +191,10 @@ export const QueryWrapper = ({
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
-        <QueryEditorRow<DataQuery>
+        <QueryEditorRow<AlertDataQuery>
           alerting
+          hideRefId={!isAdvancedMode}
+          hideActionButtons={!isAdvancedMode}
           collapsable={false}
           dataSource={dsSettings}
           onDataSourceLoaded={setDsInstance}
@@ -159,19 +209,14 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
-          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          renderHeaderExtras={() => (
+            <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
+          )}
           app={CoreApp.UnifiedAlerting}
           hideHideQueryButton={true}
         />
       </div>
-      {showVizualisation && (
-        <VizWrapper
-          data={data}
-          thresholds={thresholds}
-          thresholdsType={thresholdsType}
-          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-        />
-      )}
+      {showVizualisation && <VizWrapper data={data} thresholds={thresholds} thresholdsType={thresholdsType} />}
     </Stack>
   );
 };
@@ -264,22 +309,22 @@ export function MinIntervalOption({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: AlertingQueryWrapper;
-    margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
+  wrapper: css({
+    label: 'AlertingQueryWrapper',
+    marginBottom: theme.spacing(1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
 
-    button {
-      overflow: visible;
-    }
-  `,
-  dsTooltip: css`
-    display: flex;
-    align-items: center;
-    &:hover {
-      opacity: 0.85;
-      cursor: pointer;
-    }
-  `,
+    button: {
+      overflow: 'visible',
+    },
+  }),
+  dsTooltip: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:hover': {
+      opacity: 0.85,
+      cursor: 'pointer',
+    },
+  }),
 });

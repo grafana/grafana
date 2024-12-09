@@ -1,37 +1,67 @@
 import { startCase, uniq } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { intrinsics } from '../traceql/traceql';
+import { getEscapedSpanNames } from '../datasource';
+import TempoLanguageProvider from '../language_provider';
 import { Scope } from '../types';
 
-export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
-  return `{${filters
-    .filter((f) => f.tag && f.operator && f.value?.length)
-    .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
-    .join(' && ')}}`;
+export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
+  const interpolatedFilters = filters.map((filter) => {
+    const updatedFilter = {
+      ...filter,
+      tag: getTemplateSrv().replace(filter.tag ?? '', scopedVars ?? {}),
+    };
+
+    if (filter.value) {
+      updatedFilter.value =
+        typeof filter.value === 'string'
+          ? getTemplateSrv().replace(filter.value ?? '', scopedVars ?? {}, VariableFormatID.Pipe)
+          : filter.value.map((v) => getTemplateSrv().replace(v ?? '', scopedVars ?? {}, VariableFormatID.Pipe));
+    }
+
+    return updatedFilter;
+  });
+
+  return interpolatedFilters;
 };
 
-const valueHelper = (f: TraceqlFilter) => {
-  if (Array.isArray(f.value) && f.value.length > 1) {
-    return `"${f.value.join('|')}"`;
+const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
+
+const escapeValues = (values: string[]) => getEscapedSpanNames(values);
+
+export const valueHelper = (f: TraceqlFilter) => {
+  const value = Array.isArray(f.value) && isRegExpOperator(f.operator!) ? escapeValues(f.value) : f.value;
+
+  if (Array.isArray(value) && value.length > 1) {
+    return `"${value.join('|')}"`;
   }
   if (f.valueType === 'string') {
-    return `"${f.value}"`;
+    return `"${value}"`;
   }
-  return f.value;
+  return value;
 };
-const scopeHelper = (f: TraceqlFilter) => {
+
+export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   // Intrinsic fields don't have a scope
-  if (intrinsics.find((t) => t === f.tag)) {
+  if (lp.getIntrinsics().find((t) => t === f.tag)) {
     return '';
   }
   return (
-    (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
+    (f.scope === TraceqlSearchScope.Event ||
+    f.scope === TraceqlSearchScope.Instrumentation ||
+    f.scope === TraceqlSearchScope.Link ||
+    f.scope === TraceqlSearchScope.Resource ||
+    f.scope === TraceqlSearchScope.Span
+      ? f.scope?.toLowerCase()
+      : '') + '.'
   );
 };
-const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
+
+export const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   if (f.tag === 'duration') {
     const durationType = filters.find((f) => f.id === 'duration-type');
     if (durationType) {
@@ -42,11 +72,32 @@ const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   return f.tag;
 };
 
-export const filterScopedTag = (f: TraceqlFilter) => {
-  return scopeHelper(f) + f.tag;
+export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
+  return `{${filters
+    .filter((f) => f.key && f.operator && f.value)
+    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f, lp)}`)
+    .join(' && ')}}`;
 };
 
-export const filterTitle = (f: TraceqlFilter) => {
+const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => {
+  if (lp.getIntrinsics().find((t) => t === f.key)) {
+    return f.value;
+  }
+  if (parseInt(f.value, 10).toString() === f.value) {
+    return f.value;
+  }
+  return `"${f.value}"`;
+};
+
+export const getTagWithoutScope = (tag: string) => {
+  return tag.replace(/^(event|instrumentation|link|resource|span)\./, '');
+};
+
+export const filterScopedTag = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
+  return scopeHelper(f, lp) + f.tag;
+};
+
+export const filterTitle = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   // Special case for the intrinsic "name" since a label called "Name" isn't explicit
   if (f.tag === 'name') {
     return 'Span Name';
@@ -55,16 +106,30 @@ export const filterTitle = (f: TraceqlFilter) => {
   if (f.tag === 'service.name' && f.scope === TraceqlSearchScope.Resource) {
     return 'Service Name';
   }
-  return startCase(filterScopedTag(f));
+  return startCase(filterScopedTag(f, lp));
 };
 
 export const getFilteredTags = (tags: string[], staticTags: Array<string | undefined>) => {
-  return [...intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+  return [...tags].filter((t) => !staticTags.includes(t));
 };
 
 export const getUnscopedTags = (scopes: Scope[]) => {
   return uniq(
-    scopes.map((scope: Scope) => (scope.name && scope.name !== 'intrinsic' && scope.tags ? scope.tags : [])).flat()
+    scopes
+      .map((scope: Scope) =>
+        scope.name && scope.name !== TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
+      )
+      .flat()
+  );
+};
+
+export const getIntrinsicTags = (scopes: Scope[]) => {
+  return uniq(
+    scopes
+      .map((scope: Scope) =>
+        scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
+      )
+      .flat()
   );
 };
 

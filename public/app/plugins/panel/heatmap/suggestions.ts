@@ -20,7 +20,12 @@ export class HeatmapSuggestionsSupplier {
     }
 
     const palette = quantizeScheme(defaultOptions.color, config.theme2);
-    const info = prepareHeatmapData(builder.data.series, undefined, defaultOptions, palette, config.theme2);
+    const info = prepareHeatmapData({
+      frames: builder.data.series,
+      options: defaultOptions,
+      palette,
+      theme: config.theme2,
+    });
     if (!info || info.warning) {
       return;
     }

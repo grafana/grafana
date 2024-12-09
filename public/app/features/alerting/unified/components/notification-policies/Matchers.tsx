@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
 
@@ -29,7 +29,7 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
         ))}
         {/* TODO hover state to show all matchers we're not showing */}
         {hasMoreMatchers && (
-          <HoverCard
+          <PopupCard
             arrow
             placement="top"
             content={
@@ -43,7 +43,7 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
             <span>
               <div className={styles.metadata}>{`and ${rest.length} more`}</div>
             </span>
-          </HoverCard>
+          </PopupCard>
         )}
       </Stack>
     </span>
@@ -72,23 +72,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     const { color, borderColor } = getTagColorsFromName(label);
 
     return {
-      wrapper: css`
-        color: #fff;
-        background: ${color};
-        padding: ${theme.spacing(0.33)} ${theme.spacing(0.66)};
-        font-size: ${theme.typography.bodySmall.fontSize};
+      wrapper: css({
+        color: '#fff',
+        background: color,
+        padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
+        fontSize: theme.typography.bodySmall.fontSize,
 
-        border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(2)};
-      `,
+        border: `solid 1px ${borderColor}`,
+        borderRadius: theme.shape.borderRadius(2),
+
+        // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_
+        // when rendering the matcher, and is only noticeable when editing
+        whiteSpace: 'pre',
+      }),
     };
   },
-  metadata: css`
-    color: ${theme.colors.text.secondary};
+  metadata: css({
+    color: theme.colors.text.secondary,
 
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.bodySmall.fontWeight};
-  `,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.bodySmall.fontWeight,
+  }),
 });
 
 export { Matchers };

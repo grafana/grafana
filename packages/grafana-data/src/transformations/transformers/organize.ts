@@ -1,4 +1,5 @@
-import { DataFrame, DataTransformerInfo, TransformationApplicabilityLevels } from '../../types';
+import { DataFrame } from '../../types/dataFrame';
+import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { filterFieldsByNameTransformer } from './filterByName';
 import { DataTransformerID } from './ids';

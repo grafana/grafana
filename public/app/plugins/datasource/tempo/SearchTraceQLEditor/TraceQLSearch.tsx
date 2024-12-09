@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
@@ -18,7 +18,7 @@ import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
-import { filterScopedTag, filterTitle, generateQueryFromFilters, replaceAt } from './utils';
+import { filterScopedTag, filterTitle, interpolateFilters, replaceAt } from './utils';
 
 interface Props {
   datasource: TempoDatasource;
@@ -27,11 +27,12 @@ interface Props {
   onBlur?: () => void;
   onClearResults: () => void;
   app?: CoreApp;
+  addVariablesToOptions?: boolean;
 }
 
 const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
-const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
+const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions = true }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
@@ -61,9 +62,10 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
     onChange({ ...query, filters: query.filters.filter((f) => f.id !== s.id) });
   };
 
+  const templateVariables = getTemplateSrv().getVariables();
   useEffect(() => {
-    setTraceQlQuery(generateQueryFromFilters(query.filters || []));
-  }, [query]);
+    setTraceQlQuery(datasource.languageProvider.generateQueryFromFilters(interpolateFilters(query.filters || [])));
+  }, [datasource.languageProvider, query, templateVariables]);
 
   const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
 
@@ -97,6 +99,10 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
   const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
   staticTags.push('duration');
   staticTags.push('traceDuration');
+  staticTags.push('span:duration');
+  staticTags.push('trace:duration');
+  staticTags.push('status');
+  staticTags.push('span:status');
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
   // The duration and status fields are a special case since its selector is hard-coded
@@ -116,9 +122,10 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               f.tag && (
                 <InlineSearchField
                   key={f.id}
-                  label={filterTitle(f)}
+                  label={filterTitle(f, datasource.languageProvider)}
                   tooltip={`Filter your search by ${filterScopedTag(
-                    f
+                    f,
+                    datasource.languageProvider
                   )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
                 >
                   <SearchField
@@ -130,6 +137,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
                     hideScope={true}
                     hideTag={true}
                     query={traceQlQuery}
+                    addVariablesToOptions={addVariablesToOptions}
                   />
                 </InlineSearchField>
               )
@@ -153,6 +161,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               query={traceQlQuery}
               isMulti={false}
               allowCustomValue={false}
+              addVariablesToOptions={addVariablesToOptions}
             />
           </InlineSearchField>
           <InlineSearchField
@@ -212,10 +221,17 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               isTagsLoading={isTagsLoading}
               query={traceQlQuery}
               requireTagAndValue={true}
+              addVariablesToOptions={addVariablesToOptions}
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (
-            <GroupByField datasource={datasource} onChange={onChange} query={query} isTagsLoading={isTagsLoading} />
+            <GroupByField
+              datasource={datasource}
+              onChange={onChange}
+              query={query}
+              isTagsLoading={isTagsLoading}
+              addVariablesToOptions={addVariablesToOptions}
+            />
           )}
         </div>
         <div className={styles.rawQueryContainer}>
@@ -231,7 +247,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               });
 
               onClearResults();
-              const traceQlQuery = generateQueryFromFilters(query.filters || []);
+              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters(query.filters || []);
               onChange({
                 ...query,
                 query: traceQlQuery,
@@ -242,7 +258,11 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
             Edit in TraceQL
           </Button>
         </div>
-        <TempoQueryBuilderOptions onChange={onChange} query={query} />
+        <TempoQueryBuilderOptions
+          onChange={onChange}
+          query={query}
+          isStreaming={datasource.isStreamingSearchEnabled() ?? false}
+        />
       </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>

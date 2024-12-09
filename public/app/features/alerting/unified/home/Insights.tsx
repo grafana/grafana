@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -16,6 +14,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
 import { config } from '../../../../core/config';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -100,12 +99,22 @@ const namespace = config.bootData.settings.namespace;
 
 export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
 
-export function getInsightsScenes() {
+const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
 
   [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
     ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
   });
+  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
+};
+
+export const insightsIsAvailable = () => {
+  const [_, cloudUsageDs, __] = getInsightsDataSources();
+  return cloudUsageDs.settings;
+};
+
+export function getInsightsScenes() {
+  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
 
   const categories = [];
 
@@ -165,7 +174,28 @@ export function getInsightsScenes() {
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
-        props: { children: <div>Monitor the status of your system.</div> },
+        props: {
+          children: (
+            <>
+              <Text>
+                Monitor the status of your system{' '}
+                <Tooltip
+                  content={
+                    <div>
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                      <br />
+                      <br />
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </div>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Text>
+            </>
+          ),
+        },
       }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),

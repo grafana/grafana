@@ -1,4 +1,4 @@
-import { CombinedState, combineReducers, Reducer } from 'redux';
+import { AnyAction, combineReducers, Reducer } from 'redux';
 
 import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { initialVariableInspectState, variableInspectReducer, VariableInspectState } from '../inspect/reducer';
@@ -16,7 +16,7 @@ export interface TemplatingState {
   inspect: VariableInspectState;
 }
 
-let templatingReducers: Reducer<CombinedState<TemplatingState>>;
+let templatingReducers: Reducer<TemplatingState, AnyAction, Partial<TemplatingState>>;
 
 export function getTemplatingReducers() {
   if (!templatingReducers) {

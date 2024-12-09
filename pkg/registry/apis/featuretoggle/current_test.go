@@ -8,16 +8,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetFeatureToggles(t *testing.T) {
@@ -397,7 +396,7 @@ func callGetWith(t *testing.T, b *FeatureFlagAPIBuilder, expectedCode int) v0alp
 		Header: http.Header{},
 	}
 	req.Header.Add("content-type", "application/json")
-	req = req.WithContext(appcontext.WithUser(req.Context(), &user.SignedInUser{}))
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{}))
 	b.handleCurrentStatus(w, req)
 
 	rts := v0alpha1.ResolvedToggleState{}
@@ -426,7 +425,7 @@ func callPatchWith(t *testing.T, b *FeatureFlagAPIBuilder, update v0alpha1.Resol
 		Header: http.Header{},
 	}
 	req.Header.Add("content-type", "application/json")
-	req = req.WithContext(appcontext.WithUser(req.Context(), &user.SignedInUser{}))
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{}))
 	b.handleCurrentStatus(w, req)
 
 	require.NotNil(t, w.Body())

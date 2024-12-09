@@ -1,4 +1,3 @@
-import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame } from '@grafana/data';
@@ -12,7 +11,7 @@ import {
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getGrafanaMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = `sum by(rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m{id="${INSTANCE_ID}"})`;
@@ -63,7 +62,7 @@ export function getGrafanaMissedIterationsScene(datasource: DataSourceRef, panel
       .setData(transformation)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

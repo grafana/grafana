@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
 
@@ -13,8 +14,8 @@ import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboards
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
-  const { uid: folderUID } = match.params;
+export function BrowseFolderLibraryPanelsPage() {
+  const { uid: folderUID = '' } = useParams();
   const { data: folderDTO } = useGetFolderQuery(folderUID);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
   const [saveFolder] = useSaveFolderMutation();

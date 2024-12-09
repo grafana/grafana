@@ -1,6 +1,7 @@
-import React, { ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef } from 'react';
 
-import { Alert, Badge } from '@grafana/ui';
+import { Alert, Badge, Tooltip } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
@@ -26,6 +27,37 @@ export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps)
   );
 };
 
-export const ProvisioningBadge = () => {
-  return <Badge text={'Provisioned'} color={'purple'} />;
+export const ProvisioningBadge = ({
+  tooltip,
+  provenance,
+}: {
+  tooltip?: boolean;
+  /**
+   * If provided, will be used within any displayed tooltip to indicate the type of provisioning
+   */
+  provenance?: string;
+}) => {
+  const badge = <Badge text="Provisioned" color="purple" />;
+
+  if (tooltip) {
+    const provenanceTooltip = (
+      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance }}>
+        This resource has been provisioned via {{ provenance }} and cannot be edited through the UI
+      </Trans>
+    );
+
+    const standardTooltip = (
+      <Trans i18nKey="alerting.provisioning.badge-tooltip-standard">
+        This resource has been provisioned and cannot be edited through the UI
+      </Trans>
+    );
+
+    const tooltipContent = provenance ? provenanceTooltip : standardTooltip;
+    return (
+      <Tooltip content={tooltipContent}>
+        <span>{badge}</span>
+      </Tooltip>
+    );
+  }
+  return badge;
 };

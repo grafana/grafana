@@ -15,11 +15,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -153,10 +152,6 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("DB disposed")
 }
 
-func (e *DataSourceHandler) Ping() error {
-	return e.db.Ping()
-}
-
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
@@ -213,10 +208,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
+				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
 			} else if theErrString, ok := r.(string); ok {
-				queryResult.dataResponse.Error = fmt.Errorf(theErrString)
+				queryResult.dataResponse.Error = errors.New(theErrString)
+				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
 			} else {
 				queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
+				queryResult.dataResponse.ErrorSource = backend.ErrorSourceDownstream
 			}
 			ch <- queryResult
 		}
@@ -228,12 +226,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	timeRange := query.TimeRange
 
-	errAppendDebug := func(frameErr string, err error, query string) {
+	errAppendDebug := func(frameErr string, err error, query string, source backend.ErrorSource) {
 		var emptyFrame data.Frame
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.dataResponse.ErrorSource = source
 		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
 		ch <- queryResult
 	}
@@ -244,13 +243,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
 
 	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream)
 		return
 	}
 	defer func() {
@@ -261,7 +260,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("failed to get configurations", err, interpolatedQuery)
+		errAppendDebug("failed to get configurations", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
 
@@ -269,7 +268,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
-		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
+		errAppendDebug("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
 
@@ -291,14 +290,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
-		errAppendDebug("converting time columns failed", err, interpolatedQuery)
+		errAppendDebug("converting time columns failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery)
+			errAppendDebug("db has no time column", errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), interpolatedQuery, backend.ErrorSourceDownstream)
 			return
 		}
 
@@ -316,7 +315,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
-				errAppendDebug("convert value to float failed", err, interpolatedQuery)
+				errAppendDebug("convert value to float failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
 				return
 			}
 		}
@@ -327,7 +326,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
-				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
+				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery, backend.ErrorSourcePlugin)
 				return
 			}
 

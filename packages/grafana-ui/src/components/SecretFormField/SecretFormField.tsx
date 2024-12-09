@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes } from 'react';
+import * as React from 'react';
 
+import { Trans } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Field } from '../Forms/Field';
@@ -73,7 +75,7 @@ export const SecretFormField = ({
               {...omit(inputProps, 'value')}
             />
             <Button onClick={onReset} variant="secondary" type="button">
-              Reset
+              <Trans i18nKey="grafana-ui.secret-form-field.reset">Reset</Trans>
             </Button>
           </>
         ) : (

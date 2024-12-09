@@ -12,26 +12,26 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Azure AD OAuth2
-title: Configure Azure AD OAuth2 authentication
+menuTitle: Azure AD/Entra ID OAuth
+title: Configure Azure AD/Entra ID OAuth authentication
 weight: 800
 ---
 
-# Configure Azure AD OAuth2 authentication
+# Configure Azure AD/Entra ID OAuth authentication
 
-The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
+The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
+If Users use the same email address in Microsoft Entra ID that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
 {{% /admonition %}}
 
-## Create the Azure AD application
+## Create the Microsoft Entra ID application
 
-To enable the Azure AD OAuth2, register your application with Azure AD.
+To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
-1. Log in to [Azure Portal](https://portal.azure.com), then click **Azure Active Directory** in the side menu.
+1. Log in to [Azure Portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
 
-1. If you have access to more than one tenant, select your account in the upper right. Set your session to the Azure AD tenant you wish to use.
+1. If you have access to more than one tenant, select your account in the upper right. Set your session to the Entra ID tenant you wish to use.
 
 1. Under **Manage** in the side menu, click **App Registrations** > **New Registration**. Enter a descriptive name.
 
@@ -46,21 +46,29 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets**, then add a new entry under **Client secrets** with the following configuration.
+1. Click **Certificates & secrets** in the side menu, then add a new entry under **Client secrets** with the following configuration.
 
    - Description: Grafana OAuth
-   - Expires: Never
+   - Expires: Select an expiration period
 
-1. Click **Add** then copy the key value. This is the OAuth client secret.
+1. Click **Add** then copy the key **Value**. This is the OAuth client secret.
+
+{{% admonition type="note" %}}
+Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
+{{% /admonition %}}
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
-1. Go to **Azure Active Directory** and then to **Enterprise Applications**.
+1. Go to **Microsoft Entra ID** and then to **Enterprise Applications**, under **Manage**.
 
 1. Search for your application and click it.
 
 1. Click **Users and Groups**.
 1. Click **Add user/group** to add a user or group to the Grafana roles.
+
+{{% admonition type="note" %}}
+When assigning a group to a Grafana role, ensure that users are direct members of the group. Users in nested groups will not have access to Grafana due to limitations within Azure AD/Entra ID side. For more information, see [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/en-us/entra/identity/users/directory-service-limits-restrictions).
+{{% /admonition %}}
 
 ### Configure application roles for Grafana in the Azure Portal
 
@@ -88,7 +96,7 @@ If you prefer to configure the application roles for Grafana in the manifest fil
 
 1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click **Manifest** and then click **Edit**.
+1. Click **Manifest**.
 
 1. Add a Universally Unique Identifier to each role.
 
@@ -143,13 +151,11 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
 
 ### Assign server administrator privileges
 
-> Available in Grafana v9.2 and later versions.
-
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
-The setting `allow_assign_grafana_admin` under `[auth.azuread]` must be set to `true` for this to work.  
+The setting `allow_assign_grafana_admin` under `[auth.azuread]` must be set to `true` for this to work.
 If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```json
@@ -167,7 +173,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Before you begin
 
-Ensure that you have followed the steps in [Create the Azure AD application](#create-the-azure-ad-application) before you begin.
+Ensure that you have followed the steps in [Create the Microsoft Entra ID application](#create-the-microsoft-entra-id-application) before you begin.
 
 ## Configure Azure AD authentication client using the Grafana UI
 
@@ -175,7 +181,7 @@ Ensure that you have followed the steps in [Create the Azure AD application](#cr
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Azure AD/Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
@@ -255,8 +261,6 @@ Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_u
 
 ### Configure refresh token
 
-> Available in Grafana v9.3 and later versions.
-
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
@@ -268,9 +272,9 @@ Refresh token fetching and access token expiration check is enabled by default f
 ### Configure allowed tenants
 
 To limit access to authenticated users who are members of one or more tenants, set `allowed_organizations`
-to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Azure Active Directory -> Overview**.
+to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Microsoft Entra ID -> Overview**.
 
-Make sure to include the tenant IDs of all the federated Users' root directory if your Azure AD contains external identities.
+Make sure to include the tenant IDs of all the federated Users' root directory if your Entra ID contains external identities.
 
 For example, if you want to only give access to members of the tenant `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
@@ -280,12 +284,12 @@ allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 
 ### Configure allowed groups
 
-Azure AD groups can be used to limit user access to Grafana. For more information about managing groups in Azure AD, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
+Microsoft Entra ID groups can be used to limit user access to Grafana. For more information about managing groups in Entra ID, refer to [Manage Microsoft Entra groups and group membership](https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-groups).
 
-To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
+To limit access to authenticated users who are members of one or more Entra ID groups, set `allowed_groups`
 to a **comma-** or **space-separated** list of group object IDs.
 
-1. To find object IDs for a specific group on the Azure portal, go to **Azure Active Directory > Groups**.
+1. To find object IDs for a specific group on the Azure portal, go to **Microsoft Entra ID > Manage > Groups**.
 
    You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**. If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
@@ -293,7 +297,7 @@ to a **comma-** or **space-separated** list of group object IDs.
      allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
    ```
 
-1. You must enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Azure AD App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
+1. You must enable adding the [group attribute](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims) to the tokens in your Entra ID App registration either [from the Azure Portal](#configure-group-membership-claims-on-the-azure-portal) or [from the manifest file](#configure-group-membership-claim-in-the-manifest-file).
 
 #### Configure group membership claims on the Azure Portal
 
@@ -302,20 +306,20 @@ To ensure that the `groups` claim is included in the token, add the `groups` cla
 To configure group membership claims from the Azure Portal UI, complete the following steps:
 
 1. Navigate to the **App Registrations** page and select your application.
-1. Select **Token configuration**.
+1. Under **Manage** in the side menu, select **Token configuration**.
 1. Click **Add groups claim** and select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**).
 
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
 {{% admonition type="note" %}}
-If the user is a member of more than 200 groups, Azure AD does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
+If the user is a member of more than 200 groups, Entra ID does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
 {{% /admonition %}}
 
 #### Configure group membership claim in the manifest file
 
 1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click **Manifest** and then click **Edit**.
+1. Click **Manifest**.
 
 1. Add the following to the root of the manifest file:
 
@@ -349,14 +353,14 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Team Sync (Enterprise only)
+### Group sync (Enterprise only)
 
-With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
-the correct teams.
+With group sync you can map your Entra ID groups to teams and roles in Grafana. This allows users to automatically be added to
+the correct teams and be granted the correct roles in Grafana.
 
-You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
+You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
+To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
 
 ## Common troubleshooting
 
@@ -365,15 +369,13 @@ configuring Azure AD authentication in Grafana.
 
 ### Users with over 200 Group assignments
 
-> Supported in Grafana v8.5 and later versions.
-
 To ensure that the token size doesn't exceed HTTP header size limits,
-Azure AD limits the number of object IDs that it includes in the groups claim.
+Entra ID limits the number of object IDs that it includes in the groups claim.
 If a user is member of more groups than the
 overage limit (200), then
-Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
+Entra ID does not emit the groups claim in the token and emits a group overage claim instead.
 
-> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-token-claims-reference#groups-overage-claim)
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
@@ -386,7 +388,7 @@ Admin consent might be required for this permission.
 
 #### Configure the required Graph API permissions
 
-1. Navigate to **Azure Active Directory > App registrations** and select your application.
+1. Navigate to **Microsoft Entra ID > Manage > App registrations** and select your application.
 1. Select **API permissions** and then click on **Add a permission**.
 1. Select **Microsoft Graph** from the list of APIs.
 1. Select **Delegated permissions**.
@@ -407,19 +409,34 @@ force_use_graph_api = true
 
 ### Map roles
 
-By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
+By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in Entra ID.
 
 If no application role is found, the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
+You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned and the `org_mapping` expression evaluates to an empty mapping.
 
-**On every login** the user organization role will be reset to match AzureAD's application role and
+You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their Entra ID group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
+
+**On every login** the user organization role will be reset to match Entra ID's application role and
 their organization membership will be reset to the default organization.
+
+#### Org roles mapping example
+
+The Entra ID integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Entra ID group membership.
+
+In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
+
+The external user is part of the following Entra ID groups: `032cb8e0-240f-4347-9120-6f33013e817a` and `bce1c492-0679-4989-941b-8de5e6789cb9`.
+
+Config:
+
+```ini
+org_mapping = ["032cb8e0-240f-4347-9120-6f33013e817a:org_foo:Viewer", "bce1c492-0679-4989-941b-8de5e6789cb9:org_bar:Editor", "*:org_baz:Editor"]
+```
 
 ## Skip organization role sync
 
-If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
+If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from Entra ID, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
 See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
 
 ```ini
@@ -428,3 +445,37 @@ See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}})
 # prevents the sync of org roles from AzureAD
 skip_org_role_sync = true
 ```
+
+## Configuration options
+
+The following table outlines the various Azure AD/Entra ID configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+
+| Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Default                |
+| ---------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `enabled`                    | No       | Yes                | Enables Azure AD/Entra ID authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `false`                |
+| `name`                       | No       | Yes                | Name that refers to the Azure AD/Entra ID authentication from the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                       | `OAuth`                |
+| `icon`                       | No       | Yes                | Icon used for the Azure AD/Entra ID authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                               | `signin`               |
+| `client_id`                  | Yes      | Yes                | Client ID of the App (`Application (client) ID` on the **App registration** dashboard).                                                                                                                                                                                                                                                                                                                                                                                                         |                        |
+| `client_secret`              | Yes      | Yes                | Client secret of the App.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                        |
+| `auth_url`                   | Yes      | Yes                | Authorization endpoint of the Azure AD/Entra ID OAuth2 provider.                                                                                                                                                                                                                                                                                                                                                                                                                                |                        |
+| `token_url`                  | Yes      | Yes                | Endpoint used to obtain the OAuth2 access token.                                                                                                                                                                                                                                                                                                                                                                                                                                                |                        |
+| `auth_style`                 | No       | Yes                | Name of the [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) to be used when ID token is requested from OAuth2 provider. It determines how `client_id` and `client_secret` are sent to Oauth2 provider. Available values are `AutoDetect`, `InParams` and `InHeader`.                                                                                                                                                                                                       | `AutoDetect`           |
+| `scopes`                     | No       | Yes                | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `openid email profile` |
+| `allow_sign_up`              | No       | Yes                | Controls Grafana user creation through the Azure AD/Entra ID login. Only existing Grafana users can log in with Azure AD/Entra ID if set to `false`.                                                                                                                                                                                                                                                                                                                                            | `true`                 |
+| `auto_login`                 | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                          | `false`                |
+| `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Map roles]({{< relref "#map-roles" >}}).                                                                                                                                                                                                                                                                        | `false`                |
+| `org_attribute_path`         | No       | No                 | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no value is returned, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation will be mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example). |                        |
+| `org_mapping`                | No       | No                 | List of comma- or space-separated `<ExternalOrgName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                          |                        |
+| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to automatically sync the Grafana server administrator role. When enabled, if the Azure AD/Entra ID user's App role is `GrafanaAdmin`, Grafana grants the user server administrator privileges and the organization administrator role. If disabled, the user will only receive the organization administrator role. For more details on user role mapping, refer to [Map roles]({{< relref "#map-roles" >}}).                                                                    | `false`                |
+| `skip_org_role_sync`         | No       | Yes                | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                              | `false`                |
+| `allowed_groups`             | No       | Yes                | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure Azure AD/Entra ID to include the `groups` claim following [Configure group membership claims on the Azure Portal]({{< relref "#configure-group-membership-claims-on-the-azure-portal" >}}).                                                                                                                                   |                        |
+| `allowed_organizations`      | No       | Yes                | List of comma- or space-separated Azure tenant identifiers. The user should be a member of at least one tenant to log in.                                                                                                                                                                                                                                                                                                                                                                       |                        |
+| `allowed_domains`            | No       | Yes                | List of comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                             |                        |
+| `tls_skip_verify_insecure`   | No       | No                 | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                          | `false`                |
+| `tls_client_cert`            | No       | No                 | The path to the certificate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |                        |
+| `tls_client_key`             | No       | No                 | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                        |
+| `tls_client_ca`              | No       | No                 | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                             |                        |
+| `use_pkce`                   | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                              | `true`                 |
+| `use_refresh_token`          | No       | Yes                | Enables the use of refresh tokens and checks for access token expiration. When enabled, Grafana automatically adds the `offline_access` scope to the list of scopes.                                                                                                                                                                                                                                                                                                                            | `true`                 |
+| `force_use_graph_api`        | No       | Yes                | Set to `true` to always fetch groups from the Microsoft Graph API instead of the `id_token`. If a user belongs to more than 200 groups, the Microsoft Graph API will be used to retrieve the groups regardless of this setting.                                                                                                                                                                                                                                                                 | `false`                |
+| `signout_redirect_url`       | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                        |

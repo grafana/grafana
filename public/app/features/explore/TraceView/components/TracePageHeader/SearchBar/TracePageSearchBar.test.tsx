@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { defaultFilters } from '../../../useSearch';
 import { trace } from '../TracePageHeader.test';
@@ -55,7 +54,7 @@ describe('<TracePageSearchBar>', () => {
 
   it('renders show span filter matches only switch', async () => {
     render(<TracePageSearchBarWithProps matches={[]} />);
-    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    const matchesSwitch = screen.getByRole('switch', { name: 'Show matches only switch' });
     expect(matchesSwitch).toBeInTheDocument();
   });
 });

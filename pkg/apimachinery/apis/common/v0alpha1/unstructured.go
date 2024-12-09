@@ -14,7 +14,7 @@ import (
 type Unstructured struct {
 	// Object is a JSON compatible map with string, float, int, bool, []interface{},
 	// or map[string]interface{} children.
-	Object map[string]any
+	Object map[string]interface{}
 }
 
 // Produce an API definition that represents map[string]any
@@ -97,6 +97,14 @@ func (u *Unstructured) GetNestedString(fields ...string) string {
 	val, found, err := unstructured.NestedString(u.Object, fields...)
 	if !found || err != nil {
 		return ""
+	}
+	return val
+}
+
+func (u *Unstructured) GetNestedBool(fields ...string) bool {
+	val, found, err := unstructured.NestedBool(u.Object, fields...)
+	if !found || err != nil {
+		return false
 	}
 	return val
 }

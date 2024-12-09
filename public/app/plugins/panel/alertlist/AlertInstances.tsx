@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
 import pluralize from 'pluralize';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
@@ -138,15 +138,15 @@ export const AlertInstances = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  clickable: css`
-    cursor: pointer;
-  `,
-  footerRow: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  `,
+  clickable: css({
+    cursor: 'pointer',
+  }),
+  footerRow: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  }),
 });

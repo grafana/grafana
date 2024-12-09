@@ -69,7 +69,7 @@ export function getVariableName(expression: string) {
   return variableName;
 }
 
-export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
+export const getUnknownVariableStrings = (variables: VariableModel[], model: DashboardModel) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -342,7 +342,7 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
 };
 
 const countLeaves = (object: object): number => {
-  const total = Object.values(object).reduce((count: number, value: any) => {
+  const total = Object.values(object).reduce<number>((count, value) => {
     if (typeof value === 'object') {
       return count + countLeaves(value);
     }

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 import { DataLinkEditor } from '../DataLinkEditor';
@@ -36,14 +37,14 @@ export const DataLinkEditorModalContent = ({
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">
-          Cancel
+          <Trans i18nKey="grafana-ui.data-link-editor-modal.cancel">Cancel</Trans>
         </Button>
         <Button
           onClick={() => {
             onSave(index, dirtyLink);
           }}
         >
-          Save
+          <Trans i18nKey="grafana-ui.data-link-editor-modal.save">Save</Trans>
         </Button>
       </Modal.ButtonRow>
     </>

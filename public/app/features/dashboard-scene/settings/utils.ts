@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
@@ -61,14 +61,6 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
       text: t('dashboard-settings.links.title', 'Links'),
       url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
       active: currentEditView === 'links',
-    });
-  }
-
-  if (dashboard.state.meta.canMakeEditable) {
-    pageNav.children!.push({
-      text: t('dashboard-settings.general.title', 'General'),
-      url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
-      active: currentEditView === 'settings',
     });
   }
 

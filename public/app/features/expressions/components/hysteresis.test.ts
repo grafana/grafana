@@ -125,7 +125,7 @@ describe('thresholdReducer', () => {
   };
 
   it('should return initial state', () => {
-    expect(thresholdReducer(undefined, { type: undefined })).toEqual({
+    expect(thresholdReducer(undefined, { type: '' })).toEqual({
       type: ExpressionQueryType.threshold,
       conditions: [],
       refId: '',

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -111,29 +112,28 @@ export const OptionsPaneCategory = React.memo(
     return (
       <div
         className={boxStyles}
-        data-testid="options-category"
         data-plugin-sandbox={sandboxId}
-        aria-label={selectors.components.OptionsGroup.group(id)}
+        data-testid={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
         {/* disabling a11y rules here because there's a Button that handles keyboard interaction */}
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <Button
-            aria-label={selectors.components.OptionsGroup.toggle(id)}
-            type="button"
-            fill="text"
-            size="sm"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            className={styles.toggleButton}
-            icon={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={onToggle}
-          />
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
+          <Button
+            data-testid={selectors.components.OptionsGroup.toggle(id)}
+            type="button"
+            fill="text"
+            size="md"
+            variant="secondary"
+            aria-expanded={isExpanded}
+            className={styles.toggleButton}
+            icon={isExpanded ? 'angle-down' : 'angle-up'}
+            onClick={onToggle}
+          />
         </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
@@ -159,7 +159,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     lineHeight: 1.5,
     fontSize: '1rem',
-    paddingLeft: '6px',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
   }),
@@ -167,7 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     cursor: 'pointer',
     alignItems: 'center',
-    padding: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
 
@@ -185,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.5, 0),
   }),
   body: css({
-    padding: theme.spacing(1, 2, 1, 4),
+    padding: theme.spacing(1, 2, 1, 2),
   }),
   bodyNested: css({
     position: 'relative',
@@ -195,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       content: "''",
       position: 'absolute',
       top: 0,
-      left: '8px',
+      left: '1px',
       width: '1px',
       height: '100%',
       background: theme.colors.border.weak,

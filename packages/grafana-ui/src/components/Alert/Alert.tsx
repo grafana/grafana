@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +11,6 @@ import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Text } from '../Text/Text';
-
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -151,6 +151,8 @@ const getStyles = (
     }),
     icon: css({
       color: color.text,
+      position: 'relative',
+      top: '-1px',
     }),
     content: css({
       color: theme.colors.text.primary,

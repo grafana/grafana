@@ -1,7 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { render } from 'test/redux-rtl';
+import { render, fireEvent, screen, waitFor, userEvent } from 'test/test-utils';
 
 import { VerifyEmailPage } from './VerifyEmailPage';
 
@@ -31,7 +28,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('VerifyEmail Page', () => {
   it('renders correctly', () => {
     render(<VerifyEmailPage />);
-    expect(screen.getByText('Verify Email')).toBeInTheDocument();
+    expect(screen.getByText('Verify email')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Email/i })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Send verification email' })).toBeInTheDocument();
@@ -46,10 +43,10 @@ describe('VerifyEmail Page', () => {
     expect(await screen.findByText('Email is required')).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox', { name: /Email/i }), 'test');
-    await waitFor(() => expect(screen.queryByText('Email is invalid')).toBeInTheDocument());
+    expect(await screen.findByText('Email is invalid')).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox', { name: /Email/i }), 'test@gmail.com');
-    await waitFor(() => expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument());
+    expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument();
   });
   it('should show complete signup if email-verification is successful', async () => {
     postMock.mockResolvedValueOnce({ message: 'SignUpCreated' });
@@ -63,7 +60,7 @@ describe('VerifyEmail Page', () => {
         email: 'test@gmail.com',
       })
     );
-    expect(screen.getByRole('link', { name: 'Complete Signup' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Complete Signup' })).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'Complete signup' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Complete signup' })).toHaveAttribute('href', '/signup');
   });
 });

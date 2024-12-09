@@ -11,7 +11,7 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useCallback, useId, useRef, useState } from 'react';
+import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +34,7 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
-export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
+export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
@@ -101,7 +101,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
 
     return (
       <>
-        {React.cloneElement(children, {
+        {cloneElement(children, {
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': !childHasMatchingAriaLabel && isOpen ? tooltipId : undefined,
@@ -118,7 +118,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
                 className={style.container}
               >
                 {typeof content === 'string' && content}
-                {React.isValidElement(content) && React.cloneElement(content)}
+                {isValidElement(content) && cloneElement(content)}
                 {contentIsFunction && content({})}
               </div>
             </div>

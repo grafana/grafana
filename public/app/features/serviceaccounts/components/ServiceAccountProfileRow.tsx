@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
@@ -99,8 +100,8 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    disabled: css`
-      color: ${theme.colors.text.secondary};
-    `,
+    disabled: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };

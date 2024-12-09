@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
 

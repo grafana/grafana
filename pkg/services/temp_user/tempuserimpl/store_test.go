@@ -31,8 +31,8 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		Status: tempuser.TmpUserInvitePending,
 	}
 	setup := func(t *testing.T) {
-		db := db.InitTestDB(t)
-		store = &xormStore{db: db, cfg: db.Cfg}
+		db, cfg := db.InitTestDBWithCfg(t)
+		store = &xormStore{db: db, cfg: cfg}
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
 	}
@@ -112,8 +112,8 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: userID,
 		}
-		db := db.InitTestDB(t)
-		store = &xormStore{db: db, cfg: db.Cfg}
+		db, cfg := db.InitTestDBWithCfg(t)
+		store = &xormStore{db: db, cfg: cfg}
 
 		for i := 0; i < verifications; i++ {
 			tempUser, err = store.CreateTempUser(context.Background(), &cmd)
@@ -152,8 +152,8 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: 99,
 		}
-		db := db.InitTestDB(t)
-		store = &xormStore{db: db, cfg: db.Cfg}
+		db, cfg := db.InitTestDBWithCfg(t)
+		store = &xormStore{db: db, cfg: cfg}
 
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)

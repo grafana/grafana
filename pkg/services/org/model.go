@@ -5,10 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Typed errors
@@ -45,13 +44,13 @@ type OrgUser struct {
 	Updated time.Time
 }
 
-type RoleType = roletype.RoleType
+type RoleType = identity.RoleType
 
 const (
-	RoleNone   RoleType = roletype.RoleNone
-	RoleViewer RoleType = roletype.RoleViewer
-	RoleEditor RoleType = roletype.RoleEditor
-	RoleAdmin  RoleType = roletype.RoleAdmin
+	RoleNone   RoleType = identity.RoleNone
+	RoleViewer RoleType = identity.RoleViewer
+	RoleEditor RoleType = identity.RoleEditor
+	RoleAdmin  RoleType = identity.RoleAdmin
 )
 
 type CreateOrgCommand struct {
@@ -144,6 +143,7 @@ type UpdateOrgUserCommand struct {
 type OrgUserDTO struct {
 	OrgID              int64           `json:"orgId" xorm:"org_id"`
 	UserID             int64           `json:"userId" xorm:"user_id"`
+	UID                string          `json:"uid" xorm:"uid"`
 	Email              string          `json:"email"`
 	Name               string          `json:"name"`
 	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`

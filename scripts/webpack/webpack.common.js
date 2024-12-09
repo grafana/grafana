@@ -7,6 +7,11 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    swagger: './public/swagger/index.tsx',
+  },
+  experiments: {
+    // Required to load WASM modules.
+    asyncWebAssembly: true,
   },
   output: {
     clean: true,
@@ -96,17 +101,13 @@ module.exports = {
         ],
       },
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
-      },
-      {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         type: 'asset/resource',
         generator: { filename: 'static/img/[name].[hash:8][ext]' },
       },
       // for pre-caching SVGs as part of the JS bundles
       {
-        test: /(unicons|mono|custom)[\\/].*\.svg$/,
+        test: /(unicons|mono|custom|solid)[\\/].*\.svg$/,
         type: 'asset/source',
       },
       {

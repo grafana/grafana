@@ -1,10 +1,10 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
+import { AzureClientSecretCredentials, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { Field, Select, Input, Button } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureClientSecretCredentials, AzureCredentials } from '../../types';
 
 export interface AppRegistrationCredentialsProps {
   credentials: AzureClientSecretCredentials;
