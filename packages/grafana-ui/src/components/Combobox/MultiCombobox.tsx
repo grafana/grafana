@@ -14,6 +14,7 @@ import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString }
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
+
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (items?: T[]) => void;
@@ -49,11 +50,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       // Measure text width and add size of padding, separator and close button
       currWidth += measureText(selectedItems[i].label || '', 12).width + 50;
       if (currWidth > maxWidth) {
-        // Always show at least 1 item
+        // If there is no space for that item, show the current number of items,
+        // but always show at least 1 item
         setShownItems(i || 1);
         break;
       }
       if (i === selectedItems.length - 1) {
+        // If it is the last item, show all items
         setShownItems(selectedItems.length);
       }
     }
@@ -164,7 +167,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 content={
                   <>
                     {selectedItems.slice(shownItems).map((item) => (
-                      <div>{itemToString(item)}</div>
+                      <div key={item.value}>{itemToString(item)}</div>
                     ))}
                   </>
                 }
