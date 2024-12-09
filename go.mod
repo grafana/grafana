@@ -480,6 +480,8 @@ require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 
+require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209181612-b00774f45fef
+
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
