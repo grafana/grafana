@@ -8,6 +8,7 @@
   "scripts": {
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js --progress",
     "build:nominify": "yarn run build -- --env noMinify=1",
+    "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:scenes": "./e2e/start-and-run-suite scenes",
@@ -89,6 +90,7 @@
     "@react-types/menu": "3.9.13",
     "@react-types/overlays": "3.8.11",
     "@react-types/shared": "3.25.0",
+    "@rsdoctor/webpack-plugin": "^0.4.6",
     "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@stylistic/eslint-plugin-ts": "^2.9.0",
@@ -239,7 +241,6 @@
     "typescript": "5.5.4",
     "webpack": "5.95.0",
     "webpack-assets-manifest": "^5.1.0",
-    "webpack-bundle-analyzer": "4.10.2",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.1.0",
     "webpack-livereload-plugin": "3.0.2",
