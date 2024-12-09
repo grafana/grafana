@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -73,7 +72,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, info c
 }
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzextv1.ListResponse, error) {
-	groupResource := structpb.NewStringValue(common.FormatGroupResource(group, resource))
+	resourceCtx := common.NewResourceContext(group, resource)
 
 	// 1. List all folders subject has access to resource type in
 	folders, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
@@ -82,11 +81,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 		Type:                 common.TypeFolder,
 		Relation:             common.FolderResourceRelation(relation),
 		User:                 subject,
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": groupResource,
-			},
-		},
+		Context:              resourceCtx,
 	})
 	if err != nil {
 		return nil, err
@@ -99,11 +94,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 		Type:                 common.TypeResource,
 		Relation:             relation,
 		User:                 subject,
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": groupResource,
-			},
-		},
+		Context:              resourceCtx,
 	})
 	if err != nil {
 		return nil, err

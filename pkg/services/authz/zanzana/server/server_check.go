@@ -7,7 +7,6 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -93,25 +92,23 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 
 // checkGeneric check our generic "resource" type.
 func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
-	groupResource := structpb.NewStringValue(common.FormatGroupResource(group, resource))
 
-	// Create relation can only exist on namespace or folder level.
-	// So we skip direct resource access check.
-	if relation != common.RelationCreate {
-		// Check if subject has direct access to resource
+	var (
+		folderRelation = common.FolderResourceRelation(relation)
+		resourceCtx    = common.NewResourceContext(group, resource)
+	)
+
+	if folder != "" && common.IsFolderRelation(folderRelation) {
+		// Check if subject has access as a sub resource for the folder
 		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: relation,
-				Object:   common.NewResourceIdent(group, resource, name),
+				Relation: common.FolderResourceRelation(relation),
+				Object:   common.NewFolderIdent(folder),
 			},
-			Context: &structpb.Struct{
-				Fields: map[string]*structpb.Value{
-					"requested_group": groupResource,
-				},
-			},
+			Context: resourceCtx,
 		})
 
 		if err != nil {
@@ -119,28 +116,25 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 		}
 
 		if res.GetAllowed() {
-			return &authzv1.CheckResponse{Allowed: true}, nil
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 		}
+
 	}
 
-	if folder == "" {
+	if !common.IsResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	// Check if subject has access as a sub resource for the folder
+	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
-			Relation: common.FolderResourceRelation(relation),
-			Object:   common.NewFolderIdent(folder),
+			Relation: relation,
+			Object:   common.NewResourceIdent(group, resource, name),
 		},
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": groupResource,
-			},
-		},
+		Context: resourceCtx,
 	})
 
 	if err != nil {

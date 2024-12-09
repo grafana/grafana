@@ -77,6 +77,24 @@ func IsNamespaceRelation(relation string) bool {
 	return false
 }
 
+func IsFolderRelation(relation string) bool {
+	for _, r := range FolderRelations {
+		if r == relation {
+			return true
+		}
+	}
+	return false
+}
+
+func IsResourceRelation(relation string) bool {
+	for _, r := range ResourceRelations {
+		if r == relation {
+			return true
+		}
+	}
+	return false
+}
+
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
 }
@@ -272,4 +290,12 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
 		),
 	})
+}
+
+func NewResourceContext(group, resource string) *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"requested_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+		},
+	}
 }
