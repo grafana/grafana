@@ -53,7 +53,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 			t.Error(err)
 		}
 	}()
-	time.Sleep(10 * time.Second) // wait for http server to be running
+	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
 	client := http.Client{}
 	res, err := client.Get("http://localhost:3001/metrics")
