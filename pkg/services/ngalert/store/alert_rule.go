@@ -445,6 +445,16 @@ func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 	return count, err
 }
 
+func (st DBstore) FolderHasAlertRules(ctx context.Context, orgID int64, folderUID string) (bool, error) {
+	var count int64
+	var err error
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		count, err = sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID).Count()
+		return err
+	})
+	return count > 0, err
+}
+
 // ListAlertRules is a handler for retrieving alert rules of specific organisation.
 func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
