@@ -1,4 +1,4 @@
-const JSURL = require('jsurl');
+import { stringify } from 'jsurl2';
 
 export interface AwsUrl {
   end: string;
@@ -29,5 +29,5 @@ export function getLogsEndpoint(region: string): string {
 export function encodeUrl(obj: AwsUrl, region: string): string {
   return `https://${getLogsEndpoint(
     region
-  )}/cloudwatch/home?region=${region}#logs-insights:queryDetail=${JSURL.stringify(obj)}`;
+  )}/cloudwatch/home?region=${region}#logs-insights:queryDetail=${stringify(obj)}`;
 }
