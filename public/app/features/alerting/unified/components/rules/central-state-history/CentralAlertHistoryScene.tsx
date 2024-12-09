@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
+import { Options } from 'uplot';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { FieldConfig, GrafanaTheme2, VariableHide } from '@grafana/data';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -22,6 +23,7 @@ import {
   VariableDependencyConfig,
   VariableValue,
   VariableValueSelectors,
+  VizPanel,
   sceneGraph,
   useUrlSync,
 } from '@grafana/scenes';
@@ -228,12 +230,37 @@ export function getEventsScenesFlexItem(
       valueInLabelFilter: labelsFilterVariable.getValue(),
       valueInStateToFilter: transitionsToFilterVariable.getValue(),
       valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
+      body:
+        // eslint-disable-next-line
+        PanelBuilders.timeseries()
+          .setTitle('Alert Events')
+          .setDescription(
+            'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+          )
+          .setData(getSceneQuery(datasource))
+          .setColor({ mode: 'continuous-BlPu' })
+          .setCustomFieldConfig('fillOpacity', 100)
+          .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+          .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
+          .setCustomFieldConfig('lineWidth', 1)
+          .setCustomFieldConfig('barAlignment', 0)
+          .setCustomFieldConfig('spanNulls', false)
+          .setCustomFieldConfig('insertNulls', false)
+          .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+          .setCustomFieldConfig('pointSize', 5)
+          .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
+          .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
+          .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
+          .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+          .setOption('tooltip', { mode: TooltipDisplayMode.Single })
+          .setNoValue('No events found')
+          .build() as VizPanel<Options, FieldConfig>,
     }),
   });
 }
 
 export class EventsPanelScenesObject extends SceneObjectBase<
-  FilterScenesObjectState & { datasource: DataSourceInformation }
+  FilterScenesObjectState & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
 > {
   public static Component = EventsPanelScenesObjectRenderer;
   private _onAnyVariableChanged(): void {
@@ -276,7 +303,9 @@ export class EventsPanelScenesObject extends SceneObjectBase<
     }
   }
 
-  public constructor(state: HistoryEventsListObjectState & { datasource: DataSourceInformation }) {
+  public constructor(
+    state: HistoryEventsListObjectState & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
+  ) {
     super(state);
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -289,30 +318,10 @@ export class EventsPanelScenesObject extends SceneObjectBase<
 
 export function EventsPanelScenesObjectRenderer({
   model,
-}: SceneComponentProps<EventsPanelScenesObject & { datasource: DataSourceInformation }>) {
-  const body = PanelBuilders.timeseries()
-    .setTitle('Alert Events')
-    .setDescription(
-      'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
-    )
-    .setData(getSceneQuery(model.state.datasource))
-    .setColor({ mode: 'continuous-BlPu' })
-    .setCustomFieldConfig('fillOpacity', 100)
-    .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
-    .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
-    .setCustomFieldConfig('lineWidth', 1)
-    .setCustomFieldConfig('barAlignment', 0)
-    .setCustomFieldConfig('spanNulls', false)
-    .setCustomFieldConfig('insertNulls', false)
-    .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-    .setCustomFieldConfig('pointSize', 5)
-    .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
-    .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
-    .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-    .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
-    .setOption('tooltip', { mode: TooltipDisplayMode.Single })
-    .setNoValue('No events found')
-    .build();
+}: SceneComponentProps<
+  EventsPanelScenesObject & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
+>) {
+  const { body } = model.useState();
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(model.getRoot());
