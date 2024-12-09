@@ -22639,7 +22639,8 @@
         },
         "summary": "Deletes user.",
         "tags": [
-          "user"
+          "user",
+          "enterprise"
         ]
       },
       "get": {
@@ -22663,7 +22664,8 @@
         },
         "summary": "Fetches all users in UserSchema format.",
         "tags": [
-          "users"
+          "users",
+          "enterprise"
         ]
       },
       "post": {
@@ -22690,7 +22692,8 @@
         },
         "summary": "Creates user.",
         "tags": [
-          "users"
+          "users",
+          "enterprise"
         ]
       }
     },
@@ -22716,7 +22719,8 @@
         },
         "summary": "Gets user by id.",
         "tags": [
-          "user"
+          "user",
+          "enterprise"
         ]
       }
     },

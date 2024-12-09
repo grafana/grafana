@@ -8609,7 +8609,8 @@
     "/scim/users/": {
       "get": {
         "tags": [
-          "users"
+          "users",
+          "enterprise"
         ],
         "summary": "Fetches all users in UserSchema format.",
         "operationId": "getUsers",
@@ -8633,7 +8634,8 @@
       },
       "post": {
         "tags": [
-          "users"
+          "users",
+          "enterprise"
         ],
         "summary": "Creates user.",
         "operationId": "createUser",
@@ -8660,7 +8662,8 @@
       },
       "delete": {
         "tags": [
-          "user"
+          "user",
+          "enterprise"
         ],
         "summary": "Deletes user.",
         "operationId": "deleteUser",
@@ -8686,7 +8689,8 @@
     "/scim/users/:id": {
       "get": {
         "tags": [
-          "user"
+          "user",
+          "enterprise"
         ],
         "summary": "Gets user by id.",
         "operationId": "getUser",
