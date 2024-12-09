@@ -22,7 +22,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -154,8 +153,7 @@ export function GrafanaEvaluationBehaviorStep({
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [folder, group, type, isPaused, folderUid, folderName, evaluateEvery] = watch([
-    'folder',
+  const [group, type, isPaused, folderUid, folderName, evaluateEvery] = watch([
     'group',
     'type',
     'isPaused',
@@ -166,7 +164,7 @@ export function GrafanaEvaluationBehaviorStep({
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
-  const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
+  const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folderUid ?? '');
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const groupOptions = useMemo(() => {
@@ -183,7 +181,7 @@ export function GrafanaEvaluationBehaviorStep({
   // synchronize the evaluation interval with the group name when it's an existing group
   useEffect(() => {
     if (existingGroup) {
-      setValue('evaluateEvery', existingGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
+      setValue('evaluateEvery', existingGroup.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
     }
   }, [existingGroup, setValue]);
 
@@ -191,7 +189,6 @@ export function GrafanaEvaluationBehaviorStep({
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = loadingGroups || isNewGroup || !folderUid || !group;
-  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -211,7 +208,7 @@ export function GrafanaEvaluationBehaviorStep({
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const label =
-    isGrafanaManagedRuleByType(type) && !folder
+    isGrafanaManagedRuleByType(type) && !folderUid
       ? t(
           'alerting.rule-form.evaluation.select-folder-before',
           'Select a folder before setting evaluation group and interval'
@@ -239,7 +236,7 @@ export function GrafanaEvaluationBehaviorStep({
               <Controller
                 render={({ field: { ref, ...field }, fieldState }) => (
                   <Select
-                    disabled={!folder || loadingGroups}
+                    disabled={!folderUid || loadingGroups}
                     inputId="group"
                     key={uniqueId()}
                     {...field}
@@ -247,7 +244,7 @@ export function GrafanaEvaluationBehaviorStep({
                       field.onChange(group.label ?? '');
                     }}
                     isLoading={loadingGroups}
-                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                    invalid={Boolean(folderUid) && !group && Boolean(fieldState.error)}
                     cacheOptions
                     loadingMessage={'Loading groups...'}
                     defaultValue={defaultGroupValue}
@@ -282,7 +279,7 @@ export function GrafanaEvaluationBehaviorStep({
               icon="plus"
               fill="outline"
               variant="secondary"
-              disabled={!folder}
+              disabled={!folderUid}
               data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
             >
               <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
@@ -301,9 +298,10 @@ export function GrafanaEvaluationBehaviorStep({
           <EditRuleGroupModal
             ruleGroupIdentifier={{
               dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-              groupName: existingGroup?.name ?? emptyGroup.name,
+              groupName: existingGroup?.name ?? '',
               namespaceName: folderUid ?? existingNamespaceName,
             }}
+            rulerConfig={GRAFANA_RULER_CONFIG}
             onClose={() => closeEditGroupModal()}
             intervalEditOnly
             hideFolder={true}
