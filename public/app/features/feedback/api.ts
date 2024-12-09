@@ -17,8 +17,9 @@ class K8sAPI {
     });
   }
 
-  async createFeedback(feedback: FeedbackSpec): Promise<void> {
-    await withErrorHandling(async () => {
+  // returns back true when request is successful, false when not
+  async createFeedback(feedback: FeedbackSpec): Promise<boolean> {
+    return await withErrorHandling(async () => {
       const fullFeedback: ResourceForCreate<FeedbackSpec, string> = {
         metadata: {
           generateName: 'feedback-', // the prefix. apiserver will generate the trailing random characters.
@@ -33,14 +34,19 @@ class K8sAPI {
   }
 }
 
-async function withErrorHandling(apiCall: () => Promise<void>, message = 'Your feedback was received. Thank you!') {
+async function withErrorHandling(
+  apiCall: () => Promise<void>,
+  message = 'Your feedback was received. Thank you!'
+): Promise<boolean> {
   try {
     await apiCall();
     dispatch(notifyApp(createSuccessNotification(message)));
+    return true;
   } catch (e) {
     if (e instanceof Error) {
       dispatch(notifyApp(createErrorNotification('Unable to save feedback', e)));
     }
+    return false;
   }
 }
 

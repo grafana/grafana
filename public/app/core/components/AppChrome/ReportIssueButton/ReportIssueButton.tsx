@@ -1,15 +1,15 @@
 import FeedbackPlus from 'feedbackplus';
 import { useState } from 'react';
 
+import { FeatureState } from '@grafana/data';
 import { ToolbarButton, Drawer, Stack, FeatureBadge, Icon } from '@grafana/ui';
 
 import { DrawerContents } from './FeedbackDrawerContents';
 import { ScreenShotEditModal } from './ScreenShotEditModal';
 import { FeedbackFormData } from './types';
-import { FeatureState } from '@grafana/data';
 
 export const ReportIssueButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isScreenshotEditModalOpen, setIsScreenshotEditModalOpen] = useState(false);
   const [formData, setFormData] = useState<FeedbackFormData>({
     message: '',
@@ -20,18 +20,24 @@ export const ReportIssueButton = () => {
     contactChecked: false,
     width: 0,
     height: 0,
-    bitmap: {} as HTMLImageElement,
+    bitmap: {} as ImageBitmap,
   });
   const feedbackPlus = new FeedbackPlus();
 
   return (
     <>
-      <ToolbarButton iconOnly icon={'bug'} isOpen={isOpen} aria-label="Report Issue" onClick={() => setIsOpen(true)} />
-      {isOpen && (
+      <ToolbarButton
+        iconOnly
+        icon={'bug'}
+        isOpen={isDrawerOpen}
+        aria-label="Report Issue"
+        onClick={() => setIsDrawerOpen(true)}
+      />
+      {isDrawerOpen && (
         <Drawer
           title="Send feedback to Grafana"
           size="md"
-          onClose={() => setIsOpen(false)}
+          onClose={() => setIsDrawerOpen(false)}
           subtitle={
             <Stack direction="column" gap={1}>
               <Stack direction="row" gap={1}>
@@ -53,7 +59,7 @@ export const ReportIssueButton = () => {
           }
         >
           <DrawerContents
-            setIsOpen={setIsOpen}
+            setIsDrawerOpen={setIsDrawerOpen}
             setFormData={setFormData}
             formData={formData}
             feedbackPlus={feedbackPlus}
@@ -62,12 +68,12 @@ export const ReportIssueButton = () => {
         </Drawer>
       )}
       <ScreenShotEditModal
-        isOpen={isScreenshotEditModalOpen}
+        isScreenshotEditModalOpen={isScreenshotEditModalOpen}
         feedbackPlus={feedbackPlus}
         setFormData={setFormData}
         formData={formData}
         setIsScreenshotEditModalOpen={setIsScreenshotEditModalOpen}
-        setIsDropdownOpen={setIsOpen}
+        setIsDrawerOpen={setIsDrawerOpen}
       />
     </>
   );
@@ -75,10 +81,11 @@ export const ReportIssueButton = () => {
 
 /*
   TODO:
-  - fix width/ratio of thumbnail in preview (also weirdly pixelated?? are we losing image quality in converting it twice?)
-  - make dropdown cooler looking
-  - add a cancel button to delete screenshot if the user doesn't like it
-  - make this file easier to look at without crying, add prop types, fix "any" types
+  - fix "any" types
+  - move the complicated annotation logic to a separate file
+  - add tests
+  - uninstall html2canvas since we're not using it anymore
+  - we're saving the screenshot data in state as a string, and as a bitmap, probably we should just use bitmap and convert it when we make the network request
   - add a highlight feature
   - let user make multiple edits to a screenshot (you can kind of do this already by saving and editing multiple times)
 */
