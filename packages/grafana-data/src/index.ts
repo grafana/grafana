@@ -869,5 +869,6 @@ export {
   type DataFrameRefIdToDataSourceUid,
   type CorrelationsData,
   attachCorrelationsToDataFrames,
+  correlationsDataLinkPostProcessorFactory,
   getCorrelationsBySourceUIDs,
 } from './utils/correlations';
