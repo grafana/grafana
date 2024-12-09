@@ -46,7 +46,8 @@ for file in ./npm-artifacts/*.tgz; do
 done
 
 # Check if any files in packages/grafana-e2e-selectors were changed. If so, add a 'modified' tag to the package
-CHANGES_COUNT=$(git diff HEAD~1..HEAD --name-only -- packages/grafana-e2e-selectors | awk 'END{print NR}')
+# Ignore changes to the package.json file to prevent modified tag from being pointed to patch releases
+CHANGES_COUNT=$(git diff HEAD~1..HEAD --name-only -- packages/grafana-e2e-selectors | awk '!/packages\/grafana-e2e-selectors\/package.json/' | awk 'END{print NR}')
 if (( $CHANGES_COUNT > 0 )); then
     # Wait a little bit to allow the package to be published to the registry
     sleep 5s
