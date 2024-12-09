@@ -609,6 +609,9 @@ describe('requestSupportsSharding', () => {
     'count_over_time({place="luna"}[1m])',
     'sum_over_time({place="luna"}[1m])',
     'sum by (level) (count_over_time({place="luna"}[1m]))',
+    'sum by (level) (rate({place="luna"}[1m]))',
+    'sum(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m]))',
   ])('allows supported metric queries', (expr: string) => {
     expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(true);
   });
@@ -616,8 +619,10 @@ describe('requestSupportsSharding', () => {
   it.each([
     'avg_over_time({place="luna"}[1m])',
     'avg(sum_over_time({place="luna"}[1m]))',
-    'sum by (level) (rate({place="luna"}[1m]))',
+    'avg(rate({place="luna"}[1m]))',
     'count_over_time({place="luna"}[1m]) / count_over_time({place="luna"}[1m])',
+    'avg(sum by (level) (avg_over_time({place="luna"}[1m])))',
+    'sum(rate({place="luna"}[1m])) / sum(rate({place="luna"}[1m]))',
   ])('declines supported metric queries', (expr: string) => {
     expect(requestSupportsSharding([{ refId: 'A', expr }])).toBe(false);
   });

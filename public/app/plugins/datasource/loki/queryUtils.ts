@@ -334,21 +334,40 @@ function metricSupportsSharding(query: string) {
   if (isLogsQuery(query)) {
     return false;
   }
-  const operations = [...getNodesFromQuery(query, [RangeOp]), ...getNodesFromQuery(query, [VectorOp])];
+  query = query.trim().toLowerCase();
+
   const disallowed = getNodesFromQuery(query, [BinOpExpr]);
   if (disallowed.length > 0) {
     return false;
   }
-  const supportedOps = ['sum', 'count_over_time', 'sum_over_time'];
-  query = query.toLowerCase();
-  for (const node of operations) {
-    const expr = query.substring(node.from, node.to);
-    if (!supportedOps.includes(expr)) {
-      return false;
+
+  /**
+   * If there are VectorAggregationExpr, we want to make sure that the leftmost VectorOp is sum, meaning that
+   * it's wrapped in a sum. E.g.
+   * Disallowed: avg(sum by (level) (avg_over_time({place="luna"}[1m])))
+   * Allowed: sum(sum by (level) (avg_over_time({place="luna"}[1m])))
+   */
+  const vectorOps = getNodesFromQuery(query, [VectorOp]);
+  const supportedVectorOps = vectorOps.filter(node => getNodeString(query, node) === 'sum');
+  const unsupportedVectorOps = vectorOps.filter(node => getNodeString(query, node) !== 'sum');
+  const supportedWrappingVectorOpps = supportedVectorOps.filter(supportedOp => unsupportedVectorOps.every(unsupportedOp => supportedOp.from < unsupportedOp.from));
+  if (unsupportedVectorOps.length > 0) {
+    return supportedWrappingVectorOpps.length > 0;
+  }
+
+  const rangeOps = getNodesFromQuery(query, [RangeOp]);
+  const supportedRangeOps = ['count_over_time', 'sum_over_time', 'bytes_over_time'];
+  for (const node of rangeOps) {
+    if (!supportedRangeOps.includes(getNodeString(query, node))) {
+      return supportedWrappingVectorOpps.length > 0;
     }
   }
 
   return true;
+}
+
+function getNodeString(query: string, node: SyntaxNode) {
+  return query.substring(node.from, node.to);
 }
 
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
