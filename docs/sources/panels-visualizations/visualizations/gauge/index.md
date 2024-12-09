@@ -29,6 +29,8 @@ Gauges are single-value visualizations that allow you to quickly visualize where
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
 
+<!-- Replace image above -->
+
 You can use gauges if you need to track:
 
 - Service level objectives (SLOs)
@@ -51,19 +53,21 @@ The following video provides beginner steps for creating gauge panels. You'll le
 
 To create a gauge visualization you need a dataset containing at least one numeric field. These values are identified by the field name. Additional text fields aren’t required but can be used for identification and labeling.
 
+<!-- figure out if all of these examples are actually useful -->
+
 ### Example - One value
 
 | GaugeName | GaugeValue |
 | --------- | ---------- |
 | MyGauge   | 5          |
 
-![Gauge with single numeric value](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example1.png 'Gauge with single numeric value')
+![Gauge with single numeric value](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example1.png)
 
 This dataset generates a visualization with one empty gauge showing the numeric value. This is because the gauge visualization automatically defines the upper and lower range from the minimum and maximum values in the dataset. This dataset has only one value, so it’s set as both minimum and maximum.
 
 If you only have one value, but you want to define a different minimum and maximum, you can set them manually in the [Standard options](#standard-options) settings to generate a more typical looking gauge.
 
-![Gauge with single numeric value and hardcoded max and min](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example2.png 'Gauge with single numeric value and hardcoded max-min')
+![Gauge with single numeric value and hardcoded max and min](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example2.png)
 
 ### Example - One row, multiple values
 
@@ -87,7 +91,7 @@ The gauge visualization can display datasets with multiple rows of data or even 
 | Indicators | 6      | 9      | 15     |
 | Defaults   | 1      | 4      | 8      |
 
-![Gauge visualization with multiple rows and columns of numeric values showing the last row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example6.png 'Gauge viz with multiple rows and columns of numeric values showing the last row')
+![Gauge visualization with multiple rows and columns of numeric values showing the last row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example6.png)
 
 By default, the visualization is configured to [calculate](#value-options) a single value per column or series and to display only the last row of data. However, it derives the minimum and maximum from the full dataset, even if those values aren’t visible.
 
@@ -95,7 +99,7 @@ In this example, that means only the last row of data is displayed in the gauges
 
 If you want to show one gauge per table cell, you can change the **Show** setting from **Calculate** to **All values**, and each gauge is labeled by concatenating the text column with each value's column name.
 
-![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example7.png 'Gauge viz with multiple rows and columns of numeric values showing all the values')
+![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example7.png)
 
 ### Example - Defined min and max
 
@@ -105,11 +109,11 @@ You can also define minimum and maximum values as part of the dataset.
 | ---------- | ----- | --- | --- |
 | Gauges     | 5     | 10  | 2   |
 
-![Gauge visualization with numeric values defining max and minimum](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example4.png 'Gauge with numeric values defining max and minimum')
+![Gauge visualization with numeric values defining max and minimum](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example4.png)
 
 If you don’t want to display gauges for the `min` and `max` values, you can configure only one field to be displayed as described in the [value options](#value-options) section.
 
-![Gauge visualization with numeric values defining max and minimum but hidden](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example5.png 'Gauge with numeric values defining max and minimum but hidden')
+![Gauge visualization with numeric values defining max and minimum but hidden](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example5.png)
 
 Even when minimum and maximum values aren’t displayed, the visualization still pulls the range from them.
 
@@ -176,6 +180,8 @@ Adjust the sizes of the gauge text.
 ### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+<!-- Move section below probably into gauge options section -->
 
 Last, gauge colors and thresholds (the outer bar markers) of the gauge can be configured as described above.
 
