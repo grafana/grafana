@@ -74,7 +74,7 @@ export class MetricSelectSceneReact extends SceneObjectBase<MetricSelectSceneSta
 
     let metricNamesFiltered = metricNames;
     if (metricNames && metricNames.length > 25) {
-      metricNamesFiltered = metricNames.slice(0, 2);
+      metricNamesFiltered = metricNames.slice(0, 25);
     }
 
     return (
