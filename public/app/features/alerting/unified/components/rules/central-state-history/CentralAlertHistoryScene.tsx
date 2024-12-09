@@ -241,12 +241,15 @@ export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<C
   }
 
   const onClearFilter = () => {
+    // eslint-disable-next-line
     const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model) as TextBoxVariable;
     labelsFiltersVariable.setValue('');
 
+    // eslint-disable-next-line
     const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model) as CustomVariable;
     stateToFilterVariable.changeValueTo(StateFilterValues.all);
 
+    // eslint-disable-next-line
     const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model) as CustomVariable;
     stateFromFilterVariable.changeValueTo(StateFilterValues.all);
   };
