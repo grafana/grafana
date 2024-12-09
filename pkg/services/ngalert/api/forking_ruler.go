@@ -153,7 +153,17 @@ func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contex
 	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
 }
 
+func (f *RulerApiHandler) handleRouteGetGrafanaRulesCortexConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
+}
+
 func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Group"]
+	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
+}
+
+func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupCortexConfig(ctx *contextmodel.ReqContext) response.Response {
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Group"]
 	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
@@ -168,6 +178,10 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 }
 
 func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
+}
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaCortexRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
 	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
 }
 

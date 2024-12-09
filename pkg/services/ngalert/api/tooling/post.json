@@ -4428,6 +4428,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4463,7 +4464,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4693,6 +4694,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -6440,6 +6442,38 @@
     ]
    }
   },
+  "/ruler/grafana/api/prom/rules": {
+   "get": {
+    "operationId": "RouteGetGrafanaRulesCortexConfig",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets all rules in prometheus format (cortextool).",
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
   "/ruler/grafana/api/prom/rules/{Namespace}": {
    "post": {
     "consumes": [
@@ -6498,11 +6532,79 @@
       }
      }
     },
-    "summary": "Creates or updates a rule group in Prometheus format.",
+    "summary": "Creates or updates a rule group in Prometheus format (cortextool).",
     "tags": [
      "ruler"
     ],
     "x-raw-request": "true"
+   }
+  },
+  "/ruler/grafana/api/prom/rules/{Namespace}/{Group}": {
+   "delete": {
+    "operationId": "RouteDeleteGrafanaCortexRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "204": {
+      "$ref": "#/responses/The",
+      "description": "rule group was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Deletes a rule group in Prometheus format (cortextool).",
+    "tags": [
+     "ruler"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetGrafanaRuleGroupCortexConfig",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "RuleGroupConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/RuleGroupConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Gets a rule group in Prometheus format (cortextool).",
+    "tags": [
+     "ruler"
+    ]
    }
   },
   "/ruler/grafana/api/v1/export/rules": {
