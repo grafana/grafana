@@ -65,7 +65,7 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"pull_request", "opened", provisioning.WebhookResponse{
 			Code: http.StatusAccepted, // 202
-			Jobs: []provisioning.Job{
+			Jobs: []provisioning.JobSpec{
 				{
 					Action: provisioning.JobActionPullRequest,
 					Ref:    "dashboard/1733653266690",
@@ -80,7 +80,7 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
-			Jobs: []provisioning.Job{
+			Jobs: []provisioning.JobSpec{
 				{
 					Action: provisioning.JobActionMergeBranch,
 					Added: []provisioning.FileRef{

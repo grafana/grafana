@@ -277,12 +277,12 @@ func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path
 
 // Webhook implements Repository.
 func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Code:    http.StatusNotImplemented,
-			Message: "webhook not implemented",
-		},
-	}
+	return &provisioning.WebhookResponse{
+		Code: http.StatusAccepted,
+		Jobs: []provisioning.JobSpec{{
+			Action: provisioning.JobActionMergeBranch, // sync the latest changes
+		}},
+	}, nil
 }
 
 func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {

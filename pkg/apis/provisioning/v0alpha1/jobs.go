@@ -6,6 +6,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// The repository name and type are stored as labels
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type Job struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   JobSpec   `json:"spec,omitempty"`
+	Status JobStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type JobList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []Job `json:"items,omitempty"`
+}
+
 // +enum
 type JobAction string
 
@@ -20,7 +38,7 @@ const (
 	JobActionExport JobAction = "export"
 )
 
-type Job struct {
+type JobSpec struct {
 	Action JobAction `json:"action"`
 
 	// The branch of commit hash
@@ -41,6 +59,13 @@ type Job struct {
 type FileRef struct {
 	Ref  string `json:"ref"`
 	Path string `json:"path"`
+}
+
+// The job status
+type JobStatus struct {
+	State   string      `json:"state,omitempty"` // pending, running, ...
+	Updated metav1.Time `json:"updated,omitempty"`
+	Errors  []string    `json:"errors,omitempty"`
 }
 
 // Filter ignorable files
@@ -65,5 +90,8 @@ type WebhookResponse struct {
 	Message string `json:"added,omitempty"`
 
 	// Jobs to be processed
-	Jobs []Job `json:"jobs,omitempty"`
+	Jobs []JobSpec `json:"jobs,omitempty"`
+
+	// The queued jobs
+	IDs []string `json:"ids,omitempty"`
 }

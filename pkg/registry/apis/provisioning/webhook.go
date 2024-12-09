@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -23,6 +25,7 @@ type webhookConnector struct {
 	getter         RepoGetter
 	logger         *slog.Logger
 	resourceClient *resources.ClientFactory
+	jobs           jobs.JobQueue
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -76,6 +79,29 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Jobs != nil {
+			// Add the job to the job queue
+			jobs := []provisioning.Job{}
+			for _, spec := range rsp.Jobs {
+				job := provisioning.Job{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: namespace,
+						Labels: map[string]string{
+							"repository": name,
+						},
+					},
+					Spec: spec,
+				}
+				id, err := s.jobs.Add(ctx, job)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				job.Name = id
+				jobs = append(jobs, job)
+				rsp.IDs = append(rsp.IDs, id)
+			}
+
+			// TODO, create worker from job queue
 			worker, ok := repo.(repository.JobProcessor)
 			if !ok {
 				responder.Error(fmt.Errorf("repo does not support processing jobs"))
@@ -89,12 +115,23 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			defer cancel()
 
 			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			for _, job := range rsp.Jobs {
-				err := worker.Process(ctx, logger, job, factory)
+			for _, job := range jobs {
+				err = worker.Process(ctx, logger, job, factory)
 				if err != nil {
+					_ = s.jobs.Complete(ctx, namespace, job.Name, provisioning.JobStatus{
+						State: "error",
+						Errors: []string{
+							err.Error(),
+						},
+					})
 					responder.Error(err)
 					return
 				}
+
+				// Finished the job
+				_ = s.jobs.Complete(ctx, namespace, job.Name, provisioning.JobStatus{
+					State: "finished",
+				})
 			}
 		}
 		responder.Object(rsp.Code, rsp)
