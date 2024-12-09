@@ -113,37 +113,41 @@ If you don’t want to display gauges for the `min` and `max` values, you can co
 
 Even when minimum and maximum values aren’t displayed, the visualization still pulls the range from them.
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value options
+### Value options
 
 Use the following options to refine how your visualization displays the value:
 
-### Show
+#### Show
 
 Choose how Grafana displays your data.
 
-#### Calculate
+##### Calculate
 
 Show a calculated value based on all rows.
 
 - **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
 - **Fields -** Select the fields display in the panel.
 
-#### All values
+##### All values
 
 Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
 
 - **Limit -** The maximum number of rows to display. Default is 5,000.
 - **Fields -** Select the fields display in the panel.
 
-## Gauge
+### Gauge
 
 Adjust how the gauge is displayed.
 
-### Orientation
+#### Orientation
 
 Choose a stacking direction.
 
@@ -151,15 +155,15 @@ Choose a stacking direction.
 - **Horizontal -** Gauges display top to bottom.
 - **Vertical -** Gauges display left to right.
 
-### Show threshold labels
+#### Show threshold labels
 
 Controls if threshold values are shown.
 
-### Show threshold markers
+#### Show threshold markers
 
 Controls if a threshold band is shown outside the inner gauge value band.
 
-### Gauge size
+#### Gauge size
 
 Choose a gauge size mode.
 
@@ -176,7 +180,7 @@ If you set a minimum width, the x-axis scrollbar is automatically displayed when
 This option only applies when gauge size is set to manual.
 {{% /admonition %}}
 
-### Min height
+#### Min height
 
 Set the minimum height of horizontally-oriented gauges.
 
@@ -186,30 +190,30 @@ If you set a minimum height, the y-axis scrollbar is automatically displayed whe
 This option only applies when gauge size is set to manual.
 {{% /admonition %}}
 
-### Neutral
+#### Neutral
 
 Set the starting value from which every gauge will be filled.
 
-## Text size
+### Text size
 
 Adjust the sizes of the gauge text.
 
 - **Title -** Enter a numeric value for the gauge title size.
 - **Value -** Enter a numeric value for the gauge value size.
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -217,6 +221,6 @@ Last, gauge colors and thresholds (the outer bar markers) of the gauge can be co
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png 'Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11')
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
