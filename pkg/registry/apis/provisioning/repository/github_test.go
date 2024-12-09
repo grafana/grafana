@@ -83,19 +83,20 @@ func TestParseWebhooks(t *testing.T) {
 			Jobs: []provisioning.Job{
 				{
 					Action: provisioning.JobActionMergeBranch,
+					Ref:    "5c816f9812e391c62b0c5555d0b473b296d9179c",
 					Added: []provisioning.FileRef{
 						{
-							Ref:  "",
+							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
 							Path: "nested-1/dash-1.json",
 						},
 						{
-							Ref:  "",
+							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
 							Path: "nested-1/nested-2/dash-2.json",
 						},
 					},
 					Modified: []provisioning.FileRef{
 						{
-							Ref:  "72096e3adc646c5a5b8a91744f962b12bac06045",
+							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
 							Path: "first-dashboard.json",
 						},
 					},
