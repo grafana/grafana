@@ -31,23 +31,19 @@ const (
 	RelationSetEdit  = common.RelationSetEdit
 	RelationSetAdmin = common.RelationSetAdmin
 
-	RelationRead             = common.RelationRead
-	RelationWrite            = common.RelationWrite
-	RelationCreate           = common.RelationCreate
-	RelationDelete           = common.RelationDelete
-	RelationPermissionsRead  = common.RelationPermissionsRead
-	RelationPermissionsWrite = common.RelationPermissionsWrite
+	RelationRead   = common.RelationGet
+	RelationWrite  = common.RelationUpdate
+	RelationCreate = common.RelationCreate
+	RelationDelete = common.RelationDelete
 
 	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
 	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
 	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
 
-	RelationFolderResourceRead             = common.RelationFolderResourceRead
-	RelationFolderResourceWrite            = common.RelationFolderResourceWrite
-	RelationFolderResourceCreate           = common.RelationFolderResourceCreate
-	RelationFolderResourceDelete           = common.RelationFolderResourceDelete
-	RelationFolderResourcePermissionsRead  = common.RelationFolderResourcePermissionsRead
-	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
+	RelationFolderResourceRead   = common.RelationFolderResourceGet
+	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
+	RelationFolderResourceCreate = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete = common.RelationFolderResourceDelete
 )
 
 var (

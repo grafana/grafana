@@ -24,19 +24,19 @@ func GetTypeInfo(group, resource string) (TypeInfo, bool) {
 }
 
 var VerbMapping = map[string]string{
-	utils.VerbGet:              RelationRead,
-	utils.VerbList:             RelationRead,
-	utils.VerbWatch:            RelationRead,
+	utils.VerbGet:              RelationGet,
+	utils.VerbList:             RelationGet,
+	utils.VerbWatch:            RelationGet,
 	utils.VerbCreate:           RelationCreate,
-	utils.VerbUpdate:           RelationWrite,
-	utils.VerbPatch:            RelationWrite,
+	utils.VerbUpdate:           RelationUpdate,
+	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
 }
 
 var RelationToVerbMapping = map[string]string{
-	RelationRead:   utils.VerbGet,
+	RelationGet:    utils.VerbGet,
 	RelationCreate: utils.VerbCreate,
-	RelationWrite:  utils.VerbUpdate,
+	RelationUpdate: utils.VerbUpdate,
 	RelationDelete: utils.VerbDelete,
 }

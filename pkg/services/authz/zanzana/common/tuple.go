@@ -31,42 +31,34 @@ const (
 	RelationSetEdit  string = "edit"
 	RelationSetAdmin string = "admin"
 
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	RelationGet    string = "get"
+	RelationUpdate string = "update"
+	RelationCreate string = "create"
+	RelationDelete string = "delete"
 
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceRead             string = "resource_" + RelationRead
-	RelationFolderResourceWrite            string = "resource_" + RelationWrite
-	RelationFolderResourceCreate           string = "resource_" + RelationCreate
-	RelationFolderResourceDelete           string = "resource_" + RelationDelete
-	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
-	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
+	RelationFolderResourceGet    string = "resource_" + RelationGet
+	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate string = "resource_" + RelationCreate
+	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
 var ResourceRelations = []string{
-	RelationRead,
-	RelationWrite,
+	RelationGet,
+	RelationUpdate,
 	RelationDelete,
-	RelationPermissionsRead,
-	RelationPermissionsWrite,
 }
 
 var FolderRelations = append(
 	ResourceRelations,
 	RelationCreate,
-	RelationFolderResourceRead,
-	RelationFolderResourceWrite,
+	RelationFolderResourceGet,
+	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
-	RelationFolderResourcePermissionsRead,
-	RelationFolderResourcePermissionsWrite,
 )
 
 func FolderResourceRelation(relation string) string {
