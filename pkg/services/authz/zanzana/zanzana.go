@@ -31,8 +31,8 @@ const (
 	RelationSetEdit  = common.RelationSetEdit
 	RelationSetAdmin = common.RelationSetAdmin
 
-	RelationRead   = common.RelationGet
-	RelationWrite  = common.RelationUpdate
+	RelationGet    = common.RelationGet
+	RelationUpdate = common.RelationUpdate
 	RelationCreate = common.RelationCreate
 	RelationDelete = common.RelationDelete
 
