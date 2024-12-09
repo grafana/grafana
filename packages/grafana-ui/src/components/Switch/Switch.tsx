@@ -80,8 +80,8 @@ InlineSwitch.displayName = 'Switch';
 
 const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   switch: css({
-    width: '32px',
-    height: '16px',
+    width: theme.spacing(4),
+    height: theme.spacing(2),
     position: 'relative',
     lineHeight: 1,
 
@@ -101,7 +101,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         },
 
         svg: {
-          transform: 'translate3d(17px, -50%, 0)',
+          transform: `translate3d(calc(${theme.spacing(2)} + 1px), -50%, 0)`,
           background: theme.colors.primary.contrastText,
           color: theme.colors.primary.main,
         },
@@ -147,8 +147,8 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         position: 'absolute',
         display: 'block',
         color: 'transparent',
-        width: '12px',
-        height: '12px',
+        width: `calc(${theme.spacing(2)} - 4px)`,
+        height: `calc(${theme.spacing(2)} - 4px)`,
         borderRadius: theme.shape.radius.circle,
         background: theme.colors.text.secondary,
         boxShadow: theme.shadows.z1,
