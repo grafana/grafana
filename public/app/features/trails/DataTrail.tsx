@@ -7,8 +7,8 @@ import {
   GrafanaTheme2,
   MetricFindValue,
   RawTimeRange,
-  VariableHide,
   urlUtil,
+  VariableHide,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
@@ -25,6 +25,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -50,11 +51,11 @@ import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import {
-  sortResources,
   getOtelJoinQuery,
   getOtelResourcesObject,
-  updateOtelJoinWithGroupLeft,
   getProdOrDefaultOption,
+  sortResources,
+  updateOtelJoinWithGroupLeft,
 } from './otel/util';
 import { getOtelExperienceToggleState } from './services/store';
 import {
@@ -98,8 +99,8 @@ export interface DataTrailState extends SceneObjectState {
   metricSearch?: string;
 }
 
-export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
+export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -122,7 +123,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       useOtelExperience: state.useOtelExperience ?? false,
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
-      showPreviews: true,
+      showPreviews: state.showPreviews ?? true,
       ...state,
     });
 
@@ -278,9 +279,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return stateUpdate;
   }
 
-  getUrlState() {
-    const { metric, metricSearch } = this.state;
-    return { metric, metricSearch };
+  getUrlState(): SceneObjectUrlValues {
+    const { metric, metricSearch, showPreviews } = this.state;
+    return {
+      metric,
+      metricSearch,
+      ...{ showPreviews: showPreviews === false ? 'false' : null },
+    };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -299,6 +304,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.metricSearch = values.metricSearch;
     } else if (values.metric == null) {
       stateUpdate.metricSearch = undefined;
+    }
+
+    if (typeof values.showPreviews === 'string') {
+      stateUpdate.showPreviews = values.showPreviews !== 'false';
     }
 
     this.setState(stateUpdate);
