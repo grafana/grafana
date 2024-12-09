@@ -62,6 +62,7 @@ export const GroupingToMatrixTransformerEditor = ({
     { label: 'Null', value: SpecialValue.Null, description: 'Null value' },
     { label: 'True', value: SpecialValue.True, description: 'Boolean true value' },
     { label: 'False', value: SpecialValue.False, description: 'Boolean false value' },
+    { label: 'Zero', value: SpecialValue.Zero, description: 'Number 0 value' },
     { label: 'Empty', value: SpecialValue.Empty, description: 'Empty string' },
   ];
 
