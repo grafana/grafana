@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Enrichment, MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
@@ -107,6 +107,20 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
         value: unquoteWithUnescape(value),
       })) ?? [];
 
+  console.log(route.enrichments);
+
+  const enrichments: Record<string, string> =
+        route.enrichments?.reduce((a, v) => ({
+          ...a,
+          [v.options.key]: {
+            active: true,
+            query: v.options.expr ?? '',
+            url: v.url,
+          }
+        }), {}) ?? {};
+
+  console.log(enrichments);
+  
   return {
     id,
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
@@ -126,6 +140,7 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     repeatIntervalValue: route.repeat_interval ?? '',
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
+    enrichments: enrichments ?? undefined,
   };
 };
 
@@ -170,6 +185,25 @@ export const formAmRouteToAmRoute = (
     formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)
   );
 
+  // Enrichments are optional and only
+  const enrichments: Enrichment[] =
+        Object
+        .keys(formAmRoute.enrichments ?? {})
+        .filter((enrichment) => {
+          const data = (formAmRoute.enrichments ?? {})[enrichment];
+          return data.active
+        })
+        .map((enrichment) => {
+          const data = (formAmRoute.enrichments ?? {})[enrichment];
+          return {
+            options: {
+              key: enrichment,
+              expr: ((data ?? { query: ''}) as unknown as { query: string }).query,
+            },
+            url: data.url ?? ('http://enrichi.hackathon-2024-12-enrichi.svc.cluster.local:8080/enrich/' + enrichment),
+          }
+        });
+  
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
@@ -183,6 +217,7 @@ export const formAmRouteToAmRoute = (
     routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
     receiver: receiver,
+    enrichments: enrichments,
   };
 
   // non-Grafana managed rules should use "matchers", Grafana-managed rules should use "object_matchers"
