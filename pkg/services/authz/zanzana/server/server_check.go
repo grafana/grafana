@@ -22,7 +22,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	// Check if subject has access through namespace
 	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
@@ -38,7 +37,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	return s.checkGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), store)
 }
 
-// checkTyped performes check on the root "namespace". If subject has access through the namespace they have access to
+// checkTyped checks on the root "namespace". If subject has access through the namespace they have access to
 // every resource for that "GroupResource".
 func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
 	if !common.IsNamespaceRelation(relation) {
@@ -67,7 +66,7 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 }
 
-// checkTyped performes checks on our typed resources e.g. folder.
+// checkTyped checks on our typed resources e.g. folder.
 func (s *Server) checkTyped(ctx context.Context, subject, relation, name string, info common.TypeInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
@@ -90,7 +89,9 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
-// checkGeneric check our generic "resource" type.
+// checkGeneric check our generic "resource" type. It checks:
+// 1. If subject has access as a sub resource for a folder.
+// 2. If subject has direct access to resource.
 func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
 	var (
 		resourceCtx    = common.NewResourceContext(group, resource)
