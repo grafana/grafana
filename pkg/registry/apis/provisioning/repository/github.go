@@ -619,6 +619,10 @@ func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, j
 	prURL := job.URL
 
 	for _, file := range files {
+		if r.ignore(file.GetFilename()) {
+			continue
+		}
+
 		resource := changedResource{
 			Filename: path.Base(file.GetFilename()),
 			Path:     file.GetFilename(),

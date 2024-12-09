@@ -215,6 +215,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		client:     b.client,
 		logger:     b.logger.With("connector", "import"),
+		ignore:     provisioning.IncludeYamlOrJSON,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
