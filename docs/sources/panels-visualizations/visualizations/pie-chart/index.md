@@ -114,9 +114,9 @@ Use the following options to refine the value in your visualization.
 
 | Option | Description |
 | ------ | ----------- |
-| Show | Choose how much information to show. **Calculate** reduces each value to a single value per series. **All values** displays every value from a single series. |
-| Calculation | Select a calculation to reduce each series when **Calculate** has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | When displaying every value from a single series, this limits the number of values displayed. <!--only applies to All values --> |
+| Show | Set how much information to show. Choose from:<ul><li>**Calculate** - Reduces each value to a single value per series.</li><li>**All values** - Displays every value from a single series.</li></ul> |
+| Calculation | If you chose **Calculation** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
+| Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
 | Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
 
 <!-- prettier-ignore-end -->
