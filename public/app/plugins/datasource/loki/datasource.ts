@@ -1,4 +1,5 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
+import { LRUCache } from 'lru-cache';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
@@ -43,6 +44,7 @@ import {
   QueryVariableModel,
   CustomVariableModel,
 } from '@grafana/data';
+import { isRelativeTime } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -111,6 +113,10 @@ export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
 export const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
+const statsCache = new LRUCache<string, QueryStats>({
+  ttl: 1 * 60 * 1000,
+  ttlAutopurge: true,
+});
 
 export function makeRequest(
   query: LokiQuery,
@@ -575,7 +581,7 @@ export class LokiDatasource
     if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
     }
-
+    
     const labelMatchers = getStreamSelectorsFromQuery(query.expr);
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
@@ -586,16 +592,34 @@ export class LokiDatasource
         return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
       }
 
+      let rangeKey = '';
+      if (isRelativeTime(timeRange.raw.from)) {
+        rangeKey += `${timeRange.raw.from}.`;
+      } else {
+        rangeKey += `${start}.`;
+      }
+      if (isRelativeTime(timeRange.raw.to)) {
+        rangeKey += `${timeRange.raw.to}`;
+      } else {
+        rangeKey += `${end}.`;
+      }
+
+      const key = `${labelMatchers[idx]}.${rangeKey}.${this.uid}`;
+
       try {
-        const data = await this.statsMetadataRequest(
-          'index/stats',
-          {
-            query: labelMatchers[idx],
-            start: start,
-            end: end,
-          },
-          { showErrorAlert: false, requestId: `${REF_ID_STARTER_STATS}${query.refId}` }
-        );
+        let data = statsCache.get(key);
+        if (!data) {
+          data = await this.statsMetadataRequest(
+            'index/stats',
+            {
+              query: labelMatchers[idx],
+              start: start,
+              end: end,
+            },
+            { showErrorAlert: false, requestId: `${REF_ID_STARTER_STATS}${query.refId}` }
+          );
+          statsCache.set(key, data);
+        }
 
         statsForAll = {
           streams: statsForAll.streams + data.streams,
@@ -616,7 +640,6 @@ export class LokiDatasource
    * In metric queries, this means extending it over the range interval.
    * @returns An object containing the start and end time in nanoseconds (NS_IN_MS) or undefined if the time range cannot be estimated.
    */
-
   getStatsTimeRange(
     query: LokiQuery,
     idx: number,
