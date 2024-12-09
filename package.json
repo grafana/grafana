@@ -9,7 +9,7 @@
   "scripts": {
     "build": "NODE_ENV=production nx exec --verbose -- vite build",
     "build:nominify": "NO_MINIFY=1 yarn run build",
-    "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
+    "build:stats": "ANALYZE_BUNDLE=1 yarn run build",
     "dev": "NODE_ENV=dev nx exec -- vite",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:scenes": "./e2e/start-and-run-suite scenes",
