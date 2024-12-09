@@ -522,6 +522,8 @@ require (
 	k8s.io/apiextensions-apiserver v0.31.3 // indirect
 )
 
+require github.com/quasilyte/go-ruleguard/dsl v0.3.22
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
