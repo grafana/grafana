@@ -226,7 +226,7 @@
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "1.5.5",
     "rimraf": "6.0.1",
-    "rudder-sdk-js": "2.48.29",
+    "rudder-sdk-js": "2.48.41",
     "sass": "1.80.7",
     "sass-loader": "16.0.3",
     "smtp-tester": "^2.1.0",
