@@ -7,5 +7,5 @@ export type FeedbackFormData = {
   contactChecked: boolean;
   width: number;
   height: number;
-  bitmap: HTMLImageElement;
+  bitmap: ImageBitmap;
 };
