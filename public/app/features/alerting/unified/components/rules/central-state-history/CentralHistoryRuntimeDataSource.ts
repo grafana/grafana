@@ -53,13 +53,12 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
   async query(request: DataQueryRequest<HistoryAPIQuery>): Promise<DataQueryResponse> {
     const from = request.range.from.unix();
     const to = request.range.to.unix();
-
-    // Get the labels and states filters from the URL
+    // get the query from the request
     const query = request.targets[0]!;
 
     const templateSrv = getTemplateSrv();
 
-    // where is the labels filter used??
+    // we get the labels, stateTo and stateFrom from the query variables
     const labels = templateSrv.replace(query.labels ?? '', request.scopedVars);
     const stateTo = templateSrv.replace(query.stateTo ?? '', request.scopedVars);
     const stateFrom = templateSrv.replace(query.stateFrom ?? '', request.scopedVars);
