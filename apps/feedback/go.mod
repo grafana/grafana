@@ -3,7 +3,6 @@ module github.com/grafana/grafana/apps/feedback
 go 1.23.1
 
 require (
-	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/google/uuid v1.6.0
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.25.2
