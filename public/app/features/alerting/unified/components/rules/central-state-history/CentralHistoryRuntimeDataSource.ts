@@ -1,4 +1,3 @@
-import { template } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { DataQuery, DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data';
@@ -11,7 +10,7 @@ import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { DataSourceInformation } from '../../../home/Insights';
 
 import { LIMIT_EVENTS } from './EventListSceneObject';
-import { getStateFilterFromInQueryParams, getStateFilterToInQueryParams, historyResultToDataFrame } from './utils';
+import { historyResultToDataFrame } from './utils';
 
 const historyDataSourceUid = '__history_api_ds_uid__';
 const historyDataSourcePluginId = '__history_api_ds_pluginId__';

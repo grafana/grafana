@@ -8,7 +8,6 @@ import {
   CustomVariable,
   SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
   TextBoxVariable,
   VariableDependencyConfig,
   VariableValue,
