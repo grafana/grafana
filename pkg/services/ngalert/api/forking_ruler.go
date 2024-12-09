@@ -126,7 +126,15 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
+func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupCortexConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	return f.postRuleGroupInPromFormat(ctx, namespace)
+}
+
 func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	return f.postRuleGroupInPromFormat(ctx, namespace)
+}
+
+func (f *RulerApiHandler) postRuleGroupInPromFormat(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		return errorToResponse(err)
@@ -145,7 +153,17 @@ func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contex
 	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
 }
 
+func (f *RulerApiHandler) handleRouteGetGrafanaRulesCortexConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
+}
+
 func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Group"]
+	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
+}
+
+func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupCortexConfig(ctx *contextmodel.ReqContext) response.Response {
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Group"]
 	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
@@ -160,6 +178,10 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 }
 
 func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
+}
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaCortexRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
 	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
 }
 

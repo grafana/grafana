@@ -85,9 +85,33 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
+// swagger:route GET /ruler/grafana/api/prom/rules ruler RouteGetGrafanaRulesCortexConfig
+//
+// Gets all rules in prometheus format (cortextool).
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: NamespaceConfigResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route GET /ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group} ruler RouteGetGrafanaRuleGroupPrometheusConfig
 //
 // Gets a rule group in Prometheus format.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: RuleGroupConfigResponse
+//       403: ForbiddenError
+//       404: NotFound
+
+// swagger:route GET /ruler/grafana/api/prom/rules/{Namespace}/{Group} ruler RouteGetGrafanaRuleGroupCortexConfig
+//
+// Gets a rule group in Prometheus format (cortextool).
 //
 //     Produces:
 //     - application/json
@@ -114,9 +138,37 @@ import (
 //     Extensions:
 //       x-raw-request: true
 
+// swagger:route POST /ruler/grafana/api/prom/rules/{Namespace} ruler RoutePostGrafanaRuleGroupCortexConfig
+//
+// Creates or updates a rule group in Prometheus format (cortextool).
+//
+//     Consumes:
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
+
 // swagger:route DELETE /ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group} ruler RouteDeleteGrafanaPrometheusRuleGroup
 //
 // Deletes a rule group in Prometheus format.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       204: The rule group was deleted successfully.
+//       403: ForbiddenError
+
+// swagger:route DELETE /ruler/grafana/api/prom/rules/{Namespace}/{Group} ruler RouteDeleteGrafanaCortexRuleGroup
+//
+// Deletes a rule group in Prometheus format (cortextool).
 //
 //     Produces:
 //     - application/json
@@ -718,7 +770,7 @@ type UpdateRuleGroupResponse struct {
 	Deleted []string `json:"deleted,omitempty"`
 }
 
-// swagger:parameters RoutePostGrafanaRuleGroupPrometheusConfig
+// swagger:parameters RoutePostGrafanaRuleGroupPrometheusConfig RoutePostGrafanaRuleGroupCortexConfig
 type RoutePostGrafanaRuleGroupPrometheusConfigParams struct {
 	// in: path
 	Namespace string
@@ -763,4 +815,12 @@ type RouteDeleteGrafanaPrometheusRuleGroupParams struct {
 type RouteDeleteGrafanaPrometheusNamespaceParams struct {
 	// in: path
 	Namespace string
+}
+
+// swagger:parameters RouteDeleteGrafanaCortexRuleGroup
+type RouteDeleteGrafanaCortexRuleGroupParams struct {
+	// in: path
+	Namespace string
+	// in: path
+	Group string
 }
