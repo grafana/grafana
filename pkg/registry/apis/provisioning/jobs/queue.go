@@ -137,7 +137,7 @@ func (s *jobStore) drainPending() {
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
-
+			s.logger.Error("error running job", "job", job.Name, "error", err)
 		}
 	}
 }
