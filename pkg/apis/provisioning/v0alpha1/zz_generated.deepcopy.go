@@ -469,8 +469,8 @@ func (in *S3RepositoryConfig) DeepCopy() *S3RepositoryConfig {
 func (in *WebhookResponse) DeepCopyInto(out *WebhookResponse) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.Job != nil {
-		in, out := &in.Job, &out.Job
+	if in.Jobs != nil {
+		in, out := &in.Jobs, &out.Jobs
 		*out = make([]Job, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

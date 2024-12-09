@@ -65,5 +65,5 @@ type WebhookResponse struct {
 	Message string `json:"added,omitempty"`
 
 	// Jobs to be processed
-	Job []Job `json:"job,omitempty"`
+	Jobs []Job `json:"jobs,omitempty"`
 }

@@ -1011,7 +1011,7 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"job": {
+					"jobs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Jobs to be processed",
 							Type:        []string{"array"},
