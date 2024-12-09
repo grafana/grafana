@@ -1,11 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
-import { createRequire } from 'node:module';
 import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
-
-const require = createRequire(import.meta.url);
-const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -46,7 +42,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with admin role
     {
       name: 'admin',
-      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
+      testDir: './plugin-e2e-api-tests/as-admin-user',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -56,7 +52,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with viewer role
     {
       name: 'viewer',
-      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
+      testDir: './plugin-e2e-api-tests/as-viewer-user',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/viewer.json',
@@ -65,7 +61,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'elasticsearch',
-      testDir: path.join(testDirRoot, '/elasticsearch'),
+      testDir: './elasticsearch',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -74,7 +70,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'mysql',
-      testDir: path.join(testDirRoot, '/mysql'),
+      testDir: './mysql',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -83,7 +79,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'mssql',
-      testDir: path.join(testDirRoot, '/mssql'),
+      testDir: './mssql',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -110,7 +106,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'cloudwatch',
-      testDir: path.join(testDirRoot, '/cloudwatch'),
+      testDir: './cloudwatch',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
