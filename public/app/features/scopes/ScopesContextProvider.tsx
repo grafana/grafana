@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { ScopesContext } from '@grafana/scenes';
+import { ScopesContext } from '@grafana/runtime';
 
 import { ScopesService } from './ScopesService';
 

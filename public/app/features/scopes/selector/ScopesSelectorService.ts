@@ -23,8 +23,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   private _scopesCache = new Map<string, Promise<Scope>>();
 
-  private _scopesService: ScopesService = ScopesService.instance!;
-
   private constructor() {
     super({
       opened: false,
@@ -162,19 +160,19 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       path,
     }));
     this.updateState({ selectedScopes, treeScopes });
-    this._scopesService.setLoading(true);
+    ScopesService.instance?.setLoading(true);
     ScopesDashboardsService.instance?.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.fetchScopesApi(treeScopes);
     this.updateState({ selectedScopes });
-    this._scopesService.setScopes(selectedScopes.map(({ scope }) => scope));
-    this._scopesService.setLoading(false);
+    ScopesService.instance?.setScopes(selectedScopes.map(({ scope }) => scope));
+    ScopesService.instance?.setLoading(false);
   };
 
   public removeAllScopes = () => this.setNewScopes([]);
 
   public open = async () => {
-    if (!this._scopesService.state.readOnly) {
+    if (!ScopesService.instance?.state.readOnly) {
       if (Object.keys(this.state.nodes[''].nodes).length === 0) {
         await this.updateNode([''], true, '');
       }
@@ -205,7 +203,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.setNewScopes();
   };
 
-  public toggleDrawer = () => this._scopesService.setDrawerOpened(!this._scopesService.state.drawerOpened);
+  public toggleDrawer = () => ScopesService.instance?.setDrawerOpened(!ScopesService.instance?.state.drawerOpened);
 
   public closeNodes = (nodes: NodesMap): NodesMap => {
     return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
@@ -387,5 +385,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       return acc;
     }, []);
+  };
+
+  public reset = () => {
+    ScopesSelectorService.#instance = undefined;
   };
 }

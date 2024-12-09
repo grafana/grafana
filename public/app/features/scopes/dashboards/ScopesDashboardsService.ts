@@ -4,6 +4,7 @@ import { finalize, from } from 'rxjs';
 import { ScopeDashboardBinding } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 
+import { ScopesService } from '../ScopesService';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { SuggestedDashboardsFoldersMap } from './types';
@@ -91,6 +92,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         loading: false,
       });
 
+      ScopesService.instance?.setDrawerOpened(false);
+
       return;
     }
 
@@ -107,6 +110,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         const filteredFolders = this.filterFolders(folders, this.state.searchQuery);
 
         this.updateState({ dashboards, filteredFolders, folders, loading: false });
+
+        ScopesService.instance?.setDrawerOpened(dashboards.length > 0);
 
         this._fetchSub?.unsubscribe();
       });
@@ -204,5 +209,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     } catch (err) {
       return [];
     }
+  };
+
+  public reset = () => {
+    ScopesDashboardsService.#instance = undefined;
   };
 }

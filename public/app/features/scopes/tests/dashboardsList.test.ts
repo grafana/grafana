@@ -54,8 +54,8 @@ describe('Dashboards list', () => {
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    await renderDashboard();
     fetchDashboardsSpy = jest.spyOn(ScopesDashboardsService.instance!, 'fetchDashboardsApi');
   });
 
@@ -260,14 +260,13 @@ describe('Dashboards list', () => {
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
-    await toggleDashboards();
     await updateScopes(['cloud']);
+    await toggleDashboards();
     expectNoDashboardsForScope();
     expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
-    await toggleDashboards();
     await updateScopes(['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();

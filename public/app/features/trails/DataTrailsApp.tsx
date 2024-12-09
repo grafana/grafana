@@ -121,7 +121,7 @@ export function getDataTrailsApp() {
       scopesBridge,
       $behaviors: [
         () => {
-          scopesBridge?.enable();
+          scopesBridge?.setEnabled(true);
 
           const sub = scopesBridge?.subscribeToValue(() => {
             dataTrailsApp.state.trail.publishEvent(new RefreshMetricsEvent());
@@ -129,7 +129,7 @@ export function getDataTrailsApp() {
           });
 
           return () => {
-            scopesBridge?.disable();
+            scopesBridge?.setEnabled(false);
             sub?.unsubscribe();
           };
         },

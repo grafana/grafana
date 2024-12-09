@@ -1,6 +1,4 @@
 import { config } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesSelectorService } from '../selector/ScopesSelectorService';
@@ -9,6 +7,7 @@ import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScope
 import { expectScopesSelectorValue } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
+import { getListOfScopes } from './utils/selectors';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -20,7 +19,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Selector', () => {
-  let dashboardScene: DashboardScene;
   let fetchSelectedScopesSpy: jest.SpyInstance;
   let dashboardReloadSpy: jest.SpyInstance;
 
@@ -29,8 +27,8 @@ describe('Selector', () => {
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    dashboardScene = renderDashboard();
+  beforeEach(async () => {
+    await renderDashboard();
     fetchSelectedScopesSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchScopesApi');
     dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
   });
@@ -44,9 +42,7 @@ describe('Selector', () => {
     await selectResultCloud();
     await applyScopes();
     expect(fetchSelectedScopesSpy).toHaveBeenCalled();
-    expect(sceneGraph.getScopesBridge(dashboardScene)?.getValue()).toEqual(
-      mocksScopes.filter(({ metadata: { name } }) => name === 'cloud')
-    );
+    expect(getListOfScopes()).toEqual(mocksScopes.filter(({ metadata: { name } }) => name === 'cloud'));
   });
 
   it('Does not save the scopes on close', async () => {
@@ -54,7 +50,7 @@ describe('Selector', () => {
     await selectResultCloud();
     await cancelScopes();
     expect(fetchSelectedScopesSpy).not.toHaveBeenCalled();
-    expect(sceneGraph.getScopesBridge(dashboardScene)?.getValue()).toEqual([]);
+    expect(getListOfScopes()).toEqual([]);
   });
 
   it('Shows selected scopes', async () => {

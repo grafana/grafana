@@ -62,8 +62,8 @@ describe('Tree', () => {
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    await renderDashboard();
     fetchNodesSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchNodeApi');
     fetchScopeSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchScopeApi');
   });

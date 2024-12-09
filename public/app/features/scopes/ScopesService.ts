@@ -1,14 +1,11 @@
 import { Scope } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { ScopesContextValue } from '@grafana/scenes';
+import { config, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
 
 import { ScopesServiceBase } from './ScopesServiceBase';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
-export class ScopesService extends ScopesServiceBase<ScopesContextValue['state']> implements ScopesContextValue {
+export class ScopesService extends ScopesServiceBase<ScopesContextValueState> implements ScopesContextValue {
   static #instance: ScopesService | undefined = undefined;
-
-  private _selectorService: ScopesSelectorService = ScopesSelectorService.instance!;
 
   private constructor() {
     super({
@@ -28,33 +25,21 @@ export class ScopesService extends ScopesServiceBase<ScopesContextValue['state']
     return ScopesService.#instance;
   }
 
-  public changeScopes = (scopeNames: string[]) => this._selectorService.changeScopes(scopeNames);
+  public changeScopes = (scopeNames: string[]) => ScopesSelectorService.instance?.changeScopes(scopeNames);
 
-  public enableReadOnly = () => {
-    if (!this.state.readOnly) {
-      this.updateState({ readOnly: true });
+  public setReadOnly = (readOnly: boolean) => {
+    if (this.state.readOnly !== readOnly) {
+      this.updateState({ readOnly });
     }
 
-    if (this._selectorService.state.opened) {
-      this._selectorService.closeAndReset();
-    }
-  };
-
-  public disableReadOnly = () => {
-    if (this.state.readOnly) {
-      this.updateState({ readOnly: false });
+    if (readOnly && ScopesSelectorService.instance?.state.opened) {
+      ScopesSelectorService.instance?.closeAndReset();
     }
   };
 
-  public enable = () => {
-    if (!this.state.enabled) {
-      this.updateState({ enabled: true });
-    }
-  };
-
-  public disable = () => {
-    if (this.state.enabled) {
-      this.updateState({ enabled: false });
+  public setEnabled = (enabled: boolean) => {
+    if (this.state.enabled !== enabled) {
+      this.updateState({ enabled });
     }
   };
 
@@ -70,5 +55,9 @@ export class ScopesService extends ScopesServiceBase<ScopesContextValue['state']
     if (this.state.drawerOpened !== drawerOpened) {
       this.updateState({ drawerOpened });
     }
+  };
+
+  public reset = () => {
+    ScopesService.#instance = undefined;
   };
 }
