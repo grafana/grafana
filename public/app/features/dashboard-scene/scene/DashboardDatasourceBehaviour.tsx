@@ -26,24 +26,24 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   }
 
   private _activationHandler() {
-    const dashboardDsQueryRunner = this.parent;
+    const queryRunner = this.parent;
     let libraryPanelSub: Unsubscribable;
     let dashboard: DashboardScene;
-    if (!(dashboardDsQueryRunner instanceof SceneQueryRunner)) {
+    if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (!this.isDashboardDS(dashboardDsQueryRunner)) {
+    if (!this.containsDashboardDSQueries(queryRunner)) {
       return;
     }
 
     try {
-      dashboard = getDashboardSceneFor(dashboardDsQueryRunner);
+      dashboard = getDashboardSceneFor(queryRunner);
     } catch {
       return;
     }
 
-    const dashboardQuery = dashboardDsQueryRunner.state.queries.find((query) => query.panelId !== undefined);
+    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
 
     if (!dashboardQuery) {
       return;
@@ -62,7 +62,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
     if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
       libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+        this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
       });
       return;
     }
@@ -74,7 +74,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     }
 
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      dashboardDsQueryRunner.runQueries();
+      queryRunner.runQueries();
     }
 
     return () => {
@@ -85,7 +85,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     };
   }
 
-  private isDashboardDS(queryRunner: SceneQueryRunner): boolean {
+  private containsDashboardDSQueries(queryRunner: SceneQueryRunner): boolean {
     if (queryRunner.state.datasource?.uid === SHARED_DASHBOARD_QUERY) {
       return true;
     }
