@@ -79,7 +79,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 
 	// 1. List all folders subject has access to resource type in
 	var folders []string
-	if common.IsFolderRelation(folderRelation) {
+	if common.IsFolderResourceRelation(folderRelation) {
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,

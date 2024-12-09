@@ -21,7 +21,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
-
 	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 		folderRelation = common.FolderResourceRelation(relation)
 	)
 
-	if folder != "" && common.IsFolderRelation(folderRelation) {
+	if folder != "" && common.IsFolderResourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
 		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,

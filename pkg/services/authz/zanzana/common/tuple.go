@@ -46,6 +46,7 @@ const (
 	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
+// NamespaceRelations are relations that can be added on type "namespace".
 var NamespaceRelations = []string{
 	RelationGet,
 	RelationUpdate,
@@ -53,19 +54,28 @@ var NamespaceRelations = []string{
 	RelationDelete,
 }
 
+// ResourceRelations are relations that can be added on type "resource".
 var ResourceRelations = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
 }
 
-var FolderRelations = append(
-	ResourceRelations,
-	RelationCreate,
+// FolderResourceRelations are relations that can be added on type "folder" for child resources.
+var FolderResourceRelations = []string{
 	RelationFolderResourceGet,
 	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
+}
+
+// FodlerRelations are relations that can be added on type "folder".
+var FolderRelations = append(
+	FolderResourceRelations,
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
+	RelationDelete,
 )
 
 func IsNamespaceRelation(relation string) bool {
@@ -77,13 +87,14 @@ func IsNamespaceRelation(relation string) bool {
 	return false
 }
 
-func IsFolderRelation(relation string) bool {
-	for _, r := range FolderRelations {
+func IsFolderResourceRelation(relation string) bool {
+	for _, r := range FolderResourceRelations {
 		if r == relation {
 			return true
 		}
 	}
 	return false
+
 }
 
 func IsResourceRelation(relation string) bool {
