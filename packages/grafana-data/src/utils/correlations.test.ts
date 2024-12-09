@@ -1,8 +1,7 @@
 import { DataFrame, DataFrameType, DataSourceInstanceSettings, FieldType, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CorrelationData } from './useCorrelations';
-import { attachCorrelationsToDataFrames } from './utils';
+import { attachCorrelationsToDataFrames, CorrelationData } from './correlations';
 
 describe('correlations utils', () => {
   it('attaches correlations defined in the configuration', () => {

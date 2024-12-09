@@ -4,6 +4,7 @@ import { map, mergeMap } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
+  attachCorrelationsToDataFrames,
   DataFrame,
   FieldType,
   getDisplayProcessor,
@@ -20,7 +21,6 @@ import { DataQuery } from '@grafana/schema';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
-import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
 import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
