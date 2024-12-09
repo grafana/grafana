@@ -192,6 +192,10 @@ Choose whether you want to display the heatmap legend on the visualization by to
 
 Set the color used to show exemplar data.
 
+### Standard options
+
+Toggle the **Field min/max** option on to have minimum and maximum values calculated per field.
+
 ### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
