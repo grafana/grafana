@@ -74,15 +74,19 @@ func TestParseWebhooks(t *testing.T) {
 			},
 		}},
 		{"push", "ignored", provisioning.WebhookResponse{
-			Code: http.StatusOK,
+			Code: http.StatusOK, // parsed but nothing required
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
-			Code: http.StatusOK,
+			Code: http.StatusAccepted,
 			Job: &provisioning.Job{
 				Action: provisioning.JobActionMergeBranch,
+				Ref:    "main",
 				Added: []string{
 					"nested-1/dash-1.json",
 					"nested-1/nested-2/dash-2.json",
+				},
+				Modified: []string{
+					"first-dashboard.json",
 				},
 			},
 		}},
@@ -105,13 +109,7 @@ func TestParseWebhooks(t *testing.T) {
 			},
 		},
 		logger: slog.Default().With("logger", "github-repository"),
-		ignore: func(p string) bool { // TODO, get config?
-			ext := filepath.Ext(p)
-			if ext == "yaml" || ext == "json" {
-				return false
-			}
-			return true
-		},
+		ignore: provisioning.IncludeYamlOrJSON,
 	}
 
 	for _, tt := range tests {
@@ -123,8 +121,8 @@ func TestParseWebhooks(t *testing.T) {
 			rsp, err := gh.parseWebhook(tt.messageType, payload)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.expected.Code, rsp.Code)
-			assert.Equal(t, tt.expected.Job, rsp.Job)
+			require.Equal(t, tt.expected.Code, rsp.Code)
+			require.Equal(t, tt.expected.Job, rsp.Job)
 		})
 	}
 }

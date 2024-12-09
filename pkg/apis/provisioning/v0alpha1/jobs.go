@@ -1,6 +1,10 @@
 package v0alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"path/filepath"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +enum
 type JobAction string
@@ -36,6 +40,14 @@ type Job struct {
 
 // Filter ignorable files
 type IgnoreFile = func(path string) bool
+
+func IncludeYamlOrJSON(p string) bool { // put this somewhere better
+	ext := filepath.Ext(p)
+	if ext == ".yaml" || ext == ".json" {
+		return false
+	}
+	return true
+}
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type WebhookResponse struct {

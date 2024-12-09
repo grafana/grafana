@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -106,11 +105,6 @@ func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path st
 			Code:    http.StatusNotImplemented,
 		},
 	}
-}
-
-// Process implements Repository.
-func (r *s3Repository) Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error {
-	return fmt.Errorf("not implemented yet")
 }
 
 // Webhook implements Repository.

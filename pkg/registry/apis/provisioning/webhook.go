@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -76,6 +77,12 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Job != nil {
+			worker, ok := repo.(repository.JobProcessor)
+			if !ok {
+				responder.Error(fmt.Errorf("repo does not support processing jobs"))
+				return
+			}
+
 			// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
 			// TODO: Async process the jobs!!
 			ctx := identity.WithRequester(context.Background(), id)
@@ -83,7 +90,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			defer cancel()
 
 			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			err := repo.Process(ctx, logger, *rsp.Job, factory)
+			err := worker.Process(ctx, logger, *rsp.Job, factory)
 			if err != nil {
 				responder.Error(err)
 				return

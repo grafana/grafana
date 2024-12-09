@@ -95,13 +95,15 @@ type Repository interface {
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
 
-	// Temporary... likely want this as its own thing... eg GithubWorker or similar
-	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error
-
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error
 	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
 	AfterDelete(ctx context.Context, logger *slog.Logger) error
+}
+
+type JobProcessor interface {
+	// Temporary... likely want this as its own thing... eg GithubWorker or similar
+	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error
 }
 
 // FileReplicator is an interface for replicating files
