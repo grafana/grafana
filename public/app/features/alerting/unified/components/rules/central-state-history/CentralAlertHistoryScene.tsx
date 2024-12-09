@@ -171,26 +171,23 @@ function getEventsSceneObject(
   transitionsToFilterVariable: CustomVariable,
   transitionsFromFilterVariable: CustomVariable
 ) {
-  return new EmbeddedScene({
-    controls: [],
-    body: new SceneFlexLayout({
-      direction: 'column',
-      children: [
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: new SceneFlexLayout({
-            children: [
-              getEventsScenesFlexItem(
-                alertStateHistoryDataSource,
-                labelsFilterVariable,
-                transitionsToFilterVariable,
-                transitionsFromFilterVariable
-              ),
-            ],
-          }),
+  return new SceneFlexLayout({
+    direction: 'column',
+    children: [
+      new SceneFlexItem({
+        ySizing: 'content',
+        body: new SceneFlexLayout({
+          children: [
+            getEventsScenesFlexItem(
+              alertStateHistoryDataSource,
+              labelsFilterVariable,
+              transitionsToFilterVariable,
+              transitionsFromFilterVariable
+            ),
+          ],
         }),
-      ],
-    }),
+      }),
+    ],
   });
 }
 
@@ -322,13 +319,6 @@ export function EventsPanelScenesObjectRenderer({
   EventsPanelScenesObject & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
 >) {
   const { body } = model.useState();
-
-  // we need to call this to sync the url with the scene state
-  const isUrlSyncInitialized = useUrlSync(model.getRoot());
-
-  if (!isUrlSyncInitialized) {
-    return null;
-  }
 
   if (body) {
     return <body.Component model={body} />;
