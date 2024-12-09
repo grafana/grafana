@@ -49,13 +49,14 @@ func NewDashboardLinter() *DashboardLinter {
 	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
-func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisioning.LintIssue, error) {
+func (l *DashboardLinter) Lint(ctx context.Context, buf []byte) ([]provisioning.LintIssue, error) {
 	var data specData
-	if err := json.Unmarshal(fileData, &data); err != nil {
-		return nil, fmt.Errorf("unmarshal file data into spec: %w", err)
+	// Try to parse the spec from data
+	if err := json.Unmarshal(buf, &data); err == nil && len(data.Spec) > 0 {
+		buf = data.Spec
 	}
 
-	dashboard, err := lint.NewDashboard(data.Spec)
+	dashboard, err := lint.NewDashboard(buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse dashboard with linter: %v", err)
 	}
