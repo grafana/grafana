@@ -121,7 +121,6 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 		if res.GetAllowed() {
 			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 		}
-
 	}
 
 	if !common.IsResourceRelation(relation) {
