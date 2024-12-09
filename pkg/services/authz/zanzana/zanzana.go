@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	TypeUser      = common.TypeUser
-	TypeTeam      = common.TypeTeam
-	TypeRole      = common.TypeRole
-	TypeFolder    = common.TypeFolder
-	TypeResource  = common.TypeResource
-	TypeNamespace = common.TypeNamespace
+	TypeUser           = common.TypeUser
+	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
+	TypeTeam           = common.TypeTeam
+	TypeRole           = common.TypeRole
+	TypeFolder         = common.TypeFolder
+	TypeResource       = common.TypeResource
+	TypeNamespace      = common.TypeNamespace
 )
 
 const (

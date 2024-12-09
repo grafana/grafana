@@ -1131,8 +1131,8 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			},
 			expectedCode: http.StatusOK,
 			expectedOutput: []dtos.FolderSearchHit{
-				dtos.FolderSearchHit{UID: "foo", Title: "Folder 1"},
-				dtos.FolderSearchHit{UID: "qux", Title: "Folder 3"},
+				{UID: "foo", Title: "Folder 1"},
+				{UID: "qux", Title: "Folder 3"},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
@@ -1146,7 +1146,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			params:       "?parentUid=foo",
 			expectedCode: http.StatusOK,
 			expectedOutput: []dtos.FolderSearchHit{
-				dtos.FolderSearchHit{UID: "bar", Title: "Folder 2", ParentUID: "foo"},
+				{UID: "bar", Title: "Folder 2", ParentUID: "foo"},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
