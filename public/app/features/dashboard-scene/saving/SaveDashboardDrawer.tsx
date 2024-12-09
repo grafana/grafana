@@ -38,15 +38,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
     const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
-    const changeInfo = getDashboardChangesFromScene(
-      model.state.dashboardRef.resolve(),
-      saveTimeRange,
-      saveVariables,
-      saveRefresh
-    );
+    const dashboard = model.state.dashboardRef.resolve();
+    const changeInfo = getDashboardChangesFromScene(dashboard, saveTimeRange, saveVariables, saveRefresh);
     const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
-    const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
 

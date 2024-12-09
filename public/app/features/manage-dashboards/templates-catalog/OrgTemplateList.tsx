@@ -5,6 +5,7 @@ import DashboardTemplateImport from 'app/features/dashboard/dashgrid/DashboardTe
 
 import { OrgTemplateItem } from './OrgTemplateItem';
 import { useOrgTemplates } from './hooks';
+import { OrgTemplateForm } from './OrgTemplateForm';
 
 interface OrgTemplateListProps {}
 
@@ -35,7 +36,11 @@ export function OrgTemplateList({}: OrgTemplateListProps) {
         <EmptySearchResult>No Dashboards</EmptySearchResult>
       )}
       {openTemplateImportDrawer && (
-        <DashboardTemplateImport dashboardUid={dashboardUid} onCancel={() => setOpenTemplateImportDrawer(false)} />
+        <DashboardTemplateImport
+          dashboardUid={dashboardUid}
+          isDashboardOrg
+          onCancel={() => setOpenTemplateImportDrawer(false)}
+        />
       )}
     </Stack>
   );

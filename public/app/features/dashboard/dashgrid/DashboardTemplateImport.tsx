@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Drawer, Form } from '@grafana/ui';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { ImportDashboardForm } from 'app/features/manage-dashboards/components/ImportDashboardForm';
@@ -15,9 +16,26 @@ import { Input, InputUsage, LibraryPanel } from '../components/DashExportModal/D
 export interface Props {
   dashboardUid: string;
   onCancel: () => void;
+  isDashboardOrg?: boolean;
 }
 
-const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
+async function getTemplate(
+  dashboardUid: string,
+  isDashboardOrg: boolean
+): Promise<{ dashboard: Dashboard; folderUid: string }> {
+  if (isDashboardOrg) {
+    const result = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`);
+    return { dashboard: result.dashboard, folderUid: result.meta.folderId };
+  }
+
+  const result = await await getBackendSrv().get(`/api/gnet/dashboards/${dashboardUid}`);
+  const searchObj = locationService.getSearchObject();
+  const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
+
+  return { dashboard: result, folderUid: folder.uid };
+}
+
+const DashboardTemplateImport = ({ dashboardUid, onCancel, isDashboardOrg }: Props) => {
   const defaultInputs: DashboardInputs = {
     constants: [],
     libraryPanels: [],
@@ -45,12 +63,16 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
     const fetchAndProcessDashboard = async () => {
       setIsLoading(true);
       try {
-        const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${dashboardUid}`);
-        const searchObj = locationService.getSearchObject();
-        const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
+        const { dashboard, folderUid } = await getTemplate(dashboardUid, !!isDashboardOrg);
+        const dashboardFromTemplate = {
+          ...dashboard,
+          title: `From template: ${dashboard.title}`,
+          uid: `${dashboard.uid}-t`,
+          tags: dashboard.tags?.filter((tag) => tag !== 'template'),
+        };
 
-        setCommunityDashboardToImport(dashboard.json);
-        setFolder(folder);
+        setCommunityDashboardToImport(dashboardFromTemplate);
+        setFolder({ uid: folderUid });
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
       } finally {
@@ -59,7 +81,7 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
     };
 
     fetchAndProcessDashboard();
-  }, [dashboardUid]);
+  }, [dashboardUid, isDashboardOrg]);
 
   const getDataSourceDescription = useCallback((input: { usage?: InputUsage }): string | undefined => {
     if (!input.usage) {
@@ -103,20 +125,20 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
 
       const dashboardInputs = !!libraryPanels?.length
         ? dashboardJson.__inputs.reduce((acc: Input[], input: Input) => {
-          if (!input?.usage?.libraryPanels) {
-            acc.push(input);
-            return acc;
-          }
+            if (!input?.usage?.libraryPanels) {
+              acc.push(input);
+              return acc;
+            }
 
-          const newLibraryPanels = getNewLibraryPanelsByInput(input);
-          if (newLibraryPanels?.length) {
-            acc.push({
-              ...input,
-              usage: { libraryPanels: newLibraryPanels },
-            });
-          }
-          return acc;
-        }, [])
+            const newLibraryPanels = getNewLibraryPanelsByInput(input);
+            if (newLibraryPanels?.length) {
+              acc.push({
+                ...input,
+                usage: { libraryPanels: newLibraryPanels },
+              });
+            }
+            return acc;
+          }, [])
         : dashboardJson.__inputs;
 
       return { ...dashboardJson, __inputs: dashboardInputs };
@@ -231,7 +253,8 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel }: Props) => {
       dispatch(
         browseDashboardsAPI.endpoints.importDashboard.initiate({
           // uid: if user changed it, take the new uid from importDashboardForm,
-          // else read it from original dashboard
+          // else read it from original dashboardimport is from '../../../../../scripts/grafana-server/tmp/public/lib/monaco/min/vs/language/typescript/tsWorker';
+
           // by default the uid input is disabled, onSubmit ignores values from disabled inputs
           dashboard: {
             ...communityDashboardToImport,

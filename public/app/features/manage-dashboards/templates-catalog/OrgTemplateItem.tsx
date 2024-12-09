@@ -16,14 +16,13 @@ export function OrgTemplateItem({ dashboard, compact = false, onClick }: OrgTemp
   };
 
   return (
-    <Card>
+    <Card onClick={onOpenTemplateDrawer}>
       <Card.Heading>{dashboard.title}</Card.Heading>
       <Card.Tags>
         <Stack>
           <LinkButton href={dashboard.url} target="blank" variant="secondary" fill="text">
             View
           </LinkButton>
-          <Button onClick={onOpenTemplateDrawer}>Use as template</Button>
         </Stack>
       </Card.Tags>
       <Card.Meta>{dashboard.folderTitle || 'General'}</Card.Meta>

@@ -1,10 +1,9 @@
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { DashboardQueryResult } from 'app/features/search/service';
 
 import { SortBy, GnetAPIResponse, SORT_TO_DIRECTION } from './types';
-
-import { DashboardQueryResult } from 'app/features/search/service';
 
 interface UseCommunityTemplatesOptions {
   sortBy?: SortBy;
