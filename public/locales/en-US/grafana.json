@@ -1294,7 +1294,10 @@
       "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
       "warnExperimentalFeature": "Related logs is an experimental feature."
     },
-    "viewBy": "View by"
+    "viewBy": "View by",
+    "wingman": {
+      "sortBy": "Sort by"
+    }
   },
   "export": {
     "json": {
@@ -3222,6 +3225,20 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "trail": {
+    "metric-select": {
+      "wingman": {
+        "anomalies": {
+          "changepoints": "Changepoints",
+          "loading": {
+            "pending": "Loading...",
+            "rejected": "Failed to load metrics"
+          },
+          "none-found": "No metrics found"
+        }
+      }
     }
   },
   "trails": {

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -16,6 +18,8 @@ import (
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/stats/statsimpl")
 
 func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
 	return &sqlStatsService{cfg: cfg, db: db}
@@ -242,6 +246,79 @@ func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *s
 		return nil
 	})
 	return result, err
+}
+
+func (ss *sqlStatsService) GetExpressionsFromDashboardPanels(ctx context.Context, query *stats.GetExtractedExpressionsQuery) ([]*stats.ExtractedExpression, error) {
+	ctx, span := tracer.Start(ctx, "statsimpl.GetExpressionsFromDashboardPanels")
+	defer span.End()
+
+	queryResult := make([]*stats.ExtractedExpression, 0)
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sql := fmt.Sprintf(`WITH RECURSIVE
+				    panel_targets AS (
+				        SELECT
+				            dashboard.id,
+				            json_extract(target.value, '$.expr') AS expr
+				        FROM
+				            dashboard,
+				            json_each(dashboard.data, '$.panels') AS panel,
+				            json_each(panel.value, '$.targets') AS target
+				        WHERE
+				            json_extract(target.value, '$.datasource.type') = '%s'
+				    )
+				SELECT
+				    id,
+				    expr
+				FROM
+				    panel_targets
+				WHERE
+				    expr IS NOT NULL AND trim(expr) != ''`, query.DSType)
+
+		sess := dbSession.SQL(sql, query.OrgID)
+		err := sess.Find(&queryResult)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return queryResult, nil
+}
+
+func (ss *sqlStatsService) GetExpressionsFromAlertRules(ctx context.Context, query *stats.GetExtractedExpressionsQuery) ([]*stats.ExtractedExpression, error) {
+	ctx, span := tracer.Start(ctx, "statsimpl.GetExpressionsFromAlertRules")
+	defer span.End()
+
+	queryResult := make([]*stats.ExtractedExpression, 0)
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sql := fmt.Sprintf(`WITH RECURSIVE
+				    alert_rule_targets AS (
+				        SELECT
+				            alert_rule.id,
+				            json_extract(rule.value, '$.model.expr') AS expr
+				        FROM
+				            alert_rule,
+				            json_each(alert_rule.data, '$') AS rule  -- Iterate over the array of rules directly
+				        WHERE
+				            json_extract(rule.value, '$.model.datasource.type') = '%s'
+				    )
+				SELECT
+				    id,
+				    expr
+				FROM
+				    alert_rule_targets
+				WHERE
+				    expr IS NOT NULL AND trim(expr) != ''`, query.DSType)
+
+		sess := dbSession.SQL(sql, query.OrgID)
+		err := sess.Find(&queryResult)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return queryResult, nil
 }
 
 func (ss *sqlStatsService) IsUnifiedAlertingEnabled() bool {

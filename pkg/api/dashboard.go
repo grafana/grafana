@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"

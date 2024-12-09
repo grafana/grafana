@@ -30,6 +30,12 @@ import { Trans } from 'app/core/internationalization';
 import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
+import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
+import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
+import { getMetricNames } from '../MetricSelect/api';
+import { getPreviewPanelFor } from '../MetricSelect/previewPanel';
+import { sortRelatedMetrics } from '../MetricSelect/relatedMetrics';
+import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from '../MetricSelect/util';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
@@ -45,12 +51,8 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
-import { SelectMetricAction } from './SelectMetricAction';
-import { getMetricNames } from './api';
-import { getPreviewPanelFor } from './previewPanel';
-import { sortRelatedMetrics } from './relatedMetrics';
-import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
+import { AnomaliesScene } from './display/anomalies/AnomaliesScene';
+import { renderAsRedMetricsDisplay } from './display/redMetrics';
 
 interface MetricPanel {
   name: string;
@@ -61,7 +63,7 @@ interface MetricPanel {
   loaded?: boolean;
 }
 
-export interface MetricSelectSceneState extends SceneObjectState {
+export interface MetricSelectSceneForWingmanState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
   metricPrefix?: string;
@@ -69,9 +71,10 @@ export interface MetricSelectSceneState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
+  wm_display_view?: string;
 }
 
-const ROW_PREVIEW_HEIGHT = '175px';
+export const ROW_PREVIEW_HEIGHT = '220px';
 const ROW_CARD_HEIGHT = '64px';
 const METRIC_PREFIX_ALL = 'all';
 
@@ -80,15 +83,19 @@ const MAX_METRIC_NAMES = 20000;
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
 
-export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
+export class MetricSelectSceneForWingman
+  extends SceneObjectBase<MetricSelectSceneForWingmanState>
+  implements SceneObjectWithUrlSync
+{
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
 
-  constructor(state: Partial<MetricSelectSceneState>) {
+  constructor(state: Partial<MetricSelectSceneForWingmanState>) {
     super({
       $variables: state.$variables,
       metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
+      wm_display_view: state.wm_display_view ?? 'default',
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -103,7 +110,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix', 'wm_display_view'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: () => {
@@ -120,6 +127,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     if (typeof values.metricPrefix === 'string') {
       if (this.state.metricPrefix !== values.metricPrefix) {
         this.setState({ metricPrefix: values.metricPrefix });
+      }
+    }
+
+    if (typeof values.wm_display_view === 'string') {
+      if (this.state.wm_display_view !== values.wm_display_view) {
+        this.setState({ wm_display_view: values.wm_display_view });
       }
     }
   }
@@ -180,6 +193,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.subscribeToState((newState, prevState) => {
       if (newState.metricNames !== prevState.metricNames) {
         this.onMetricNamesChanged();
+      }
+      if (newState.wm_display_view !== prevState.wm_display_view) {
+        this.buildLayout();
       }
     });
 
@@ -283,6 +299,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           `This limit is being exceeded for the current data source. ` +
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
+
+      // don't show metric names warning for anomalies or red metrics
+      const { wm_display_view: displayAs } = this.state;
+      metricNamesWarning = displayAs === 'anomalies' || displayAs === 'red_metrics' ? undefined : metricNamesWarning;
 
       // if there are no otel targets for otel resources, there will be no labels
       if (trail.state.useOtelExperience && (jobsList.length === 0 || instancesList.length === 0)) {
@@ -407,6 +427,48 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const children: SceneFlexItem[] = [];
 
+    const rowTemplate = showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+
+    // TODO
+    //    urlSync will pass the necessary params to this function.
+    //    For now we can just set a default value for params and keep hacking.
+
+    /**
+     * In here we should have some switch case to switch between selected display options
+     * Display options are defined in wingman.ts file.
+     * Each group is an urlVariable and each option id will be the value of it
+     * For instance wm_display_view=red_metrics&wm_group_by=alerts&wm_sort_by=org_most_queried
+     * And url sync will handle the changes and we can act on the changes.
+     * This is pretty bad way of handling things but for now it'll do the job.
+     */
+
+    const { wm_display_view: displayAs } = this.state;
+
+    switch (displayAs) {
+      case 'red_metrics':
+        console.log('red metrics will be rendered');
+        const redChildren = await renderAsRedMetricsDisplay(trail, ROW_PREVIEW_HEIGHT);
+        this.state.body.setState({ children: redChildren, templateColumns: '1fr', autoRows: 'auto', rowGap: 2 });
+        return;
+      case 'anomalies':
+        console.log('anomalies will be rendered');
+        // TODO: Undo this temporary hack of a grid inside a grid
+        this.state.body.setState({
+          children: [new AnomaliesScene({})],
+          autoRows: rowTemplate,
+          templateColumns: undefined,
+          rowGap: 1, // to reset the row gap which is changed in RED metrics
+        });
+        return;
+      case 'up_down_time':
+      // TODO implement up/down time
+      case 'default':
+      default:
+      // default display no action needed.
+    }
+
+    // TODO implement grouping (this.state.wm_group_by) and sorting (this.state.wm_sort_by)
+
     const metricsList = this.sortedPreviewMetrics();
 
     // Get the current filters to determine the count of them
@@ -442,9 +504,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       }
     }
 
-    const rowTemplate = showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
-
-    this.state.body.setState({ children, autoRows: rowTemplate });
+    this.state.body.setState({
+      children,
+      autoRows: rowTemplate,
+      templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', // reset because of red metrics changing this
+      rowGap: 1, // reset because of red metrics changing this
+    });
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
@@ -491,7 +556,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     trail.setState({ useOtelExperience: !useOtelExperience });
   };
 
-  public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
+  public static Component = ({ model }: SceneComponentProps<MetricSelectSceneForWingman>) => {
     const { body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning, rootGroup, metricPrefix } =
       model.useState();
     const { children } = body.useState();

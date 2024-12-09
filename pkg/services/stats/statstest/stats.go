@@ -43,3 +43,10 @@ func (s *FakeService) GetSystemStats(ctx context.Context, query *stats.GetSystem
 func (s *FakeService) GetSystemUserCountStats(ctx context.Context, query *stats.GetSystemUserCountStatsQuery) (*stats.SystemUserCountStats, error) {
 	return nil, s.ExpectedError
 }
+
+func (s *FakeService) GetExpressionsFromDashboardPanels(ctx context.Context, query *stats.GetExtractedExpressionsQuery) ([]*stats.ExtractedExpression, error) {
+	return nil, s.ExpectedError
+}
+func (s *FakeService) GetExpressionsFromAlertRules(ctx context.Context, query *stats.GetExtractedExpressionsQuery) ([]*stats.ExtractedExpression, error) {
+	return nil, s.ExpectedError
+}

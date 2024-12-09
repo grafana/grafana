@@ -11,4 +11,6 @@ type Service interface {
 	GetDataSourceAccessStats(ctx context.Context, query *GetDataSourceAccessStatsQuery) ([]*DataSourceAccessStats, error)
 	GetSystemStats(ctx context.Context, query *GetSystemStatsQuery) (*SystemStats, error)
 	GetSystemUserCountStats(ctx context.Context, query *GetSystemUserCountStatsQuery) (*SystemUserCountStats, error)
+	GetExpressionsFromDashboardPanels(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
+	GetExpressionsFromAlertRules(ctx context.Context, query *GetExtractedExpressionsQuery) ([]*ExtractedExpression, error)
 }

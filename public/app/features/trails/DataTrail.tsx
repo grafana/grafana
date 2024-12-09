@@ -11,7 +11,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, getBackendSrv, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -25,6 +25,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -32,6 +33,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncContextProvider,
   UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
@@ -61,6 +63,7 @@ import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
   trailDS,
+  UsageStats,
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
@@ -70,6 +73,8 @@ import {
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getTrailFor, limitAdhocProviders } from './utils';
+import { MetricSelectSceneForWingman } from './wingman/MetricSelectSceneForWingman';
+import { withWingman } from './wingman/wingman';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -96,9 +101,12 @@ export interface DataTrailState extends SceneObjectState {
   // Synced with url
   metric?: string;
   metricSearch?: string;
+
+  // Usage Stats
+  usageStats: UsageStats;
 }
 
-export class DataTrail extends SceneObjectBase<DataTrailState> {
+export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
@@ -123,6 +131,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: true,
+      usageStats: {
+        dashboards: {},
+        alertRules: {},
+      },
       ...state,
     });
 
@@ -224,7 +236,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   private _addingFilterWithoutReportingInteraction = false;
-  private datasourceHelper = new MetricDatasourceHelper(this);
+  datasourceHelper = new MetricDatasourceHelper(this);
 
   public getMetricMetadata(metric?: string) {
     return this.datasourceHelper.getMetricMetadata(metric);
@@ -302,6 +314,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     this.setState(stateUpdate);
+  }
+
+  public async fetchUsageStats() {
+    const usageStats = await getBackendSrv().get<UsageStats>('/api/metric-stats');
+    this.setState({ usageStats });
   }
 
   /**
@@ -644,6 +661,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
       const datasourceHelper = model.datasourceHelper;
       limitAdhocProviders(model, filtersVariable, datasourceHelper);
+      model.fetchUsageStats();
     }, [model]);
 
     return (
@@ -658,7 +676,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             <settings.Component model={settings} />
           </div>
         )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        {topScene && (
+          <UrlSyncContextProvider scene={topScene}>
+            <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+          </UrlSyncContextProvider>
+        )}
       </div>
     );
   };
@@ -668,7 +690,11 @@ export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({});
+    if (config.featureToggles.exploreMetricsWingman) {
+      return withWingman(new MetricSelectSceneForWingman({}));
+    } else {
+      return new MetricSelectScene({});
+    }
   }
 }
 
