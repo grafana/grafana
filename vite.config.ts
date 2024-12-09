@@ -57,7 +57,7 @@ export default defineConfig(({ command }) => ({
       ...frontendDevEnvSettings,
     }),
     { ...moveAssets(), apply: 'build' },
-    { ...visualizer(), apply: 'build' },
+    ...(process.env.ANALYZE_BUNDLE ? [visualizer()] : []),
   ],
   optimizeDeps: {
     include: [
