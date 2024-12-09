@@ -4,7 +4,6 @@ export type FeedbackFormData = {
   imageType: string;
   reporterEmail: string;
   accessChecked: boolean;
-  contactChecked: boolean;
   width: number;
   height: number;
   bitmap: ImageBitmap;

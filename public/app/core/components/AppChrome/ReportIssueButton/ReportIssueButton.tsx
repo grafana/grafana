@@ -17,7 +17,6 @@ export const ReportIssueButton = () => {
     imageType: '',
     reporterEmail: '',
     accessChecked: false,
-    contactChecked: false,
     width: 0,
     height: 0,
     bitmap: {} as ImageBitmap,
