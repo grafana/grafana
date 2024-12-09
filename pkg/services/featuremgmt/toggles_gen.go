@@ -818,4 +818,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagAzureMonitorEnableUserAuth
+	// Enables user auth for Azure Monitor datasource only
+	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
 )
