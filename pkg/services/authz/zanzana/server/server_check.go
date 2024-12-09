@@ -67,6 +67,10 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 
 // checkTyped checks on our typed resources e.g. folder.
 func (s *Server) checkTyped(ctx context.Context, subject, relation, name string, info common.TypeInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
+	if !info.IsValidRelation(relation) {
+		return &authzv1.CheckResponse{Allowed: false}, nil
+	}
+
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,

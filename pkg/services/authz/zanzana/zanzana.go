@@ -47,9 +47,9 @@ const (
 )
 
 var (
-	FolderRelations         = common.FolderRelations
-	FolderResourceRelations = common.FolderResourceRelations
-	ResourceRelations       = common.ResourceRelations
+	RelationsFolder         = common.RelationsFolder
+	RelationsFolderResource = common.RelationsFolder
+	RelationsResouce        = common.RelationsResource
 )
 
 const (

@@ -11,11 +11,15 @@ type TypeInfo struct {
 	Relations []string
 }
 
+func (t TypeInfo) IsValidRelation(relation string) bool {
+	return isValidRelation(relation, t.Relations)
+}
+
 var typedResources = map[string]TypeInfo{
 	FormatGroupResource(
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
-	): {Type: "folder", Relations: append(ResourceRelations, RelationCreate)},
+	): {Type: "folder", Relations: RelationsFolder},
 }
 
 func GetTypeInfo(group, resource string) (TypeInfo, bool) {

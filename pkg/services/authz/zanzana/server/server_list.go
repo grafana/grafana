@@ -22,15 +22,7 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	res, err := s.checkNamespace(
-		ctx,
-		r.GetSubject(),
-		relation,
-		r.GetGroup(),
-		r.GetResource(),
-		store,
-	)
-
+	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +46,12 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 }
 
 func (s *Server) listTyped(ctx context.Context, subject, relation string, info common.TypeInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
+	if !info.IsValidRelation(relation) {
+		return &authzextv1.ListResponse{}, nil
+	}
+
 	// List all resources user has access too
-	listRes, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 info.Type,
@@ -67,7 +63,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, info c
 	}
 
 	return &authzextv1.ListResponse{
-		Items: typedObjects(info.Type, listRes.GetObjects()),
+		Items: typedObjects(info.Type, res.GetObjects()),
 	}, nil
 }
 

@@ -46,32 +46,32 @@ const (
 	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
-// NamespaceRelations are relations that can be added on type "namespace".
-var NamespaceRelations = []string{
+// RelationsNamespace are relations that can be added on type "namespace".
+var RelationsNamespace = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
 }
 
-// ResourceRelations are relations that can be added on type "resource".
-var ResourceRelations = []string{
+// RelationsResource are relations that can be added on type "resource".
+var RelationsResource = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
 }
 
-// FolderResourceRelations are relations that can be added on type "folder" for child resources.
-var FolderResourceRelations = []string{
+// RelationsFolderResource are relations that can be added on type "folder" for child resources.
+var RelationsFolderResource = []string{
 	RelationFolderResourceGet,
 	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
 }
 
-// FodlerRelations are relations that can be added on type "folder".
-var FolderRelations = append(
-	FolderResourceRelations,
+// RelationsFolder are relations that can be added on type "folder".
+var RelationsFolder = append(
+	RelationsFolderResource,
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
@@ -79,26 +79,19 @@ var FolderRelations = append(
 )
 
 func IsNamespaceRelation(relation string) bool {
-	for _, r := range NamespaceRelations {
-		if r == relation {
-			return true
-		}
-	}
-	return false
+	return isValidRelation(relation, RelationsNamespace)
 }
 
 func IsFolderResourceRelation(relation string) bool {
-	for _, r := range FolderResourceRelations {
-		if r == relation {
-			return true
-		}
-	}
-	return false
-
+	return isValidRelation(relation, RelationsFolderResource)
 }
 
 func IsResourceRelation(relation string) bool {
-	for _, r := range ResourceRelations {
+	return isValidRelation(relation, RelationsResource)
+}
+
+func isValidRelation(relation string, valid []string) bool {
+	for _, r := range valid {
 		if r == relation {
 			return true
 		}

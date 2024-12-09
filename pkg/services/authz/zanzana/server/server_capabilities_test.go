@@ -53,7 +53,7 @@ func testCapabilities(t *testing.T, server *Server) {
 		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate, common.RelationDelete}, res.GetCapabilities())
 	})
 
-	t.Run("user:6 should be able to read folder 1 ", func(t *testing.T) {
+	t.Run("user:6 should be able to read folder 1", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:6", folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
 		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
