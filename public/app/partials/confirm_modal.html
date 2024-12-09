@@ -2,9 +2,7 @@
   <div class="modal-header">
     <h2 class="modal-header-title">
       <icon name="'{{icon}}'" size="'lg'"></icon>
-      <span class="p-l-1">
-        {{title}}
-      </span>
+      <span class="p-l-1"> {{title}} </span>
     </h2>
 
     <a class="modal-header-close" ng-click="dismiss();">
@@ -23,7 +21,7 @@
       <input
         type="text"
         class="gf-form-input width-16"
-        style="display: inline-block;"
+        style="display: inline-block"
         placeholder="Type {{confirmText}} to confirm"
         ng-model="confirmInput"
         ng-change="updateConfirmText(confirmInput)"
