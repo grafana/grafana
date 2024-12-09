@@ -197,7 +197,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // @grafana/partner-datasources
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // @grafana-app-platform-squad
-	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
+	xorm.io/builder v0.3.13 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
 )
@@ -477,6 +477,8 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
+
+require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209160225-b1f1144807f9
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
