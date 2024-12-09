@@ -316,7 +316,7 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				tt.input.name,
 				v0alpha1.SchemeGroupVersion.WithResource("folders"),
 				"",
-				"create",
+				"CREATE",
 				nil,
 				true,
 				&user.SignedInUser{},
