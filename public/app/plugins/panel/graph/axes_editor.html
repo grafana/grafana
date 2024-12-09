@@ -15,7 +15,10 @@
       <div class="gf-form gf-form--grow">
         <label class="gf-form-label width-6">
           Unit
-				  <info-popover mode="right-normal">The default unit used when not defined by the datasource or in the Fields or Overrides configuration.</info-popover>
+          <info-popover mode="right-normal"
+            >The default unit used when not defined by the datasource or in the Fields or Overrides
+            configuration.</info-popover
+          >
         </label>
         <unit-picker on-change="ctrl.setUnitFormat(yaxis)" value="yaxis.format" class="flex-grow-1" />
       </div>
@@ -100,9 +103,7 @@
       on-change="ctrl.render()"
     ></gf-form-switch>
     <div class="gf-form" ng-show="ctrl.panel.yaxis.align">
-      <label class="gf-form-label width-6">
-        Level
-      </label>
+      <label class="gf-form-label width-6"> Level </label>
       <input
         type="number"
         class="gf-form-input width-6"
