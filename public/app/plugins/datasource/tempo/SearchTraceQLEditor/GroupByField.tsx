@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { Alert, HorizontalGroup, InputActionMeta, Link, Select, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
