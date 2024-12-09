@@ -20,7 +20,8 @@ import {
   SceneDataLayerControls,
   UserActionEvent,
 } from '@grafana/scenes';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
@@ -283,7 +284,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
       }
     : {};
 
@@ -359,7 +360,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   });
 }
 
-function registerPanelInteractionsReporter(scene: DashboardScene) {
+export function registerPanelInteractionsReporter(scene: DashboardScene) {
   // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
   scene.subscribeToEvent(UserActionEvent, (e) => {
     const { interaction } = e.payload;
