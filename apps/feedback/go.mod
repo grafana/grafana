@@ -96,11 +96,7 @@ require (
 	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
 	golang.org/x/net v0.31.0 // indirect
-<<<<<<< HEAD
-	golang.org/x/oauth2 v0.23.0 // indirect
-=======
 	golang.org/x/oauth2 v0.24.0 // indirect
->>>>>>> fae281280ebd4eed021effb2fa0c5ba2799471b1
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect

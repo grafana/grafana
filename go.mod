@@ -148,11 +148,7 @@ require (
 	github.com/spf13/cobra v1.8.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
-<<<<<<< HEAD
-	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
-=======
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
->>>>>>> fae281280ebd4eed021effb2fa0c5ba2799471b1
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569 // @grafana/grafana-backend-group
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // indirect; @grafana/grafana-backend-group
