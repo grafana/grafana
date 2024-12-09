@@ -3,7 +3,8 @@ import { Fragment } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Icon, IconName, Input, Switch, Text, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Label, Field, Icon, IconName, Input, Switch, Text, useStyles2 } from '@grafana/ui';
 
 interface EnrichmentConfig {
   id: string;
@@ -176,12 +177,38 @@ const CustomUrlEnrichmentForm = ({ enrichment, control, register }: CustomDetail
 };
 
 const CustomQueryEnrichmentForm = ({ enrichment, control, register }: CustomDetailProps) => {
+  const styles = useStyles2(getStyles);
+
   return (
     <Fragment>
-      <Field label="Loki Query" description="Specify a query to lookup and append additional data to your alert.">
+      <Field>
         <Controller
           render={({ field: { onChange, ref, value, ...field } }) => {
-            return <Input placeholder="Enter query..." {...register(`${enrichment.id}.query`)} />;
+            return (
+              <div  className={styles.customFormContainer}>
+                                <div className={styles.timeoutlabel}>
+                                <Label>Datasource</Label>
+                  <div className={styles.timeoutsubtext}>Select a datasource for your query</div>
+
+                <DataSourcePicker
+                  inputId="enrichi-data-source-picker"
+                  pluginId="prometheus"
+                  current={undefined}
+                  noDefault={true}
+                  width={40}
+                  onChange={(ds) => {
+                    console.log('datasource change', ds);
+                  }}
+                />
+                </div>
+                <div className={styles.timeoutlabel}>
+                  <Label>Timeout</Label>
+                  <div className={styles.timeoutsubtext}>Specify the maximum time to wait for a response in ms below</div>
+                  <Input placeholder="500"  width={12} {...register(`${enrichment.id}.timeout`)} />
+                </div>
+              </div>
+            );
+            // return <Input placeholder="Enter query..." {...register(`${enrichment.id}.query`)} />;
           }}
           control={control}
           name={`${enrichment.id}.query`}
@@ -236,6 +263,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     paddingLeft: theme.spacing(8),
+  }),
+  timeoutlabel: css({
+    marginTop: theme.spacing(2),
+  }),
+  timeoutsubtext: css({
+    fontSize: theme.typography.h6.fontSize,
+    color: theme.colors.text.primary,
+  }),
+  customFormContainer: css({
+    marginTop: theme.spacing(2),  
   }),
 });
 
