@@ -22,6 +22,9 @@ import {
   Json,
   OrFilter,
   FilterOp,
+  RangeOp,
+  VectorOp,
+  BinOpExpr,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -319,9 +322,33 @@ export function requestSupportsSharding(allQueries: LokiQuery[]) {
     .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
-    .filter((query) => query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr));
+    .filter(
+      (query) =>
+        (query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr)) || metricSupportsSharding(query.expr)
+    );
 
   return queries.length > 0;
+}
+
+function metricSupportsSharding(query: string) {
+  if (isLogsQuery(query)) {
+    return false;
+  }
+  const operations = [...getNodesFromQuery(query, [RangeOp]), ...getNodesFromQuery(query, [VectorOp])];
+  const disallowed = getNodesFromQuery(query, [BinOpExpr]);
+  if (disallowed.length > 0) {
+    return false;
+  }
+  const supportedOps = ['sum', 'count_over_time', 'sum_over_time'];
+  query = query.toLowerCase();
+  for (const node of operations) {
+    const expr = query.substring(node.from, node.to);
+    if (!supportedOps.includes(expr)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
