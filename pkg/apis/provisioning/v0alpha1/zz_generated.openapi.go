@@ -721,6 +721,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Enum:        []interface{}{"github", "local", "s3"},
 						},
 					},
+					"linting": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Linting enables linting for this repository",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with s3 and github.",

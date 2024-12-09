@@ -157,8 +157,7 @@ func (s *filesConnector) getParser(ctx context.Context, repo repository.Reposito
 	}
 
 	parser := resources.NewParser(repo.Config(), client, kinds)
-	// FIXME: make linting an global option and not specific to PRs
-	if repo.Config().Spec.GitHub.PullRequestLinter {
+	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
 		// TODO: which logger?
 		cfg, err := repo.Read(ctx, s.logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)

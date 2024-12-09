@@ -504,7 +504,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !cfg.PullRequestLinter && !cfg.GenerateDashboardPreviews {
+	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no action required on pull request event",
@@ -715,6 +715,10 @@ type changedResource struct {
 	Data                 []byte
 }
 
+func (r *githubRepository) shouldLintPullRequest() bool {
+	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
+}
+
 var lintDashboardIssuesTemplate = `Hey there! 👋
 Grafana found some linting issues in this dashboard you may want to check:
 {{ range .}}
@@ -726,7 +730,7 @@ Grafana found some linting issues in this dashboard you may want to check:
 // The linter is disabled if the configuration does not have PullRequestLinter enabled.
 // The only supported type of file to lint is a dashboard.
 func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resources []changedResource) error {
-	if !r.Config().Spec.GitHub.PullRequestLinter {
+	if !r.shouldLintPullRequest() {
 		return nil
 	}
 
