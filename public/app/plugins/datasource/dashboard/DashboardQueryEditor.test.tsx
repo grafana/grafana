@@ -11,11 +11,11 @@ import {
   createDashboardModelFixture,
   createPanelSaveModel,
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
+import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { DashboardDatasource } from './datasource';
 import { SHARED_DASHBOARD_QUERY } from './types';
-import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
