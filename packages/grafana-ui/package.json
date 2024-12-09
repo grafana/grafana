@@ -141,7 +141,7 @@
     "@types/chance": "1.1.6",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "7.4.3",
-    "@types/hoist-non-react-statics": "3.3.5",
+    "@types/hoist-non-react-statics": "3.3.6",
     "@types/is-hotkey": "0.1.10",
     "@types/jest": "29.5.14",
     "@types/mock-raf": "1.0.6",
