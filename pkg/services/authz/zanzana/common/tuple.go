@@ -259,7 +259,7 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 	}
 
 	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
-		User:     RenderUser,
+		User:     req.TupleKey.User,
 		Relation: "view",
 		Object: NewNamespaceResourceIdent(
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
