@@ -96,6 +96,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
+		UseAsTemplate: c.Query("useAsTemplate") == "true",
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
