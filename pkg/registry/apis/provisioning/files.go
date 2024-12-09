@@ -149,7 +149,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) getParser(ctx context.Context, repo repository.Repository) (*resources.Parser, error) {
+func (s *filesConnector) getParser(ctx context.Context, logger *slog.Logger, repo repository.Repository) (*resources.Parser, error) {
 	ns := repo.Config().Namespace
 	client, kinds, err := s.client.New(ns) // As system user
 	if err != nil {
@@ -159,13 +159,12 @@ func (s *filesConnector) getParser(ctx context.Context, repo repository.Reposito
 	parser := resources.NewParser(repo.Config(), client, kinds)
 	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
-		// TODO: which logger?
-		cfg, err := repo.Read(ctx, s.logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)
+		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), repo.Config().Spec.GitHub.Branch)
 		switch {
 		case err == nil:
-			s.logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+			logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
 		case errors.Is(err, github.ErrResourceNotFound):
-			s.logger.InfoContext(ctx, "no linter config found")
+			logger.InfoContext(ctx, "no linter config found")
 		default:
 			return nil, fmt.Errorf("failed to read linter config: %w", err)
 		}
@@ -186,7 +185,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
-	parser, err := s.getParser(ctx, repo)
+	parser, err := s.getParser(ctx, logger, repo)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -233,7 +232,7 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		Ref:  ref,
 	}
 
-	parser, err := s.getParser(ctx, repo)
+	parser, err := s.getParser(ctx, logger, repo)
 	if err != nil {
 		return nil, err
 	}
