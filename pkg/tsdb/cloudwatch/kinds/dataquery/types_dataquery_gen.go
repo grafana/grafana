@@ -16,13 +16,6 @@ const (
 	CloudWatchQueryModeMetrics     CloudWatchQueryMode = "Metrics"
 )
 
-// Defines values for LogsQueryLanguage.
-const (
-	LogsQueryLanguageCWLI LogsQueryLanguage = "CWLI"
-	LogsQueryLanguagePPL  LogsQueryLanguage = "PPL"
-	LogsQueryLanguageSQL  LogsQueryLanguage = "SQL"
-)
-
 // Defines values for MetricEditorMode.
 const (
 	MetricEditorModeN0 MetricEditorMode = 0
@@ -201,9 +194,8 @@ type CloudWatchLogsQuery struct {
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
 
 	// Log groups to query
-	LogGroups     []LogGroup           `json:"logGroups,omitempty"`
-	QueryLanguage *LogsQueryLanguage   `json:"queryLanguage,omitempty"`
-	QueryMode     *CloudWatchQueryMode `json:"queryMode,omitempty"`
+	LogGroups []LogGroup           `json:"logGroups,omitempty"`
+	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -332,9 +324,6 @@ type LogGroup struct {
 	// Name of the log group
 	Name string `json:"name"`
 }
-
-// LogsQueryLanguage defines model for LogsQueryLanguage.
-type LogsQueryLanguage string
 
 // MetricEditorMode defines model for MetricEditorMode.
 type MetricEditorMode int

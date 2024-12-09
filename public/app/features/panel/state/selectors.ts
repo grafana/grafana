@@ -1,4 +1,4 @@
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 import { StoreState } from 'app/types';
 
 import { PanelState } from './reducers';

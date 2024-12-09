@@ -4,7 +4,7 @@ import { Dispatch } from 'react';
 import { LibraryPanel } from '@grafana/schema';
 import { LibraryElementDTOMetaUser } from '@grafana/schema/src/raw/librarypanel/x/librarypanel_types.gen';
 
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state';
 
 export enum LibraryElementKind {
   Panel = 1,

@@ -3,7 +3,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { saveAndRefreshLibraryPanel } from '../utils';
 

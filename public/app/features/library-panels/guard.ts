@@ -1,4 +1,4 @@
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state';
 
 import { PanelModelWithLibraryPanel } from './types';
 

@@ -7,8 +7,7 @@ import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/rando
 import { createDashboardSceneFromDashboardModel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../state';
 
 import { getDebugDashboard, getGithubMarkdown } from './utils';
 

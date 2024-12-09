@@ -20,8 +20,7 @@ import {
   SceneDataLayerControls,
   UserActionEvent,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';

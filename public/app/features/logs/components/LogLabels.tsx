@@ -10,16 +10,15 @@ const HIDDEN_LABELS = ['detected_level', 'level', 'lvl', 'filename'];
 interface Props {
   labels: Labels;
   emptyMessage?: string;
-  addTooltip?: boolean;
 }
 
-export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true }: Props) => {
+export const LogLabels = memo(({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = useMemo(
     () =>
       Object.keys(labels)
-        .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label) && labels[label])
-        .map((label) => `${label}=${labels[label]}`),
+        .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label))
+        .sort(),
     [labels]
   );
 
@@ -33,15 +32,16 @@ export const LogLabels = memo(({ labels, emptyMessage, addTooltip = true }: Prop
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.map((labelValue) => {
-        return addTooltip ? (
-          <Tooltip content={labelValue} key={labelValue} placement="top">
+      {displayLabels.map((label) => {
+        const value = labels[label];
+        if (!value) {
+          return;
+        }
+        const labelValue = `${label}=${value}`;
+        return (
+          <Tooltip content={labelValue} key={label} placement="top">
             <LogLabel styles={styles}>{labelValue}</LogLabel>
           </Tooltip>
-        ) : (
-          <LogLabel styles={styles} tooltip={labelValue} key={labelValue}>
-            {labelValue}
-          </LogLabel>
         );
       })}
     </span>

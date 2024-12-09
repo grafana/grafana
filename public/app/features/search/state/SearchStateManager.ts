@@ -13,8 +13,7 @@ import {
   reportSearchQueryInteraction,
   reportSearchResultInteraction,
 } from '../page/reporting';
-import { getGrafanaSearcher } from '../service/searcher';
-import { SearchQuery } from '../service/types';
+import { getGrafanaSearcher, SearchQuery } from '../service';
 import { SearchLayout, SearchQueryParams, SearchState } from '../types';
 import { parseRouteParams } from '../utils';
 

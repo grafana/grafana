@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -84,7 +85,7 @@ func doRequestPage(_ context.Context, r *http.Request, dsInfo datasourceInfo, pa
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return cloudMonitoringResponse{}, backend.DownstreamError(err)
+		return cloudMonitoringResponse{}, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {

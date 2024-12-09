@@ -2,8 +2,7 @@ import * as React from 'react';
 
 import { LoadingState } from '@grafana/data';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../state';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';

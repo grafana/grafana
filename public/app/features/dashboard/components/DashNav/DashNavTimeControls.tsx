@@ -11,7 +11,7 @@ import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state';
 
 export interface Props {
   dashboard: DashboardModel;

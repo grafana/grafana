@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
+	notifications "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -20,6 +20,8 @@ import (
 var (
 	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
 )
+
+var resourceInfo = notifications.TimeIntervalResourceInfo
 
 type TimeIntervalService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
@@ -35,7 +37,7 @@ type legacyStorage struct {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return ResourceInfo.NewFunc()
+	return resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -45,11 +47,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return ResourceInfo.GetSingularName()
+	return resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return ResourceInfo.NewListFunc()
+	return resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -86,7 +88,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 			return convertToK8sResource(info.OrgID, mt, s.namespacer)
 		}
 	}
-	return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
+	return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -103,7 +105,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 			return nil, err
 		}
 	}
-	p, ok := obj.(*model.TimeInterval)
+	p, ok := obj.(*notifications.TimeInterval)
 	if !ok {
 		return nil, fmt.Errorf("expected time-interval but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
@@ -147,7 +149,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 			return nil, false, err
 		}
 	}
-	p, ok := obj.(*model.TimeInterval)
+	p, ok := obj.(*notifications.TimeInterval)
 	if !ok {
 		return nil, false, fmt.Errorf("expected time-interval but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
@@ -188,7 +190,7 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	p, ok := old.(*model.TimeInterval)
+	p, ok := old.(*notifications.TimeInterval)
 	if !ok {
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
@@ -197,6 +199,6 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	return old, false, err                                                                                                         // false - will be deleted async
 }
 
-func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "deleteCollection")
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
 }

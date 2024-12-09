@@ -10,8 +10,7 @@ import { dispatch } from 'app/store/store';
 
 import { ScopedResourceClient } from '../apiserver/client';
 import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
-import { getGrafanaSearcher } from '../search/service/searcher';
-import { DashboardQueryResult, SearchQuery } from '../search/service/types';
+import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
 

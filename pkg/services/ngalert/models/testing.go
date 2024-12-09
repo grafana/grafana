@@ -628,7 +628,6 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
 		Record:          r.Record,
-		IsPaused:        r.IsPaused,
 	}
 
 	if r.DashboardUID != nil {

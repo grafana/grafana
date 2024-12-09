@@ -5,8 +5,7 @@ import { StoreState } from 'app/types';
 
 import { initPanelState } from '../../panel/state/actions';
 import { setPanelInstanceState } from '../../panel/state/reducers';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { DashboardModel, PanelModel } from '../state';
 
 import { LazyLoader } from './LazyLoader';
 import { PanelChromeAngular } from './PanelChromeAngular';

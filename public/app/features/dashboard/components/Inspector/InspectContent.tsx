@@ -23,8 +23,7 @@ import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../state';
 
 interface Props {
   dashboard: DashboardModel;

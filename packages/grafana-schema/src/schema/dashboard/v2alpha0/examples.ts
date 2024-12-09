@@ -163,10 +163,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         },
         description: 'Test Description',
-        links: [
-          { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
-          { title: 'Test Link 2', url: 'http://test2.com' },
-        ],
+        links: [],
         title: 'Test Panel',
         uid: 'test-panel-uid',
         vizConfig: {

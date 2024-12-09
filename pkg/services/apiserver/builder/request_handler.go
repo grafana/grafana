@@ -18,12 +18,7 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 	router := mux.NewRouter()
 
 	for _, builder := range builders {
-		provider, ok := builder.(APIGroupRouteProvider)
-		if !ok || provider == nil {
-			continue
-		}
-
-		routes := provider.GetAPIRoutes()
+		routes := builder.GetAPIRoutes()
 		if routes == nil {
 			continue
 		}

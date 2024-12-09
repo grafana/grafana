@@ -8,8 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { DashboardModel, PanelModel } from '../state';
 
 import { PanelStateWrapper, Props } from './PanelStateWrapper';
 

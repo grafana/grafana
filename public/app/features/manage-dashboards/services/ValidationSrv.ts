@@ -1,4 +1,4 @@
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 class ValidationError extends Error {
   type: string;

@@ -12,7 +12,7 @@ import {
   SceneVariableSet,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 

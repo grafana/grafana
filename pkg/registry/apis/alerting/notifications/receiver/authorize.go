@@ -22,7 +22,7 @@ type AccessControlService interface {
 }
 
 func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
+	if attr.GetResource() != resourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)

@@ -74,3 +74,7 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return oas, nil
 }
+
+func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil // no custom API routes
+}

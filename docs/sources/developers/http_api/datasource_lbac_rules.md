@@ -57,13 +57,13 @@ Content-Length: 131
 {
   "rules": [
     {
-      "teamUId": "fdnd1pf4m9sxvc",
+      "teamId": "1",
       "rules": [
         "{ service_name=\"bigquery-sync-mysql\" }"
       ]
     },
     {
-      "teamUid": "dfed1p2m9sxvfc",
+      "teamId": "2",
       "rules": [
         "{ service_name=\"api\" }"
       ]
@@ -99,13 +99,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
   "rules": [
     {
-      "teamUId": "fdnd1pf4m9sxvc",
+      "teamId": "1",
       "rules": [
         "{ service_name=\"bigquery-sync-mysql\" }"
       ]
     },
     {
-      "teamUid": "dfed1p2m9sxvfc",
+      "teamId": "2",
       "rules": [
         "{ service_name=\"api\" }"
       ]
@@ -127,13 +127,13 @@ Content-Length: 35
   "name": "loki",
   "rules": [
     {
-      "teamUId": "fdnd1pf4m9sxvc",
+      "teamId": "1",
       "rules": [
         "{ service_name=\"bigquery-sync-mysql\" }"
       ]
     },
     {
-      "teamUid": "dfed1p2m9sxvfc",
+      "teamId": "2",
       "rules": [
         "{ service_name=\"api\" }"
       ]

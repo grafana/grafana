@@ -1,7 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { DashboardDTO } from '../../../../../types';
-import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
+import { DashboardModel } from '../../../../dashboard/state';
 import { dashboardApi } from '../../api/dashboardApi';
 
 const convertToDashboardModel = memoizeOne((dashboardDTO: DashboardDTO) => {
