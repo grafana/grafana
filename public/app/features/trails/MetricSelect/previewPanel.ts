@@ -40,7 +40,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
   });
 }
 
-function convertPreviewQueriesToIgnoreUsage(query: PromQuery, currentFilterCount: number) {
+export function convertPreviewQueriesToIgnoreUsage(query: PromQuery, currentFilterCount: number) {
   // If there are filters, we append to the list. Otherwise, we replace the empty list.
   const replacement = currentFilterCount > 0 ? '${filters},__ignore_usage__=""' : '__ignore_usage__=""';
 

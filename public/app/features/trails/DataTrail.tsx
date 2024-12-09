@@ -36,6 +36,7 @@ import {
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { SceneContextObject } from '@grafana/scenes-react';
 import { useStyles2 } from '@grafana/ui';
 import { getSelectedScopes } from 'app/features/scopes';
 
@@ -43,6 +44,7 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
+import { MetricSelectSceneReact } from './MetricSelect/MetricSelectSceneReact';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
@@ -78,6 +80,7 @@ export interface DataTrailState extends SceneObjectState {
   history: DataTrailHistory;
   settings: DataTrailSettings;
   createdAt: number;
+  context: SceneContextObject;
 
   // just for the starting data source
   initialDS?: string;
@@ -123,6 +126,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: true,
+      context: state.context ?? new SceneContextObject({}),
       ...state,
     });
 
@@ -174,39 +178,39 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
 
-        // fresh check for otel experience
-        this.checkDataSourceForOTelResources();
-        // clear filters on resetting the data source
-        const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-        if (adhocVariable instanceof AdHocFiltersVariable) {
-          adhocVariable.setState({ filters: [] });
-        }
+        // // fresh check for otel experience
+        // this.checkDataSourceForOTelResources();
+        // // clear filters on resetting the data source
+        // const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+        // if (adhocVariable instanceof AdHocFiltersVariable) {
+        //   adhocVariable.setState({ filters: [] });
+        // }
       }
 
       // update otel variables when changed
-      if (this.state.useOtelExperience && (name === VAR_OTEL_DEPLOYMENT_ENV || name === VAR_OTEL_RESOURCES)) {
-        // for state and variables
-        const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
-        const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
-        const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
-        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
-        const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
+      // if (this.state.useOtelExperience && (name === VAR_OTEL_DEPLOYMENT_ENV || name === VAR_OTEL_RESOURCES)) {
+      //   // for state and variables
+      //   const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
+      //   const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
+      //   const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
+      //   const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+      //   const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
 
-        if (
-          timeRange &&
-          otelResourcesVariable instanceof AdHocFiltersVariable &&
-          otelJoinQueryVariable instanceof ConstantVariable &&
-          otelDepEnvVariable instanceof CustomVariable
-        ) {
-          this.updateOtelData(
-            datasourceUid,
-            timeRange,
-            otelDepEnvVariable,
-            otelResourcesVariable,
-            otelJoinQueryVariable
-          );
-        }
-      }
+      //   if (
+      //     timeRange &&
+      //     otelResourcesVariable instanceof AdHocFiltersVariable &&
+      //     otelJoinQueryVariable instanceof ConstantVariable &&
+      //     otelDepEnvVariable instanceof CustomVariable
+      //   ) {
+      //     this.updateOtelData(
+      //       datasourceUid,
+      //       timeRange,
+      //       otelDepEnvVariable,
+      //       otelResourcesVariable,
+      //       otelJoinQueryVariable
+      //     );
+      //   }
+      // }
     },
   });
 
@@ -297,7 +301,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric == null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({});
+      stateUpdate.topScene = new MetricSelectSceneReact({});
     }
 
     if (typeof values.metricSearch === 'string') {
@@ -622,28 +626,28 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
-    useEffect(() => {
-      // check if the otel experience has been enabled
-      if (!useOtelExperience) {
-        // if the experience has been turned off, reset the otel variables
-        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
-        const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
-        const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
-        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+    // useEffect(() => {
+    //   // check if the otel experience has been enabled
+    //   if (!useOtelExperience) {
+    //     // if the experience has been turned off, reset the otel variables
+    //     const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
+    //     const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
+    //     const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
+    //     const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
 
-        if (
-          otelResourcesVariable instanceof AdHocFiltersVariable &&
-          otelDepEnvVariable instanceof CustomVariable &&
-          otelJoinQueryVariable instanceof ConstantVariable &&
-          filtersVariable instanceof AdHocFiltersVariable
-        ) {
-          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersVariable);
-        }
-      } else {
-        // if experience is enabled, check standardization and update the otel variables
-        model.checkDataSourceForOTelResources();
-      }
-    }, [model, hasOtelResources, useOtelExperience]);
+    //     if (
+    //       otelResourcesVariable instanceof AdHocFiltersVariable &&
+    //       otelDepEnvVariable instanceof CustomVariable &&
+    //       otelJoinQueryVariable instanceof ConstantVariable &&
+    //       filtersVariable instanceof AdHocFiltersVariable
+    //     ) {
+    //       model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersVariable);
+    //     }
+    //   } else {
+    //     // if experience is enabled, check standardization and update the otel variables
+    //     model.checkDataSourceForOTelResources();
+    //   }
+    // }, [model, hasOtelResources, useOtelExperience]);
 
     useEffect(() => {
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
@@ -673,7 +677,7 @@ export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({});
+    return new MetricSelectSceneReact({});
   }
 }
 

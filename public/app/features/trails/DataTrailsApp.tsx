@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
+import { SceneContext } from '@grafana/scenes-react';
 import { useStyles2 } from '@grafana/ui/';
 import { Page } from 'app/core/components/Page/Page';
 import { getClosestScopesFacade, ScopesFacade, ScopesSelector } from 'app/features/scopes';
@@ -117,7 +118,9 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
             }
           />
         )}
-        <trail.Component model={trail} />
+        <SceneContext.Provider value={trail.state.context}>
+          <trail.Component model={trail} />
+        </SceneContext.Provider>
       </Page>
     </UrlSyncContextProvider>
   );
