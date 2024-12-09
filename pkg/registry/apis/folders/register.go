@@ -146,10 +146,6 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
-}
-
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana folders"
