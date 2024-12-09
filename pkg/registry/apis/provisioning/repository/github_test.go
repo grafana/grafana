@@ -135,9 +135,6 @@ func TestParseWebhooks(t *testing.T) {
 			rsp, err := gh.parseWebhook(tt.messageType, payload)
 			require.NoError(t, err)
 
-			// jj, _ := json.MarshalIndent(rsp.Jobs, "", "  ")
-			// fmt.Printf("%s", string(jj))
-
 			require.Equal(t, tt.expected.Code, rsp.Code)
 			require.Equal(t, tt.expected.Jobs, rsp.Jobs)
 		})
