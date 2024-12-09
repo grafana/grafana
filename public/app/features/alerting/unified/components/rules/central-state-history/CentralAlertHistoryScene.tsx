@@ -12,7 +12,6 @@ import {
   SceneFlexItem,
   SceneFlexLayout,
   SceneObjectBase,
-  SceneObjectState,
   SceneQueryRunner,
   SceneReactObject,
   SceneRefreshPicker,
@@ -21,7 +20,6 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VariableDependencyConfig,
-  VariableValue,
   VariableValueSelectors,
   VizPanel,
   sceneGraph,
@@ -44,14 +42,13 @@ import {
 import { Trans } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../../Analytics';
-import { DataSourceInformation } from '../../../home/Insights';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
-import { HistoryEventsListObject, HistoryEventsListObjectState } from './EventListSceneObject';
+import { HistoryEventsListObject } from './EventListSceneObject';
 
-export const LABELS_FILTER = 'labelsFilter';
-export const STATE_FILTER_TO = 'stateFilterTo';
-export const STATE_FILTER_FROM = 'stateFilterFrom';
+export const LABELS_FILTER = 'LABELS_FILTER';
+export const STATE_FILTER_TO = 'STATE_FILTER_TO';
+export const STATE_FILTER_FROM = 'STATE_FILTER_FROM';
 /**
  *
  * This scene shows the history of the alert state changes.
@@ -93,6 +90,7 @@ export const CentralAlertHistoryScene = () => {
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
     });
+
     //custom variable for filtering by the previous state
     const transitionsFromFilterVariable = new CustomVariable({
       name: STATE_FILTER_FROM,
@@ -101,6 +99,7 @@ export const CentralAlertHistoryScene = () => {
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
     });
+
     return new EmbeddedScene({
       controls: [
         new SceneReactObject({
@@ -110,11 +109,7 @@ export const CentralAlertHistoryScene = () => {
           component: FilterInfo,
         }),
         new VariableValueSelectors({}),
-        new ClearFilterButtonScenesObject({
-          valueInLabelFilter: labelsFilterVariable.getValue(),
-          valueInStateToFilter: transitionsToFilterVariable.getValue(),
-          valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
-        }),
+        new ClearFilterButtonScenesObject({}),
         new SceneControlsSpacer(),
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
@@ -133,24 +128,16 @@ export const CentralAlertHistoryScene = () => {
         children: [
           new SceneFlexItem({
             ySizing: 'content',
-            body: getEventsSceneObject(
-              alertStateHistoryDatasource,
-              labelsFilterVariable,
-              transitionsToFilterVariable,
-              transitionsFromFilterVariable
-            ),
+            body: getEventsSceneObject(),
           }),
           new SceneFlexItem({
-            body: new HistoryEventsListObject({
-              valueInLabelFilter: labelsFilterVariable.getValue(),
-              valueInStateToFilter: transitionsToFilterVariable.getValue(),
-              valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
-            }),
+            body: new HistoryEventsListObject({}),
           }),
         ],
       }),
     });
   }, []);
+
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
 
@@ -163,28 +150,15 @@ export const CentralAlertHistoryScene = () => {
 /**
  * Creates a SceneFlexItem with a timeseries panel that shows the events.
  * The query uses a runtime datasource that fetches the events from the history api.
- * @param alertStateHistoryDataSource the datasource information for the runtime datasource
  */
-function getEventsSceneObject(
-  alertStateHistoryDataSource: DataSourceInformation,
-  labelsFilterVariable: TextBoxVariable,
-  transitionsToFilterVariable: CustomVariable,
-  transitionsFromFilterVariable: CustomVariable
-) {
+function getEventsSceneObject() {
   return new SceneFlexLayout({
     direction: 'column',
     children: [
       new SceneFlexItem({
         ySizing: 'content',
         body: new SceneFlexLayout({
-          children: [
-            getEventsScenesFlexItem(
-              alertStateHistoryDataSource,
-              labelsFilterVariable,
-              transitionsToFilterVariable,
-              transitionsFromFilterVariable
-            ),
-          ],
+          children: [getEventsScenesFlexItem()],
         }),
       }),
     ],
@@ -196,15 +170,15 @@ function getEventsSceneObject(
  * @param datasource the datasource information for the runtime datasource
  * @returns the SceneQueryRunner
  */
-function getSceneQuery(datasource: DataSourceInformation) {
+function getQueryRunnerForAlertHistoryDataSource() {
   const query = new SceneQueryRunner({
-    datasource: datasource,
+    datasource: alertStateHistoryDatasource,
     queries: [
       {
         refId: 'A',
-        expr: '',
-        queryType: 'range',
-        step: '10s',
+        labels: '${LABELS_FILTER}',
+        stateFrom: '${STATE_FILTER_FROM}',
+        stateTo: '${STATE_FILTER_TO}',
       },
     ],
   });
@@ -214,200 +188,69 @@ function getSceneQuery(datasource: DataSourceInformation) {
  * This function creates a SceneFlexItem with a timeseries panel that shows the events.
  * The query uses a runtime datasource that fetches the events from the history api.
  */
-export function getEventsScenesFlexItem(
-  datasource: DataSourceInformation,
-  labelsFilterVariable: TextBoxVariable,
-  transitionsToFilterVariable: CustomVariable,
-  transitionsFromFilterVariable: CustomVariable
-) {
+export function getEventsScenesFlexItem() {
   return new SceneFlexItem({
     minHeight: 300,
-    body: new EventsPanelScenesObject({
-      datasource: datasource,
-      valueInLabelFilter: labelsFilterVariable.getValue(),
-      valueInStateToFilter: transitionsToFilterVariable.getValue(),
-      valueInStateFromFilter: transitionsFromFilterVariable.getValue(),
-      body:
-        // eslint-disable-next-line
-        PanelBuilders.timeseries()
-          .setTitle('Alert Events')
-          .setDescription(
-            'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
-          )
-          .setData(getSceneQuery(datasource))
-          .setColor({ mode: 'continuous-BlPu' })
-          .setCustomFieldConfig('fillOpacity', 100)
-          .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
-          .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
-          .setCustomFieldConfig('lineWidth', 1)
-          .setCustomFieldConfig('barAlignment', 0)
-          .setCustomFieldConfig('spanNulls', false)
-          .setCustomFieldConfig('insertNulls', false)
-          .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-          .setCustomFieldConfig('pointSize', 5)
-          .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
-          .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
-          .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-          .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
-          .setOption('tooltip', { mode: TooltipDisplayMode.Single })
-          .setNoValue('No events found')
-          .build() as VizPanel<Options, FieldConfig>,
-    }),
+    body:
+      // eslint-disable-next-line
+      PanelBuilders.timeseries()
+        .setTitle('Alert Events')
+        .setDescription(
+          'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+        )
+        .setData(getQueryRunnerForAlertHistoryDataSource())
+        .setColor({ mode: 'continuous-BlPu' })
+        .setCustomFieldConfig('fillOpacity', 100)
+        .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+        .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
+        .setCustomFieldConfig('lineWidth', 1)
+        .setCustomFieldConfig('barAlignment', 0)
+        .setCustomFieldConfig('spanNulls', false)
+        .setCustomFieldConfig('insertNulls', false)
+        .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+        .setCustomFieldConfig('pointSize', 5)
+        .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
+        .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
+        .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
+        .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+        .setOption('tooltip', { mode: TooltipDisplayMode.Single })
+        .setNoValue('No events found')
+        .build() as VizPanel<Options, FieldConfig>,
   });
 }
 
-export class EventsPanelScenesObject extends SceneObjectBase<
-  FilterScenesObjectState & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
-> {
-  public static Component = EventsPanelScenesObjectRenderer;
-  private _onAnyVariableChanged(): void {
-    this.forceRender();
-  }
-
-  public _onActivate() {
-    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, this);
-    if (stateToFilterVariable instanceof CustomVariable) {
-      this.setState({ ...this.state, valueInStateToFilter: stateToFilterVariable.state.value });
-      this._subs.add(
-        stateToFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInStateToFilter: newState.value });
-          const query = getSceneQuery(this.state.datasource);
-          query.runQueries();
-        })
-      );
-    }
-    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, this);
-    if (stateFromFilterVariable instanceof CustomVariable) {
-      this.setState({ ...this.state, valueInStateFromFilter: stateFromFilterVariable.state.value });
-      this._subs.add(
-        stateFromFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInStateFromFilter: newState.value });
-          const query = getSceneQuery(this.state.datasource);
-          query.runQueries();
-        })
-      );
-    }
-    const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, this);
-    if (labelsFilterVariable instanceof TextBoxVariable) {
-      this.setState({ ...this.state, valueInLabelFilter: labelsFilterVariable.state.value });
-      this._subs.add(
-        labelsFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInLabelFilter: newState.value });
-          const query = getSceneQuery(this.state.datasource);
-          query.runQueries();
-        })
-      );
-    }
-  }
-
-  public constructor(
-    state: HistoryEventsListObjectState & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
-  ) {
-    super(state);
-    this.addActivationHandler(this._onActivate.bind(this));
-  }
-  protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
-
-    onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
-  });
-}
-
-export function EventsPanelScenesObjectRenderer({
-  model,
-}: SceneComponentProps<
-  EventsPanelScenesObject & { datasource: DataSourceInformation; body: VizPanel<Options, FieldConfig> }
->) {
-  const { body } = model.useState();
-
-  if (body) {
-    return <body.Component model={body} />;
-  }
-  return <></>;
-}
-
-/*
- * This component shows a button to clear the filters.
- * It is shown when the filters are active.
- * props:
- * labelsFilterVariable: the textbox variable for filtering by labels
- * transitionsToFilterVariable: the custom variable for filtering by the current state
- * transitionsFromFilterVariable: the custom variable for filtering by the previous state
- */
-export interface FilterScenesObjectState extends SceneObjectState {
-  valueInLabelFilter: VariableValue;
-  valueInStateToFilter: VariableValue;
-  valueInStateFromFilter: VariableValue;
-}
-
-export class ClearFilterButtonScenesObject extends SceneObjectBase<FilterScenesObjectState> {
+export class ClearFilterButtonScenesObject extends SceneObjectBase {
   public static Component = ClearFilterButtonObjectRenderer;
 
-  public _onActivate() {
-    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, this);
-    if (stateToFilterVariable instanceof CustomVariable) {
-      this.setState({ ...this.state, valueInStateToFilter: stateToFilterVariable.state.value });
-      this._subs.add(
-        stateToFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInStateToFilter: newState.value });
-        })
-      );
-    }
-    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, this);
-    if (stateFromFilterVariable instanceof CustomVariable) {
-      this.setState({ ...this.state, valueInStateFromFilter: stateFromFilterVariable.state.value });
-      this._subs.add(
-        stateFromFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInStateFromFilter: newState.value });
-        })
-      );
-    }
-    const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, this);
-    if (labelsFilterVariable instanceof TextBoxVariable) {
-      this.setState({ ...this.state, valueInLabelFilter: labelsFilterVariable.state.value });
-      this._subs.add(
-        labelsFilterVariable?.subscribeToState((newState, prevState) => {
-          this.setState({ ...prevState, valueInLabelFilter: newState.value });
-        })
-      );
-    }
-  }
-
-  public constructor(state: HistoryEventsListObjectState) {
-    super(state);
-    this.addActivationHandler(this._onActivate.bind(this));
-  }
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
+  });
 }
 
 export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
-  // eslint-disable-next-line
-  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
-  // eslint-disable-next-line
-  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
-  // eslint-disable-next-line
-  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
+  // This make sure the component is re-rendered when the variables change
+  model.useState();
 
-  const labelsFiltersVariableState = model.useState().valueInLabelFilter;
-  const stateToFilterVariableState = model.useState().valueInStateToFilter;
-  const stateFromFilterVariableState = model.useState().valueInStateFromFilter;
-
-  const valueInfilterTextBox = labelsFiltersVariableState;
-  const valueInStateToFilter = stateToFilterVariableState;
-  const valueInStateFromFilter = stateFromFilterVariableState;
+  const labelsFilter = sceneGraph.interpolate(model, '${LABELS_FILTER}');
+  const stateTo = sceneGraph.interpolate(model, '${STATE_FILTER_TO}');
+  const stateFrom = sceneGraph.interpolate(model, '${STATE_FILTER_FROM}');
 
   // if no filter is active, return null
-  if (
-    !valueInfilterTextBox &&
-    valueInStateToFilter === StateFilterValues.all &&
-    valueInStateFromFilter === StateFilterValues.all
-  ) {
+  if (!labelsFilter && stateTo === StateFilterValues.all && stateFrom === StateFilterValues.all) {
     return null;
   }
+
   const onClearFilter = () => {
+    const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model) as TextBoxVariable;
     labelsFiltersVariable.setValue('');
+
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model) as CustomVariable;
     stateToFilterVariable.changeValueTo(StateFilterValues.all);
+
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model) as CustomVariable;
     stateFromFilterVariable.changeValueTo(StateFilterValues.all);
   };
+
   return (
     <Tooltip content="Clear filter">
       <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
