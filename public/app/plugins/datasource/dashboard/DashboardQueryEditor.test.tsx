@@ -13,7 +13,7 @@ import {
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
-import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
 import { DashboardDatasource } from './datasource';
 import { SHARED_DASHBOARD_QUERY } from './types';
 
@@ -111,7 +111,9 @@ describe('DashboardQueryEditor', () => {
     const anotherPanel = await screen.findByText('Another panel');
     expect(anotherPanel).toBeInTheDocument();
 
-    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
   });
 
   it('does not show a panel with either SHARED_DASHBOARD_QUERY datasource or MixedDS with SHARED_DASHBOARD_QUERY as an option in the dropdown', async () => {
@@ -134,8 +136,12 @@ describe('DashboardQueryEditor', () => {
     const anotherPanel = await screen.findByText('Another panel');
     expect(anotherPanel).toBeInTheDocument();
 
-    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
-    expect(screen.queryByText('A mixed DS with dashboard DS query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
+    expect(screen.queryByText('A mixed DS with dashboard DS query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
   });
 
   it('does not show the current panelInEdit as an option in the dropdown', async () => {
@@ -158,6 +164,8 @@ describe('DashboardQueryEditor', () => {
     const anotherPanel = await screen.findByText('Another panel');
     expect(anotherPanel).toBeInTheDocument();
 
-    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
   });
 });

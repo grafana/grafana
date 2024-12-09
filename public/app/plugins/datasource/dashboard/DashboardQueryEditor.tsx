@@ -40,6 +40,8 @@ const topics = [
   { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
 ];
 
+export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
+
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
 
@@ -128,19 +130,24 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     () =>
       dashboard?.panels
         .filter(
-          (panel) =>
-            config.panels[panel.type] &&
-            panel.targets &&
-            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id) &&
-            panel.datasource?.uid !== SHARED_DASHBOARD_QUERY &&
-            !isMixedDSWithDashboardQueries(panel)
+          (panel) => config.panels[panel.type] && panel.targets && !isPanelInEdit(panel.id, dashboard.panelInEdit?.id)
         )
-        .map((panel) => ({
-          value: panel.id,
-          label: panel.title ?? 'Panel ' + panel.id,
-          description: getPanelDescription(panel),
-          imgUrl: config.panels[panel.type].info.logos.small,
-        })) ?? [],
+        .map((panel) => {
+          let description = getPanelDescription(panel);
+          let isDisabled = false;
+          if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY || isMixedDSWithDashboardQueries(panel)) {
+            description = INVALID_PANEL_DESCRIPTION;
+            isDisabled = true;
+          }
+
+          return {
+            value: panel.id,
+            label: panel.title ?? 'Panel ' + panel.id,
+            imgUrl: config.panels[panel.type].info.logos.small,
+            description,
+            isDisabled,
+          };
+        }) ?? [],
     [dashboard, getPanelDescription]
   );
 
