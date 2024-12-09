@@ -12,6 +12,7 @@ import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/store/store';
 
 import { Input, InputUsage, LibraryPanel } from '../components/DashExportModal/DashboardExporter';
+import { DashboardDTO } from 'app/types';
 
 export interface Props {
   dashboardUid: string;
@@ -24,15 +25,22 @@ async function getTemplate(
   isDashboardOrg: boolean
 ): Promise<{ dashboard: Dashboard; folderUid: string }> {
   if (isDashboardOrg) {
-    const result = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`);
-    return { dashboard: result.dashboard, folderUid: result.meta.folderId };
+    const { dashboard, meta } = await getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${dashboardUid}`);
+
+    const dashboardFromTemplate = {
+      ...dashboard,
+      title: `From template: ${dashboard.title}`,
+      uid: `${dashboard.uid}-t`,
+    };
+
+    return { dashboard: dashboardFromTemplate, folderUid: meta.folderUid ?? '' };
   }
 
   const result = await await getBackendSrv().get(`/api/gnet/dashboards/${dashboardUid}`);
   const searchObj = locationService.getSearchObject();
   const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
 
-  return { dashboard: result, folderUid: folder.uid };
+  return { dashboard: result.json, folderUid: folder.uid };
 }
 
 const DashboardTemplateImport = ({ dashboardUid, onCancel, isDashboardOrg }: Props) => {
@@ -64,14 +72,8 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel, isDashboardOrg }: Pro
       setIsLoading(true);
       try {
         const { dashboard, folderUid } = await getTemplate(dashboardUid, !!isDashboardOrg);
-        const dashboardFromTemplate = {
-          ...dashboard,
-          title: `From template: ${dashboard.title}`,
-          uid: `${dashboard.uid}-t`,
-          tags: dashboard.tags?.filter((tag) => tag !== 'template'),
-        };
 
-        setCommunityDashboardToImport(dashboardFromTemplate);
+        setCommunityDashboardToImport(dashboard);
         setFolder({ uid: folderUid });
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
@@ -261,7 +263,7 @@ const DashboardTemplateImport = ({ dashboardUid, onCancel, isDashboardOrg }: Pro
             title: formData.title,
             uid: formData.uid || communityDashboardToImport.uid,
           },
-          overwrite: true,
+          overwrite: false,
           inputs: inputsToPersist,
           folderUid: formData.folder.uid,
         })
