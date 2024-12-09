@@ -22870,7 +22870,7 @@
           {
             "description": "Flag indicating if dashboard can be used as template",
             "in": "query",
-            "name": "useAsTemplare",
+            "name": "useAsTemplate",
             "schema": {
               "type": "boolean"
             }

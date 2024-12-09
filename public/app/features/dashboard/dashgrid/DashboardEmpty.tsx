@@ -15,8 +15,8 @@ import {
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { TemplateItem } from 'app/features/manage-dashboards/templates-catalog/TemplateItem';
-import { useTemplateDashboards } from 'app/features/manage-dashboards/templates-catalog/hooks';
+import { TemplateItem } from 'app/features/manage-dashboards/templates-catalog/CommunityTemplateItem';
+import { useCommunityTemplates } from 'app/features/manage-dashboards/templates-catalog/hooks';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -63,7 +63,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const [showTemplateImportForm, setShowTemplateImportForm] = useState(false);
   const [communityDashboardToImportUID, setCommunityDashboardToImportUID] = useState('');
-  const { dashboards } = useTemplateDashboards({
+  const { dashboards } = useCommunityTemplates({
     pageSize: 3,
     filterByIds: DEFAULT_VARIABLES_TO_USE_AS_TEMPLATE,
   });

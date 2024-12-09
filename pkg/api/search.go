@@ -208,7 +208,7 @@ type SearchParams struct {
 	// Flag indicating if dashboard can be used as template
 	// in:query
 	// required: false
-	UseAsTemplare bool `json:"useAsTemplare"`
+	UseAsTemplate bool `json:"useAsTemplate"`
 }
 
 // swagger:response searchResponse

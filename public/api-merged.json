@@ -8831,7 +8831,7 @@
           {
             "type": "boolean",
             "description": "Flag indicating if dashboard can be used as template",
-            "name": "useAsTemplare",
+            "name": "useAsTemplate",
             "in": "query"
           }
         ],

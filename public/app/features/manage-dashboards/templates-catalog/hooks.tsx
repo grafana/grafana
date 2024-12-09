@@ -4,7 +4,9 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { SortBy, GnetAPIResponse, SORT_TO_DIRECTION } from './types';
 
-interface UseTemplateDashboardsOptions {
+import { DashboardQueryResult } from 'app/features/search/service';
+
+interface UseCommunityTemplatesOptions {
   sortBy?: SortBy;
   page?: number;
   filter?: string;
@@ -12,13 +14,13 @@ interface UseTemplateDashboardsOptions {
   filterByIds?: string[];
 }
 
-export function useTemplateDashboards({
+export function useCommunityTemplates({
   sortBy = 'downloads',
   page = 1,
   filter = '',
   pageSize = 30,
   filterByIds = [],
-}: UseTemplateDashboardsOptions) {
+}: UseCommunityTemplatesOptions) {
   const {
     value: response,
     loading,
@@ -39,11 +41,37 @@ export function useTemplateDashboards({
   };
 }
 
-interface UseTemplateDashboardOptions {
+interface UseOrgTemplatesOptions {}
+
+interface UseOrgTemplatesResponse {
+  dashboards: DashboardQueryResult;
+  loading: boolean;
+  error?: Error;
+}
+
+export function useOrgTemplates({}: UseOrgTemplatesOptions): UseOrgTemplatesResponse {
+  const {
+    value: response,
+    loading,
+    error,
+  } = useAsync(async () => {
+    return await getBackendSrv().get<DashboardQueryResult>(
+      `/api/search?permission=View&sort=alpha-asc&useAsTemplate=true`
+    );
+  }, []);
+
+  return {
+    dashboards: response,
+    loading,
+    error,
+  };
+}
+
+interface UseCommunityTemplateOptions {
   dashboardId: number;
 }
 
-export function useTemplateDashboard({ dashboardId }: UseTemplateDashboardOptions) {
+export function useCommunityTemplate({ dashboardId }: UseCommunityTemplateOptions) {
   const {
     value: response,
     loading,
