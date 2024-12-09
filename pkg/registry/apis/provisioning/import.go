@@ -18,6 +18,7 @@ type importConnector struct {
 	repoGetter RepoGetter
 	client     *resources.ClientFactory
 	logger     *slog.Logger
+	ignore     provisioning.IgnoreFile
 }
 
 func (*importConnector) New() runtime.Object {
@@ -90,6 +91,11 @@ func (c *importConnector) Connect(
 			logger := logger.With("file", entry.Path)
 			if !entry.Blob {
 				logger.DebugContext(ctx, "ignoring non-blob entry")
+				continue
+			}
+
+			if c.ignore(entry.Path) {
+				logger.DebugContext(ctx, "ignoring file")
 				continue
 			}
 
