@@ -345,24 +345,36 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []*string
+	lowerQuery := strings.ToLower(query.RawQuery)
 
-	for _, valuePair := range row.Values {
-		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("CARDINALITY")) {
-			values = append(values, util.ParseString(valuePair[0]))
-		} else {
-			if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-				if len(valuePair) >= 2 {
-					values = append(values, util.ParseString(valuePair[1]))
-				}
-			} else if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW DIAGNOSTICS")) {
-				// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
-				for _, vp := range valuePair {
-					values = append(values, util.ParseString(vp))
-				}
-			} else {
-				if len(valuePair) >= 1 {
-					values = append(values, util.ParseString(valuePair[0]))
-				}
+	switch {
+	case util.IsCardinalityQuery(query.RawQuery):
+		// Handle all CARDINALITY queries
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 1 {
+				values = append(values, util.ParseString(valuePair[0]))
+			}
+		}
+	case strings.Contains(lowerQuery, "show diagnostics"):
+		// Handle SHOW DIAGNOSTICS
+		// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
+		for _, valuePair := range row.Values {
+			for _, vp := range valuePair {
+				values = append(values, util.ParseString(vp))
+			}
+		}
+	case strings.Contains(lowerQuery, "show tag values"):
+		// Handle SHOW TAG VALUES (non-CARDINALITY)
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 2 {
+				values = append(values, util.ParseString(valuePair[1]))
+			}
+		}
+	default:
+		// Handle other queries
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 1 {
+				values = append(values, util.ParseString(valuePair[0]))
 			}
 		}
 	}

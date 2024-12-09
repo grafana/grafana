@@ -382,8 +382,10 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 }
 
 func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []string, measurement string, query *models.Query) *data.Frame {
-	// Frame without time column
-	if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("CARDINALITY")) {
+	lowerQuery := strings.ToLower(query.RawQuery)
+	switch {
+	case util.IsCardinalityQuery(query.RawQuery):
+		// Handle all CARDINALITY queries
 		var stringArray []*string
 		for _, v := range valueFields {
 			if f, ok := v.At(0).(*float64); ok {
@@ -394,14 +396,19 @@ func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []
 			}
 		}
 		return data.NewFrame(measurement, data.NewField("Value", nil, stringArray))
-	}
-	if len(columns) >= 2 && strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+
+	case len(columns) >= 2 && strings.Contains(lowerQuery, "show tag values"):
+		// Handle SHOW TAG VALUES (non-CARDINALITY)
 		return data.NewFrame(measurement, valueFields[1])
-	}
-	if len(columns) >= 1 {
+
+	case len(columns) >= 1:
+		// Handle generic queries with at least one column
 		return data.NewFrame(measurement, valueFields[0])
+
+	default:
+		// No valid frame to return
+		return nil
 	}
-	return nil
 }
 
 func handleTableFormatFirstFrame(rsp *backend.DataResponse, measurement string, query *models.Query) {

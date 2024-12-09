@@ -104,6 +104,13 @@ func TestParsingAsTimeSeriesWithoutTimeColumn(t *testing.T) {
 
 		runQuery(t, f, "cardinality", "time_series", query)
 	})
+
+	t.Run("create frames for tag values and without time column even the query string has cardinality as string", func(t *testing.T) {
+		res := ResponseParse(readJsonFile("show_tag_values_response"), 200, generateQuery("SHOW TAG VALUES FROM custom_influxdb_cardinality WITH KEY = \"database\"", "time_series", ""))
+		require.NoError(t, res.Error)
+		require.Equal(t, "Value", res.Frames[0].Fields[0].Name)
+		require.Equal(t, "cpu-total", *res.Frames[0].Fields[0].At(0).(*string))
+	})
 }
 
 func TestInfluxDBStreamingParser(t *testing.T) {
