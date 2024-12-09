@@ -3,6 +3,7 @@ package authorizer
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	orgsvc "github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -19,7 +20,7 @@ type GrafanaAuthorizer struct {
 	auth authorizer.Authorizer
 }
 
-func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaAuthorizer {
+func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service, features featuremgmt.FeatureToggles) (*GrafanaAuthorizer, error) {
 	authorizers := []authorizer.Authorizer{
 		&impersonationAuthorizer{},
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
@@ -28,6 +29,15 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 	// In Hosted grafana, the StackID replaces the orgID as a valid namespace
 	if cfg.StackID != "" {
 		authorizers = append(authorizers, newStackIDAuthorizer(cfg))
+
+		if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+			// try this out in cloud before expanding it for on-prem
+			upstreamAuthorizer, err := newUpstreamAuthorizer(cfg)
+			if err != nil {
+				return nil, err
+			}
+			authorizers = append(authorizers, upstreamAuthorizer)
+		}
 	} else {
 		authorizers = append(authorizers, newOrgIDAuthorizer(orgService))
 	}
@@ -42,7 +52,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaA
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),
-	}
+	}, nil
 }
 
 func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {

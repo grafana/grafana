@@ -18,6 +18,17 @@ type RemoteService struct {
 	Version string `yaml:"version"`
 	Host    string `yaml:"host"`
 	Port    int32  `yaml:"port"`
+
+	ClusterScopedResources []ClusterScopedResource `yaml:"cluster_scoped_resources"`
+}
+
+type ClusterScopedResource struct {
+	Resource      string                             `yaml:"resource"`
+	Authorization ClusterScopedResourceAuthorization `yaml:"authorization"`
+}
+
+type ClusterScopedResourceAuthorization struct {
+	GrantReadOnlyToAuthenticated bool `yaml:"grant_readonly_to_authenticated"`
 }
 
 type RemoteServicesConfig struct {

@@ -146,6 +146,10 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	unified resource.ResourceClient,
 ) (*service, error) {
+	grafanaAuthorizer, err := authorizer.NewGrafanaAuthorizer(cfg, orgService, features)
+	if err != nil {
+		return nil, err
+	}
 	s := &service{
 		log:               log.New(modules.GrafanaAPIServer),
 		cfg:               cfg,
@@ -153,7 +157,7 @@ func ProvideService(
 		rr:                rr,
 		stopCh:            make(chan struct{}),
 		builders:          []builder.APIGroupBuilder{},
-		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		authorizer:        grafanaAuthorizer,
 		tracing:           tracing,
 		db:                db, // For Unified storage
 		metrics:           metrics.ProvideRegisterer(),
