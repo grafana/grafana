@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 
 import { receiversApi } from 'app/features/alerting/unified/api/receiversK8sApi';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
-import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -84,7 +84,7 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   }, [installed, loading, oncallIntegrationsResponse]);
 };
 
-type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+type K8sReceiver = ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver;
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
   return {
@@ -385,6 +385,7 @@ const grafanaContactPointToK8sReceiver = (
       title: contactPoint.name,
       integrations: (contactPoint.grafana_managed_receiver_configs || []).map(mapIntegrationSettingsForK8s),
     },
+    status: {},
   };
 };
 
@@ -412,7 +413,7 @@ export const useCreateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
 
     return createGrafanaContactPoint({
       namespace,
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
+      comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver: contactPointToUse,
     }).unwrap();
   });
 
@@ -461,7 +462,7 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
       return replaceGrafanaContactPoint({
         name: id,
         namespace,
-        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
+        comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver: contactPointToUse,
       }).unwrap();
     } else if ('originalName' in args) {
       const { contactPoint, originalName } = args;

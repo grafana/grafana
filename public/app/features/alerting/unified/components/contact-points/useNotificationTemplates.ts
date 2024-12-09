@@ -7,8 +7,8 @@ import { templatesApi } from '../../api/templateApi';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroupList,
 } from '../../openapi/templatesApi.gen';
 import {
   addNotificationTemplateAction,
@@ -70,13 +70,13 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
 }
 
 function templateGroupsToTemplates(
-  templateGroups: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList
+  templateGroups: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroupList
 ): NotificationTemplate[] {
   return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
 }
 
 function templateGroupToTemplate(
-  templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
+  templateGroup: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup
 ): NotificationTemplate {
   const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? PROVENANCE_NONE;
   return {
@@ -165,9 +165,10 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
 
     return createNamespacedTemplateGroup({
       namespace: getK8sNamespace(),
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
+      comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup: {
         spec: { title: templateValues.title, content },
         metadata: {},
+        status: {},
       },
     }).unwrap();
   });
@@ -197,9 +198,10 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
     return replaceNamespacedTemplateGroup({
       namespace: getK8sNamespace(),
       name: template.uid,
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
+      comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTemplategroupV0Alpha1TemplateGroup: {
         spec: { title: patch.title, content },
         metadata: { name: template.uid },
+        status: {},
       },
     }).unwrap();
   });
