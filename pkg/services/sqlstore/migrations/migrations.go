@@ -35,6 +35,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	addStarMigrations(mg)
 	addOrgMigrations(mg)
 	addDashboardMigration(mg) // Do NOT add more migrations to this function.
+	addDashboardUIDStarMigrations(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
@@ -140,21 +141,4 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	externalsession.AddMigration(mg)
 
 	accesscontrol.AddReceiverCreateScopeMigration(mg)
-}
-
-func addStarMigrations(mg *Migrator) {
-	starV1 := Table{
-		Name: "star",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "user_id", Type: DB_BigInt, Nullable: false},
-			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"user_id", "dashboard_id"}, Type: UniqueIndex},
-		},
-	}
-
-	mg.AddMigration("create star table", NewAddTableMigration(starV1))
-	mg.AddMigration("add unique index star.user_id_dashboard_id", NewAddIndexMigration(starV1, starV1.Indices[0]))
 }

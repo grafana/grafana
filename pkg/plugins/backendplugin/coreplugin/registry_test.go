@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -61,4 +62,15 @@ func TestNewPlugin(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLogger(t *testing.T) {
+	t.Run("logger.With should create a new logger", func(t *testing.T) {
+		wrapper := &logWrapper{
+			logger: log.New("test"),
+		}
+		newLogger := wrapper.With("key", "value")
+
+		require.NotSame(t, newLogger.(*logWrapper).logger, wrapper.logger, "`With` should not return the same instance")
+	})
 }

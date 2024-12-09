@@ -17,11 +17,11 @@ import {
   Icon,
   InlineField,
   InlineFieldRow,
+  ScrollContainer,
   SelectMenuOptions,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';

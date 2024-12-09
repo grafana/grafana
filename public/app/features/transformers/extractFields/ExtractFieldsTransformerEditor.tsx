@@ -1,3 +1,5 @@
+import { ChangeEvent } from 'react';
+
 import {
   DataTransformerID,
   TransformerRegistryItem,
@@ -7,7 +9,7 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -29,7 +31,7 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
 
 export const extractFieldsTransformerEditor = ({
   input,
-  options,
+  options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
   const onPickSourceField = (source?: string) => {
@@ -50,6 +52,20 @@ export const extractFieldsTransformerEditor = ({
     onChange({
       ...options,
       jsonPaths,
+    });
+  };
+
+  const onRegexpChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...options,
+      regExp: e.target.value,
+    });
+  };
+
+  const onDelimiterChange = (val: ComboboxOption) => {
+    onChange({
+      ...options,
+      delimiter: val.value,
     });
   };
 
@@ -96,7 +112,29 @@ export const extractFieldsTransformerEditor = ({
           />
         </InlineField>
       </InlineFieldRow>
-      {options.format === 'json' && <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />}
+      {options.format === FieldExtractorID.RegExp && (
+        <InlineFieldRow>
+          <InlineField label="RegExp" labelWidth={16} interactive={true} tooltip="Example: /(?<NewField>.*)/">
+            <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+      {options.format === FieldExtractorID.JSON && (
+        <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />
+      )}
+      {options.format === FieldExtractorID.Delimiter && (
+        <InlineFieldRow>
+          <InlineField label="Delimiter" labelWidth={16}>
+            <Combobox
+              value={options.delimiter}
+              options={[{ value: ',' }, { value: ';' }, { value: '|' }]}
+              onChange={onDelimiterChange}
+              placeholder="Select delimiter..."
+              width={24}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       <InlineFieldRow>
         <InlineField label={'Replace all fields'} labelWidth={16}>
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />

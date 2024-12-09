@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authapi"
+	"github.com/grafana/grafana/pkg/services/authapi/fake"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
@@ -62,6 +64,7 @@ type Service struct {
 
 	dsService              datasources.DataSourceService
 	gcomService            gcom.Service
+	authApiService         authapi.Service
 	dashboardService       dashboards.DashboardService
 	folderService          folder.Service
 	pluginStore            pluginstore.Store
@@ -151,9 +154,23 @@ func ProvideService(
 			return nil, fmt.Errorf("creating http client for GCOM: %w", err)
 		}
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom)
+
+		if features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAuthApiMig) {
+			s.log.Info("using authapi client because feature flag is enabled")
+			httpClientAuthApi, err := httpClientProvider.New()
+			if err != nil {
+				return nil, fmt.Errorf("creating http client for AuthApi: %w", err)
+			}
+			// the api token is the same as for gcom
+			s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
+		} else {
+			s.log.Info("using gcom client for auth")
+			s.authApiService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom).(*gcom.GcomClient)
+		}
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
+		s.gcomService = &gcomStub{}
+		s.authApiService = &fake.AuthapiStub{Policies: map[string]authapi.AccessPolicy{}, Token: nil}
 		s.cfg.StackID = "12345"
 	}
 
@@ -169,7 +186,7 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
+func (s *Service) GetToken(ctx context.Context) (authapi.TokenView, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetToken")
 	defer span.End()
 	logger := s.log.FromContext(ctx)
@@ -179,7 +196,7 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	defer cancel()
 	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
 	if err != nil {
-		return gcom.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+		return authapi.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
 	}
 
 	logger.Info("instance found", "slug", instance.Slug)
@@ -189,14 +206,14 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.ListTokensTimeout)
 	defer cancel()
-	tokens, err := s.gcomService.ListTokens(timeoutCtx, gcom.ListTokenParams{
+	tokens, err := s.authApiService.ListTokens(timeoutCtx, authapi.ListTokenParams{
 		RequestID:        requestID,
-		Region:           instance.RegionSlug,
 		AccessPolicyName: accessPolicyName,
 		TokenName:        accessTokenName,
+		Region:           instance.RegionSlug,
 	})
 	if err != nil {
-		return gcom.TokenView{}, fmt.Errorf("listing tokens: %w", err)
+		return authapi.TokenView{}, fmt.Errorf("listing tokens: %w", err)
 	}
 	logger.Info("found access tokens", "num_tokens", len(tokens))
 
@@ -208,7 +225,7 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	}
 
 	logger.Info("cloud migration token not found")
-	return gcom.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
+	return authapi.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
 		instance, accessPolicyName, accessTokenName, cloudmigration.ErrTokenNotFound)
 }
 
@@ -231,7 +248,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.FetchAccessPolicyTimeout)
 	defer cancel()
-	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, instance.RegionSlug, accessPolicyName)
+	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, accessPolicyName, instance.RegionSlug)
 	if err != nil {
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("fetching access policy by name: name=%s %w", accessPolicyName, err)
 	}
@@ -239,7 +256,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	if existingAccessPolicy != nil {
 		timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteAccessPolicyTimeout)
 		defer cancel()
-		if _, err := s.gcomService.DeleteAccessPolicy(timeoutCtx, gcom.DeleteAccessPolicyParams{
+		if _, err := s.authApiService.DeleteAccessPolicy(timeoutCtx, authapi.DeleteAccessPolicyParams{
 			RequestID:      requestID,
 			AccessPolicyID: existingAccessPolicy.ID,
 			Region:         instance.RegionSlug,
@@ -251,15 +268,15 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.CreateAccessPolicyTimeout)
 	defer cancel()
-	accessPolicy, err := s.gcomService.CreateAccessPolicy(timeoutCtx,
-		gcom.CreateAccessPolicyParams{
+	accessPolicy, err := s.authApiService.CreateAccessPolicy(timeoutCtx,
+		authapi.CreateAccessPolicyParams{
 			RequestID: requestID,
 			Region:    instance.RegionSlug,
 		},
-		gcom.CreateAccessPolicyPayload{
+		authapi.CreateAccessPolicyPayload{
 			Name:        accessPolicyName,
 			DisplayName: accessPolicyDisplayName,
-			Realms:      []gcom.Realm{{Type: "stack", Identifier: s.cfg.StackID, LabelPolicies: []gcom.LabelPolicy{}}},
+			Realms:      []authapi.Realm{{Type: "stack", Identifier: s.cfg.StackID, LabelPolicies: []authapi.LabelPolicy{}}},
 			Scopes:      []string{"cloud-migrations:read", "cloud-migrations:write"},
 		})
 	if err != nil {
@@ -273,9 +290,12 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.CreateTokenTimeout)
 	defer cancel()
 
-	token, err := s.gcomService.CreateToken(timeoutCtx,
-		gcom.CreateTokenParams{RequestID: requestID, Region: instance.RegionSlug},
-		gcom.CreateTokenPayload{
+	token, err := s.authApiService.CreateToken(timeoutCtx,
+		authapi.CreateTokenParams{
+			RequestID: requestID,
+			Region:    instance.RegionSlug,
+		},
+		authapi.CreateTokenPayload{
 			AccessPolicyID: accessPolicy.ID,
 			Name:           accessTokenName,
 			DisplayName:    accessTokenDisplayName,
@@ -303,14 +323,14 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	return cloudmigration.CreateAccessTokenResponse{Token: base64.StdEncoding.EncodeToString(bytes)}, nil
 }
 
-func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, accessPolicyName string) (*gcom.AccessPolicy, error) {
-	accessPolicies, err := s.gcomService.ListAccessPolicies(ctx, gcom.ListAccessPoliciesParams{
+func (s *Service) findAccessPolicyByName(ctx context.Context, accessPolicyName string, region string) (*authapi.AccessPolicy, error) {
+	accessPolicies, err := s.authApiService.ListAccessPolicies(ctx, authapi.ListAccessPoliciesParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
-		Region:    regionSlug,
 		Name:      accessPolicyName,
+		Region:    region,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("listing access policies: name=%s region=%s :%w", accessPolicyName, regionSlug, err)
+		return nil, fmt.Errorf("listing access policies: name=%s :%w", accessPolicyName, err)
 	}
 
 	for _, accessPolicy := range accessPolicies {
@@ -349,10 +369,10 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteTokenTimeout)
 	defer cancel()
-	if err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
+	if err := s.authApiService.DeleteToken(timeoutCtx, authapi.DeleteTokenParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
-		Region:    instance.RegionSlug,
 		TokenID:   tokenID,
+		Region:    instance.RegionSlug,
 	}); err != nil && !errors.Is(err, gcom.ErrTokenNotFound) {
 		return fmt.Errorf("deleting cloud migration token: tokenID=%s %w", tokenID, err)
 	}
@@ -394,7 +414,7 @@ func (s *Service) GetSessionList(ctx context.Context, orgID int64) (*cloudmigrat
 	return &cloudmigration.CloudMigrationSessionListResponse{Sessions: migrations}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (s *Service) CreateSession(ctx context.Context, signedInUser *user.SignedInUser, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSession")
 	defer span.End()
 
@@ -419,7 +439,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, cloudmigration.ErrSessionCreationFailure.Errorf("error creating migration")
 	}
 
-	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil, signedInUser.UserUID)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -429,18 +449,18 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, orgID int64, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *Service) DeleteSession(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.DeleteSession")
 	defer span.End()
 
 	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, orgID, sessionUID)
 	if err != nil {
-		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+		s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 		return nil, fmt.Errorf("deleting migration from db for session %v: %w", sessionUID, err)
 	}
 
 	err = s.deleteLocalFiles(snapshots)
-	s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 	return session, nil
 }
 
@@ -506,7 +526,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
 		s.cancelFunc = cancelFunc
 
-		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
+		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.buildSnapshot(asyncCtx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
@@ -527,7 +547,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		}
 
 		span.SetStatus(codes.Ok, "snapshot built")
-		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err)
+		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return &snapshot, nil
@@ -685,7 +705,7 @@ func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.List
 	return snapshotList, nil
 }
 
-func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error {
+func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot",
 		trace.WithAttributes(
 			attribute.String("sessionUid", sessionUid),
@@ -740,7 +760,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, sessionUid st
 
 		asyncCtx, s.cancelFunc = context.WithCancel(asyncCtx)
 
-		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
+		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.uploadSnapshot(asyncCtx, session, snapshot, uploadUrl)
@@ -760,7 +780,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, sessionUid st
 			}
 		}
 
-		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err)
+		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return nil
@@ -808,6 +828,7 @@ func (s *Service) report(
 	t gmsclient.LocalEventType,
 	d time.Duration,
 	evtErr error,
+	userUID string,
 ) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.report")
 	defer span.End()
@@ -832,6 +853,7 @@ func (s *Service) report(
 	e := gmsclient.EventRequestDTO{
 		Event:   t,
 		LocalID: id,
+		UserUID: userUID,
 	}
 
 	if d != 0 {

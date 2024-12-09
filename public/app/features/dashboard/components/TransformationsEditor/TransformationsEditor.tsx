@@ -13,12 +13,20 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Container, Themeable, withTheme, IconButton, ButtonGroup } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import {
+  Button,
+  ConfirmModal,
+  Container,
+  Themeable,
+  withTheme,
+  IconButton,
+  ButtonGroup,
+  ScrollContainer,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';

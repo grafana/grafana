@@ -17,12 +17,13 @@ import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
 
-export const SIMPLE_CONDITION_QUERY_ID = 'A';
-export const SIMPLE_CONDITION_REDUCER_ID = 'B';
-export const SIMPLE_CONDITION_THRESHOLD_ID = 'C';
-
+export const SimpleConditionIdentifier = {
+  queryId: 'A',
+  reducerId: 'B',
+  thresholdId: 'C',
+} as const;
 export interface SimpleCondition {
-  whenField: string;
+  whenField?: string;
   evaluator: {
     params: number[];
     type: EvalFunction;
@@ -106,15 +107,17 @@ export const SimpleConditionEditor = ({
           </Text>
         </header>
         <InlineFieldRow className={styles.condition.container}>
-          <InlineField label="WHEN">
-            <Select
-              options={reducerTypes}
-              value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
-              onChange={onReducerTypeChange}
-              width={20}
-            />
-          </InlineField>
-          <InlineField label="OF QUERY">
+          {simpleCondition.whenField && (
+            <InlineField label="WHEN">
+              <Select
+                options={reducerTypes}
+                value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
+                onChange={onReducerTypeChange}
+                width={20}
+              />
+            </InlineField>
+          )}
+          <InlineField label={simpleCondition.whenField ? 'OF QUERY' : 'WHEN QUERY'}>
             <Stack direction="row" gap={1} alignItems="center">
               <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (
@@ -156,7 +159,8 @@ function updateReduceExpression(
   dispatch: Dispatch<UnknownAction>
 ) {
   const reduceExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.model.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.reduce && query.model.refId === SimpleConditionIdentifier.reducerId
   );
 
   const newReduceExpression = reduceExpression
@@ -176,7 +180,8 @@ function updateThresholdFunction(
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.model.refId === SimpleConditionIdentifier.thresholdId
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
@@ -194,7 +199,8 @@ function updateThresholdValue(
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.model.refId === SimpleConditionIdentifier.thresholdId
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
@@ -207,13 +213,14 @@ function updateThresholdValue(
 
 export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<ExpressionQuery>>): SimpleCondition {
   const reduceExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const thresholdExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
-  const whenField = reduceExpression?.model.reducer ?? ReducerID.last;
+  const whenField = reduceExpression?.model.reducer;
   const params = conditionsFromThreshold[0]?.evaluator?.params
     ? [...conditionsFromThreshold[0]?.evaluator?.params]
     : [0];

@@ -103,15 +103,15 @@ You can install publicly available plugins and plugins that are private or used 
 
 ### Install plugins from other sources
 
-To install plugins from other sources, you must define the custom URL and specify it immediately before the plugin name in the `GF_INSTALL_PLUGINS` environment variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
+To install plugins from other sources, you must define the custom URL and specify it immediately before the plugin name in the `GF_PLUGINS_PREINSTALL` environment variable: `GF_PLUGINS_PREINSTALL=<plugin ID>@[<plugin version>]@<url to plugin zip>`.
 
 Example:
 
-The following command runs Grafana Enterprise on **port 3000** in detached mode and installs the custom plugin, which is specified as a URL parameter in the `GF_INSTALL_PLUGINS` environment variable.
+The following command runs Grafana Enterprise on **port 3000** in detached mode and installs the custom plugin, which is specified as a URL parameter in the `GF_PLUGINS_PREINSTALL` environment variable.
 
 ```bash
 docker run -d -p 3000:3000 --name=grafana \
-  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
+  -e "GF_PLUGINS_PREINSTALL=custom-plugin@@http://plugin-domain.com/my-custom-plugin.zip,grafana-clock-panel" \
   grafana/grafana-enterprise
 ```
 

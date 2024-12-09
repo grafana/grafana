@@ -217,6 +217,7 @@ export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
 export { Grid } from './Layout/Grid/Grid';
 export { Space } from './Layout/Space';
+export { ScrollContainer } from './ScrollContainer/ScrollContainer';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -321,3 +322,9 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+} from './ElementSelectionContext/ElementSelectionContext';

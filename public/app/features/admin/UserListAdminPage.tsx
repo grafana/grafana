@@ -7,7 +7,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
@@ -79,6 +79,7 @@ const UserListAdminPageUnConnected = ({
             autoFocus={true}
             value={query}
             onChange={changeQuery}
+            escapeRegex={false}
           />
           <RadioButtonGroup
             options={[
@@ -94,7 +95,7 @@ const UserListAdminPageUnConnected = ({
           ))}
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
-              New user
+              <Trans i18nKey="admin.users-list.create-button">New user</Trans>
             </LinkButton>
           )}
         </div>
