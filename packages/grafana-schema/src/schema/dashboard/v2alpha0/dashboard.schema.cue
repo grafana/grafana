@@ -362,12 +362,9 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
   query: DataQueryKind
-
-  // TODO: Should be figured out based on datasource (Grafana ds)
-  // builtIn?: int
-  // Below are currently existing options for annotation queries
+  builtIn?: bool
   enable: bool
   filter: AnnotationPanelFilter
   hide: bool
@@ -398,7 +395,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
   query: DataQueryKind
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
 
   refId: string
   hidden: bool
@@ -598,7 +595,7 @@ QueryVariableSpec: {
   refresh: VariableRefresh
   skipUrlSync: bool | *false
   description?: string
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   query: string | DataQueryKind | *""
   regex: string | *""
   sort: VariableSort
@@ -732,7 +729,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""
     value: ""
@@ -756,7 +753,7 @@ GroupByVariableKind: {
 // Adhoc variable specification
 AdhocVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   baseFilters: [...AdHocFilterWithLabels] | *[]
   filters: [...AdHocFilterWithLabels] | *[]
   defaultKeys: [...MetricFindValue] | *[]

@@ -14,9 +14,8 @@ const normalizeMatchers = (route: Route) => {
   const routeMatchers: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher[] = [];
 
   if (route.object_matchers) {
-    // todo foreach
-    route.object_matchers.map(([label, type, value]) => {
-      return { label, type, value };
+    route.object_matchers.forEach(([label, type, value]) => {
+      routeMatchers.push({ label, type, value });
     });
   }
 

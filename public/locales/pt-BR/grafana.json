@@ -245,6 +245,7 @@
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
       "view": ""
     },
     "contact-points": {
@@ -328,6 +329,14 @@
     "mute-timings": {
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
@@ -2937,8 +2946,7 @@
       "loading": "",
       "save-button": "Salvar no arquivo",
       "share-externally-label": "Exportar para compartilhamento externo",
-      "view-button": "Visualizar JSON",
-      "view-button-schemav2": ""
+      "view-button": "Visualizar JSON"
     },
     "library": {
       "info": "Criar painel de biblioteca."
@@ -3221,9 +3229,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",

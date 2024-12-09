@@ -12,7 +12,6 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -22,6 +21,14 @@ var (
 	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
 )
 
+func FeatureEnabled(features featuremgmt.FeatureToggles) bool {
+	return featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+		featuremgmt.FlagKubernetesDashboardsAPI,
+		featuremgmt.FlagKubernetesDashboards, // << the UI will call the new apis
+		featuremgmt.FlagProvisioning)
+}
+
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct{}
 
@@ -29,7 +36,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+	if !FeatureEnabled(features) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 	builder := &DashboardsAPIBuilder{}
@@ -43,10 +50,6 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // no authorizer
-}
-
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	return grafanarest.Mode0
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -70,8 +73,4 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return oas, nil
-}
-
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
 }

@@ -85,7 +85,7 @@ import {
 
 const DEFAULT_DATASOURCE = 'default';
 
-type TypedVariableModelv2 =
+export type TypedVariableModelV2 =
   | QueryVariableKind
   | TextVariableKind
   | ConstantVariableKind
@@ -101,7 +101,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const annotationLayers = dashboard.annotations.map((annotation) => {
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
-      query: annotation.spec,
+      query: {
+        ...annotation.spec,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
+      },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
@@ -297,7 +300,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource.uid || datasource.type !== query.spec.datasource.type) {
+    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
@@ -393,7 +396,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): SceneVariable {
+function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -590,7 +593,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVariable {
+export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

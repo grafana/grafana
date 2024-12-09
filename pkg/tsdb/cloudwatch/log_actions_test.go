@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -309,6 +311,26 @@ func TestQuery_StartQuery(t *testing.T) {
 	})
 }
 
+type withQueryLanguageMock struct {
+	capturedLanguage      *dataquery.LogsQueryLanguage
+	mockWithQueryLanguage func(language *dataquery.LogsQueryLanguage) func(request *request.Request)
+}
+
+func newWithQueryLanguageMock() *withQueryLanguageMock {
+	mock := &withQueryLanguageMock{
+		capturedLanguage: new(dataquery.LogsQueryLanguage),
+	}
+
+	mock.mockWithQueryLanguage = func(language *dataquery.LogsQueryLanguage) func(request *request.Request) {
+		*mock.capturedLanguage = *language
+		return func(req *request.Request) {
+
+		}
+	}
+
+	return mock
+}
+
 func Test_executeStartQuery(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
@@ -321,40 +343,135 @@ func Test_executeStartQuery(t *testing.T) {
 		return &cli
 	}
 
-	t.Run("successfully parses information from JSON to StartQueryWithContext", func(t *testing.T) {
-		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
-		})
-		executor := newExecutor(im, log.NewNullLogger())
-
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
+	t.Run("successfully parses information from JSON to StartQueryWithContext for language", func(t *testing.T) {
+		testCases := map[string]struct {
+			queries        []backend.DataQuery
+			expectedOutput []*cloudwatchlogs.StartQueryInput
+			queryLanguage  dataquery.LogsQueryLanguage
+		}{
+			"not defined": {
+				queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+						JSON: json.RawMessage(`{
+							"type":    "logAction",
+							"subtype": "StartQuery",
+							"limit":   12,
+							"queryString":"fields @message",
+							"logGroupNames":["some name","another name"]
+						}`),
+					},
+				},
+				expectedOutput: []*cloudwatchlogs.StartQueryInput{{
+					StartTime:     aws.Int64(0),
+					EndTime:       aws.Int64(1),
+					Limit:         aws.Int64(12),
+					QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+					LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
+				}},
+				queryLanguage: dataquery.LogsQueryLanguageCWLI,
+			},
+			"CWLI": {
+				queries: []backend.DataQuery{{
 					RefID:     "A",
 					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
 					JSON: json.RawMessage(`{
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"limit":   12,
+						"queryLanguage": "CWLI",
 						"queryString":"fields @message",
 						"logGroupNames":["some name","another name"]
 					}`),
+				}},
+				expectedOutput: []*cloudwatchlogs.StartQueryInput{
+					{
+						StartTime:     aws.Int64(0),
+						EndTime:       aws.Int64(1),
+						Limit:         aws.Int64(12),
+						QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+						LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
+					},
 				},
+				queryLanguage: dataquery.LogsQueryLanguageCWLI,
 			},
-		})
+			"PPL": {
+				queries: []backend.DataQuery{{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryLanguage": "PPL",
+						"queryString":"source logs | fields @message",
+						"logGroupNames":["some name","another name"]
+					}`),
+				}},
+				expectedOutput: []*cloudwatchlogs.StartQueryInput{
+					{
+						StartTime:     aws.Int64(0),
+						EndTime:       aws.Int64(1),
+						Limit:         aws.Int64(12),
+						QueryString:   aws.String("source logs | fields @message"),
+						LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
+					},
+				},
+				queryLanguage: dataquery.LogsQueryLanguagePPL,
+			},
+			"SQL": {
+				queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+						JSON: json.RawMessage(`{
+							"type":    "logAction",
+							"subtype": "StartQuery",
+							"limit":   12,
+							"queryLanguage": "SQL",
+							"queryString":"SELECT * FROM logs",
+							"logGroupNames":["some name","another name"]
+						}`),
+					},
+				},
+				expectedOutput: []*cloudwatchlogs.StartQueryInput{
+					{
+						StartTime:     aws.Int64(0),
+						EndTime:       aws.Int64(1),
+						Limit:         aws.Int64(12),
+						QueryString:   aws.String("SELECT * FROM logs"),
+						LogGroupNames: nil,
+					},
+				},
+				queryLanguage: dataquery.LogsQueryLanguageSQL,
+			},
+		}
+		for name, test := range testCases {
+			t.Run(name, func(t *testing.T) {
+				cli = fakeCWLogsClient{}
+				im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+					return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+				})
+				executor := newExecutor(im, log.NewNullLogger())
 
-		assert.NoError(t, err)
-		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
-			{
-				StartTime:     aws.Int64(0),
-				EndTime:       aws.Int64(1),
-				Limit:         aws.Int64(12),
-				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
-				LogGroupNames: []*string{aws.String("some name"), aws.String("another name")},
-			},
-		}, cli.calls.startQueryWithContext)
+				languageMock := newWithQueryLanguageMock()
+				originalWithQueryLanguage := WithQueryLanguage
+				WithQueryLanguage = languageMock.mockWithQueryLanguage
+				defer func() {
+					WithQueryLanguage = originalWithQueryLanguage
+				}()
+
+				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+					Queries:       test.queries,
+				})
+
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOutput, cli.calls.startQueryWithContext)
+				assert.Equal(t, &test.queryLanguage, languageMock.capturedLanguage)
+			})
+		}
 	})
 
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
@@ -400,6 +517,7 @@ func Test_executeStartQuery(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"limit":   12,
+						"queryLanguage": "CWLI",
 						"queryString":"fields @message",
 						"logGroups":[{"arn": "fakeARN"}]
 					}`),
