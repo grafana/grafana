@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -13,20 +14,18 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client         auth.BackgroundIdentityService
-	getter         RepoGetter
-	logger         *slog.Logger
-	resourceClient *resources.ClientFactory
+	client auth.BackgroundIdentityService
+	getter RepoGetter
+	logger *slog.Logger
+	jobs   jobs.JobQueue
 }
 
 func (*webhookConnector) New() runtime.Object {
-	// This is added as the "ResponseType" regardless what ProducesObject() returns
 	return &provisioning.WebhookResponse{}
 }
 
@@ -76,25 +75,25 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 		if rsp.Jobs != nil {
-			worker, ok := repo.(repository.JobProcessor)
-			if !ok {
-				responder.Error(fmt.Errorf("repo does not support processing jobs"))
-				return
-			}
-
-			// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
-			// TODO: Async process the jobs!!
-			ctx := identity.WithRequester(context.Background(), id)
-			ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
-			defer cancel()
-
-			factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-			for _, job := range rsp.Jobs {
-				err := worker.Process(ctx, logger, job, factory)
+			// Add the job to the job queue
+			for _, spec := range rsp.Jobs {
+				job := provisioning.Job{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: namespace,
+						Labels: map[string]string{
+							"repository":      name,
+							"repository.type": string(repo.Config().Spec.Type),
+						},
+					},
+					Spec: spec,
+				}
+				id, err := s.jobs.Add(ctx, job)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
+				job.Name = id
+				rsp.IDs = append(rsp.IDs, id)
 			}
 		}
 		responder.Object(rsp.Code, rsp)

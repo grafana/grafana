@@ -433,11 +433,11 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 
 	count := 0
 
-	jobs := make([]provisioning.Job, 0, len(event.Commits))
+	jobs := make([]provisioning.JobSpec, 0, len(event.Commits))
 
 	beforeRef := event.GetBefore()
 	for _, commit := range event.Commits {
-		job := provisioning.Job{
+		job := provisioning.JobSpec{
 			Action: provisioning.JobActionMergeBranch,
 			Ref:    commit.GetID(),
 		}
@@ -538,7 +538,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
-		Jobs: []provisioning.Job{
+		Jobs: []provisioning.JobSpec{
 			{
 				Action: provisioning.JobActionPullRequest,
 				URL:    pr.GetHTMLURL(),
@@ -551,7 +551,9 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 }
 
 // Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error {
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, factory FileReplicatorFactory) error {
+	job := wrap.Spec
+
 	// TODO... verify added vs removed vs modified... should not process 2x!
 	replicator, err := factory.New()
 	if err != nil {
@@ -610,7 +612,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, job
 }
 
 // Process a pull request
-func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.Job, replicator FileReplicator) error {
+func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.JobSpec, replicator FileReplicator) error {
 	// Get the files changed in the pull request
 	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, job.PR)
 	if err != nil {
