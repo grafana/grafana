@@ -27,14 +27,14 @@ var ErrNamespaceMismatch = errors.New("the file namespace does not match target 
 
 type Parser struct {
 	// The target repository
-	repo repository.Repository
+	repo *provisioning.Repository
 
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
 }
 
-func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
+func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
 	return &Parser{
 		repo:   repo,
 		client: client,
@@ -98,7 +98,7 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 		return nil, err
 	}
 	obj := parsed.Obj
-	cfg := r.repo.Config()
+	cfg := r.repo
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != cfg.GetNamespace() {

@@ -77,7 +77,8 @@ spec:
 			"schemaVersion": 7,
 			"panels": [],
 			"tags": []
-		}`)})
+		}`),
+		})
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, classic)
@@ -97,11 +98,11 @@ spec:
 		info.Data, err = os.ReadFile(filepath.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := NewParser(repository.NewUnknown(&provisioning.Repository{
+		parser := NewParser(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
-		}), &DynamicClient{}, &StaticKindsLookup{})
+		}, &DynamicClient{}, &StaticKindsLookup{})
 
 		// try to validate (and lint)
 		validate := true
@@ -119,7 +120,7 @@ spec:
 
 		jj, err := json.MarshalIndent(parsed.Lint, "", "  ")
 		require.NoError(t, err)
-		//fmt.Printf("%s\n", string(jj))
+		// fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
 				"severity": "error",

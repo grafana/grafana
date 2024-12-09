@@ -153,7 +153,7 @@ func (s *filesConnector) getParser(repo repository.Repository) (*resources.Parse
 	if err != nil {
 		return nil, err
 	}
-	return resources.NewParser(repo, client, kinds), nil
+	return resources.NewParser(repo.Config(), client, kinds), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
