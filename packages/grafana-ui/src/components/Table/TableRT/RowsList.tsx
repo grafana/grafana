@@ -17,20 +17,20 @@ import {
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
-import { usePanelContext } from '../PanelChrome';
-
-import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
-import { TableCell } from './TableCell';
-import { TableStyles } from './styles';
-import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from './types';
+import { useTheme2 } from '../../../themes';
+import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
+import { usePanelContext } from '../../PanelChrome';
+import { TableCell } from '../Cells/TableCell';
+import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from '../types';
 import {
   calculateAroundPointThreshold,
   getCellColors,
   isPointTimeValAroundTableTimeVal,
   guessTextBoundingBox,
-} from './utils';
+} from '../utils';
+
+import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
+import { TableStyles } from './styles';
 
 interface RowsListProps {
   data: DataFrame;
@@ -252,7 +252,7 @@ export const RowsList = (props: RowsListProps) => {
     ) {
       rowBg = (rowIndex: number): CellColors => {
         const display = field.display!(field.values.get(rowIndex));
-        const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        const colors = getCellColors(tableStyles.theme, fieldOptions.cellOptions, display);
         return colors;
       };
     }
