@@ -115,6 +115,7 @@ func TestParseWebhooks(t *testing.T) {
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
 		t.Run(name, func(t *testing.T) {
+			// nolint:gosec
 			payload, err := os.ReadFile(filepath.Join("github", "testdata", name))
 			require.NoError(t, err)
 
