@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/influxdata/influxql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
@@ -34,11 +35,13 @@ func readJsonFile(filePath string) io.ReadCloser {
 }
 
 func generateQuery(query, resFormat, alias string) *models.Query {
+	statement, _ := influxql.ParseStatement(query)
 	return &models.Query{
 		RawQuery:     query,
 		UseRawQuery:  true,
 		Alias:        alias,
 		ResultFormat: resFormat,
+		Statement:    statement,
 	}
 }
 

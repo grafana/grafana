@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	"github.com/influxdata/influxql"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
@@ -382,9 +382,12 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 }
 
 func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []string, measurement string, query *models.Query) *data.Frame {
-	lowerQuery := strings.ToLower(query.RawQuery)
-	switch {
-	case util.IsCardinalityQuery(query.RawQuery):
+	switch query.Statement.(type) {
+	case *influxql.ShowMeasurementCardinalityStatement,
+		*influxql.ShowSeriesCardinalityStatement,
+		*influxql.ShowFieldKeyCardinalityStatement,
+		*influxql.ShowTagValuesCardinalityStatement,
+		*influxql.ShowTagKeyCardinalityStatement:
 		// Handle all CARDINALITY queries
 		var stringArray []*string
 		for _, v := range valueFields {
@@ -397,17 +400,13 @@ func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []
 		}
 		return data.NewFrame(measurement, data.NewField("Value", nil, stringArray))
 
-	case len(columns) >= 2 && strings.Contains(lowerQuery, "show tag values"):
+	case *influxql.ShowTagValuesStatement:
 		// Handle SHOW TAG VALUES (non-CARDINALITY)
 		return data.NewFrame(measurement, valueFields[1])
 
-	case len(columns) >= 1:
+	default:
 		// Handle generic queries with at least one column
 		return data.NewFrame(measurement, valueFields[0])
-
-	default:
-		// No valid frame to return
-		return nil
 	}
 }
 

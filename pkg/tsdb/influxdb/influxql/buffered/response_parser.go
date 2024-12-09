@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/influxdata/influxql"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
@@ -345,17 +346,20 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []*string
-	lowerQuery := strings.ToLower(query.RawQuery)
 
-	switch {
-	case util.IsCardinalityQuery(query.RawQuery):
+	switch query.Statement.(type) {
+	case *influxql.ShowMeasurementCardinalityStatement,
+		*influxql.ShowSeriesCardinalityStatement,
+		*influxql.ShowFieldKeyCardinalityStatement,
+		*influxql.ShowTagValuesCardinalityStatement,
+		*influxql.ShowTagKeyCardinalityStatement:
 		// Handle all CARDINALITY queries
 		for _, valuePair := range row.Values {
 			if len(valuePair) >= 1 {
 				values = append(values, util.ParseString(valuePair[0]))
 			}
 		}
-	case strings.Contains(lowerQuery, "show diagnostics"):
+	case *influxql.ShowDiagnosticsStatement:
 		// Handle SHOW DIAGNOSTICS
 		// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
 		for _, valuePair := range row.Values {
@@ -363,7 +367,7 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 				values = append(values, util.ParseString(vp))
 			}
 		}
-	case strings.Contains(lowerQuery, "show tag values"):
+	case *influxql.ShowTagValuesStatement:
 		// Handle SHOW TAG VALUES (non-CARDINALITY)
 		for _, valuePair := range row.Values {
 			if len(valuePair) >= 2 {
