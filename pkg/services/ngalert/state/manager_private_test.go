@@ -44,38 +44,48 @@ func TestStateIsStale(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		lastEvaluation time.Time
+		state          State
 		expectedResult bool
 	}{
 		{
-			name:           "false if last evaluation is now",
-			lastEvaluation: now,
+			name: "false if last evaluation is now",
+			state: State{
+				LastEvaluationTime: now,
+			},
 			expectedResult: false,
 		},
 		{
-			name:           "false if last evaluation is 1 interval before now",
-			lastEvaluation: now.Add(-time.Duration(intervalSeconds)),
+			name: "false if last evaluation is 1 interval before now",
+			state: State{
+				LastEvaluationTime: now.Add(-time.Duration(intervalSeconds)),
+			},
 			expectedResult: false,
 		},
 		{
-			name:           "false if last evaluation is little less than 2 interval before now",
-			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2).Add(100 * time.Millisecond),
+			name: "false if last evaluation is little less than 2 interval before now",
+			state: State{
+				LastEvaluationTime: now.Add(-time.Duration(intervalSeconds) * time.Second * 2).Add(100 * time.Millisecond),
+			},
 			expectedResult: false,
 		},
 		{
-			name:           "true if last evaluation is 2 intervals from now",
-			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2),
+			name: "true if last evaluation is 2 intervals from now",
+			state: State{
+				LastEvaluationTime: now.Add(-time.Duration(intervalSeconds) * time.Second * 2),
+			},
 			expectedResult: true,
 		},
 		{
-			name:           "true if last evaluation is 3 intervals from now",
-			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 3),
+			name: "true if last evaluation is 3 intervals from now",
+			state: State{
+				LastEvaluationTime: now.Add(-time.Duration(intervalSeconds) * time.Second * 3),
+			},
 			expectedResult: true,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedResult, stateIsStale(now, tc.lastEvaluation, intervalSeconds))
+			require.Equal(t, tc.expectedResult, stateIsStale(now, &tc.state, intervalSeconds, ngmodels.EvaluationSemanticsGrafana, nil))
 		})
 	}
 }

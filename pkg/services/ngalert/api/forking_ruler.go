@@ -1,10 +1,15 @@
 package api
 
 import (
+	"io"
+
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // RulerApiHandler will validate and proxy requests to the correct backend type depending on the datasource.
@@ -97,6 +102,10 @@ func (f *RulerApiHandler) handleRouteGetRuleByUID(ctx *contextmodel.ReqContext, 
 	return f.GrafanaRuler.RouteGetRuleByUID(ctx, ruleUID)
 }
 
+func (f *RulerApiHandler) handleRoutePostRulesGroupConvert(ctx *contextmodel.ReqContext, dsUID string) response.Response {
+	return f.GrafanaRuler.RoutePostRulesGroupConvert(ctx, dsUID)
+}
+
 func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, namespace string) response.Response {
 	payloadType := conf.Type()
 	if payloadType != apimodels.GrafanaBackend {
@@ -117,10 +126,43 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
+func (f *RulerApiHandler) handleRoutePostGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		return errorToResponse(err)
+	}
+	defer func() { _ = ctx.Req.Body.Close() }()
+
+	var ruleGroup apimodels.PostablePrometheusRuleGroup
+	if err := yaml.Unmarshal(body, &ruleGroup); err != nil {
+		return errorToResponse(err)
+	}
+
+	return f.GrafanaRuler.RoutePostGrafanaRuleGroupPrometheusConfig(ctx, ruleGroup, namespace)
+}
+
+func (f *RulerApiHandler) handleRouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetGrafanaRulesPrometheusConfig(ctx)
+}
+
+func (f *RulerApiHandler) handleRouteGetGrafanaRuleGroupPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Group"]
+	return f.GrafanaRuler.RouteGetGrafanaRuleGroupPrometheusConfig(ctx, namespaceParam, groupnameParam)
+}
+
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {
 	_, err := getDatasourceByUID(ctx, f.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
 		return nil, err
 	}
 	return f.LotexRuler, nil
+}
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusRuleGroup(ctx *contextmodel.ReqContext, fullpath, groupName string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, groupName)
+}
+
+func (f *RulerApiHandler) handleRouteDeleteGrafanaPrometheusNamespace(ctx *contextmodel.ReqContext, fullpath string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRulesByFullpath(ctx, fullpath, "")
 }
