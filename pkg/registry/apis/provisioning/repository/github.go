@@ -563,11 +563,8 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		return r.processPR(ctx, logger, job, replicator)
 	}
 
-	// ???????
-	// Is everything below here generic?  not github specific?
-
+	// NOTE: Everything below here is not git specific
 	for _, commit := range job.Commits {
-
 		// NOT PR, this is processing the actual files
 		for _, v := range commit.Added {
 			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
