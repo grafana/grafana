@@ -106,7 +106,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      height: '100%',
+      flexGrow: 1,
       width: '100%',
     }),
   };
