@@ -77,6 +77,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                                                              | Yes                |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                          | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                             | Yes                |
+| `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                                                       | Yes                |
 
 ## Public preview feature toggles
 

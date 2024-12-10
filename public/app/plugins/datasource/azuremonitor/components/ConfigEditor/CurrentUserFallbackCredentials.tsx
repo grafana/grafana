@@ -14,7 +14,6 @@ import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 export interface Props {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
-  userIdentityEnabled: boolean;
   credentials: AadCurrentUserCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
