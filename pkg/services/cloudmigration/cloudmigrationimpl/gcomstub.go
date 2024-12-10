@@ -81,8 +81,22 @@ func (client *gcomStub) DeleteToken(ctx context.Context, params gcom.DeleteToken
 }
 
 func (client *gcomStub) GetPlugins(ctx context.Context, requestID string) (map[string]gcom.Plugin, error) {
-	plugins := make(map[string]gcom.Plugin)
-	plugins["active-plugin"] = gcom.Plugin{Slug: "active-plugin", Status: "active", SignatureType: "commercial"}
-	plugins["deprecated-plugin"] = gcom.Plugin{Slug: "deprecated-plugin", Status: "deprecated", SignatureType: "commercial"}
+	plugins := map[string]gcom.Plugin{
+		"plugin-external-valid-grafana": {
+			Slug:          "plugin-external-valid-grafana",
+			Status:        "active",
+			SignatureType: "grafana",
+		},
+		"plugin-external-valid-commercial": {
+			Slug:          "plugin-external-valid-commercial",
+			Status:        "active",
+			SignatureType: "commercial",
+		},
+		"plugin-external-valid-community": {
+			Slug:          "active-plugin",
+			Status:        "active",
+			SignatureType: "community",
+		},
+	}
 	return plugins, nil
 }
