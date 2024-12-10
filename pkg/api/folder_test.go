@@ -16,6 +16,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	conversions "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -527,6 +528,10 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 	return &clientrest.Config{
 		Host: m.host,
 	}
+}
+
+func (m mockClientConfigProvider) GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config {
+	return nil
 }
 
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}

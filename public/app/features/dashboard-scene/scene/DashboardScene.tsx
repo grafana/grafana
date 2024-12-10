@@ -385,7 +385,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return true;
   };
 
-  public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
+  public openSaveDrawer({
+    saveAsCopy,
+    saveProvisioned,
+    onSaveSuccess,
+  }: {
+    saveAsCopy?: boolean;
+    saveProvisioned?: boolean;
+    onSaveSuccess?: () => void;
+  }) {
     if (!this.state.isEditing) {
       return;
     }
@@ -395,6 +403,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+        saveProvisioned,
       }),
     });
   }

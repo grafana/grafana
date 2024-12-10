@@ -37,7 +37,8 @@ type FolderInfoList struct {
 
 	// +listType=map
 	// +listMapKey=uid
-	Items []FolderInfo `json:"items,omitempty"`
+	// TODO: Make a new version with `items` => `infoItems`. I just did this to work around it in dev.
+	Items []FolderInfo `json:"infoItems,omitempty"`
 }
 
 // FolderInfo briefly describes a folder -- unlike a folder resource,
