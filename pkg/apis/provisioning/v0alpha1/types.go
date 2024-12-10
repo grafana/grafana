@@ -101,6 +101,9 @@ type RepositorySpec struct {
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
+	// Linting enables linting for this repository
+	Linting bool `json:"linting,omitempty"`
+
 	// The repository on the local file system.
 	// Mutually exclusive with s3 and github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
