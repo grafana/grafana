@@ -47,7 +47,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
+        () =>
+          import(
+            /* webpackChunkName: "NotificationPoliciesPage" */ 'app/features/alerting/unified/NotificationPoliciesPage'
+          )
       ),
     },
     {
