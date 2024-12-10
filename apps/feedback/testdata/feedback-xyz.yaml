@@ -1,0 +1,14 @@
+apiVersion: feedback.grafana.app/v0alpha1
+kind: Feedback
+metadata:
+  name: xyz
+  annotations:
+    xx: XXX
+    yy: YYY
+  labels:
+    aa: AAA
+    bb: BBB
+spec:
+  message: |
+    This is a cool message!
+    With many lines!
