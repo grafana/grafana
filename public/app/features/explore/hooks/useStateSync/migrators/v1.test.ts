@@ -1,7 +1,7 @@
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { v1Migrator } from './v1';
-
+jest.mock('app/features/plugins/plugin_loader', () => ({}));
 // Avoids errors caused by circular dependencies
 jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
   ignoreNextSave: jest.fn(),

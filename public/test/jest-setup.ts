@@ -78,7 +78,8 @@ jest.mock('../app/core/core', () => ({
   appEvents: testAppEvents,
 }));
 jest.mock('../app/angular/partials', () => ({}));
-jest.mock('../app/features/plugins/plugin_loader', () => ({}));
+// Mocking this means we can't test plugin loading/dynamic import of datasource components 🤷‍♂️
+// jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {
