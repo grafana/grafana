@@ -8,30 +8,39 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 )
 
-func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar, isHistogram bool) *data.Frame {
-	timeField := data.NewField("Time", nil, []time.Time{})
-	valueField := data.NewField("Value", nil, []float64{})
+const bucketFieldName = "__bucket"
+
+func transformExemplarToFrame(name string, series *tempopb.TimeSeries, isHistogram bool) *data.Frame {
+	exemplars := series.Exemplars
+
+	var fields []*data.Field
+
+	// Setup fields for basic data
+	fields = append(fields, data.NewField("Time", nil, []time.Time{}))
+	fields = append(fields, data.NewField("Value", nil, []float64{}))
 	traceIdField := data.NewField("traceId", nil, []string{})
 	traceIdField.Config = &data.FieldConfig{
 		DisplayName: "Trace ID",
 	}
-	bucketField := data.NewField("__bucket", nil, []float64{})
+	fields = append(fields, traceIdField)
+
+	// Add fields for each label to be able to link exemplars to the series
+	for _, label := range series.Labels {
+		fields = append(fields, data.NewField(label.GetKey(), nil, []string{}))
+	}
+
+	// Special case for histograms, requires a bucket field
+	if isHistogram {
+		fields = append(fields, data.NewField(bucketFieldName, nil, []float64{}))
+	}
 
 	frame := &data.Frame{
-		RefID: name,
-		Name:  "exemplar",
-		Fields: []*data.Field{
-			timeField,
-			valueField,
-			traceIdField,
-		},
+		RefID:  name,
+		Name:   "exemplar",
+		Fields: fields,
 		Meta: &data.FrameMeta{
 			DataTopic: "annotations",
 		},
-	}
-
-	if isHistogram {
-		frame.Fields = append(frame.Fields, bucketField)
 	}
 
 	for _, exemplar := range exemplars {
@@ -41,10 +50,24 @@ func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar, isHisto
 			traceId = strings.ReplaceAll(traceId, "\"", "")
 		}
 
+		// Add basic data
 		frame.AppendRow(time.UnixMilli(exemplar.GetTimestampMs()), exemplar.GetValue(), traceId)
 
+		// Add bucket for histograms
 		if isHistogram {
-			frame.Fields[3].Append(exemplar.GetValue())
+			bucketField, _ := frame.FieldByName(bucketFieldName)
+			if bucketField != nil {
+				bucketField.Append(exemplar.GetValue())
+			}
+		}
+
+		// Add labels
+		for _, label := range series.Labels {
+			field, _ := frame.FieldByName(label.GetKey())
+			if field != nil {
+				val, _ := metricsValueToString(label.GetValue())
+				field.Append(val)
+			}
 		}
 	}
 	return frame
