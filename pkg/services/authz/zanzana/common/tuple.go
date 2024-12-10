@@ -31,43 +31,73 @@ const (
 	RelationSetEdit  string = "edit"
 	RelationSetAdmin string = "admin"
 
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	RelationGet    string = "get"
+	RelationUpdate string = "update"
+	RelationCreate string = "create"
+	RelationDelete string = "delete"
 
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceRead             string = "resource_" + RelationRead
-	RelationFolderResourceWrite            string = "resource_" + RelationWrite
-	RelationFolderResourceCreate           string = "resource_" + RelationCreate
-	RelationFolderResourceDelete           string = "resource_" + RelationDelete
-	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
-	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
+	RelationFolderResourceGet    string = "resource_" + RelationGet
+	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate string = "resource_" + RelationCreate
+	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
-var ResourceRelations = []string{
-	RelationRead,
-	RelationWrite,
+// RelationsNamespace are relations that can be added on type "namespace".
+var RelationsNamespace = []string{
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
 	RelationDelete,
-	RelationPermissionsRead,
-	RelationPermissionsWrite,
 }
 
-var FolderRelations = append(
-	ResourceRelations,
-	RelationCreate,
-	RelationFolderResourceRead,
-	RelationFolderResourceWrite,
+// RelationsResource are relations that can be added on type "resource".
+var RelationsResource = []string{
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
+}
+
+// RelationsFolderResource are relations that can be added on type "folder" for child resources.
+var RelationsFolderResource = []string{
+	RelationFolderResourceGet,
+	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
-	RelationFolderResourcePermissionsRead,
-	RelationFolderResourcePermissionsWrite,
+}
+
+// RelationsFolder are relations that can be added on type "folder".
+var RelationsFolder = append(
+	RelationsFolderResource,
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
+	RelationDelete,
 )
+
+func IsNamespaceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsNamespace)
+}
+
+func IsFolderResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsFolderResource)
+}
+
+func IsResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsResource)
+}
+
+func isValidRelation(relation string, valid []string) bool {
+	for _, r := range valid {
+		if r == relation {
+			return true
+		}
+	}
+	return false
+}
 
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
@@ -258,10 +288,18 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 
 	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
 		User:     req.TupleKey.User,
-		Relation: "view",
+		Relation: RelationSetView,
 		Object: NewNamespaceResourceIdent(
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
 		),
 	})
+}
+
+func NewResourceContext(group, resource string) *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"requested_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+		},
+	}
 }
