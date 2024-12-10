@@ -26,7 +26,6 @@ type Service interface {
 	ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
 	DeleteToken(ctx context.Context, params DeleteTokenParams) error
-
 	GetPlugins(ctx context.Context, requestID string) (map[string]Plugin, error)
 }
 
