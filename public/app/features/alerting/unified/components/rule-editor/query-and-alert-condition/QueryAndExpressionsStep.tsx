@@ -269,10 +269,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       // update condition too if refId was updated
       if (condition === oldRefId) {
-        handleSetCondition(newRefId);
+        setValue('condition', newRefId);
       }
     },
-    [condition, queries, handleSetCondition]
+    [condition, queries, setValue]
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
