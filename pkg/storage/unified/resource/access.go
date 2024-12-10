@@ -2,12 +2,16 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -33,6 +37,46 @@ var _ authz.AccessClient = &staticAuthzClient{}
 
 type groupResource map[string]map[string]interface{}
 
+const (
+	metricsNamespace = "grafana"
+	metricsSubSystem = "grpc_authz_limited_client"
+)
+
+var metOnce sync.Once
+
+type accessMetrics struct {
+	checksDuration *prometheus.HistogramVec
+	errorsTotal    *prometheus.CounterVec
+}
+
+func newMetrics(reg prometheus.Registerer) *accessMetrics {
+	m := &accessMetrics{
+		checksDuration: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Name:      "requests_total",
+				Help:      "Number requests using the authenticator with fallback",
+			}, []string{"resource", "group", "fallback_used", "allowed"}),
+		errorsTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Name:      "errors_total",
+				Help:      "Number of errors",
+			}, []string{"resource", "group"}),
+	}
+
+	if reg != nil {
+		metOnce.Do(func() {
+			reg.MustRegister(m.checksDuration)
+			reg.MustRegister(m.errorsTotal)
+		})
+	}
+
+	return m
+}
+
 // authzLimitedClient is a client that enforces RBAC for the limited number of groups and resources.
 // This is a temporary solution until the authz service is fully implemented.
 // The authz service will be responsible for enforcing RBAC.
@@ -43,10 +87,12 @@ type authzLimitedClient struct {
 	allowlist groupResource
 	logger    *slog.Logger
 	tracer    trace.Tracer
+	metrics   *accessMetrics
 }
 
 type AuthzOptions struct {
-	Tracer trace.Tracer
+	Tracer   trace.Tracer
+	Registry prometheus.Registerer
 }
 
 // NewAuthzLimitedClient creates a new authzLimitedClient.
@@ -55,19 +101,24 @@ func NewAuthzLimitedClient(client authz.AccessChecker, opts AuthzOptions) authz.
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("limited-authz-client")
 	}
+	if opts.Registry == nil {
+		opts.Registry = prometheus.DefaultRegisterer
+	}
 	return &authzLimitedClient{
 		client: client,
 		allowlist: groupResource{
 			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
 			"folder.grafana.app":    map[string]interface{}{"folders": nil},
 		},
-		logger: logger,
-		tracer: opts.Tracer,
+		logger:  logger,
+		tracer:  opts.Tracer,
+		metrics: newMetrics(opts.Registry),
 	}
 }
 
 // Check implements authz.AccessClient.
 func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
+	t := time.Now()
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Check", trace.WithAttributes(
 		attribute.String("group", req.Group),
 		attribute.String("resource", req.Resource),
@@ -75,20 +126,20 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req a
 	))
 	defer span.End()
 	if grpcutils.FallbackUsed(ctx) {
-		c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "fallback", true, "rbac", false, "allowed", true)
+		c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "true", "true").Observe(time.Since(t).Seconds())
 		return authz.CheckResponse{Allowed: true}, nil
 	}
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
-		c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "fallback", false, "rbac", false, "allowed", true)
+		c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "false", "true").Observe(time.Since(t).Seconds())
 		return authz.CheckResponse{Allowed: true}, nil
 	}
-	t := time.Now()
 	resp, err := c.client.Check(ctx, id, req)
 	if err != nil {
-		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "fallback", false, "rbac", true, "error", err, "duration", time.Since(t))
+		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", tracing.TraceIDFromContext(ctx, false))
+		c.metrics.errorsTotal.WithLabelValues(req.Resource, req.Group).Inc()
 		return resp, err
 	}
-	c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "fallback", false, "rbac", true, "allowed", resp.Allowed, "duration", time.Since(t))
+	c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "false", fmt.Sprintf("%t", resp.Allowed)).Observe(time.Since(t).Seconds())
 	return resp, nil
 }
 
@@ -100,6 +151,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	))
 	defer span.End()
 	return func(namespace string, name, folder string) bool {
+		t := time.Now()
 		ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Compile.Check", trace.WithAttributes(
 			attribute.String("group", req.Group),
 			attribute.String("resource", req.Resource),
@@ -107,15 +159,13 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		))
 		defer span.End()
 		if grpcutils.FallbackUsed(ctx) {
-			c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "fallback", true, "rbac", false, "allowed", true)
+			c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "true", "true").Observe(time.Since(t).Seconds())
 			return true
 		}
-		// TODO: Implement For now we perform the check for each item.
 		if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
-			c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "fallback", false, "rbac", false, "allowed", true)
+			c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "true", "true").Observe(time.Since(t).Seconds())
 			return true
 		}
-		t := time.Now()
 		r, err := c.client.Check(ctx, id, authz.CheckRequest{
 			Verb:      "get",
 			Group:     req.Group,
@@ -125,10 +175,11 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			Folder:    folder,
 		})
 		if err != nil {
-			c.logger.Error("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "fallback", false, "rbac", true, "error", err, "duration", time.Since(t))
+			c.metrics.errorsTotal.WithLabelValues(req.Resource, req.Group).Inc()
+			c.logger.Error("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "error", err, "duration", time.Since(t), "traceid", tracing.TraceIDFromContext(ctx, false))
 			return false
 		}
-		c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "fallback", false, "rbac", true, "allowed", r.Allowed, "duration", time.Since(t))
+		c.metrics.checksDuration.WithLabelValues(req.Resource, req.Group, "false", fmt.Sprintf("%t", r.Allowed)).Observe(time.Since(t).Seconds())
 		return r.Allowed
 	}, nil
 }
