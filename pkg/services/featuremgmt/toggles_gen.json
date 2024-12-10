@@ -1874,19 +1874,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesDashboardsAPI",
-        "resourceVersion": "1729017284006",
-        "creationTimestamp": "2024-10-15T18:34:44Z"
-      },
-      "spec": {
-        "description": "Use the kubernetes API in the backend for dashboards",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-18T05:32:44Z"
