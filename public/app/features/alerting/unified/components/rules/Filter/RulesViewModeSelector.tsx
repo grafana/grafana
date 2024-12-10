@@ -43,17 +43,27 @@ const LegacyViewOptions: Array<SelectableValue<LegacySupportedView>> = [
 
 function RulesViewModeSelectorV1() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
-
   const viewParam = queryParams.get('view');
 
-  // Returning the same values for list and state are for type safety
-  const currentView: LegacySupportedView = viewParam === 'list' ? 'list' : viewParam === 'state' ? 'state' : 'grouped';
+  const currentView = viewParamToLegacyView(viewParam);
 
   const handleViewChange = (view: LegacySupportedView) => {
     updateQueryParams({ view });
   };
 
   return <RadioButtonGroup options={LegacyViewOptions} value={currentView} onChange={handleViewChange} />;
+}
+
+function viewParamToLegacyView(viewParam: string | null): LegacySupportedView {
+  if (viewParam === 'list') {
+    return 'list';
+  }
+
+  if (viewParam === 'state') {
+    return 'state';
+  }
+
+  return 'grouped';
 }
 
 export const RulesViewModeSelector = config.featureToggles.alertingListViewV2

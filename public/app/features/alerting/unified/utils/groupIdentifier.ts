@@ -1,12 +1,7 @@
 import { CombinedRule, GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
-import {
-  getDatasourceAPIUid,
-  getRulesSourceName,
-  GRAFANA_RULES_SOURCE_NAME,
-  isGrafanaRulesSource,
-} from './utils/datasource';
-import { isGrafanaRulerRule } from './utils/rules';
+import { getDatasourceAPIUid, getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import { isGrafanaRulerRule } from './rules';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
   if (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {

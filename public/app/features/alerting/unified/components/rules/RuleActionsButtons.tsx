@@ -11,7 +11,7 @@ import { AlertmanagerProvider } from 'app/features/alerting/unified/state/Alertm
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
-import { groupIdentifier } from '../../groupIdentifier';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';

@@ -6,7 +6,7 @@ import { byRole, byText } from 'testing-library-selector';
 import { AccessControlAction } from 'app/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { groupIdentifier } from '../../groupIdentifier';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../../mocks/grafanaRulerApi';
@@ -87,7 +87,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
 
   const onClick = () => {
     if (ruleGroupID.groupOrigin !== 'grafana') {
-      throw new Error('not a Grafana rule')
+      throw new Error('not a Grafana rule');
     }
 
     // always handle your errors!
