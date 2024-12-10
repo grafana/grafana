@@ -20,6 +20,14 @@ type {{classname}} interface { {{#operation}}
 }
 
 {{#operations}}{{#operation}}
+{{#vendorExtensions.x-raw-request}}
+func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) response.Response { {{#hasPathParams}}
+	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
+	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
+	return f.handle{{nickname}}(ctx{{#pathParams}}, {{paramName}}Param{{/pathParams}})
+}
+{{/vendorExtensions.x-raw-request}}
+{{^vendorExtensions.x-raw-request}}
 func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) response.Response { {{#hasPathParams}}
 	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
 	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
@@ -31,6 +39,7 @@ func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) respon
 	}
 	{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 }
+{{/vendorExtensions.x-raw-request}}
 {{/operation}}{{/operations}}
 
 func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API) {

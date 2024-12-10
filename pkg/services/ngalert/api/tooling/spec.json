@@ -1626,6 +1626,201 @@
         }
       }
     },
+    "/ruler/grafana/prometheus/config/v1/rules": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Gets all rules in prometheus format.",
+        "operationId": "RouteGetGrafanaRulesPrometheusConfig",
+        "responses": {
+          "202": {
+            "description": "NamespaceConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
+    "/ruler/grafana/prometheus/config/v1/rules/{Namespace}": {
+      "post": {
+        "consumes": [
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Creates or updates a rule group in Prometheus format.",
+        "operationId": "RoutePostGrafanaRuleGroupPrometheusConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-uid",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "name": "x-datasource-type",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-recording-rules-paused",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "name": "x-alert-rules-paused",
+            "in": "header"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostablePrometheusRuleGroup"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "UpdateRuleGroupResponse",
+            "schema": {
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Deletes all rule groups in the given namespace.",
+        "operationId": "RouteDeleteGrafanaPrometheusNamespace",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "rule groups in the namespace were deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
+    "/ruler/grafana/prometheus/config/v1/rules/{Namespace}/{Group}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Gets a rule group in Prometheus format.",
+        "operationId": "RouteGetGrafanaRuleGroupPrometheusConfig",
+        "responses": {
+          "202": {
+            "description": "RuleGroupConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/RuleGroupConfigResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Deletes a rule group in Prometheus format.",
+        "operationId": "RouteDeleteGrafanaPrometheusRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "rule group was deleted successfully.",
+            "$ref": "#/responses/The"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/ruler/{DatasourceUID}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -1661,6 +1856,59 @@
             "description": "NamespaceConfigResponse",
             "schema": {
               "$ref": "#/definitions/NamespaceConfigResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        }
+      }
+    },
+    "/ruler/{DatasourceUID}/api/v1/rules/convert": {
+      "post": {
+        "description": "Converts submitted rule groups from Prometheus format to Grafana-Managed",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RoutePostRulesGroupConvert",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "DatasourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "PauseRecordingRules",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "PauseAlerts",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "UpdateRuleGroupResponse",
+            "schema": {
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
             }
           },
           "403": {
@@ -3306,7 +3554,7 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -3324,12 +3572,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3358,12 +3606,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3407,12 +3655,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3797,6 +4045,9 @@
     "AlertRuleEditorSettings": {
       "type": "object",
       "properties": {
+        "simplified_notifications_section": {
+          "type": "boolean"
+        },
         "simplified_query_and_expressions_section": {
           "type": "boolean"
         }
@@ -4388,7 +4639,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -4596,10 +4847,6 @@
           }
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -6490,6 +6737,52 @@
         }
       }
     },
+    "PostablePrometheusRule": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "keep_firing_for": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "PostablePrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostablePrometheusRule"
+          }
+        }
+      }
+    },
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
@@ -7243,6 +7536,9 @@
         "groups"
       ],
       "properties": {
+        "groupNextToken": {
+          "type": "string"
+        },
         "groups": {
           "type": "array",
           "items": {
@@ -7607,6 +7903,10 @@
     },
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
+    },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
     },
     "Span": {
       "type": "object",
@@ -8435,7 +8735,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -8560,7 +8859,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
