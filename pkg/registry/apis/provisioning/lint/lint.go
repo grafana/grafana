@@ -13,5 +13,5 @@ type Linter interface {
 type LinterFactory interface {
 	ConfigPath() string
 	NewFromConfig(cfg []byte) (Linter, error)
-	New() (Linter, error)
+	New() Linter
 }

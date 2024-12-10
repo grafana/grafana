@@ -58,9 +58,10 @@ type GrafanaAnnotations = {
   [key: string]: string | undefined;
 };
 
-export interface Resource<T = object, K = string> extends TypeMeta<K> {
+export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {
   metadata: ObjectMeta;
   spec: T;
+  status?: S;
 }
 
 export interface ResourceForCreate<T = object, K = string> extends Partial<TypeMeta<K>> {
@@ -77,9 +78,9 @@ export interface ListMeta {
   remainingItemCount?: number;
 }
 
-export interface ResourceList<T, K = string> extends TypeMeta {
+export interface ResourceList<T, S = object, K = string> extends TypeMeta {
   metadata: ListMeta;
-  items: Array<Resource<T, K>>;
+  items: Array<Resource<T, S, K>>;
 }
 
 export type ListOptionsLabelSelector =
@@ -142,12 +143,12 @@ export interface MetaStatus {
   details?: object;
 }
 
-export interface ResourceClient<T = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
-  get(name: string): Promise<Resource<T, K>>;
+export interface ResourceClient<T = object, S = object, K = string> {
+  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
+  get(name: string): Promise<Resource<T, S, K>>;
   subresource<S>(name: string, path: string): Promise<S>;
-  list(opts?: ListOptions): Promise<ResourceList<T, K>>;
-  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
+  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
+  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
   delete(name: string): Promise<MetaStatus>;
 }
 

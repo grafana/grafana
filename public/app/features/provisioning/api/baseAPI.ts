@@ -39,5 +39,5 @@ export const baseAPI = createApi({
     baseURL: BASE_URL,
   }),
   endpoints: () => ({}),
-  tagTypes: ['RepositoryList'],
+  tagTypes: ['RepositoryList', 'JobList'],
 });

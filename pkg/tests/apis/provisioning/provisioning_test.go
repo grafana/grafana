@@ -122,15 +122,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
-					"name": "repositories/hello",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "HelloWorld",
-					"verbs": [
-						"get"
-					]
-				},
-				{
 					"name": "repositories/history",
 					"singularName": "",
 					"namespaced": true,
@@ -284,26 +275,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		)
 		require.Nil(t, obj)
 		require.Error(t, err)
-	})
-
-	t.Run("basic helloworld subresource", func(t *testing.T) {
-		// Add it if this is the only test that ran
-		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
-			metav1.UpdateOptions{},
-		)
-		require.NoError(t, err)
-
-		// "test" is Not found
-		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
-		require.Error(t, err) // "test" not found
-		require.Nil(t, resp)  // "test" not found
-
-		resp, err = client.Resource.Get(ctx, "github-example", metav1.GetOptions{}, "hello")
-		require.NoError(t, err)
-		require.Equal(t,
-			"World",
-			mustNestedString(resp.Object, "whom"))
 	})
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
