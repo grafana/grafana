@@ -3,6 +3,7 @@ import {
   DashboardV2Spec,
   defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDTO } from 'app/types';
@@ -29,7 +30,8 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     resourceVersion: '1',
     annotations: {
-      'grafana.app/folder': 'folder-uid',
+      [AnnoKeyFolder]: 'folder-uid',
+      [AnnoKeyFolderTitle]: 'Folder title',
     },
   },
   access: {},
@@ -68,7 +70,7 @@ describe('validateUid', () => {
     });
     it('should return a message with the existing dashboard title and folder title', async () => {
       const result = await validateUid('dashboard-uid');
-      expect(result).toBe(`Dashboard named 'V2 Dashboard' in folder 'folder-uid' has the same UID`);
+      expect(result).toBe(`Dashboard named 'V2 Dashboard' in folder 'Folder title' has the same UID`);
     });
   });
 });

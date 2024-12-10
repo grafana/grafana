@@ -48,6 +48,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   if (dashboard.loading) {
     return null;
   }
+
   if (isDashboardResource(dashboard.value)) {
     // TODO[schema]: handle v2
     throw new Error('v2 schema handling not implemented');

@@ -3,6 +3,16 @@ import {
   defaultDashboardV2Spec,
   defaultTimeSettingsSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyFolder,
+  AnnoKeyFolderId,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeySlug,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
 import { transformCursorSynctoEnum } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { DashboardDTO } from 'app/types';
 
@@ -61,11 +71,14 @@ export function ensureV2Response(
       name: dto.dashboard.uid,
       resourceVersion: dto.dashboard.version?.toString() || '0',
       annotations: {
-        'grafana.app/createdBy': dto.meta.createdBy,
-        'grafana.app/updatedBy': dto.meta.updatedBy,
-        'grafana.app/updatedTimestamp': dto.meta.updated,
-        'grafana.app/folder': dto.meta.folderUid,
-        'grafana.app/slug': dto.meta.slug,
+        [AnnoKeyCreatedBy]: dto.meta.createdBy,
+        [AnnoKeyUpdatedBy]: dto.meta.updatedBy,
+        [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
+        [AnnoKeyFolder]: dto.meta.folderUid,
+        [AnnoKeyFolderId]: dto.meta.folderId,
+        [AnnoKeyFolderUrl]: dto.meta.folderUrl,
+        [AnnoKeyFolderTitle]: dto.meta.folderTitle,
+        [AnnoKeySlug]: dto.meta.slug,
       },
     },
     spec,
