@@ -96,7 +96,7 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
 						}
 
-						metrics.GetMetrics().FeedbackCollected.With(prometheus.Labels{
+						metrics.GetMetrics(ctx).FeedbackCollected.With(prometheus.Labels{
 							"slug":           feedbackCfg.GrafanaCfg.Slug,
 							"has_screenshot": strconv.FormatBool(hasScreenshot),
 						}).Inc()

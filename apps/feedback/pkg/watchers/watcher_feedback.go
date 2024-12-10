@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
-	"k8s.io/klog/v2"
 
 	feedback "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	githubClient "github.com/grafana/grafana/apps/feedback/pkg/githubclient"
@@ -39,11 +38,13 @@ type FeedbackWatcher struct {
 
 func NewFeedbackWatcher(cfg *setting.Cfg, gcomService gcom.Service, feedbackStore *resource.TypedStore[*feedback.Feedback]) (*FeedbackWatcher, error) {
 	section := cfg.SectionWithEnvOverrides("feedback_button")
+
 	token, owner, repo := section.Key("github_token").MustString(""), section.Key("github_owner").MustString(""), section.Key("github_repo").MustString("")
 	gitClient := githubClient.NewGitHubClient(token, owner, repo)
+
 	llmClient, err := llmclient.NewLLMClient(section.Key("llm_url").MustString(""), llmclient.ChatOptions{SelectedModel: section.Key("llm_model").MustString("llama3.1:8b"), Temperature: float32(section.Key("llm_temperature").MustFloat64(0.5))})
 	if err != nil {
-		klog.ErrorS(err, "failed to initialize llm client in feedback watcher, automated feedback triage will not work")
+		logging.DefaultLogger.Error("failed to initialize llm client in feedback watcher, automated feedback triage will not work", "error", err.Error())
 	}
 
 	return &FeedbackWatcher{
@@ -148,7 +149,7 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 		}
 
 		if t, err := s.llmClient.PromptForShortIssueTitle(ctx, object.Spec.Message); err != nil {
-			klog.ErrorS(err, "error prompting the llm for a short issue title")
+			logging.FromContext(ctx).Error("prompting the llm for a short issue title", "error", err.Error())
 		} else {
 			title = t
 		}
@@ -165,7 +166,7 @@ func (s *FeedbackWatcher) createGithubIssue(ctx context.Context, object *feedbac
 		return "", err
 	}
 
-	metrics.GetMetrics().GithubIssueCreated.With(prometheus.Labels{
+	metrics.GetMetrics(ctx).GithubIssueCreated.With(prometheus.Labels{
 		"slug":           s.cfg.Slug,
 		"has_screenshot": strconv.FormatBool(object.Spec.ScreenshotUrl != nil),
 		"was_triaged":    strconv.FormatBool(len(labels) > 0 && labels[0] != "team/unknown"),

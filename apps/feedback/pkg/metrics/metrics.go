@@ -1,10 +1,11 @@
 package metrics
 
 import (
+	"context"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/klog/v2"
 )
 
 const (
@@ -20,7 +21,7 @@ type metrics struct {
 var instantiated *metrics
 var once sync.Once
 
-func GetMetrics() *metrics {
+func GetMetrics(ctx context.Context) *metrics {
 	// are singletons in go naughty?
 	once.Do(func() {
 		instantiated = &metrics{
@@ -39,9 +40,10 @@ func GetMetrics() *metrics {
 		}
 
 		if err := prometheus.Register(instantiated); err != nil {
-			klog.ErrorS(err, "error registering metrics")
+			logging.FromContext(ctx).Error("registering metrics", "error", err.Error())
 		}
 	})
+
 	return instantiated
 }
 
