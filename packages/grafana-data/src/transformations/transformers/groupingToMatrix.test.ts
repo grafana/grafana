@@ -105,11 +105,18 @@ describe('Grouping to Matrix', () => {
     });
   });
 
-  it('generates Matrix with empty entries', async () => {
+  it.each([
+    [undefined, ''],
+    [SpecialValue.Null, null],
+    [SpecialValue.False, false],
+    [SpecialValue.True, true],
+    [SpecialValue.Empty, ''],
+    [SpecialValue.Zero, 0],
+  ])('generates Matrix with empty entries', async (emptyValue, expectedValue) => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {
-        emptyValue: SpecialValue.Null,
+        emptyValue: emptyValue,
       },
     };
 
@@ -133,13 +140,13 @@ describe('Grouping to Matrix', () => {
         {
           name: '1000',
           type: FieldType.number,
-          values: [1, null],
+          values: [1, expectedValue],
           config: {},
         },
         {
           name: '1001',
           type: FieldType.number,
-          values: [null, 2],
+          values: [expectedValue, 2],
           config: {},
         },
       ];
