@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useContext, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { ElementSelectionContext, ElementSelectionContextState, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui';
 
+import { DashboardScene } from '../DashboardScene';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -17,18 +17,13 @@ interface RowsLayoutManagerState extends SceneObjectState {
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
   public isDashboardLayoutManager: true = true;
 
-  private _context: ElementSelectionContextState | undefined;
-
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {
-    // Try to add new panels to all selected rows
-    if (this._context?.enabled && this._context?.selected.length > 0) {
-      return this.state.rows
-        .filter((r) => this._context?.selected.some((s) => s.id === r.state.key))
-        .forEach((r) => {
-          r.onAddPanel(vizPanel.clone());
-        });
+    // Try to add new panels to the selected row
+    const selectedObject = this.getSelectedObject();
+    if (selectedObject instanceof RowItem) {
+      return selectedObject.onAddPanel(vizPanel);
     }
 
     // If we don't have selected rows but a single row, add to it
@@ -88,8 +83,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return RowsLayoutManager.getDescriptor();
   }
 
-  public setContext(context: ElementSelectionContextState | undefined) {
-    this._context = context;
+  public getSelectedObject() {
+    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selectedObject?.resolve();
   }
 
   public static getDescriptor(): LayoutRegistryItem {
@@ -114,11 +109,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public static Component = ({ model }: SceneComponentProps<RowsLayoutManager>) => {
     const { rows } = model.useState();
     const styles = useStyles2(getStyles);
-    const ctx = useContext(ElementSelectionContext);
-
-    useEffect(() => {
-      model.setContext(ctx);
-    }, [model, ctx]);
 
     return (
       <div className={styles.wrapper}>
