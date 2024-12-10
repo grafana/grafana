@@ -1,5 +1,5 @@
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
-import $ from 'jquery';
+import 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import { AppEvent } from '@grafana/data';

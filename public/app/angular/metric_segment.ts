@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
