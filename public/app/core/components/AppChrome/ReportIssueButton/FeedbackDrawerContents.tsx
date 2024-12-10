@@ -52,9 +52,6 @@ export const DrawerContents = ({
   const onAccessChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, accessChecked: e.target.checked });
   };
-  const onContactChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, contactChecked: e.target.checked });
-  };
 
   const onSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -66,7 +63,6 @@ export const DrawerContents = ({
       screenshot: formData.screenshot,
       imageType: formData.imageType,
       diagnosticData,
-      canContactReporter: formData.contactChecked,
       canAccessInstance: formData.accessChecked,
       reporterEmail: formData.reporterEmail,
     };
@@ -80,7 +76,6 @@ export const DrawerContents = ({
         imageType: '',
         reporterEmail: '',
         accessChecked: false,
-        contactChecked: false,
         width: 0,
         height: 0,
         bitmap: {} as ImageBitmap,
@@ -111,13 +106,6 @@ export const DrawerContents = ({
         label="Can we access your instance?"
         value={formData.accessChecked}
         onChange={onAccessChange}
-        showLabel={true}
-        transparent={true}
-      />
-      <InlineSwitch
-        label="Can we contact you?"
-        value={formData.contactChecked}
-        onChange={onContactChange}
         showLabel={true}
         transparent={true}
       />
