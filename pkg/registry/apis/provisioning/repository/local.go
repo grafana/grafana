@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"path"
+
 	// Git still uses sha1 for the most part: https://git-scm.com/docs/hash-function-transition
 	//nolint:gosec
 	"crypto/sha1"
@@ -21,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type LocalFolderResolver struct {
@@ -31,30 +34,28 @@ type LocalFolderResolver struct {
 	DevenvPath string
 }
 
-func (r *LocalFolderResolver) LocalPath(path string) string {
-	// Ignore anything with funky path names
-	if strings.Contains(path, "..") {
-		return ""
+var ErrInvalidLocalFolder = apierrors.NewBadRequest("the path given is invalid")
+
+func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
+	parts := strings.SplitN(p, "/", 2)
+	if len(parts) != 2 {
+		return "", ErrInvalidLocalFolder
 	}
 
-	parts := strings.SplitN(path, "/", 2)
-	if len(parts) != 2 {
-		return ""
-	}
 	switch parts[0] {
 	case "provisioning":
 		if r.ProvisioningPath == "" {
-			return "" // not allowed
+			return "", ErrInvalidLocalFolder
 		}
-		return filepath.Join(r.ProvisioningPath, parts[1])
+		return safepath.Join(r.ProvisioningPath, parts[1])
 
 	case "devenv":
 		if r.DevenvPath == "" {
-			return "" // not allowed
+			return "", ErrInvalidLocalFolder
 		}
-		return filepath.Join(r.DevenvPath, parts[1])
+		return safepath.Join(r.DevenvPath, parts[1])
 	}
-	return ""
+	return "", ErrInvalidLocalFolder
 }
 
 var _ Repository = (*localRepository)(nil)
@@ -66,14 +67,18 @@ type localRepository struct {
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) (*localRepository, error) {
 	r := &localRepository{
 		config: config,
 	}
 	if config.Spec.Local != nil {
-		r.path = resolver.LocalPath(config.Spec.Local.Path)
+		var err error
+		r.path, err = resolver.LocalPath(config.Spec.Local.Path)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return r
+	return r, nil
 }
 
 func (r *localRepository) Config() *provisioning.Repository {
@@ -138,18 +143,17 @@ func (r *localRepository) validateRequest(ref string) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, filePath string, ref string) (*FileInfo, error) {
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
 
-	fullpath := filepath.Join(r.path, path)
-	// Treats https://securego.io/docs/rules/g304.html
-	if !strings.HasPrefix(fullpath, r.path) {
-		return nil, ErrFileNotFound
+	filePath, err := safepath.Join(r.path, filePath)
+	if err != nil {
+		return nil, err
 	}
 
-	info, err := os.Stat(fullpath)
+	info, err := os.Stat(filePath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
 	} else if err != nil {
@@ -157,18 +161,18 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 	}
 
 	//nolint:gosec
-	data, err := os.ReadFile(fullpath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, _, err := r.calculateFileHash(fullpath)
+	hash, _, err := r.calculateFileHash(filePath)
 	if err != nil {
 		return nil, err
 	}
 
 	return &FileInfo{
-		Path: path,
+		Path: strings.TrimPrefix(filePath, safepath.Clean(r.path)),
 		Data: data,
 		Hash: hash,
 		Modified: &metav1.Time{
@@ -231,19 +235,32 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, sanitisedPath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	path = filepath.Join(r.path, path)
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-			return err
-		}
-		return os.WriteFile(path, data, 0600)
+	inputUnsafePath := sanitisedPath // do NOT use in path operations, only for responses!
+
+	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
+	if err != nil {
+		logger.WarnContext(ctx, "got an invalid path from caller", "path", inputUnsafePath, "err", err)
+		return err
 	}
-	return fmt.Errorf("file already exists")
+
+	_, err = os.Stat(sanitisedPath)
+	if !errors.Is(err, os.ErrNotExist) {
+		if err != nil {
+			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
+		}
+		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), inputUnsafePath)
+	}
+
+	if err := os.MkdirAll(path.Dir(sanitisedPath), 0700); err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to create file: %w", err))
+	}
+
+	return os.WriteFile(sanitisedPath, data, 0600)
 }
 
 func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
@@ -251,7 +268,11 @@ func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path 
 		return err
 	}
 
-	path = filepath.Join(r.path, path)
+	path, err := safepath.Join(r.path, path)
+	if err != nil {
+		return err
+	}
+
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("file does not exist")
 	}
@@ -263,7 +284,12 @@ func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path 
 		return err
 	}
 
-	return os.Remove(filepath.Join(r.path, path))
+	path, err := safepath.Join(r.path, path)
+	if err != nil {
+		return err
+	}
+
+	return os.Remove(path)
 }
 
 func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path string, ref string) ([]provisioning.HistoryItem, error) {

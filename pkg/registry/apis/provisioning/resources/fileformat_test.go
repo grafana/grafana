@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -96,7 +96,7 @@ spec:
 		info := &repository.FileInfo{
 			Path: "devenv/dev-dashboards/panel-timeline/timeline-demo.json",
 		}
-		info.Data, err = os.ReadFile(filepath.Join("../../../../..", info.Path))
+		info.Data, err = os.ReadFile(path.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
 		parser := NewParser(&provisioning.Repository{

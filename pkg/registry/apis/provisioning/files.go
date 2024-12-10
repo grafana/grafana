@@ -7,7 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -108,17 +108,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		if strings.Contains(filePath, "..") {
-			logger.DebugContext(r.Context(), "got a file path including '..'; failing the request for security reasons")
-			responder.Error(apierrors.NewBadRequest("invalid path navigation"))
-			return
-		}
-
-		switch filepath.Ext(filePath) {
+		switch path.Ext(filePath) {
 		case ".json", ".yaml", ".yml":
 			// ok
 		default:
-			logger.DebugContext(r.Context(), "got a file extension that was not JSON or YAML", "extension", filepath.Ext(filePath))
+			logger.DebugContext(r.Context(), "got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
 			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
 			return
 		}

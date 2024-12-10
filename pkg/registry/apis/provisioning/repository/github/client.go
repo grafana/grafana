@@ -97,6 +97,7 @@ type RepositoryContent interface {
 	IsSymlink() bool
 	// Returns the full path from the root of the repository.
 	// This has no leading or trailing slashes.
+	// The path only uses '/' for directories. You can use the 'path' package to interact with these.
 	GetPath() string
 	// Get the SHA hash. This is usually a SHA-256, but may also be SHA-512.
 	// Directories have SHA hashes, too (TODO: how is this calculated?).
