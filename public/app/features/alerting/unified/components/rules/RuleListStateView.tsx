@@ -10,7 +10,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem';
 import { ListSection } from '../../rule-list/components/ListSection';
-import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { hashRule } from '../../utils/rule-id';

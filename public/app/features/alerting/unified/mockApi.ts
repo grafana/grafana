@@ -1,5 +1,5 @@
-import { http, HttpResponse } from 'msw';
-import { setupServer, SetupServer } from 'msw/node';
+import { HttpResponse, http } from 'msw';
+import { SetupServer, setupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -21,8 +21,8 @@ import {
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
-  AlertmanagerConfig,
   AlertManagerCortexConfig,
+  AlertmanagerConfig,
   AlertmanagerReceiver,
   EmailConfig,
   GrafanaManagedReceiverConfig,

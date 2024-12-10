@@ -1,6 +1,6 @@
 import { within } from '@testing-library/react';
-import { render, waitFor, screen, userEvent } from 'test/test-utils';
-import { byText, byRole } from 'testing-library-selector';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';

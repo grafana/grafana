@@ -1,7 +1,7 @@
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { screen, render, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Components } from '@grafana/e2e-selectors';
@@ -10,12 +10,12 @@ import { configureStore } from 'app/store/configureStore';
 
 import { TemplatePreviewResponse } from '../../api/templateApi';
 import {
+  REJECTED_PREVIEW_RESPONSE,
   mockPreviewTemplateResponse,
   mockPreviewTemplateResponseRejected,
-  REJECTED_PREVIEW_RESPONSE,
 } from '../../mocks/templatesApi';
 
-import { defaults, TemplateFormValues } from './TemplateForm';
+import { TemplateFormValues, defaults } from './TemplateForm';
 import { TemplatePreview } from './TemplatePreview';
 
 jest.mock(

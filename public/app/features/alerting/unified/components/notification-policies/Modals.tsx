@@ -3,7 +3,7 @@ import { FC, useCallback, useMemo, useState } from 'react';
 
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { AlertmanagerGroup, AlertState, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';

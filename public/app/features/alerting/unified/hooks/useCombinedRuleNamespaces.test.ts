@@ -1,6 +1,6 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { sortRulesByName, flattenGrafanaManagedRules } from './useCombinedRuleNamespaces';
+import { flattenGrafanaManagedRules, sortRulesByName } from './useCombinedRuleNamespaces';
 
 describe('flattenGrafanaManagedRules', () => {
   it('should properly transform grafana managed namespaces', () => {

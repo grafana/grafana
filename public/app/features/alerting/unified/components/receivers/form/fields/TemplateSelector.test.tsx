@@ -12,7 +12,7 @@ import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constan
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction, NotificationChannelOption } from 'app/types';
 
-import { getTemplateOptions, TemplatesPicker } from './TemplateSelector';
+import { TemplatesPicker, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';
 
 const alertmanagerConfigMock = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);

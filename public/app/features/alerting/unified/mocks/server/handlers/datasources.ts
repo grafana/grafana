@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { buildInfoResponse } from 'app/features/alerting/unified/testSetup/featureDiscovery';
 

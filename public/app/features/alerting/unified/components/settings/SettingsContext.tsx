@@ -1,5 +1,5 @@
 import { debounce, union, without } from 'lodash';
-import { createContext, useContext, PropsWithChildren, useEffect, useRef } from 'react';
+import { PropsWithChildren, createContext, useContext, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';

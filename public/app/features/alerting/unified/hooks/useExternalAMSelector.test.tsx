@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer } from 'msw/node';
 import { getWrapper } from 'test/test-utils';
 

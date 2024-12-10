@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { ComponentProps, HTMLAttributes } from 'react';
 
-import { Icon, IconName, useStyles2, Text, Stack } from '@grafana/ui';
+import { Icon, IconName, Stack, Text, useStyles2 } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;

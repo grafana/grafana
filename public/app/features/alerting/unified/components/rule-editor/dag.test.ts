@@ -2,11 +2,11 @@ import { Graph } from 'app/core/utils/dag';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  _getOriginsOfRefId,
-  parseRefsFromMathExpression,
   _createDagFromQueries,
-  fingerprintGraph,
+  _getOriginsOfRefId,
   fingerPrintQueries,
+  fingerprintGraph,
+  parseRefsFromMathExpression,
 } from './dag';
 
 describe('working with dag', () => {

@@ -8,6 +8,7 @@ import { mockGrafanaRulerRule, mockRulerAlertingRule, mockRulerGrafanaRule, mock
 import { fromRulerRule } from '../../utils/rule-id';
 
 import {
+  SwapOperation,
   addRuleAction,
   deleteRuleAction,
   moveRuleGroupAction,
@@ -17,7 +18,6 @@ import {
   reorderRulesInRuleGroupAction,
   ruleGroupReducer,
   swapItems,
-  SwapOperation,
   updateRuleAction,
   updateRuleGroupAction,
 } from './ruleGroups';

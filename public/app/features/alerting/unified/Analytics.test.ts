@@ -1,7 +1,7 @@
 import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { isNewUser, USER_CREATION_MIN_DAYS } from './Analytics';
+import { USER_CREATION_MIN_DAYS, isNewUser } from './Analytics';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

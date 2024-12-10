@@ -1,4 +1,4 @@
-import { renderHook, waitFor, getWrapper } from 'test/test-utils';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';

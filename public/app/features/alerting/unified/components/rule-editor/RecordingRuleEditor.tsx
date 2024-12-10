@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { FC, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { PanelData, CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';

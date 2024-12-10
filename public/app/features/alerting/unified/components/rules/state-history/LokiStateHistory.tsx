@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
 import { Alert, Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';

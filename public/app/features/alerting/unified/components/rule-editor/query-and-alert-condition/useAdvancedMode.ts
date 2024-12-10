@@ -6,7 +6,7 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from './QueryAndExpressionsStep';
-import { getSimpleConditionFromExpressions, SimpleCondition } from './SimpleCondition';
+import { SimpleCondition, getSimpleConditionFromExpressions } from './SimpleCondition';
 
 function initializeSimpleCondition(
   isGrafanaAlertingType: boolean,

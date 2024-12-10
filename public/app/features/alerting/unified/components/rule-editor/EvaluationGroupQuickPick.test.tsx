@@ -1,6 +1,6 @@
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { getEvaluationGroupOptions, EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
+import { EvaluationGroupQuickPick, getEvaluationGroupOptions } from './EvaluationGroupQuickPick';
 
 describe('EvaluationGroupQuickPick', () => {
   it('should render the correct default preset, set active element and allow selecting another option', async () => {

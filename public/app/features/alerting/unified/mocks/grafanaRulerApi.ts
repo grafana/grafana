@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer } from 'msw/node';
 
 import { FieldType } from '@grafana/data';
@@ -9,7 +9,7 @@ import {
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { PREVIEW_URL, PreviewResponse, PROM_RULES_URL } from '../api/alertRuleApi';
+import { PREVIEW_URL, PROM_RULES_URL, PreviewResponse } from '../api/alertRuleApi';
 import { Annotation } from '../utils/constants';
 
 export function mockPreviewApiResponse(server: SetupServer, result: PreviewResponse) {
