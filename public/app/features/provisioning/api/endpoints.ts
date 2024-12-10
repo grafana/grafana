@@ -143,6 +143,7 @@ export { injectedRtkApi as generatedAPI };
 
 export const {
   useListRepositoryQuery,
+  useListJobsQuery,
   useCreateRepositoryMutation,
   useGetRepositoryQuery,
   useUpdateRepositoryMutation,
