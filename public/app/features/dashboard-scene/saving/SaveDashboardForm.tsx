@@ -24,7 +24,7 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges } = changeInfo;
+  const { hasChanges } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
@@ -32,7 +32,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   });
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, changedSaveModel, { ...options, overwrite });
+    const result = await onSaveDashboard(dashboard, { ...options, overwrite });
     if (result.status === 'success') {
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
