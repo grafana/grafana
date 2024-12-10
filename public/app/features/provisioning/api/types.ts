@@ -58,9 +58,8 @@ export interface UpdateRequestArg extends RequestArg {
   body: ResourceForCreate<RepositorySpec>;
 }
 
-
-export type RepositoryResource = Resource<RepositorySpec,RepositoryStatus,'Repository'>;
-export type RepositoryList = ResourceList<RepositorySpec,RepositoryStatus,'Repository'>;
+export type RepositoryResource = Resource<RepositorySpec, RepositoryStatus, 'Repository'>;
+export type RepositoryList = ResourceList<RepositorySpec, RepositoryStatus, 'Repository'>;
 
 export type JobSpec = {
   action: string;
@@ -77,8 +76,8 @@ export type JobStatus = {
   errors?: string[];
 };
 
-export type JobResource = Resource<JobSpec,JobStatus,'Job'>;
-export type JobList = ResourceList<JobSpec,JobStatus,'Job'>;
+export type JobResource = Resource<JobSpec, JobStatus, 'Job'>;
+export type JobList = ResourceList<JobSpec, JobStatus, 'Job'>;
 
 export type ResourceObjects = {
   type?: {
