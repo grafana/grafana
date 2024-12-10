@@ -154,14 +154,7 @@ export const CentralAlertHistoryScene = () => {
 function getEventsSceneObject() {
   return new SceneFlexLayout({
     direction: 'column',
-    children: [
-      new SceneFlexItem({
-        ySizing: 'content',
-        body: new SceneFlexLayout({
-          children: [getEventsScenesFlexItem()],
-        }),
-      }),
-    ],
+    children: [getEventsScenesFlexItem()],
   });
 }
 
