@@ -16,7 +16,7 @@ import (
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.Ping()
 	if err != nil {
-		logCheckHealthError(ctx, e.dsInfo, err)
+		logCheckHealthError(ctx, e.dsInfo, err, e.log)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
 			return ErrToHealthCheckResult(err)
 		}
@@ -73,8 +73,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	return res, nil
 }
 
-func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) {
-	logger := log.DefaultLogger.FromContext(ctx)
+func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),
 		"config_user_length":                len(dsInfo.User),
@@ -105,8 +104,8 @@ func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) 
 	}
 	configSummaryJson, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
-		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error")
+		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error", "plugin_id", "grafana-postgresql-datasource")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJson))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "plugin_id", "grafana-postgresql-datasource", "details", string(configSummaryJson))
 }
