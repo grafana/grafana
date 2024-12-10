@@ -737,6 +737,15 @@ func TestGetPlugins(t *testing.T) {
 			Signature:     plugins.SignatureStatusUnsigned,
 			SignatureType: plugins.SignatureTypePrivate,
 		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-not-in-gcom",
+				Type: plugins.TypeDataSource,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommercial,
+		},
 	}...)
 
 	s.pluginSettingsService = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
