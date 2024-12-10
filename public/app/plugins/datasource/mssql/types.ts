@@ -1,4 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { SQLOptions } from '@grafana/sql';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
@@ -17,37 +17,13 @@ export enum MSSQLEncryptOptions {
   false = 'false',
   true = 'true',
 }
-
-export enum AzureCloud {
-  Public = 'AzureCloud',
-  None = '',
-}
-
-export type ConcealedSecretType = symbol;
-
-export enum AzureAuthType {
-  MSI = 'msi',
-  CLIENT_SECRET = 'clientsecret',
-  AD_PASSWORD = 'ad-password',
-}
-
-export interface AzureCredentialsType {
-  authType: AzureAuthType;
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecretType;
-  userId?: string;
-  password?: string | ConcealedSecretType;
-}
-
 export interface MssqlOptions extends SQLOptions {
   authenticationType?: MSSQLAuthenticationType;
   encrypt?: MSSQLEncryptOptions;
   sslRootCertFile?: string;
   serverName?: string;
   connectionTimeout?: number;
-  azureCredentials?: AzureCredentialsType;
+  azureCredentials?: AzureCredentials;
   keytabFilePath?: string;
   credentialCache?: string;
   credentialCacheLookupFile?: string;
@@ -59,15 +35,6 @@ export interface MssqlOptions extends SQLOptions {
 export interface MssqlSecureOptions {
   password?: string;
 }
-
-export type AzureAuthJSONDataType = DataSourceJsonData & {
-  azureCredentials: AzureCredentialsType;
-};
-
-export type AzureAuthSecureJSONDataType = {
-  azureClientSecret: undefined | string | ConcealedSecretType;
-  password: undefined | string | ConcealedSecretType;
-};
 
 export type AzureAuthConfigType = {
   azureAuthIsSupported: boolean;

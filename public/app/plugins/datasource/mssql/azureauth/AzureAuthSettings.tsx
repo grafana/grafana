@@ -1,24 +1,25 @@
 import { useMemo } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { AzureCredentials, AzureCloud, updateDatasourceCredentials } from '@grafana/azure-sdk';
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { AzureCredentialsType } from '../types';
-
-import { KnownAzureClouds } from './AzureCredentials';
-import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { getCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+
+export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: AzureCloud.Public, label: 'Azure' }];
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
   const azureEntraPasswordCredentialsEnabled = config.azure.azureEntraPasswordCredentialsEnabled;
 
-  const credentials = useMemo(() => getCredentials(dsSettings, config), [dsSettings]);
+  const credentials = useMemo(() => getCredentials(dsSettings), [dsSettings]);
 
-  const onCredentialsChange = (credentials: AzureCredentialsType): void => {
-    onChange(updateCredentials(dsSettings, config, credentials));
+  const onCredentialsChange = (credentials: AzureCredentials): void => {
+    onChange(updateDatasourceCredentials(dsSettings, credentials));
   };
 
   // The auth type needs to be set on the first load of the data source
