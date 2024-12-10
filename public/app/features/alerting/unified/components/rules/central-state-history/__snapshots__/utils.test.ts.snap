@@ -39,7 +39,7 @@ exports[`historyResultToDataFrame should decode 1`] = `
 ]
 `;
 
-exports[`historyResultToDataFrame should decode and filter 1`] = `
+exports[`historyResultToDataFrame should decode and filter example1 1`] = `
 [
   {
     "fields": [
@@ -62,6 +62,37 @@ exports[`historyResultToDataFrame should decode and filter 1`] = `
         "type": "number",
         "values": [
           1,
+        ],
+      },
+    ],
+    "length": 1,
+  },
+]
+`;
+
+exports[`historyResultToDataFrame should decode and filter example2 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {
+          "custom": {
+            "fillOpacity": 100,
+          },
+          "displayName": "Time",
+        },
+        "name": "time",
+        "type": "time",
+        "values": [
+          1727189670000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "value",
+        "type": "number",
+        "values": [
+          8,
         ],
       },
     ],

@@ -105,7 +105,7 @@ export function getStateFilterFromInQueryParams() {
  * This function groups the data frames by time and filters them by labels.
  * The interval is set to 10 seconds.
  * */
-function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[], filters: HistoryFilters): DataFrame[] {
+export function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[], filters: HistoryFilters): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
   const labelsFilterValue = filters.labels;
   const dataframesFiltered = dataFrames.filter((frame) => {
