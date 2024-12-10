@@ -9,7 +9,7 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes } from 'app/types';
 
 import { Echo } from '../../../core/services/echo/Echo';
 import {
@@ -20,6 +20,7 @@ import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 import { getPreloadedState } from '../../variables/state/helpers';
 import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { TransactionStatus } from '../../variables/types';
+import { ResponseTransformers } from '../api/ResponseTransformers';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -77,104 +78,111 @@ interface ScenarioContext {
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
 const DASH_UID = 'DGmvKKxZz';
-function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
+
+const v1Dashboard: DashboardDTO = {
+  meta: {
+    canStar: false,
+    canShare: false,
+    isNew: true,
+    folderId: 0,
+  },
+  dashboard: {
+    title: 'My cool dashboard',
+    schemaVersion: 0,
+    panels: [
+      {
+        type: 'stat',
+        gridPos: { x: 0, y: 0, w: 12, h: 9 },
+        title: 'Panel Title',
+        id: 2,
+        targets: [
+          {
+            datasource: {
+              type: 'grafana-azure-monitor-datasource',
+              uid: 'DSwithQueriesOnInitDashboard',
+              name: 'azMonitor',
+            },
+            queryType: 'Azure Log Analytics',
+            refId: 'A',
+            expr: 'old expr',
+          },
+          {
+            datasource: {
+              type: 'cloudwatch',
+              uid: '1234',
+              name: 'Cloud Watch',
+            },
+            refId: 'B',
+          },
+        ],
+      },
+      {
+        collapsed: true,
+        gridPos: {
+          h: 1,
+          w: 24,
+          x: 0,
+          y: 8,
+        },
+        id: 22,
+        panels: [
+          {
+            datasource: {
+              type: 'grafana-redshift-datasource',
+              uid: 'V6_lLJf7k',
+            },
+            gridPos: {
+              h: 8,
+              w: 12,
+              x: 12,
+              y: 9,
+            },
+            id: 8,
+            targets: [
+              {
+                datasource: {
+                  type: 'grafana-redshift-datasource',
+                  uid: 'V6_lLJf7k',
+                },
+                rawSQL: '',
+                refId: 'A',
+              },
+              {
+                datasource: {
+                  type: 'grafana-azure-monitor-datasource',
+                  uid: 'DSwithQueriesOnInitDashboard',
+                  name: 'azMonitor',
+                },
+                queryType: 'Azure Monitor',
+                refId: 'B',
+              },
+            ],
+            title: 'Redshift and Azure',
+            type: 'stat',
+          },
+          {
+            id: 9,
+            type: 'text',
+          },
+        ],
+        title: 'Collapsed Panel',
+        type: 'row',
+      },
+    ],
+    templating: {
+      list: [constantBuilder().build() as any],
+    },
+    uid: DASH_UID,
+  },
+};
+const v2Dashboard = ResponseTransformers.ensureV2Response(v1Dashboard);
+
+function describeInitScenario(description: string, scenarioFn: ScenarioFn, v2 = false) {
   describe(description, () => {
     const loaderSrv = {
-      loadDashboard: jest.fn(() => ({
-        meta: {
-          canStar: false,
-          canShare: false,
-          isNew: true,
-          folderId: 0,
-        },
-        dashboard: {
-          title: 'My cool dashboard',
-          panels: [
-            {
-              type: 'stat',
-              gridPos: { x: 0, y: 0, w: 12, h: 9 },
-              title: 'Panel Title',
-              id: 2,
-              targets: [
-                {
-                  datasource: {
-                    type: 'grafana-azure-monitor-datasource',
-                    uid: 'DSwithQueriesOnInitDashboard',
-                    name: 'azMonitor',
-                  },
-                  queryType: 'Azure Log Analytics',
-                  refId: 'A',
-                  expr: 'old expr',
-                },
-                {
-                  datasource: {
-                    type: 'cloudwatch',
-                    uid: '1234',
-                    name: 'Cloud Watch',
-                  },
-                  refId: 'B',
-                },
-              ],
-            },
-            {
-              collapsed: true,
-              gridPos: {
-                h: 1,
-                w: 24,
-                x: 0,
-                y: 8,
-              },
-              id: 22,
-              panels: [
-                {
-                  datasource: {
-                    type: 'grafana-redshift-datasource',
-                    uid: 'V6_lLJf7k',
-                  },
-                  gridPos: {
-                    h: 8,
-                    w: 12,
-                    x: 12,
-                    y: 9,
-                  },
-                  id: 8,
-                  targets: [
-                    {
-                      datasource: {
-                        type: 'grafana-redshift-datasource',
-                        uid: 'V6_lLJf7k',
-                      },
-                      rawSQL: '',
-                      refId: 'A',
-                    },
-                    {
-                      datasource: {
-                        type: 'grafana-azure-monitor-datasource',
-                        uid: 'DSwithQueriesOnInitDashboard',
-                        name: 'azMonitor',
-                      },
-                      queryType: 'Azure Monitor',
-                      refId: 'B',
-                    },
-                  ],
-                  title: 'Redshift and Azure',
-                  type: 'stat',
-                },
-                {
-                  id: 9,
-                  type: 'text',
-                },
-              ],
-              title: 'Collapsed Panel',
-              type: 'row',
-            },
-          ],
-          templating: {
-            list: [constantBuilder().build()],
-          },
-          uid: DASH_UID,
-        },
-      })),
+      loadDashboard: jest.fn(() => {
+        return v2 ? v2Dashboard : v1Dashboard;
+      }),
     } as unknown as DashboardLoaderSrv;
 
     setDashboardLoaderSrv(loaderSrv);
@@ -246,210 +254,239 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   });
 }
 
-describeInitScenario('Initializing new dashboard', (ctx) => {
-  ctx.setup(() => {
-    ctx.storeState.user.orgId = 12;
-    ctx.args.routeName = DashboardRoutes.New;
-  });
+describe('initDashboard', () => {
+  // TODO: Add v2 test after we merge https://github.com/grafana/grafana/pull/97338
+  describe.each([false])('should work with schemas', (useV2) => {
+    describeInitScenario(
+      'Initializing new dashboard',
+      (ctx) => {
+        ctx.setup(() => {
+          ctx.storeState.user.orgId = 12;
+          ctx.args.routeName = DashboardRoutes.New;
+        });
 
-  it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
-  });
+        it('Should send action dashboardInitFetching', () => {
+          expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+        });
 
-  it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
+        it('Should send action dashboardInitServices ', () => {
+          expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+        });
 
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
-  });
+        it('Should update location with orgId query param', () => {
+          const search = locationService.getSearch();
+          expect(search.get('orgId')).toBe('12');
+        });
 
-  it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[7].payload.title).toBe('New dashboard');
-  });
+        it('Should send action dashboardInitCompleted', () => {
+          expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
+          expect(ctx.actions[7].payload.title).toBe('New dashboard');
+        });
 
-  it('Should initialize services', () => {
-    expect(getTimeSrv().init).toBeCalled();
-    expect(getDashboardSrv().setCurrent).toBeCalled();
-    expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
-  });
-});
-
-describeInitScenario('Initializing home dashboard', (ctx) => {
-  ctx.setup(() => {
-    ctx.args.routeName = DashboardRoutes.Home;
-    ctx.backendSrv.get.mockResolvedValue({
-      redirectUri: '/u/123/my-home',
-    });
-  });
-
-  it('Should redirect to custom home dashboard', () => {
-    const location = locationService.getLocation();
-    expect(location.pathname).toBe('/u/123/my-home');
-  });
-});
-
-describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
-  ctx.setup(() => {
-    ctx.args.routeName = DashboardRoutes.Home;
-    const fetchError: FetchError = {
-      cancelled: true,
-      config: {
-        url: '/api/dashboards/home',
+        it('Should initialize services', () => {
+          expect(getTimeSrv().init).toBeCalled();
+          expect(getDashboardSrv().setCurrent).toBeCalled();
+          expect(getDashboardQueryRunner().run).toBeCalled();
+          expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
+        });
       },
-      data: 'foo',
-      status: 500,
-    };
-    ctx.backendSrv.get.mockRejectedValue(fetchError);
-  });
+      useV2
+    );
 
-  it('Should abort init process', () => {
-    expect(ctx.actions.length).toBe(1);
-  });
-});
+    describeInitScenario(
+      'Initializing home dashboard',
+      (ctx) => {
+        ctx.setup(() => {
+          ctx.args.routeName = DashboardRoutes.Home;
+          ctx.backendSrv.get.mockResolvedValue({
+            redirectUri: '/u/123/my-home',
+          });
+        });
 
-describeInitScenario('Initializing existing dashboard', (ctx) => {
-  const mockQueries = [
-    {
-      context: 'explore',
-      key: 'jdasldsa98dsa9',
-      refId: 'A',
-      expr: 'new expr',
-    },
-    {
-      context: 'explore',
-      key: 'fdsjkfds78fd',
-      refId: 'B',
-    },
-  ];
-
-  ctx.setup(() => {
-    ctx.storeState.user.orgId = 12;
-    ctx.storeState.user.user = { id: 34 };
-    ctx.storeState.explore.left.queries = mockQueries;
-  });
-
-  it('should send dashboard_loaded event', () => {
-    expect(appEvents.publish).toHaveBeenCalledWith({
-      payload: {
-        queries: {
-          cloudwatch: [
-            {
-              datasource: {
-                name: 'Cloud Watch',
-                type: 'cloudwatch',
-                uid: '1234',
-              },
-              refId: 'B',
-            },
-          ],
-          'grafana-azure-monitor-datasource': [
-            {
-              datasource: {
-                name: 'azMonitor',
-                type: 'grafana-azure-monitor-datasource',
-                uid: 'DSwithQueriesOnInitDashboard',
-              },
-              expr: 'old expr',
-              queryType: 'Azure Log Analytics',
-              refId: 'A',
-            },
-            {
-              datasource: {
-                name: 'azMonitor',
-                type: 'grafana-azure-monitor-datasource',
-                uid: 'DSwithQueriesOnInitDashboard',
-              },
-              queryType: 'Azure Monitor',
-              refId: 'B',
-            },
-          ],
-          'grafana-redshift-datasource': [
-            {
-              datasource: {
-                type: 'grafana-redshift-datasource',
-                uid: 'V6_lLJf7k',
-              },
-              rawSQL: '',
-              refId: 'A',
-            },
-          ],
-        },
-        dashboardId: 'DGmvKKxZz',
-        orgId: 12,
-        userId: 34,
-        grafanaVersion: '1.0',
+        it('Should redirect to custom home dashboard', () => {
+          const location = locationService.getLocation();
+          expect(location.pathname).toBe('/u/123/my-home');
+        });
       },
-      type: 'dashboard-loaded',
-    });
-  });
+      useV2
+    );
 
-  it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
-  });
+    describeInitScenario(
+      'Initializing home dashboard cancelled',
+      (ctx) => {
+        ctx.setup(() => {
+          ctx.args.routeName = DashboardRoutes.Home;
+          const fetchError: FetchError = {
+            cancelled: true,
+            config: {
+              url: '/api/dashboards/home',
+            },
+            data: 'foo',
+            status: 500,
+          };
+          ctx.backendSrv.get.mockRejectedValue(fetchError);
+        });
 
-  it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
+        it('Should abort init process', () => {
+          expect(ctx.actions.length).toBe(1);
+        });
+      },
+      useV2
+    );
 
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
-  });
+    describeInitScenario(
+      'Initializing existing dashboard',
+      (ctx) => {
+        const mockQueries = [
+          {
+            context: 'explore',
+            key: 'jdasldsa98dsa9',
+            refId: 'A',
+            expr: 'new expr',
+          },
+          {
+            context: 'explore',
+            key: 'fdsjkfds78fd',
+            refId: 'B',
+          },
+        ];
 
-  it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
-  });
+        ctx.setup(() => {
+          ctx.storeState.user.orgId = 12;
+          ctx.storeState.user.user = { id: 34 };
+          ctx.storeState.explore.left.queries = mockQueries;
+        });
 
-  it('Should initialize services', () => {
-    expect(getTimeSrv().init).toBeCalled();
-    expect(getDashboardSrv().setCurrent).toBeCalled();
-    expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
-  });
+        it('should send dashboard_loaded event', () => {
+          expect(appEvents.publish).toHaveBeenCalledWith({
+            payload: {
+              queries: {
+                cloudwatch: [
+                  {
+                    datasource: {
+                      name: 'Cloud Watch',
+                      type: 'cloudwatch',
+                      uid: '1234',
+                    },
+                    refId: 'B',
+                  },
+                ],
+                'grafana-azure-monitor-datasource': [
+                  {
+                    datasource: {
+                      name: 'azMonitor',
+                      type: 'grafana-azure-monitor-datasource',
+                      uid: 'DSwithQueriesOnInitDashboard',
+                    },
+                    expr: 'old expr',
+                    queryType: 'Azure Log Analytics',
+                    refId: 'A',
+                  },
+                  {
+                    datasource: {
+                      name: 'azMonitor',
+                      type: 'grafana-azure-monitor-datasource',
+                      uid: 'DSwithQueriesOnInitDashboard',
+                    },
+                    queryType: 'Azure Monitor',
+                    refId: 'B',
+                  },
+                ],
+                'grafana-redshift-datasource': [
+                  {
+                    datasource: {
+                      type: 'grafana-redshift-datasource',
+                      uid: 'V6_lLJf7k',
+                    },
+                    rawSQL: '',
+                    refId: 'A',
+                  },
+                ],
+              },
+              dashboardId: 'DGmvKKxZz',
+              orgId: 12,
+              userId: 34,
+              grafanaVersion: '1.0',
+            },
+            type: 'dashboard-loaded',
+          });
+        });
 
-  it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
-  });
-});
+        it('Should send action dashboardInitFetching', () => {
+          expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+        });
 
-describeInitScenario('Initializing previously canceled dashboard initialization', (ctx) => {
-  ctx.setup(() => {
-    ctx.storeState.dashboard.initPhase = DashboardInitPhase.Fetching;
-  });
+        it('Should send action dashboardInitServices ', () => {
+          expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+        });
 
-  it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
-  });
+        it('Should update location with orgId query param', () => {
+          const search = locationService.getSearch();
+          expect(search.get('orgId')).toBe('12');
+        });
 
-  it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
+        it('Should send action dashboardInitCompleted', () => {
+          expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
+          expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
+        });
 
-  it('Should not send action dashboardInitCompleted', () => {
-    const dashboardInitCompletedAction = ctx.actions.find((a) => {
-      return a.type === dashboardInitCompleted.type;
-    });
-    expect(dashboardInitCompletedAction).toBe(undefined);
-  });
+        it('Should initialize services', () => {
+          expect(getTimeSrv().init).toBeCalled();
+          expect(getDashboardSrv().setCurrent).toBeCalled();
+          expect(getDashboardQueryRunner().run).toBeCalled();
+          expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
+        });
 
-  it('Should initialize timeSrv and dashboard query runner', () => {
-    expect(getTimeSrv().init).toBeCalled();
-    expect(getDashboardQueryRunner().run).toBeCalled();
-  });
-});
+        it('Should initialize redux variables if newVariables is enabled', () => {
+          expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+        });
+      },
+      useV2
+    );
 
-describeInitScenario('Initializing snapshot dashboard', (ctx) => {
-  ctx.setup(() => {
-    ctx.args.urlUid = undefined;
-  });
+    describeInitScenario(
+      'Initializing previously canceled dashboard initialization',
+      (ctx) => {
+        ctx.setup(() => {
+          ctx.storeState.dashboard.initPhase = DashboardInitPhase.Fetching;
+        });
 
-  it('Should send action initVariablesTransaction with correct payload', () => {
-    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
-    expect(ctx.actions[2].payload.action.payload.uid).toBe(DASH_UID);
+        it('Should send action dashboardInitFetching', () => {
+          expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+        });
+
+        it('Should send action dashboardInitServices ', () => {
+          expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+        });
+
+        it('Should not send action dashboardInitCompleted', () => {
+          const dashboardInitCompletedAction = ctx.actions.find((a) => {
+            return a.type === dashboardInitCompleted.type;
+          });
+          expect(dashboardInitCompletedAction).toBe(undefined);
+        });
+
+        it('Should initialize timeSrv and dashboard query runner', () => {
+          expect(getTimeSrv().init).toBeCalled();
+          expect(getDashboardQueryRunner().run).toBeCalled();
+        });
+      },
+      useV2
+    );
+
+    describeInitScenario(
+      'Initializing snapshot dashboard',
+      (ctx) => {
+        ctx.setup(() => {
+          ctx.args.urlUid = undefined;
+        });
+
+        it('Should send action initVariablesTransaction with correct payload', () => {
+          expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+          expect(ctx.actions[2].payload.action.payload.uid).toBe(DASH_UID);
+        });
+      },
+      useV2
+    );
   });
 });

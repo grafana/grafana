@@ -1,8 +1,8 @@
 import { t } from 'i18next';
 
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 
 import { validationSrv } from '../services/ValidationSrv';
 
@@ -52,11 +52,9 @@ export const validateUid = (value: string) => {
   return getDashboardAPI()
     .getDashboardDTO(value)
     .then((existingDashboard) => {
-      if (isDashboardResource(existingDashboard)) {
-        // TODO[schema v2]: Update to use correct annotation with title when it's added
-        return `Dashboard named '${existingDashboard?.spec.title}' in folder '${existingDashboard?.metadata.annotations?.[AnnoKeyFolder]}' has the same UID`;
-      }
-      return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same UID`;
+      const dashboard = ResponseTransformers.ensureV2Response(existingDashboard);
+
+      return `Dashboard named '${dashboard.spec.title}' in folder '${dashboard.metadata.annotations?.[AnnoKeyFolderTitle]}' has the same UID`;
     })
     .catch((error) => {
       error.isHandled = true;

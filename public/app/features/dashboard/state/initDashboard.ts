@@ -32,7 +32,7 @@ import {
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
-import { isDashboardResource } from '../api/utils';
+import { ResponseTransformers } from '../api/ResponseTransformers';
 import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
@@ -65,12 +65,8 @@ async function fetchDashboard(
         const stateManager = getDashboardScenePageStateManager();
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
-        if (isDashboardResource(cachedDashboard)) {
-          throw new Error('v2 schema not supported');
-        }
-
         if (cachedDashboard) {
-          return cachedDashboard;
+          return ResponseTransformers.ensureV1Response(cachedDashboard);
         }
 
         // load home dash
@@ -92,32 +88,28 @@ async function fetchDashboard(
       case DashboardRoutes.Public: {
         const dashboard = await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
 
-        if (isDashboardResource(dashboard)) {
-          throw new Error('v2 schema not supported');
-        }
-
-        return dashboard;
+        return ResponseTransformers.ensureV1Response(dashboard);
       }
       case DashboardRoutes.Normal: {
         const dashDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (isDashboardResource(dashDTO)) {
-          throw new Error('v2 schema not supported');
-        }
+        const folderUid = ResponseTransformers.ensureV1Response(dashDTO).meta.folderUid;
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (dashDTO.meta.folderUid) {
+        if (folderUid) {
           try {
-            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
+            await dispatch(getFolderByUid(folderUid));
           } catch (err) {
-            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
+            console.warn('Error fetching parent folder', folderUid, 'for dashboard', err);
           }
         }
 
-        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
+        const url = ResponseTransformers.ensureV1Response(dashDTO).meta.url;
+
+        if (args.fixUrl && url && !playlistSrv.state.isPlaying) {
           // check if the current url is correct (might be old slug)
-          const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
+          const dashboardUrl = locationUtil.stripBaseFromUrl(url);
           const currentPath = locationService.getLocation().pathname;
 
           if (dashboardUrl !== currentPath) {
@@ -129,7 +121,7 @@ async function fetchDashboard(
             console.log('not correct url correcting', dashboardUrl, currentPath);
           }
         }
-        return dashDTO;
+        return ResponseTransformers.ensureV1Response(dashDTO);
       }
       case DashboardRoutes.New: {
         // only the folder API has information about ancestors
@@ -140,11 +132,7 @@ async function fetchDashboard(
         }
         const dash = await buildNewDashboardSaveModel(args.urlFolderUid);
 
-        if (isDashboardResource(dash)) {
-          throw new Error('v2 schema not supported');
-        }
-
-        return dash;
+        return ResponseTransformers.ensureV1Response(dash);
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };
