@@ -46,8 +46,9 @@ type Dashboard struct {
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
-	Title string
-	Data  *simplejson.Json
+	Title         string
+	Data          *simplejson.Json
+	UseAsTemplate bool `xorm:"use_as_template"`
 }
 
 func (d *Dashboard) SetID(id int64) {
@@ -142,6 +143,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
+	dash.UseAsTemplate = cmd.UseAsTemplate
 	dash.UpdateSlug()
 	return dash
 }
@@ -203,9 +205,10 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
 	// Deprecated: use FolderUID instead
-	FolderID  int64  `json:"folderId" xorm:"folder_id"`
-	FolderUID string `json:"folderUid" xorm:"folder_uid"`
-	IsFolder  bool   `json:"isFolder"`
+	FolderID      int64  `json:"folderId" xorm:"folder_id"`
+	FolderUID     string `json:"folderUid" xorm:"folder_uid"`
+	IsFolder      bool   `json:"isFolder"`
+	UseAsTemplate bool   `json:"useAsTemplate"`
 
 	UpdatedAt time.Time
 }
@@ -416,14 +419,15 @@ type FindPersistedDashboardsQuery struct {
 	DashboardUIDs []string
 	Type          string
 	// Deprecated: use FolderUIDs instead
-	FolderIds  []int64
-	FolderUIDs []string
-	Tags       []string
-	Limit      int64
-	Page       int64
-	Permission dashboardaccess.PermissionType
-	Sort       model.SortOption
-	IsDeleted  bool
+	FolderIds     []int64
+	FolderUIDs    []string
+	Tags          []string
+	Limit         int64
+	Page          int64
+	Permission    dashboardaccess.PermissionType
+	Sort          model.SortOption
+	IsDeleted     bool
+	UseAsTemplate bool
 
 	Filters []any
 

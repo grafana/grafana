@@ -172,10 +172,29 @@ export function ignoreChanges(current: DashboardScene | null, original?: Dashboa
     return true;
   }
 
+  // Ignore changes if the original is empty (new dashboard) and is moving to import page or redirecting to other page
+
+  if (current.state.isEmpty && isEmptyDashboard(original)) {
+    return true;
+  }
+
   const { canSave, fromScript, fromFile } = current.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }
 
   return !canSave || fromScript || fromFile;
+}
+
+function isEmptyDashboard(dashboard: Dashboard): boolean {
+  if (!dashboard) {
+    return true;
+  }
+
+  const hasNoPanels = !dashboard.panels?.length;
+  const hasNoLinks = !dashboard.links?.length;
+  const hasNoTemplates = !dashboard.templating?.list?.length;
+  const hasNoUid = !dashboard.uid;
+
+  return hasNoPanels && hasNoLinks && hasNoTemplates && hasNoUid;
 }

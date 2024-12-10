@@ -8,20 +8,27 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
+import {
+  useDeleteItemsMutation,
+  useMarkDashboardsAsTemplateMutation,
+  useMoveItemsMutation,
+} from '../../api/browseDashboardsAPI';
 import { setAllSelection, useActionSelectionState } from '../../state';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
+import { MarkAsATemplateModal } from './MarkAsATemplateModal';
 import { MoveModal } from './MoveModal';
 
-export interface Props {}
+export interface Props { }
 
 export function BrowseActions() {
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
+  const [markAsTemplate] = useMarkDashboardsAsTemplateMutation();
+
   const [, stateManager] = useSearchStateManager();
 
   // Folders can only be moved if nested folders is enabled
@@ -53,6 +60,11 @@ export function BrowseActions() {
     onActionComplete();
   };
 
+  const onMarkingAsTemplate = async () => {
+    await markAsTemplate({ selectedItems });
+    onActionComplete();
+  };
+
   const showMoveModal = () => {
     appEvents.publish(
       new ShowModalReactEvent({
@@ -77,6 +89,18 @@ export function BrowseActions() {
     );
   };
 
+  const onMarkDashboardAsTemplate = () => {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: MarkAsATemplateModal,
+        props: {
+          selectedItems,
+          onConfirm: onMarkingAsTemplate,
+        },
+      })
+    );
+  };
+
   const moveButton = (
     <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
@@ -95,6 +119,9 @@ export function BrowseActions() {
 
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+      </Button>
+      <Button onClick={onMarkDashboardAsTemplate} variant="secondary">
+        Mark as template{' '}
       </Button>
     </Stack>
   );

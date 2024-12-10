@@ -96,6 +96,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
+		UseAsTemplate: c.Query("useAsTemplate") == "true",
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
@@ -205,6 +206,10 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	Deleted bool `json:"deleted"`
+	// Flag indicating if dashboard can be used as template
+	// in:query
+	// required: false
+	UseAsTemplate bool `json:"useAsTemplate"`
 }
 
 // swagger:response searchResponse

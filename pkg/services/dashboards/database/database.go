@@ -396,7 +396,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
 		metrics.MApiDashboardInsert.Inc()
-		affectedRows, err = sess.Nullable("folder_uid").Insert(dash)
+		affectedRows, err = sess.Nullable("folder_uid").UseBool("use_as_template").Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)
 
@@ -408,7 +408,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		dash.UpdatedBy = userId
 
-		affectedRows, err = sess.MustCols("folder_id", "folder_uid").Nullable("folder_uid").ID(dash.ID).Update(dash)
+		affectedRows, err = sess.MustCols("folder_id", "folder_uid").Nullable("folder_uid").UseBool("use_as_template").ID(dash.ID).Update(dash)
 	}
 
 	if err != nil {
@@ -898,6 +898,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
+
+	if query.UseAsTemplate {
+		filters = append(filters, searchstore.UseAsTemplateFilter{})
+	}
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}

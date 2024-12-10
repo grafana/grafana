@@ -104,6 +104,7 @@ export interface SearchState {
   includePanels?: boolean;
   eventTrackingNamespace: EventTrackingNamespace;
   deleted: boolean;
+  useAsTemplate: boolean;
 }
 
 export type OnToggleChecked = (item: DashboardViewItem) => void;
@@ -120,6 +121,7 @@ export interface SearchQueryParams {
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
+  useAsTemplate?: boolean | null;
 }
 
 // new Search Types

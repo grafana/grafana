@@ -552,6 +552,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	cmd.UserID = userID
 
 	dash := cmd.GetDashboardModel()
+
 	newDashboard := dash.ID == 0
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
@@ -635,13 +636,14 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":    "success",
-		"slug":      dashboard.Slug,
-		"version":   dashboard.Version,
-		"id":        dashboard.ID,
-		"uid":       dashboard.UID,
-		"url":       dashboard.GetURL(),
-		"folderUid": dashboard.FolderUID,
+		"status":        "success",
+		"slug":          dashboard.Slug,
+		"version":       dashboard.Version,
+		"id":            dashboard.ID,
+		"uid":           dashboard.UID,
+		"url":           dashboard.GetURL(),
+		"folderUid":     dashboard.FolderUID,
+		"useAsTemplate": dashboard.UseAsTemplate,
 	})
 }
 

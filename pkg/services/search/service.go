@@ -44,10 +44,11 @@ type Query struct {
 	DashboardUIDs []string
 	DashboardIds  []int64
 	// Deprecated: use FolderUID instead
-	FolderIds  []int64
-	FolderUIDs []string
-	Permission dashboardaccess.PermissionType
-	Sort       string
+	FolderIds     []int64
+	FolderUIDs    []string
+	Permission    dashboardaccess.PermissionType
+	Sort          string
+	UseAsTemplate bool
 }
 
 type Service interface {
@@ -101,6 +102,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Page:          query.Page,
 		Permission:    query.Permission,
 		IsDeleted:     query.IsDeleted,
+		UseAsTemplate: query.UseAsTemplate,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

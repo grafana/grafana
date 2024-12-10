@@ -70,6 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters;
+  const isTemplate = dashboard.state.tags?.includes('template');
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -546,6 +547,22 @@ export function ToolbarActions({ dashboard }: Props) {
             icon="copy"
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
+            }}
+          />
+          <Menu.Item
+            label={isTemplate ? 'Unmark as template' : 'Mark as template'}
+            icon="dashboard"
+            onClick={() => {
+              if (isTemplate) {
+                dashboard.setState({
+                  tags: (dashboard.state.tags || []).filter((t) => t !== 'template'),
+                });
+              } else {
+                dashboard.setState({
+                  tags: dashboard.state.tags ? dashboard.state.tags.concat('template') : ['template'],
+                });
+              }
+              dashboard.openSaveDrawer({});
             }}
           />
         </Menu>

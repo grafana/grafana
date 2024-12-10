@@ -244,4 +244,13 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"deleted"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Add use_as_template column", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "use_as_template", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add index for use_as_template", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"use_as_template"},
+		Type: IndexType,
+	}))
 }
