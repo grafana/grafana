@@ -7,6 +7,8 @@ describe('historyResultToDataFrame', () => {
   });
 
   it('should decode and filter', () => {
-    expect(historyResultToDataFrame(fixtureData, { stateFrom: 'Pending', stateTo: 'Alerting' })).toMatchSnapshot();
+    expect(
+      historyResultToDataFrame(fixtureData, { stateFrom: 'Pending', stateTo: 'Alerting', labels: '' })
+    ).toMatchSnapshot();
   });
 });

@@ -9,6 +9,7 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   TextBoxVariable,
+  VariableDependencyConfig,
   VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
@@ -495,25 +496,26 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
 export class HistoryEventsListObject extends SceneObjectBase {
   public static Component = HistoryEventsListObjectRenderer;
-  public constructor() {
-    super({});
-  }
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
+  });
 }
 
 export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
+  // This make sure the component is re-rendered when the variables change
+  model.useState();
+
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
+
   // eslint-disable-next-line
   const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
   // eslint-disable-next-line
   const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
   // eslint-disable-next-line
   const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
-
-  const valueInfilterTextBox: VariableValue = labelsFiltersVariable.getValue();
-  const valueInStateToFilter = stateToFilterVariable.getValue();
-  const valueInStateFromFilter = stateFromFilterVariable.getValue();
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
@@ -524,7 +526,7 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
     if (type === 'stateFrom') {
       stateFromFilterVariable.changeValueTo(value);
     }
-    const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
+    const finalFilter = combineMatcherStrings(labelsFiltersVariable.state.value.toString(), newFilterToAdd);
     if (type === 'label') {
       labelsFiltersVariable.setValue(finalFilter);
     }
@@ -533,10 +535,10 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
   return (
     <HistoryEventsList
       timeRange={timeRange}
-      valueInLabelFilter={valueInfilterTextBox}
+      valueInLabelFilter={labelsFiltersVariable.state.value}
       addFilter={addFilter}
-      valueInStateToFilter={valueInStateToFilter}
-      valueInStateFromFilter={valueInStateFromFilter}
+      valueInStateToFilter={stateToFilterVariable.state.value}
+      valueInStateFromFilter={stateFromFilterVariable.state.value}
     />
   );
 }
