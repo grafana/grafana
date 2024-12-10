@@ -1752,6 +1752,12 @@
     "infinite-scroll": {
       "older-logs": "Øľđęř ľőģş"
     },
+    "log-details": {
+      "fields": "Fįęľđş",
+      "links": "Ŀįŉĸş",
+      "log-line": "Ŀőģ ľįŉę",
+      "no-details": "Ńő đęŧäįľş äväįľäþľę"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę"
