@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -44,5 +45,7 @@ var WireSet = wire.NewSet(
 	query.RegisterAPIService,
 	scope.RegisterAPIService,
 	notifications.RegisterAPIService,
+	//sso.RegisterAPIService,
+	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
 )
