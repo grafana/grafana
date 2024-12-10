@@ -35,7 +35,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return orderA - orderB;
   });
 
-  const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
+  const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item, i) => {
     const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `recent-dashboards${url}`,
@@ -43,6 +43,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
+      shortcut: ['/', 'd', i + 1 + ''],
     };
   });
 
@@ -79,7 +80,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   return goToSearchResultActions;
 }
 
-export function useSearchResults(searchQuery: string, isShowing: boolean) {
+export function useDashboardsAndFoldersSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);

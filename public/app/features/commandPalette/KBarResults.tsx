@@ -20,6 +20,7 @@ interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
   onRender: (params: RenderParams) => React.ReactElement;
+  onClick?: (id: string) => void;
   maxHeight?: number;
 }
 
@@ -172,7 +173,12 @@ export const KBarResults = (props: KBarResultsProps) => {
             onPointerMove: () =>
               pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
-            onClick: (ev: React.MouseEvent) => execute(ev, item),
+            onClick: (ev: React.MouseEvent) => {
+              execute(ev, item);
+              if (props.onClick) {
+                props.onClick(item.id);
+              }
+            },
           };
           const active = virtualRow.index === activeIndex;
 
