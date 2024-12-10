@@ -30,12 +30,9 @@ test.describe('test data source with frontend only health check', () => {
     selectors,
   }) => {
     const configPage = await createDataSourceConfigPage({ type: 'zipkin' });
-    const healthCheckPath = `${selectors.apis.DataSource.proxy(configPage.datasource.uid)}/api/v2/services`;
-    await page.route(healthCheckPath, async (route) => {
-      await route.fulfill({ status: 200, body: 'OK' });
-    });
+    configPage.mockHealthCheckResponse({ status: 200 });
     await page.getByPlaceholder('http://localhost:9411').fill('http://localhost:9411');
-    await expect(configPage.saveAndTest({ path: healthCheckPath })).toBeOK();
+    await expect(configPage.saveAndTest()).toBeOK();
     await expect(
       configPage,
       formatExpectError('Expected data source config to display success alert after save')

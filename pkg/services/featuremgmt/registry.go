@@ -1617,8 +1617,9 @@ var (
 		{
 			Name:        "zipkinBackendMigration",
 			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",
