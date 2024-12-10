@@ -289,7 +289,9 @@ func TestSimpleServer(t *testing.T) {
 		require.Equal(t, restored.ResourceVersion, found.ResourceVersion)
 		foundUnstructured := &unstructured.Unstructured{}
 		err = foundUnstructured.UnmarshalJSON(found.Value)
+		require.NoError(t, err)
 		foundObj, err := utils.MetaAccessor(foundUnstructured)
+		require.NoError(t, err)
 		// the UID should be different now
 		require.NotEqual(t, uid, string(foundObj.GetUID()))
 	})

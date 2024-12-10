@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type actionType string
@@ -85,7 +83,6 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user identity.Reques
 			Presence: true,
 		}, backend.SubscribeStreamStatusOK, nil
 	}
-	ctx = k8sRequest.WithUser(ctx, user.(k8sUser.Info))
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
@@ -128,7 +125,6 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 		// Eventually this could broadcast a message back to the dashboard saying a pull request exists
 		return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("not implemented yet")
 	}
-	ctx = k8sRequest.WithUser(ctx, requester.(k8sUser.Info))
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {

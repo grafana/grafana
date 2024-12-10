@@ -598,12 +598,13 @@ func TestBackend_restore(t *testing.T) {
 	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
 		Object: map[string]any{},
 	})
+	require.NoError(t, err)
 	meta.SetUID("new-uid")
 	oldMeta, err := utils.MetaAccessor(&unstructured.Unstructured{
 		Object: map[string]any{},
 	})
-	oldMeta.SetUID("old-uid")
 	require.NoError(t, err)
+	oldMeta.SetUID("old-uid")
 	event := resource.WriteEvent{
 		Type:      resource.WatchEvent_RESTORED,
 		Key:       resKey,

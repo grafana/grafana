@@ -72,7 +72,7 @@ func TestLatest(t *testing.T) {
 		require.NoError(t, err)
 		mockClient.On("Read", ctx, readReq).Return(&resource.ReadResponse{
 			ResourceVersion: 123,
-			Value:           []byte(val),
+			Value:           val,
 		}, nil).Once()
 
 		mockResponder.On("Object", http.StatusOK, mock.MatchedBy(func(obj interface{}) bool {
