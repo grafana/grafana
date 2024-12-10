@@ -469,13 +469,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderNodeGraphPanel() {
-    const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
+    const { exploreId, showTrace, datasourceInstance, nodeGraphResult } = this.props;
     const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
 
     return (
       <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
-          dataFrames={queryResponse.nodeGraphFrames}
+          dataFrames={nodeGraphResult ?? []}
           exploreId={exploreId}
           withTraceView={showTrace}
           datasourceType={datasourceType}
@@ -681,6 +681,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
+    nodeGraphResult,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -694,6 +695,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queries,
     isLive,
     graphResult,
+    nodeGraphResult,
     logsResult: logsResult ?? undefined,
     queryResponse,
     syncedTimes,
