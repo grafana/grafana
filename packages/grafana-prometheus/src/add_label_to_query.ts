@@ -5,6 +5,7 @@ import { PromQueryModeller } from './querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
+import { utf8Support } from './utf8_support';
 
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
@@ -30,7 +31,7 @@ export function addLabelToQuery(query: string, key: string, value: string | numb
     return query;
   }
 
-  const filter = toLabelFilter(key, value, operator);
+  const filter = toLabelFilter(utf8Support(key), value, operator);
   return addFilter(query, vectorSelectorPositions, filter);
 }
 

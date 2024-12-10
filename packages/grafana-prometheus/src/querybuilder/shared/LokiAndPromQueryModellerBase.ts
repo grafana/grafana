@@ -83,20 +83,27 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
       return '';
     }
 
-    let expr = '{';
-    for (const filter of labels) {
-      if (expr !== '{') {
-        expr += ', ';
-      }
+    const renderedLabels = labels.map((filter) => `${filter.label}${filter.op}"${filter.value}"`).join(', ');
 
-      expr += `${filter.label}${filter.op}"${filter.value}"`;
-    }
-
-    return expr + `}`;
+    return `{${renderedLabels}}`;
   }
 
   renderQuery(query: PromLokiVisualQuery, nested?: boolean) {
-    let queryString = `${query.metric ?? ''}${this.renderLabels(query.labels)}`;
+    let queryString = '';
+    const labels = this.renderLabels(query.labels);
+    if (query.metric) {
+      if (this.isUtf8Metric(query.metric)) {
+        // This is a utf8 metric, put inside the curly {"utf8.metric", label="value"}
+        queryString = `{${query.metric}${labels.length > 0 ? `, ${labels.substring(1)}` : `}`}`;
+      } else {
+        // This is a legacy metric, put outside the curl legacy_query{label="value"}
+        queryString = `${query.metric}${labels}`;
+      }
+    } else {
+      // No metric just use labels {label="value"}
+      queryString = labels;
+    }
+
     queryString = this.renderOperations(queryString, query.operations);
 
     if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {
@@ -119,5 +126,10 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
         return def?.category === PromVisualQueryOperationCategory.BinaryOps;
       }) !== undefined
     );
+  }
+
+  isUtf8Metric(metricName: string): boolean {
+    const wrappedInQuotes = /^".*"$/;
+    return wrappedInQuotes.test(metricName);
   }
 }
