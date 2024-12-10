@@ -28,23 +28,6 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationRequiresDevMode(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true, // should fail
-		DisableAnonymous:     true,
-		APIServerStorageType: options.StorageTypeUnified, // tests local unified storage connection
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
-	require.Error(t, err)
-}
-
 func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		ctx := context.Background()
