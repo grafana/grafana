@@ -1620,6 +1620,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "exploreMetricsRemoveOverviewTab",
+			Description:  "Remove overview tab from selected metric view.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:            "enableExtensionsAdminPage",
 			Description:     "Enables the extension admin page regardless of development mode",
 			Stage:           FeatureStageExperimental,

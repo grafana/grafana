@@ -871,6 +871,10 @@ const (
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
+	// FlagExploreMetricsRemoveOverviewTab
+	// Remove overview tab from selected metric view.
+	FlagExploreMetricsRemoveOverviewTab = "exploreMetricsRemoveOverviewTab"
+
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
