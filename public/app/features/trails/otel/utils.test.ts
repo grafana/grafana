@@ -2,6 +2,7 @@ import { AdHocVariableFilter, MetricFindValue } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, sceneGraph } from '@grafana/scenes';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
@@ -332,6 +333,12 @@ describe('util functions that rely on trail and variable setup', () => {
       useOtelExperience: true,
       nonPromotedOtelResources,
     });
+    setupDataSources(
+      mockDataSource({
+        name: 'Prometheus',
+        type: DataSourceType.Prometheus,
+      })
+    );
     locationService.push(preTrailUrl);
     activateFullSceneTree(trail);
     getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
