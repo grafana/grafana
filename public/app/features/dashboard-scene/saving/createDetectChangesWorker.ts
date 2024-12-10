@@ -1,3 +1,5 @@
 import { corsWorker } from 'app/core/utils/CorsWorker';
 
-export const createWorker = () => corsWorker('./DetectChangesWorker.ts', { name: 'detectChanges' });
+import detectChangesWorkerUrl from './DetectChangesWorker?worker&url';
+
+export const createWorker = () => corsWorker(detectChangesWorkerUrl, { name: 'detectChanges' });
