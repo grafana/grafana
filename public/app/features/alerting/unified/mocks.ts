@@ -416,7 +416,7 @@ class MockDataSourceApi extends DataSourceApi {
   }
 }
 
-// TODO This should be eventually moved to public/app/features/alerting/unified/testSetup/datasources.ts
+/** @deprecated use `setupDatasources` instead */
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore

@@ -104,7 +104,7 @@ export function mimirDataSource() {
         manageAlerts: true,
       },
     },
-    { alerting: true }
+    { alerting: true, module: 'core:plugin/alertmanager' }
   );
 
   setupDataSources(dataSource);
