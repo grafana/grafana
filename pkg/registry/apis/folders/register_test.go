@@ -340,14 +340,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		setupFn func(*mock.Mock, string)
 		wantErr bool
 	}{
-		// {
-		// 	name: "should allow deletion when folder is empty",
-		// 	setupFn: func(m *mock.Mock, name string) {
-		// 		m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: "stacks-123", Folder: name}).Return(
-		// 			&resource.ResourceStatsResponse{},
-		// 			nil)
-		// 	},
-		// },
+		{
+			name: "should allow deletion when folder is empty",
+			setupFn: func(m *mock.Mock, name string) {
+				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: "stacks-123", Folder: name}).Return(
+					&resource.ResourceStatsResponse{},
+					nil)
+			},
+		},
 		{
 			name: "should return folder not empty when the folder is not empty",
 			setupFn: func(m *mock.Mock, name string) {
