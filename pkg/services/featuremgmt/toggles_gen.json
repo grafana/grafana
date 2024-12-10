@@ -1271,6 +1271,21 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchCrossClusterSearch",
+        "resourceVersion": "1733848475752",
+        "creationTimestamp": "2024-12-09T13:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-10 16:34:35.752111 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables cross cluster search in the Elasticsearch datasource",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-24T14:46:31Z"
