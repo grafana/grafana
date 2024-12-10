@@ -1086,74 +1086,81 @@ describe('ElasticDatasource', () => {
 
   describe('getFields', () => {
     const getFieldsMockData = {
-      '[test-]YYYY.MM.DD': {
-        mappings: {
-          properties: {
-            '@timestamp_millis': {
-              type: 'date',
-              format: 'epoch_millis',
-            },
-            classification_terms: {
-              type: 'keyword',
-            },
-            ip_address: {
-              type: 'ip',
-            },
-            justification_blob: {
-              properties: {
-                criterion: {
-                  type: 'text',
-                  fields: {
-                    keyword: {
-                      type: 'keyword',
-                      ignore_above: 256,
-                    },
-                  },
-                },
-                shallow: {
-                  properties: {
-                    jsi: {
-                      properties: {
-                        sdb: {
-                          properties: {
-                            dsel2: {
-                              properties: {
-                                'bootlegged-gille': {
-                                  properties: {
-                                    botness: {
-                                      type: 'float',
-                                    },
-                                    general_algorithm_score: {
-                                      type: 'float',
-                                    },
-                                  },
-                                },
-                                'uncombed-boris': {
-                                  properties: {
-                                    botness: {
-                                      type: 'float',
-                                    },
-                                    general_algorithm_score: {
-                                      type: 'float',
-                                    },
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            overall_vote_score: {
-              type: 'float',
-            },
+      fields: {
+        '@timestamp_millis': {
+          date: {
+            type: 'date',
+            metadata_field: false,
+          },
+        },
+        classification_terms: {
+          keyword: {
+            type: 'keyword',
+            metadata_field: false,
+          },
+        },
+        ip_address: {
+          ip: {
+            type: 'ip',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.criterion.keyword': {
+          keyword: {
+            type: 'keyword',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.criterion': {
+          text: {
+            type: 'text',
+            metadata_field: false,
+          },
+        },
+        justification_blob: {
+          object: {
+            type: 'object',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score': {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        overall_vote_score: {
+          float: {
+            type: 'float',
+            metadata_field: false,
+          },
+        },
+        _index: {
+          _index: {
+            type: '_index',
+            metadata_field: true,
           },
         },
       },
+      indices: ['[test-]YYYY.MM.DD'],
     };
 
     it('should not retry when ES is down', async () => {
@@ -1163,7 +1170,7 @@ describe('ElasticDatasource', () => {
       });
 
       ds.getResource = jest.fn().mockImplementation((options) => {
-        if (options.url === `test-${twoDaysBefore}/_mapping`) {
+        if (options.url === `test-${twoDaysBefore}/_field_caps`) {
           return of({
             data: {},
           });

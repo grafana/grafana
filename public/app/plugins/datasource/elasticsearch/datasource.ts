@@ -1,4 +1,4 @@
-import { cloneDeep, first as _first, isNumber, isObject, isString, map as _map, find } from 'lodash';
+import { cloneDeep, first as _first, isNumber, isString, map as _map, find } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -86,20 +86,6 @@ import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersi
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
-
-// Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
-// custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
-const ELASTIC_META_FIELDS = [
-  '_index',
-  '_type',
-  '_id',
-  '_source',
-  '_size',
-  '_field_names',
-  '_ignored',
-  '_routing',
-  '_meta',
-];
 
 export class ElasticDatasource
   extends DataSourceWithBackend<ElasticsearchQuery, ElasticsearchOptions>
@@ -197,7 +183,7 @@ export class ElasticDatasource
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const url = '_mapping';
+    const url = '_field_caps';
 
     const indexUrlList = indexList.map((index) => {
       // make sure `index` does not end with a slash
@@ -219,8 +205,7 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        const path = indexUrlList[listLen - index - 1];
-        return from(this.getResource(path)).pipe(catchError((err) => of({ err })));
+        return from(this.getResource(indexUrlList[listLen - index - 1])).pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -731,11 +716,6 @@ export class ElasticDatasource
     return true;
   }
 
-  // Private method used in the `getFields` to check if a field is a metadata field.
-  private isMetadataField(fieldName: string) {
-    return ELASTIC_META_FIELDS.includes(fieldName);
-  }
-
   /**
    * Get the list of the fields to display in query editor or used for example in getTagKeys.
    * @todo instead of being a string, this could be a custom type representing all the elastic types
@@ -759,59 +739,36 @@ export class ElasticDatasource
     return this.requestAllIndices(range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
-          if (this.isMetadataField(key)) {
-            return false;
-          }
-
-          if (!type || type.length === 0) {
-            return true;
-          }
-
           // equal query type filter, or via type map translation
-          return type.includes(obj.type) || type.includes(typeMap[obj.type]);
+          for (const objField in obj) {
+            if (objField === 'object') {
+              return false;
+            }
+            if (obj[objField]['metadata_field']) {
+              return false;
+            }
+
+            if (!type || type.length === 0) {
+              return true;
+            }
+
+            if (type.includes(objField) || type.includes(typeMap[objField])) {
+              return true;
+            }
+          }
+          return false;
         };
 
-        // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
-        const fieldNameParts: string[] = [];
         const fields: Record<string, { text: string; type: string }> = {};
 
-        function getFieldsRecursively(obj: any) {
-          for (const key in obj) {
-            const subObj = obj[key];
-
-            // Check mapping field for nested fields
-            if (isObject(subObj.properties)) {
-              fieldNameParts.push(key);
-              getFieldsRecursively(subObj.properties);
-            }
-
-            if (isObject(subObj.fields)) {
-              fieldNameParts.push(key);
-              getFieldsRecursively(subObj.fields);
-            }
-
-            if (isString(subObj.type)) {
-              const fieldName = fieldNameParts.concat(key).join('.');
-
-              // Hide meta-fields and check field type
-              if (shouldAddField(subObj, key)) {
-                fields[fieldName] = {
-                  text: fieldName,
-                  type: subObj.type,
-                };
-              }
-            }
-          }
-          fieldNameParts.pop();
-        }
-
-        for (const indexName in result) {
-          const index = result[indexName];
-          if (index && index.mappings) {
-            const mappings = index.mappings;
-
-            const properties = mappings.properties;
-            getFieldsRecursively(properties);
+        const fieldsData = result['fields'];
+        for (const fieldName in fieldsData) {
+          const fieldInfo = fieldsData[fieldName];
+          if (shouldAddField(fieldInfo, fieldName)) {
+            fields[fieldName] = {
+              text: fieldName,
+              type: fieldInfo.type,
+            };
           }
         }
 
