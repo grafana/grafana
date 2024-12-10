@@ -16,7 +16,9 @@ import (
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
@@ -31,6 +33,7 @@ type githubRepository struct {
 	linterFactory lint.LinterFactory
 	renderer      PreviewRenderer
 	ignore        provisioning.IgnoreFile
+	iface         dynamic.ResourceInterface
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -42,6 +45,7 @@ func NewGitHub(
 	baseURL *url.URL,
 	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
+	iface dynamic.ResourceInterface,
 ) *githubRepository {
 	return &githubRepository{
 		config:        config,
@@ -51,6 +55,7 @@ func NewGitHub(
 		linterFactory: linterFactory,
 		renderer:      renderer,
 		ignore:        provisioning.IncludeYamlOrJSON,
+		iface:         iface,
 	}
 }
 
@@ -648,6 +653,22 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 				continue
 			}
 		}
+
+		// TODO: why having to fetch this one again?
+		resource, err := r.iface.Get(ctx, r.config.Name, metav1.GetOptions{})
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to get repository", "error", err)
+			continue
+		}
+
+		unstructuredResource := resource.DeepCopy()
+		unstructured.SetNestedField(unstructuredResource.Object, commit.SHA1, "status", "currentGitCommit")
+
+		if _, err := r.iface.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+			logger.ErrorContext(ctx, "failed to update repository status", "error", err)
+		}
+
+		logger.InfoContext(ctx, "repository status updated", "commit", commit.SHA1)
 	}
 
 	return nil
