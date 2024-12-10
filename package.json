@@ -57,7 +57,6 @@
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
-    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
