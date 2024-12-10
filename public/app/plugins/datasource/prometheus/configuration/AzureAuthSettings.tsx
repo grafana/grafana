@@ -2,11 +2,11 @@ import { cx } from '@emotion/css';
 import { FormEvent, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { AzureCredentials } from './AzureCredentials';
 import { getAzureCloudOptions, getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
