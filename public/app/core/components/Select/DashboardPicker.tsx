@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
@@ -55,16 +56,18 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      const res = await getDashboardAPI().getDashboardDTO(value);
-      if (res.dashboard) {
+      const res = await getDashboardAPI().getDashboardDTO(value, undefined);
+      const formatted = ResponseTransformers.ensureV1Response(res);
+
+      if (formatted.dashboard) {
         setCurrent({
           value: {
-            uid: res.dashboard.uid,
-            title: res.dashboard.title,
-            folderTitle: res.meta.folderTitle,
-            folderUid: res.meta.folderUid,
+            uid: formatted.dashboard.uid,
+            title: formatted.dashboard.title,
+            folderTitle: formatted.meta.folderTitle,
+            folderUid: formatted.meta.folderUid,
           },
-          label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+          label: formatLabel(formatted.meta?.folderTitle, formatted.dashboard.title),
         });
       }
     })();
