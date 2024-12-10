@@ -209,7 +209,10 @@
 /devenv/dev-dashboards/panel-trend @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-xychart @grafana/dataviz-squad
 /devenv/dev-dashboards/transforms @grafana/dataviz-squad
-/devenv/dev-dashboards/panel-datagrid @grafana/dataviz-squad
+/devenv/dev-dashboards/all-panels.json @grafana/dataviz-squad
+/devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
+/devenv/dev-dashboards/home.json @grafana/dataviz-squad
+/devenv/dev-dashboards/panel-flamegraph/panel_tests_flame_graph.json @grafana/dataviz-squad
 
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/aws-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
