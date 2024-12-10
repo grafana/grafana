@@ -14,29 +14,54 @@ menuTitle: Configure notifications
 title: Configure notifications
 weight: 125
 refs:
-  contact-points:
+  intro-notifications:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points/
-  notification-policies:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
+  configure-contact-points:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
-  templates-page:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
+  configure-notification-policies:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
+  configure-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
+  configure-silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  configure-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure notifications
 
-Choose how, when, and where to send your alert notifications.
+Configuring how, when, and where to send alert notifications is an essential part of your alerting system.
 
-As a first step, define your [contact points](ref:contact-points) where to send your alert notifications to. A contact point is a set of one or more integrations that are used to deliver notifications.
+By default, Grafana Alerting provides default notification messages with relevant alert information, so you don't need to configure messages initially. In the alert rule, you need to configure how to forward their alerts:
 
-Next, create a [notification policy](ref:notification-policies) which is a set of rules for where, when and how your alerts are routed to contact points. In a notification policy, you define where to send your alert notifications by choosing one of the contact points you created.
+1. Directly to a contact point.
+2. To a contact point via notification policies (more flexible).
 
-Optionally, you can add [notification templates](ref:templates-page) to contact points for reuse and consistent messaging in your notifications.
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="In the alert rule, you can configure to forward alerts directly to a contact point or through notification policies" >}}
+
+The notification setup is essential for implementing an alerting system that can effectively scale across multiple teams and services. For a quick overview about the various components involved in handling notifications in Grafana Alerting, refer to the [introduction about notifications](ref:intro-notifications).
+
+This section provides step-by-step instructions for:
+
+- [Configuring contact points](ref:configure-contact-points) to specify where to receive alert notifications.
+- [Configuring notification policies](ref:configure-notification-policies) to determine alerts are routed to contact points.
+- [Templating notifications](ref:configure-templates) to customize notification messages.
+- [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
