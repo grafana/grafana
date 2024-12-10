@@ -31,6 +31,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -64,6 +65,7 @@ type ProvisioningAPIBuilder struct {
 	client            *resources.ClientFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
+	jobs              jobs.JobQueue
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -93,6 +95,7 @@ func NewProvisioningAPIBuilder(
 			blobstore:  blobstore,
 			identities: identities,
 		},
+		jobs: jobs.NewJobQueue(50), // in memory for now
 	}
 }
 
@@ -167,6 +170,13 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	b.jobs.Register(&GithubWorker{
+		getter:         b,
+		logger:         b.logger.With("worker", "github"),
+		resourceClient: b.client,
+		identities:     b.identities,
+	})
+
 	repositoryStorage.AfterCreate = b.afterCreate
 	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
 	repositoryStorage.BeginUpdate = b.beginUpdate
@@ -175,23 +185,22 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	helloWorld := &helloWorldSubresource{
+	storage := map[string]rest.Storage{}
+	storage[provisioning.JobResourceInfo.StoragePath()] = b.jobs
+	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
+	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = &helloWorldSubresource{
 		getter:        repositoryStorage,
 		statusUpdater: repositoryStatusStorage,
 		parent:        b,
 		logger:        b.logger.With("connector", "hello_world"),
 	}
-
-	storage := map[string]rest.Storage{}
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
-	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
-	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
-	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter:         b,
-		client:         b.identities,
-		resourceClient: b.client,
-		logger:         b.logger.With("connector", "webhook"),
+		getter: b,
+		client: b.identities,
+		jobs:   b.jobs,
+		logger: b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
@@ -206,6 +215,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		client:     b.client,
 		logger:     b.logger.With("connector", "import"),
+		ignore:     provisioning.IncludeYamlOrJSON,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,

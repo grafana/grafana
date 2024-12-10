@@ -68,12 +68,22 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		// fmt.Printf("%s", string(v1Disco))
+		//fmt.Printf("%s", string(v1Disco))
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
 			"groupVersion": "provisioning.grafana.app/v0alpha1",
 			"resources": [
+				{
+					"name": "jobs",
+					"singularName": "job",
+					"namespaced": true,
+					"kind": "Job",
+					"verbs": [
+						"get",
+						"list"
+					]
+				},
 				{
 					"name": "repositories",
 					"singularName": "repository",

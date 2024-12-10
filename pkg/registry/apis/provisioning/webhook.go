@@ -6,41 +6,30 @@ import (
 	"log/slog"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client         auth.BackgroundIdentityService
-	getter         RepoGetter
-	logger         *slog.Logger
-	resourceClient *resources.ClientFactory
+	client auth.BackgroundIdentityService
+	getter RepoGetter
+	logger *slog.Logger
+	jobs   jobs.JobQueue
 }
 
 func (*webhookConnector) New() runtime.Object {
-	// This is added as the "ResponseType" regardless what ProducesObject() returns
 	return &provisioning.WebhookResponse{}
 }
 
 func (*webhookConnector) Destroy() {}
-
-func (*webhookConnector) NamespaceScoped() bool {
-	return true
-}
-
-func (*webhookConnector) GetSingularName() string {
-	return "WebhookResponse"
-}
 
 func (*webhookConnector) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
@@ -74,23 +63,45 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
-	webhook := repo.Webhook(ctx, s.logger, responder, factory)
-	if webhook == nil {
-		return nil, &errors.StatusError{
-			ErrStatus: v1.Status{
-				Message: fmt.Sprintf("webhook is not implemented for: %s", repo.Config().Spec.Type),
-				Code:    http.StatusNotImplemented,
-			},
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := s.logger.With("repo", name)
+		rsp, err := repo.Webhook(ctx, logger, r)
+		if err != nil {
+			responder.Error(err)
+			return
 		}
-	}
-	return webhook, nil
+		if rsp == nil {
+			responder.Error(fmt.Errorf("expecting a response"))
+			return
+		}
+		if rsp.Jobs != nil {
+			// Add the job to the job queue
+			for _, spec := range rsp.Jobs {
+				job := provisioning.Job{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: namespace,
+						Labels: map[string]string{
+							"repository":      name,
+							"repository.type": string(repo.Config().Spec.Type),
+						},
+					},
+					Spec: spec,
+				}
+				id, err := s.jobs.Add(ctx, job)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				job.Name = id
+				rsp.IDs = append(rsp.IDs, id)
+			}
+		}
+		responder.Object(rsp.Code, rsp)
+	}), nil
 }
 
 var (
-	_ rest.Storage              = (*webhookConnector)(nil)
-	_ rest.Connecter            = (*webhookConnector)(nil)
-	_ rest.Scoper               = (*webhookConnector)(nil)
-	_ rest.SingularNameProvider = (*webhookConnector)(nil)
-	_ rest.StorageMetadata      = (*webhookConnector)(nil)
+	_ rest.Storage         = (*webhookConnector)(nil)
+	_ rest.Connecter       = (*webhookConnector)(nil)
+	_ rest.StorageMetadata = (*webhookConnector)(nil)
 )

@@ -32,6 +32,10 @@ export type RepositorySpec = {
   preferYaml?: boolean;
 };
 
+export type RepositoryStatus = {
+  hash?: string; // ??? TODO
+};
+
 export type EditingOptions = {
   create: boolean;
   delete: boolean;
@@ -54,21 +58,27 @@ export interface UpdateRequestArg extends RequestArg {
   body: ResourceForCreate<RepositorySpec>;
 }
 
-export type RepositoryList = ResourceList<RepositorySpec>;
 
-export type RepositoryResource = Resource<RepositorySpec>;
+export type RepositoryResource = Resource<RepositorySpec,RepositoryStatus,'Repository'>;
+export type RepositoryList = ResourceList<RepositorySpec,RepositoryStatus,'Repository'>;
 
-export type HelloWorld = {
-  apiVersion?: string;
-  kind?: string;
-  whom?: string;
+export type JobSpec = {
+  action: string;
+  ref?: string;
+  pr?: number;
+  hash?: string;
+  url?: string;
 };
 
-export type WebhookResponse = {
-  apiVersion?: string;
-  kind?: string;
-  status?: string;
+export type JobStatus = {
+  updated?: string; // actually a date...
+  state: 'pending' | 'working' | 'success' | 'error';
+  message?: string;
+  errors?: string[];
 };
+
+export type JobResource = Resource<JobSpec,JobStatus,'Job'>;
+export type JobList = ResourceList<JobSpec,JobStatus,'Job'>;
 
 export type ResourceObjects = {
   type?: {
