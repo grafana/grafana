@@ -322,15 +322,17 @@ export function TableNG(props: TableNGProps) {
 
   // Sort rows
   const sortedRows = useMemo(() => {
+    const comparators = sortColumns.map((sort) => getComparator(columnTypes[sort.columnKey]));
     if (sortColumns.length === 0) {
       return rows;
     }
 
     return [...rows].sort((a, b) => {
+      let sortIndex = 0;
       for (const sort of sortColumns) {
         const { columnKey, direction } = sort;
-        const comparator = getComparator(columnTypes[columnKey]);
-        const compResult = comparator(a[columnKey], b[columnKey]);
+        const compResult = comparators[sortIndex](a[columnKey], b[columnKey]);
+        sortIndex += 1;
         if (compResult !== 0) {
           return direction === 'ASC' ? compResult : -compResult;
         }
@@ -481,6 +483,7 @@ function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.R
 type Comparator = (a: any, b: any) => number;
 
 function getComparator(sortColumnType: string): Comparator {
+  const collator = new Intl.Collator('en', { sensitivity: 'base' });
   switch (sortColumnType) {
     case FieldType.time:
     case FieldType.number:
@@ -489,7 +492,7 @@ function getComparator(sortColumnType: string): Comparator {
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+      return (a, b) => collator.compare(String(a), String(b));
   }
 }
 
