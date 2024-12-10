@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, ComponentSize, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { Button, ComponentSize, InlineField, InlineFieldRow, useTheme2 } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
+import { getPropertiesForButtonSize } from '@grafana/ui/src/components/Forms/commonStyles';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
@@ -25,6 +26,9 @@ export interface MetricComboboxProps {
   onBlur?: () => void;
   variableEditor?: boolean;
 }
+
+const INLINE_FIELD_WIDTH = 20;
+const BUTTON_SIZE: ComponentSize = 'md';
 
 export function MetricCombobox({
   datasource,
@@ -86,9 +90,14 @@ export function MetricCombobox({
   }, [onGetMetrics]);
 
   const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
-  const inlineFieldWidth = 20;
-  const buttonSize: ComponentSize = 'md';
-  const styles = useStyles2(getMectricComboboxStyles, inlineFieldWidth, buttonSize);
+
+  const theme = useTheme2();
+  const { height } = getPropertiesForButtonSize(BUTTON_SIZE, theme);
+  const buttonSpace = parseInt(theme.spacing(height), 10);
+  const inlineFieldSpace = parseInt(theme.spacing(INLINE_FIELD_WIDTH), 10);
+  const widthToSubstract = inlineFieldSpace + buttonSpace;
+  const styles = getMectricComboboxStyles(buttonSpace, widthToSubstract);
+
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -104,7 +113,7 @@ export function MetricCombobox({
 
         {metricsExplorerEnabled ? (
           <Button
-            size={buttonSize}
+            size={BUTTON_SIZE}
             tooltip="Open metrics explorer"
             aria-label="Open metrics explorer"
             variant="secondary"
@@ -138,7 +147,7 @@ export function MetricCombobox({
           <InlineFieldRow>
             <InlineField
               label="Metric"
-              labelWidth={inlineFieldWidth}
+              labelWidth={INLINE_FIELD_WIDTH}
               tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
             >
               {asyncSelect()}
@@ -180,34 +189,21 @@ const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?:
   return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
 };
 
-const getMectricComboboxStyles = (theme: GrafanaTheme2, inlineFieldWidth: number, buttonSize: ComponentSize) => {
-  const buttonSizeProp = () => {
-    switch (buttonSize) {
-      case 'sm':
-        return 24;
-      case 'lg':
-        return 48;
-      default:
-        return 32;
-    }
-  };
-  const widthToSubstract = inlineFieldWidth * 8 + buttonSizeProp();
-  return {
-    adaptToParentQueryEditor: css({
-      // Take metrics explorer button into account
-      maxWidth: `calc(100% - 32px)`,
-    }),
-    adaptToParentVariableEditor: css({
-      maxWidth: '100%',
-      display: 'flex',
-      '[class*="InlineFieldRow"]': {
-        '> div': {
-          'label + div': {
-            // Take label and the metrics explorer button into account
-            maxWidth: `calc(100% - ${widthToSubstract}px)`,
-          },
+const getMectricComboboxStyles = (buttonToSubstract: number, widthToSubstract: number) => ({
+  adaptToParentQueryEditor: css({
+    // Take metrics explorer button into account
+    maxWidth: `calc(100% - ${buttonToSubstract}px)`,
+  }),
+  adaptToParentVariableEditor: css({
+    maxWidth: '100%',
+    display: 'flex',
+    '[class*="InlineFieldRow"]': {
+      '> div': {
+        'label + div': {
+          // Take label and the metrics explorer button into account
+          maxWidth: `calc(100% - ${widthToSubstract}px)`,
         },
       },
-    }),
-  };
-};
+    },
+  }),
+});
