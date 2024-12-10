@@ -51,7 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';

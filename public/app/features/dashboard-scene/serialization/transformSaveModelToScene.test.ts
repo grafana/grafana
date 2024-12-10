@@ -36,7 +36,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
-import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
+import { buildNewDashboardSaveModelV1 } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -173,7 +173,7 @@ describe('transformSaveModelToScene', () => {
 
   describe('When creating a new dashboard', () => {
     it('should initialize the DashboardScene in edit mode and dirty', async () => {
-      const rsp = await buildNewDashboardSaveModel();
+      const rsp = await buildNewDashboardSaveModelV1();
       const scene = transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
