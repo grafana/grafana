@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -69,7 +68,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		fmt.Printf("%s", string(v1Disco))
+		//fmt.Printf("%s", string(v1Disco))
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
