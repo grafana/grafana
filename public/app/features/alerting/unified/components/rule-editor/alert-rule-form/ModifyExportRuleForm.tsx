@@ -233,7 +233,6 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
   const exportingNewRule = !uid;
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
-  const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (
     <GrafanaExportDrawer
@@ -241,7 +240,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={formatProviders}
+      formatProviders={Object.values(allGrafanaExportProviders)}
     >
       <GrafanaRuleDesignExportPreview
         exportFormat={activeTab}
