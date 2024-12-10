@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const MainOrgName = "Main Org."
-
 type store interface {
 	Get(context.Context, int64) (*org.Org, error)
 	// Insert adds a new organization. returns organization id
