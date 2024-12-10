@@ -43,7 +43,7 @@ require (
 	golang.org/x/text v0.20.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.67.1 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.68.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
@@ -115,7 +115,7 @@ require (
 	go.opentelemetry.io/otel/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
