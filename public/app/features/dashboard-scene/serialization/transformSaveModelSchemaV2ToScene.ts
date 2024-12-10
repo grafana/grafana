@@ -63,7 +63,8 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
@@ -85,7 +86,7 @@ import {
 
 const DEFAULT_DATASOURCE = 'default';
 
-type TypedVariableModelv2 =
+export type TypedVariableModelV2 =
   | QueryVariableKind
   | TextVariableKind
   | ConstantVariableKind
@@ -217,13 +218,12 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     titleItems.push(new AngularDeprecation());
   }
 
-  // FIXME: Links in a panel are DashboardLinks not DataLinks
-  // titleItems.push(
-  //   new VizPanelLinks({
-  //     rawLinks: panel.spec.links,
-  //     menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-  //   })
-  // );
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.spec.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 
@@ -396,7 +396,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): SceneVariable {
+function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -593,7 +593,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVariable {
+export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

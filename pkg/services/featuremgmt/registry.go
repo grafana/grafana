@@ -1436,8 +1436,9 @@ var (
 		{
 			Name:        "newFiltersUI",
 			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
@@ -1679,6 +1680,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
 		},
 	}
 )
