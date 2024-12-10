@@ -4,16 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
 	GROUP      = "dashboard.grafana.app"
 	VERSION    = "v2alpha1"
 	APIVERSION = GROUP + "/" + VERSION
+
+	// Dashboard stubs in v0/v1 will use this schemaVersion to indicate
+	PLACEHOLDER_DASHBOARD_SCHEMA_VERSION = 9999
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
