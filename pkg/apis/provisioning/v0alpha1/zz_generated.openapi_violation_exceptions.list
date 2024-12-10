@@ -5,6 +5,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provis
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,JobStatus,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,Lint
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,TestResults,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,WebhookResponse,IDs
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,WebhookResponse,Jobs
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,FileList,Items
