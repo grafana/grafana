@@ -1,7 +1,5 @@
 import { OrgRole } from '@grafana/data';
 
-
-
 export { OrgRole as OrgRole };
 
 export enum PermissionLevelString {
