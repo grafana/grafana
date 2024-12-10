@@ -1,25 +1,13 @@
 import { filter, isArray, isNumber, isString } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import config from 'app/core/config';
 import store from 'app/core/store';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
-import { DashboardDTO } from 'app/types';
 
 export class ImpressionSrv {
   constructor() {}
 
-  addDashboardImpression(dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
-    const shouldAddImpression = isDashboardResource(dashboard) || dashboard.meta.dashboardNotFound !== true;
-
-    if (!shouldAddImpression) {
-      return;
-    }
-
-    const dashboardUID = isDashboardResource(dashboard) ? dashboard.metadata.name : dashboard.dashboard.uid;
-
+  addDashboardImpression(dashboardUID: string) {
     const impressionsKey = this.impressionKey();
     let impressions: string[] = [];
     if (store.exists(impressionsKey)) {

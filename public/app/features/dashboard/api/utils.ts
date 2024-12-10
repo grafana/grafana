@@ -33,7 +33,7 @@ export function isDashboardResource(
     return false;
   }
 
-  return 'kind' in obj && obj.kind === 'DashboardWithAccessInfo';
+  return 'kind' in obj && obj.kind === 'DashboardWithAccessInfo' && isDashboardV2Spec(obj.spec);
 }
 
 export function isDashboardV2Spec(obj: object): obj is DashboardV2Spec {

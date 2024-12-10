@@ -2,45 +2,44 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
+import { TransitionalDashboardAPI } from './transitional_dashboard_api';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v0';
 import { K8sDashboardV2APIStub } from './v2';
 
-// Describes the dashboard DTO types per API version
-export interface ApiVersionDTO {
-  legacy: DashboardDTO;
-  v0: DashboardDTO;
-  // v1: DashboardDTO; TODO[schema]: enable v1 when available
-  v2: DashboardWithAccessInfo<DashboardV2Spec>;
-}
+type DashboardAPIClients = {
+  legacy: DashboardAPI<DashboardDTO>;
+  v0: DashboardAPI<DashboardDTO>;
+  v2: DashboardAPI<DashboardDTO>;
+};
 
-type DashboardAPIClients = Record<
-  keyof ApiVersionDTO,
-  DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>
->;
+type V2ModeOptions = {
+  useV2Mode: true;
+};
 
 let clients: Partial<DashboardAPIClients> | undefined;
 
-export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('dashboardAPI can be only overridden in test environment');
-  }
-  clients = override;
-}
+// Overloads
+export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
+export function getDashboardAPI(opts: V2ModeOptions): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
 
-export function getDashboardAPI(): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
+export function getDashboardAPI(opts?: V2ModeOptions): DashboardAPI<any> {
+  const v = getDashboardsApiVersion();
+  const v2api = new K8sDashboardV2APIStub();
+  const v0api = new K8sDashboardAPI();
+
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),
-      v0: new K8sDashboardAPI(),
-      v2: new K8sDashboardV2APIStub(),
+      v0: new TransitionalDashboardAPI(v0api),
+      v2: new TransitionalDashboardAPI(v2api),
     };
   }
 
-  const v = getDashboardsApiVersion();
-
-  // console.log('Dashboard API version:', v);
+  if (v === 'v2' && opts?.useV2Mode) {
+    return new K8sDashboardV2APIStub();
+  }
 
   if (!clients[v]) {
     throw new Error(`Unknown Dashboard API version: ${v}`);

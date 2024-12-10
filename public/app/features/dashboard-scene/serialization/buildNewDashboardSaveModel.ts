@@ -15,9 +15,10 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 export async function buildNewDashboardSaveModel(
-  urlFolderUid?: string
+  urlFolderUid?: string,
+  isV2Mode?: boolean
 ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
-  if (config.featureToggles.useV2DashboardsAPI) {
+  if (isV2Mode) {
     return buildNewDashboardSaveModelV2(urlFolderUid);
   }
 

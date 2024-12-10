@@ -2,10 +2,13 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
+import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -56,19 +59,37 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      const res = await getDashboardAPI().getDashboardDTO(value, undefined);
-      const formatted = ResponseTransformers.ensureV1Response(res);
+      // when using getDashboardAPI, if isV2Mode is not set, we will always return the v1 schema version
+      // isV2Mode is set to true when the feature toggle of dashboardSchemaV2 and useV2DashboardsAPI is enabled
+      // We could create a different feature toggle with better naming if we want, but the idea of using
+      // dashboardSchemaV2 is to indicate that this component is ready to process the new schema
+      const isV2Mode = config.featureToggles.dashboardSchemaV2 && config.featureToggles.useV2DashboardsAPI;
 
-      if (formatted.dashboard) {
+      if (isV2Mode) {
+        const resWithSchemaV2 = await getDashboardAPI({ useV2Mode: true }).getDashboardDTO(value, undefined);
         setCurrent({
           value: {
-            uid: formatted.dashboard.uid,
-            title: formatted.dashboard.title,
-            folderTitle: formatted.meta.folderTitle,
-            folderUid: formatted.meta.folderUid,
+            uid: resWithSchemaV2.metadata.name,
+            title: resWithSchemaV2.spec.title,
+            folderTitle: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolderTitle],
+            folderUid: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder],
           },
-          label: formatLabel(formatted.meta?.folderTitle, formatted.dashboard.title),
+          label: formatLabel(resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder], resWithSchemaV2.spec.title),
         });
+      } else {
+        // this means that the dashboard returned is a v1 schema
+        const resWithSchemaV1 = await getDashboardAPI().getDashboardDTO(value, undefined);
+        if (resWithSchemaV1.dashboard) {
+          setCurrent({
+            value: {
+              uid: resWithSchemaV1.dashboard.uid,
+              title: resWithSchemaV1.dashboard.title,
+              folderTitle: resWithSchemaV1.meta.folderTitle,
+              folderUid: resWithSchemaV1.meta.folderUid,
+            },
+            label: formatLabel(resWithSchemaV1.meta?.folderTitle, resWithSchemaV1.dashboard.title),
+          });
+        }
       }
     })();
     // we don't need to rerun this effect every time `current` changes

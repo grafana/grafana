@@ -7,10 +7,10 @@ import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
+  DashboardDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -261,21 +261,14 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
-          // TODO: This will be removed when save dashboard is implemented for v2
-          if (isDashboardResource(dashDto)) {
-            throw new Error('v2 schema is not supported');
-          }
-
-          const options: SaveDashboardCommand = {
+          await getDashboardAPI().saveDashboard({
+            dashboard: fullDash.dashboard,
             folderUid: destinationUID,
             overwrite: false,
             message: '',
-            dashboard: dashDto.dashboard,
-          };
-
-          await getDashboardAPI().saveDashboard(options);
+          });
         }
 
         return { data: undefined };
