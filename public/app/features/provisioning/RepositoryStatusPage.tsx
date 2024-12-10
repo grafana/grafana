@@ -27,7 +27,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ScopedResourceClient } from '../apiserver/client';
 
 import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
-import { JobSpec, JobStatus, RepositoryResource } from './api/types';
+import { JobSpec, JobStatus, RepositoryResource, FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
@@ -71,7 +71,7 @@ export default function RepositoryStatusPage() {
           <>
             {query.data ? (
               <>
-                <RepoTestOptions name={name} />
+                <ErrorView repo={query.data} />
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -98,18 +98,12 @@ export default function RepositoryStatusPage() {
     </Page>
   );
 }
-
-type FileDetails = {
-  path: string;
-  size: string;
-  hash: string;
-};
-
 interface RepoProps {
   repo: RepositoryResource;
 }
 
-function RepoTestOptions({ name }: FilesTableProps) {
+function ErrorView({ repo }: RepoProps) {
+  const name = repo.metadata.name;
   const status = useTestRepositoryQuery({ name });
   if (status.isLoading) {
     return (

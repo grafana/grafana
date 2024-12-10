@@ -128,9 +128,15 @@ export type GetFileArg = {
   ref?: string;
 };
 
+export type FileDetails = {
+  path: string;
+  size: string;
+  hash: string;
+};
+
 export type ListFilesApiResponse = {
   apiVersion?: string;
-  files?: any[];
+  files?: FileDetails[];
   kind?: string;
   metadata?: any;
 };
