@@ -251,6 +251,7 @@ module.exports = [
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
+      'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',

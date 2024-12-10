@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent } from 'test/test-utils';

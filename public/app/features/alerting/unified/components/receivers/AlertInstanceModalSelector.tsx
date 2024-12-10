@@ -6,14 +6,14 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  clearButtonStyles,
   FilterInput,
+  Icon,
   LoadingPlaceholder,
   Modal,
-  Tooltip,
-  useStyles2,
-  Icon,
   Tag,
+  Tooltip,
+  clearButtonStyles,
+  useStyles2,
 } from '@grafana/ui';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';

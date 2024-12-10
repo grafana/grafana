@@ -1,14 +1,14 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
-import { byText, byRole } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
-import { mockGrafanaRulerRule, mockCombinedRule, mockCombinedRuleGroup, grantUserPermissions } from '../../mocks';
-import { grafanaRulerNamespace, grafanaRulerRule, grafanaRulerGroupName } from '../../mocks/grafanaRulerApi';
+import { grantUserPermissions, mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../../mocks';
+import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';

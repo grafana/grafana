@@ -1,17 +1,17 @@
 import { reject } from 'lodash';
-import { Observable, of, OperatorFunction, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, OperatorFunction, ReplaySubject, Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  dataFrameFromJSON,
   DataFrameJSON,
-  getDefaultTimeRange,
   LoadingState,
   PanelData,
+  TimeRange,
+  dataFrameFromJSON,
+  getDefaultTimeRange,
   preProcessPanelData,
   rangeUtil,
-  TimeRange,
   withLoadingIndicator,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';

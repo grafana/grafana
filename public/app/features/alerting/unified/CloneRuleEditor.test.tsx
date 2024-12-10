@@ -14,13 +14,13 @@ import {
   RulerRuleDTO,
 } from '../../../types/unified-alerting-dto';
 
-import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
+import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import {
+  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,

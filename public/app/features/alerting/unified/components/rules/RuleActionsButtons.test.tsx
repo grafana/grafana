@@ -1,4 +1,4 @@
-import { userEvent, screen, render } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';

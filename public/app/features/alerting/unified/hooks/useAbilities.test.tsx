@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { render, screen, renderHook, waitFor, getWrapper } from 'test/test-utils';
+import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';

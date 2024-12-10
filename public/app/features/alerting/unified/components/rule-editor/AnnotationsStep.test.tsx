@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
-import { screen, render, within } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { DashboardSearchItemType } from '../../../../search/types';

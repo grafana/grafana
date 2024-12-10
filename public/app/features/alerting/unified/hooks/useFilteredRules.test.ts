@@ -2,6 +2,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import {
+  MockDataSourceSrv,
   getCloudRule,
   mockAlertQuery,
   mockCombinedCloudRuleNamespace,
@@ -9,7 +10,6 @@ import {
   mockCombinedRuleGroup,
   mockCombinedRuleNamespace,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockRulerGrafanaRule,
