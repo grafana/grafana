@@ -482,6 +482,8 @@ require github.com/google/go-github/v66 v66.0.0 // @grafana/grafana-app-platform
 
 require github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 // @grafana/grafana-app-platform-squad
 
+require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 // @grafana/alerting-backend
+
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
