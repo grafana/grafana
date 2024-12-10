@@ -35,13 +35,14 @@ type receiversAuthz interface {
 }
 
 type AlertmanagerSrv struct {
-	log            log.Logger
-	ac             accesscontrol.AccessControl
-	mam            *notifier.MultiOrgAlertmanager
-	crypto         notifier.Crypto
-	silenceSvc     SilenceService
-	featureManager featuremgmt.FeatureToggles
-	receiverAuthz  receiversAuthz
+	log             log.Logger
+	ac              accesscontrol.AccessControl
+	mam             *notifier.MultiOrgAlertmanager
+	crypto          notifier.Crypto
+	silenceSvc      SilenceService
+	featureManager  featuremgmt.FeatureToggles
+	receiverAuthz   receiversAuthz
+	receiverService *notifier.ReceiverService
 }
 
 type UnknownReceiverError struct {
@@ -264,6 +265,27 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
+	if srv.receiverService != nil {
+		for idx := range body.Receivers {
+			r, err := notifier.PostableApiReceiverToReceiver(body.Receivers[idx], "")
+			if err != nil {
+				return response.ErrOrFallback(http.StatusBadRequest, "failed to parse receiver configuration", err)
+			}
+			patched, err := srv.receiverService.PatchReceiverSettings(c.Req.Context(), c.SignedInUser, c.OrgID, r)
+			if err != nil {
+				srv.log.Warn("Failed to patch receiver with system settings", "err", err)
+				continue
+			}
+			if patched {
+				converted, err := legacy_storage.ReceiverToPostableApiReceiver(r)
+				if err != nil {
+					srv.log.Warn("Failed to convert back from domain model.", "err", err)
+				}
+				body.Receivers[idx] = converted
+			}
+		}
+	}
+
 	ctx, cancelFunc, err := contextWithTimeoutFromRequest(
 		c.Req.Context(),
 		c.Req,
@@ -302,6 +324,22 @@ func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, bo
 	}
 
 	return response.JSON(http.StatusOK, newTestTemplateResult(res))
+}
+
+// is this the right place to put this code???
+func (srv AlertmanagerSrv) RoutePostGrafanaAlerts(c *contextmodel.ReqContext, body apimodels.Alerts) response.Response {
+	orgID := c.SignedInUser.GetOrgID() // will this work for on-call plugin?
+	am, errResp := srv.AlertmanagerFor(orgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	err := am.PutAlerts(c.Req.Context(), apimodels.PostableAlerts{PostableAlerts: body})
+	if err != nil {
+		srv.log.Error("failed to send alerts to alert manager: %v", err, "orgID", orgID)
+		return response.Error(http.StatusInternalServerError, "Problem sending alert", err)
+	}
+	return response.Empty(200)
 }
 
 // contextWithTimeoutFromRequest returns a context with a deadline set from the

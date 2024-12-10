@@ -7,7 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
-import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
+import { ONCALL_ADAPTIVE_ALERTING_FEATURE, ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
@@ -60,6 +60,15 @@ function useOnCallPluginStatus() {
       : OnCallIntegrationStatus.V1;
   }, [isOnCallEnabled, onCallFeatures]);
 
+  const escalationChainStatus = useMemo((): OnCallEscalationChainStatus => {
+    if (!isOnCallEnabled) {
+      return OnCallEscalationChainStatus.Disabled;
+    }
+    return onCallFeatures.includes(ONCALL_ADAPTIVE_ALERTING_FEATURE) // TODO: Add the feature flag to OnCall.
+      ? OnCallEscalationChainStatus.V1
+      : OnCallEscalationChainStatus.Disabled;
+  }, [isOnCallEnabled, onCallFeatures]);
+
   const isAlertingV2IntegrationEnabled = useMemo(
     () => integrationStatus === OnCallIntegrationStatus.V2,
     [integrationStatus]
@@ -68,6 +77,7 @@ function useOnCallPluginStatus() {
   return {
     isOnCallEnabled,
     integrationStatus,
+    escalationChainStatus,
     isAlertingV2IntegrationEnabled,
     isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
     onCallError: pluginError ?? onCallFeaturesError,
@@ -236,7 +246,7 @@ export function useOnCallIntegration() {
     integrationStatus,
     onCallNotifierMeta: {
       enabled: !!isOnCallEnabled,
-      order: -1, // The default is 0. We want OnCall to be the first on the list
+      order: 0,
       description: isOnCallEnabled
         ? 'Connect effortlessly to Grafana OnCall'
         : 'Enable Grafana OnCall plugin to use this integration',
@@ -249,5 +259,122 @@ export function useOnCallIntegration() {
     isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,
     isValidating,
     hasOnCallError: Boolean(onCallError) || isIntegrationsQueryError,
+  };
+}
+
+enum OnCallEscalationChainStatus {
+  Disabled = 'disabled',
+  V1 = 'v1',
+}
+
+enum OnCallEscalationSelectKeys {
+  EscalationChainID = 'escalation_chain_id',
+  TeamName = 'team_name',
+  SlackChannelID = 'slack_channel_id',
+}
+
+export function useOnCallEscalationChain() {
+  const { isOnCallEnabled, escalationChainStatus, isOnCallStatusLoading, onCallError } = useOnCallPluginStatus();
+
+  const { useGrafanaOnCallEscalationChainsQuery, useGrafanaOnCallTeamsQuery, useGrafanaOnCallSlackChannelsQuery } =
+    onCallApi;
+
+  const {
+    data: grafanaOnCallEscalationChains = [],
+    isLoading: isLoadingOnCallEscalationChains,
+    isError: isEscalationChainsQueryError,
+  } = useGrafanaOnCallEscalationChainsQuery(undefined);
+
+  const { data: teams = [], isLoading: isTeamsLoading, isError: isTeamsError } = useGrafanaOnCallTeamsQuery(undefined);
+
+  const {
+    data: slackChannels = [],
+    isLoading: isSlackChannelsLoading,
+    isError: isSlackChannelsError,
+  } = useGrafanaOnCallSlackChannelsQuery(undefined);
+
+  const onCallFormValidators = useMemo(() => {
+    return {
+      [OnCallEscalationSelectKeys.EscalationChainID]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
+        return grafanaOnCallEscalationChains.map((i) => i.id).includes(value)
+          ? true
+          : 'Selection of existing OnCall escalation chain is required';
+      },
+      [OnCallEscalationSelectKeys.TeamName]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
+        return teams.map((i) => i.name).includes(value) ? true : 'Selection of existing OnCall team is required';
+      },
+      [OnCallEscalationSelectKeys.SlackChannelID]: (value: string) => {
+        if (!value) {
+          // This field is not required if other fields are filled.
+          return true;
+        }
+        return slackChannels.map((i) => i.slack_id).includes(value)
+          ? true
+          : 'Selection of existing OnCall slack channel is required';
+      },
+    };
+  }, [grafanaOnCallEscalationChains, teams, slackChannels]);
+
+  const extendOnCallEscalationChainNotifierFeatures = useCallback(
+    (notifier: NotifierDTO): NotifierDTO => {
+      if (notifier.type === ReceiverTypes.OnCallEscalationChain) {
+        const options = produce(notifier.options, (draft) => {
+          draft.forEach((option) => {
+            if (option.propertyName === OnCallEscalationSelectKeys.EscalationChainID) {
+              option.element = 'select';
+              option.selectOptions = grafanaOnCallEscalationChains.map((i) => ({
+                label: i.name,
+                description: i.team ? `Team: ${i.team}, ID: ${i.id}` : `ID: ${i.id}`,
+                value: i.id,
+              }));
+            } else if (option.propertyName === OnCallEscalationSelectKeys.SlackChannelID) {
+              option.element = 'select';
+              option.selectOptions = slackChannels.map((i) => ({
+                label: `#${i.display_name}`,
+                description: `ID: ${i.slack_id}`,
+                value: i.slack_id,
+              }));
+            } else if (option.propertyName === OnCallEscalationSelectKeys.TeamName) {
+              option.element = 'select';
+              option.selectOptions = teams.map((i) => ({
+                label: i.name,
+                description: i.email ? `Email: ${i.email}, ID: ${i.id}` : `ID: ${i.id}`,
+                value: i.name,
+              }));
+              option.selectOptions.unshift({ label: 'No team', value: undefined });
+            }
+          });
+        });
+
+        return { ...notifier, options };
+      }
+
+      return notifier;
+    },
+    [grafanaOnCallEscalationChains, slackChannels, teams]
+  );
+
+  return {
+    escalationChainStatus,
+    notifierMeta: {
+      enabled: !!isOnCallEnabled,
+      order: -1, // The default is 0. We want OnCall to be the first on the list
+      description: isOnCallEnabled
+        ? 'Send to a Grafana OnCall Escalation Chain'
+        : 'Enable Grafana OnCall plugin to use this integration',
+      iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
+    },
+    extendNotifier: extendOnCallEscalationChainNotifierFeatures,
+    formValidators: onCallFormValidators,
+    isLoading: isLoadingOnCallEscalationChains || isOnCallStatusLoading || isTeamsLoading || isSlackChannelsLoading,
+    hasError: Boolean(onCallError) || isEscalationChainsQueryError || isTeamsError || isSlackChannelsError,
   };
 }
