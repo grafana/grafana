@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import * as React from 'react';
 
@@ -34,12 +33,9 @@ import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
-import LabeledList from '../../common/LabeledList';
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
-import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
@@ -47,6 +43,7 @@ import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
 import SpanFlameGraph from './SpanFlameGraph';
+import { SpanOverviewList } from './SpanOverviewList';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -202,92 +199,10 @@ export default function SpanDetail(props: SpanDetailProps) {
     references: referencesState,
     isStackTracesOpen,
   } = detailState;
-  const {
-    operationName,
-    process,
-    duration,
-    relativeStartTime,
-    startTime,
-    traceID,
-    spanID,
-    logs,
-    tags,
-    warnings,
-    references,
-    stackTraces,
-  } = span;
+  const { operationName, process, traceID, spanID, logs, tags, warnings, references, stackTraces } = span;
   const { timeZone } = props;
-  let overviewItems = [
-    {
-      key: 'svc',
-      label: 'Service:',
-      value: process.serviceName,
-    },
-    {
-      key: 'duration',
-      label: 'Duration:',
-      value: formatDuration(duration),
-    },
-    {
-      key: 'start',
-      label: 'Start Time:',
-      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
-    },
-    ...(span.childSpanCount > 0
-      ? [
-          {
-            key: 'child_count',
-            label: 'Child Count:',
-            value: span.childSpanCount,
-          },
-        ]
-      : []),
-  ];
 
   const styles = useStyles2(getStyles);
-
-  if (span.kind) {
-    overviewItems.push({
-      key: KIND,
-      label: 'Kind:',
-      value: span.kind,
-    });
-  }
-  if (span.statusCode !== undefined) {
-    overviewItems.push({
-      key: STATUS,
-      label: 'Status:',
-      value: SpanStatusCode[span.statusCode].toLowerCase(),
-    });
-  }
-  if (span.statusMessage) {
-    overviewItems.push({
-      key: STATUS_MESSAGE,
-      label: 'Status Message:',
-      value: span.statusMessage,
-    });
-  }
-  if (span.instrumentationLibraryName) {
-    overviewItems.push({
-      key: LIBRARY_NAME,
-      label: 'Library Name:',
-      value: span.instrumentationLibraryName,
-    });
-  }
-  if (span.instrumentationLibraryVersion) {
-    overviewItems.push({
-      key: LIBRARY_VERSION,
-      label: 'Library Version:',
-      value: span.instrumentationLibraryVersion,
-    });
-  }
-  if (span.traceState) {
-    overviewItems.push({
-      key: TRACE_STATE,
-      label: 'Trace State:',
-      value: span.traceState,
-    });
-  }
 
   const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
     return (
@@ -354,7 +269,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           {operationName}
         </h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={styles.list} divider={true} items={overviewItems} />
+          <SpanOverviewList className={styles.list} span={span} timeZone={timeZone} />
         </div>
       </div>
       <div className={styles.linkList}>
