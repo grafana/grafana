@@ -17,6 +17,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -122,7 +123,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("count")] = &subCountREST{service: b.folderSvc, storage: b.storage}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	// enable dual writer
@@ -235,19 +236,39 @@ var folderValidationRules = struct {
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
+	obj := a.GetObject()
+
+	_, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create:
+		return b.validateOnCreate(ctx, id, obj)
+	case admission.Delete:
+		return b.validateOnDelete(ctx, id)
+	case admission.Update:
+		return nil
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, id string) error {
+	// check if any other folder or dashboard is referencing this folder
+	// by calling feature in https://github.com/grafana/grafana/pull/97534
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
 	for _, invalidName := range folderValidationRules.invalidNames {
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
 	}
 
-	obj := a.GetObject()
-
-	f, ok := obj.(*v0alpha1.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not v0alpha1.Folder")
-	}
-
+	f, _ := obj.(*v0alpha1.Folder)
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}

@@ -17,7 +17,7 @@ func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMap
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name: "title",
+		Name: resource.SEARCH_FIELD_TITLE,
 		Type: "text",
 		// TODO - if we don't want title to be a keyword, we can use this
 		// set the title field to use keyword analyzer so it sorts by the whole phrase
@@ -31,7 +31,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	})
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "description",
+		Name:               resource.SEARCH_FIELD_DESCRIPTION,
 		Type:               "text",
 		Store:              true,
 		Index:              true,
@@ -41,25 +41,36 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	})
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "tags",
+		Name:               resource.SEARCH_FIELD_TAGS,
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       false,
+		IncludeInAll:       true,
 		DocValues:          false,
 	})
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "folder",
+		Name:               resource.SEARCH_FIELD_FOLDER,
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       false,
+		IncludeInAll:       true,
 		DocValues:          true, // will be needed for authz client
+	})
+
+	mapper.AddFieldMapping(&mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_REPOSITORY,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+		DocValues:          true,
 	})
 
 	mapper.Dynamic = true
