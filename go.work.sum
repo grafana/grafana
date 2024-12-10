@@ -1003,6 +1003,8 @@ github.com/grafana/go-json v0.0.0-20241115232854-f14426c40ff2 h1:8xGrYqQ1GM4aaMk
 github.com/grafana/go-json v0.0.0-20241115232854-f14426c40ff2/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/grafana/gomemcache v0.0.0-20240229205252-cd6a66d6fb56/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-app-sdk v0.19.0/go.mod h1:y0BgzYxc+a7CwOqkwUhN9zXd5cgZJjd2zAbgHEd/xzo=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3 h1:6D2gGAwyQBElSrp3E+9lSr7k8gLuP3Aiy20rweLWeBw=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3/go.mod h1:YeND+6FDA7OuFgDzYODN8kfPhXLCehcpxe4T9mdnpCY=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.6/go.mod h1:Tk376Nbldo4Cha9RgiU7ik8WKFkNpfds98aUzS8omLE=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=

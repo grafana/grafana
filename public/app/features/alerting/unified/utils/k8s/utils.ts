@@ -15,7 +15,7 @@ export const getK8sNamespace = () => config.namespace;
  * and the `alertingApiServer` feature toggle being enabled
  */
 export const shouldUseK8sApi = (alertmanager?: string) => {
-  const featureToggleEnabled = config.featureToggles.alertingApiServer;
+  const featureToggleEnabled = false; // config.featureToggles.alertingApiServer;
   return featureToggleEnabled && alertmanager === GRAFANA_RULES_SOURCE_NAME;
 };
 
