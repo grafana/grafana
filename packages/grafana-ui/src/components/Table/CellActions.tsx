@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { IconSize } from '../../types/icon';
+import { IconName, IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
@@ -20,11 +20,19 @@ interface CommonButtonProps {
   tooltipPlacement: TooltipPlacement;
 }
 
+interface ActionButtonProps {
+  icon: IconName;
+  tooltip: string;
+  onClick: () => void;
+}
+
 export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const inspectEnabled = Boolean(field.config.custom?.inspect);
+  const extraActions = field.config.custom?.actions as (ActionButtonProps[] | undefined);
+
   const commonButtonProps: CommonButtonProps = {
     size: 'sm',
     tooltipPlacement: 'top',
@@ -67,6 +75,15 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
           {showFilters && (
             <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
           )}
+          {extraActions?.map((action, i) => (
+            <IconButton
+              key={i}
+              name={action.icon}
+              tooltip={action.tooltip}
+              onClick={action.onClick}
+              {...commonButtonProps}
+            />
+          ))}
         </Stack>
       </div>
 
