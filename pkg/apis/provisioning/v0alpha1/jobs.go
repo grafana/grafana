@@ -68,6 +68,13 @@ type JobSpec struct {
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
 
+	// When we know the commits, these will be passed along
+	Commits []CommitInfo `json:"commits,omitempty"`
+}
+
+type CommitInfo struct {
+	SHA1 string `json:"sha1,omitempty"`
+
 	Added    []FileRef `json:"added,omitempty"`
 	Modified []FileRef `json:"modified,omitempty"`
 	Removed  []FileRef `json:"removed,omitempty"`
@@ -80,10 +87,11 @@ type FileRef struct {
 
 // The job status
 type JobStatus struct {
-	Updated metav1.Time `json:"updated,omitempty"`
-	State   JobState    `json:"state,omitempty"`
-	Message string      `json:"message,omitempty"`
-	Errors  []string    `json:"errors,omitempty"`
+	State    JobState `json:"state,omitempty"`
+	Started  int64    `json:"started,omitempty"`
+	Finished int64    `json:"finished,omitempty"`
+	Message  string   `json:"message,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
 }
 
 // Filter ignorable files
@@ -102,14 +110,14 @@ type WebhookResponse struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// HTTP Status code
+	// 200 implies that the payload was understood but nothing is required
+	// 202 implies that an async job has been scheduled to handle the request
 	Code int `json:"code,omitempty"`
 
 	// Optional message
 	Message string `json:"added,omitempty"`
 
 	// Jobs to be processed
-	Jobs []JobSpec `json:"jobs,omitempty"`
-
-	// The queued jobs
-	IDs []string `json:"ids,omitempty"`
+	// When the response is 202 (Accepted) the queued jobs will be returned
+	Job *JobSpec `json:"job,omitempty"`
 }

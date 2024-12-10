@@ -65,14 +65,12 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"pull_request", "opened", provisioning.WebhookResponse{
 			Code: http.StatusAccepted, // 202
-			Jobs: []provisioning.JobSpec{
-				{
-					Action: provisioning.JobActionPullRequest,
-					Ref:    "dashboard/1733653266690",
-					Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
-					PR:     12,
-					URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
-				},
+			Job: &provisioning.JobSpec{
+				Action: provisioning.JobActionPullRequest,
+				Ref:    "dashboard/1733653266690",
+				Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+				PR:     12,
+				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			},
 		}},
 		{"push", "ignored", provisioning.WebhookResponse{
@@ -80,10 +78,10 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
-			Jobs: []provisioning.JobSpec{
-				{
-					Action: provisioning.JobActionMergeBranch,
-					Ref:    "5c816f9812e391c62b0c5555d0b473b296d9179c",
+			Job: &provisioning.JobSpec{
+				Action: provisioning.JobActionMergeBranch,
+				Commits: []provisioning.CommitInfo{{
+					SHA1: "5c816f9812e391c62b0c5555d0b473b296d9179c",
 					Added: []provisioning.FileRef{
 						{
 							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
@@ -100,7 +98,7 @@ func TestParseWebhooks(t *testing.T) {
 							Path: "first-dashboard.json",
 						},
 					},
-				},
+				}},
 			},
 		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
@@ -136,7 +134,7 @@ func TestParseWebhooks(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
-			require.Equal(t, tt.expected.Jobs, rsp.Jobs)
+			require.Equal(t, tt.expected.Job, rsp.Job)
 		})
 	}
 }
