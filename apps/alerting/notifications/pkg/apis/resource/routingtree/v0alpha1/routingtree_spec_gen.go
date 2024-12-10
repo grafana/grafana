@@ -8,6 +8,19 @@ const (
 	MatcherTypeN1         MatcherType = "!~"
 )
 
+// LeafRoute is a route that does not have any sub-routes
+// +k8s:openapi-gen=true
+type LeafRoute struct {
+	Continue          bool      `json:"continue"`
+	GroupBy           []string  `json:"group_by,omitempty"`
+	GroupInterval     *string   `json:"group_interval,omitempty"`
+	GroupWait         *string   `json:"group_wait,omitempty"`
+	Matchers          []Matcher `json:"matchers,omitempty"`
+	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
+	Receiver          *string   `json:"receiver,omitempty"`
+	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
+}
+
 // Matcher defines model for Matcher.
 // +k8s:openapi-gen=true
 type Matcher struct {
@@ -31,7 +44,77 @@ type Route struct {
 	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
 	Receiver          *string   `json:"receiver,omitempty"`
 	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
-	Routes            []Route   `json:"routes,omitempty"`
+	Routes            []Route2  `json:"routes,omitempty"`
+}
+
+// Route2 defines model for Route2.
+// +k8s:openapi-gen=true
+type Route2 struct {
+	Continue          bool      `json:"continue"`
+	GroupBy           []string  `json:"group_by,omitempty"`
+	GroupInterval     *string   `json:"group_interval,omitempty"`
+	GroupWait         *string   `json:"group_wait,omitempty"`
+	Matchers          []Matcher `json:"matchers,omitempty"`
+	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
+	Receiver          *string   `json:"receiver,omitempty"`
+	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
+	Routes            []Route3  `json:"routes,omitempty"`
+}
+
+// Route3 defines model for Route3.
+// +k8s:openapi-gen=true
+type Route3 struct {
+	Continue          bool      `json:"continue"`
+	GroupBy           []string  `json:"group_by,omitempty"`
+	GroupInterval     *string   `json:"group_interval,omitempty"`
+	GroupWait         *string   `json:"group_wait,omitempty"`
+	Matchers          []Matcher `json:"matchers,omitempty"`
+	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
+	Receiver          *string   `json:"receiver,omitempty"`
+	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
+	Routes            []Route4  `json:"routes,omitempty"`
+}
+
+// Route4 defines model for Route4.
+// +k8s:openapi-gen=true
+type Route4 struct {
+	Continue          bool      `json:"continue"`
+	GroupBy           []string  `json:"group_by,omitempty"`
+	GroupInterval     *string   `json:"group_interval,omitempty"`
+	GroupWait         *string   `json:"group_wait,omitempty"`
+	Matchers          []Matcher `json:"matchers,omitempty"`
+	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
+	Receiver          *string   `json:"receiver,omitempty"`
+	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
+	Routes            []Route5  `json:"routes,omitempty"`
+}
+
+// Route5 defines model for Route5.
+// +k8s:openapi-gen=true
+type Route5 struct {
+	Continue          bool      `json:"continue"`
+	GroupBy           []string  `json:"group_by,omitempty"`
+	GroupInterval     *string   `json:"group_interval,omitempty"`
+	GroupWait         *string   `json:"group_wait,omitempty"`
+	Matchers          []Matcher `json:"matchers,omitempty"`
+	MuteTimeIntervals []string  `json:"mute_time_intervals,omitempty"`
+	Receiver          *string   `json:"receiver,omitempty"`
+	RepeatInterval    *string   `json:"repeat_interval,omitempty"`
+	Routes            []Route6  `json:"routes,omitempty"`
+}
+
+// Route6 defines model for Route6.
+// +k8s:openapi-gen=true
+type Route6 struct {
+	Continue          bool        `json:"continue"`
+	GroupBy           []string    `json:"group_by,omitempty"`
+	GroupInterval     *string     `json:"group_interval,omitempty"`
+	GroupWait         *string     `json:"group_wait,omitempty"`
+	Matchers          []Matcher   `json:"matchers,omitempty"`
+	MuteTimeIntervals []string    `json:"mute_time_intervals,omitempty"`
+	Receiver          *string     `json:"receiver,omitempty"`
+	RepeatInterval    *string     `json:"repeat_interval,omitempty"`
+	Routes            []LeafRoute `json:"routes,omitempty"`
 }
 
 // RouteDefaults defines model for RouteDefaults.
