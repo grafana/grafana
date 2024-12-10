@@ -375,6 +375,8 @@ func handleGrpcStatusError(ctx context.Context, err error) error {
 				if errorSourceErr != nil {
 					logger.Error("Could not set plugin error source", "error", errorSourceErr)
 				}
+				// a downstream error is returned here as plugin errors are considered as downstream errors in the
+				// context of the Grafana server.
 				return plugins.ErrPluginDownstreamErrorBase.Errorf("%v", err)
 			}
 		}
