@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Input, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, RadioButtonGroup, Switch, useElementSelection, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -102,11 +102,6 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     this.state.layout.addPanel(vizPanel);
   };
 
-  public onEdit = () => {
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.selectObject(this);
-  };
-
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
     const { layout, title, isCollapsed, height = 'expand' } = model.useState();
     const { isEditing } = getDashboardSceneFor(model).useState();
@@ -114,10 +109,16 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
     const shouldGrow = !isCollapsed && height === 'expand';
+    const { isSelected, onSelect } = useElementSelection(model.state.key);
 
     return (
       <div
-        className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed, shouldGrow && styles.wrapperGrow)}
+        className={cx(
+          styles.wrapper,
+          isCollapsed && styles.wrapperCollapsed,
+          shouldGrow && styles.wrapperGrow,
+          isSelected && 'dashboard-selected-element'
+        )}
         ref={ref}
       >
         <div className={styles.rowHeader}>
@@ -132,7 +133,9 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
               {titleInterpolated}
             </span>
           </button>
-          {isEditing && <Button icon="pen" variant="secondary" size="sm" fill="text" onClick={() => model.onEdit()} />}
+          {isEditing && (
+            <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
+          )}
         </div>
         {!isCollapsed && <layout.Component model={layout} />}
       </div>

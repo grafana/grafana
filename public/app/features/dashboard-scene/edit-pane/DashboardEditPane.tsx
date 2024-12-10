@@ -2,8 +2,15 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneObject, SceneObjectRef } from '@grafana/scenes';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneObject,
+  SceneObjectRef,
+  sceneGraph,
+  useSceneObjectState,
+} from '@grafana/scenes';
+import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -12,17 +19,59 @@ import { ElementEditPane } from './ElementEditPane';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectedObject?: SceneObjectRef<SceneObject>;
+  selectionContext: ElementSelectionContextState;
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
-  public selectObject(obj: SceneObject) {
+  public constructor() {
+    super({
+      selectionContext: {
+        enabled: false,
+        selected: [],
+        onSelect: (item, multi) => this.selectElement(item, multi),
+      },
+    });
+  }
+
+  public enableSelection() {
+    // Enable element selection
+    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
+  }
+
+  public disableSelection() {}
+
+  private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+    const obj = sceneGraph.findByKey(this, element.id);
+    if (obj) {
+      this.selectObject(obj, element.id, multi);
+    }
+  }
+
+  public selectObject(obj: SceneObject, id: string, multi?: boolean) {
     const currentSelection = this.state.selectedObject?.resolve();
     if (currentSelection === obj) {
-      const dashboard = getDashboardSceneFor(this);
-      this.setState({ selectedObject: dashboard.getRef() });
-    } else {
-      this.setState({ selectedObject: obj.getRef() });
+      this.clearSelection();
+      return;
     }
+
+    this.setState({
+      selectedObject: obj.getRef(),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected: [{ id }],
+      },
+    });
+  }
+
+  public clearSelection() {
+    const dashboard = getDashboardSceneFor(this);
+    this.setState({
+      selectedObject: dashboard.getRef(),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected: [],
+      },
+    });
   }
 }
 
@@ -42,10 +91,15 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       const dashboard = getDashboardSceneFor(editPane);
       editPane.setState({ selectedObject: dashboard.getRef() });
     }
-    editPane.activate();
+
+    editPane.enableSelection();
+
+    return () => {
+      editPane.disableSelection();
+    };
   }, [editPane]);
 
-  const { selectedObject } = editPane.useState();
+  const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
 
