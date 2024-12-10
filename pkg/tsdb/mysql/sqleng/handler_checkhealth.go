@@ -16,7 +16,7 @@ import (
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.db.Ping()
 	if err != nil {
-		logCheckHealthError(ctx, e.dsInfo, err, e.log)
+		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
 			return ErrToHealthCheckResult(err)
 		}
@@ -63,7 +63,8 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	return res, nil
 }
 
-func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
+func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) {
+	logger := log.DefaultLogger.FromContext(ctx)
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),
 		"config_user_length":                len(dsInfo.User),
@@ -94,8 +95,8 @@ func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, lo
 	}
 	configSummaryJson, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
-		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error", "plugin_id", "mysql")
+		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "plugin_id", "mysql", "details", string(configSummaryJson))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJson))
 }
