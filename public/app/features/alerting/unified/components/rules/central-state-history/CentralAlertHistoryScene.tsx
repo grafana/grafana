@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
-import { Options } from 'uplot';
 
-import { FieldConfig, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -21,7 +20,6 @@ import {
   TextBoxVariable,
   VariableDependencyConfig,
   VariableValueSelectors,
-  VizPanel,
   sceneGraph,
   useUrlSync,
 } from '@grafana/scenes';
@@ -184,31 +182,29 @@ function getQueryRunnerForAlertHistoryDataSource() {
 export function getEventsScenesFlexItem() {
   return new SceneFlexItem({
     minHeight: 300,
-    body:
-      // eslint-disable-next-line
-      PanelBuilders.timeseries()
-        .setTitle('Alert Events')
-        .setDescription(
-          'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
-        )
-        .setData(getQueryRunnerForAlertHistoryDataSource())
-        .setColor({ mode: 'continuous-BlPu' })
-        .setCustomFieldConfig('fillOpacity', 100)
-        .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
-        .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
-        .setCustomFieldConfig('lineWidth', 1)
-        .setCustomFieldConfig('barAlignment', 0)
-        .setCustomFieldConfig('spanNulls', false)
-        .setCustomFieldConfig('insertNulls', false)
-        .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
-        .setCustomFieldConfig('pointSize', 5)
-        .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
-        .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
-        .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-        .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
-        .setOption('tooltip', { mode: TooltipDisplayMode.Single })
-        .setNoValue('No events found')
-        .build() as VizPanel<Options, FieldConfig>,
+    body: PanelBuilders.timeseries()
+      .setTitle('Alert Events')
+      .setDescription(
+        'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+      )
+      .setData(getQueryRunnerForAlertHistoryDataSource())
+      .setColor({ mode: 'continuous-BlPu' })
+      .setCustomFieldConfig('fillOpacity', 100)
+      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
+      .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
+      .setCustomFieldConfig('lineWidth', 1)
+      .setCustomFieldConfig('barAlignment', 0)
+      .setCustomFieldConfig('spanNulls', false)
+      .setCustomFieldConfig('insertNulls', false)
+      .setCustomFieldConfig('showPoints', VisibilityMode.Auto)
+      .setCustomFieldConfig('pointSize', 5)
+      .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
+      .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
+      .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
+      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+      .setOption('tooltip', { mode: TooltipDisplayMode.Single })
+      .setNoValue('No events found')
+      .build(),
   });
 }
 
@@ -234,17 +230,20 @@ export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<C
   }
 
   const onClearFilter = () => {
-    // eslint-disable-next-line
-    const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model) as TextBoxVariable;
-    labelsFiltersVariable.setValue('');
+    const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
+    if (labelsFiltersVariable instanceof TextBoxVariable) {
+      labelsFiltersVariable.setValue('');
+    }
 
-    // eslint-disable-next-line
-    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model) as CustomVariable;
-    stateToFilterVariable.changeValueTo(StateFilterValues.all);
+    const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model);
+    if (stateToFilterVariable instanceof CustomVariable) {
+      stateToFilterVariable.changeValueTo(StateFilterValues.all);
+    }
 
-    // eslint-disable-next-line
-    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model) as CustomVariable;
-    stateFromFilterVariable.changeValueTo(StateFilterValues.all);
+    const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model);
+    if (stateFromFilterVariable instanceof CustomVariable) {
+      stateFromFilterVariable.changeValueTo(StateFilterValues.all);
+    }
   };
 
   return (

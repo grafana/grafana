@@ -510,35 +510,40 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
 
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
 
-  // eslint-disable-next-line
-  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
-  // eslint-disable-next-line
-  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
-  // eslint-disable-next-line
-  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
+  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
+  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model);
+  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model);
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
     trackUseCentralHistoryFilterByClicking({ type, key, value });
-    if (type === 'stateTo') {
+    if (type === 'stateTo' && stateToFilterVariable instanceof CustomVariable) {
       stateToFilterVariable.changeValueTo(value);
     }
-    if (type === 'stateFrom') {
+    if (type === 'stateFrom' && stateFromFilterVariable instanceof CustomVariable) {
       stateFromFilterVariable.changeValueTo(value);
     }
-    const finalFilter = combineMatcherStrings(labelsFiltersVariable.state.value.toString(), newFilterToAdd);
-    if (type === 'label') {
+    if (type === 'label' && labelsFiltersVariable instanceof TextBoxVariable) {
+      const finalFilter = combineMatcherStrings(labelsFiltersVariable.state.value.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
     }
   };
 
-  return (
-    <HistoryEventsList
-      timeRange={timeRange}
-      valueInLabelFilter={labelsFiltersVariable.state.value}
-      addFilter={addFilter}
-      valueInStateToFilter={stateToFilterVariable.state.value}
-      valueInStateFromFilter={stateFromFilterVariable.state.value}
-    />
-  );
+  if (
+    stateToFilterVariable instanceof CustomVariable &&
+    stateFromFilterVariable instanceof CustomVariable &&
+    labelsFiltersVariable instanceof TextBoxVariable
+  ) {
+    return (
+      <HistoryEventsList
+        timeRange={timeRange}
+        valueInLabelFilter={labelsFiltersVariable.state.value}
+        addFilter={addFilter}
+        valueInStateToFilter={stateToFilterVariable.state.value}
+        valueInStateFromFilter={stateFromFilterVariable.state.value}
+      />
+    );
+  } else {
+    return null;
+  }
 }
