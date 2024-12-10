@@ -16,12 +16,6 @@ var _ resource.ResourceIndexServer = &backend{}
 // GetStats implements resource.ResourceIndexServer.
 // This will use the SQL index to count values
 func (b *backend) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	if req.Repository != "" {
-		return &resource.ResourceStatsResponse{
-			Error: resource.NewBadRequestError("repository not supported"),
-		}, nil
-	}
-
 	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetStats")
 	defer span.End()
 
