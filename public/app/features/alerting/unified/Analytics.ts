@@ -9,7 +9,7 @@ import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
+import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
 export const USER_CREATION_MIN_DAYS = 7;

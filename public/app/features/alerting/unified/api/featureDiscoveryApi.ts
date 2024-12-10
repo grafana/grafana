@@ -6,9 +6,9 @@ import {
   RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getDataSourceUID,
   getRulesDataSourceByUID,
-  GRAFANA_RULES_SOURCE_NAME,
   isGrafanaRulesSource,
 } from '../utils/datasource';
 

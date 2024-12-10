@@ -9,7 +9,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDataSourceByName, getRulesDataSourceByUID, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByName, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';

@@ -1,5 +1,5 @@
 import { chunk, clamp } from 'lodash';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function usePagination<T>(items: T[], initialPage = 1, itemsPerPage: number) {
   const [page, setPage] = useState(initialPage);

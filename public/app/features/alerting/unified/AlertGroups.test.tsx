@@ -8,11 +8,11 @@ import { AccessControlAction } from 'app/types';
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
 import {
+  MockDataSourceSrv,
   grantUserPermissions,
   mockAlertGroup,
   mockAlertmanagerAlert,
   mockDataSource,
-  MockDataSourceSrv,
 } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';

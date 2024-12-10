@@ -1,6 +1,6 @@
 import { FetchError } from '@grafana/runtime';
 
-import { messageFromError, UNKNOW_ERROR } from './redux';
+import { UNKNOW_ERROR, messageFromError } from './redux';
 
 describe('messageFromError method', () => {
   it('should return UNKNOW_ERROR message when error is an object and not having neither in the e.data.message and nor in e.message', () => {

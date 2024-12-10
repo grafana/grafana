@@ -1,4 +1,4 @@
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';

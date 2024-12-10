@@ -6,10 +6,10 @@ import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
-import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
+import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';

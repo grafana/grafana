@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
@@ -13,8 +13,8 @@ import {
   mapMultiSelectValueToStrings,
   promDurationValidator,
   repeatIntervalValidator,
-  stringsToSelectableValues,
   stringToSelectableValue,
+  stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 

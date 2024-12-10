@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { forwardRef, FC } from 'react';
-import { createFilter, GroupBase, OptionsOrGroups } from 'react-select';
+import { FC, forwardRef } from 'react';
+import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';

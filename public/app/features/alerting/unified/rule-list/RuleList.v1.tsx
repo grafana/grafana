@@ -26,7 +26,7 @@ import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
 
 const VIEWS = {

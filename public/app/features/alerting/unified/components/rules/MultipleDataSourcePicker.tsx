@@ -3,14 +3,14 @@ import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
 
 import {
   DataSourceInstanceSettings,
+  SelectableValue,
   getDataSourceUID,
   isUnsignedPluginSignature,
-  SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, DataSourcePickerState, DataSourcePickerProps } from '@grafana/runtime';
+import { DataSourcePickerProps, DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { ActionMeta, Stack, PluginSignatureBadge, MultiSelect } from '@grafana/ui';
+import { ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 

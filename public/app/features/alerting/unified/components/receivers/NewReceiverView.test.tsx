@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 

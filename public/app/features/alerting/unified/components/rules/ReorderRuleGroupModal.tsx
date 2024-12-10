@@ -3,9 +3,9 @@ import {
   DragDropContext,
   Draggable,
   DraggableProvided,
+  DropResult,
   Droppable,
   DroppableProvided,
-  DropResult,
 } from '@hello-pangea/dnd';
 import cx from 'classnames';
 import { produce } from 'immer';
@@ -27,7 +27,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { useReorderRuleForRuleGroup } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading } from '../../hooks/useAsync';
-import { swapItems, SwapOperation } from '../../reducers/ruler/ruleGroups';
+import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
 import { fetchRulerRulesAction } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';

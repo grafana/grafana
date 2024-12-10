@@ -1,15 +1,15 @@
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
   DataQuery,
   DataSourceInstanceSettings,
-  getDataSourceRef,
   LoadingState,
   PanelData,
-  rangeUtil,
   RelativeTimeRange,
+  getDataSourceRef,
+  rangeUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon, Stack } from '@grafana/ui';

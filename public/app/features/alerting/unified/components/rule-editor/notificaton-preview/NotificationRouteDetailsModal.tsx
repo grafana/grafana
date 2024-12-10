@@ -13,7 +13,7 @@ import { createContactPointSearchLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
-import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
+import { RouteWithPath, hasEmptyMatchers, isDefaultPolicy } from './route';
 
 interface Props {
   routesByIdMap: Map<string, RouteWithPath>;

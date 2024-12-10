@@ -1,7 +1,7 @@
 import { renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
