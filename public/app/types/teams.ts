@@ -1,6 +1,6 @@
-import { Role } from './accessControl';
-import { TeamPermissionLevel } from './acl';
+import { TeamPermissionLevel } from '@grafana/data';
 
+import { Role } from './accessControl';
 export interface TeamDTO {
   /**
    * Email of the team.
