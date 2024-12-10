@@ -46,8 +46,9 @@ export class DataProvider {
    *
    * @remarks
    * This is useful with fuzzy searching items to provide as Monaco autocomplete suggestions.
+   * Making dataProvider.inputInRange public because it works better than monacoSettings.inputInRange for debouncing the input because it is updated more regularly
    */
-  private inputInRange: string;
+  inputInRange: string;
   private suggestionsIncomplete: boolean;
 
   constructor(params: DataProviderParams) {
@@ -68,6 +69,10 @@ export class DataProvider {
 
   getAllMetricNames(): string[] {
     return this.languageProvider.metrics;
+  }
+
+  getLimitedMetricNames(m: string): Promise<string[]> {
+    return this.languageProvider.getLimitedMetrics(m);
   }
 
   metricNamesToMetrics(metricNames: string[]): Metric[] {
