@@ -12,4 +12,5 @@ export const INTEGRATION_ICONS: Record<string, IconName> = {
   telegram: 'telegram-alt',
   webhook: 'link',
   sns: 'amazon',
+  // TODO: messagebird
 };

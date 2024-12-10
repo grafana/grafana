@@ -98,6 +98,23 @@
                         "secureSettings": {}
                     },
                     {
+                        "name": "a messagebird receiver",
+                        "type": "messagebird",
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "accessKey": "",
+                            "originator": "31612345678",
+                            "recipients": "31612345678;31687654321",
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false
+                        },
+                        "secureSettings": {"accessKey": "<access_key>"}
+                    },
+                    {
                         "name": "a hipchat receiver",
                         "type": "hipchat",
                         "sendReminder": false,

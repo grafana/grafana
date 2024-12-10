@@ -1133,6 +1133,7 @@ var nonEmailAlertNames = []string{
 	"PagerdutyAlert",
 	"TeamsAlert",
 	"WebhookAlert",
+	"MessageBirdAlert",
 }
 
 // emailAlertNames are name of alerts to be sent via email. This should be in sync with
@@ -1512,6 +1513,16 @@ const alertmanagerConfig = `
           ]
         },
         {
+          "receiver": "messagebird_recv",
+          "group_wait": "0s",
+          "group_by": [
+            "alertname"
+          ],
+          "matchers": [
+            "alertname=\"MessageBirdAlert\""
+          ]
+        },
+        {
           "receiver": "kafka_recv",
           "group_wait": "0s",
           "group_by": [
@@ -1649,6 +1660,18 @@ const alertmanagerConfig = `
             "type": "googlechat",
             "settings": {
               "url": "http://CHANNEL_ADDR/googlechat_recv/googlechat_test"
+            }
+          }
+        ]
+      },
+      {
+        "name": "messagebird_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "messagebird_test",
+            "type": "messagebird",
+            "settings": {
+              "url": "http://CHANNEL_ADDR/messagebird_recv/messagebird_test"
             }
           }
         ]
@@ -2030,6 +2053,16 @@ var expAlertmanagerConfigFromAPI = `
           ]
         },
         {
+          "receiver": "messagebird_recv",
+          "group_wait": "0s",
+          "group_by": [
+            "alertname"
+          ],
+          "matchers": [
+            "alertname=\"MessageBirdAlert\""
+          ]
+        },
+        {
           "receiver": "kafka_recv",
           "group_wait": "0s",
           "group_by": [
@@ -2178,6 +2211,21 @@ var expAlertmanagerConfigFromAPI = `
             "disableResolveMessage": false,
             "settings": {
               "url": "http://CHANNEL_ADDR/googlechat_recv/googlechat_test"
+            },
+            "secureFields": {}
+          }
+        ]
+      },
+      {
+        "name": "messagebird_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "",
+            "name": "messagebird_test",
+            "type": "messagebird",
+            "disableResolveMessage": false,
+            "settings": {
+              "url": "http://CHANNEL_ADDR/messagebird_recv/messagebird_test"
             },
             "secureFields": {}
           }
@@ -2727,6 +2775,10 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"telegram_recv/bot6sh027hs034h": {
 		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nHTML\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault&orgId=1\n\r\n--abcd--\r\n",
+	},
+	// TODO: proper recipients array
+	"messagebird_recv/messagebird_test": {
+		"--abcd\r\nContent-Disposition: form-data; name=\"originator\"\r\n\r\n31612345678\r\n--abcd\r\nContent-Disposition: form-data; name=\"recipients\"\r\n\r\n31612345678;31687654321\r\n--abcd\r\nContent-Disposition: form-data; name=\"body\"\r\n\r\nFiring\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
