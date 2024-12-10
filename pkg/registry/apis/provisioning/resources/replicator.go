@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path/filepath"
+	"path"
 	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -101,14 +101,19 @@ func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInf
 }
 
 func (r *replicator) createFolderPath(ctx context.Context, filePath string) (string, error) {
-	dir := filepath.Dir(filePath)
+	dir := path.Dir(filePath)
 	parent := r.repository.Config().Spec.Folder
-	if dir == "." {
+	if dir == "." || dir == "/" {
 		return parent, nil
 	}
 
 	logger := r.logger.With("file", filePath)
-	for _, folder := range strings.Split(dir, string(filepath.Separator)) {
+	for _, folder := range strings.Split(dir, "/") {
+		if folder == "" {
+			// Trailing / leading slash?
+			continue
+		}
+
 		logger := logger.With("folder", folder)
 		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
 		// FIXME: Check for IsNotFound properly
@@ -134,7 +139,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 			},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			return parent, fmt.Errorf("failed to create folder %s: %w", folder, err)
+			return parent, fmt.Errorf("failed to create folder '%s': %w", folder, err)
 		}
 
 		parent = folder

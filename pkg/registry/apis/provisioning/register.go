@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"path/filepath"
+	"path"
 	"slices"
 	"strings"
 
@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -122,8 +123,9 @@ func RegisterAPIService(
 	}
 
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
-		ProvisioningPath: cfg.ProvisioningPath,
-		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
+		ProvisioningPath: safepath.Clean(cfg.ProvisioningPath),
+		// We're not going to use safepath.Join here. We trust the configuration a reasonable amount.
+		DevenvPath: safepath.Clean(path.Join(cfg.HomePath, "devenv")),
 	}, func(namespace string) string {
 		return cfg.AppURL
 	}, cfg.SecretKey, identities, features, render, store, ghFactory)
@@ -239,7 +241,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
+		return repository.NewLocal(r, b.localFileResolver)
 	case provisioning.GitHubRepositoryType:
 		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
 		if err != nil {

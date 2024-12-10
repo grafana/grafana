@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,7 +127,7 @@ func TestParseWebhooks(t *testing.T) {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
 		t.Run(name, func(t *testing.T) {
 			// nolint:gosec
-			payload, err := os.ReadFile(filepath.Join("github", "testdata", name))
+			payload, err := os.ReadFile(path.Join("github", "testdata", name))
 			require.NoError(t, err)
 
 			rsp, err := gh.parseWebhook(tt.messageType, payload)

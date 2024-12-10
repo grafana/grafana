@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -120,8 +120,8 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 
 	// When name is missing use the file path as the k8s name
 	if obj.GetName() == "" {
-		name := filepath.Base(info.Path)
-		suffix := filepath.Ext(name)
+		name := path.Base(info.Path)
+		suffix := path.Ext(name)
 		if suffix != "" {
 			name = strings.TrimSuffix(name, suffix)
 		}
@@ -187,7 +187,7 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.Object
 	delete(obj, "metadata")
 
-	switch filepath.Ext(f.Info.Path) {
+	switch path.Ext(f.Info.Path) {
 	// JSON pretty print
 	case ".json":
 		return json.MarshalIndent(obj, "", "  ")
