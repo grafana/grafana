@@ -152,15 +152,6 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("DB disposed")
 }
 
-func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	err := e.db.Ping()
-
-	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, err).Error()}, nil
-	}
-	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
-}
-
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
