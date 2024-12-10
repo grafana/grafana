@@ -10,7 +10,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource } from '../../../mocks';
-import * as config from '../../../utils/config';
 import { DataSourceType } from '../../../utils/datasource';
 
 import internalAlertmanagerConfig from './api/alertmanager/grafana/config/api/v1/alerts.json';
@@ -30,8 +29,6 @@ export { history as alertmanagerConfigurationHistory };
 
 export const EXTERNAL_VANILLA_ALERTMANAGER_UID = 'vanilla-alertmanager';
 export const PROVISIONED_MIMIR_ALERTMANAGER_UID = 'provisioned-alertmanager';
-
-jest.spyOn(config, 'getAllDataSources');
 
 export const mockDataSources = {
   [EXTERNAL_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>(
