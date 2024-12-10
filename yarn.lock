@@ -18362,7 +18362,6 @@ __metadata:
     jsdom-testing-mocks: "npm:^1.13.1"
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
-    jsurl2: "npm:^2.2.0"
     kbar: "npm:0.1.0-beta.45"
     lerna: "npm:8.1.8"
     leven: "npm:^4.0.0"
@@ -21133,13 +21132,6 @@ __metadata:
     json-schema: "npm:0.4.0"
     verror: "npm:1.10.0"
   checksum: 10/fcfca5b55f83e1b8be5f932c71754bd37afd2611f81685abd05689e8ce718a91155ff7bd5b94c65ce483a787b5c43c6d0c18c1d2259fca5bb61a3f8ea2e29c0a
-  languageName: node
-  linkType: hard
-
-"jsurl2@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "jsurl2@npm:2.2.0"
-  checksum: 10/eb54376c7af6881b2110eb5b71314f17f7165fb450d82b67cc5f28f66a8999439b140b7533354ed9d522236e08d2bd94730186464c1fc9b502e8977027fbc43c
   languageName: node
   linkType: hard
 
