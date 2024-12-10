@@ -193,6 +193,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -276,6 +277,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -383,6 +385,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -521,6 +524,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -618,6 +622,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1062,6 +1067,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1414,6 +1420,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1538,6 +1545,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -2095,6 +2103,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -3791,6 +3800,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -4822,6 +4832,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -5740,6 +5751,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e97f7a0c3923b506dad6bf861bb1ea440a8f072ee3744742eec35e7278c3581c
+hmac: 04ba0c9b8e69705a28a24ba03de14ece0b15c4b44f6262fcbc6a9ee874b5a9db
 
 ...
