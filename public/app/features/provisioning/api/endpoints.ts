@@ -134,7 +134,7 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
     }),
-    testRepository: build.query<TestResponse, { name: string;}>({
+    testRepository: build.query<TestResponse, { name: string }>({
       query: ({ name }) => ({
         url: `${BASE_PATH}/${name}/test`,
         method: 'POST', // tests the existing configuration

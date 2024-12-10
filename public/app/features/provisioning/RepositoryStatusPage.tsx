@@ -60,21 +60,23 @@ interface FilesTableProps {
   name: string;
 }
 
-
 function RepoTestOptions({ name }: FilesTableProps) {
   const status = useTestRepositoryQuery({ name });
   if (status.isLoading) {
-    return <div><Spinner/> Testing configuration...</div>
+    return (
+      <div>
+        <Spinner /> Testing configuration...
+      </div>
+    );
   }
-  if (status.isError){
+  if (status.isError) {
     if (!status.data) {
-      return <Alert title='Error testing configuration' severity='error'/>
+      return <Alert title="Error testing configuration" severity="error" />;
     }
-    return <pre>{JSON.stringify(status.data, null, '  ')}</pre>
+    return <pre>{JSON.stringify(status.data, null, '  ')}</pre>;
   }
   return null; // don't show anything when it is OK?
 }
-
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 
