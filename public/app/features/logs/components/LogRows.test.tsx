@@ -275,4 +275,26 @@ describe('Popover menu', () => {
     expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
     expect(onClickFilterString).toHaveBeenCalledTimes(1);
   });
+  describe('Interacting with log details', () => {
+    it('Allows text selection even if the popover menu is not available', async () => {
+      setup({
+        onClickFilterOutString: undefined,
+        onClickFilterString: undefined,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+      expect(screen.queryByText(/details/)).not.toBeInTheDocument();
+    });
+
+    it('Displays Log Details if there is no text selection', async () => {
+      jest.spyOn(document, 'getSelection').mockReturnValue(null);
+      setup({
+        onClickFilterOutString: undefined,
+        onClickFilterString: undefined,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+      expect(screen.getByText(/details/)).toBeInTheDocument();
+    });
+  });
 });
