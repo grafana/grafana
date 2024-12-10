@@ -8,10 +8,13 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/storage"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -22,6 +25,7 @@ var (
 	_ rest.Getter               = (*jobStore)(nil)
 	_ rest.Lister               = (*jobStore)(nil)
 	_ rest.Storage              = (*jobStore)(nil)
+	_ rest.Watcher              = (*jobStore)(nil)
 
 	resourceInfo = provisioning.JobResourceInfo
 )
@@ -98,4 +102,21 @@ func (s *jobStore) Get(ctx context.Context, name string, options *metav1.GetOpti
 	}
 
 	return nil, apierrors.NewNotFound(resourceInfo.GroupResource(), name)
+}
+
+func (s *jobStore) Watch(ctx context.Context, opts *internalversion.ListOptions) (watch.Interface, error) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing namespace")
+	}
+
+	p := storage.SelectionPredicate{
+		Label: labels.Everything(), // TODO... limit
+		Field: fields.Everything(),
+	}
+
+	// Can watch by label selection
+	jw := s.watchSet.newWatch(ctx, 0, p, s.versioner, &ns)
+	jw.Start()
+	return jw, nil
 }
