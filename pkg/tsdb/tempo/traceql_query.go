@@ -96,7 +96,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert response to type: %w", err)
 	}
 
-	frames := traceql.TransformMetricsResponse(queryResponse)
+	frames := traceql.TransformMetricsResponse(tempoQuery, queryResponse)
 
 	result.Frames = frames
 	ctxLogger.Debug("Successfully performed TraceQL query", "function", logEntrypoint())
@@ -150,6 +150,9 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 	}
 	if query.Step != nil {
 		q.Set("step", *query.Step)
+	}
+	if query.Exemplars != nil {
+		q.Set("exemplars", strconv.FormatInt(*query.Exemplars, 10))
 	}
 
 	searchUrl.RawQuery = q.Encode()
