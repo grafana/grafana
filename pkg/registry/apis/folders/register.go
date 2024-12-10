@@ -17,7 +17,6 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
@@ -255,22 +254,30 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return b.validateOnDelete(ctx, f)
 	case admission.Update:
 		return nil
+	case admission.Connect:
+		return nil
 	}
 	return nil
 }
 
 func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Folder) error {
-	// check if any other folder or dashboard is referencing this folder
-	// by calling feature in https://github.com/grafana/grafana/pull/97534
 	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
 	if err != nil {
 		return err
 	}
-	for _, v := range resp.Stats {
-		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty // TODO:
+
+	if resp.Error != nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	if resp != nil && resp.Stats != nil {
+		for _, v := range resp.Stats {
+			if v.Count > 0 {
+				return folder.ErrFolderNotEmpty
+			}
 		}
 	}
+
 	return nil
 }
 
