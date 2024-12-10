@@ -98,6 +98,7 @@
     "react-i18next": "^14.0.0",
     "react-inlinesvg": "3.0.2",
     "react-loading-skeleton": "3.5.0",
+    "react-router-dom": "^5.3.4",
     "react-router-dom-v5-compat": "^6.26.1",
     "react-select": "5.8.3",
     "react-table": "7.8.0",
