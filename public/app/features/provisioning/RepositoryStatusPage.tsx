@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
+  List,
   Alert,
   Card,
   CellProps,
@@ -27,7 +28,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ScopedResourceClient } from '../apiserver/client';
 
 import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
-import { JobSpec, JobStatus, RepositoryResource, FileDetails } from './api/types';
+import { JobSpec, JobStatus, RepositoryResource, FileDetails, TestResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
@@ -113,10 +114,16 @@ function ErrorView({ repo }: RepoProps) {
     );
   }
   if (status.isError) {
-    if (!status.data) {
+    let response = (status.error as any)?.data as TestResponse;
+    if (!response || !response.errors) {
       return <Alert title="Error testing configuration" severity="error" />;
     }
-    return <pre>{JSON.stringify(status.data, null, '  ')}</pre>;
+
+    return (
+      <Alert title="Error testing configuration" severity="error">
+        <List items={response.errors} renderItem={(error) => <div>{error}</div>} />
+      </Alert>
+    );
   }
   return null; // don't show anything when it is OK?
 }

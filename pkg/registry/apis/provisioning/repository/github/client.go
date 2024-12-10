@@ -26,6 +26,9 @@ type ErrRateLimited = github.RateLimitError
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go
 type Client interface {
+	// IsAuthenticated checks if the client is authenticated.
+	IsAuthenticated(ctx context.Context) error
+
 	// GetContents returns the metadata and content of a file or directory.
 	// When a file is checked, the first returned value will have a value. For a directory, the second will. The other value is always nil.
 	// If an error occurs, the returned values may or may not be nil.
@@ -69,6 +72,9 @@ type Client interface {
 
 	// Commits returns the commits for the given path
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
+
+	// RepoExists checks if a repository exists.
+	RepoExists(ctx context.Context, owner, repository string) (bool, error)
 
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error

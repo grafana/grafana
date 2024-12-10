@@ -100,12 +100,55 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "test is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	if err := r.gh.IsAuthenticated(ctx); err != nil {
+		// TODO: should we return a more specific error or error code?
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors:  []string{err.Error()},
+		}, nil
 	}
+
+	// FIXME: check token permissions
+
+	ok, err := r.gh.RepoExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusInternalServerError,
+			Success: false,
+			Errors:  []string{err.Error()},
+		}, nil
+	}
+
+	if !ok {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors:  []string{"repository does not exist"},
+		}, nil
+	}
+
+	ok, err = r.gh.BranchExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusInternalServerError,
+			Success: false,
+			Errors:  []string{err.Error()},
+		}, nil
+	}
+
+	if !ok {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors:  []string{"branch does not exist"},
+		}, nil
+	}
+
+	return &provisioning.TestResults{
+		Code:    http.StatusOK,
+		Success: true,
+	}, nil
 }
 
 // ReadResource implements provisioning.Repository.
