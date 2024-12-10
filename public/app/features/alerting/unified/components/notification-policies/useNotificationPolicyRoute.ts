@@ -6,9 +6,9 @@ import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/type
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import {
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Spec,
 } from '../../openapi/routesApi.gen';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
@@ -78,7 +78,7 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
     const { routes, _metadata, ...defaults } = newRoute;
     // Remove provenance so we don't send it to API
     // Convert Route to K8s compatible format
-    const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
+    const k8sRoute: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Spec = {
       defaults: {
         ...defaults,
         // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
@@ -88,15 +88,16 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
     };
 
     // Create the K8s route object
-    const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
+    const routeObject: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree = {
       spec: k8sRoute,
       metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+      status: {},
     };
 
     return updatedNamespacedRoute({
       name: ROOT_ROUTE_NAME,
       namespace,
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
+      comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree: routeObject,
     }).unwrap();
   }
 
@@ -130,7 +131,9 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
   return k8sApiSupported ? updateUsingK8sApi : updateUsingConfigFileApi;
 }
 
-function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[]): Route[] {
+function k8sRoutesToRoutes(
+  routes: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree[]
+): Route[] {
   return routes?.map((route) => {
     return {
       ...route.spec.defaults,
@@ -149,7 +152,9 @@ function isValidMatcherOperator(type: string): type is MatcherOperator {
   return Object.values<string>(MatcherOperator).includes(type);
 }
 
-function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
+function k8sSubRouteToRoute(
+  route: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route
+): Route {
   return {
     ...route,
     routes: route.routes?.map(k8sSubRouteToRoute),
@@ -163,10 +168,13 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
   };
 }
 
-function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
+function routeToK8sSubRoute(
+  route: Route
+): ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route {
   const { object_matchers, ...rest } = route;
   return {
     ...rest,
+    continue: Boolean(route.continue),
     receiver: route.receiver ?? undefined,
     matchers: object_matchers?.map(([label, type, value]) => ({
       label,
