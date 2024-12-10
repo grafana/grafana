@@ -107,10 +107,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagMysqlParseTime
-	// Ensure the parseTime flag is set for MySQL driver
-	FlagMysqlParseTime = "mysqlParseTime"
-
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
