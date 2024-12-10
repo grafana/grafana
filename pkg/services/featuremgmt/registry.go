@@ -1248,7 +1248,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false", // disabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1436,8 +1436,9 @@ var (
 		{
 			Name:        "newFiltersUI",
 			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
