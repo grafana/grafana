@@ -20,11 +20,26 @@ labels:
 title: Configure notification policies
 weight: 420
 refs:
-  notification-policies:
+  alertmanager-architecture:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  intro-notification-policies:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
+  configure-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
+  configure-contact-points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
 # Configure notification policies
@@ -37,9 +52,11 @@ Each alert is evaluated by the default policy and subsequently by each child pol
 
 If the **Continue matching subsequent sibling nodes** option is enabled for a child policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A default policy governs any alert that does not match a child policy.
 
-You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
+For more information on notification policies, refer to [fundamentals of Notification Policies](ref:intro-notification-policies).
 
-For more information on notification policies, refer to [fundamentals of Notification Policies](ref:notification-policies).
+{{% admonition type="note" %}}
+The default notification policy and its child policies are assigned to a [specific Alertmanager](ref:alertmanager-architecture), and they cannot use contact points or mute timings from other Alertmanagers.
+{{% /admonition %}}
 
 ## Edit the default notification policy
 
@@ -47,7 +64,7 @@ For more information on notification policies, refer to [fundamentals of Notific
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Default policy section, click **...** -> **Edit**.
-1. In **Default contact point**, update the contact point for where to send notifications when alert rules do not match any specific policy.
+1. In **Default contact point**, update the [contact point](ref:configure-contact-points) for where to send notifications when alert rules do not match any specific policy.
 1. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
 1. In **Timing options**, select from the following options:
    - **Group wait** Time to wait to buffer alerts of the same group before sending an initial notification. Default is 30 seconds.
@@ -66,7 +83,7 @@ If you want to choose where to position your policy, see the section on **Add a 
 3. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
 4. Click **+New child policy** from the default policy.
 5. In the Matching labels section, add one or more rules for matching alert labels.
-6. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the child policies.
+6. In the **Contact point** dropdown, select the [contact point](ref:configure-contact-points) to send notification to if alert matches only this specific policy and not any of the child policies.
 7. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
 8. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
 9. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
@@ -98,7 +115,7 @@ It is important to note that all matched policies are **exact** matches. Grafana
 
 ## Mute timings
 
-Mute timings are not inherited from a parent notification policy. They have to be configured in full on each level.
+Mute timings are not inherited from a parent notification policy, and they have to be configured on each level. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
 
 ## Example
 
