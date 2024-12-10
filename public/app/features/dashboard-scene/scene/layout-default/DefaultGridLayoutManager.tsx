@@ -9,23 +9,18 @@ import {
   sceneUtils,
   SceneComponentProps,
 } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { Trans } from 'app/core/internationalization';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
-  getDefaultVizPanel,
 } from '../../utils/utils';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
-import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
@@ -40,6 +35,8 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  public isDashboardLayoutManager: true = true;
+
   public editModeChanged(isEditing: boolean): void {
     const updateResizeAndDragging = () => {
       this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
@@ -387,48 +384,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public renderEditor() {
-    return <DefaultGridLayoutEditor layoutManager={this} />;
-  }
-
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    if (!config.featureToggles.dashboardNewLayouts) {
-      return <model.state.grid.Component model={model.state.grid} />;
-    }
-
-    return (
-      <LayoutEditChrome layoutManager={model}>
-        <model.state.grid.Component model={model.state.grid} />
-      </LayoutEditChrome>
-    );
+    return <model.state.grid.Component model={model.state.grid} />;
   };
-}
-
-function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGridLayoutManager>) {
-  return (
-    <>
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          const vizPanel = getDefaultVizPanel();
-          layoutManager.addPanel(vizPanel);
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
-      </Button>
-
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          layoutManager.addNewRow!();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.row">Row</Trans>
-      </Button>
-    </>
-  );
 }

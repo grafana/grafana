@@ -4,6 +4,8 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
+import { getLayoutManagerFor } from './utils';
+
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
 }
@@ -53,4 +55,5 @@ export const dashboardSceneGraph = {
   getVizPanels,
   getDataLayers,
   getCursorSync,
+  getLayoutManagerFor,
 };

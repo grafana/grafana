@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { Box } from '@grafana/ui';
+
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 
@@ -55,6 +57,10 @@ export class OptionsPaneCategoryDescriptor {
   render(searchQuery?: string) {
     if (this.props.customRender) {
       return this.props.customRender();
+    }
+
+    if (this.props.id === '') {
+      return <Box padding={2}>{this.items.map((item) => item.render(searchQuery))}</Box>;
     }
 
     return (

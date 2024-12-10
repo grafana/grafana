@@ -34,7 +34,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function setupDashboardScene(state: DashboardSceneState): DashboardScene {
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
 }
 

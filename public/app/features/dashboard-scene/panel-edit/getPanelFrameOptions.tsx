@@ -34,7 +34,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
-          return <PanelFrameTitle panel={panel} />;
+          return <PanelFrameTitleInput panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
@@ -50,7 +50,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         title: 'Description',
         value: panel.state.description,
         render: function renderDescription() {
-          return <DescriptionTextArea panel={panel} />;
+          return <PanelDescriptionTextArea panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
@@ -64,17 +64,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       new OptionsPaneItemDescriptor({
         title: 'Transparent background',
         render: function renderTransparent() {
-          return (
-            <Switch
-              value={panel.state.displayMode === 'transparent'}
-              id="transparent-background"
-              onChange={() => {
-                panel.setState({
-                  displayMode: panel.state.displayMode === 'transparent' ? 'default' : 'transparent',
-                });
-              }}
-            />
-          );
+          return <PanelBackgroundSwitch panel={panel} />;
         },
       })
     )
@@ -116,7 +106,7 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-function PanelFrameTitle({ panel }: { panel: VizPanel }) {
+export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
   const { title } = panel.useState();
 
   return (
@@ -128,7 +118,7 @@ function PanelFrameTitle({ panel }: { panel: VizPanel }) {
   );
 }
 
-function DescriptionTextArea({ panel }: { panel: VizPanel }) {
+export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
   const { description } = panel.useState();
 
   return (
@@ -136,6 +126,22 @@ function DescriptionTextArea({ panel }: { panel: VizPanel }) {
       id="description-text-area"
       value={description}
       onChange={(e) => panel.setState({ description: e.currentTarget.value })}
+    />
+  );
+}
+
+export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
+  const { displayMode } = panel.useState();
+
+  return (
+    <Switch
+      value={displayMode === 'transparent'}
+      id="transparent-background"
+      onChange={() => {
+        panel.setState({
+          displayMode: panel.state.displayMode === 'transparent' ? 'default' : 'transparent',
+        });
+      }}
     />
   );
 }
