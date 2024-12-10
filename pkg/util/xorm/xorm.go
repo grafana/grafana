@@ -2,13 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.8
-// +build go1.8
+//go:build go1.10
+// +build go1.10
 
 package xorm
 
 import (
 	"context"
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"os"
 	"reflect"
@@ -54,9 +56,11 @@ func init() {
 	regDrvsNDialects()
 }
 
+type ConnectorCreator func(dataSourceName string) (driver.Connector, error)
+
 // NewEngine new a db manager according to the parameter. Currently support four
 // drivers
-func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
+func NewEngine(driverName string, dataSourceName string, connectorCreator ConnectorCreator) (*Engine, error) {
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
 		return nil, fmt.Errorf("unsupported driver name: %v", driverName)
@@ -72,9 +76,20 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		return nil, fmt.Errorf("unsupported dialect type: %v", uri.DbType)
 	}
 
-	db, err := core.Open(driverName, dataSourceName)
-	if err != nil {
-		return nil, err
+	var db *core.DB
+	if connectorCreator == nil {
+		d, err := core.Open(driverName, dataSourceName)
+		if err != nil {
+			return nil, err
+		}
+		db = d
+	} else {
+		connector, err := connectorCreator(dataSourceName)
+		if err != nil {
+			return nil, err
+		}
+		sqlDb := sql.OpenDB(connector)
+		db = core.FromDB(sqlDb)
 	}
 
 	err = dialect.Init(db, uri, driverName, dataSourceName)
