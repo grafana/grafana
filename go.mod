@@ -83,7 +83,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.25.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.27.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.3 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -499,7 +499,6 @@ require (
 	github.com/blevesearch/zapx/v16 v16.1.8 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/deepmap/oapi-codegen v1.16.3 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect

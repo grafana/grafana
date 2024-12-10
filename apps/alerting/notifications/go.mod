@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.23.1
 
 require (
-	github.com/grafana/grafana-app-sdk v0.25.2
+	github.com/grafana/grafana-app-sdk v0.27.0
 	k8s.io/apimachinery v0.31.3
 	k8s.io/apiserver v0.31.3
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
@@ -53,7 +53,6 @@ require (
 	github.com/prometheus/common v0.60.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.14 // indirect
@@ -77,7 +76,6 @@ require (
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
-	golang.org/x/tools v0.27.0 // indirect
 	google.golang.org/genproto v0.0.0-20240820151423-278611b39280 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
