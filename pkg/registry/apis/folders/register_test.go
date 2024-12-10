@@ -336,26 +336,18 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	tests := []struct {
-		name    string
-		setupFn func(*mock.Mock, string)
-		wantErr bool
+		name          string
+		statsResponse *resource.ResourceStatsResponse_Stats
+		wantErr       bool
 	}{
 		{
-			name: "should allow deletion when folder is empty",
-			setupFn: func(m *mock.Mock, name string) {
-				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: "stacks-123", Folder: name}).Return(
-					&resource.ResourceStatsResponse{},
-					nil)
-			},
+			name:          "should allow deletion when folder is empty",
+			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 0},
 		},
 		{
-			name: "should return folder not empty when the folder is not empty",
-			setupFn: func(m *mock.Mock, name string) {
-				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: "stacks-123", Folder: name}).Return(
-					&resource.ResourceStatsResponse{Stats: []*resource.ResourceStatsResponse_Stats{{Count: 1}}},
-					nil)
-			},
-			wantErr: true,
+			name:          "should return folder not empty when the folder is not empty",
+			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 2},
+			wantErr:       true,
 		},
 	}
 
@@ -376,9 +368,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setupFn != nil {
-				tt.setupFn(m, obj.Name)
+			var setupFn = func(m *mock.Mock, stats *resource.ResourceStatsResponse_Stats) {
+				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
+					&resource.ResourceStatsResponse{Stats: []*resource.ResourceStatsResponse_Stats{stats}},
+					nil,
+				).Once()
 			}
+
+			setupFn(m, tt.statsResponse)
 
 			b := &FolderAPIBuilder{
 				gv:            resourceInfo.GroupVersion(),
@@ -402,7 +399,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			),
+				nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
