@@ -57,3 +57,5 @@ export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermis
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
+export { NestedFolderPicker, setNestedFolderPicker } from './components/NestedFolderPicker';
+export type { NestedFolderPickerType, NestedFolderPickerProps } from './components/NestedFolderPicker';

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, NestedFolderPickerProps } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -21,28 +21,6 @@ import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
 
-export interface NestedFolderPickerProps {
-  /* Folder UID to show as selected */
-  value?: string;
-
-  /** Show an invalid state around the folder picker */
-  invalid?: boolean;
-
-  /* Whether to show the root 'Dashboards' (formally General) folder as selectable */
-  showRootFolder?: boolean;
-
-  /* Folder UIDs to exclude from the picker, to prevent invalid operations */
-  excludeUIDs?: string[];
-
-  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
-  permission?: PermissionLevelString.View | PermissionLevelString.Edit;
-
-  /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
-
-  /* Whether the picker should be clearable */
-  clearable?: boolean;
-}
 
 const debouncedSearch = debounce(getSearchResults, 300);
 

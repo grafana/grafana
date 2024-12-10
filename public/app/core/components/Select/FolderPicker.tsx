@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, NestedFolderPickerProps } from '@grafana/runtime';
 
-import { NestedFolderPicker, NestedFolderPickerProps } from '../NestedFolderPicker/NestedFolderPicker';
+import { NestedFolderPicker } from '../NestedFolderPicker/NestedFolderPicker';
 
 import { OldFolderPicker } from './OldFolderPicker';
 
