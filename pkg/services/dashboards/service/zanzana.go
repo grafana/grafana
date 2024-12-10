@@ -122,7 +122,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaGeneric(ctx context.Context
 	}
 
 	for len(result) < int(limit) {
-		findRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
+		findRes, err := dr.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}

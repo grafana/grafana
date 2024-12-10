@@ -298,6 +298,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
+	dashboardservice.ProvideDashboardReadService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	folderimpl.ProvideStore,
