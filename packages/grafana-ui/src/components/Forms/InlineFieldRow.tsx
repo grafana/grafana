@@ -28,9 +28,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignContent: 'flex-start',
       rowGap: theme.spacing(0.5),
       maxWidth: '100%',
-      '> div': {
-        maxWidth: '100%',
-      },
     }),
   };
 };
