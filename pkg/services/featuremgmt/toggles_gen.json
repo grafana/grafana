@@ -1272,11 +1272,14 @@
     {
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
-        "resourceVersion": "1733752418883",
-        "creationTimestamp": "2024-12-09T13:53:38Z"
+        "resourceVersion": "1733848475752",
+        "creationTimestamp": "2024-12-09T13:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-10 16:34:35.752111 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables cross cluster search in the elasticsearch datasource",
+        "description": "Enables cross cluster search in the Elasticsearch datasource",
         "stage": "preview",
         "codeowner": "@grafana/aws-datasources"
       }
