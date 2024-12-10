@@ -1,5 +1,3 @@
-import { stringify } from 'jsurl2';
-
 export interface AwsUrl {
   end: string;
   start: string;
@@ -30,4 +28,63 @@ export function encodeUrl(obj: AwsUrl, region: string): string {
   return `https://${getLogsEndpoint(
     region
   )}/cloudwatch/home?region=${region}#logs-insights:queryDetail=${stringify(obj)}`;
+}
+
+// Lifted from https://github.com/Sage/jsurl
+function stringify<T>(v: T): string {
+  function encode(s: string): string {
+    return !/[^\w-.]/.test(s)
+      ? s
+      : s.replace(/[^\w-.]/g, (ch: string): string => {
+          if (ch === '$') {
+            return '!';
+          }
+          const charCode = ch.charCodeAt(0);
+          // Thanks to Douglas Crockford for the negative slice trick
+          return charCode < 0x100
+            ? '*' + ('00' + charCode.toString(16)).slice(-2)
+            : '**' + ('0000' + charCode.toString(16)).slice(-4);
+        });
+  }
+
+  let tmpAry;
+
+  switch (typeof v) {
+    case 'number':
+      return isFinite(v) ? '~' + v : '~null';
+    case 'boolean':
+      return '~' + v;
+    case 'string':
+      return "~'" + encode(v);
+    case 'object':
+      if (!v) {
+        return '~null';
+      }
+
+      tmpAry = [];
+
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) {
+          tmpAry[i] = stringify(v[i]) || '~null';
+        }
+
+        return '~(' + (tmpAry.join('') || '~') + ')';
+      } else {
+        for (const key in v) {
+          if (v.hasOwnProperty(key)) {
+            const val = stringify(v[key]);
+
+            // skip undefined and functions
+            if (val) {
+              tmpAry.push(encode(key) + val);
+            }
+          }
+        }
+
+        return '~(' + tmpAry.join('~') + ')';
+      }
+    default:
+      // function, undefined
+      return '';
+  }
 }
