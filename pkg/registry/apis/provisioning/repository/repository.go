@@ -8,7 +8,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -94,11 +93,17 @@ type Repository interface {
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
 
 	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc
+	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
+
 	// Hooks called after the repository has been created, updated or deleted
 	AfterCreate(ctx context.Context, logger *slog.Logger) error
 	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
 	AfterDelete(ctx context.Context, logger *slog.Logger) error
+}
+
+type JobProcessor interface {
+	// Temporary... likely want this as its own thing... eg GithubWorker or similar
+	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, factory FileReplicatorFactory) error
 }
 
 // FileReplicator is an interface for replicating files

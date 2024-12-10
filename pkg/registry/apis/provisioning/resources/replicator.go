@@ -94,7 +94,7 @@ func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInf
 		return fmt.Errorf("failed to upsert object: %w", err)
 	}
 
-	r.logger.InfoContext(ctx, "Replicated file", "name", file.Obj.GetName(), "path", fileInfo.Path)
+	r.logger.InfoContext(ctx, "Replicated file", "name", file.Obj.GetName(), "path", fileInfo.Path, "parent", parent)
 
 	return nil
 }
@@ -113,6 +113,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 		// FIXME: Check for IsNotFound properly
 		if obj != nil || err == nil {
 			logger.DebugContext(ctx, "folder already existed")
+			parent = folder
 			continue
 		}
 

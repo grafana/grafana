@@ -56,6 +56,30 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	})
 
+var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"jobs", "job", "Job",
+	func() runtime.Object { return &Job{} },     // newObj
+	func() runtime.Object { return &JobList{} }, // newList
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Action", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Job)
+			if !ok {
+				return nil, errors.New("expected Repository")
+			}
+
+			return []interface{}{
+				m.Name, // may our may not be nice to read
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Action,
+			}, nil
+		},
+	})
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion   = schema.GroupVersion{Group: GROUP, Version: VERSION}
@@ -84,6 +108,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&Job{},
+		&JobList{},
 	)
 	return nil
 }

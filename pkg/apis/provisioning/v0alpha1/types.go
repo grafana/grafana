@@ -234,14 +234,6 @@ type ResourceObjects struct {
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
 }
 
-// Dummy object to return for webhooks
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type WebhookResponse struct {
-	metav1.TypeMeta `json:",inline"`
-
-	Status string `json:"status,omitempty"`
-}
-
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FileList struct {
