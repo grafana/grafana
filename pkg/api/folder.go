@@ -779,6 +779,7 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, "")
 }
 

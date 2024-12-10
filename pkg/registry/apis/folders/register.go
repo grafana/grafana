@@ -17,11 +17,14 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -29,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -57,12 +59,10 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
-	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
@@ -73,7 +73,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:    request.GetNamespaceMapper(cfg),
 		folderSvc:     folderSvc,
 		accessControl: accessControl,
-		searcher:      unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -241,22 +240,48 @@ var folderValidationRules = struct {
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
+	obj := a.GetObject()
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create:
+		return b.validateOnCreate(ctx, id, obj)
+	case admission.Delete:
+		return b.validateOnDelete(ctx, f)
+	case admission.Update:
+		return nil
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Folder) error {
+	// check if any other folder or dashboard is referencing this folder
+	// by calling feature in https://github.com/grafana/grafana/pull/97534
+	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	if err != nil {
+		return err
+	}
+	for _, v := range resp.Stats {
+		if v.Count > 0 {
+			return folder.ErrFolderNotEmpty // TODO:
+		}
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
 	for _, invalidName := range folderValidationRules.invalidNames {
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
 	}
 
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
-	}
-
-	f, ok := obj.(*v0alpha1.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not v0alpha1.Folder")
-	}
-
+	f, _ := obj.(*v0alpha1.Folder)
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
