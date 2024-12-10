@@ -1,3 +1,5 @@
+import { Resource } from 'app/features/apiserver/types';
+
 import { baseAPI as api } from './baseAPI';
 import {
   RepositoryList,
@@ -10,6 +12,8 @@ import {
   GetFileArg,
   ListFilesApiResponse,
   HistoryListResponse,
+  TestResponse,
+  RepositorySpec,
   JobList,
 } from './types';
 
@@ -135,6 +139,18 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
     }),
+    testRepository: build.query<TestResponse, { name: string }>({
+      query: ({ name }) => ({
+        url: `${BASE_PATH}/${name}/test`,
+        method: 'POST', // tests the existing configuration
+      }),
+    }),
+    testRepositoryConfig: build.mutation<TestResponse, Resource<RepositorySpec>>({
+      query: ({ metadata }) => ({
+        url: `${BASE_PATH}/${metadata.name ?? 'new'}/test`,
+        method: 'POST',
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -160,4 +176,6 @@ export const {
   useGetRepositoryStatusQuery,
   useUpdateRepositoryStatusMutation,
   usePatchRepositoryStatusMutation,
+  useTestRepositoryQuery,
+  useTestRepositoryConfigMutation,
 } = injectedRtkApi;

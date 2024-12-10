@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/google/go-github/v66/github"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type realImpl struct {
@@ -19,6 +21,45 @@ var _ Client = (*realImpl)(nil)
 
 func NewRealClient(client *github.Client) *realImpl {
 	return &realImpl{client}
+}
+
+func (r *realImpl) IsAuthenticated(ctx context.Context) error {
+	if _, _, err := r.gh.Users.Get(ctx, ""); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized:
+				return apierrors.NewUnauthorized("token is invalid or expired")
+			case http.StatusForbidden:
+				return &apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusUnauthorized,
+						Reason:  metav1.StatusReasonUnauthorized,
+						Message: "token is revoked or has insufficient permissions",
+					},
+				}
+			case http.StatusServiceUnavailable:
+				return ErrServiceUnavailable
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *realImpl) RepoExists(ctx context.Context, owner, repository string) (bool, error) {
+	_, resp, err := r.gh.Repositories.Get(ctx, owner, repository)
+	if err == nil {
+		return true, nil
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error) {

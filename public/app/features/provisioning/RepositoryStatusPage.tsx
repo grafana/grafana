@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
+  List,
   Alert,
   Card,
   CellProps,
@@ -26,8 +27,8 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ScopedResourceClient } from '../apiserver/client';
 
-import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery } from './api';
-import { JobSpec, JobStatus, RepositoryResource } from './api/types';
+import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
+import { JobSpec, JobStatus, RepositoryResource, FileDetails, TestResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
@@ -71,6 +72,7 @@ export default function RepositoryStatusPage() {
           <>
             {query.data ? (
               <>
+                <ErrorView repo={query.data} />
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -97,15 +99,33 @@ export default function RepositoryStatusPage() {
     </Page>
   );
 }
-
-type FileDetails = {
-  path: string;
-  size: string;
-  hash: string;
-};
-
 interface RepoProps {
   repo: RepositoryResource;
+}
+
+function ErrorView({ repo }: RepoProps) {
+  const name = repo.metadata.name;
+  const status = useTestRepositoryQuery({ name });
+  if (status.isLoading) {
+    return (
+      <div>
+        <Spinner /> Testing configuration...
+      </div>
+    );
+  }
+  if (status.isError) {
+    let response = (status.error as any)?.data as TestResponse;
+    if (!response || !response.errors) {
+      return <Alert title="Error testing configuration" severity="error" />;
+    }
+
+    return (
+      <Alert title="Error testing configuration" severity="error">
+        <List items={response.errors} renderItem={(error) => <div>{error}</div>} />
+      </Alert>
+    );
+  }
+  return null; // don't show anything when it is OK?
 }
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;

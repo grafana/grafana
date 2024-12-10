@@ -65,7 +65,7 @@ type Repository interface {
 	Validate() field.ErrorList
 
 	// Called to check if all connection information actually works
-	Test(ctx context.Context, logger *slog.Logger) error
+	Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error)
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users

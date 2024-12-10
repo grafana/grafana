@@ -44,9 +44,13 @@ export type EditingOptions = {
   update: boolean;
 };
 
-export type WatchEvent = {
-  object: unknown;
-  type: string;
+export type TestResponse = {
+  apiVersion?: string;
+  kind?: string;
+  code: number;
+  success: boolean;
+  errors?: string[];
+  details?: object;
 };
 
 export interface RequestArg {
@@ -126,9 +130,15 @@ export type GetFileArg = {
   ref?: string;
 };
 
+export type FileDetails = {
+  path: string;
+  size: string;
+  hash: string;
+};
+
 export type ListFilesApiResponse = {
   apiVersion?: string;
-  files?: any[];
+  files?: FileDetails[];
   kind?: string;
   metadata?: any;
 };

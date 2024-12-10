@@ -309,6 +309,24 @@ func (_m *MockClient) GetTree(ctx context.Context, owner string, repository stri
 	return r0, r1, r2
 }
 
+// IsAuthenticated provides a mock function with given fields: ctx
+func (_m *MockClient) IsAuthenticated(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsAuthenticated")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ListPullRequestFiles provides a mock function with given fields: ctx, owner, repository, number
 func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, repository string, number int) ([]CommitFile, error) {
 	ret := _m.Called(ctx, owner, repository, number)
@@ -358,6 +376,34 @@ func (_m *MockClient) ListWebhooks(ctx context.Context, owner string, repository
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]WebhookConfig)
 		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, owner, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepoExists provides a mock function with given fields: ctx, owner, repository
+func (_m *MockClient) RepoExists(ctx context.Context, owner string, repository string) (bool, error) {
+	ret := _m.Called(ctx, owner, repository)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RepoExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, owner, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, owner, repository)
+	} else {
+		r0 = ret.Get(0).(bool)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {

@@ -152,6 +152,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
+					"name": "repositories/test",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "TestResults",
+					"verbs": [
+						"create"
+					]
+				},
+				{
 					"name": "repositories/webhook",
 					"singularName": "",
 					"namespaced": true,
