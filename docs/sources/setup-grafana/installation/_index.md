@@ -46,7 +46,7 @@ Installation of Grafana on other operating systems is possible, but is not recom
 Grafana requires the minimum system resources:
 
 - Minimum recommended memory: 512 MB
-- Minimum recommended CPU: 1
+- Minimum recommended CPU: 1 core
 
 Some features might require more memory or CPUs, including:
 
