@@ -10,21 +10,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/lib/pq"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	err := e.Ping()
-	if err != nil {
+	if err := e.db.Ping(); err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
 			return ErrToHealthCheckResult(err)
 		}
-		errResponse := &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: e.TransformQueryError(e.log, err).Error(),
-		}
-		return errResponse, nil
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, err).Error()}, nil
 	}
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
@@ -38,7 +32,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}
 	details := map[string]string{
 		"verboseMessage":   err.Error(),
-		"errorDetailsLink": "https://grafana.com/docs/grafana/latest/datasources/postgres",
+		"errorDetailsLink": "https://grafana.com/docs/grafana/latest/datasources/mssql",
 	}
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
@@ -47,22 +41,10 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
 		}
 	}
-	if errors.Is(err, pq.ErrSSLNotSupported) {
-		res.Message = "SSL error: Failed to connect to the server"
-	}
-	if strings.HasPrefix(err.Error(), "pq") {
-		res.Message = "Database error: Failed to connect to the postgres server"
+	if strings.HasPrefix(err.Error(), "mssql: ") {
+		res.Message = "Database error: Failed to connect to the mssql server"
 		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
 			details["verboseMessage"] = unwrappedErr.Error()
-		}
-	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		if pqErr != nil {
-			if pqErr.Code != "" {
-				res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
-			}
-			details["verboseMessage"] = pqErr.Message
 		}
 	}
 	detailBytes, marshalErr := json.Marshal(details)
@@ -84,7 +66,6 @@ func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) 
 		"config_max_idle_conns":             dsInfo.JsonData.MaxIdleConns,
 		"config_conn_max_life_time":         dsInfo.JsonData.ConnMaxLifetime,
 		"config_conn_timeout":               dsInfo.JsonData.ConnectionTimeout,
-		"config_timescaledb":                dsInfo.JsonData.Timescaledb,
 		"config_ssl_mode":                   dsInfo.JsonData.Mode,
 		"config_tls_configuration_method":   dsInfo.JsonData.ConfigurationMethod,
 		"config_tls_skip_verify":            dsInfo.JsonData.TlsSkipVerify,
