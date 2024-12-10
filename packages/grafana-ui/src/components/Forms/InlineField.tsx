@@ -98,6 +98,7 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
       position: 'relative',
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
       margin: `0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0`,
+      maxWidth: '100%',
     }),
     childContainer: css({
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
