@@ -152,7 +152,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'showInactiveAlerts',
       name: 'Show alerts with 0 instances',
       description:
-        'Include alert rules which have 0 (zero) instances. As these rules have no instances, they will remain hidden if an Alert instance label filter is configured.',
+        'Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.',
       defaultValue: false,
       category: ['Filter'],
     })
