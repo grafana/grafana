@@ -281,7 +281,7 @@ func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
-	if c.SignedInUser.IsEmailVerified() {
+	if c.SignedInUser.GetEmailVerified() {
 		// email is already verified so we don't need to trigger the flow.
 		return response.Respond(http.StatusNotModified, nil)
 	}

@@ -28,12 +28,13 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function setupDashboardScene(state: DashboardSceneState): DashboardScene {
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
 }
 
@@ -142,6 +143,15 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                 key: 'test-panel-uid',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [
+                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                      { title: 'Test Link 2', url: 'http://test2.com' },
+                    ],
+                    menu: new VizPanelLinksMenu({}),
+                  }),
+                ],
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,

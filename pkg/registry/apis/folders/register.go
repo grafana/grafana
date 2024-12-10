@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -145,10 +146,6 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
-}
-
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana folders"
@@ -245,6 +242,15 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	}
 
 	obj := a.GetObject()
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+
+	if f.Spec.Title == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
 
 	for i := 1; i <= folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)
