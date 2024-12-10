@@ -2327,10 +2327,10 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1726241874335",
+        "resourceVersion": "1733231733564",
         "creationTimestamp": "2024-05-03T15:02:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-13 15:37:54.335099 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-12-03 13:15:33.564083 +0000 UTC"
         }
       },
       "spec": {
@@ -2338,7 +2338,7 @@
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
