@@ -45,8 +45,10 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse, spanMap: Map<string,
   const nodesById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, new TreeNode(span.spanID)]));
   const spansById = spanMap ?? new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
+  console.log('root', root);
   trace.spans.forEach((span: TraceSpanData) => {
     const node = nodesById.get(span.spanID)!;
+    console.log('node', node);
     if (Array.isArray(span.references) && span.references.length) {
       const { refType, spanID: parentID } = span.references[0];
       if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {

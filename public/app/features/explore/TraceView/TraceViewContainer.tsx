@@ -28,7 +28,7 @@ export function TraceViewContainer(props: Props) {
   }
 
   return (
-    <PanelChrome padding="none" title="Trace">
+    <PanelChrome padding="none">
       <TraceView
         exploreId={exploreId}
         dataFrames={dataFrames}
