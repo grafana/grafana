@@ -62,6 +62,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.HomeDashboardID != 0 {
 			res.HomeDashboardID = p.HomeDashboardID
 		}
+
 		if p.JSONData != nil {
 			if p.JSONData.Language != "" {
 				res.JSONData.Language = p.JSONData.Language
@@ -77,6 +78,10 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 
 			if p.JSONData.CookiePreferences != nil {
 				res.JSONData.CookiePreferences = p.JSONData.CookiePreferences
+			}
+
+			if p.JSONData.CustomCommands != nil {
+				res.JSONData.CustomCommands = p.JSONData.CustomCommands
 			}
 		}
 	}
@@ -218,6 +223,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.Theme = *cmd.Theme
 	}
 
+	if cmd.CustomCommands != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.CustomCommands = cmd.CustomCommands
+	}
+
 	preference.Updated = time.Now()
 	preference.Version += 1
 
@@ -236,7 +248,8 @@ func (s *Service) GetDefaults() *pref.Preference {
 		WeekStart:       s.defaults.WeekStart,
 		HomeDashboardID: 0,
 		JSONData: &pref.PreferenceJSONData{
-			Language: s.defaults.JSONData.Language,
+			Language:       s.defaults.JSONData.Language,
+			CustomCommands: s.defaults.JSONData.CustomCommands,
 		},
 	}
 }
@@ -280,6 +293,9 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 			return nil, err
 		}
 		jsonData.CookiePreferences = cookies
+	}
+	if cmd.CustomCommands != nil {
+		jsonData.CustomCommands = cmd.CustomCommands
 	}
 
 	return jsonData, nil
