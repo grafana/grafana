@@ -1,16 +1,15 @@
 import { ChangeEvent } from 'react';
 
+import { AzureCredentials, AzureAuthType } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, Select, Input } from '@grafana/ui/src/components';
-
-import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export interface Props {
   managedIdentityEnabled: boolean;
   azureEntraPasswordCredentialsEnabled: boolean;
-  credentials: AzureCredentialsType;
+  credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
-  onCredentialsChange: (updatedCredentials: AzureCredentialsType) => void;
+  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
 }
 
@@ -26,9 +25,89 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
-      const updated: AzureCredentialsType = {
+      const updated: AzureCredentials = {
         ...credentials,
-        authType: selected.value || AzureAuthType.MSI,
+        authType: selected.value || 'msi',
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onAzureCloudChange = (selected: SelectableValue<string>) => {
+    if (credentials.authType === 'clientsecret') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        azureCloud: selected.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (credentials.authType === 'clientsecret') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        tenantId: event.target.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (credentials.authType === 'clientsecret' || credentials.authType === 'ad-password') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        clientId: event.target.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (credentials.authType === 'clientsecret') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        clientSecret: event.target.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onClientSecretReset = () => {
+    if (credentials.authType === 'clientsecret') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        clientSecret: '',
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onUserIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (credentials.authType === 'ad-password') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        userId: event.target.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (credentials.authType === 'ad-password') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        password: event.target.value,
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onPasswordReset = () => {
+    if (credentials.authType === 'ad-password') {
+      const updated: AzureCredentials = {
+        ...credentials,
+        password: '',
       };
       onCredentialsChange(updated);
     }
@@ -36,32 +115,22 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
     {
-      value: AzureAuthType.CLIENT_SECRET,
+      value: 'clientsecret',
       label: 'App Registration',
     },
   ];
   if (managedIdentityEnabled) {
     authTypeOptions.push({
-      value: AzureAuthType.MSI,
+      value: 'msi',
       label: 'Managed Identity',
     });
   }
   if (azureEntraPasswordCredentialsEnabled) {
     authTypeOptions.push({
-      value: AzureAuthType.AD_PASSWORD,
+      value: 'ad-password',
       label: 'Azure Entra Password',
     });
   }
-
-  const onInputChange = ({ property, value }: { property: keyof AzureCredentialsType; value: string }) => {
-    if (onCredentialsChange) {
-      const updated: AzureCredentialsType = {
-        ...credentials,
-        [property]: value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
 
   return (
     <div>
@@ -78,17 +147,14 @@ export const AzureCredentialsForm = (props: Props) => {
           disabled={disabled}
         />
       </Field>
-      {credentials.authType === AzureAuthType.CLIENT_SECRET && (
+      {credentials.authType === 'clientsecret' && (
         <>
           {azureCloudOptions && (
             <Field label="Azure Cloud" htmlFor="azure-cloud-type" disabled={disabled}>
               <Select
                 value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                 options={azureCloudOptions}
-                onChange={(selected: SelectableValue<AzureAuthType>) => {
-                  const value = selected.value || '';
-                  onInputChange({ property: 'azureCloud', value });
-                }}
+                onChange={onAzureCloudChange}
                 isDisabled={disabled}
                 inputId="azure-cloud-type"
                 aria-label="Azure Cloud"
@@ -107,10 +173,7 @@ export const AzureCredentialsForm = (props: Props) => {
               width={45}
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.tenantId || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const value = event.target.value;
-                onInputChange({ property: 'tenantId', value });
-              }}
+              onChange={onTenantIdChange}
               disabled={disabled}
               aria-label="Tenant ID"
             />
@@ -126,10 +189,7 @@ export const AzureCredentialsForm = (props: Props) => {
               width={45}
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientId || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const value = event.target.value;
-                onInputChange({ property: 'clientId', value });
-              }}
+              onChange={onClientIdChange}
               disabled={disabled}
               aria-label="Client ID"
             />
@@ -145,14 +205,7 @@ export const AzureCredentialsForm = (props: Props) => {
                     data-testid={'client-secret'}
                     width={45}
                   />
-                  <Button
-                    variant="secondary"
-                    type="button"
-                    onClick={() => {
-                      onInputChange({ property: 'clientSecret', value: '' });
-                    }}
-                    disabled={disabled}
-                  >
+                  <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
                     Reset
                   </Button>
                 </div>
@@ -170,10 +223,7 @@ export const AzureCredentialsForm = (props: Props) => {
                   aria-label="Client Secret"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const value = event.target.value;
-                    onInputChange({ property: 'clientSecret', value });
-                  }}
+                  onChange={onClientSecretChange}
                   id="client-secret"
                   disabled={disabled}
                 />
@@ -181,16 +231,13 @@ export const AzureCredentialsForm = (props: Props) => {
             ))}
         </>
       )}
-      {credentials.authType === AzureAuthType.AD_PASSWORD && azureEntraPasswordCredentialsEnabled && (
+      {credentials.authType === 'ad-password' && azureEntraPasswordCredentialsEnabled && (
         <>
           <Field label="User Id" required htmlFor="user-id" invalid={!credentials.userId} error={'User ID is required'}>
             <Input
               width={45}
               value={credentials.userId || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const value = event.target.value;
-                onInputChange({ property: 'userId', value });
-              }}
+              onChange={onUserIdChange}
               disabled={disabled}
               aria-label="User ID"
             />
@@ -205,10 +252,7 @@ export const AzureCredentialsForm = (props: Props) => {
             <Input
               width={45}
               value={credentials.clientId || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const value = event.target.value;
-                onInputChange({ property: 'clientId', value });
-              }}
+              onChange={onClientIdChange}
               disabled={disabled}
               aria-label="Application Client ID"
             />
@@ -224,14 +268,7 @@ export const AzureCredentialsForm = (props: Props) => {
                     data-testid={'password'}
                     width={45}
                   />
-                  <Button
-                    variant="secondary"
-                    type="button"
-                    onClick={() => {
-                      onInputChange({ property: 'password', value: '' });
-                    }}
-                    disabled={disabled}
-                  >
+                  <Button variant="secondary" type="button" onClick={onPasswordReset} disabled={disabled}>
                     Reset
                   </Button>
                 </div>
@@ -248,10 +285,7 @@ export const AzureCredentialsForm = (props: Props) => {
                   width={45}
                   aria-label="Password"
                   value={credentials.password || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const value = event.target.value;
-                    onInputChange({ property: 'password', value });
-                  }}
+                  onChange={onPasswordChange}
                   id="password"
                   disabled={disabled}
                 />
