@@ -45,25 +45,25 @@ func (s *jobStore) Register(worker Worker) {
 }
 
 // Add implements JobQueue.
-func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error) {
+func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	if job.Namespace == "" {
-		return "", fmt.Errorf("expecting namespace")
+		return nil, fmt.Errorf("expecting namespace")
 	}
 	_, ok := job.Labels["repository"]
 	if !ok {
-		return "", fmt.Errorf("expecting repository name label")
+		return nil, fmt.Errorf("expecting repository name label")
 	}
 	_, ok = job.Labels["repository.type"] // TODO: ideally just based on the action type
 	if !ok {
-		return "", fmt.Errorf("expecting repository name label")
+		return nil, fmt.Errorf("expecting repository name label")
 	}
 	if job.Spec.Action == "" {
-		return "", fmt.Errorf("missing spec.action")
+		return nil, fmt.Errorf("missing spec.action")
 	}
 
 	// Only for add
 	if job.Status.State != "" {
-		return "", fmt.Errorf("must add jobs with empty state")
+		return nil, fmt.Errorf("must add jobs with empty state")
 	}
 
 	s.mutex.Lock()
@@ -78,7 +78,7 @@ func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error
 	job.CreationTimestamp = metav1.NewTime(time.Now())
 
 	jobs := make([]provisioning.Job, 0, len(s.jobs)+2)
-	jobs = append(jobs, job)
+	jobs = append(jobs, *job)
 	for i, j := range s.jobs {
 		if i >= s.capacity {
 			break
@@ -93,7 +93,7 @@ func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error
 	}()
 
 	s.jobs = jobs // replace existing list
-	return job.Name, nil
+	return job, nil
 }
 
 // Reads the queue until no jobs remain
@@ -154,7 +154,7 @@ func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisi
 			s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
 			s.jobs[i].Status.State = provisioning.JobStateWorking
 			s.jobs[i].Labels["state"] = string(provisioning.JobStateWorking)
-			s.jobs[i].Status.Updated = metav1.NewTime(time.Now())
+			s.jobs[i].Status.Started = time.Now().UnixMilli()
 			job := s.jobs[i]
 			return &job
 		}
@@ -171,7 +171,7 @@ func (s *jobStore) Complete(ctx context.Context, namespace string, name string, 
 
 	for idx, job := range s.jobs {
 		if job.Name == name && job.Namespace == namespace {
-			status.Updated = metav1.NewTime(time.Now())
+			status.Finished = time.Now().UnixMilli()
 			job.ResourceVersion = strconv.FormatInt(s.rv, 10)
 			job.Status = status
 			job.Labels["state"] = string(status.State)
