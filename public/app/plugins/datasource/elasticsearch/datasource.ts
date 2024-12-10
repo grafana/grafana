@@ -805,16 +805,36 @@ export class ElasticDatasource
           fieldNameParts.pop();
         }
 
+        // Process runtime fields
+        function getRuntimeFields(mapping: { runtime: Record<string, { type: string }> }) {
+          if (!mapping.runtime) {
+            return;
+          }
+
+          for (const key in mapping.runtime) {
+            const runtimeField = mapping.runtime[key];
+            if (shouldAddField(runtimeField, key)) {
+              fields[key] = {
+                text: key,
+                type: runtimeField.type,
+              };
+            }
+          }
+        }
+
         for (const indexName in result) {
           const index = result[indexName];
           if (index && index.mappings) {
             const mappings = index.mappings;
 
+            // Process regular fields
             const properties = mappings.properties;
             getFieldsRecursively(properties);
+
+            // Process runtime fields
+            getRuntimeFields(mappings);
           }
         }
-
         // transform to array
         return _map(fields, (value) => {
           return value;
