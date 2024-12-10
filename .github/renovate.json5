@@ -67,6 +67,11 @@
       reviewers: ["team:grafana/plugins-platform-frontend"],
       matchPackageNames: ["@locker/{/,}**"],
     },
+    {
+      groupName: "augurs",
+      matchPackageNames: ["@bsull/augurs"],
+      reviewers: ["sd2k"],
+    },
   ],
   pin: {
     enabled: false,
