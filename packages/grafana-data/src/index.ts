@@ -762,6 +762,7 @@ export {
   type ToggleFilterAction,
   type DataSourceWithToggleableQueryFiltersSupport,
   type DataSourceWithQueryModificationSupport,
+  type DataSourceWithLabelTypeSupport,
   hasToggleableQueryFiltersSupport,
   hasQueryModificationSupport,
 } from './types/logs';
