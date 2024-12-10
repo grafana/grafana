@@ -7,6 +7,7 @@ load(
 )
 load(
     "scripts/drone/steps/lib.star",
+    "bench_frontend_tests_step",
     "build_frontend_package_step",
     "build_storybook_step",
     "build_test_plugins_step",
@@ -138,6 +139,7 @@ def build_e2e(trigger, ver_mode):
             playwright_e2e_tests_step(),
             playwright_e2e_report_upload(),
             playwright_e2e_report_post_link(),
+            bench_frontend_tests_step(),
             e2e_tests_artifacts(),
             build_storybook_step(ver_mode = ver_mode),
             test_a11y_frontend_step(ver_mode = ver_mode),
