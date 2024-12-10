@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, waitFor, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
