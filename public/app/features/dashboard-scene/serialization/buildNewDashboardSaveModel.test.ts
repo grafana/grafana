@@ -45,6 +45,7 @@ jest.mock('@grafana/runtime', () => ({
       newDashboardWithFiltersAndGroupBy: false,
     },
     bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
       user: {
         timezone: 'Africa/Abidjan',
       },

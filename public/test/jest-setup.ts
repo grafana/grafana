@@ -78,7 +78,6 @@ jest.mock('../app/core/core', () => ({
   appEvents: testAppEvents,
 }));
 jest.mock('../app/angular/partials', () => ({}));
-jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {

@@ -30,7 +30,6 @@ jest.mock('@grafana/runtime', () => ({
       licenseUrl: '',
     },
     featureToggles: { accesscontrol: true },
-    bootData: { navTree: [], user: {} },
     buildInfo: {
       edition: 'Open Source',
       version: '7.5.0',
