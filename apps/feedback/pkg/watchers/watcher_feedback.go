@@ -78,10 +78,7 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("upload_to_github").MustBool(false) {
 
-		screenshot, err := object.Spec.Screenshot.Bytes()
-		if err != nil {
-			return fmt.Errorf("error reading screenshot data: %s", err)
-		}
+		screenshot := object.Spec.Screenshot
 
 		// Update the screenshot part if it is present.
 		if object.Spec.ScreenshotUrl == nil && len(screenshot) > 0 {

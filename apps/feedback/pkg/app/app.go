@@ -90,18 +90,15 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("message cannot be empty")
 						}
 
-						screenshot, err := feedback.Spec.Screenshot.Bytes()
-						if err != nil {
-							return fmt.Errorf("error reading screenshot data: %s", err)
-						}
+						hasScreenshot := len(feedback.Spec.Screenshot) > 0
 
-						if feedback.Spec.ScreenshotUrl != nil && *feedback.Spec.ScreenshotUrl != "" && len(screenshot) > 0 {
+						if feedback.Spec.ScreenshotUrl != nil && *feedback.Spec.ScreenshotUrl != "" && hasScreenshot {
 							return fmt.Errorf("screenshot and screenshot url cannot be both filled in at the same time")
 						}
 
 						metrics.GetMetrics().FeedbackCollected.With(prometheus.Labels{
 							"slug":           feedbackCfg.GrafanaCfg.Slug,
-							"has_screenshot": strconv.FormatBool(len(screenshot) > 0),
+							"has_screenshot": strconv.FormatBool(hasScreenshot),
 						}).Inc()
 						return nil
 					},
