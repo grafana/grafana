@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -644,6 +645,7 @@ type folderK8sHandler struct {
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
 	userService          user.Service
+	ngAlertSvc           ngstore.DBstore
 }
 
 //-----------------------------------------------------------------------------------------
@@ -651,12 +653,14 @@ type folderK8sHandler struct {
 //-----------------------------------------------------------------------------------------
 
 func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
+
 	return &folderK8sHandler{
 		gvr:                  folderalpha1.FolderResourceInfo.GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
 		userService:          hs.userService,
+		ngAlertSvc:           hs.ngAlertSvc,
 	}
 }
 
@@ -774,8 +778,15 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+
+	ctx := c.Req.Context()
+
+	err := fk8s.checkForAlertRules()
 	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	if err := client.Delete(ctx, uid, v1.DeleteOptions{}); err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
@@ -988,7 +999,7 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	folderIDs, err := fk8s.getParents(f)
+	folderIDs, err := getParents(f)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,7 +1015,11 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 	return metadata, nil
 }
 
-func (fk8s *folderK8sHandler) getParents(f *folder.Folder) (map[string]bool, error) {
+func (fk8s *folderK8sHandler) checkForAlertRules() error {
+	return folder.ErrFolderNotEmpty.Errorf("folder contains alert rules, please delete them first.")
+}
+
+func getParents(f *folder.Folder) (map[string]bool, error) {
 	folderIDs := map[string]bool{f.UID: true}
 	if (f.UID == accesscontrol.GeneralFolderUID) || (f.UID == folder.SharedWithMeFolderUID) {
 		return folderIDs, nil
