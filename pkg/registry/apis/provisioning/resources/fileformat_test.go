@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -77,7 +78,8 @@ spec:
 			"schemaVersion": 7,
 			"panels": [],
 			"tags": []
-		}`)})
+		}`),
+		})
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, classic)
@@ -97,14 +99,15 @@ spec:
 		info.Data, err = os.ReadFile(filepath.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := NewParser(repository.NewUnknown(&provisioning.Repository{
+		parser := NewParser(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test",
 			},
-		}), &DynamicClient{}, &StaticKindsLookup{})
+		}, &DynamicClient{}, &StaticKindsLookup{})
 
 		// try to validate (and lint)
 		validate := true
+		parser.SetLinter(lint.NewDashboardLinter())
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)
@@ -119,7 +122,7 @@ spec:
 
 		jj, err := json.MarshalIndent(parsed.Lint, "", "  ")
 		require.NoError(t, err)
-		//fmt.Printf("%s\n", string(jj))
+		// fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
 				"severity": "error",
