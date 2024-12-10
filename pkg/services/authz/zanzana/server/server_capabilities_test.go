@@ -29,7 +29,7 @@ func testCapabilities(t *testing.T, server *Server) {
 		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate}, res.GetCapabilities())
 	})
 
-	t.Run("user:2 should be able to read and write resource:dashboards.grafana.app/dashboards/1 through namespace", func(t *testing.T) {
+	t.Run("user:2 should be able to read and write resource:dashboards.grafana.app/dashboards/1 through group_resource", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:2", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
 		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate}, res.GetCapabilities())
@@ -59,7 +59,7 @@ func testCapabilities(t *testing.T, server *Server) {
 		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
 	})
 
-	t.Run("user:7 should be able to read folder one through namespace access", func(t *testing.T) {
+	t.Run("user:7 should be able to read folder one through group_resource access", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:7", folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
 		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())

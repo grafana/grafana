@@ -44,7 +44,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.False(t, res.Groups[groupResource].Items["2"])
 	})
 
-	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/{1,2} through namespace", func(t *testing.T) {
+	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/{1,2} through group_resource", func(t *testing.T) {
 		groupResource := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newReq("user:2", utils.VerbGet, dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},
@@ -108,7 +108,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.False(t, res.Groups[groupResource].Items["2"])
 	})
 
-	t.Run("user:7 should be able to read folder {1,2} through namespace access", func(t *testing.T) {
+	t.Run("user:7 should be able to read folder {1,2} through group_resource access", func(t *testing.T) {
 		groupResource := zanzana.FormatGroupResource(folderGroup, folderResource)
 		res, err := server.BatchCheck(context.Background(), newReq("user:7", utils.VerbGet, folderGroup, folderResource, []*authzextv1.BatchCheckItem{
 			{Name: "1"},

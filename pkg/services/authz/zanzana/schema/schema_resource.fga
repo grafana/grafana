@@ -11,6 +11,17 @@ extend type folder
     define resource_update: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_update from parent
     define resource_delete: [user with folder_group_filter, service-account with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_delete from parent
 
+type group_resource
+  relations
+    define view: [user, service-account, render, team#member, role#assignee] or edit
+    define edit: [user, service-account, team#member, role#assignee] or admin
+    define admin: [user, service-account, team#member, role#assignee]
+
+    define get: [user, service-account, render, team#member, role#assignee] or view
+    define create: [user, service-account, team#member, role#assignee] or edit
+    define update: [user, service-account, team#member, role#assignee] or edit
+    define delete: [user, service-account, team#member, role#assignee] or edit
+
 type resource
   relations
     define view: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
