@@ -2,11 +2,11 @@ package dualwrite
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -199,7 +199,7 @@ func getOrgByName(ctx context.Context, store db.DB, name string) (*org.Org, erro
 			return err
 		}
 		if !exists {
-			return errors.Errorf("org does not exist: %s", name)
+			return fmt.Errorf("org does not exist: %s", name)
 		}
 		return nil
 	})
