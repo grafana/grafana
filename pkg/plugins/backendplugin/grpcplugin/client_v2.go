@@ -348,8 +348,9 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 	return backend.FromProto().ConversionResponse(protoResp), nil
 }
 
-// handleGrpcStatusError handles gRPC status errors and sets the error source via context based on the error metadata.
-// Regardless of the error source, a plugin downstream error is returned.
+// handleGrpcStatusError handles gRPC status errors and sets the error source via context based on the error metadata
+// returned from the plugin. Regardless of the error source, a plugin downstream error is returned as both plugin and
+// downstream errors are treated the same in Grafana.
 func handleGrpcStatusError(ctx context.Context, err error) error {
 	st := status.Convert(err)
 	if st == nil {
