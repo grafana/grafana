@@ -322,8 +322,8 @@ export function TableNG(props: TableNGProps) {
 
   // Sort rows
   const sortedRows = useMemo(() => {
-    const comparators = sortColumns.map((sort) => getComparator(columnTypes[sort.columnKey]));
-    const sortDirs = sortColumns.map((sort) => (sort.direction === 'ASC' ? 1 : -1));
+    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
+    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
 
     if (sortColumns.length === 0) {
       return rows;
