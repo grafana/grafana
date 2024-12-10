@@ -26,42 +26,42 @@ func testCapabilities(t *testing.T, server *Server) {
 	t.Run("user:1 should only be able to read and write resource:dashboards.grafana.app/dashboards/1", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:1", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead, common.RelationWrite}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate}, res.GetCapabilities())
 	})
 
 	t.Run("user:2 should be able to read and write resource:dashboards.grafana.app/dashboards/1 through namespace", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:2", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead, common.RelationWrite}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate}, res.GetCapabilities())
 	})
 
 	t.Run("user:3 should be able to read resource:dashboards.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:3", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
 	})
 
 	t.Run("user:4 should be able to read dashboards.grafana.app/dashboards in folder 1", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:4", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
 	})
 
 	t.Run("user:5 should be able to read, write, create and delete resource:dashboards.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:5", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead, common.RelationWrite, common.RelationDelete}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet, common.RelationUpdate, common.RelationDelete}, res.GetCapabilities())
 	})
 
-	t.Run("user:6 should be able to read folder 1 ", func(t *testing.T) {
+	t.Run("user:6 should be able to read folder 1", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:6", folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
 	})
 
 	t.Run("user:7 should be able to read folder one through namespace access", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:7", folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationGet}, res.GetCapabilities())
 	})
 }
