@@ -115,13 +115,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
-    if (this.popoverMenuSupported() === false) {
-      return false;
-    }
     const selection = document.getSelection()?.toString();
     if (!selection) {
       return false;
     }
+    if (this.popoverMenuSupported() === false) {
+      // This signals onRowClick inside LogRow to skip the event because the user is selecting text
+      return selection ? true : false;
+    }
+
     if (!this.logRowsRef.current) {
       return false;
     }
@@ -247,7 +249,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+                  handleTextSelection={this.handleSelection}
                   {...rest}
                 />
               ))}
@@ -270,7 +272,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+                  handleTextSelection={this.handleSelection}
                   {...rest}
                 />
               ))}
