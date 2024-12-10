@@ -1,4 +1,4 @@
-import { ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
+import { ActionModel, Field, InterpolateFunction, LinkModel, OneClickMode } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
 import { config } from '@grafana/runtime';
 import { getActions } from 'app/features/actions/utils';
@@ -22,6 +22,16 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   }
 
   return links;
+};
+
+export const getOneClickLinks = (field: Field, dataIdx: number) => {
+  if (field.config.oneClickMode === OneClickMode.Off || !config.featureToggles.vizActions) {
+    return undefined;
+  }
+
+  const links = getDataLinks(field, dataIdx);
+
+  return links[0] ?? undefined;
 };
 
 export const getFieldActions = (
