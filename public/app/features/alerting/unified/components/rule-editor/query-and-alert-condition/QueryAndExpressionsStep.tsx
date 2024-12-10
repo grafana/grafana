@@ -159,7 +159,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     if (!editingExistingRule && isOptimizeReducerEnabled) {
       dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
     }
-  }, [dataQueries, expressionQueries, editingExistingRule, isOptimizeReducerEnabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [type, condition, dataSourceName, editorSettings] = watch([
     'type',
@@ -289,6 +290,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -298,7 +305,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
