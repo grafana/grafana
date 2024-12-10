@@ -239,6 +239,7 @@ guaranteed because plugin developers can override this functionality. The follow
 ### Unsupported
 
 - Graphite
+- Dynatrace
 
 ### Unconfirmed
 
@@ -258,7 +259,6 @@ guaranteed because plugin developers can override this functionality. The follow
 - Datadog
 - Dataset
 - Druid
-- Dynatrace
 - GitHub
 - Google BigQuery
 - Grafana for YNAB
