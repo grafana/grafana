@@ -1252,5 +1252,157 @@ describe('ElasticDatasource', () => {
         expect(fields).toEqual(['@timestamp_millis']);
       });
     });
+
+    describe('runtime fields', () => {
+      const mockDataWithRuntimeFields = {
+        '[test-]YYYY.MM.DD': {
+          mappings: {
+            runtime: {
+              day_of_week: {
+                type: 'keyword',
+              },
+              hour_of_day: {
+                type: 'long',
+              },
+              timestamp_millis: {
+                type: 'date',
+              },
+            },
+            properties: {
+              '@timestamp_millis': {
+                type: 'date',
+                format: 'epoch_millis',
+              },
+              regular_field: {
+                type: 'keyword',
+              },
+            },
+          },
+        },
+      };
+
+      it('should return runtime fields along with regular fields', async () => {
+        const ds = createElasticDatasource({
+          jsonData: { interval: 'Daily' },
+        });
+
+        ds.getResource = jest.fn().mockResolvedValue(mockDataWithRuntimeFields);
+
+        await expect(ds.getFields()).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+
+          const fieldObjects = received[0];
+          const fields = map(fieldObjects, 'text');
+
+          // Should include both runtime and regular fields
+          expect(fields).toEqual([
+            '@timestamp_millis',
+            'regular_field',
+            'day_of_week',
+            'hour_of_day',
+            'timestamp_millis',
+          ]);
+        });
+      });
+
+      it('should filter runtime fields by type', async () => {
+        const ds = createElasticDatasource({
+          jsonData: { interval: 'Daily' },
+        });
+
+        ds.getResource = jest.fn().mockResolvedValue(mockDataWithRuntimeFields);
+
+        // Test filtering for number fields
+        await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+
+          const fieldObjects = received[0];
+          const fields = map(fieldObjects, 'text');
+
+          // Should only include number (long) runtime fields
+          expect(fields).toEqual(['hour_of_day']);
+        });
+
+        // Test filtering for date fields
+        await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+
+          const fieldObjects = received[0];
+          const fields = map(fieldObjects, 'text');
+
+          // Should include both regular and runtime date fields
+          expect(fields).toEqual(['@timestamp_millis', 'timestamp_millis']);
+        });
+      });
+
+      it('should handle missing runtime fields section', async () => {
+        const ds = createElasticDatasource({
+          jsonData: { interval: 'Daily' },
+        });
+
+        const mockDataWithoutRuntime = {
+          '[test-]YYYY.MM.DD': {
+            mappings: {
+              properties: {
+                '@timestamp_millis': {
+                  type: 'date',
+                  format: 'epoch_millis',
+                },
+                regular_field: {
+                  type: 'keyword',
+                },
+              },
+            },
+          },
+        };
+
+        ds.getResource = jest.fn().mockResolvedValue(mockDataWithoutRuntime);
+
+        await expect(ds.getFields()).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+
+          const fieldObjects = received[0];
+          const fields = map(fieldObjects, 'text');
+
+          // Should only include regular fields
+          expect(fields).toEqual(['@timestamp_millis', 'regular_field']);
+        });
+      });
+
+      it('should handle empty runtime fields section', async () => {
+        const ds = createElasticDatasource({
+          jsonData: { interval: 'Daily' },
+        });
+
+        const mockDataWithEmptyRuntime = {
+          '[test-]YYYY.MM.DD': {
+            mappings: {
+              runtime: {},
+              properties: {
+                '@timestamp_millis': {
+                  type: 'date',
+                  format: 'epoch_millis',
+                },
+                regular_field: {
+                  type: 'keyword',
+                },
+              },
+            },
+          },
+        };
+
+        ds.getResource = jest.fn().mockResolvedValue(mockDataWithEmptyRuntime);
+
+        await expect(ds.getFields()).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+
+          const fieldObjects = received[0];
+          const fields = map(fieldObjects, 'text');
+
+          // Should only include regular fields
+          expect(fields).toEqual(['@timestamp_millis', 'regular_field']);
+        });
+      });
+    });
   });
 });
