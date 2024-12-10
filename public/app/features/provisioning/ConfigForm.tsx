@@ -35,6 +35,8 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       token: '',
       owner: '',
       repository: '',
+      branch: '',
+      linting: false,
       branchWorkflow: false,
       editing: {
         create: false,
@@ -166,11 +168,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Repository name'} error={errors?.repository?.message} invalid={!!errors?.repository}>
             <Input {...register('repository', { required: 'This field is required.' })} placeholder={'example'} />
           </Field>
-          <Field label={'Commit directly to main'}>
+          <Field label={'Branch'} error={errors?.branch?.message} invalid={!!errors?.branch}>
+            <Input {...register('branch')} placeholder={'main'} />
+          </Field>
+          <Field label={'Enable branch workflow'}>
             <Switch {...register('branchWorkflow')} id={'branchWorkflow'} />
           </Field>
           <Field label={'Show dashboard previews'}>
             <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
+          </Field>
+          <Field label={'Lint pull requests'}>
+            <Switch {...register('pullRequestLinter')} id={'pullRequestLinter'} />
           </Field>
         </>
       )}
@@ -197,6 +205,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
           name={'folder'}
           render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
         />
+      </Field>
+      <Field label={'Linting'}>
+        <Switch {...register('linting')} id={'linting'} />
+      </Field>
+      <Field label={'Prefer YAML'}>
+        <Switch {...register('preferYaml')} id={'preferYaml'} />
       </Field>
       <FieldSet label={'Editing options'}>
         <Field label={'Create'} description={'Enable creating files on repository'}>

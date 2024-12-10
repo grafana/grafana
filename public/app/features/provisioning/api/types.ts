@@ -5,6 +5,7 @@ import { Resource, ResourceForCreate, ResourceList } from '../../apiserver/types
 export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
+  pullRequestLinter?: boolean;
   owner: string;
   repository: string;
   token?: string;
@@ -30,6 +31,7 @@ export type RepositorySpec = {
   type: 'github' | 'local' | 's3';
   editing: EditingOptions;
   preferYaml?: boolean;
+  linting?: boolean;
 };
 
 export type RepositoryStatus = {
