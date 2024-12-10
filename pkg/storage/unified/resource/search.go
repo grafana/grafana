@@ -252,7 +252,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 
 // init is called during startup.  any failure will block startup and continued execution
 func (s *searchSupport) init(ctx context.Context) error {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
 	defer span.End()
 	start := time.Now().Unix()
 
@@ -295,6 +295,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}()
 
 	end := time.Now().Unix()
+	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	if IndexMetrics != nil {
 		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
@@ -388,7 +389,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
 	builder, err := s.builders.get(ctx, nsr)
