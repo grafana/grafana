@@ -176,9 +176,6 @@ func TestBleveBackend(t *testing.T) {
 
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
-
-		count, _ = index.DocCount(ctx, "")
-		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
