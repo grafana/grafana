@@ -28,6 +28,7 @@ func Join(prefix string, elem ...string) (string, error) {
 	}
 
 	for i, e := range elem {
+		// We don't use Clean here because the output of path.Join will clean for us.
 		elem[i] = replaceOSSeparators(e)
 	}
 	subPath := path.Join(elem...) // performs a Clean after joining
@@ -39,6 +40,7 @@ func Join(prefix string, elem ...string) (string, error) {
 }
 
 // Performs a [path.Clean] on the path, as well as replacing its OS separators.
+// Note that this does no effort to ensure the paths are safe to use. It only cleans them.
 func Clean(p string) string {
 	return path.Clean(replaceOSSeparators(p))
 }
