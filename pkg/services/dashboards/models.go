@@ -260,6 +260,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+
+	IncludeDeleted bool // only supported when using unified storage
 }
 
 type DashboardTagCloudItem struct {
