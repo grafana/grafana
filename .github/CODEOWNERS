@@ -231,7 +231,7 @@
 /devenv/dev-dashboards/panel-dashlist @grafana/dashboards-squad
 /devenv/dev-dashboards/live @grafana/dashboards-squad
 
-/devenv/dev-dashboards/panel-framegraph/ @grafana/observability-traces-and-profiling
+/devenv/dev-dashboards/panel-flamegraph/ @grafana/observability-traces-and-profiling
 /devenv/dev-dashboards/panel-polystat @grafana/plugins-platform-frontend
 /devenv/dev-dashboards/extensions/ @grafana/plugins-platform-frontend
 
