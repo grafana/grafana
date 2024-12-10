@@ -119,10 +119,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 	t.Run("with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPI,
-				featuremgmt.FlagKubernetesDashboards,
-			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: 0,
@@ -135,10 +131,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 	t.Run("with dual writer mode 1", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPI,
-				featuremgmt.FlagKubernetesDashboards,
-			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: 1,
@@ -151,10 +143,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 	t.Run("with dual writer mode 2", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPI,
-				featuremgmt.FlagKubernetesDashboards,
-			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: 2,
@@ -167,10 +155,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 	t.Run("with dual writer mode 3", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPI,
-				featuremgmt.FlagKubernetesDashboards,
-			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: 3,
@@ -184,10 +168,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		t.Skip("skipping test because of authorizer issue")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPI,
-				featuremgmt.FlagKubernetesDashboards,
-			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: 4,
