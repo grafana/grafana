@@ -26,7 +26,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { DashboardEditPaneBehavior } from '../edit-pane/DashboardEditPaneBehavior';
+import { DashboardEditableElement } from '../edit-pane/DashboardEditableElement';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -223,7 +223,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new behaviors.SceneQueryController(),
     registerDashboardMacro,
     registerPanelInteractionsReporter,
-    new DashboardEditPaneBehavior({}),
+    new DashboardEditableElement({}),
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     preserveDashboardSceneStateInLocalStorage,
     addPanelsOnLoadBehavior,
@@ -239,7 +239,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   ];
 
   if (config.featureToggles.dashboardNewLayouts) {
-    behaviorList.push(new DashboardEditPaneBehavior({}));
+    behaviorList.push(new DashboardEditableElement({}));
   }
 
   const dashboardScene = new DashboardScene({

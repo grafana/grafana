@@ -12,10 +12,10 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectedObject?: SceneObjectRef<SceneObject>;
@@ -102,8 +102,9 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
+  const editableElement = useEditableElement(selectedObject?.resolve());
 
-  if (!selectedObject) {
+  if (!editableElement) {
     return null;
   }
 
@@ -122,27 +123,11 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     );
   }
 
-  const element = getEditableElementFor(selectedObject.resolve());
-
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={element} key={element.getTypeName()} />
+      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
     </div>
   );
-}
-
-function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
-  if (isEditableDashboardElement(obj)) {
-    return obj;
-  }
-
-  for (const behavior of obj.state.$behaviors ?? []) {
-    if (isEditableDashboardElement(behavior)) {
-      return behavior;
-    }
-  }
-
-  throw new Error("Can't find editable element for selected object");
 }
 
 function getStyles(theme: GrafanaTheme2) {

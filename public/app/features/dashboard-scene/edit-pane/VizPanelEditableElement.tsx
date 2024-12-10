@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { sceneGraph, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -14,21 +14,13 @@ import {
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
-export class VizPanelEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
+export class VizPanelEditableElement implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
 
-  private getPanel(): VizPanel {
-    const panel = this.parent;
-
-    if (!(panel instanceof VizPanel)) {
-      throw new Error('VizPanelEditPaneBehavior must have a VizPanel parent');
-    }
-
-    return panel;
-  }
+  public constructor(private panel: VizPanel) {}
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const panel = this.getPanel();
+    const panel = this.panel;
     const layoutElement = panel.parent!;
 
     const panelOptions = useMemo(() => {
@@ -108,8 +100,8 @@ export class VizPanelEditPaneBehavior extends SceneObjectBase implements Editabl
   }
 
   public onDelete = () => {
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this);
-    layout.removePanel(this.getPanel());
+    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
+    layout.removePanel(this.panel);
   };
 
   public renderActions(): React.ReactNode {
