@@ -1261,6 +1261,8 @@
       "title-with-name": "Table - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Add",
+      "add-to-queryless-extensions": "Go queryless",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
