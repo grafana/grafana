@@ -13,7 +13,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/web"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // POST /api/preferences/set-home-dash
@@ -39,8 +38,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		if query.UID == "" {
 			dashboardID = 0 // clear the value
 		} else {
-			ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
 				return response.Error(http.StatusNotFound, "Dashboard not found", err)
 			}
@@ -168,7 +166,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 }
 
 // swagger:route GET /org/preferences org_preferences getOrgPreferences
-// W
+//
 // Get Current Org Prefs.
 //
 // Responses:

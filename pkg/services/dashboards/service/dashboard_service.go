@@ -20,13 +20,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -76,10 +76,17 @@ type DashboardServiceImpl struct {
 	metrics              *dashboardsMetrics
 }
 
-type dashboardK8sHandler struct {
+// interface to allow for testing
+type dashboardK8sHandler interface {
+	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
+}
+
+var _ dashboardK8sHandler = (*dashk8sHandler)(nil)
+
+type dashk8sHandler struct {
 	namespacer         request.NamespaceMapper
 	gvr                schema.GroupVersionResource
-	restConfigProvider grafanaapiserver.RestConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
 }
 
 // This is the uber service that implements a three smaller services
@@ -90,13 +97,12 @@ func ProvideDashboardServiceImpl(
 	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
 	restConfigProvider apiserver.RestConfigProvider,
 ) (*DashboardServiceImpl, error) {
-
 	gvr := schema.GroupVersionResource{
 		Group:    v0alpha1.GROUP,
 		Version:  v0alpha1.VERSION,
 		Resource: v0alpha1.DashboardResourceInfo.GetName(),
 	}
-	k8sHandler := &dashboardK8sHandler{
+	k8sHandler := &dashk8sHandler{
 		gvr:                gvr,
 		namespacer:         request.GetNamespaceMapper(cfg),
 		restConfigProvider: restConfigProvider,
@@ -113,7 +119,7 @@ func ProvideDashboardServiceImpl(
 		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
-		k8sclient:            *k8sHandler,
+		k8sclient:            k8sHandler,
 		metrics:              newDashboardsMetrics(r),
 	}
 
@@ -262,7 +268,6 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
-		UID:       dash.UID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID, // nolint:staticcheck
@@ -621,7 +626,7 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 	}
 }
 
-func (dk8s *dashboardK8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+func (dk8s *dashk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
 	dyn, err := dynamic.NewForConfig(dk8s.restConfigProvider.GetRestConfig(ctx))
 	if err != nil {
 		return nil, false
@@ -685,7 +690,7 @@ func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboa
 			return nil, dashboards.ErrDashboardNotFound
 		}
 
-		return UnstructuredToLegacyDashboard(*out, query.OrgID)
+		return UnstructuredToLegacyDashboard(out, query.OrgID)
 	}
 
 	return dr.dashboardStore.GetDashboard(ctx, query)
@@ -696,7 +701,7 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 	return dr.dashboardStore.GetDashboardUIDByID(ctx, query)
 }
 
-// TODO: add support for unified storage
+// TODO: add support to get dashboards in unified storage.
 func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
@@ -793,6 +798,7 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 	return userDashboardUIDs, nil
 }
 
+// TODO: add support to find dashboards in unified storage too.
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
 	defer span.End()
@@ -814,7 +820,6 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 		}(time.Now())
 	}
-	// TODO: implement for unistore too
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
@@ -941,29 +946,61 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 	return deletedDashboardsCount, nil
 }
 
-// TODO: fully translate
-func UnstructuredToLegacyDashboard(item unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
+func UnstructuredToLegacyDashboard(item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
 	spec := item.Object["spec"].(map[string]any)
-
 	out := dashboards.Dashboard{
 		OrgID: orgID,
 		Data:  simplejson.NewFromAny(spec),
+	}
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+
+	out.UID = obj.GetName()
+	out.Slug = obj.GetSlug()
+	out.FolderUID = obj.GetFolder()
+
+	out.Created = obj.GetCreationTimestamp().Time
+	updated, err := obj.GetUpdatedTimestamp()
+	if err == nil && updated != nil {
+		out.Updated = *updated
+	}
+	deleted := obj.GetDeletionTimestamp()
+	if deleted != nil {
+		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
 	if id, ok := spec["id"].(int64); ok {
 		out.ID = id
 	}
 
-	if uid, ok := spec["uid"].(string); ok {
-		out.UID = uid
+	if gnetID, ok := spec["gnet_id"].(int64); ok {
+		out.GnetID = gnetID
 	}
 
 	if version, ok := spec["version"].(int64); ok {
 		out.Version = int(version)
 	}
 
+	if pluginID, ok := spec["plugin_id"].(string); ok {
+		out.PluginID = pluginID
+	}
+
+	if isFolder, ok := spec["is_folder"].(bool); ok {
+		out.IsFolder = isFolder
+	}
+
+	if hasACL, ok := spec["has_acl"].(bool); ok {
+		out.HasACL = hasACL
+	}
+
 	if title, ok := spec["title"].(string); ok {
 		out.Title = title
+		// if slug isn't in the metadata, add it via the title
+		if out.Slug == "" {
+			out.UpdateSlug()
+		}
 	}
 
 	return &out, nil

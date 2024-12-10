@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type ServiceImpl struct {
@@ -322,14 +321,12 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		return nil, err
 	}
 
-	ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-
 	if len(starredDashboardResult.UserStars) > 0 {
 		var uids []string
 		for uid := range starredDashboardResult.UserStars {
 			uids = append(uids, uid)
 		}
-		starredDashboards, err := s.dashboardService.GetDashboards(ctx, &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
 		if err != nil {
 			return nil, err
 		}

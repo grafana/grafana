@@ -78,7 +78,7 @@ func (l *latestREST) Connect(ctx context.Context, uid string, opts runtime.Objec
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		rsp, err := l.unified.Read(ctx, &resource.ReadRequest{
 			Key:             key,
-			ResourceVersion: 0, // 0 will return the latest version
+			ResourceVersion: 0, // 0 will return the latest version that was not a delete event
 			IncludeDeleted:  true,
 		})
 		if err != nil || rsp == nil || rsp.Error != nil {

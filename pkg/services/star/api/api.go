@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type API struct {
@@ -66,14 +65,14 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get user stars", err)
 	}
-	ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
+
 	uids := []string{}
 	if len(iuserstars.UserStars) > 0 {
 		var uids []string
 		for uid := range iuserstars.UserStars {
 			uids = append(uids, uid)
 		}
-		starredDashboards, err := api.dashboardService.GetDashboards(ctx, &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch dashboards", err)
 		}

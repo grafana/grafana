@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 const defaultAnnotationsLimit = 100
@@ -58,8 +57,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUID != "" {
 		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.SignedInUser.GetOrgID()}
-		ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-		dqResult, err := hs.DashboardService.GetDashboard(ctx, &dq)
+		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
 		} else {
@@ -84,8 +82,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 				item.DashboardUID = val
 			} else {
 				query := dashboards.GetDashboardQuery{ID: item.DashboardID, OrgID: c.SignedInUser.GetOrgID()}
-				ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-				queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+				queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && queryResult != nil {
 					item.DashboardUID = &queryResult.UID
 					dashboardCache[item.DashboardID] = &queryResult.UID
@@ -128,8 +125,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
 		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
-		ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
 		}
@@ -400,8 +396,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 
 	if cmd.DashboardUID != "" {
 		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
-		ctx := k8sRequest.WithUser(c.Req.Context(), c.SignedInUser)
-		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
 		}

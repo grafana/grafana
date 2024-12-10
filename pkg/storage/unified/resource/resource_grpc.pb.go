@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName    = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName  = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName  = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName  = "/resource.ResourceStore/Delete"
+	ResourceStore_Restore_FullMethodName = "/resource.ResourceStore/Restore"
+	ResourceStore_List_FullMethodName    = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName   = "/resource.ResourceStore/Watch"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -40,6 +41,7 @@ type ResourceStoreClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -98,6 +100,16 @@ func (c *resourceStoreClient) Delete(ctx context.Context, in *DeleteRequest, opt
 	return out, nil
 }
 
+func (c *resourceStoreClient) Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RestoreResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_Restore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *resourceStoreClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
@@ -140,6 +152,7 @@ type ResourceStoreServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Restore(context.Context, *RestoreRequest) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -168,6 +181,9 @@ func (UnimplementedResourceStoreServer) Update(context.Context, *UpdateRequest) 
 }
 func (UnimplementedResourceStoreServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedResourceStoreServer) Restore(context.Context, *RestoreRequest) (*RestoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restore not implemented")
 }
 func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
@@ -267,6 +283,24 @@ func _ResourceStore_Delete_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourceStore_Restore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).Restore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_Restore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).Restore(ctx, req.(*RestoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ResourceStore_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
@@ -318,6 +352,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _ResourceStore_Delete_Handler,
+		},
+		{
+			MethodName: "Restore",
+			Handler:    _ResourceStore_Restore_Handler,
 		},
 		{
 			MethodName: "List",
