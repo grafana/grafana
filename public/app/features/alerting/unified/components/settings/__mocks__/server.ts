@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { SetupServerApi } from 'msw/node';
 
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -10,7 +10,7 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { mockDataSource, MockDataSourceSrv } from '../../../mocks';
+import { MockDataSourceSrv, mockDataSource } from '../../../mocks';
 import * as config from '../../../utils/config';
 import { DataSourceType } from '../../../utils/datasource';
 
