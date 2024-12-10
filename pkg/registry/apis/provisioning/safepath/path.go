@@ -8,8 +8,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-// This error indicates that an input path had a path traversal which led to escaping the required prefix.
-// E.g. Join("/test", "..") would return this.
+// ErrUnsafePathTraversal indicates that an input path had a path traversal which led to escaping the required prefix.
+// E.g. Join("/test", "..") would return this, because it doesn't stay within the '/test' directory.
 var ErrUnsafePathTraversal = apierrors.NewBadRequest("the input path had an unacceptable path traversal")
 
 // Join joins any number of elements in a path under a common prefix path.
