@@ -1,4 +1,4 @@
-import { Observable, defer, finalize, map, of } from 'rxjs';
+import { Observable, debounceTime, defer, finalize, first, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -10,6 +10,7 @@ import {
   DataTopic,
   PanelData,
   DataFrame,
+  LoadingState,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -17,6 +18,8 @@ import {
   findVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
+
+import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { DashboardQuery } from './types';
 
@@ -35,10 +38,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
     let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
-
-    if (options.requestId.indexOf('mixed') > -1) {
-      throw new Error('Dashboard data source cannot be used with Mixed data source.');
-    }
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -88,6 +87,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             key: 'source-ds-provider',
           };
         }),
+        this.emitFirstLoadedDataIfMixedDS(options.requestId),
         finalize(() => cleanUp?.())
       );
     });
@@ -110,6 +110,19 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+  }
+
+  private emitFirstLoadedDataIfMixedDS(
+    requestId: string
+  ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
+    return (source: Observable<DataQueryResponse>) => {
+      return requestId.includes(MIXED_REQUEST_PREFIX)
+        ? source.pipe(
+            debounceTime(200),
+            first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
+          )
+        : source;
+    };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
