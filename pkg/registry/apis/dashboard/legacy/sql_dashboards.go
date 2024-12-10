@@ -14,7 +14,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"

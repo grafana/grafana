@@ -323,6 +323,38 @@ message WatchEvent {
   Resource previous = 4;
 }
 
+// Get statistics across multiple resources
+// For these queries, we do not need authorization to see the actual values
+message ResourceStatsRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+
+  // An optional list of group/resource identifiers
+  // when empty, we assume searching across everything
+  // NOTE, this query may need to federate across a few storage instances
+  repeated string kinds = 2;
+
+  // Limit the stats within a folder (not recursive!) 
+  string folder = 3;
+}
+
+message ResourceStatsResponse {
+  message Stats {
+    // Resource group
+    string group = 1;
+    // Resource name
+    string resource = 2;
+    // Number of items
+    int64 count = 3;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // All results exist within this key
+  repeated Stats stats = 2;
+}
+
 // Search within a single resource
 message ResourceSearchRequest {
   message Sort {
@@ -714,6 +746,9 @@ service ResourceStore {
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
   rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
+
+  // Get the resource stats
+  rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);

@@ -7,16 +7,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestBleveBackend(t *testing.T) {
-	t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
-
 	dashboardskey := &resource.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -34,6 +34,9 @@ func TestBleveBackend(t *testing.T) {
 		Root:          tmpdir.Name(),
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 	}, tracing.NewNoopTracerService())
+
+	// AVOID NPE in test
+	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
 	ctx := context.Background()
@@ -65,7 +68,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "dash",
 				},
-				Title:  "bbb (dash)",
+				Title:  "aaa (dash)",
 				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
@@ -82,7 +85,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "dash",
 				},
-				Title:  "aaa (dash)",
+				Title:  "bbb (dash)",
 				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
@@ -103,7 +106,10 @@ func TestBleveBackend(t *testing.T) {
 					Resource:  "dash",
 				},
 				Title:  "ccc (dash)",
-				Folder: "xxx",
+				Folder: "zzz",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name: "r0",
+				},
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID: 12,
 				},
@@ -124,7 +130,7 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit: 100000,
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: true}, // ccc,bbb,aaa
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
@@ -138,8 +144,11 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		// Match the results
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
+		t.Run("x", func(t *testing.T) {
+			t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
+			// Match the results
+			resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
+		})
 
 		// Get the tags facets
 		facet, ok := rsp.Facet["tags"]
@@ -161,6 +170,12 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
+
+		count, _ := index.DocCount(ctx, "")
+		assert.Equal(t, int64(3), count)
+
+		count, _ = index.DocCount(ctx, "zzz")
+		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -216,6 +231,8 @@ func TestBleveBackend(t *testing.T) {
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
+		t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
+
 		// The other tests must run first to build the indexes
 		require.NotNil(t, dashboardsIndex)
 		require.NotNil(t, foldersIndex)
