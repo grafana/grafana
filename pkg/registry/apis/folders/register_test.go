@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
