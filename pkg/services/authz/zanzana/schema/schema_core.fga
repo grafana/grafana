@@ -12,12 +12,10 @@ type namespace
     define edit: [user, service-account, team#member, role#assignee] or admin
     define admin: [user, service-account, team#member, role#assignee]
 
-    define read: [user, service-account, render, team#member, role#assignee] or view
+    define get: [user, service-account, render, team#member, role#assignee] or view
     define create: [user, service-account, team#member, role#assignee] or edit
-    define write: [user, service-account, team#member, role#assignee] or edit
+    define update: [user, service-account, team#member, role#assignee] or edit
     define delete: [user, service-account, team#member, role#assignee] or edit
-    define permissions_read: [user, service-account, team#member, role#assignee] or admin
-    define permissions_write: [user, service-account, team#member, role#assignee] or admin
 
 type role
   relations
@@ -29,8 +27,6 @@ type team
     define admin: [user, service-account]
     define member: [user, service-account] or admin
 
-    define read: [role#assignee] or member
-    define write: [role#assignee] or admin
+    define get: [role#assignee] or member
+    define update: [role#assignee] or admin
     define delete: [role#assignee] or admin
-    define permissions_read: [role#assignee] or admin
-    define permissions_write: [role#assignee] or admin
