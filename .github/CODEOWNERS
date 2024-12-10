@@ -212,7 +212,6 @@
 /devenv/dev-dashboards/all-panels.json @grafana/dataviz-squad
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
-/devenv/dev-dashboards/panel-flamegraph/panel_tests_flame_graph.json @grafana/dataviz-squad
 
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/aws-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
@@ -232,7 +231,7 @@
 /devenv/dev-dashboards/panel-dashlist @grafana/dashboards-squad
 /devenv/dev-dashboards/live @grafana/dashboards-squad
 
-/devenv/dev-dashboards/panel-framegraph @grafana/observability-traces-and-profiling
+/devenv/dev-dashboards/panel-framegraph/ @grafana/observability-traces-and-profiling
 /devenv/dev-dashboards/panel-polystat @grafana/plugins-platform-frontend
 /devenv/dev-dashboards/extensions/ @grafana/plugins-platform-frontend
 
