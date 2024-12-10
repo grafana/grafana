@@ -81,7 +81,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"kind": "Job",
 					"verbs": [
 						"get",
-						"list"
+						"list",
+						"watch"
 					]
 				},
 				{

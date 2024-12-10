@@ -37,7 +37,8 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 		return nil, fmt.Errorf("failed to get client for namespace %s: %w", f.namespace, err)
 	}
 
-	parser := NewParser(f.repo, dynamicClient, kinds)
+	// The replicator does not need a linter
+	parser := NewParser(f.repo.Config(), dynamicClient, kinds)
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Version:  "v0alpha1",
@@ -56,7 +57,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 type replicator struct {
 	logger     *slog.Logger
 	client     *DynamicClient
-	parser     *FileParser
+	parser     *Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
@@ -181,7 +182,7 @@ func (r *replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo
 	return true, nil
 }
 
-func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedFile, error) {
+func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)

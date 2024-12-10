@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
+import { SelectableValue, urlUtil } from '@grafana/data';
 import {
   Alert,
+  Card,
   CellProps,
   Column,
   EmptyState,
@@ -11,17 +15,41 @@ import {
   LinkButton,
   Spinner,
   Stack,
+  Tab,
+  TabContent,
+  TabsBar,
   Text,
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
+import { ScopedResourceClient } from '../apiserver/client';
 
 import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
+import { JobSpec, JobStatus, RepositoryResource } from './api/types';
 import { PROVISIONING_URL } from './constants';
+
+enum TabSelection {
+  Files = 'files',
+  Jobs = 'jobs',
+  Folder = 'folder', // the configured folder
+  Settings = 'settings',
+}
+const tabInfo: SelectableValue<TabSelection> = [
+  { value: TabSelection.Files, label: 'Files' },
+  { value: TabSelection.Jobs, label: 'Recent Events' },
+  { value: TabSelection.Folder, label: 'Folder' },
+  { value: TabSelection.Settings, label: 'Settings' },
+];
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
   const query = useGetRepositoryStatusQuery({ name });
+
+  const location = useLocation();
+  const [queryParams] = useQueryParams();
+  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Files;
 
   //@ts-expect-error TODO add error types
   const notFound = query.isError && query.error?.status === 404;
@@ -33,7 +61,7 @@ export default function RepositoryStatusPage() {
         subTitle: 'Check the status of configured repository.',
       }}
     >
-      <Page.Contents isLoading={false}>
+      <Page.Contents isLoading={query.isLoading}>
         {notFound ? (
           <EmptyState message={`Repository not found`} variant="not-found">
             <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
@@ -41,8 +69,29 @@ export default function RepositoryStatusPage() {
           </EmptyState>
         ) : (
           <>
-            <RepoTestOptions name={name} />
-            <FilesTable name={name} />
+            {query.data ? (
+              <>
+                <RepoTestOptions name={name} />
+                <TabsBar>
+                  {tabInfo.map((t: SelectableValue) => (
+                    <Tab
+                      href={urlUtil.renderUrl(location.pathname, { ...queryParams, tab: t.value })}
+                      key={t.value}
+                      label={t.label!}
+                      active={tab === t.value}
+                    />
+                  ))}
+                </TabsBar>
+                <TabContent>
+                  {tab === TabSelection.Files && <FilesView repo={query.data} />}
+                  {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
+                  {tab === TabSelection.Folder && <FolderView repo={query.data} />}
+                  {tab === TabSelection.Settings && <SettingsView repo={query.data} />}
+                </TabContent>
+              </>
+            ) : (
+              <div>not found</div>
+            )}
           </>
         )}
       </Page.Contents>
@@ -56,8 +105,8 @@ type FileDetails = {
   hash: string;
 };
 
-interface FilesTableProps {
-  name: string;
+interface RepoProps {
+  repo: RepositoryResource;
 }
 
 function RepoTestOptions({ name }: FilesTableProps) {
@@ -80,7 +129,8 @@ function RepoTestOptions({ name }: FilesTableProps) {
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 
-function FilesTable({ name }: FilesTableProps) {
+function FilesView({ repo }: RepoProps) {
+  const name = repo.metadata.name;
   const query = useListRepositoryFilesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
   const data = [...(query.data?.files ?? [])].filter((file) =>
@@ -138,7 +188,6 @@ function FilesTable({ name }: FilesTableProps) {
 
   return (
     <Stack grow={1} direction={'column'} gap={2}>
-      <Text element={'h3'}>Repository files</Text>
       <Stack gap={2}>
         <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
@@ -149,5 +198,84 @@ function FilesTable({ name }: FilesTableProps) {
         getRowId={(file: FileDetails) => String(file.hash)}
       />
     </Stack>
+  );
+}
+
+const jobsClient = new ScopedResourceClient<JobSpec, JobStatus, 'Job'>({
+  group: 'provisioning.grafana.app',
+  version: 'v0alpha1',
+  resource: 'jobs',
+});
+
+function JobsView({ repo }: RepoProps) {
+  const name = repo.metadata.name;
+  const jobs = useAsync(async () => {
+    return jobsClient.list({
+      labelSelector: [
+        {
+          key: 'repository',
+          operator: '=',
+          value: name,
+        },
+      ],
+    });
+  }, [name]);
+
+  if (jobs.loading) {
+    return <Spinner />;
+  }
+  if (jobs.error) {
+    return (
+      <Alert title="error loading jobs">
+        <pre>{JSON.stringify(jobs.error)}</pre>
+      </Alert>
+    );
+  }
+  if (!jobs.value?.items?.length) {
+    return (
+      <div>
+        No recent events...
+        <br />
+        Note: history is not maintained after system restart
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {jobs.value.items.map((item) => {
+        return (
+          <Card key={item.metadata.resourceVersion}>
+            <Card.Heading>
+              {item.spec.action} / {item.status?.state}
+            </Card.Heading>
+            <Card.Description>
+              <span>{JSON.stringify(item.spec)}</span>
+              <span>{JSON.stringify(item.status)}</span>
+            </Card.Description>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function FolderView({ repo }: RepoProps) {
+  return (
+    <div>
+      <h2>TODO, show folder: {repo.metadata.name}</h2>
+      <br />
+      <a href={`/dashboards/f/${repo.spec.folder} /`}>{repo.spec.folder} </a>
+    </div>
+  );
+}
+
+function SettingsView({ repo }: RepoProps) {
+  return (
+    <div>
+      <h2>TODO, show settings inline???: {repo.metadata.name}</h2>
+
+      <LinkButton href={`${PROVISIONING_URL}/${repo.metadata.name}/edit`}>Edit</LinkButton>
+    </div>
   );
 }

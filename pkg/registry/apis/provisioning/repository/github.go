@@ -431,23 +431,23 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	count := 0
-
-	jobs := make([]provisioning.JobSpec, 0, len(event.Commits))
+	job := &provisioning.JobSpec{
+		Action: provisioning.JobActionMergeBranch,
+	}
 
 	beforeRef := event.GetBefore()
 	for _, commit := range event.Commits {
-		job := provisioning.JobSpec{
-			Action: provisioning.JobActionMergeBranch,
-			Ref:    commit.GetID(),
+		commitInfo := provisioning.CommitInfo{
+			SHA1: commit.GetID(),
 		}
 
+		count := 0
 		for _, file := range commit.Added {
 			if r.ignore(file) {
 				continue
 			}
 
-			job.Added = append(job.Added, provisioning.FileRef{
+			commitInfo.Added = append(commitInfo.Added, provisioning.FileRef{
 				Ref:  commit.GetID(),
 				Path: file,
 			})
@@ -458,7 +458,7 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			if r.ignore(file) {
 				continue
 			}
-			job.Modified = append(job.Modified, provisioning.FileRef{
+			commitInfo.Modified = append(commitInfo.Modified, provisioning.FileRef{
 				Ref:  commit.GetID(),
 				Path: file,
 			})
@@ -470,18 +470,20 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 				continue
 			}
 
-			job.Removed = append(job.Removed, provisioning.FileRef{
+			commitInfo.Removed = append(commitInfo.Removed, provisioning.FileRef{
 				Ref:  beforeRef,
 				Path: file,
 			})
 			count++
 		}
 
-		jobs = append(jobs, job)
+		if count > 0 {
+			job.Commits = append(job.Commits, commitInfo)
+		}
 		beforeRef = commit.GetID()
 	}
 
-	if count == 0 {
+	if len(job.Commits) == 0 {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no files require updates",
@@ -489,9 +491,8 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	}
 
 	return &provisioning.WebhookResponse{
-		Code:    http.StatusAccepted,
-		Message: fmt.Sprintf("%d files", count),
-		Jobs:    jobs,
+		Code: http.StatusAccepted,
+		Job:  job,
 	}, nil
 }
 
@@ -504,7 +505,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("missing github config")
 	}
 
-	if !cfg.PullRequestLinter && !cfg.GenerateDashboardPreviews {
+	if !r.shouldLintPullRequest() && !cfg.GenerateDashboardPreviews {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no action required on pull request event",
@@ -538,14 +539,12 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
-		Jobs: []provisioning.JobSpec{
-			{
-				Action: provisioning.JobActionPullRequest,
-				URL:    pr.GetHTMLURL(),
-				PR:     pr.GetNumber(),
-				Ref:    pr.GetHead().GetRef(),
-				Hash:   pr.GetHead().GetSHA(),
-			},
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			URL:    pr.GetHTMLURL(),
+			PR:     pr.GetNumber(),
+			Ref:    pr.GetHead().GetRef(),
+			Hash:   pr.GetHead().GetSHA(),
 		},
 	}, nil
 }
@@ -564,47 +563,47 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		return r.processPR(ctx, logger, job, replicator)
 	}
 
-	// ???????
-	// Is everything below here generic?  not github specific?
+	// NOTE: Everything below here is not git specific
+	for _, commit := range job.Commits {
+		// NOT PR, this is processing the actual files
+		for _, v := range commit.Added {
+			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to read added resource", "file", v, "error", err)
+				continue
+			}
 
-	// NOT PR, this is processing the actual files
-	for _, v := range job.Added {
-		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to read added resource", "file", v, "error", err)
-			continue
+			err = replicator.Replicate(ctx, fileInfo)
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to replicate added resource", "file", v, "error", err)
+				continue
+			}
+		}
+		for _, v := range commit.Modified {
+			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to read modified resource", "file", v, "error", err)
+				continue
+			}
+
+			err = replicator.Replicate(ctx, fileInfo)
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to replicate modified resource", "file", v, "error", err)
+				continue
+			}
 		}
 
-		err = replicator.Replicate(ctx, fileInfo)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to replicate added resource", "file", v, "error", err)
-			continue
-		}
-	}
-	for _, v := range job.Modified {
-		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to read modified resource", "file", v, "error", err)
-			continue
-		}
+		for _, v := range commit.Removed {
+			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to read removed resource", "file", v, "error", err)
+				continue
+			}
 
-		err = replicator.Replicate(ctx, fileInfo)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to replicate modified resource", "file", v, "error", err)
-			continue
-		}
-	}
-
-	for _, v := range job.Removed {
-		fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to read removed resource", "file", v, "error", err)
-			continue
-		}
-
-		if err := replicator.Delete(ctx, fileInfo); err != nil {
-			logger.ErrorContext(ctx, "failed to delete resource", "file", v, "error", err)
-			continue
+			if err := replicator.Delete(ctx, fileInfo); err != nil {
+				logger.ErrorContext(ctx, "failed to delete resource", "file", v, "error", err)
+				continue
+			}
 		}
 	}
 
@@ -717,6 +716,10 @@ type changedResource struct {
 	Data                 []byte
 }
 
+func (r *githubRepository) shouldLintPullRequest() bool {
+	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
+}
+
 var lintDashboardIssuesTemplate = `Hey there! 👋
 Grafana found some linting issues in this dashboard you may want to check:
 {{ range .}}
@@ -728,7 +731,7 @@ Grafana found some linting issues in this dashboard you may want to check:
 // The linter is disabled if the configuration does not have PullRequestLinter enabled.
 // The only supported type of file to lint is a dashboard.
 func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resources []changedResource) error {
-	if !r.Config().Spec.GitHub.PullRequestLinter {
+	if !r.shouldLintPullRequest() {
 		return nil
 	}
 

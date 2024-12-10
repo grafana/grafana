@@ -74,27 +74,25 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			responder.Error(fmt.Errorf("expecting a response"))
 			return
 		}
-		if rsp.Jobs != nil {
+		if rsp.Job != nil {
 			// Add the job to the job queue
-			for _, spec := range rsp.Jobs {
-				job := provisioning.Job{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: namespace,
-						Labels: map[string]string{
-							"repository":      name,
-							"repository.type": string(repo.Config().Spec.Type),
-						},
+			job := &provisioning.Job{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: namespace,
+					Labels: map[string]string{
+						"repository":      name,
+						"repository.type": string(repo.Config().Spec.Type),
 					},
-					Spec: spec,
-				}
-				id, err := s.jobs.Add(ctx, job)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-				job.Name = id
-				rsp.IDs = append(rsp.IDs, id)
+				},
+				Spec: *rsp.Job,
 			}
+			job, err := s.jobs.Add(ctx, job)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			responder.Object(rsp.Code, job)
+			return
 		}
 		responder.Object(rsp.Code, rsp)
 	}), nil

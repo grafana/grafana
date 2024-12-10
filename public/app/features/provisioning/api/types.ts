@@ -32,16 +32,24 @@ export type RepositorySpec = {
   preferYaml?: boolean;
 };
 
+export type RepositoryStatus = {
+  hash?: string; // ??? TODO
+};
+
 export type EditingOptions = {
   create: boolean;
   delete: boolean;
   update: boolean;
 };
 
-export type WatchEvent = {
-  object: unknown;
-  type: string;
-};
+export type TestResponse = {
+  apiVersion?: string;
+  kind?: string;
+  code: number;
+  success: boolean;
+  errors?: string[];
+  details?: object;
+}
 
 export interface RequestArg {
   /** Repository UID */
@@ -54,18 +62,26 @@ export interface UpdateRequestArg extends RequestArg {
   body: ResourceForCreate<RepositorySpec>;
 }
 
-export type RepositoryList = ResourceList<RepositorySpec>;
+export type RepositoryResource = Resource<RepositorySpec, RepositoryStatus, 'Repository'>;
+export type RepositoryList = ResourceList<RepositorySpec, RepositoryStatus, 'Repository'>;
 
-export type RepositoryResource = Resource<RepositorySpec>;
-
-export type TestResponse = {
-  apiVersion?: string;
-  kind?: string;
-  code: number;
-  success: boolean;
-  errors?: string[];
-  details?: object;
+export type JobSpec = {
+  action: string;
+  ref?: string;
+  pr?: number;
+  hash?: string;
+  url?: string;
 };
+
+export type JobStatus = {
+  updated?: string; // actually a date...
+  state: 'pending' | 'working' | 'success' | 'error';
+  message?: string;
+  errors?: string[];
+};
+
+export type JobResource = Resource<JobSpec, JobStatus, 'Job'>;
+export type JobList = ResourceList<JobSpec, JobStatus, 'Job'>;
 
 export type ResourceObjects = {
   type?: {

@@ -65,6 +65,8 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
 			{Name: "Action", Type: "string"},
+			{Name: "State", Type: "string"},
+			{Name: "Repository", Type: "string"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Job)
@@ -76,6 +78,8 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				m.Name, // may our may not be nice to read
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Action,
+				m.Status.State,
+				m.Labels["repository"],
 			}, nil
 		},
 	})

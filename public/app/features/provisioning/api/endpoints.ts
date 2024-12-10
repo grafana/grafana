@@ -14,6 +14,7 @@ import {
   HistoryListResponse,
   TestResponse,
   RepositorySpec,
+  JobList,
 } from './types';
 
 const BASE_PATH = '/repositories';
@@ -23,6 +24,10 @@ const injectedRtkApi = api.injectEndpoints({
     listRepository: build.query<RepositoryList, void>({
       query: () => ({ url: BASE_PATH }),
       providesTags: ['RepositoryList'],
+    }),
+    listJobs: build.query<JobList, void>({
+      query: () => ({ url: '/jobs' }),
+      providesTags: ['JobList'],
     }),
     createRepository: build.mutation<void, RepositoryForCreate>({
       query: (body) => ({
@@ -154,6 +159,7 @@ export { injectedRtkApi as generatedAPI };
 
 export const {
   useListRepositoryQuery,
+  useListJobsQuery,
   useCreateRepositoryMutation,
   useGetRepositoryQuery,
   useUpdateRepositoryMutation,

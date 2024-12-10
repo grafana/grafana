@@ -10,18 +10,21 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/google/uuid"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/storage"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func NewJobQueue(capacity int) JobQueue {
 	return &jobStore{
-		rv:       1,
-		capacity: capacity,
-		jobs:     []provisioning.Job{},
-		logger:   slog.Default().With("logger", "job-queue"),
+		rv:        1,
+		capacity:  capacity,
+		jobs:      []provisioning.Job{},
+		watchSet:  NewWatchSet(),
+		versioner: &storage.APIObjectVersioner{},
+		logger:    slog.Default().With("logger", "job-queue"),
 	}
 }
 
@@ -31,8 +34,10 @@ type jobStore struct {
 	workers  []Worker
 
 	// All jobs
-	jobs []provisioning.Job
-	rv   int64 // updates whenever changed
+	jobs      []provisioning.Job
+	rv        int64 // updates whenever changed
+	watchSet  *WatchSet
+	versioner storage.Versioner
 
 	mutex sync.RWMutex
 }
@@ -45,25 +50,25 @@ func (s *jobStore) Register(worker Worker) {
 }
 
 // Add implements JobQueue.
-func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error) {
+func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	if job.Namespace == "" {
-		return "", fmt.Errorf("expecting namespace")
+		return nil, fmt.Errorf("expecting namespace")
 	}
 	_, ok := job.Labels["repository"]
 	if !ok {
-		return "", fmt.Errorf("expecting repository name label")
+		return nil, fmt.Errorf("expecting repository name label")
 	}
 	_, ok = job.Labels["repository.type"] // TODO: ideally just based on the action type
 	if !ok {
-		return "", fmt.Errorf("expecting repository name label")
+		return nil, fmt.Errorf("expecting repository name label")
 	}
 	if job.Spec.Action == "" {
-		return "", fmt.Errorf("missing spec.action")
+		return nil, fmt.Errorf("missing spec.action")
 	}
 
 	// Only for add
 	if job.Status.State != "" {
-		return "", fmt.Errorf("must add jobs with empty state")
+		return nil, fmt.Errorf("must add jobs with empty state")
 	}
 
 	s.mutex.Lock()
@@ -74,33 +79,44 @@ func (s *jobStore) Add(ctx context.Context, job provisioning.Job) (string, error
 	job.Status.State = provisioning.JobStatePending
 	job.Labels["action"] = string(job.Spec.Action) // make it searchable
 	job.Labels["state"] = string(job.Status.State)
-	job.Name = "j" + uuid.NewString()
+	job.Name = util.GenerateShortUID()
 	job.CreationTimestamp = metav1.NewTime(time.Now())
 
 	jobs := make([]provisioning.Job, 0, len(s.jobs)+2)
-	jobs = append(jobs, job)
+	jobs = append(jobs, *job)
 	for i, j := range s.jobs {
 		if i >= s.capacity {
-			break
+			// Remove the old jobs
+			s.watchSet.notifyWatchers(watch.Event{
+				Object: j.DeepCopyObject(),
+				Type:   watch.Deleted,
+			}, nil)
+			continue
 		}
 		jobs = append(jobs, j)
 	}
 
+	// Send add event
+	s.watchSet.notifyWatchers(watch.Event{
+		Object: job.DeepCopyObject(),
+		Type:   watch.Added,
+	}, nil)
+
 	// For now, start a thread processing each job
 	go func() {
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 200)
 		s.drainPending()
 	}()
 
 	s.jobs = jobs // replace existing list
-	return job.Name, nil
+	return job, nil
 }
 
 // Reads the queue until no jobs remain
 func (s *jobStore) drainPending() {
 	var err error
 	for {
-		time.Sleep(time.Microsecond * 100)
+		time.Sleep(time.Microsecond * 200)
 		ctx := context.Background()
 
 		job := s.Checkout(ctx, nil)
@@ -150,12 +166,19 @@ func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisi
 	// The oldest jobs should be checked out first
 	for i := len(s.jobs) - 1; i >= 0; i-- {
 		if s.jobs[i].Status.State == provisioning.JobStatePending {
+			oldObj := s.jobs[i].DeepCopyObject()
+
 			s.rv++
 			s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
 			s.jobs[i].Status.State = provisioning.JobStateWorking
 			s.jobs[i].Labels["state"] = string(provisioning.JobStateWorking)
-			s.jobs[i].Status.Updated = metav1.NewTime(time.Now())
+			s.jobs[i].Status.Started = time.Now().UnixMilli()
 			job := s.jobs[i]
+
+			s.watchSet.notifyWatchers(watch.Event{
+				Object: job.DeepCopyObject(),
+				Type:   watch.Modified,
+			}, oldObj)
 			return &job
 		}
 	}
@@ -171,11 +194,18 @@ func (s *jobStore) Complete(ctx context.Context, namespace string, name string, 
 
 	for idx, job := range s.jobs {
 		if job.Name == name && job.Namespace == namespace {
-			status.Updated = metav1.NewTime(time.Now())
+			oldObj := job.DeepCopyObject()
+
+			status.Finished = time.Now().UnixMilli()
 			job.ResourceVersion = strconv.FormatInt(s.rv, 10)
 			job.Status = status
 			job.Labels["state"] = string(status.State)
 			s.jobs[idx] = job
+
+			s.watchSet.notifyWatchers(watch.Event{
+				Object: job.DeepCopyObject(),
+				Type:   watch.Modified,
+			}, oldObj)
 			return nil
 		}
 	}

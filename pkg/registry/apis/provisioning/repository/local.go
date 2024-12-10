@@ -309,9 +309,9 @@ func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path
 func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
-		Jobs: []provisioning.JobSpec{{
+		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionMergeBranch, // sync the latest changes
-		}},
+		},
 	}, nil
 }
 

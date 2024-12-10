@@ -17,7 +17,7 @@ var (
 type JobQueue interface {
 	rest.Storage // temporary.. simplifies registration
 
-	Add(ctx context.Context, job provisioning.Job) (string, error)
+	Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
 	Checkout(ctx context.Context, query labels.Selector) *provisioning.Job
 	Complete(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error
 
