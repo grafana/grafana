@@ -476,18 +476,17 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 export interface AnnotationQuerySpec {
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
-	builtIn?: boolean;
 	enable: boolean;
-	filter: AnnotationPanelFilter;
 	hide: boolean;
 	iconColor: string;
 	name: string;
+	builtIn?: boolean;
+	filter?: AnnotationPanelFilter;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	query: defaultDataQueryKind(),
 	enable: false,
-	filter: defaultAnnotationPanelFilter(),
 	hide: false,
 	iconColor: "",
 	name: "",
@@ -970,7 +969,6 @@ export interface DatasourceVariableSpec {
 	refresh: VariableRefresh;
 	regex: string;
 	current: VariableOption;
-	defaultOptionEnabled: boolean;
 	options: VariableOption[];
 	multi: boolean;
 	includeAll: boolean;
@@ -987,7 +985,6 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	refresh: "never",
 	regex: "",
 	current: { text: "", value: "", },
-	defaultOptionEnabled: false,
 	options: [],
 	multi: false,
 	includeAll: false,
