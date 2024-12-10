@@ -18,7 +18,7 @@ const (
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder
 	TypeResource       = common.TypeResource
-	TypeNamespace      = common.TypeNamespace
+	TypeNamespace      = common.TypeGroupResouce
 )
 
 const (
@@ -95,7 +95,7 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
-		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource), true
 	}
 
 	if translation.typ == TypeResource {

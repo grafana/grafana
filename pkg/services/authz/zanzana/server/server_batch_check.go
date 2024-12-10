@@ -56,7 +56,7 @@ func (s *Server) batchCheckItem(
 
 	allowed, ok := groupResourceAccess[groupResource]
 	if !ok {
-		res, err := s.checkNamespace(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), store)
+		res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), store)
 		if err != nil {
 			return nil, err
 		}

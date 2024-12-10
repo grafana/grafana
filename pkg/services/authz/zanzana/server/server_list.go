@@ -22,7 +22,7 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
 	}

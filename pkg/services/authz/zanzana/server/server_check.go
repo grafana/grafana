@@ -21,7 +21,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
-	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
 	}
@@ -36,10 +36,10 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	return s.checkGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), store)
 }
 
-// checkTyped checks on the root "namespace". If subject has access through the namespace they have access to
-// every resource for that "GroupResource".
-func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
-	if !common.IsNamespaceRelation(relation) {
+// checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
+// within it.
+func (s *Server) checkGroupResource(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
+	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -49,7 +49,7 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(group, resource),
+			Object:   common.NewGroupResourceIdent(group, resource),
 		},
 	}
 

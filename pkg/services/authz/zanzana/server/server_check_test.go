@@ -35,7 +35,7 @@ func testCheck(t *testing.T, server *Server) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/1 through namespace", func(t *testing.T) {
+	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/1 through group_resource", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newReq("user:2", utils.VerbGet, dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
@@ -83,7 +83,7 @@ func testCheck(t *testing.T, server *Server) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:7 should be able to read folder one through namespace access", func(t *testing.T) {
+	t.Run("user:7 should be able to read folder one through group_resource access", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newReq("user:7", utils.VerbGet, folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
