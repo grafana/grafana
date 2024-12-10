@@ -49,7 +49,7 @@ export type TestResponse = {
   success: boolean;
   errors?: string[];
   details?: object;
-}
+};
 
 export interface RequestArg {
   /** Repository UID */
