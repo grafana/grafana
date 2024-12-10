@@ -1,19 +1,23 @@
 import { useMemo } from 'react';
 
+import { SceneObjectBase } from '@grafana/scenes';
 import { Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement } from '../scene/types';
+import { getDashboardSceneFor } from '../utils/utils';
 
-export class DummySelectedObject implements EditableDashboardElement {
+export class DashboardEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
 
-  constructor(private dashboard: DashboardScene) {}
-
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const dashboard = this.dashboard;
+    const dashboard = getDashboardSceneFor(this);
+
+    // When layout changes we need to update options list
+    const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
@@ -39,7 +43,9 @@ export class DummySelectedObject implements EditableDashboardElement {
         );
     }, [dashboard]);
 
-    return [dashboardOptions];
+    const layoutCategory = useLayoutCategory(body);
+
+    return [dashboardOptions, layoutCategory];
   }
 
   public getTypeName(): string {
