@@ -236,6 +236,15 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
+				{
+					Name: "query-folder",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folder:      "folder",
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
 			},
 		}})
 }

@@ -920,6 +920,22 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	return s.search.Search(ctx, req)
 }
 
+// GetStats implements ResourceServer.
+func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+	if s.search == nil {
+		// If the backend implements "GetStats", we can use it
+		srv, ok := s.backend.(ResourceIndexServer)
+		if ok {
+			return srv.GetStats(ctx, req)
+		}
+		return nil, fmt.Errorf("search index not configured")
+	}
+	return s.search.GetStats(ctx, req)
+}
+
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
 	return s.search.History(ctx, req)
