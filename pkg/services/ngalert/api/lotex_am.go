@@ -239,7 +239,8 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *contextmodel.ReqContext, config 
 	)
 }
 
-func (am *LotexAM) RoutePostAMAlerts(ctx *contextmodel.ReqContext, alerts apimodels.PostableAlerts) response.Response {
+// Does this already do what we're looking for?
+func (am *LotexAM) RoutePostAMAlerts(ctx *contextmodel.ReqContext, alerts apimodels.Alerts) response.Response {
 	yml, err := yaml.Marshal(alerts)
 	if err != nil {
 		return ErrResp(500, err, "Failed marshal postable alerts")

@@ -27,7 +27,7 @@ import {
 } from '../../../utils/receiver-form';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
-import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
+import { useOnCallEscalationChain, useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
@@ -70,6 +70,14 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     hasOnCallError,
   } = useOnCallIntegration();
 
+  const {
+    notifierMeta: onCallEscalationChainNotifierMeta,
+    extendNotifier: extendOnCallEscalationChainNotifierFeatures,
+    formValidators: onCallEscalationChainFormValidators,
+    isLoading: isLoadingOnCallEscalationChain,
+    hasError: hasOnCallEscalationChainError,
+  } = useOnCallEscalationChain();
+
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
 
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
@@ -79,12 +87,19 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     ReceiverFormValues<GrafanaChannelValues> | undefined,
     Record<string, GrafanaManagedReceiverConfig>,
   ] => {
-    if (!contactPoint || isLoadingNotifiers || isLoadingOnCallIntegration) {
+    if (!contactPoint || isLoadingNotifiers || isLoadingOnCallIntegration || isLoadingOnCallEscalationChain) {
       return [undefined, {}];
     }
 
     return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint), grafanaNotifiers);
-  }, [contactPoint, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
+  }, [
+    contactPoint,
+    isLoadingNotifiers,
+    grafanaNotifiers,
+    extendOnCallReceivers,
+    isLoadingOnCallIntegration,
+    isLoadingOnCallEscalationChain,
+  ]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
@@ -141,7 +156,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   );
   const isTestable = !readOnly;
 
-  if (isLoadingNotifiers || isLoadingOnCallIntegration) {
+  if (isLoadingNotifiers || isLoadingOnCallIntegration || isLoadingOnCallEscalationChain) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
@@ -151,14 +166,19 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         dto: extendOnCallNotifierFeatures(n),
         meta: onCallNotifierMeta,
       };
+    } else if (n.type === ReceiverTypes.OnCallEscalationChain) {
+      return {
+        dto: extendOnCallEscalationChainNotifierFeatures(n),
+        meta: onCallEscalationChainNotifierMeta,
+      };
     }
 
     return { dto: n };
   });
   return (
     <>
-      {hasOnCallError && (
-        <Alert severity="error" title="Loading OnCall integration failed">
+      {(hasOnCallError || hasOnCallEscalationChainError) && (
+        <Alert severity="error" title="Loading OnCall failed">
           Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
           plugin configuration
         </Alert>
@@ -177,7 +197,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         defaultItem={{ ...defaultChannelValues }}
         commonSettingsComponent={GrafanaCommonChannelSettings}
-        customValidators={{ [ReceiverTypes.OnCall]: onCallFormValidators }}
+        customValidators={{
+          [ReceiverTypes.OnCall]: onCallFormValidators,
+          [ReceiverTypes.OnCallEscalationChain]: onCallEscalationChainFormValidators,
+        }}
         canManagePermissions={
           editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }

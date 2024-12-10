@@ -18,7 +18,8 @@ export interface OnCallPaginatedResult<T> {
 }
 
 export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
-type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
+export const ONCALL_ADAPTIVE_ALERTING_FEATURE = 'grafana_adaptive_alerting';
+type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | typeof ONCALL_ADAPTIVE_ALERTING_FEATURE | string;
 
 type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
@@ -36,6 +37,32 @@ export interface CreateIntegrationDTO {
 export interface OnCallConfigChecks {
   is_chatops_connected: boolean;
   is_integration_chatops_connected: boolean;
+}
+
+type EscalationChainResult = OnCallPaginatedResult<OnCallEscalationChainDTO> | OnCallEscalationChainDTO[];
+
+export interface OnCallEscalationChainDTO {
+  id: string;
+  name: string;
+  team?: string;
+}
+
+type TeamResult = OnCallPaginatedResult<OnCallTeamDTO> | OnCallTeamDTO[];
+
+export interface OnCallTeamDTO {
+  id: string;
+  name: string;
+  email?: string;
+  avatar_url?: string;
+  is_sharing_resources_to_all: boolean;
+}
+
+type SlackChannelResult = OnCallPaginatedResult<OnCallSlackChannelDTO> | OnCallSlackChannelDTO[];
+
+export interface OnCallSlackChannelDTO {
+  id: string;
+  display_name: string;
+  slack_id: string;
 }
 
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.OnCall}/resources${path}`;
@@ -90,12 +117,63 @@ export const onCallApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
+    grafanaOnCallEscalationChains: build.query<OnCallEscalationChainDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/escalation_chains/'),
+        params: {
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: EscalationChainResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallEscalationChains'],
+    }),
+    grafanaOnCallTeams: build.query<OnCallTeamDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/teams/'),
+        params: {
+          include_no_team: false,
+          only_include_notifiable_teams: false,
+          short: true,
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: TeamResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallTeams'],
+    }),
+    grafanaOnCallSlackChannels: build.query<OnCallSlackChannelDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/slack_channels/'),
+        params: {
+          skip_pagination: true,
+        },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: SlackChannelResult) => {
+        if (isPaginatedResponse(response)) {
+          return response.results;
+        }
+        return response;
+      },
+      providesTags: ['OnCallSlackChannels'],
+    }),
   }),
 });
 
 function isPaginatedResponse(
-  response: AlertReceiveChannelsResult
-): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
+  response: AlertReceiveChannelsResult | EscalationChainResult | TeamResult | SlackChannelResult
+): response is OnCallPaginatedResult<any> {
   return 'results' in response && Array.isArray(response.results);
 }
 

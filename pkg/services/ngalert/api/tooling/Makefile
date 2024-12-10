@@ -55,7 +55,7 @@ copy-files:
 	ls -1 go | xargs -n 1 -I {} mv go/{} ../generated_base_{}
 
 fix:
-	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableAlert/apimodels.Alerts/' $(GENERATED_GO_MATCHERS)
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]UpdateDashboardACLCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
