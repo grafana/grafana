@@ -26,8 +26,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       return selectedObject.onAddPanel(vizPanel);
     }
 
-    // If we don't have selected rows but a single row, add to it
-    if (this.state.rows.length === 1) {
+    // If we don't have selected row add it to the first row
+    if (this.state.rows.length > 0) {
       return this.state.rows[0].onAddPanel(vizPanel);
     }
 
