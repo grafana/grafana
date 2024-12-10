@@ -135,11 +135,28 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
+ * This type mirrors the required properties from PanelModel<TOptions> needed for migration handlers.
+ *
+ * By maintaining a separate type definition, we ensure that changes to PanelModel
+ * that would break third-party migration handlers are caught at compile time,
+ * rather than failing silently when third-party code attempts to use an incompatible panel.
+ */
+export interface PanelMigrationModel<TOptions = any> {
+  id: number;
+  type: string;
+  title?: string;
+  options: TOptions;
+  fieldConfig: PanelModel<TOptions>['fieldConfig'];
+  pluginVersion?: string;
+  targets?: PanelModel<TOptions>['targets'];
+}
+
+/**
  * Called when a panel is first loaded with current panel model to migrate panel options if needed.
  * Can return panel options, or a Promise that resolves to panel options for async migrations
  */
 export type PanelMigrationHandler<TOptions = any> = (
-  panel: PanelModel<TOptions>
+  panel: PanelMigrationModel<TOptions>
 ) => Partial<TOptions> | Promise<Partial<TOptions>>;
 
 /**
