@@ -504,6 +504,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorEnableUserAuth",
+        "resourceVersion": "1733495779155",
+        "creationTimestamp": "2024-12-06T14:36:19Z"
+      },
+      "spec": {
+        "description": "Enables user auth for Azure Monitor datasource only",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorPrometheusExemplars",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-06-06T16:53:17Z"
