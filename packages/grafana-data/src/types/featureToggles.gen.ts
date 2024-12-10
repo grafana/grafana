@@ -244,4 +244,5 @@ export interface FeatureToggles {
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
 }
