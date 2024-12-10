@@ -32,6 +32,10 @@ type getBasicRolesQuery struct {
 	OrgUserTable string
 }
 
+func (r getBasicRolesQuery) Validate() error {
+	return nil
+}
+
 func newGetBasicRoles(sql *legacysql.LegacyDatabaseHelper, q *BasicRoleQuery) getBasicRolesQuery {
 	return getBasicRolesQuery{
 		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
@@ -49,6 +53,10 @@ type getPermissionsQuery struct {
 	UserRoleTable    string
 	TeamRoleTable    string
 	BuiltinRoleTable string
+}
+
+func (r getPermissionsQuery) Validate() error {
+	return nil
 }
 
 func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery) getPermissionsQuery {
