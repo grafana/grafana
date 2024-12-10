@@ -904,6 +904,6 @@ const (
 	FlagFeedbackButton = "feedbackButton"
 
 	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the elasticsearch datasource
+	// Enables cross cluster search in the Elasticsearch datasource
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 )

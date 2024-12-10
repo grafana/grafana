@@ -191,10 +191,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
-	// - /_field_caps for fetching field capbilities, e.g. requests going to `index/_field_caps`
+	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	// - _field_caps for fetching "root" field capbilities
+	// - _field_caps for fetching "root" field capabilities
 	if req.Path != "" && !isFieldCaps(req.Path) && req.Path != "_msearch" &&
 		!strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)

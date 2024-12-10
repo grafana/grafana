@@ -1678,7 +1678,7 @@ var (
 		},
 		{
 			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the elasticsearch datasource",
+			Description: "Enables cross cluster search in the Elasticsearch datasource",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
