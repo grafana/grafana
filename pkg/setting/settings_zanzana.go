@@ -37,6 +37,9 @@ type ZanzanaSettings struct {
 	// Use streamed version of list objects.
 	// Returns full list of objects, but takes more time.
 	UseStreamedListObjects bool
+
+	AnonymousOrgRole   string
+	AnonymousNamespace string
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
