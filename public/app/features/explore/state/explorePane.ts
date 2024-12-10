@@ -6,6 +6,7 @@ import {
   HistoryItem,
   DataSourceApi,
   ExplorePanelsState,
+  getCorrelationsBySourceUIDs,
   PreferredVisualisationType,
   RawTimeRange,
   ExploreCorrelationHelperData,
@@ -14,7 +15,6 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';

@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   dateTimeForTimeZone,
+  getCorrelationsBySourceUIDs,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
@@ -35,7 +36,6 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
