@@ -170,6 +170,20 @@ datasources:
     # <bool> Allows users to edit data sources from the
     # Grafana UI.
     editable: false
+    # Grafana Enterprise only - optional query and resource
+    # cache settings for this data source.
+    caching:
+      # <bool> Enables caching for this data source.
+      enabled: true
+      # <bool> Sets whether to use the default query and resource
+      # cache TTLs configured by the Grafana Operator in the .ini file.
+      useDefaultTTL: true
+      # <duration> Sets how long data query results will be cached
+      # for if `useDefaultTTL` is set to `false`.
+      queriesTTL: 5m
+      # <duration> Sets how long resource query results will be
+      # cached for if `useDefaultTTL` is set to `false`.
+      resourcesTTL: 10m
 ```
 
 For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../../datasources" >}}).

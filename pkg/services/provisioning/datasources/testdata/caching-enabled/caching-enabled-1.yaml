@@ -1,0 +1,27 @@
+# config file version
+apiVersion: 1
+
+deleteDatasources:
+  - name: Graphite
+  - name: Prometheus
+
+datasources:
+  - name: Graphite
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+    orgId: 1
+    caching:
+      enabled: true
+      queriesTTL: 1m
+      resourcesTTL: 40s
+      useDefaultTTL: false
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    orgId: 1
+    caching:
+      enabled: true
+      useDefaultTTL: true
