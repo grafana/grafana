@@ -69,6 +69,7 @@ COPY pkg/aggregator/go.* pkg/aggregator/
 COPY apps/playlist/go.* apps/playlist/
 COPY apps apps
 COPY kindsv2 kindsv2
+COPY apps/alerting/notifications/go.* apps/alerting/notifications/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
