@@ -67,10 +67,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
-	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		unified = nil // hide the search index
-	}
-
 	builder := &FolderAPIBuilder{
 		gv:            resourceInfo.GroupVersion(),
 		features:      features,
@@ -132,7 +128,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("count")] = &subCountREST{
-		service:  b.folderSvc,
 		searcher: b.searcher,
 	}
 
