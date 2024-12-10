@@ -354,6 +354,7 @@
     "moment": "2.30.1",
     "moment-timezone": "0.5.46",
     "monaco-editor": "0.34.1",
+    "motion": "^11.13.1",
     "moveable": "0.53.0",
     "nanoid": "^5.0.4",
     "node-forge": "^1.3.1",
