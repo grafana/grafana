@@ -350,7 +350,6 @@ prometheusRunQueriesInParallel,2024-08-12T12:31:39Z,,c9ddc688a2b2c4ebb49e8ecf71d
 backgroundPluginInstaller,2024-08-12T14:39:31Z,2024-09-23T13:49:18Z,d342e76f636e3a5751c5e7baccd1c8910b50d863,Andres Martinez Gotor
 pluginsDetailsRightPanel,2024-08-13T09:55:30Z,,8044cb50f17a021a32e7ac0b83cf8d723457a9ae,Yulia Shanyrova
 lokiSendDashboardPanelNames,2024-08-22T19:30:43Z,,ec857e1de99d228668e3fb2c0bfd30230a96e180,Sven Grossmann
-mysqlParseTime,2024-08-27T11:16:04Z,,c59dddf7afb227f756259a50fc1d2b1946a4a72f,Ryan McKinley
 singleTopNav,2024-08-29T08:48:32Z,,8aaa155cb0215119d2455732a9e37f7c2aeff35c,Laura Fernández
 exploreLogsAggregatedMetrics,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann
 exploreLogsLimitedTimeRange,2024-08-29T13:55:59Z,,15a4ff992bd925f5714bc4e73fa9766a995b5711,Sven Grossmann

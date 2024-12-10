@@ -793,7 +793,6 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagPanelTitleSearch,
 		featuremgmt.FlagDashboardRestore,
-		featuremgmt.FlagMysqlParseTime,
 	)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
