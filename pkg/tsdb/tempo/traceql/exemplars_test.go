@@ -10,7 +10,12 @@ import (
 )
 
 func TestTransformExemplarToFrame_EmptyExemplars(t *testing.T) {
-	frame := transformExemplarToFrame("test", []tempopb.Exemplar{})
+	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
+		Labels:     nil,
+		Samples:    nil,
+		PromLabels: "",
+		Exemplars:  make([]tempopb.Exemplar, 0),
+	}, false)
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -30,7 +35,12 @@ func TestTransformExemplarToFrame_SingleExemplar(t *testing.T) {
 			},
 		},
 	}
-	frame := transformExemplarToFrame("test", exemplars)
+	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
+		Labels:     nil,
+		Samples:    nil,
+		PromLabels: "",
+		Exemplars:  exemplars,
+	}, false)
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -38,6 +48,33 @@ func TestTransformExemplarToFrame_SingleExemplar(t *testing.T) {
 	assert.Equal(t, time.UnixMilli(1638316800000), frame.Fields[0].At(0))
 	assert.Equal(t, 1.23, frame.Fields[1].At(0))
 	assert.Equal(t, "trace-123", frame.Fields[2].At(0))
+}
+
+func TestTransformExemplarToFrame_SingleExemplarHistogram(t *testing.T) {
+	exemplars := []tempopb.Exemplar{
+		{
+			TimestampMs: 1638316800000,
+			Value:       1.23,
+			Labels: []v1.KeyValue{
+				{Key: "trace:id", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "trace-123"}}},
+			},
+		},
+	}
+	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
+		Labels:     nil,
+		Samples:    nil,
+		PromLabels: "",
+		Exemplars:  exemplars,
+	}, true)
+	assert.NotNil(t, frame)
+	assert.Equal(t, "test", frame.RefID)
+	assert.Equal(t, "exemplar", frame.Name)
+	assert.Len(t, frame.Fields, 4)
+	assert.Equal(t, time.UnixMilli(1638316800000), frame.Fields[0].At(0))
+	assert.Equal(t, 1.23, frame.Fields[1].At(0))
+	assert.Equal(t, "trace-123", frame.Fields[2].At(0))
+	assert.Equal(t, 1.23, frame.Fields[3].At(0))
+	assert.Equal(t, "__bucket", frame.Fields[3].Name)
 }
 
 func TestTransformExemplarToFrame_MultipleExemplars(t *testing.T) {
@@ -57,7 +94,12 @@ func TestTransformExemplarToFrame_MultipleExemplars(t *testing.T) {
 			},
 		},
 	}
-	frame := transformExemplarToFrame("test", exemplars)
+	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
+		Labels:     nil,
+		Samples:    nil,
+		PromLabels: "",
+		Exemplars:  exemplars,
+	}, false)
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -78,7 +120,12 @@ func TestTransformExemplarToFrame_ExemplarWithoutTraceId(t *testing.T) {
 			Labels:      []v1.KeyValue{},
 		},
 	}
-	frame := transformExemplarToFrame("test", exemplars)
+	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
+		Labels:     nil,
+		Samples:    nil,
+		PromLabels: "",
+		Exemplars:  exemplars,
+	}, false)
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)

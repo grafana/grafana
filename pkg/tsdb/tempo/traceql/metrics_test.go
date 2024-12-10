@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,9 @@ import (
 
 func TestTransformMetricsResponse_EmptyResponse(t *testing.T) {
 	resp := tempopb.QueryRangeResponse{}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Empty(t, frames)
 }
 
@@ -29,7 +32,9 @@ func TestTransformMetricsResponse_SingleSeriesSingleLabel(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 1)
 	assert.Equal(t, "value1", frames[0].RefID)
 	assert.Equal(t, "value1", frames[0].Name)
@@ -57,7 +62,9 @@ func TestTransformMetricsResponse_SingleSeriesMultipleLabels(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 1)
 	assert.Equal(t, "{label1=\"value1\", label2=123, label3=123.456, label4=true}", frames[0].RefID)
 	assert.Equal(t, "{label1=\"value1\", label2=123, label3=123.456, label4=true}", frames[0].Name)
@@ -90,7 +97,9 @@ func TestTransformMetricsResponse_MultipleSeries(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 2)
 	assert.Equal(t, "value1", frames[0].RefID)
 	assert.Equal(t, "value1", frames[0].Name)
