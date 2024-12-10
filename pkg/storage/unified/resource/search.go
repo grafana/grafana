@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -171,7 +170,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 
 // init is called during startup.  any failure will block startup and continued execution
 func (s *searchSupport) init(ctx context.Context) error {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
 	defer span.End()
 	start := time.Now().Unix()
 
@@ -214,6 +213,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}()
 
 	end := time.Now().Unix()
+	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	if IndexMetrics != nil {
 		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
@@ -277,7 +277,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
 	if latencySeconds > 5 {
-		logger.Warn("high index latency", "latency", latencySeconds)
+		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
 		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
@@ -307,7 +307,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
 	builder, err := s.builders.get(ctx, nsr)
