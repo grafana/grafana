@@ -39,7 +39,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 // checkTyped checks on the root "namespace". If subject has access through the namespace they have access to
 // every resource for that "GroupResource".
 func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
-	if !common.IsNamespaceRelation(relation) {
+	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -49,7 +49,7 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(group, resource),
+			Object:   common.NewGroupResourceIdent(group, resource),
 		},
 	}
 
