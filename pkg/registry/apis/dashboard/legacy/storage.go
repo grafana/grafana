@@ -335,6 +335,6 @@ func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*
 }
 
 // GetStats implements ResourceServer.
-func (s *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
 	return nil, fmt.Errorf("not yet (GetStats)")
 }
