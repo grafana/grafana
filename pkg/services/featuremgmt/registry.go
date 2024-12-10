@@ -720,13 +720,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "kubernetesDashboardsAPI",
-			Description:     "Use the kubernetes API in the backend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-		},
-		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
