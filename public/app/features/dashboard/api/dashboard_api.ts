@@ -46,11 +46,11 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 }
 
-interface DashboardWithAccessInfo extends Resource<DashboardDataDTO, 'DashboardWithAccessInfo'> {
+export interface DashboardWithAccessInfo<T = DashboardDataDTO> extends Resource<T, 'DashboardWithAccessInfo'> {
   access: Object; // TODO...
 }
 
-// Implemented using /apis/dashboards.grafana.app/*
+// Implemented using /apis/dashboard.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
 

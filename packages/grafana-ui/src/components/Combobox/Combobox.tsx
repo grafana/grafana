@@ -5,12 +5,14 @@ import { debounce } from 'lodash';
 import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { logOptions } from '../../utils';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
+import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
@@ -25,8 +27,11 @@ export type ComboboxOption<T extends string | number = string> = {
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-interface ComboboxBaseProps<T extends string | number>
-  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
+export interface ComboboxBaseProps<T extends string | number>
+  extends Pick<
+    InputProps,
+    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+  > {
   /**
    * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
    */
@@ -36,19 +41,32 @@ interface ComboboxBaseProps<T extends string | number>
    */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  onChange: (option: ComboboxOption<T> | null) => void;
+  onChange: (option: ComboboxOption<T>) => void;
   /**
    * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
    * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
    */
-  value: T | ComboboxOption<T> | null;
+  value?: T | ComboboxOption<T> | null;
   /**
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+  onBlur?: () => void;
 }
 
-type AutoSizeConditionals =
+const RECOMMENDED_ITEMS_AMOUNT = 100_000;
+
+type ClearableConditionals<T extends number | string> =
+  | {
+      isClearable: true;
+      /**
+       * The onChange handler is called with `null` when clearing the Combobox.
+       */
+      onChange: (option: ComboboxOption<T> | null) => void;
+    }
+  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
+
+export type AutoSizeConditionals =
   | {
       width: 'auto';
       /**
@@ -66,13 +84,16 @@ type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
+type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
 
-function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
-  if (item?.label?.includes('Custom value: ')) {
-    return item?.value.toString();
+export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
+  if (!item) {
+    return '';
   }
-  return item?.label ?? item?.value.toString() ?? '';
+  if (item.label?.includes('Custom value: ')) {
+    return item.value.toString();
+  }
+  return item.label ?? item.value.toString();
 }
 
 function itemFilter<T extends string | number>(inputValue: string) {
@@ -81,8 +102,8 @@ function itemFilter<T extends string | number>(inputValue: string) {
   return (item: ComboboxOption<T>) => {
     return (
       !inputValue ||
-      item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item?.value?.toString().toLowerCase().includes(lowerCasedInputValue)
+      item.label?.toLowerCase().includes(lowerCasedInputValue) ||
+      item.value?.toString().toLowerCase().includes(lowerCasedInputValue)
     );
   };
 }
@@ -105,8 +126,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     createCustomValue = false,
     id,
     width,
+    minWidth,
+    maxWidth,
     'aria-labelledby': ariaLabelledBy,
-    ...restProps
+    autoFocus,
+    onBlur,
+    disabled,
+    loading,
+    invalid,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -123,7 +150,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const setItems = useCallback(
     (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
       let itemsToSet = items;
-
+      logOptions(itemsToSet.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabelledBy);
       if (inputValue && createCustomValue) {
         const optionMatchingInput = items.find(
           (opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue
@@ -146,7 +173,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       baseSetItems(itemsToSet);
     },
-    [createCustomValue]
+    [createCustomValue, id, ariaLabelledBy]
   );
 
   const selectedItemIndex = useMemo(() => {
@@ -154,7 +181,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    if (value === null) {
+    if (valueProp === undefined || valueProp === null) {
       return null;
     }
 
@@ -164,9 +191,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     }
 
     return index;
-  }, [options, value, isAsync]);
+  }, [valueProp, options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
+    if (valueProp === undefined || valueProp === null) {
+      return null;
+    }
+
     if (selectedItemIndex !== null && !isAsync) {
       return options[selectedItemIndex];
     }
@@ -215,8 +246,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getMenuProps,
     getItemProps,
 
-    openMenu,
-    closeMenu,
     selectItem,
   } = useCombobox({
     menuId,
@@ -327,11 +356,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
-  const handleSuffixClick = useCallback(() => {
-    isOpen ? closeMenu() : openMenu();
-  }, [isOpen, openMenu, closeMenu]);
+  const isAutoSize = width === 'auto';
 
-  const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+  const InputComponent = isAutoSize ? AutoSizeInput : Input;
 
   const suffixIcon = asyncLoading
     ? 'spinner'
@@ -343,9 +370,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   return (
-    <div>
+    <div className={isAutoSize ? styles.addaptToParent : undefined}>
       <InputComponent
-        width={width === 'auto' ? undefined : width}
+        width={isAutoSize ? undefined : width}
+        {...(isAutoSize ? { minWidth, maxWidth } : {})}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        disabled={disabled}
+        loading={loading}
+        invalid={invalid}
+        className={styles.input}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
@@ -366,14 +400,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               />
             )}
 
-            {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
-                translated to the input, so it blocks the input from being focused. So we need an additional event
-                handler here to open/close the menu. It should not have button role because we intentionally don't
-                want it in the a11y tree. */}
-            <Icon name={suffixIcon} onClick={handleSuffixClick} />
+            <Icon name={suffixIcon} />
           </>
         }
-        {...restProps}
         {...getInputProps({
           ref: inputRef,
           /*  Empty onCall to avoid TS error
@@ -385,68 +414,70 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           placeholder,
         })}
       />
-      <div
-        className={cx(styles.menu, !isOpen && styles.menuClosed)}
-        style={{
-          ...floatStyles,
-        }}
-        {...getMenuProps({
-          ref: floatingRef,
-          'aria-labelledby': ariaLabelledBy,
-        })}
-      >
-        {isOpen && (
-          <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
-            {!asyncError && (
-              <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                  return (
-                    <li
-                      key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                      data-index={virtualRow.index}
-                      className={cx(
-                        styles.option,
-                        selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                        highlightedIndex === virtualRow.index && styles.optionFocused
-                      )}
-                      style={{
-                        height: virtualRow.size,
-                        transform: `translateY(${virtualRow.start}px)`,
-                      }}
-                      {...getItemProps({
-                        item: items[virtualRow.index],
-                        index: virtualRow.index,
-                      })}
-                    >
-                      <div className={styles.optionBody}>
-                        <span className={styles.optionLabel}>
-                          {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                        </span>
-                        {items[virtualRow.index].description && (
-                          <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+      <Portal>
+        <div
+          className={cx(styles.menu, !isOpen && styles.menuClosed)}
+          style={{
+            ...floatStyles,
+          }}
+          {...getMenuProps({
+            ref: floatingRef,
+            'aria-labelledby': ariaLabelledBy,
+          })}
+        >
+          {isOpen && (
+            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+              {!asyncError && (
+                <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    return (
+                      <li
+                        key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                        data-index={virtualRow.index}
+                        className={cx(
+                          styles.option,
+                          selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                          highlightedIndex === virtualRow.index && styles.optionFocused
                         )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            <div aria-live="polite">
-              {asyncError && (
-                <MessageRow>
-                  <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-                  <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
-                </MessageRow>
+                        style={{
+                          height: virtualRow.size,
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                        {...getItemProps({
+                          item: items[virtualRow.index],
+                          index: virtualRow.index,
+                        })}
+                      >
+                        <div className={styles.optionBody}>
+                          <span className={styles.optionLabel}>
+                            {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                          </span>
+                          {items[virtualRow.index].description && (
+                            <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
-              {items.length === 0 && !asyncError && (
-                <MessageRow>
-                  <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-                </MessageRow>
-              )}
-            </div>
-          </ScrollContainer>
-        )}
-      </div>
+              <div aria-live="polite">
+                {asyncError && (
+                  <MessageRow>
+                    <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+                    <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
+                  </MessageRow>
+                )}
+                {items.length === 0 && !asyncError && (
+                  <MessageRow>
+                    <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
+                  </MessageRow>
+                )}
+              </div>
+            </ScrollContainer>
+          )}
+        </div>
+      </Portal>
     </div>
   );
 };

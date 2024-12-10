@@ -15,9 +15,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -217,23 +215,21 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	}
 
 	start = time.Now()
-	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse", trace.WithAttributes(
-		attribute.Bool("metricDataplane", responseOpts.metricDataplane),
-	))
+	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse")
 	defer span.End()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
-	res := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: responseOpts.metricDataplane})
+	res := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, res.Error.Error())
 		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
-		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
+		api.log.Error("Error parsing response from loki", "error", res.Error, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
 	}
 	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
-	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
+	api.log.Info("Response parsed from loki", "duration", time.Since(start), "framesLength", len(res.Frames), "stage", stageParseResponse)
 
 	return &res, nil
 }

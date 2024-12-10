@@ -6,16 +6,19 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeResource  string = "resource"
-	TypeNamespace string = "namespace"
+	TypeUser           string = "user"
+	TypeServiceAccount string = "service-account"
+	TypeRenderService  string = "render"
+	TypeTeam           string = "team"
+	TypeRole           string = "role"
+	TypeFolder         string = "folder"
+	TypeResource       string = "resource"
+	TypeNamespace      string = "namespace"
 )
 
 const (
@@ -28,24 +31,73 @@ const (
 	RelationSetEdit  string = "edit"
 	RelationSetAdmin string = "admin"
 
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	RelationGet    string = "get"
+	RelationUpdate string = "update"
+	RelationCreate string = "create"
+	RelationDelete string = "delete"
 
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceRead             string = "resource_" + RelationRead
-	RelationFolderResourceWrite            string = "resource_" + RelationWrite
-	RelationFolderResourceCreate           string = "resource_" + RelationCreate
-	RelationFolderResourceDelete           string = "resource_" + RelationDelete
-	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
-	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
+	RelationFolderResourceGet    string = "resource_" + RelationGet
+	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate string = "resource_" + RelationCreate
+	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
+
+// RelationsNamespace are relations that can be added on type "namespace".
+var RelationsNamespace = []string{
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
+	RelationDelete,
+}
+
+// RelationsResource are relations that can be added on type "resource".
+var RelationsResource = []string{
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
+}
+
+// RelationsFolderResource are relations that can be added on type "folder" for child resources.
+var RelationsFolderResource = []string{
+	RelationFolderResourceGet,
+	RelationFolderResourceUpdate,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+}
+
+// RelationsFolder are relations that can be added on type "folder".
+var RelationsFolder = append(
+	RelationsFolderResource,
+	RelationGet,
+	RelationUpdate,
+	RelationCreate,
+	RelationDelete,
+)
+
+func IsNamespaceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsNamespace)
+}
+
+func IsFolderResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsFolderResource)
+}
+
+func IsResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsResource)
+}
+
+func isValidRelation(relation string, valid []string) bool {
+	for _, r := range valid {
+		if r == relation {
+			return true
+		}
+	}
+	return false
+}
 
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
@@ -224,4 +276,30 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 		result = append(result, ToOpenFGATuple(t))
 	}
 	return result
+}
+
+func AddRenderContext(req *openfgav1.CheckRequest) {
+	if req.ContextualTuples == nil {
+		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
+	}
+	if req.ContextualTuples.TupleKeys == nil {
+		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
+	}
+
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
+		User:     req.TupleKey.User,
+		Relation: RelationSetView,
+		Object: NewNamespaceResourceIdent(
+			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
+			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+		),
+	})
+}
+
+func NewResourceContext(group, resource string) *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"requested_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+		},
+	}
 }
