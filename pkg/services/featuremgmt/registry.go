@@ -1667,11 +1667,25 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:        "azureMonitorEnableUserAuth",
+			Description: "Enables user auth for Azure Monitor datasource only",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
+		},
+		{
 			Name:         "alertingNotificationsStepMode",
 			Description:  "Enables simplified step mode in the notifications section",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
 		},
 	}
 )

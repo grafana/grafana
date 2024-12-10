@@ -135,8 +135,6 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 }
 
 func (s *Service) installPlugins(ctx context.Context) error {
-	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-
 	for _, installPlugin := range s.cfg.PreinstallPlugins {
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
@@ -162,6 +160,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		start := time.Now()
 		ctx = repo.WithRequestOrigin(ctx, "preinstall")
+		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, installPlugin.URL)
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
