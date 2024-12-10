@@ -48,7 +48,7 @@ type ResourceIndex interface {
 	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
 
 	// Get the number of documents in the index
-	DocCount(ctx context.Context, folder, repository string) (int64, error)
+	DocCount(ctx context.Context, folder string) (int64, error)
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -192,7 +192,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, req.Repository)
+			count, err := index.DocCount(ctx, req.Folder)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -215,7 +215,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 	rsp.Stats = make([]*ResourceStatsResponse_Stats, len(stats))
 
 	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" && req.Repository == "" {
+	if req.Folder == "" {
 		for i, stat := range stats {
 			rsp.Stats[i] = &ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -236,7 +236,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, req.Repository)
+		count, err := index.DocCount(ctx, req.Folder)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -442,7 +442,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 
 	// Record the number of objects indexed for the kind/resource
-	docCount, err := index.DocCount(ctx, "", "")
+	docCount, err := index.DocCount(ctx, "")
 	if err != nil {
 		s.log.Warn("error getting doc count", "error", err)
 	}
