@@ -76,9 +76,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  delete queryParams['tab'];
-  let tabHref = location.pathname + '?' + urlUtil.toUrlParams(queryParams);
-  tabHref = urlUtil.appendQueryToUrl(tabHref, 'tab=');
+
   let showJSON = '';
   switch (tab) {
     case TabSelection.Existing:
@@ -91,6 +89,13 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
       showJSON = JSON.stringify(wrap.resource.file, null, '  ');
       break;
   }
+
+  const tabInfo = [
+    { value: TabSelection.Lint, label: 'Lint', counter: wrap.lint?.length },
+    { value: TabSelection.File, label: 'File (from repository)' },
+    { value: TabSelection.Existing, label: 'Existing (from grafana)' },
+    { value: TabSelection.DryRun, label: 'Dry Run (result after apply)' },
+  ];
 
   return (
     <div>
@@ -122,33 +127,22 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
       <br />
 
       <TabsBar>
-        <Tab
-          href={`${tabHref}lint`}
-          key={TabSelection.Lint}
-          label={'Lint issues'}
-          active={tab === TabSelection.Lint}
-          counter={wrap.lint?.length}
-        />
-        <Tab href={`${tabHref}file`} key={TabSelection.File} label={'File'} active={tab === TabSelection.File} />
-        <Tab
-          href={`${tabHref}existing`}
-          key={TabSelection.Existing}
-          label={'Existing'}
-          active={tab === TabSelection.Existing}
-        />
-        <Tab
-          href={`${tabHref}dryRun`}
-          key={TabSelection.DryRun}
-          label={'Dry Run'}
-          active={tab === TabSelection.DryRun}
-        />
+        {tabInfo.map((t) => (
+          <Tab
+            href={urlUtil.renderUrl(location.pathname, { ...queryParams, tab: t.value })}
+            key={t.value}
+            label={t.label}
+            active={tab === t.value}
+            counter={t.counter}
+          />
+        ))}
       </TabsBar>
       <TabContent>
         {tab === TabSelection.Lint && (
           <div>
             {wrap.lint ? (
-              wrap.lint.map((r) => (
-                <Alert title={r.rule} severity={r.severity}>
+              wrap.lint.map((r, idx) => (
+                <Alert title={r.rule} severity={r.severity} key={`${r.rule}/${idx}`}>
                   {r.message}
                 </Alert>
               ))

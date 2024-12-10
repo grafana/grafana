@@ -20,7 +20,7 @@ export interface GroupVersionResource {
   resource: string;
 }
 
-export class ScopedResourceClient<T = object, K = string> implements ResourceClient<T, K> {
+export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
@@ -29,23 +29,23 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
-  public async get(name: string): Promise<Resource<T, K>> {
-    return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
+  public async get(name: string): Promise<Resource<T, S, K>> {
+    return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
     return getBackendSrv().get<S>(`${this.url}/${name}/${path}`);
   }
 
-  public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {
+  public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, S, K>> {
     const finalOpts = opts || {};
     finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
     finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
 
-    return getBackendSrv().get<ResourceList<T, K>>(this.url, opts);
+    return getBackendSrv().get<ResourceList<T, S, K>>(this.url, opts);
   }
 
-  public async create(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>> {
+  public async create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
       // GenerateName lets the apiserver create a new uid for the name
@@ -56,9 +56,9 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
     return getBackendSrv().post(this.url, obj);
   }
 
-  public async update(obj: Resource<T, K>): Promise<Resource<T, K>> {
+  public async update(obj: Resource<T, S, K>): Promise<Resource<T, S, K>> {
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().put<Resource<T, K>>(`${this.url}/${obj.metadata.name}`, obj);
+    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
   }
 
   public async delete(name: string): Promise<MetaStatus> {
