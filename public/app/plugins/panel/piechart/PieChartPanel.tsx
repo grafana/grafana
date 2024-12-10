@@ -84,18 +84,6 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
   const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
-    .sort((a, b) => {
-      if (a.field.displayName) {
-         return 1
-      } else if (isNaN(a.display.numeric)) {
-        return 1;
-      } else if (isNaN(b.display.numeric)) {
-        return -1;
-      } else {
-        return b.display.numeric - a.display.numeric;
-      }
-    })
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 
