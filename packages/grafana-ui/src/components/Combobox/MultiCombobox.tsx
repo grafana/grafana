@@ -1,9 +1,14 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { useStyles2 } from '../../themes';
+import { measureText } from '../../utils';
 import { Checkbox } from '../Forms/Checkbox';
+import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
+import { Text } from '../Text/Text';
+import { Tooltip } from '../Tooltip';
 
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
 import { OptionListItem } from './OptionListItem';
@@ -30,10 +35,32 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return getSelectedItemsFromValue<T>(value, options);
   }, [value, options, isAsync]);
 
-  const multiStyles = useStyles2(getMultiComboboxStyles);
-
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
+  const [shownItems, setShownItems] = useState<number>(selectedItems.length);
+  const [measureRef, { width }] = useMeasure<HTMLDivElement>();
+  const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
+
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
+
+  useEffect(() => {
+    const maxWidth = width - suffixWidth;
+    let currWidth = 0;
+    for (let i = 0; i < selectedItems.length; i++) {
+      // Measure text width and add size of padding, separator and close button
+      currWidth += measureText(selectedItems[i].label || '', 12).width + 50;
+      if (currWidth > maxWidth) {
+        // If there is no space for that item, show the current number of items,
+        // but always show at least 1 item
+        setShownItems(i || 1);
+        break;
+      }
+      if (i === selectedItems.length - 1) {
+        // If it is the last item, show all items
+        setShownItems(selectedItems.length);
+      }
+    }
+  }, [width, suffixWidth, selectedItems]);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -114,25 +141,53 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
+  const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
+
   return (
-    <div className={multiStyles.wrapper}>
-      <span className={multiStyles.pillWrapper}>
-        {selectedItems.map((item, index) => (
-          <ValuePill
-            onRemove={() => {
-              removeSelectedItem(item);
-            }}
-            key={`${item.value}${index}`}
-            {...getSelectedItemProps({ selectedItem: item, index })}
-          >
-            {itemToString(item)}
-          </ValuePill>
-        ))}
-      </span>
-      <input
-        className={multiStyles.input}
-        {...getInputProps(getDropdownProps({ preventKeyAction: isOpen, placeholder, onFocus: () => setIsOpen(true) }))}
-      />
+    <div>
+      <div className={multiStyles.wrapper} ref={measureRef} onClick={() => setIsOpen(!isOpen)}>
+        <span className={multiStyles.pillWrapper}>
+          {visibleItems.map((item, index) => (
+            <ValuePill
+              onRemove={() => {
+                removeSelectedItem(item);
+              }}
+              key={`${item.value}${index}`}
+              {...getSelectedItemProps({ selectedItem: item, index })}
+            >
+              {itemToString(item)}
+            </ValuePill>
+          ))}
+          {selectedItems.length > shownItems && !isOpen && (
+            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={suffixMeasureRef}>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              <Text>...</Text>
+              <Tooltip
+                interactive
+                content={
+                  <>
+                    {selectedItems.slice(shownItems).map((item) => (
+                      <div key={item.value}>{itemToString(item)}</div>
+                    ))}
+                  </>
+                }
+              >
+                <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
+              </Tooltip>
+            </Box>
+          )}
+          <input
+            className={multiStyles.input}
+            {...getInputProps(
+              getDropdownProps({
+                preventKeyAction: isOpen,
+                placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                onFocus: () => setIsOpen(true),
+              })
+            )}
+          />
+        </span>
+      </div>
       <div {...getMenuProps()}>
         <Portal>
           {isOpen && (
