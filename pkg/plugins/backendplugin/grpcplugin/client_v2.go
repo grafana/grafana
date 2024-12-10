@@ -348,14 +348,17 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 	return backend.FromProto().ConversionResponse(protoResp), nil
 }
 
-// handleGrpcStatusError handles gRPC status errors and sets the error source based on the error metadata.
+// handleGrpcStatusError handles gRPC status errors and sets the error source via context based on the error metadata.
+// Regardless of the error source, a plugin downstream error is returned.
 func handleGrpcStatusError(ctx context.Context, err error) error {
 	st := status.Convert(err)
+	if st == nil {
+		return fmt.Errorf("%v: %w", "Failed to query data", err)
+	}
 	for _, detail := range st.Details() {
-		switch t := detail.(type) {
-		case *errdetails.ErrorInfo:
-			errorSource, ok := t.Metadata[errorSourceMetadataKey]
-			if !ok {
+		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+			errorSource, exists := errorInfo.Metadata[errorSourceMetadataKey]
+			if !exists {
 				break
 			}
 
@@ -365,14 +368,12 @@ func handleGrpcStatusError(ctx context.Context, err error) error {
 				if innerErr != nil {
 					logger.Error("Could not set downstream error source", "error", innerErr)
 				}
-				// TODO decide if underlying public message should be improved
 				return plugins.ErrPluginDownstreamErrorBase.Errorf("%v", err)
 			case string(backend.ErrorSourcePlugin):
 				errorSourceErr := backend.WithErrorSource(ctx, backend.ErrorSourcePlugin)
 				if errorSourceErr != nil {
 					logger.Error("Could not set plugin error source", "error", errorSourceErr)
 				}
-				// TODO decide if underlying public message should be improved
 				return plugins.ErrPluginDownstreamErrorBase.Errorf("%v", err)
 			}
 		}
