@@ -6,24 +6,12 @@ type service-account
 
 type render
 
-type namespace
-  relations
-    define view: [user, service-account, render, team#member, role#assignee] or edit
-    define edit: [user, service-account, team#member, role#assignee] or admin
-    define admin: [user, service-account, team#member, role#assignee]
-
-    define get: [user, service-account, render, team#member, role#assignee] or view
-    define create: [user, service-account, team#member, role#assignee] or edit
-    define update: [user, service-account, team#member, role#assignee] or edit
-    define delete: [user, service-account, team#member, role#assignee] or edit
-
 type role
   relations
     define assignee: [user, service-account, team#member, role#assignee]
 
 type team
   relations
-    # Action sets
     define admin: [user, service-account]
     define member: [user, service-account] or admin
 
