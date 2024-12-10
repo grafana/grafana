@@ -11,11 +11,11 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -44,6 +44,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
+	search        *dashboard.SearchHandler
 	unified       resource.ResourceClient
 
 	log log.Logger
@@ -61,7 +62,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+	if !dashboard.FeatureEnabled(features) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 
@@ -74,6 +75,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -93,11 +95,6 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return dashboard.GetAuthorizer(b.dashboardService, b.log)
-}
-
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -202,8 +199,13 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 
+	// Resolve the empty name
+	sub := oas.Paths.Paths[root+"search/{name}"]
+	oas.Paths.Paths[root+"search"] = sub
+	delete(oas.Paths.Paths, root+"search/{name}")
+
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
@@ -211,5 +213,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.search.GetAPIRoutes(defs)
 }

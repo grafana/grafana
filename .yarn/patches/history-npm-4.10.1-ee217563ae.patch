@@ -1,0 +1,63 @@
+diff --git a/cjs/history.js b/cjs/history.js
+index fcd8ebab613c6d87b9ac824feb30ab1080cf0ef2..4df20d5cb2f9ba5fc8777899aada53f49399560b 100644
+--- a/cjs/history.js
++++ b/cjs/history.js
+@@ -103,16 +103,6 @@ function createLocation(path, state, key, currentLocation) {
+     if (state !== undefined && location.state === undefined) location.state = state;
+   }
+ 
+-  try {
+-    location.pathname = decodeURI(location.pathname);
+-  } catch (e) {
+-    if (e instanceof URIError) {
+-      throw new URIError('Pathname "' + location.pathname + '" could not be decoded. ' + 'This is likely caused by an invalid percent-encoding.');
+-    } else {
+-      throw e;
+-    }
+-  }
+-
+   if (key) location.key = key;
+ 
+   if (currentLocation) {
+diff --git a/esm/history.js b/esm/history.js
+index df67820fe3eed558c44fca07a82b0cd409d46720..e0e0d4f69a407e8de782b3fdf8297d42708e110a 100644
+--- a/esm/history.js
++++ b/esm/history.js
+@@ -80,16 +80,6 @@ function createLocation(path, state, key, currentLocation) {
+     if (state !== undefined && location.state === undefined) location.state = state;
+   }
+ 
+-  try {
+-    location.pathname = decodeURI(location.pathname);
+-  } catch (e) {
+-    if (e instanceof URIError) {
+-      throw new URIError('Pathname "' + location.pathname + '" could not be decoded. ' + 'This is likely caused by an invalid percent-encoding.');
+-    } else {
+-      throw e;
+-    }
+-  }
+-
+   if (key) location.key = key;
+ 
+   if (currentLocation) {
+diff --git a/umd/history.js b/umd/history.js
+index 80e4ff66c44a2a71d4f842cc05a252e48dd18e9a..f8f4901be95e48c66f5626fbf051747a2ffbe41d 100644
+--- a/umd/history.js
++++ b/umd/history.js
+@@ -207,16 +207,6 @@
+       if (state !== undefined && location.state === undefined) location.state = state;
+     }
+ 
+-    try {
+-      location.pathname = decodeURI(location.pathname);
+-    } catch (e) {
+-      if (e instanceof URIError) {
+-        throw new URIError('Pathname "' + location.pathname + '" could not be decoded. ' + 'This is likely caused by an invalid percent-encoding.');
+-      } else {
+-        throw e;
+-      }
+-    }
+-
+     if (key) location.key = key;
+ 
+     if (currentLocation) {

@@ -23,16 +23,49 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function setupDashboardScene(state: DashboardSceneState): DashboardScene {
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
 }
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      settings: {
+        defaultDatasource: 'loki',
+        datasources: {
+          Prometheus: {
+            name: 'Prometheus',
+            meta: { id: 'prometheus' },
+            type: 'datasource',
+          },
+          '-- Grafana --': {
+            name: 'Grafana',
+            meta: { id: 'grafana' },
+            type: 'datasource',
+          },
+          loki: {
+            name: 'Loki',
+            meta: { id: 'loki' },
+            type: 'datasource',
+          },
+        },
+      },
+    },
+  },
+}));
 
 describe('transformSceneToSaveModelSchemaV2', () => {
   let dashboardScene: DashboardScene;
@@ -51,6 +84,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // The intention is to have a complete dashboard scene
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({ annotationLayers }),
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -109,6 +143,15 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                 key: 'test-panel-uid',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [
+                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                      { title: 'Test Link 2', url: 'http://test2.com' },
+                    ],
+                    menu: new VizPanelLinksMenu({}),
+                  }),
+                ],
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,
@@ -132,6 +175,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         }),
       }),
       meta: {},
+      editPane: new DashboardEditPane({}),
       $behaviors: [
         new behaviors.CursorSync({
           sync: DashboardCursorSyncV1.Crosshair,
@@ -279,7 +323,58 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
   it('should transform scene to save model schema v2', () => {
     const result = transformSceneToSaveModelSchemaV2(dashboardScene);
-
     expect(result).toMatchSnapshot();
+
+    // Check that the annotation layers are correctly transformed
+    expect(result.annotations).toHaveLength(3);
+    // check annotation layer 3 with no datasource has the default datasource defined as type
+    expect(result.annotations?.[2].spec.query.kind).toBe('loki');
   });
 });
+
+const annotationLayer1 = new DashboardAnnotationsDataLayer({
+  key: 'layer1',
+  query: {
+    datasource: {
+      type: 'grafana',
+      uid: '-- Grafana --',
+    },
+    name: 'query1',
+    enable: true,
+    iconColor: 'red',
+  },
+  name: 'layer1',
+  isEnabled: true,
+  isHidden: false,
+});
+
+const annotationLayer2 = new DashboardAnnotationsDataLayer({
+  key: 'layer2',
+  query: {
+    datasource: {
+      type: 'prometheus',
+      uid: 'abcdef',
+    },
+    name: 'query2',
+    enable: true,
+    iconColor: 'blue',
+  },
+  name: 'layer2',
+  isEnabled: true,
+  isHidden: true,
+});
+
+// this could happen if a dahboard was created from code and the datasource was not defined
+const annotationLayer3NoDsDefined = new DashboardAnnotationsDataLayer({
+  key: 'layer3',
+  query: {
+    name: 'query3',
+    enable: true,
+    iconColor: 'green',
+  },
+  name: 'layer3',
+  isEnabled: true,
+  isHidden: true,
+});
+
+const annotationLayers = [annotationLayer1, annotationLayer2, annotationLayer3NoDsDefined];

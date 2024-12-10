@@ -31,13 +31,15 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -57,6 +59,7 @@ import {
   getPanelIdForVizPanel,
   isPanelClone,
 } from '../utils/utils';
+import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
@@ -126,6 +129,8 @@ export interface DashboardSceneState extends SceneObjectState {
   panelSearch?: string;
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
+  /** options pane */
+  editPane: DashboardEditPane;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -176,6 +181,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
+      editPane: new DashboardEditPane({}),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -389,6 +395,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+      }),
+    });
+  }
+
+  public openV2SchemaEditor() {
+    this.setState({
+      overlay: new SchemaV2EditorDrawer({
+        dashboardRef: this.getRef(),
       }),
     });
   }

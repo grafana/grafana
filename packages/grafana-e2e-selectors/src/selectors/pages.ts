@@ -118,6 +118,7 @@ export const versionedPages = {
     },
     addNewPanel: {
       '11.1.0': 'data-testid Add new panel',
+      '8.0.0': 'Add new panel',
       [MIN_GRAFANA_VERSION]: 'Add new panel',
     },
     itemButtonAddViz: {
@@ -964,6 +965,7 @@ export const versionedPages = {
     },
     org: {
       url: {
+        '10.2.0': '/admin/users',
         '9.5.0': '/org/users',
       },
     },

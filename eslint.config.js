@@ -1,6 +1,5 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
-const { fixupPluginRules } = require('@eslint/compat');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
@@ -47,6 +46,7 @@ module.exports = [
       'public/locales/**/*.js',
       'public/vendor/',
       'scripts/grafana-server/tmp',
+      '!.betterer.eslint.config.js',
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
@@ -78,6 +78,10 @@ module.exports = [
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
       'import/external-module-folders': ['node_modules', '.yarn'],
+      // Silences a warning when linting enterprise code
+      react: {
+        version: 'detect',
+      },
     },
 
     rules: {
@@ -256,7 +260,7 @@ module.exports = [
   {
     name: 'grafana/alerting-test-overrides',
     plugins: {
-      'testing-library': fixupPluginRules({ rules: testingLibraryPlugin.rules }),
+      'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
     },
     files: [

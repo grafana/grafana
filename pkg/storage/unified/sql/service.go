@@ -71,6 +71,11 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
+	// reg can be nil when running unified storage in standalone mode
+	if reg == nil {
+		reg = prometheus.DefaultRegisterer
+	}
+
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
 	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing, &grpc.Authenticator{})
@@ -102,8 +107,8 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// TODO, for standalone this will need to be started from enterprise
-	// Connecting to the correct remote services
-	docs := search.ProvideDocumentBuilders()
+	// Connecting to the correct remote services (cloudconfig for DS info and usage stats)
+	docs := search.ProvideDocumentBuilders(nil)
 
 	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, docs, s.tracing, s.reg, authzClient)
 	if err != nil {
