@@ -29,6 +29,7 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -208,9 +209,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
-    const url = `/api/v1/label/${interpolatedName}/values`;
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName);
+    const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
-    return value ?? [];
+    return value ? value.map(utf8Support) : [];
   };
 
   async getLabelValues(key: string): Promise<string[]> {
@@ -247,7 +249,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const res = await this.request(url, [], searchParams, this.getDefaultCacheHeaders());
     if (Array.isArray(res)) {
-      this.labelKeys = res.slice().sort();
+      this.labelKeys = res.slice().sort().map(utf8Support);
     }
 
     return [];
@@ -297,7 +299,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       requestOptions = undefined;
     }
 
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, requestOptions);
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName ?? '');
+
+    const value = await this.request(
+      `/api/v1/label/${interpolatedAndEscapedName}/values`,
+      [],
+      urlParams,
+      requestOptions
+    );
     return value ?? [];
   };
 
@@ -388,7 +397,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const data: string[] = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     // Convert string array to Record<string , []>
-    return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
+    return data.reduce((ac, a) => ({ ...ac, [utf8Support(a)]: '' }), {});
   };
 
   /**
