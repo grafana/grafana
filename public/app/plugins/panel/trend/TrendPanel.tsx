@@ -10,6 +10,7 @@ import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
+import { getOneClickLinks } from '../status-history/utils';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { prepareGraphableFields } from '../timeseries/utils';
 
@@ -119,6 +120,14 @@ export const TrendPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
+                oneClick={(seriesIdx, dataIdxs) => {
+                  const field = alignedDataFrame.fields[seriesIdx!];
+                  if (field) {
+                    return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                  }
+
+                  return undefined;
+                }}
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                   return (
                     <TimeSeriesTooltip
