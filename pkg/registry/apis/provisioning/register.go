@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net/url"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -451,11 +450,10 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		return err
 	}
 
-	// Typed validation
-	list := repo.Validate()
-	cfg := repo.Config()
+	list := ValidateRepository(repo)
 
 	if a.GetOperation() == admission.Update {
+		cfg := repo.Config()
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
 		if err != nil {
 			return fmt.Errorf("get old repository for update: %w", err)
@@ -467,36 +465,10 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		}
 	}
 
-	if cfg.Spec.Title == "" {
-		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
-	}
-
-	// Reserved names (for now)
-	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file", "new", "create", "update", "delete"}
-	if slices.Contains(reserved, cfg.Name) {
-		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
-	}
-
-	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "local"),
-			cfg.Spec.GitHub, "Local config only valid when type is local"))
-	}
-
-	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github"),
-			cfg.Spec.GitHub, "Github config only valid when type is github"))
-	}
-
-	if cfg.Spec.Type != provisioning.S3RepositoryType && cfg.Spec.S3 != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "s3"),
-			cfg.Spec.GitHub, "S3 config only valid when type is s3"))
-	}
-
 	if len(list) > 0 {
-		return apierrors.NewInvalid(schema.GroupKind{
-			Group: provisioning.GROUP,
-			Kind:  "Repository", //??
-		}, a.GetName(), list)
+		return apierrors.NewInvalid(
+			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+			a.GetName(), list)
 	}
 	return nil
 }

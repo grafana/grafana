@@ -112,18 +112,8 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
+// NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
-	local := r.config.Spec.Local
-	if local == nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []string{
-				"missing local config",
-			},
-		}, nil
-	}
-
 	if r.path == "" {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
