@@ -75,7 +75,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
         <Button size="sm" variant="secondary">
           Copy
         </Button>
-        <Button size="sm" variant="primary" onClick={this.onAddPanel} fill="outline">
+        <Button size="sm" variant="primary" onClick={() => this.onAddPanel()} fill="outline">
           Add panel
         </Button>
         <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
@@ -97,8 +97,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     this.setState({ isCollapsed: !this.state.isCollapsed });
   };
 
-  public onAddPanel = () => {
-    const vizPanel = getDefaultVizPanel();
+  public onAddPanel = (vizPanel = getDefaultVizPanel()) => {
     this.state.layout.addPanel(vizPanel);
   };
 
