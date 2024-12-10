@@ -17,6 +17,7 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
+import { createGithubPullRequest } from 'app/features/provisioning/github';
 import { DashboardMeta } from 'app/types';
 
 import { RepositorySelect } from '../../provisioning/RepositorySelect';
@@ -35,6 +36,7 @@ import { DashboardChangeInfo } from './shared';
 type FormData = {
   ref: string;
   path: string;
+  title?: string;
   comment?: string;
   repo: string;
   workflow?: WorkflowOption;
@@ -55,6 +57,7 @@ function getDefaultValues(meta: DashboardMeta) {
     path,
     repo,
     comment: '',
+    title: `Update: ${path}`, // the title? (but not in metadata)
   };
 }
 
@@ -64,8 +67,8 @@ const getDefaultWorkflow = (config?: RepositorySpec) => {
 
 function getWorkflowOptions(branch = 'main') {
   return [
-    { label: `Commit to ${branch}`, value: WorkflowOption.Branch },
     { label: 'Create pull request', value: WorkflowOption.PullRequest },
+    { label: `Commit to ${branch}`, value: WorkflowOption.Branch },
   ];
 }
 
@@ -127,15 +130,25 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
   }, [repositoryConfig, setValue]);
 
-  const doSave = ({ ref, path, comment, repo }: FormData) => {
+  const doSave = ({ ref, path, comment, repo, title, workflow }: FormData) => {
     if (!repo || !path) {
       return;
+    }
+    
+    if (workflow === WorkflowOption.PullRequest) {
+      return createGithubPullRequest(repositoryConfigQuery.data!, {
+        title: title ?? '',
+        comment: comment ?? '',
+        branch: ref ?? "",
+        path,
+        body: changeInfo.changedSaveModel
+      })
     }
 
     if (workflow === WorkflowOption.Branch) {
       ref = repositoryConfig?.github?.branch || 'main';
     }
-    action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+    return action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
   if (repositoryConfigQuery.isLoading) {
@@ -186,6 +199,13 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
               />
             </Field>
             {workflow === WorkflowOption.PullRequest && (
+              <>
+              <Field
+                label="Title"
+                description="The pull request title (in github)"
+              >
+                <Input {...register('title')} />
+              </Field>
               <Field
                 label="Branch"
                 description="Branch name in GitHub"
@@ -194,6 +214,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
               >
                 <Input {...register('ref', { validate: validateBranchName })} />
               </Field>
+              </>
             )}
           </>
         )}
