@@ -254,7 +254,7 @@ export class LokiDatasource
 
   /**
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
-   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   * @returns A DataQueryRequest or undefined if no suitable queries are found.
    */
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<LokiQuery>,
@@ -274,7 +274,7 @@ export class LokiDatasource
 
   /**
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
-   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   * @returns A DataQueryRequest or undefined if no suitable queries are found.
    */
   private getLogsSampleDataProvider(
     request: DataQueryRequest<LokiQuery>,

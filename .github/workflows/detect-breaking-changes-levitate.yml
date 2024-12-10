@@ -265,7 +265,7 @@ jobs:
       - name: Send Slack Message via Payload
         id: slack
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
-        uses: grafana/shared-workflows/actions/send-slack-message@main
+        uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
         with:
           channel-id: "C031SLFH6G0"
           payload:  |

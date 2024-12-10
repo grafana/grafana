@@ -1,16 +1,18 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
+import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Counter, Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem';
 import { ListSection } from '../../rule-list/components/ListSection';
+import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
+import { isAsyncRequestStatePending } from '../../utils/redux';
 import { hashRule } from '../../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isProvisionedRule } from '../../utils/rules';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
@@ -24,7 +26,9 @@ interface Props {
 type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
 
 export const RuleListStateView = ({ namespaces }: Props) => {
-  const styles = useStyles2(getStyles);
+  const [ref, { width }] = useMeasure<HTMLUListElement>();
+
+  const isLoading = useDataSourcesLoadingState();
 
   const groupedRules = useMemo(() => {
     const result: GroupedRules = new Map([
@@ -54,10 +58,13 @@ export const RuleListStateView = ({ namespaces }: Props) => {
   const entries = groupedRules.entries();
 
   return (
-    <ul className={styles.columnStack} role="tree">
-      {Array.from(entries).map(([state, rules]) => (
-        <RulesByState key={state} state={state} rules={rules} />
-      ))}
+    <ul role="tree" ref={ref}>
+      {isLoading && <LoadingBar width={width} />}
+      <Stack direction="column">
+        {Array.from(entries).map(([state, rules]) => (
+          <RulesByState key={state} state={state} rules={rules} />
+        ))}
+      </Stack>
     </ul>
   );
 };
@@ -71,7 +78,7 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const isNotFiringState = state !== PromAlertingRuleState.Firing;
+  const isFiringState = state !== PromAlertingRuleState.Firing;
   const hasRulesMatchingState = rules.length > 0;
 
   return (
@@ -82,7 +89,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
           <Counter value={rules.length} />
         </Stack>
       }
-      collapsed={isNotFiringState || hasRulesMatchingState}
+      collapsed={isFiringState || hasRulesMatchingState}
       pagination={
         <Pagination
           currentPage={page}
@@ -127,10 +134,20 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  columnStack: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-  }),
-});
+function useDataSourcesLoadingState() {
+  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulesDataSources = useMemo(getRulesDataSources, []);
+
+  const grafanaLoading = useUnifiedAlertingSelector((state) => {
+    const promLoading = isAsyncRequestStatePending(state.promRules[GRAFANA_RULES_SOURCE_NAME]);
+    const rulerLoading = isAsyncRequestStatePending(state.rulerRules[GRAFANA_RULES_SOURCE_NAME]);
+
+    return promLoading || rulerLoading;
+  });
+
+  const externalDataSourcesLoading = rulesDataSources.some((ds) => isAsyncRequestStatePending(promRules[ds.name]));
+
+  const loading = grafanaLoading || externalDataSourcesLoading;
+
+  return loading;
+}

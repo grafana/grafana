@@ -11,7 +11,9 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -43,6 +45,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
+	search        *dashboard.SearchHandler
 	unified       resource.ResourceClient
 
 	log log.Logger
@@ -73,6 +76,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -114,14 +118,30 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	defaultOpts, err := optsGetter.GetRESTOptions(b.legacy.Resource.GroupResource(), &dashboardinternal.Dashboard{})
+	if err != nil {
+		return err
+	}
+	storageOpts := apistore.StorageOptions{
+		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
+			internal := &dashboardinternal.Dashboard{}
+			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
+			if err != nil {
+				return nil, err
+			}
+
+			err = scheme.Convert(obj, desiredObj, nil)
+			return desiredObj, err
+		}),
+	}
+
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
 	if b.legacy.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = dashboard.NewDashboardLargeObjectSupport(scheme)
-		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
-			LargeObjectSupport: largeObjects,
-		})
+		storageOpts.LargeObjectSupport = largeObjects
 	}
+	opts.StorageOptions(dash.GroupResource(), storageOpts)
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
@@ -185,8 +205,13 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 
+	// Resolve the empty name
+	sub := oas.Paths.Paths[root+"search/{name}"]
+	oas.Paths.Paths[root+"search"] = sub
+	delete(oas.Paths.Paths, root+"search/{name}")
+
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
@@ -194,5 +219,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.search.GetAPIRoutes(defs)
 }

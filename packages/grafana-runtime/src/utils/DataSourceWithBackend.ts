@@ -19,6 +19,7 @@ import {
   AdHocVariableFilter,
 } from '@grafana/data';
 
+import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 import {
   BackendSrvRequest,
@@ -355,8 +356,17 @@ class DataSourceWithBackend<
         headers: this.getRequestHeaders(),
       })
     )
-      .then((v: FetchResponse) => v.data)
-      .catch((err) => err.data);
+      .then((v: FetchResponse<HealthCheckResult>) => v.data)
+      .catch((err) => {
+        let properties: Record<string, string> = {
+          plugin_id: this.meta?.id || '',
+          plugin_version: this.meta?.info?.version || '',
+          datasource_healthcheck_status: err?.data?.status || 'error',
+          datasource_healthcheck_message: err?.data?.message || '',
+        };
+        reportInteraction('datasource_health_check_completed', properties);
+        return err.data;
+      });
   }
 
   /**

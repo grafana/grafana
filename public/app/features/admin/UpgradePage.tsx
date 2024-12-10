@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
@@ -41,7 +42,9 @@ export const UpgradeInfo = ({ editionNotice }: UpgradeInfoProps) => {
 
   return (
     <>
-      <h2 className={styles.title}>Enterprise license</h2>
+      <h2 className={styles.title}>
+        <Trans i18nKey="admin.upgrade-info.title">Enterprise license</Trans>
+      </h2>
       <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
         <div className={styles.column}>
           <FeatureInfo />
@@ -73,11 +76,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 const GetEnterprise = () => {
   return (
     <div style={{ marginTop: '40px', marginBottom: '30px' }}>
-      <h2 style={titleStyles}>Get Grafana Enterprise</h2>
+      <h2 style={titleStyles}>
+        <Trans i18nKey="admin.get-enterprise.title">Get Grafana Enterprise</Trans>
+      </h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
-        You can use the trial version for free for 30 days. We will remind you about it five days before the trial
-        period ends.
+        <Trans i18nKey="admin.get-enterprise.description">
+          You can use the trial version for free for 30 days. We will remind you about it five days before the trial
+          period ends.
+        </Trans>
       </p>
     </div>
   );
@@ -90,7 +97,7 @@ const CallToAction = () => {
       size="lg"
       href="https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page"
     >
-      Contact us and get a free trial
+      <Trans i18nKey="admin.get-enterprise.contact-us">Contact us and get a free trial</Trans>
     </LinkButton>
   );
 };
@@ -98,7 +105,9 @@ const CallToAction = () => {
 const ServiceInfo = () => {
   return (
     <div>
-      <h4>At your service</h4>
+      <h4>
+        <Trans i18nKey="admin.get-enterprise.service-title">At your service</Trans>
+      </h4>
 
       <List>
         <Item title="Enterprise Plugins" image="public/img/licensing/plugin_enterprise.svg" />
@@ -117,9 +126,13 @@ const ServiceInfo = () => {
       </List>
 
       <div style={{ marginTop: '20px' }}>
-        <strong>Also included:</strong>
+        <strong>
+          <Trans i18nKey="admin.get-enterprise.included-heading">Also included:</Trans>
+        </strong>
         <br />
-        Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
+        <Trans i18nKey="admin.get-enterprise.included-description">
+          Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
+        </Trans>
       </div>
 
       <GetEnterprise />
@@ -130,7 +143,9 @@ const ServiceInfo = () => {
 const FeatureInfo = () => {
   return (
     <div style={{ paddingRight: '11px' }}>
-      <h4>Enhanced functionality</h4>
+      <h4>
+        <Trans i18nKey="admin.get-enterprise.features-heading">Enhanced functionality</Trans>
+      </h4>
       <FeatureListing />
     </div>
   );
@@ -143,7 +158,9 @@ const FeatureListing = () => {
       <Item title="Reporting" />
       <Item title="SAML authentication" />
       <Item title="Enhanced LDAP integration" />
-      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy, Okta</Item>
+      <Item title="Team Sync">
+        <Trans i18nKey="admin.get-enterprise.team-sync-details">LDAP, GitHub OAuth, Auth Proxy, Okta</Trans>
+      </Item>
       <Item title="White labeling" />
       <Item title="Auditing" />
       <Item title="Settings updates at runtime" />
