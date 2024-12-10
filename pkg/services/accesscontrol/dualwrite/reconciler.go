@@ -2,6 +2,7 @@ package dualwrite
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -85,6 +87,12 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 			newResourceReconciler(
 				"user role bindings",
 				userRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
+			newResourceReconciler(
+				"anonymous role binding",
+				anonymousRoleBindingsCollector(cfg, store),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
@@ -181,4 +189,23 @@ func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {
 		return nil, err
 	}
 	return orgs, nil
+}
+
+func getOrgByName(ctx context.Context, store db.DB, name string) (*org.Org, error) {
+	var orga org.Org
+	err := store.WithDbSession(ctx, func(dbSession *db.Session) error {
+		exists, err := dbSession.Where("name=?", name).Get(&orga)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return fmt.Errorf("org does not exist: %s", name)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
 }

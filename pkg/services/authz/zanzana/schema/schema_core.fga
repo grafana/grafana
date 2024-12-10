@@ -17,9 +17,11 @@ type namespace
     define update: [user, service-account, team#member, role#assignee] or edit
     define delete: [user, service-account, team#member, role#assignee] or edit
 
+type anonymous
+
 type role
   relations
-    define assignee: [user, service-account, team#member, role#assignee]
+    define assignee: [user, service-account, anonymous, team#member, role#assignee]
 
 type team
   relations
