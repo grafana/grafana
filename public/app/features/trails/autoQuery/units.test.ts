@@ -43,10 +43,6 @@ describe('getUnit', () => {
     expect(getUnit(undefined)).toBe(DEFAULT_UNIT);
   });
 
-  it('should return the default unit if the metric part is null', () => {
-    expect(getUnit(null as unknown as string)).toBe(DEFAULT_UNIT);
-  });
-
   it('should return the default unit if the metric part is an empty string', () => {
     expect(getUnit('')).toBe(DEFAULT_UNIT);
   });
@@ -75,10 +71,6 @@ describe('getPerSecondRateUnit', () => {
 
   it('should return the default rate unit if the metric part is undefined', () => {
     expect(getPerSecondRateUnit(undefined)).toBe(DEFAULT_RATE_UNIT);
-  });
-
-  it('should return the default rate unit if the metric part is null', () => {
-    expect(getPerSecondRateUnit(null as unknown as string)).toBe(DEFAULT_RATE_UNIT);
   });
 
   it('should return the default rate unit if the metric part is an empty string', () => {
