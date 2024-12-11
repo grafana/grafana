@@ -480,7 +480,8 @@
     "rule-list": {
       "configure-datasource": "Configure",
       "filter-view": {
-        "no-more-results": "No more results – showing {{numberOfRules}} rules"
+        "no-more-results": "No more results – showing {{numberOfRules}} rules",
+        "no-rules-found": "No alert- or recording rules matched your current set of filters."
       },
       "new-alert-rule": "New alert rule"
     },
