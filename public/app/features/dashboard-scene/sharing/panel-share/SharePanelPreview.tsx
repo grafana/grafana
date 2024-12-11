@@ -187,7 +187,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
           </div>
         )}
         {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
-        {error && (
+        {error && !loading && (
           <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')}>
             {isFetchError(error)
               ? error.statusText
