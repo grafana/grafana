@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/access"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
@@ -72,7 +73,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractorInternal),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -89,7 +90,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractorInternal),
 		authnlib.WithTracerOption(tracer),
 	)
 	if err != nil {
@@ -104,10 +105,59 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 	}, nil
 }
 
+func idTokenExtractorInternal(ctx context.Context) (string, error) {
+	if access.IsRunningAsGrafana(ctx) {
+		orgId := int64(1) // TODO: This isn't right.
+		staticRequester := &identity.StaticRequester{
+			Type:           claims.TypeServiceAccount, // system:apiserver
+			UserID:         1,
+			OrgID:          orgId,
+			Name:           "admin",
+			Login:          "admin",
+			OrgRole:        identity.RoleAdmin,
+			IsGrafanaAdmin: true,
+			Permissions: map[int64]map[string][]string{
+				orgId: {
+					"*": {"*"}, // all resources, all scopes
+				},
+			},
+		}
+		token, _, err := createInternalToken(staticRequester)
+		if err != nil {
+			return "", fmt.Errorf("failed to create internal token: %w", err)
+		}
+
+		staticRequester.IDToken = token
+		return token, nil
+	}
+	authInfo, ok := claims.From(ctx)
+	if !ok {
+		return "", fmt.Errorf("no claims found")
+	}
+
+	extra := authInfo.GetExtra()
+	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
+		return token[0], nil
+	}
+	// If no token is found, create an internal token.
+	// This is a workaround for StaticRequester not having a signed ID token.
+	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
+		token, _, err := createInternalToken(staticRequester)
+		if err != nil {
+			return "", fmt.Errorf("failed to create internal token: %w", err)
+		}
+
+		staticRequester.IDToken = token
+		return token, nil
+	}
+
+	return "", fmt.Errorf("id-token not found")
+}
+
 func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	// scenario: remote cloud
 	opts := []authnlib.GrpcClientInterceptorOption{
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractorCloud),
 		authnlib.WithTracerOption(tracer),
 	}
 
@@ -128,7 +178,10 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 	}, nil
 }
 
-func idTokenExtractor(ctx context.Context) (string, error) {
+func idTokenExtractorCloud(ctx context.Context) (string, error) {
+	if access.IsRunningAsGrafana(ctx) {
+		return "", nil
+	}
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
@@ -137,18 +190,6 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	extra := authInfo.GetExtra()
 	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
 		return token[0], nil
-	}
-
-	// If no token is found, create an internal token.
-	// This is a workaround for StaticRequester not having a signed ID token.
-	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
-		token, _, err := createInternalToken(staticRequester)
-		if err != nil {
-			return "", fmt.Errorf("failed to create internal token: %w", err)
-		}
-
-		staticRequester.IDToken = token
-		return token, nil
 	}
 
 	return "", fmt.Errorf("id-token not found")
