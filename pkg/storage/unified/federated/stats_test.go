@@ -39,8 +39,6 @@ func TestMain(m *testing.M) {
 
 func TestDirectSQLStats(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
-	//opts := sqlstore.NativeSettingsForDialect(store.GetDialect())
-	//sess := db.GetSqlxSession()
 	ctx := context.Background()
 
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
