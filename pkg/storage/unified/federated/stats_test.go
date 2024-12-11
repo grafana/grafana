@@ -119,7 +119,6 @@ func TestDirectSQLStats(t *testing.T) {
 		require.NoError(t, err)
 
 		jj, _ := json.MarshalIndent(stats.Stats, "", "  ")
-		//fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
 				"group": "sql-fallback",
