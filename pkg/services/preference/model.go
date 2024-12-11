@@ -68,6 +68,7 @@ type SavePreferenceCommand struct {
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands    []CustomCommand         `json:"customCommands,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -84,6 +85,7 @@ type PatchPreferenceCommand struct {
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
+	CustomCommands    []CustomCommand         `json:"customCommands,omitempty"`
 }
 
 type PreferenceJSONData struct {
@@ -91,6 +93,7 @@ type PreferenceJSONData struct {
 	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
 	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
 	Navbar            NavbarPreference       `json:"navbar"`
+	CustomCommands    []CustomCommand        `json:"customCommands,omitempty"`
 }
 
 type QueryHistoryPreference struct {
@@ -141,3 +144,23 @@ func (p Preference) TableName() string { return "preferences" }
 // swagger:model
 // Enum: analytics,performance,functional
 type CookieType string
+
+type CustomCommand struct {
+	// Unique identifier for the command
+	ID string `json:"ID"`
+
+	// Category for grouping commands
+	Category *string `json:"category,omitempty"`
+
+	// Keywords associated with the command
+	Keywords []string `json:"keywords,omitempty"`
+
+	// Optional path associated with the command
+	Path *string `json:"path,omitempty"`
+
+	// Keyboard shortcuts for the command
+	Shortcut []string `json:"shortcut,omitempty"`
+
+	// Human-readable title of the command
+	Title string `json:"title"`
+}

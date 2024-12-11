@@ -13,7 +13,6 @@ export default function useExtensionActions(): CommandPaletteAction[] {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.CommandPalette,
     context,
-    limitPerPlugin: 3,
   });
 
   return useMemo(() => {
@@ -24,6 +23,20 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       name: link.title,
       target: link.path,
       perform: () => link.onClick && link.onClick(),
+      shortcut: extractKeyboardShortcuts(link.description),
+      keywords: extractKeywords(link.description),
+      parent: undefined,
+      children: [],
     }));
   }, [links]);
+}
+
+function extractKeyboardShortcuts(input: string) {
+  const match = input.match(/\[shortcut:([^\]]+)\]/);
+  return match ? match[1].split(',') : undefined;
+}
+
+function extractKeywords(input: string) {
+  const match = input.match(/\[keywords:([^\]]+)\]/);
+  return match ? match[1].replace(',', ' ') : undefined;
 }
