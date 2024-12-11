@@ -17,10 +17,11 @@ export class TransitionalDashboardAPI implements DashboardAPI<DashboardDTO> {
   constructor(private impl: DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>) { }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<DashboardDTO> {
-    // Get response from underlying implementation (v0 or v2) from k8s
+    // Get response from underlying implementation (v2) from k8s
     const result = await this.impl.getDashboardDTO(uid, params);
 
     // Always return V1 format
+    // FIXME: This method is not complete, we will be losing some data here
     return ResponseTransformers.ensureV1Response(result);
   }
 

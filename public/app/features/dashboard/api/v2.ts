@@ -10,12 +10,13 @@ import {
   ResourceClient,
 } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { isDashboardResource, isDashboardV2Spec } from './utils';
 
 export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>> {
   private client: ResourceClient<DashboardV2Spec>;
@@ -31,9 +32,23 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-    // For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-    const result = ResponseTransformers.ensureV2Response(dashboard);
+    let result: DashboardWithAccessInfo<DashboardV2Spec>;
 
+    // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
+    // if the dashboard is a resource, meaning is in k8s, and is not a v2 spec, then convert it to a v2 spec
+    if (isDashboardResource(dashboard) && !isDashboardV2Spec(dashboard)) {
+      //this mean the dashboard is in v0 format
+      const dto = dashboard as unknown as DashboardWithAccessInfo<DashboardDataDTO>;
+      // convert to v1 schema
+      const v1Response = ResponseTransformers.ensureV1ResponseFromV0(dto);
+      // FIXME: this method is not complete, we will be loosing some data here
+      result = ResponseTransformers.ensureV2Response(v1Response);
+    } else {
+      // if the dashboard is already in v2 format, then just return it
+      result = dashboard;
+    }
+
+    // load folder info if available
     if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
       try {
         const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
@@ -44,7 +59,6 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
         console.error('Failed to load a folder', e);
       }
     }
-
     return result;
   }
 

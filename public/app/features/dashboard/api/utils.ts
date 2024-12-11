@@ -26,16 +26,22 @@ export function getDashboardsApiVersion() {
   return 'legacy';
 }
 
+// This function is used to determine if the dashboard is in v2 format or also v0 format
 export function isDashboardResource(
   obj?: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null
 ): obj is DashboardWithAccessInfo<DashboardV2Spec> {
   if (!obj) {
     return false;
   }
-
-  return 'kind' in obj && obj.kind === 'DashboardWithAccessInfo' && isDashboardV2Spec(obj.spec);
+  // is v0 or v2 format?
+  const isK8sDashboard = 'kind' in obj && obj.kind === 'DashboardWithAccessInfo';
+  return isK8sDashboard;
 }
 
 export function isDashboardV2Spec(obj: object): obj is DashboardV2Spec {
   return 'elements' in obj;
+}
+
+export function isDashboardV0Spec(obj: object): obj is DashboardV2Spec {
+  return !isDashboardV2Spec(obj); // not v2 spec means it's v0 spec
 }

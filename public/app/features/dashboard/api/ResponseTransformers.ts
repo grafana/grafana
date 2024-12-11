@@ -4,18 +4,26 @@ import {
   defaultTimeSettingsSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { transformCursorSynctoEnum } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource } from './utils';
 
-export function ensureV2Response(
-  dto: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
-): DashboardWithAccessInfo<DashboardV2Spec> {
-  if (isDashboardResource(dto)) {
-    return dto;
-  }
+export function ensureV1ResponseFromV0(dto: DashboardWithAccessInfo<DashboardDataDTO>): DashboardDTO {
+  const result: DashboardDTO = {
+    meta: {
+      ...dto.access,
+      isNew: false,
+      isFolder: false,
+      uid: dto.metadata.name,
+      k8s: dto.metadata,
+    },
+    dashboard: dto.spec,
+  };
 
+  return result;
+}
+
+export function ensureV2Response(dto: DashboardDTO): DashboardWithAccessInfo<DashboardV2Spec> {
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
 
@@ -83,11 +91,7 @@ export function ensureV2Response(
   };
 }
 
-export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO): DashboardDTO {
-  if (!isDashboardResource(dashboard)) {
-    return dashboard;
-  }
-
+export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2Spec>): DashboardDTO {
   const spec = dashboard.spec;
 
   return {
@@ -142,4 +146,5 @@ export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2S
 export const ResponseTransformers = {
   ensureV2Response,
   ensureV1Response,
+  ensureV1ResponseFromV0,
 };

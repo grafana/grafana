@@ -27,12 +27,11 @@ export function getDashboardAPI(opts: V2ModeOptions): DashboardAPI<DashboardWith
 export function getDashboardAPI(opts?: V2ModeOptions): DashboardAPI<any> {
   const v = getDashboardsApiVersion();
   const v2api = new K8sDashboardV2APIStub();
-  const v0api = new K8sDashboardAPI();
 
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),
-      v0: new TransitionalDashboardAPI(v0api),
+      v0: new K8sDashboardAPI(),
       v2: new TransitionalDashboardAPI(v2api),
     };
   }
