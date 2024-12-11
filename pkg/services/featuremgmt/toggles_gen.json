@@ -3630,13 +3630,17 @@
     {
       "metadata": {
         "name": "zipkinBackendMigration",
-        "resourceVersion": "1730907578997",
-        "creationTimestamp": "2024-11-06T15:39:38Z"
+        "resourceVersion": "1733846643829",
+        "creationTimestamp": "2024-11-06T15:39:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-10 16:04:03.82919 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables querying Zipkin data source without the proxy",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     }
   ]
