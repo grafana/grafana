@@ -333,7 +333,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 
 	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
-		return nil, err
+		b.logger.Warn("error in begin update", "err", err)
 	}
 
 	return func(ctx context.Context, success bool) {
