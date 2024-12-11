@@ -192,7 +192,7 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
 		// If has any wildcard, return immediately
-		if perm.Kind == "*" || perm.Identifier == "*" || perm.Scope == "*" {
+		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
 			permMap["*"] = true
 			return permMap
 		}
