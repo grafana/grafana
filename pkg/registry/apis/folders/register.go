@@ -270,16 +270,15 @@ func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Fol
 		return err
 	}
 
-	if resp.Error != nil {
+	if resp != nil && resp.Error != nil {
 		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
-	if resp == nil || resp.Stats == nil {
+	if resp.Stats == nil {
 		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
 	for _, v := range resp.Stats {
-		fmt.Println(v.Count)
 		if v.Count > 0 {
 			return folder.ErrFolderNotEmpty
 		}
