@@ -1,6 +1,3 @@
-// Use the real plugin_loader (stubbed by default)
-jest.unmock('app/features/plugins/plugin_loader');
-
 jest.mock('app/core/core', () => {
   return {
     coreModule: {
