@@ -14,6 +14,7 @@ const (
 	TypeUser           = common.TypeUser
 	TypeServiceAccount = common.TypeServiceAccount
 	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
 	TypeTeam           = common.TypeTeam
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder

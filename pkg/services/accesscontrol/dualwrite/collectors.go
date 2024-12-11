@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func teamMembershipCollector(store db.DB) legacyTupleCollector {
@@ -389,6 +390,35 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 
 			tuples[tuple.Object][tuple.String()] = tuple
 		}
+
+		return tuples, nil
+	}
+}
+
+// basicRoleBindingsCollector collects role bindings for basic roles
+func anonymousRoleBindingsCollector(cfg *setting.Cfg, store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+		object := zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(cfg.AnonymousOrgRole), "")
+		// Object should be set to delete obsolete permissions
+		tuples[object] = make(map[string]*openfgav1.TupleKey)
+
+		o, err := getOrgByName(ctx, store, cfg.AnonymousOrgName)
+		if err != nil {
+			return tuples, nil
+		}
+
+		if o.ID != orgID {
+			return tuples, nil
+		}
+
+		tuple := &openfgav1.TupleKey{
+			User:     zanzana.NewTupleEntry(zanzana.TypeAnonymous, "0", ""),
+			Relation: zanzana.RelationAssignee,
+			Object:   object,
+		}
+
+		tuples[tuple.Object][tuple.String()] = tuple
 
 		return tuples, nil
 	}
