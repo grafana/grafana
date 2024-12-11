@@ -1,6 +1,7 @@
 import { VAR_FILTERS_EXPR, VAR_FILTERS_WITH_CURLY_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../shared';
 
-import { generateBaseQuery, getAutoQueriesForMetric } from './getAutoQueriesForMetric';
+import { getAutoQueriesForMetric } from './getAutoQueriesForMetric';
+import { generateBaseQuery } from './queryGenerators/baseQuery';
 
 function expandExpr(shortenedExpr: string) {
   return shortenedExpr.replace('...', '${metric}{${filters}}');
