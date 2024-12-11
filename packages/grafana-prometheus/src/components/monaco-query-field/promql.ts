@@ -94,6 +94,7 @@ const functions = [
   'hour',
   'idelta',
   'increase',
+  'info',
   'irate',
   'label_join',
   'label_replace',
