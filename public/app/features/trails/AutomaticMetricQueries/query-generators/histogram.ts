@@ -1,9 +1,7 @@
 import { PromQuery } from '@grafana/prometheus';
 
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
-import { heatmapGraphBuilder } from '../graph-builders/heatmap';
-import { percentilesGraphBuilder } from '../graph-builders/percentiles';
-import { simpleGraphBuilder } from '../graph-builders/simple';
+import { heatmapGraphBuilder, percentilesGraphBuilder, simpleGraphBuilder } from '../graph-builders';
 import { AutoQueryDef } from '../types';
 import { getUnit } from '../units';
 

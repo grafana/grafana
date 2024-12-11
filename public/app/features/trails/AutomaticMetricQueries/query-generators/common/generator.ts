@@ -1,5 +1,5 @@
 import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
-import { simpleGraphBuilder } from '../../graph-builders/simple';
+import { simpleGraphBuilder } from '../../graph-builders';
 
 export type CommonQueryInfoParams = {
   description: string;

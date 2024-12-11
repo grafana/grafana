@@ -1,5 +1,4 @@
-import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from 'app/features/trails/shared';
-
+import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { AutoQueryInfo } from '../types';
 import { getPerSecondRateUnit, getUnit } from '../units';
 
