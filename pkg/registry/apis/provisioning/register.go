@@ -102,7 +102,9 @@ func NewProvisioningAPIBuilder(
 	}
 
 	builder.informer = &repositoryInformer{
+		logger:         slog.Default().With("logger", "provisioning-informer"),
 		configProvider: configProvider,
+		identities:     identities,
 		getter:         builder,
 	}
 
