@@ -139,15 +139,12 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 	}
 
 	teamIDs := make([]int64, 0, 50)
-	var index int64
+	teamQuery := legacy.ListUserTeamsQuery{
+		UserUID:    userIdentifiers.UID,
+		Pagination: common.Pagination{Limit: 50},
+	}
+
 	for {
-		teamQuery := legacy.ListUserTeamsQuery{
-			UserUID: userIdentifiers.UID,
-			Pagination: common.Pagination{
-				Limit:    50,
-				Continue: index,
-			},
-		}
 		teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
 		if err != nil {
 			return nil, fmt.Errorf("could not get user teams: %w", err)
@@ -155,10 +152,10 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 		for _, team := range teams.Items {
 			teamIDs = append(teamIDs, team.ID)
 		}
+		teamQuery.Pagination.Continue = teams.Continue
 		if teams.Continue == 0 {
 			break
 		}
-		index = teams.Continue
 	}
 
 	userPermQuery := store.PermissionsQuery{
@@ -200,8 +197,7 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	for _, perm := range permissions {
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
-			permMap["*"] = true
-			return permMap
+			return map[string]bool{"*": true}
 		}
 		permMap[perm.Scope] = true
 	}
