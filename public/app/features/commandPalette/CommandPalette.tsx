@@ -122,6 +122,9 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
+  useEffect(() => {
+    showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
+  }, [showEmptyState]);
 
   return showEmptyState ? (
     <EmptyState
