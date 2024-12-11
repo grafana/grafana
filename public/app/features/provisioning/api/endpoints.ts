@@ -1,5 +1,7 @@
 import { Resource } from 'app/features/apiserver/types';
 
+import { parseListOptionsSelector } from '../../apiserver/client';
+
 import { baseAPI as api } from './baseAPI';
 import {
   RepositoryList,
@@ -27,10 +29,17 @@ const BASE_PATH = '/repositories';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     listJobs: build.query<JobList, ListApiArg>({
-      query: (params) => ({
-        url: `/jobs`,
-        params: params || undefined,
-      }),
+      query: (queryArg) => {
+        const { fieldSelector, labelSelector, ...params } = queryArg || {};
+        return {
+          url: `/jobs`,
+          params: {
+            fieldSelector: fieldSelector ? parseListOptionsSelector(fieldSelector) : undefined,
+            labelSelector: labelSelector ? parseListOptionsSelector(labelSelector) : undefined,
+            ...params,
+          },
+        };
+      },
       providesTags: ['JobList'],
     }),
     getJob: build.query<JobResource, RequestArg>({
