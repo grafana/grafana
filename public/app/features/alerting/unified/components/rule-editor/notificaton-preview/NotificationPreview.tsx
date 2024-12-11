@@ -1,5 +1,5 @@
 import { compact } from 'lodash';
-import { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
 import { Button, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
