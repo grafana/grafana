@@ -67,7 +67,7 @@ export class AggregateHistoryWrapper implements LocationService {
     }
   }
 
-  partial(query: Record<string, any>, replace?: boolean) {
+  partial(query: Record<string, unknown>, replace?: boolean) {
     // TODO This should still work the same, maybe just make sure we don't overwrite the this.param param
     return this.locationService.partial(query, replace);
   }

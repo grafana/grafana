@@ -7,7 +7,7 @@ import { attachDebugger, createLogger } from '@grafana/ui';
 
 import { config } from '../config';
 
-import { createAggregateHistory } from './AggregateLocationService';
+import { createAggregateHistory } from './AggregateHistory';
 import { LocationUpdate } from './LocationSrv';
 
 /**
