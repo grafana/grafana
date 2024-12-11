@@ -634,25 +634,6 @@
         },
         "description": "(empty)"
       },
-      "errorResponse": {
-        "description": "(empty)",
-        "headers": {
-          "schemas": {
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "status": {
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        }
-      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -1419,16 +1400,6 @@
                 "$ref": "#/components/schemas/TeamDTO"
               },
               "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getUsers": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GetUsersBody"
             }
           }
         },
@@ -5143,21 +5114,6 @@
         },
         "type": "object"
       },
-      "EmailSchema": {
-        "description": "Implementation of SCIM specification email schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2",
-        "properties": {
-          "primary": {
-            "type": "boolean"
-          },
-          "type": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "EmbeddedContactPoint": {
         "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
         "properties": {
@@ -5868,35 +5824,6 @@
           },
           "uid": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "GetUsersBody": {
-        "properties": {
-          "Resources": {
-            "items": {
-              "$ref": "#/components/schemas/UserSchema"
-            },
-            "type": "array"
-          },
-          "itemsPerPage": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "startIndex": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalResults": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -7197,29 +7124,6 @@
         },
         "type": "array"
       },
-      "MetaSchema": {
-        "description": "Implementation of SCIM specification meta schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-3.1",
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "lastModified": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "resourceType": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "Metadata": {
         "additionalProperties": {
           "type": "boolean"
@@ -7442,24 +7346,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "NameSchema": {
-        "description": "Implementation of SCIM specification name schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "familyName": {
-            "type": "string"
-          },
-          "formatted": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "middleName": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -12320,45 +12206,6 @@
           },
           "updatedAt": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UserSchema": {
-        "description": "Implementation of SCIM specification user schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "active": {
-            "type": "boolean"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "emails": {
-            "items": {
-              "$ref": "#/components/schemas/EmailSchema"
-            },
-            "type": "array"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/MetaSchema"
-          },
-          "name": {
-            "$ref": "#/components/schemas/NameSchema"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "userName": {
             "type": "string"
           }
         },
