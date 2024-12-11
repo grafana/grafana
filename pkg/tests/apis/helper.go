@@ -403,12 +403,18 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 // Read local JSON or YAML file into a resource
 func (c *K8sTestHelper) LoadYAMLOrJSONFile(fpath string) *unstructured.Unstructured {
 	c.t.Helper()
+	return c.LoadYAMLOrJSON(string(c.LoadFile(fpath)))
+}
+
+// Read local file into a byte slice. Does not need to be a resource.
+func (c *K8sTestHelper) LoadFile(fpath string) []byte {
+	c.t.Helper()
 
 	//nolint:gosec
 	raw, err := os.ReadFile(fpath)
 	require.NoError(c.t, err)
 	require.NotEmpty(c.t, raw)
-	return c.LoadYAMLOrJSON(string(raw))
+	return raw
 }
 
 // Read local JSON or YAML file into a resource

@@ -52,6 +52,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
 		},
 	})
+	// Repo client, but less guard rails.
+	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
+		Group: "provisioning.grafana.app", Version: "v0alpha1",
+	})
 
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -294,6 +298,45 @@ func TestIntegrationProvisioning(t *testing.T) {
 		resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+	})
+
+	t.Run("safe path usages", func(t *testing.T) {
+		// Just make sure the folder doesn't exist in advance.
+		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+		}
+
+		_, err = client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+
+		const repo = "local-devenv"
+		result := restClient.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "all-panels.json").
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			Do(ctx)
+		require.NoError(t, result.Error(), "expecting to be able to create file")
+
+		result = restClient.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "test", "..", "..", "all-panels.json").
+			Body(helper.LoadFile("testdata/all-panels.json")).
+			Do(ctx)
+		require.Error(t, result.Error(), "invalid path should return error")
+
+		_, err = client.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+		require.NoError(t, err, "valid path should be fine")
+
+		_, err = client.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
+		require.Error(t, err, "invalid path should not be fine")
 	})
 }
 

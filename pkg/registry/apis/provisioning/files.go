@@ -72,7 +72,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		message := query.Get("message")
 		logger = logger.With("url", r.URL.Path, "ref", ref, "message", message)
 
-		prefix := fmt.Sprintf("/%s/files/", name)
+		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
 			logger.DebugContext(r.Context(), "failed to find a file path in the URL")
@@ -80,7 +80,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		filePath := r.URL.Path[idx+len(prefix):]
+		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
 		if filePath == "" || strings.HasSuffix(filePath, "/") {
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
