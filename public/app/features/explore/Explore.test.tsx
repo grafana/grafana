@@ -180,7 +180,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinksMock.mockReturnValueOnce({
+    usePluginLinksMock.mockReturnValue({
       links: [
         {
           id: '1',
