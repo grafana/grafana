@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -79,6 +80,7 @@ func NewProvisioningAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	blobstore blob.PublicBlobStore,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
@@ -107,6 +109,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
@@ -127,7 +130,7 @@ func RegisterAPIService(
 		DevenvPath: safepath.Clean(path.Join(cfg.HomePath, "devenv")),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, store, ghFactory)
+	}, cfg.SecretKey, identities, features, render, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
