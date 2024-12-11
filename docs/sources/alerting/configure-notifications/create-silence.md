@@ -22,6 +22,11 @@ labels:
 title: Configure silences
 weight: 440
 refs:
+  alertmanager-architecture:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
   shared-alert-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
@@ -37,6 +42,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  shared-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure silences
@@ -47,7 +57,10 @@ Silences stop notifications from getting created and last for only a specified w
 
 - Inhibition rules are not supported in the Grafana Alertmanager.
 - The preview of silenced alerts only applies to alerts in firing state.
+- Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
   {{< /admonition >}}
+
+{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Add silences
 
@@ -95,13 +108,6 @@ To remove a silence, complete the following steps.
 
 ## Rule-specific silences
 
-Rule-specific silences are silences that apply only to a specific alert rule.
-They're created when you silence an alert rule directly using the **Silence notifications** action in the UI.
+Rule-specific silences are silences that apply only to a specific alert rule. They're created when you silence an alert rule directly using the **Silence notifications** action in the UI.
 
-{{< admonition type="note" >}}
 As opposed to general silences, rule-specific silence access is tied directly to the alert rule they act on. They can be created manually by including the specific label matcher: `__alert_rule_uid__=<alert rule UID>`.
-{{< /admonition >}}
-
-## Useful links
-
-[Aggregation operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators)

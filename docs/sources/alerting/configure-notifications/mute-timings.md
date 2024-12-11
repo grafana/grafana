@@ -20,29 +20,32 @@ labels:
 title: Configure mute timings
 weight: 450
 refs:
-  external-alertmanager:
+  alertmanager-architecture:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  shared-silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  shared-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure mute timings
 
 A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
 
-Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
+{{< admonition type="note" >}}
+Mute timings are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+{{< /admonition >}}
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager](ref:external-alertmanager).
-
-## Mute timings vs silences
-
-The following table highlights the key differences between mute timings and silences.
-
-| Mute timing                                        | Silence                                                                      |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
-| Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
+{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Add mute timings
 
