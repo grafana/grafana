@@ -60,6 +60,9 @@ const BrowseDashboardsPage = memo(() => {
     if (!isSearching && searchState.result) {
       stateManager.setState({ result: undefined, includePanels: undefined });
     }
+    if (isSearching && searchState.result?.totalRows === 0) {
+      reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
+    }
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
@@ -114,7 +117,7 @@ const BrowseDashboardsPage = memo(() => {
       origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
     });
   };
-
+  console.log('searchState', searchState.result?.totalRows);
   return (
     <Page
       navId="dashboards/browse"
