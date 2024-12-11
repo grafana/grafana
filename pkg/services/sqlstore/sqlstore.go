@@ -284,7 +284,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		// Ensure that parseTime is enabled for MySQL
-		if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) && strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
+		if strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
 			if strings.Contains(ss.dbCfg.ConnectionString, "?") {
 				ss.dbCfg.ConnectionString += "&parseTime=true"
 			} else {
@@ -490,7 +490,6 @@ func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 	featureKeys := []any{
 		featuremgmt.FlagPanelTitleSearch,
-		featuremgmt.FlagMysqlParseTime,
 	}
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
