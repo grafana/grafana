@@ -14,6 +14,7 @@ const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"
 	TypeRenderService  string = "render"
+	TypeAnonymous      string = "anonymous"
 	TypeTeam           string = "team"
 	TypeRole           string = "role"
 )
