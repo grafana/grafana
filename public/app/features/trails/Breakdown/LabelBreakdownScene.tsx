@@ -34,7 +34,7 @@ import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
-import { getAutoQueriesForMetric } from '../auto-query/AutoQueryEngine';
+import { getAutoQueriesForMetric } from '../auto-query/getAutoQueriesForMetric';
 import { AutoQueryDef } from '../auto-query/types';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
