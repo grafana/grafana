@@ -164,6 +164,8 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
+
 	// This is required for --server-side apply
 	err = provisioning.AddKnownTypes(provisioning.InternalGroupVersion, scheme)
 	if err != nil {
@@ -490,24 +492,25 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 
 func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
-		"grafana-provisioning-controller": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
 			if err != nil {
 				return err
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				30*time.Minute,
+				30*time.Minute, // TODO: is this a good resync period for repos?
 			)
 
-			informer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			controller, err := NewRepositoryController(c.ProvisioningV0alpha1(), informer)
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+
+			repoController, err := NewRepositoryController(c.ProvisioningV0alpha1(), repoInformer)
 			if err != nil {
 				return err
 			}
 
-			controller.Run(postStartHookCtx.Context, repoControllerWorkers)
-
+			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 			return nil
 		},
 	}
