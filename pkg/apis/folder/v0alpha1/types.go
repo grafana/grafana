@@ -68,5 +68,11 @@ type FolderAccessInfo struct {
 type DescendantCounts struct {
 	metav1.TypeMeta `json:",inline"`
 
-	Counts map[string]int64 `json:"counts"`
+	Counts []ResourceStats `json:"counts"`
+}
+
+type ResourceStats struct {
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Count    int64  `json:"count"`
 }
