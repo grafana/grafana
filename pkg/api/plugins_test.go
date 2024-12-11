@@ -871,3 +871,43 @@ func Test_PluginsSettings(t *testing.T) {
 		})
 	}
 }
+
+func Test_UpdatePluginSetting(t *testing.T) {
+	pID := "test-app"
+	p1 := createPlugin(plugins.JSONData{
+		ID: pID, Type: "app", Name: pID,
+		Info: plugins.Info{
+			Version: "1.0.0",
+		},
+		AutoEnabled: true,
+	}, plugins.ClassExternal, plugins.NewFakeFS(),
+	)
+	pluginRegistry := &fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p1.ID: p1,
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		pID: {ID: 0, OrgID: 1, PluginID: pID, PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = setting.NewCfg()
+			hs.PluginSettings = &pluginSettings
+			hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+			hs.managedPluginsService = managedplugins.NewNoop()
+			hs.log = log.NewNopLogger()
+		})
+
+		input := strings.NewReader(`{"enabled": false}`)
+		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
+		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}

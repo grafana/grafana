@@ -721,6 +721,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			OrgID:         orgID,
 			Enabled:       plugin.AutoEnabled,
 			Pinned:        plugin.AutoEnabled,
+			AutoEnabled:   plugin.AutoEnabled,
 			PluginVersion: plugin.Info.Version,
 		}
 
