@@ -81,10 +81,13 @@ func NewProvisioningAPIBuilder(
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
-	configProvider apiserver.RestConfigProvider,
 	blobstore blob.PublicBlobStore,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
+
+	fmt.Printf("TODO... register iinformers")
+
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
@@ -111,6 +114,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
@@ -131,7 +135,7 @@ func RegisterAPIService(
 		DevenvPath: safepath.Clean(path.Join(cfg.HomePath, "devenv")),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, store, ghFactory)
+	}, cfg.SecretKey, identities, features, render, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
