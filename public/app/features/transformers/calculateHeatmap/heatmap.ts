@@ -57,8 +57,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
         if (config.featureToggles.transformationsVariableSupport) {
           const optionsCopy = {
             ...options,
-            xBuckets: { ...options.xBuckets } ?? undefined,
-            yBuckets: { ...options.yBuckets } ?? undefined,
+            xBuckets: { ...options.xBuckets },
+            yBuckets: { ...options.yBuckets },
           };
 
           if (optionsCopy.xBuckets?.value) {
