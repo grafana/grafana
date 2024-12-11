@@ -9382,6 +9382,21 @@
         "$ref": "#/definitions/SearchDeviceQueryResult"
       }
     },
+    "errorResponse": {
+      "description": "",
+      "headers": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
