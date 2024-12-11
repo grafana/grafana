@@ -331,6 +331,7 @@
       "no-contact-points-found": "Ńő čőŉŧäčŧ pőįŉŧş ƒőūŉđ",
       "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
       "no-integrations": "Ńő įŉŧęģřäŧįőŉş čőŉƒįģūřęđ",
+      "on-call-unreachable": "Ğřäƒäŉä ØŉCäľľ pľūģįŉ ĥäş þęęŉ ęŉäþľęđ įŉ yőūř Ğřäƒäŉä įŉşŧäŉčęş þūŧ įŧ įş ŉőŧ řęäčĥäþľę. Pľęäşę čĥęčĸ ŧĥę pľūģįŉ čőŉƒįģūřäŧįőŉ",
       "only-firing": "Đęľįvęřįŉģ <1>őŉľy ƒįřįŉģ</1> ŉőŧįƒįčäŧįőŉş",
       "receiver-summary": {
         "jira": "Cřęäŧęş ä \"{{issueType}}\" įşşūę įŉ ŧĥę \"{{project}}\" přőĵęčŧ"
@@ -342,7 +343,8 @@
       "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
       "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
       "used-by-rules_one": "Ůşęđ þy {{ count }} äľęřŧ řūľę",
-      "used-by-rules_other": "Ůşęđ þy {{ count }} äľęřŧ řūľę"
+      "used-by-rules_other": "Ůşęđ þy {{ count }} äľęřŧ řūľę",
+      "view-all": "Vįęŵ äľľ čőŉŧäčŧ pőįŉŧş"
     },
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
