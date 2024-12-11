@@ -131,10 +131,45 @@ type EditingOptions struct {
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 // As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatus struct {
-	// The Git commit we're currently synced to.
-	// A non-empty value only matters if we use a git storage backend.
-	// Useful for no-clone Git clients and if cloning Git clients ever lose their clones.
-	CurrentGitCommit string `json:"currentGitCommit,omitempty"`
+	// This will get updated with the current health status (and updated periodically)
+	Health HealthStatus `json:"health"`
+
+	// Sync information
+	Sync SyncStatus `json:"sync"`
+}
+
+type HealthStatus struct {
+	// When not healthy, requests will not be executed
+	Healthy bool `json:"healthy"`
+
+	// When the sync job started
+	Checked int64 `json:"started,omitempty"`
+
+	// Summary messages (will be shown to users)
+	Message []string `json:"message,omitempty"`
+}
+
+type SyncStatus struct {
+	// pending, running, success, error
+	State JobState `json:"state"`
+
+	// The ID for the job that ran this sync
+	JobID string `json:"job,omitempty"`
+
+	// When the sync job started
+	Started int64 `json:"started,omitempty"`
+
+	// When the sync job finished
+	Finished int64 `json:"finished,omitempty"`
+
+	// When the next sync check is scheduled
+	Scheduled int64 `json:"scheduled,omitempty"`
+
+	// Summary messages (will be shown to users)
+	Message []string `json:"message,omitempty"`
+
+	// The repository hash when the last sync ran
+	Hash string `json:"hash,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

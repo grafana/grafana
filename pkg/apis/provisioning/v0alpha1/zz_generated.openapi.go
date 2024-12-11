@@ -17,10 +17,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.CommitInfo":             schema_pkg_apis_provisioning_v0alpha1_CommitInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileAction":             schema_pkg_apis_provisioning_v0alpha1_FileAction(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef":                schema_pkg_apis_provisioning_v0alpha1_FileRef(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus":           schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":             schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryItem":            schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryList":            schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
@@ -38,6 +40,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType":           schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceWrapper":        schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus":             schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.TestResults":            schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 	}
@@ -167,6 +170,78 @@ func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCa
 					},
 				},
 				Required: []string{"create", "update", "delete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_FileAction(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "add/modify/remove",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "An error/warning state",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reference to the linked resource",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When there are too many actions, a summary will be included",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"action"},
 			},
 		},
 	}
@@ -362,6 +437,49 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"healthy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When not healthy, requests will not be executed",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"started": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the sync job started",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Summary messages (will be shown to users)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"healthy"},
 			},
 		},
 	}
@@ -599,16 +717,16 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"merge\"` Merge the remote branch with the grafana instance\n - `\"pr\"` Update a pull request -- send preview images, links etc",
+							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"merge\"` Merge the remote branch with the grafana instance\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Make sure grafana looks like the the repository ?? should we have a different action for incremental? or use the hash?",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"export", "merge", "pr"},
+							Enum:        []interface{}{"export", "merge", "pr", "sync"},
 						},
 					},
-					"ref": {
+					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The branch of commit hash",
+							Description: "The hash for requested job (if known/appropriate) For a sync job, having a value will indicate",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -620,12 +738,6 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "int32",
 						},
 					},
-					"hash": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 					"url": {
 						SchemaProps: spec.SchemaProps{
 							Description: "URL to the originator (eg, PR URL)",
@@ -633,9 +745,16 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch of commit hash Deprecated: do we need this?",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"commits": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When we know the commits, these will be passed along",
+							Description: "When we know the commits, these will be passed along Deprecated: do we need this?",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -685,12 +804,6 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"errors": {
-						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -703,9 +816,25 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							},
 						},
 					},
+					"actions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "What did we do",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileAction"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileAction"},
 	}
 }
 
@@ -948,16 +1077,26 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 				Description: "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"currentGitCommit": {
+					"health": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The Git commit we're currently synced to. A non-empty value only matters if we use a git storage backend. Useful for no-clone Git clients and if cloning Git clients ever lose their clones.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "This will get updated with the current health status (and updated periodically)",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus"),
+						},
+					},
+					"sync": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sync information",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"),
 						},
 					},
 				},
+				Required: []string{"health", "sync"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"},
 	}
 }
 
@@ -1165,6 +1304,78 @@ func schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref common.Referen
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"error", "pending", "success", "working"},
+						},
+					},
+					"job": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The ID for the job that ran this sync",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"started": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the sync job started",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"finished": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the sync job finished",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"scheduled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the next sync check is scheduled",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Summary messages (will be shown to users)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository hash when the last sync ran",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"state"},
 			},
 		},
 	}

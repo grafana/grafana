@@ -28,6 +28,10 @@ type JobList struct {
 type JobAction string
 
 const (
+	// Make sure grafana looks like the the repository
+	// ?? should we have a different action for incremental? or use the hash?
+	JobActionSync JobAction = "sync"
+
 	// Update a pull request -- send preview images, links etc
 	JobActionPullRequest JobAction = "pr"
 
@@ -58,17 +62,22 @@ const (
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
-	// The branch of commit hash
-	Ref string `json:"ref,omitempty"`
+	// The hash for requested job (if known/appropriate)
+	// For a sync job, having a value will indicate
+	Hash string `json:"hash,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR   int    `json:"pr,omitempty"`
-	Hash string `json:"hash,omitempty"` // used in PR code... not sure it is necessary
+	PR int `json:"pr,omitempty"`
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
 
+	// The branch of commit hash
+	// Deprecated: do we need this?
+	Ref string `json:"ref,omitempty"`
+
 	// When we know the commits, these will be passed along
+	// Deprecated: do we need this?
 	Commits []CommitInfo `json:"commits,omitempty"`
 }
 
@@ -90,8 +99,29 @@ type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
 	Started  int64    `json:"started,omitempty"`
 	Finished int64    `json:"finished,omitempty"`
-	Message  string   `json:"message,omitempty"`
-	Errors   []string `json:"errors,omitempty"`
+	Message  []string `json:"message,omitempty"`
+
+	// What did we do
+	Actions []FileAction `json:"actions,omitempty"`
+}
+
+type FileAction struct {
+	// add/modify/remove
+	Action string `json:"action"`
+	Path   string `json:"path,omitempty"`
+	Ref    string `json:"ref,omitempty"`
+
+	// An error/warning state
+	Error string `json:"error,omitempty"`
+
+	// Reference to the linked resource
+	Group    string `json:"group,omitempty"`
+	Version  string `json:"version,omitempty"`
+	Resource string `json:"resource,omitempty"`
+	Name     string `json:"name,omitempty"`
+
+	// When there are too many actions, a summary will be included
+	Count int `json:"count,omitempty"`
 }
 
 // Filter ignorable files
