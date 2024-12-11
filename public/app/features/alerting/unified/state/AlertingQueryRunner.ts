@@ -1,17 +1,17 @@
 import { reject } from 'lodash';
-import { Observable, of, OperatorFunction, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, OperatorFunction, ReplaySubject, Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  dataFrameFromJSON,
   DataFrameJSON,
-  getDefaultTimeRange,
   LoadingState,
   PanelData,
+  TimeRange,
+  dataFrameFromJSON,
+  getDefaultTimeRange,
   preProcessPanelData,
   rangeUtil,
-  TimeRange,
   withLoadingIndicator,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
@@ -21,6 +21,7 @@ import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/pro
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { createDagFromQueries, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -51,29 +52,7 @@ export class AlertingQueryRunner {
 
   async run(queries: AlertQuery[], condition: string) {
     const empty = initialState(queries, LoadingState.Done);
-    const queriesToExclude: string[] = [];
-
-    // do not execute if one more of the queries are not runnable,
-    // for example not completely configured
-    for (const query of queries) {
-      const refId = query.model.refId;
-
-      if (isExpressionQuery(query.model)) {
-        continue;
-      }
-
-      const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
-      const skipRunningQuery =
-        dataSourceInstance instanceof DataSourceWithBackend &&
-        dataSourceInstance.filterQuery &&
-        !dataSourceInstance.filterQuery(query.model);
-
-      if (skipRunningQuery) {
-        queriesToExclude.push(refId);
-      }
-    }
-
-    const queriesToRun = reject(queries, (q) => queriesToExclude.includes(q.model.refId));
+    const queriesToRun = await this.prepareQueries(queries);
 
     if (queriesToRun.length === 0) {
       return this.subject.next(empty);
@@ -96,6 +75,38 @@ export class AlertingQueryRunner {
         this.subject.next(this.lastResult);
       },
     });
+  }
+
+  // this function will omit any invalid queries and all of its descendants from the list of queries
+  // to do this we will convert the list of queries into a DAG and walk the invalid node's output edges recursively
+  async prepareQueries(queries: AlertQuery[]) {
+    const queriesToExclude: string[] = [];
+
+    // convert our list of queries to a graph
+    const queriesGraph = createDagFromQueries(queries);
+
+    // find all invalid nodes and omit those and their child nodes from the final queries array
+    // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
+    for (const query of queries) {
+      const refId = query.model.refId;
+
+      if (isExpressionQuery(query.model)) {
+        continue;
+      }
+
+      const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
+      const skipRunningQuery =
+        dataSourceInstance instanceof DataSourceWithBackend &&
+        dataSourceInstance.filterQuery &&
+        !dataSourceInstance.filterQuery(query.model);
+
+      if (skipRunningQuery) {
+        const descendants = getDescendants(refId, queriesGraph);
+        queriesToExclude.push(refId, ...descendants);
+      }
+    }
+
+    return reject(queries, (q) => queriesToExclude.includes(q.model.refId));
   }
 
   cancel() {

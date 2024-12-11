@@ -14,11 +14,15 @@ const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"
 	TypeRenderService  string = "render"
+	TypeAnonymous      string = "anonymous"
 	TypeTeam           string = "team"
 	TypeRole           string = "role"
-	TypeFolder         string = "folder"
-	TypeResource       string = "resource"
-	TypeNamespace      string = "namespace"
+)
+
+const (
+	TypeFolder       string = "folder"
+	TypeResource     string = "resource"
+	TypeGroupResouce string = "group_resource"
 )
 
 const (
@@ -46,8 +50,8 @@ const (
 	RelationFolderResourceDelete string = "resource_" + RelationDelete
 )
 
-// RelationsNamespace are relations that can be added on type "namespace".
-var RelationsNamespace = []string{
+// RelationsGroupResource are relations that can be added on type "group_resource".
+var RelationsGroupResource = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
@@ -78,8 +82,8 @@ var RelationsFolder = append(
 	RelationDelete,
 )
 
-func IsNamespaceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsNamespace)
+func IsGroupResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsGroupResource)
 }
 
 func IsFolderResourceRelation(relation string) bool {
@@ -115,8 +119,8 @@ func NewFolderIdent(name string) string {
 	return fmt.Sprintf("%s:%s", TypeFolder, name)
 }
 
-func NewNamespaceResourceIdent(group, resource string) string {
-	return fmt.Sprintf("%s:%s", TypeNamespace, FormatGroupResource(group, resource))
+func NewGroupResourceIdent(group, resource string) string {
+	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource))
 }
 
 func FormatGroupResource(group, resource string) string {
@@ -169,11 +173,11 @@ func NewFolderResourceTuple(subject, relation, group, resource, folder string) *
 	}
 }
 
-func NewNamespaceResourceTuple(subject, relation, group, resource string) *openfgav1.TupleKey {
+func NewGroupResourceTuple(subject, relation, group, resource string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   NewNamespaceResourceIdent(group, resource),
+		Object:   NewGroupResourceIdent(group, resource),
 	}
 }
 
@@ -289,7 +293,7 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, &openfgav1.TupleKey{
 		User:     req.TupleKey.User,
 		Relation: RelationSetView,
-		Object: NewNamespaceResourceIdent(
+		Object: NewGroupResourceIdent(
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
 		),
