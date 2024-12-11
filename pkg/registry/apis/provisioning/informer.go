@@ -37,7 +37,7 @@ func (r *repositoryInformer) init() error {
 	ctx := identity.WithRequester(context.Background(), id)
 	fmt.Printf("Create a writing client with this ctx: %v", ctx)
 
-	xxx := provisioningInformer.NewRepositoryInformer(nil, "default", time.Second*60, nil)
+	xxx := provisioningInformer.NewRepositoryInformer(nil, namespace, time.Second*60, nil)
 
 	_, err = xxx.AddEventHandler(r)
 
@@ -54,7 +54,7 @@ func (r *repositoryInformer) OnAdd(obj any, isInInitialList bool) {
 		return
 	}
 
-	fmt.Printf("OnADD: %v / %v\n", isInInitialList, cfg)
+	fmt.Printf("OnADD: %v / %v\n", isInInitialList, cfg.Name)
 }
 
 // OnDelete implements cache.ResourceEventHandler.
@@ -65,7 +65,7 @@ func (r *repositoryInformer) OnDelete(obj any) {
 		return
 	}
 
-	fmt.Printf("OnDelete: %v / %v\n", cfg)
+	fmt.Printf("OnDelete: %v\n", cfg.Name)
 }
 
 // OnUpdate implements cache.ResourceEventHandler.
@@ -82,5 +82,5 @@ func (r *repositoryInformer) OnUpdate(oldObj any, newObj any) {
 		return
 	}
 
-	fmt.Printf("OnUpdate: %+v / %+v\n", cfg, oldCfg)
+	fmt.Printf("OnUpdate: %s / old=%v\n", cfg.Name, oldCfg.ResourceVersion)
 }
