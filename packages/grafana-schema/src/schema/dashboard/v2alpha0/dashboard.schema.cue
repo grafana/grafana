@@ -485,6 +485,7 @@ PanelSpec: {
   links: [...DataLink]
   data: QueryGroupKind
   vizConfig: VizConfigKind
+  displayMode?: "default" | "transparent"
 }
 
 PanelKind: {
