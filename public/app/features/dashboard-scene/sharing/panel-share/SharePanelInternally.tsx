@@ -44,11 +44,11 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
       <div className={styles.configurationContainer}>
         <ShareInternallyConfiguration
           useLockedTime={useLockedTime}
-          onToggleLockedTime={() => model.onToggleLockedTime()}
+          onToggleLockedTime={model.onToggleLockedTime}
           useShortUrl={useShortUrl}
-          onUrlShorten={() => model.onUrlShorten()}
+          onUrlShorten={model.onUrlShorten}
           selectedTheme={selectedTheme}
-          onChangeTheme={(t) => model.onThemeChange(t)}
+          onChangeTheme={model.onThemeChange}
           isLoading={isBuildUrlLoading}
         />
         <ClipboardButton
