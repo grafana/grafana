@@ -5,8 +5,8 @@ import {
   _createDagFromQueries,
   _getDescendants,
   _getOriginsOfRefId,
-  fingerprintGraph,
   fingerPrintQueries,
+  fingerprintGraph,
   parseRefsFromMathExpression,
 } from './dag';
 

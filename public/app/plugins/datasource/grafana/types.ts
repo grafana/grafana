@@ -2,7 +2,7 @@ import { DataFrameJSON } from '@grafana/data';
 import { LiveDataFilter } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { SearchQuery } from 'app/features/search/service';
+import { SearchQuery } from 'app/features/search/service/types';
 
 //----------------------------------------------
 // Query

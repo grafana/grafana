@@ -88,8 +88,3 @@ func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return service.GetOpenAPIDefinitions
 }
-
-// Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}

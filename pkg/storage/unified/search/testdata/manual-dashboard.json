@@ -73,7 +73,7 @@
         [
           "aa"
         ],
-        "xxx",
+        "zzz",
         3,
         0,
         null,
@@ -92,8 +92,32 @@
     },
     {
       "cells": [
-        "ns/g/dash/aaa",
+        "ns/g/dash/bbb",
         "bbb (dash)",
+        [
+          "aa"
+        ],
+        "xxx",
+        2,
+        0,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "dash",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/g/dash/aaa",
+        "aaa (dash)",
         [
           "aa",
           "bb"
@@ -110,30 +134,6 @@
         "apiVersion": "g",
         "metadata": {
           "name": "aaa",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
-        "ns/g/dash/bbb",
-        "aaa (dash)",
-        [
-          "aa"
-        ],
-        "xxx",
-        2,
-        0,
-        null,
-        null,
-        null
-      ],
-      "object": {
-        "kind": "dash",
-        "apiVersion": "g",
-        "metadata": {
-          "name": "bbb",
           "namespace": "ns",
           "creationTimestamp": null
         }

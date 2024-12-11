@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { RadioButtonGroup, Label, Tooltip, Icon } from '@grafana/ui';
+import { Icon, Label, RadioButtonGroup, Tooltip } from '@grafana/ui';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
