@@ -1,6 +1,7 @@
-import { BettererFileTest } from '@betterer/betterer';
-import { ESLint } from 'eslint';
-import { promises as fs } from 'fs';
+// @ts-check
+const { BettererFileTest } = require('@betterer/betterer');
+const fs = require('fs/promises');
+const { ESLint } = require('eslint');
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -12,7 +13,7 @@ const eslintPathsToIgnore = [
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
-export default {
+module.exports = {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
@@ -52,8 +53,10 @@ function countUndocumentedStories() {
 /**
  *  Generic regexp pattern matcher, similar to @betterer/regexp.
  *  The only difference is that the positions of the errors are not reported, as this may cause a lot of merge conflicts.
+ * @param {RegExp} pattern - The regular expression pattern to match.
+ * @param {string} issueMessage - The message to display for the issue.
  */
-function regexp(pattern: RegExp, issueMessage: string) {
+function regexp(pattern, issueMessage) {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
     await Promise.all(
       filePaths.map(async (filePath) => {
@@ -79,7 +82,7 @@ function countEslintErrors() {
     }
 
     const runner = new ESLint({
-      overrideConfigFile: './.betterer.eslint.config.js',
+      overrideConfigFile: './.betterer.eslint.config.cjs',
       warnIgnored: false,
     });
 

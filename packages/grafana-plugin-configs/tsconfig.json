@@ -3,7 +3,8 @@
     "jsx": "react-jsx",
     "alwaysStrict": true,
     "declaration": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "isolatedModules": true
   },
   "ts-node": {
     "compilerOptions": {
