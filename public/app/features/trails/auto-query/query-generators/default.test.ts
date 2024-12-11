@@ -1,7 +1,7 @@
 import { VAR_GROUP_BY_EXP } from '../../shared';
 import { AutoQueryDef, AutoQueryInfo } from '../types';
 
-import { getGeneralBaseQuery } from './common/baseQuery';
+import { getGeneralBaseQuery } from './baseQuery';
 import { generateQueries } from './default';
 
 describe('generateQueries', () => {

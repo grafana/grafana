@@ -1,5 +1,6 @@
-import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
-import { simpleGraphBuilder } from '../../graph-builders';
+import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
+import { simpleGraphBuilder } from '../graph-builders';
+import { AutoQueryInfo } from '../types';
 
 export type CommonQueryInfoParams = {
   description: string;
@@ -13,7 +14,7 @@ export function generateCommonAutoQueryInfo({
   mainQueryExpr,
   breakdownQueryExpr,
   unit,
-}: CommonQueryInfoParams) {
+}: CommonQueryInfoParams): AutoQueryInfo {
   const common = {
     title: `${VAR_METRIC_EXPR}`,
     unit,

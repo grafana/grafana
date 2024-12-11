@@ -2,7 +2,7 @@ import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
-import { getGeneralBaseQuery } from './common/baseQuery';
+import { getGeneralBaseQuery } from './baseQuery';
 import { generateCommonAutoQueryInfo } from './common/generator';
 
 export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryInfo {

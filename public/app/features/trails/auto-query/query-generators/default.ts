@@ -2,7 +2,7 @@ import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { AutoQueryInfo } from '../types';
 import { getPerSecondRateUnit, getUnit } from '../units';
 
-import { getGeneralBaseQuery } from './common/baseQuery';
+import { getGeneralBaseQuery } from './baseQuery';
 import { generateCommonAutoQueryInfo } from './common/generator';
 
 /** These suffixes will set rate to true */
