@@ -9,7 +9,7 @@ import (
 // When this code is changed, make sure to update the code generation.
 // As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
 // If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
-
+// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
