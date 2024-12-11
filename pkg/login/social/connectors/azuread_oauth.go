@@ -357,23 +357,23 @@ func validateFederatedCredentialAudience(info *social.OAuthInfo, requester ident
 			return nil
 		}
 	}
-	return ssosettings.ErrInvalidOAuthConfig("FederatedCredentialAudience is not a supported audience.")
+	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
 }
 
 func validateClientAuthentication(info *social.OAuthInfo, requester identity.Requester) error {
 	switch info.ClientAuthentication {
 	case social.ManagedIdentity:
 		if info.ManagedIdentityClientID == "" {
-			return ssosettings.ErrInvalidOAuthConfig("ManagedIdentityClientID is required for Managed Identity authentication.")
+			return ssosettings.ErrInvalidOAuthConfig("FIC managed identity client Id is required for Managed identity authentication.")
 		}
 		if info.FederatedCredentialAudience == "" {
-			return ssosettings.ErrInvalidOAuthConfig("FederatedCredentialAudience is required for Managed Identity authentication.")
+			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
 		}
 		return nil
 
 	case social.ClientSecretPost:
 		if info.ClientSecret == "" {
-			return ssosettings.ErrInvalidOAuthConfig("ClientSecret is required for ClientSecretPost authentication.")
+			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
 		}
 		return nil
 
