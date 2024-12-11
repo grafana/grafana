@@ -28,7 +28,9 @@ func (f UndoFunc) Chain(ctx context.Context, next UndoFunc) UndoFunc {
 }
 
 type FileInfo struct {
-	// Path to the file on disk
+	// Path to the file on disk.
+	// No leading or trailing slashes will be contained within.
+	// This uses '/' for separation. Use the 'path' package to interact with this.
 	Path string
 	// The raw bytes
 	Data []byte
@@ -44,6 +46,7 @@ type FileInfo struct {
 type FileTreeEntry struct {
 	// The path to the file from the base path given (if any).
 	// No leading or trailing slashes will be contained within.
+	// This uses '/' for separation. Use the 'path' package to interact with this.
 	Path string
 	// The hash for the file. Lower-case hex.
 	// Empty string if Blob is false.

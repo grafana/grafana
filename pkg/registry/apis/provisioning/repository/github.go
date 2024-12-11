@@ -921,7 +921,7 @@ func (r *githubRepository) previewPullRequest(ctx context.Context, logger *slog.
 func (r *githubRepository) previewURL(ref, filePath, pullRequestURL string) string {
 	// Copy the baseURL to modify path and query
 	baseURL := *r.baseURL
-	baseURL.Path = path.Join(baseURL.Path, "/admin/provisioning", r.Config().GetName(), "dashboard/preview", filePath)
+	baseURL = *baseURL.JoinPath("/admin/provisioning", r.Config().GetName(), "dashboard/preview", filePath)
 
 	query := baseURL.Query()
 	if ref != "" {

@@ -7,7 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -72,7 +72,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		message := query.Get("message")
 		logger = logger.With("url", r.URL.Path, "ref", ref, "message", message)
 
-		prefix := fmt.Sprintf("/%s/files/", name)
+		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
 			logger.DebugContext(r.Context(), "failed to find a file path in the URL")
@@ -80,7 +80,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		filePath := r.URL.Path[idx+len(prefix):]
+		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
 		if filePath == "" || strings.HasSuffix(filePath, "/") {
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
@@ -108,17 +108,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		if strings.Contains(filePath, "..") {
-			logger.DebugContext(r.Context(), "got a file path including '..'; failing the request for security reasons")
-			responder.Error(apierrors.NewBadRequest("invalid path navigation"))
-			return
-		}
-
-		switch filepath.Ext(filePath) {
+		switch path.Ext(filePath) {
 		case ".json", ".yaml", ".yml":
 			// ok
 		default:
-			logger.DebugContext(r.Context(), "got a file extension that was not JSON or YAML", "extension", filepath.Ext(filePath))
+			logger.DebugContext(r.Context(), "got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
 			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
 			return
 		}
