@@ -62,6 +62,11 @@ type APIGroupRouteProvider interface {
 	GetAPIRoutes() *APIRoutes
 }
 
+type APIGroupPostStartHookProvider interface {
+	// GetPostStartHooks returns a list of functions that will be called after the server has started
+	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
+}
+
 type APIGroupOptions struct {
 	Scheme           *runtime.Scheme
 	OptsGetter       generic.RESTOptionsGetter
