@@ -1,3 +1,4 @@
+import { faro } from '@grafana/faro-web-sdk';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 export async function getDiagnosticData() {
@@ -54,6 +55,7 @@ export async function getDiagnosticData() {
       userAgent: navigator?.userAgent,
       cookiesEnabled: navigator?.cookieEnabled,
       hasTouchScreen: navigator?.maxTouchPoints > 0,
+      ...(faro?.api?.getSession()?.id && { faroSessionId: faro?.api?.getSession()?.id }),
     },
   };
 }

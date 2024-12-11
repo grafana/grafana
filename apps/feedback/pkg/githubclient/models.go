@@ -18,7 +18,8 @@ type DiagnosticPlugin struct {
 }
 
 type DiagnosticBrowser struct {
-	UserAgent string `json:"userAgent"`
+	UserAgent     string  `json:"userAgent"`
+	FaroSessionID *string `json:"faroSessionId,omitempty"`
 }
 
 type DiagnosticUnifiedAlerting struct {

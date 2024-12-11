@@ -267,6 +267,9 @@ func (s *FeedbackWatcher) buildIssueBody(ctx context.Context, object *feedback.F
 			"Instance Debugging":   fmt.Sprintf("https://ops.grafana-ops.net/d/BqokFhx7z/hg-instance-debugging?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
 			"Instance Event Audit": fmt.Sprintf("https://ops.grafana-ops.net/d/77e353652d419aa4c832523ac060fb14/hg-instance-audit?from=%s&to=%s&timezone=utc&var-cluster=%s&var-slug=%s", from, to, cluster, slug),
 		}
+		if diagnostic.Browser.FaroSessionID != nil {
+			opsDashList["Instance Faro Session"] = fmt.Sprintf("https://ops.grafana-ops.net/a/grafana-kowalski-app/apps/2/sessions?var-Filters=session_id|=|%s", *diagnostic.Browser.FaroSessionID)
+		}
 	}
 
 	// Combine data into TemplateData struct
