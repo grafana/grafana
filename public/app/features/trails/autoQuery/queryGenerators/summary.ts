@@ -2,10 +2,11 @@ import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { AutoQueryContext, AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
+import { generateBaseQuery } from './baseQuery';
 import { generateCommonAutoQueryInfo } from './common';
 
 export function createSummaryMetricQueryDefs(context: AutoQueryContext): AutoQueryInfo {
-  const { metricParts, baseQuery } = context;
+  const { metricParts, isUtf8Metric } = context;
   const suffix = metricParts.at(-1);
   if (suffix !== 'sum') {
     throw new Error('createSummaryMetricQueryDefs is only to be used for metrics that end in "_sum"');
@@ -16,6 +17,7 @@ export function createSummaryMetricQueryDefs(context: AutoQueryContext): AutoQue
   const subMetric = metricParts.slice(0, -1).join('_');
 
   const description = `${subMetric} (average)`;
+  const baseQuery = generateBaseQuery({ isRateQuery: true, isUtf8Metric });
   const mainQueryExpr = createMeanExpr(`sum(${baseQuery})`, subMetric);
   const breakdownQueryExpr = createMeanExpr(`sum(${baseQuery})by(${VAR_GROUP_BY_EXP})`, subMetric);
 

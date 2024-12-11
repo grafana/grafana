@@ -20,7 +20,6 @@ export type VizBuilder = () => VizPanelBuilder<{}, {}>;
 
 export type AutoQueryContext = {
   metricParts: string[];
-  isRateQuery: boolean;
   isUtf8Metric: boolean;
-  baseQuery: string;
+  suffix: string;
 };

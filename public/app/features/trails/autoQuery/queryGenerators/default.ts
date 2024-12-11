@@ -1,5 +1,5 @@
 import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
-import { AutoQueryInfo } from '../types';
+import { AutoQueryContext, AutoQueryInfo } from '../types';
 import { getPerSecondRateUnit, getUnit } from '../units';
 
 import { generateBaseQuery } from './baseQuery';
@@ -19,7 +19,8 @@ function getAggLabel(agg: string): string {
   return aggLabels[agg] || agg;
 }
 
-export function createDefaultMetricQueryDefs(metricParts: string[], suffix: string): AutoQueryInfo {
+export function createDefaultMetricQueryDefs(context: AutoQueryContext): AutoQueryInfo {
+  const { metricParts, suffix, isUtf8Metric } = context;
   const unitSuffix = suffix === 'total' ? metricParts.at(-2) : suffix;
 
   // Determine query type and unit
@@ -28,7 +29,7 @@ export function createDefaultMetricQueryDefs(metricParts: string[], suffix: stri
   const unit = isRateQuery ? getPerSecondRateUnit(unitSuffix) : getUnit(unitSuffix);
 
   // Generate base query and descriptions
-  const baseQuery = generateBaseQuery({ isRateQuery });
+  const baseQuery = generateBaseQuery({ isRateQuery, isUtf8Metric });
   const aggregationDescription = `${getAggLabel(aggregation)}${isRateQuery ? ' per-second rate' : ''}`;
   const description = `${VAR_METRIC_EXPR} (${aggregationDescription})`;
 
