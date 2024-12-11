@@ -12,8 +12,8 @@ import (
 func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider) resource.ResourceClient {
 	return &federatedClient{
 		ResourceClient: base,
-		stats: &sqlStats{
-			sql: sql,
+		stats: &LegacyStatsGetter{
+			SQL: sql,
 		},
 	}
 }
@@ -22,7 +22,7 @@ type federatedClient struct {
 	resource.ResourceClient
 
 	// Local DB for folder stats query
-	stats *sqlStats
+	stats *LegacyStatsGetter
 }
 
 // Get the resource stats

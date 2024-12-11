@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type sqlStats struct {
-	// Local DB for folder stats query
-	sql legacysql.LegacyDatabaseProvider
+// Read stats from legacy SQL
+type LegacyStatsGetter struct {
+	SQL legacysql.LegacyDatabaseProvider
 }
 
-func (s *sqlStats) GetStats(ctx context.Context, in *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(in.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read namespace")
@@ -24,7 +24,7 @@ func (s *sqlStats) GetStats(ctx context.Context, in *resource.ResourceStatsReque
 		return nil, fmt.Errorf("invalid OrgID found in namespace")
 	}
 
-	helper, err := s.sql(ctx)
+	helper, err := s.SQL(ctx)
 	if err != nil {
 		return nil, err
 	}

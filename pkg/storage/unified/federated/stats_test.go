@@ -104,8 +104,8 @@ func TestDirectSQLStats(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	store := &sqlStats{
-		sql: legacysql.NewDatabaseProvider(db),
+	store := &LegacyStatsGetter{
+		SQL: legacysql.NewDatabaseProvider(db),
 	}
 
 	t.Run("GetStatsForFolder1", func(t *testing.T) {
