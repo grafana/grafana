@@ -62,7 +62,6 @@ interface TooltipContainerState {
   style: Partial<CSSProperties>;
   isHovering: boolean;
   isPinned: boolean;
-  dataLinks: LinkModel[];
   dismiss: () => void;
   contents?: React.ReactNode;
 }
@@ -94,7 +93,6 @@ function initState(): TooltipContainerState {
     style: { transform: '', pointerEvents: 'none' },
     isHovering: false,
     isPinned: false,
-    dataLinks: [],
     contents: null,
     plot: null,
     dismiss: () => {},
@@ -128,7 +126,7 @@ export const TooltipPlugin2 = ({
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss, dataLinks }, setState] = useReducer(
+  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(
     mergeState,
     null,
     initState
@@ -166,7 +164,6 @@ export const TooltipPlugin2 = ({
     let _isHovering = isHovering;
     let _someSeriesIdx = false;
     let _isPinned = isPinned;
-    let _dataLinks: LinkModel[] = dataLinks;
     let _style = style;
 
     let plotVisible = false;
@@ -197,6 +194,7 @@ export const TooltipPlugin2 = ({
     let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
+    let dataLinks: LinkModel[] = [];
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -250,7 +248,6 @@ export const TooltipPlugin2 = ({
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        dataLinks: _dataLinks,
         contents:
           _isHovering || selectedRange != null
             ? renderRef.current(
@@ -261,7 +258,7 @@ export const TooltipPlugin2 = ({
                 dismiss,
                 selectedRange,
                 viaSync,
-                _dataLinks
+                dataLinks
               )
             : null,
         dismiss,
@@ -276,8 +273,9 @@ export const TooltipPlugin2 = ({
       let prevIsPinned = _isPinned;
       _isPinned = false;
       _isHovering = false;
-      _dataLinks = [];
       _plot!.setCursor({ left: -10, top: -10 });
+      dataLinks = [];
+
       scheduleRender(prevIsPinned);
     };
 
@@ -335,7 +333,7 @@ export const TooltipPlugin2 = ({
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
             if (getDataLinks) {
-              _dataLinks = getDataLinks(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
+              dataLinks = getDataLinks(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
             }
 
             setTimeout(() => {
