@@ -156,8 +156,8 @@ export const GroupByField = (props: Props) => {
         })}
         {query.groupBy && query.groupBy.length > 0 && query.groupBy[0].tag && (
           <Alert title="" severity="warning" className={styles.notice}>
-            We recommend using Explore Traces instead. If you want to write your own TraceQL queries to replicate this
-            API, please check
+            The aggregate by feature is deprecated. We recommend using Explore Traces instead. If you want to write your
+            own TraceQL queries to replicate this API, please check
             <a
               href={
                 'https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/#deprecation-in-favor-of-traceql-metrics'
