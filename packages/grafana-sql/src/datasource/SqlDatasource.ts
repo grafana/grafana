@@ -30,7 +30,7 @@ import {
 } from '@grafana/runtime';
 
 import { ResponseParser } from '../ResponseParser';
-import { SqlQueryEditor } from '../components/QueryEditor';
+import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
@@ -63,7 +63,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     this.preconfiguredDatabase = settingsData.database ?? '';
     this.annotations = {
       prepareAnnotation: migrateAnnotation,
-      QueryEditor: SqlQueryEditor,
+      QueryEditor: SqlQueryEditorLazy,
     };
   }
 

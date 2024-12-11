@@ -121,6 +121,39 @@ func (b *backend) Stop(_ context.Context) error {
 	return nil
 }
 
+// GetResourceStats implements Backend.
+func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	defer span.End()
+
+	req := &sqlStatsRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Namespace:   namespace,
+		MinCount:    minCount, // not used in query... yet?
+	}
+
+	res := make([]resource.ResourceStats, 0, 100)
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStats, req)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			row := resource.ResourceStats{}
+			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.Count, &row.ResourceVersion)
+			if err != nil {
+				return err
+			}
+			if row.Count > int64(minCount) {
+				res = append(res, row)
+			}
+		}
+		return err
+	})
+
+	return res, err
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
@@ -137,43 +170,21 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	}
 }
 
-// Namespaces returns the list of unique namespaces in storage.
-func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
-	var namespaces []string
-
-	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
-		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
-		if err != nil {
-			return err
-		}
-		for rows.Next() {
-			var ns string
-			err = rows.Scan(&ns)
-			if err != nil {
-				return err
-			}
-			namespaces = append(namespaces, ns)
-		}
-
-		err = rows.Close()
-		return err
-	})
-
-	return namespaces, err
-}
-
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		// TODO: Set the Labels
-
+		folder := ""
+		if event.Object != nil {
+			folder = event.Object.GetFolder()
+		}
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
@@ -183,6 +194,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -225,12 +237,15 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		// TODO: Set the Labels
-
+		folder := ""
+		if event.Object != nil {
+			folder = event.Object.GetFolder()
+		}
 		// 1. Update resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      folder,
 			GUID:        guid,
 		})
 		if err != nil {
@@ -241,6 +256,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -285,8 +301,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	guid := uuid.New().String()
 
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		// TODO: Set the Labels
-
+		folder := ""
+		if event.Object != nil {
+			folder = event.Object.GetFolder()
+		}
 		// 1. delete from resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -301,6 +319,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -330,16 +349,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
 
 	readReq := &sqlResourceReadRequest{
-		SQLTemplate:  sqltemplate.New(b.dialect),
-		Request:      req,
-		readResponse: new(readResponse),
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request:     req,
+		Response:    NewReadResponse(),
 	}
 
 	sr := sqlResourceRead
@@ -348,21 +367,21 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 		sr = sqlResourceHistoryRead
 	}
 
-	var res *readResponse
+	var res *resource.BackendReadResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
 		return err
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.ReadResponse{
+		return &resource.BackendReadResponse{
 			Error: resource.NewNotFoundError(req.Key),
 		}
 	} else if err != nil {
-		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}
+		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
 	}
 
-	return &res.ReadResponse
+	return res
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
@@ -396,6 +415,7 @@ type listIter struct {
 	value     []byte
 	namespace string
 	name      string
+	folder    string
 }
 
 // ContinueToken implements resource.ListIterator.
@@ -403,19 +423,20 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
-// Error implements resource.ListIterator.
 func (l *listIter) Error() error {
 	return l.err
 }
 
-// Name implements resource.ListIterator.
 func (l *listIter) Name() string {
 	return l.name
 }
 
-// Namespace implements resource.ListIterator.
 func (l *listIter) Namespace() string {
 	return l.namespace
+}
+
+func (l *listIter) Folder() string {
+	return l.folder
 }
 
 // ResourceVersion implements resource.ListIterator.
@@ -432,7 +453,7 @@ func (l *listIter) Value() []byte {
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
 		l.offset++
-		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.value)
+		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.folder, &l.value)
 		return true
 	}
 	return false
@@ -666,7 +687,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 		nextRV = rec.ResourceVersion
 		prevRV := rec.PreviousRV
 		if prevRV == nil {
-			*prevRV = int64(0)
+			prevRV = new(int64)
 		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
@@ -680,6 +701,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 				Type:       resource.WatchEvent_Type(rec.Action),
 				PreviousRV: *prevRV,
 			},
+			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}

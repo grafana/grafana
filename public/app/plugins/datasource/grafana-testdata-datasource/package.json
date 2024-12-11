@@ -2,28 +2,28 @@
   "name": "@grafana-plugins/grafana-testdata-datasource",
   "description": "Generates test data in different forms",
   "private": true,
-  "version": "11.4.0-pre",
+  "version": "11.5.0-pre",
   "dependencies": {
-    "@emotion/css": "11.13.4",
-    "@grafana/data": "11.4.0-pre",
-    "@grafana/experimental": "2.1.2",
-    "@grafana/runtime": "11.4.0-pre",
-    "@grafana/schema": "11.4.0-pre",
-    "@grafana/ui": "11.4.0-pre",
+    "@emotion/css": "11.13.5",
+    "@grafana/data": "11.5.0-pre",
+    "@grafana/experimental": "2.1.4",
+    "@grafana/runtime": "11.5.0-pre",
+    "@grafana/schema": "11.5.0-pre",
+    "@grafana/ui": "11.5.0-pre",
     "d3-random": "^3.0.1",
     "lodash": "4.17.21",
     "micro-memoize": "^4.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-select": "5.8.2",
+    "react-select": "5.8.3",
     "react-use": "17.5.1",
     "rxjs": "7.8.1",
     "tslib": "2.7.0",
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@grafana/e2e-selectors": "11.4.0-pre",
-    "@grafana/plugin-configs": "11.4.0-pre",
+    "@grafana/e2e-selectors": "11.5.0-pre",
+    "@grafana/plugin-configs": "11.5.0-pre",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.0.1",
     "@testing-library/user-event": "14.5.2",
@@ -46,5 +46,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.5.3"
 }

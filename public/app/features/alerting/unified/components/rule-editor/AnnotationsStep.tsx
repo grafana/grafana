@@ -6,15 +6,16 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
-import { DashboardModel } from '../../../../dashboard/state';
+import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
+import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, getVisualPanels, PanelDTO } from './DashboardPicker';
+import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useDashboardQuery } from './useDashboardQuery';
@@ -31,6 +32,7 @@ const AnnotationsStep = () => {
     setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
+  const type = watch('type');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
@@ -104,10 +106,12 @@ const AnnotationsStep = () => {
       </Stack>
     );
   }
+  // when using Grafana managed rules, the annotations step is the 6th step, as we have an additional step for the configure labels and notifications
+  const step = isGrafanaManagedRuleByType(type) ? 6 : 5;
 
   return (
     <RuleEditorSection
-      stepNo={5}
+      stepNo={step}
       title={t('alerting.annotations.title', 'Configure notification message')}
       description={getAnnotationsSectionDescription()}
       fullWidth

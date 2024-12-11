@@ -43,6 +43,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Type:       resource.WatchEvent_ADDED,
 							PreviousRV: 123,
 						},
+						Folder: "fldr",
 					},
 				},
 			},
@@ -59,6 +60,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Name:      "name",
 							},
 						},
+						Folder: "fldr",
 					},
 				},
 			},
@@ -75,7 +77,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Name:      "name",
 							},
 						},
-						readResponse: new(readResponse),
+						Response: NewReadResponse(),
 					},
 				},
 			},
@@ -143,9 +145,14 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Request: &resource.ReadRequest{
 							ResourceVersion: 123,
-							Key:             &resource.ResourceKey{},
+							Key: &resource.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
 						},
-						readResponse: new(readResponse),
+						Response: NewReadResponse(),
 					},
 				},
 			},
@@ -173,6 +180,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							},
 							PreviousRV: 1234,
 						},
+						Folder: "fldr",
 					},
 				},
 			},
@@ -208,6 +216,33 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						ResourceVersion: int64(12354),
+					},
+				},
+			},
+
+			sqlResourceStats: {
+				{
+					Name: "query",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "query-namespace",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "query-folder",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folder:      "folder",
+						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
 			},

@@ -281,7 +281,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
-              <LogLabels labels={processedRow.uniqueLabels} />
+              <LogLabels labels={processedRow.uniqueLabels} addTooltip={false} />
             </td>
           )}
           {displayedFields && displayedFields.length > 0 ? (
@@ -299,6 +299,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              logRowMenuIconsBefore={logRowMenuIconsBefore}
+              logRowMenuIconsAfter={logRowMenuIconsAfter}
             />
           ) : (
             <LogRowMessage

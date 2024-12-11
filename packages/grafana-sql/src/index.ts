@@ -17,7 +17,7 @@ export { ConnectionLimits } from './components/configuration/ConnectionLimits';
 export { Divider } from './components/configuration/Divider';
 export { TLSSecretsConfig } from './components/configuration/TLSSecretsConfig';
 export { useMigrateDatabaseFields } from './components/configuration/useMigrateDatabaseFields';
-export { SqlQueryEditor } from './components/QueryEditor';
+export { SqlQueryEditorLazy } from './components/QueryEditorLazy';
 export type { QueryHeaderProps } from './components/QueryHeader';
 export { createSelectClause, haveColumns } from './utils/sql.utils';
 export { applyQueryDefaults } from './defaults';

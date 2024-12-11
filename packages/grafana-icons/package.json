@@ -1,6 +1,6 @@
 {
   "name": "@grafana/saga-icons",
-  "version": "11.4.0-pre",
+  "version": "11.5.0-pre",
   "private": true,
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
@@ -34,7 +34,7 @@
     "build": "yarn generate && rollup -c rollup.config.ts --configPlugin esbuild"
   },
   "devDependencies": {
-    "@babel/core": "7.25.9",
+    "@babel/core": "7.26.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-typescript": "^12.1.0",
