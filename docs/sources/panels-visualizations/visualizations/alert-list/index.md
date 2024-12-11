@@ -105,6 +105,7 @@ These options allow you to limit alerts shown to only those that match the query
 | Alert instance label | Filter alert instances using [label](ref:alert-label) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
 | Datasource | Filter alerts from the selected data source. |
 | Folder | Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed. |
+| Show alerts with 0 instances | Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. Because these rules have no instances, they remain hidden if the **Alert instance label** filter is configured. |
 
 ### Alert state filter options
 

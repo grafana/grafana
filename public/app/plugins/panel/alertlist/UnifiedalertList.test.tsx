@@ -113,6 +113,7 @@ const defaultOptions: UnifiedAlertListOptions = {
   alertInstanceLabelFilter: '',
   datasource: 'grafana',
   viewMode: ViewMode.List,
+  showInactiveAlerts: false,
 };
 
 const defaultProps: PanelProps<UnifiedAlertListOptions> = {
