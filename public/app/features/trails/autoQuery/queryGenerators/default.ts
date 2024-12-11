@@ -3,7 +3,7 @@ import { AutoQueryInfo } from '../types';
 import { getPerSecondRateUnit, getUnit } from '../units';
 
 import { getGeneralBaseQuery } from './baseQuery';
-import { generateCommonAutoQueryInfo } from './common-generator';
+import { generateCommonAutoQueryInfo } from './common';
 
 /** These suffixes will set rate to true */
 const RATE_SUFFIXES = new Set(['count', 'total']);

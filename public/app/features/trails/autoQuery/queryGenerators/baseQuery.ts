@@ -8,4 +8,3 @@ export function getGeneralBaseQuery(rate: boolean) {
     ? `${GENERAL_RATE_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`
     : `${GENERAL_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`;
 }
-

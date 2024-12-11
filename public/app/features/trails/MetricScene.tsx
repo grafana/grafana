@@ -23,8 +23,8 @@ import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from '
 import { buildRelatedLogsScene } from './RelatedLogs/RelatedLogsScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
-import { getAutoQueriesForMetric } from './auto-query/getAutoQueriesForMetric';
-import { AutoQueryDef, AutoQueryInfo } from './auto-query/types';
+import { getAutoQueriesForMetric } from './autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef, AutoQueryInfo } from './autoQuery/types';
 import { reportExploreMetrics } from './interactions';
 import {
   ActionViewDefinition,

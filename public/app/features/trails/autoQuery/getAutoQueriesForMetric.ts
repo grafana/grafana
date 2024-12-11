@@ -1,6 +1,6 @@
-import { createDefaultMetricQueryDefs } from './query-generators/default';
-import { createHistogramMetricQueryDefs } from './query-generators/histogram';
-import { createSummaryMetricQueryDefs } from './query-generators/summary';
+import { createDefaultMetricQueryDefs } from './queryGenerators/default';
+import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
+import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
 import { AutoQueryInfo } from './types';
 
 export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {

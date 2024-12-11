@@ -3,7 +3,7 @@ import { AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
 import { getGeneralBaseQuery } from './baseQuery';
-import { generateCommonAutoQueryInfo } from './common-generator';
+import { generateCommonAutoQueryInfo } from './common';
 
 export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryInfo {
   const suffix = metricParts.at(-1);

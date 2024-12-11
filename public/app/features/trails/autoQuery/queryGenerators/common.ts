@@ -1,5 +1,5 @@
 import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
-import { simpleGraphBuilder } from '../graph-builders';
+import { simpleGraphBuilder } from '../graphBuilders';
 import { AutoQueryInfo } from '../types';
 
 export type CommonQueryInfoParams = {
@@ -35,7 +35,7 @@ export function generateCommonAutoQueryInfo({
   };
 
   const preview = {
-    ...main,
+    ...common,
     title: `${VAR_METRIC_EXPR}`,
     queries: [{ ...mainQuery, legendFormat: description }],
     vizBuilder: () => simpleGraphBuilder(preview),
