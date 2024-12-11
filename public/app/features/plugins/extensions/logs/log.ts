@@ -15,6 +15,8 @@ export type ExtensionsLogItem = {
 };
 
 const channelName = 'ui-extension-logs';
+const logsNumberLimit = 1000;
+const logsRetentionTime = 1000 * 60 * 10;
 
 export class ExtensionsLog {
   private baseLabels: Labels | undefined;
@@ -24,7 +26,7 @@ export class ExtensionsLog {
   constructor(baseLabels?: Labels, subject?: ReplaySubject<ExtensionsLogItem>, channel?: BroadcastChannel) {
     this.baseLabels = baseLabels;
     this.channel = channel ?? new BroadcastChannel(channelName);
-    this.subject = subject ?? new ReplaySubject<ExtensionsLogItem>(1000, 1000 * 60 * 10);
+    this.subject = subject ?? new ReplaySubject<ExtensionsLogItem>(logsNumberLimit, logsRetentionTime);
 
     if (!channel) {
       this.channel.onmessage = (msg: MessageEvent<ExtensionsLogItem>) => this.subject.next(msg.data);
