@@ -69,7 +69,7 @@ func newClient(opts options.StorageOptions,
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(opts.DataPath, "grafana-apiserver")
+			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
 		}
 		bucket, err := fileblob.OpenBucket(filepath.Join(opts.DataPath, "resource"), &fileblob.Options{
 			CreateDir: true,
