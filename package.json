@@ -446,7 +446,7 @@
     ]
   },
   "engines": {
-    "node": ">= 20"
+    "node": ">= 22"
   },
   "packageManager": "yarn@4.5.3",
   "dependenciesMeta": {
