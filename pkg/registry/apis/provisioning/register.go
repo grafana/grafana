@@ -74,7 +74,7 @@ type ProvisioningAPIBuilder struct {
 func NewProvisioningAPIBuilder(
 	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
-	webhookSecreteKey string,
+	webhookSecretKey string,
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
@@ -85,7 +85,7 @@ func NewProvisioningAPIBuilder(
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
-		webhookSecretKey:  webhookSecreteKey,
+		webhookSecretKey:  webhookSecretKey,
 		client:            resources.NewFactory(identities),
 		features:          features,
 		ghFactory:         ghFactory,
