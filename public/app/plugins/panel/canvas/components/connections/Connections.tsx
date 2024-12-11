@@ -208,8 +208,8 @@ export class Connections {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = event.pageX - (parentBoundingRect.x ?? 0);
+    const y = event.pageY - (parentBoundingRect.y ?? 0);
 
     this.connectionLine.setAttribute('x2', `${x / transformScale}`);
     this.connectionLine.setAttribute('y2', `${y / transformScale}`);
@@ -328,8 +328,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -483,8 +483,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
