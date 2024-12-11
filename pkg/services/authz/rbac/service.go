@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
@@ -120,13 +121,19 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]accesscontrol.Permission, error) {
-	id, err := s.identityStore.GetUserInternalID(ctx, req.Namespace, legacy.GetUserInternalIDQuery{UID: req.UserUID})
+	var userIDQuery store.UserIdentifierQuery
+	// Assume that numeric UID is user ID
+	if userID, err := strconv.Atoi(req.UserUID); err == nil {
+		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
+	} else {
+		userIDQuery = store.UserIdentifierQuery{UserUID: req.UserUID}
+	}
+	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
 	if err != nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
-	userID := id.ID
 
-	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userID})
+	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
 	if err != nil {
 		return nil, fmt.Errorf("could not get basic roles: %w", err)
 	}
@@ -135,7 +142,7 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 	var index int64
 	for {
 		teamQuery := legacy.ListUserTeamsQuery{
-			UserUID: req.UserUID,
+			UserUID: userIdentifiers.UID,
 			Pagination: common.Pagination{
 				Limit:    50,
 				Continue: index,
@@ -155,7 +162,7 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 	}
 
 	userPermQuery := store.PermissionsQuery{
-		UserID:        userID,
+		UserID:        userIdentifiers.ID,
 		Action:        req.Action,
 		TeamIDs:       teamIDs,
 		Role:          basicRoles.Role,

@@ -15,6 +15,7 @@ var (
 
 	sqlUserPerms       = mustTemplate("permission_query.sql")
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
+	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -22,6 +23,25 @@ func mustTemplate(filename string) *template.Template {
 		return t
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
+type getUserIdentifiers struct {
+	sqltemplate.SQLTemplate
+	Query *UserIdentifierQuery
+
+	UserTable string
+}
+
+func (r getUserIdentifiers) Validate() error {
+	return nil
+}
+
+func newGetUserIdentifiers(sql *legacysql.LegacyDatabaseHelper, q *UserIdentifierQuery) getUserIdentifiers {
+	return getUserIdentifiers{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       q,
+		UserTable:   sql.Table("user"),
+	}
 }
 
 type getBasicRolesQuery struct {

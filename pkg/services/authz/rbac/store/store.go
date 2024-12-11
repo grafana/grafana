@@ -56,6 +56,40 @@ func (s *Store) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo,
 	return perms, nil
 }
 
+func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetUserIdentifiers(sql, &query)
+	q, err := sqltemplate.Execute(sqlUserIdentifiers, req)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("no basic roles found for the user")
+	}
+
+	var userIDs UserIdentifiers
+	if err := rows.Scan(&userIDs.ID, &userIDs.UID); err != nil {
+		return nil, err
+	}
+
+	return &userIDs, nil
+}
+
 func (s *Store) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {

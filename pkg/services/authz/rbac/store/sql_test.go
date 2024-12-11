@@ -17,6 +17,12 @@ func TestIdentityQueries(t *testing.T) {
 		},
 	}
 
+	getIdentifiers := func(q *UserIdentifierQuery) sqltemplate.SQLTemplate {
+		v := newGetUserIdentifiers(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	getBasicRoles := func(q *BasicRoleQuery) sqltemplate.SQLTemplate {
 		v := newGetBasicRoles(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -32,6 +38,20 @@ func TestIdentityQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlUserIdentifiers: {
+				{
+					Name: "id_specified",
+					Data: getIdentifiers(&UserIdentifierQuery{
+						UserID: 1,
+					}),
+				},
+				{
+					Name: "uid_specified",
+					Data: getIdentifiers(&UserIdentifierQuery{
+						UserUID: "some_uid",
+					}),
+				},
+			},
 			sqlQueryBasicRoles: {
 				{
 					Name: "basic_roles",
