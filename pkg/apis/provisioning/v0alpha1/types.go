@@ -143,7 +143,7 @@ type HealthStatus struct {
 	Healthy bool `json:"healthy"`
 
 	// When the sync job started
-	Checked int64 `json:"started,omitempty"`
+	Checked int64 `json:"checked,omitempty"`
 
 	// Summary messages (will be shown to users)
 	Message []string `json:"message,omitempty"`

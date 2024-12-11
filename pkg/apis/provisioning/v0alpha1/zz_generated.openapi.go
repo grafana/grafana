@@ -456,7 +456,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"started": {
+					"checked": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When the sync job started",
 							Type:        []string{"integer"},

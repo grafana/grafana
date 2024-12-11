@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
@@ -171,6 +173,30 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	go func() {
+		// Wait 6 seconds???
+		time.Sleep(6 * time.Second)
+
+		// FIXME... hardcoded to default! (will fail in cloud)
+		namespace := "default"
+		id, err := b.identities.WorkerIdentity(context.Background(), namespace)
+		if err != nil {
+			b.logger.Error("error running health checker", "err", err)
+			return
+		}
+		ctx := identity.WithRequester(context.Background(), id)
+		client, _, _ := b.client.New(namespace)
+		health := healthChecker{
+			getter: b,
+			logger: slog.Default().With("logger", "repo-health-checker"),
+			client: client.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource()),
+		}
+		err = health.start(ctx)
+		if err != nil {
+			b.logger.Error("error running health checker", "err", err)
+		}
+	}()
+
 	b.jobs.Register(&GithubWorker{
 		getter:         b,
 		logger:         b.logger.With("worker", "github"),
@@ -314,13 +340,14 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 		return nil, fmt.Errorf("get old repository: %w", err)
 	}
 
+	// Should this be an error -- eg, block the update, or change the health status?
 	if err := b.ensureRepositoryFolderExists(ctx, objCfg); err != nil {
 		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
 	}
 
 	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
-		return nil, err
+		b.logger.Warn("error in begin update", "err", err)
 	}
 
 	return func(ctx context.Context, success bool) {
@@ -437,7 +464,6 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 			r.Spec.GitHub.WebhookSecret = b.generateWebhookSecret(r.Spec.GitHub.Token)
 		}
 	}
-
 	return nil
 }
 
