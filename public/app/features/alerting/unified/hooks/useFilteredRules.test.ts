@@ -2,7 +2,6 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import {
-  MockDataSourceSrv,
   getCloudRule,
   mockAlertQuery,
   mockCombinedCloudRuleNamespace,

@@ -17,7 +17,6 @@ import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import {
-  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
   mockRulerAlertingRule,
