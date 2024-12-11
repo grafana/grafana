@@ -47,6 +47,8 @@ export function addPageBanner(fn: ComponentType) {
 }
 
 export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
+  private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
+
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {};
@@ -56,6 +58,14 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     await loadAndInitAngularIfEnabled();
     this.setState({ ready: true });
     $('.preloader').remove();
+
+    // clear any old icon caches
+    const cacheKeys = await window.caches.keys();
+    for (const key of cacheKeys) {
+      if (key.startsWith('grafana-icon-cache') && key !== this.iconCacheID) {
+        window.caches.delete(key);
+      }
+    }
   }
 
   renderRoute = (route: RouteDescriptor) => {
@@ -99,7 +109,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         <ErrorBoundaryAlert style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
-              <CacheProvider>
+              <CacheProvider name={this.iconCacheID}>
                 <KBarProvider
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
