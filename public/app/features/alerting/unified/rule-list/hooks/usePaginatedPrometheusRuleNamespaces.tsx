@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';

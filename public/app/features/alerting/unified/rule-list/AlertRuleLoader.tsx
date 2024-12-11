@@ -4,7 +4,7 @@ import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/u
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { fromRule, equal, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
+import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
