@@ -1,6 +1,5 @@
 import { Decorator } from '@storybook/react';
 import * as React from 'react';
-import CacheProvider from 'react-inlinesvg/provider';
 import { useDarkMode } from 'storybook-dark-mode';
 
 import { createTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
@@ -28,12 +27,10 @@ const ThemeableStory = ({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <CacheProvider>
-        <GlobalStyles />
+      <GlobalStyles />
 
-        <style>{css}</style>
-        {children}
-      </CacheProvider>
+      <style>{css}</style>
+      {children}
     </ThemeContext.Provider>
   );
 };
