@@ -67,6 +67,7 @@ type ProvisioningAPIBuilder struct {
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
+	informer          *repositoryInformer
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -83,7 +84,7 @@ func NewProvisioningAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
-	return &ProvisioningAPIBuilder{
+	builder := &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
@@ -99,6 +100,13 @@ func NewProvisioningAPIBuilder(
 		},
 		jobs: jobs.NewJobQueue(50), // in memory for now
 	}
+
+	builder.informer = &repositoryInformer{
+		configProvider: configProvider,
+		getter:         builder,
+	}
+
+	return builder
 }
 
 func RegisterAPIService(
@@ -482,9 +490,9 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 	return provisioning.GetOpenAPIDefinitions
 }
 
-func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: this is where we could inject a non-k8s managed handler... webhook maybe?
-	return nil
+func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	fmt.Printf("TODO... post hook: %+v\n", b.informer)
+	return nil, nil
 }
 
 func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -521,7 +529,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
-					"application/json": &spec3.MediaType{
+					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &repoSchema,
 						},

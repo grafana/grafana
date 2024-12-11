@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	provisioningInformer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 var (
@@ -14,13 +15,18 @@ var (
 )
 
 type repositoryInformer struct {
-	// TODO... other dependencies
+	configProvider apiserver.RestConfigProvider
+	getter         RepoGetter
+
+	// client to write???
 }
 
 func (r *repositoryInformer) init() error {
 	xxx := provisioningInformer.NewRepositoryInformer(nil, "default", time.Second*60, nil)
 
 	_, err := xxx.AddEventHandler(r)
+
+	// TODO! we also want a client that can write status
 
 	return err
 }
