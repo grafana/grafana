@@ -1,6 +1,6 @@
 import { CombinedRule, GrafanaRulesSourceSymbol, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
-import { getDatasourceAPIUid, getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { isGrafanaRulerRule } from './rules';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {

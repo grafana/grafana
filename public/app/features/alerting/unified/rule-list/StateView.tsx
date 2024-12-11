@@ -9,8 +9,8 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '..//hooks/usePagination';
 import { calculateTotalInstances } from '../components/rule-viewer/RuleViewer';
-import { groupIdentifier } from '../utils/groupIdentifier';
 import { ListSection } from '../rule-list/components/ListSection';
+import { groupIdentifier } from '../utils/groupIdentifier';
 import { createViewLink } from '../utils/misc';
 import { hashRule } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';

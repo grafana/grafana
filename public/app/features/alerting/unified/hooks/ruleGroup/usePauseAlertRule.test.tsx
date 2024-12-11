@@ -6,12 +6,12 @@ import { byRole, byText } from 'testing-library-selector';
 import { AccessControlAction } from 'app/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { groupIdentifier } from '../../utils/groupIdentifier';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { SerializeState } from '../useAsync';
 
 import { usePauseRuleInGroup } from './usePauseAlertRule';
