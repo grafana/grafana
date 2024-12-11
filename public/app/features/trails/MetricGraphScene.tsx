@@ -14,7 +14,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 
 import { MetricActionBar } from './MetricScene';
-import { AutoVizPanel } from './auto-query/AutoVizPanel';
+import { AutoVizPanel } from './auto-query/components/AutoVizPanel';
 import { getTrailSettings } from './utils';
 
 export const MAIN_PANEL_MIN_HEIGHT = 280;
