@@ -1,11 +1,6 @@
-import { VAR_OTEL_JOIN_QUERY_EXPR } from '../shared';
+import { VAR_FILTERS_EXPR, VAR_FILTERS_WITH_CURLY_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../shared';
 
-import {
-  GENERAL_BASE_QUERY,
-  GENERAL_RATE_BASE_QUERY,
-  getAutoQueriesForMetric,
-  getGeneralBaseQuery,
-} from './getAutoQueriesForMetric';
+import { generateBaseQuery, getAutoQueriesForMetric } from './getAutoQueriesForMetric';
 
 function expandExpr(shortenedExpr: string) {
   return shortenedExpr.replace('...', '${metric}{${filters}}');
@@ -379,24 +374,54 @@ describe('getAutoQueriesForMetric', () => {
   });
 });
 
-describe('getGeneralBaseQuery', () => {
-  it('should return the rate-based query when rate is true', () => {
-    const result = getGeneralBaseQuery(true);
-    expect(result).toBe(`${GENERAL_RATE_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`);
+describe('generateBaseQuery', () => {
+  it('should generate a non-rate non-UTF8 base query', () => {
+    expect(generateBaseQuery({ isRateQuery: false, isUtf8Metric: false })).toBe(
+      `${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR} ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
   });
 
-  it('should return the base query when rate is false', () => {
-    const result = getGeneralBaseQuery(false);
-    expect(result).toBe(`${GENERAL_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`);
+  it('should generate a rate non-UTF8 base query', () => {
+    expect(generateBaseQuery({ isRateQuery: true, isUtf8Metric: false })).toBe(
+      `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
   });
 
-  it('should handle edge cases gracefully', () => {
-    // Test with explicit boolean true
-    const resultTrue = getGeneralBaseQuery(true);
-    expect(resultTrue).toBe(`${GENERAL_RATE_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`);
+  it('should generate a non-rate UTF8 base query', () => {
+    expect(generateBaseQuery({ isRateQuery: false, isUtf8Metric: true })).toBe(
+      `{${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}} ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
+  });
 
-    // Test with explicit boolean false
-    const resultFalse = getGeneralBaseQuery(false);
-    expect(resultFalse).toBe(`${GENERAL_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`);
+  it('should generate a rate UTF8 base query', () => {
+    expect(generateBaseQuery({ isRateQuery: true, isUtf8Metric: true })).toBe(
+      `rate({${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
+  });
+
+  it('should generate a grouped non-UTF8 rate query', () => {
+    expect(
+      generateBaseQuery({
+        isRateQuery: true,
+        isUtf8Metric: false,
+        groupings: ['le', 'job'],
+        aggregation: 'sum',
+      })
+    ).toBe(
+      `sum by(le, job) (sum (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval]))) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
+  });
+
+  it('should generate a grouped UTF8 rate query', () => {
+    expect(
+      generateBaseQuery({
+        isRateQuery: true,
+        isUtf8Metric: true,
+        groupings: ['le', 'instance'],
+        aggregation: 'avg',
+      })
+    ).toBe(
+      `sum by(le, instance) (avg (rate({${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}}[$__rate_interval]))) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+    );
   });
 });

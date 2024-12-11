@@ -1,4 +1,10 @@
-import { VAR_METRIC_EXPR, VAR_FILTERS_WITH_CURLY_EXPR, VAR_OTEL_JOIN_QUERY_EXPR, VAR_GROUP_BY_EXP } from '../shared';
+import {
+  VAR_METRIC_EXPR,
+  VAR_FILTERS_WITH_CURLY_EXPR,
+  VAR_OTEL_JOIN_QUERY_EXPR,
+  VAR_GROUP_BY_EXP,
+  VAR_FILTERS_EXPR,
+} from '../shared';
 
 import { generateCommonAutoQueryInfo } from './queryGenerators/common';
 import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
@@ -6,34 +12,65 @@ import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
 import { AutoQueryContext, AutoQueryInfo } from './types';
 import { getPerSecondRateUnit, getUnit } from './units';
 
-export const GENERAL_BASE_QUERY = `${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}`;
-export const GENERAL_RATE_BASE_QUERY = `rate(${GENERAL_BASE_QUERY}[$__rate_interval])`;
+const BASE_QUERY_TEMPLATE = `${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}`;
+const RATE_BASE_QUERY_TEMPLATE = `rate(${BASE_QUERY_TEMPLATE}[$__rate_interval])`;
 
-export function getGeneralBaseQuery(isRateQuery: boolean) {
-  return isRateQuery
-    ? `${GENERAL_RATE_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`
-    : `${GENERAL_BASE_QUERY} ${VAR_OTEL_JOIN_QUERY_EXPR}`;
+const BASE_QUERY_UTF8_METRIC_TEMPLATE = `{${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}}`;
+const RATE_BASE_QUERY_UTF8_METRIC_TEMPLATE = `rate(${BASE_QUERY_UTF8_METRIC_TEMPLATE}[$__rate_interval])`;
+
+const RATE_SUFFIXES = new Set(['count', 'total']);
+const UNSUPPORTED_SUFFIXES = new Set(['sum', 'bucket']);
+const SPECIFIC_AGGREGATIONS_FOR_SUFFIX: Record<string, string> = {
+  count: 'sum',
+  total: 'sum',
+};
+const aggLabels: Record<string, string> = {
+  avg: 'average',
+  sum: 'overall',
+};
+
+export function generateBaseQuery({
+  isRateQuery = false,
+  groupings = [],
+  aggregation = '',
+  isUtf8Metric = false,
+}: {
+  isRateQuery?: boolean;
+  groupings?: string[];
+  aggregation?: string;
+  isUtf8Metric?: boolean;
+}): string {
+  // Determine base query template
+  const baseQuery = isUtf8Metric
+    ? isRateQuery
+      ? RATE_BASE_QUERY_UTF8_METRIC_TEMPLATE
+      : BASE_QUERY_UTF8_METRIC_TEMPLATE
+    : isRateQuery
+      ? RATE_BASE_QUERY_TEMPLATE
+      : BASE_QUERY_TEMPLATE;
+
+  // Apply aggregation (e.g., sum, avg) if provided
+  const aggregatedQuery = aggregation ? `${aggregation} (${baseQuery})` : baseQuery;
+
+  // Apply groupings (e.g., `sum by(le, instance)`)
+  if (groupings.length > 0) {
+    return `sum by(${groupings.join(', ')}) (${aggregatedQuery}) ${VAR_OTEL_JOIN_QUERY_EXPR}`;
+  }
+
+  return `${aggregatedQuery} ${VAR_OTEL_JOIN_QUERY_EXPR}`;
 }
 
 export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
   const metricParts = metric.split('_');
   const suffix = metricParts.at(-1);
+  const unitSuffix = suffix === 'total' ? metricParts.at(-2) : suffix;
 
-  const ctx: AutoQueryContext = {
-    metricParts,
-    isRateQuery: false,
-    isUtf8Metric: false,
-    baseQuery: '',
-  };
-
+  // Handle special cases: summary and histogram
   if (suffix === 'sum') {
-    ctx.isRateQuery = true;
-    ctx.baseQuery = getGeneralBaseQuery(ctx.isRateQuery);
-    return createSummaryMetricQueryDefs(ctx);
+    return createSummaryMetricQueryDefs(createContext(metricParts, { isRateQuery: true }));
   }
-
   if (suffix === 'bucket') {
-    return createHistogramMetricQueryDefs(ctx);
+    return createHistogramMetricQueryDefs(createContext(metricParts));
   }
 
   // If the suffix is null or is in the set of unsupported suffixes, throw an error because the metric should be delegated to a different generator (summary or histogram)
@@ -41,25 +78,19 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     throw new Error(`This function does not support a metric suffix of "${suffix}"`);
   }
 
-  // Check if generating rate query and/or aggregation query
+  // Determine query type and unit
   const isRateQuery = RATE_SUFFIXES.has(suffix);
-  const isAggQuery = SPECIFIC_AGGREGATIONS_FOR_SUFFIX[suffix] || 'avg';
-
-  // Try to find the unit in the Prometheus metric name
-  const unitSuffix = suffix === 'total' ? metricParts.at(-2) : suffix;
-
-  // Get the Grafana unit or Grafana rate unit
+  const aggregation = SPECIFIC_AGGREGATIONS_FOR_SUFFIX[suffix] || 'avg';
   const unit = isRateQuery ? getPerSecondRateUnit(unitSuffix) : getUnit(unitSuffix);
 
-  const baseQuery = getGeneralBaseQuery(isRateQuery);
-  const aggregationDescription = isRateQuery
-    ? `${getAggLabel(isAggQuery)} per-second rate`
-    : `${getAggLabel(isAggQuery)}`;
-
+  // Generate base query and descriptions
+  const baseQuery = generateBaseQuery({ isRateQuery });
+  const aggregationDescription = `${getAggLabel(aggregation)}${isRateQuery ? ' per-second rate' : ''}`;
   const description = `${VAR_METRIC_EXPR} (${aggregationDescription})`;
 
-  const mainQueryExpr = `${isAggQuery}(${baseQuery})`;
-  const breakdownQueryExpr = `${isAggQuery}(${baseQuery})by(${VAR_GROUP_BY_EXP})`;
+  // Create query expressions
+  const mainQueryExpr = `${aggregation}(${baseQuery})`;
+  const breakdownQueryExpr = `${aggregation}(${baseQuery})by(${VAR_GROUP_BY_EXP})`;
 
   return generateCommonAutoQueryInfo({
     description,
@@ -69,20 +100,18 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
   });
 }
 
-const RATE_SUFFIXES = new Set(['count', 'total']);
-const UNSUPPORTED_SUFFIXES = new Set(['sum', 'bucket']);
+// Helpers
 
-/** Non-default aggregation keyed by suffix */
-const SPECIFIC_AGGREGATIONS_FOR_SUFFIX: Record<string, string> = {
-  count: 'sum',
-  total: 'sum',
-};
+function createContext(metricParts: string[], overrides: Partial<AutoQueryContext> = {}): AutoQueryContext {
+  return {
+    metricParts,
+    isRateQuery: false,
+    isUtf8Metric: false,
+    baseQuery: generateBaseQuery({ isRateQuery: overrides.isRateQuery ?? false }),
+    ...overrides,
+  };
+}
 
-const aggLabels: Record<string, string> = {
-  avg: 'average',
-  sum: 'overall',
-};
-
-function getAggLabel(agg: string) {
+function getAggLabel(agg: string): string {
   return aggLabels[agg] || agg;
 }
