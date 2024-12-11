@@ -21,5 +21,7 @@ export type VizBuilder = () => VizPanelBuilder<{}, {}>;
 export type AutoQueryContext = {
   metricParts: string[];
   isUtf8Metric: boolean;
+  unit: string;
   suffix: string;
+  unitSuffix?: string;
 };

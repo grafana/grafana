@@ -1,7 +1,15 @@
+import { AutoQueryContext } from '../types';
+
 import { createHistogramMetricQueryDefs } from './histogram';
 
 describe('createHistogramMetricQueryDefs utf8=false', () => {
-  const ctx = { metricParts: ['test', 'latency', 'seconds', 'bucket'], isUtf8Metric: false, suffix: 'bucket' };
+  const ctx: AutoQueryContext = {
+    metricParts: ['test', 'latency', 'seconds', 'bucket'],
+    isUtf8Metric: false,
+    suffix: 'bucket',
+    unitSuffix: 'seconds',
+    unit: 's',
+  };
 
   it('should create the correct title and unit for metricParts', () => {
     const result = createHistogramMetricQueryDefs(ctx);
@@ -44,7 +52,13 @@ describe('createHistogramMetricQueryDefs utf8=false', () => {
 });
 
 describe('createHistogramMetricQueryDefs utf8=true', () => {
-  const ctx = { metricParts: ['test', 'latency', 'seconds', 'bucket'], isUtf8Metric: true, suffix: 'bucket' };
+  const ctx: AutoQueryContext = {
+    metricParts: ['test', 'latency', 'seconds', 'bucket'],
+    isUtf8Metric: true,
+    suffix: 'bucket',
+    unitSuffix: 'seconds',
+    unit: 's',
+  };
 
   it('should create the correct title and unit for metricParts', () => {
     const result = createHistogramMetricQueryDefs(ctx);

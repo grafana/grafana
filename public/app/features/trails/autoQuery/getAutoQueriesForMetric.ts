@@ -2,6 +2,7 @@ import { createDefaultMetricQueryDefs } from './queryGenerators/default';
 import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
 import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
 import { AutoQueryContext, AutoQueryInfo } from './types';
+import { getUnit } from './units';
 
 export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
   const isUtf8Metric = false;
@@ -13,10 +14,14 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     throw new Error(`This function does not support a metric suffix of "${suffix}"`);
   }
 
+  const unitSuffix = metricParts.at(-2);
+  const unit = getUnit(unitSuffix);
   const ctx: AutoQueryContext = {
     metricParts,
     isUtf8Metric,
     suffix,
+    unitSuffix,
+    unit,
   };
 
   if (suffix === 'sum') {
