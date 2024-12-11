@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,6 +26,7 @@ type NotificationPolicyService struct {
 	xact            TransactionManager
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
+	validator       validation.ProvenanceStatusTransitionValidator
 }
 
 func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
@@ -35,6 +37,7 @@ func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningS
 		xact:            xact,
 		log:             log,
 		settings:        settings,
+		validator:       validation.ValidateProvenanceRelaxed,
 	}
 }
 
@@ -58,31 +61,40 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	return result, version, nil
 }
 
-func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) error {
+func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	err := tree.Validate()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
-	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, models.Provenance(tree.Provenance), version, "update")
+	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, p, version, "update")
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
-	receivers, err := nps.receiversToMap(revision.Config.AlertmanagerConfig.Receivers)
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &tree, orgID)
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
+	}
+	if err := nps.validator(storedProvenance, p); err != nil {
+		return definitions.Route{}, "", err
 	}
 
+	receivers := map[string]struct{}{}
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
+	for _, receiver := range revision.GetReceivers(nil) {
+		receivers[receiver.Name] = struct{}{}
+	}
+
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	timeIntervals := map[string]struct{}{}
@@ -94,20 +106,32 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 	err = tree.ValidateMuteTimes(timeIntervals)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	revision.Config.AlertmanagerConfig.Config.Route = &tree
 
-	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
 		return nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 	})
+	if err != nil {
+		return definitions.Route{}, "", err
+	}
+	return tree, calculateRouteFingerprint(tree), nil
 }
 
-func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &definitions.Route{}, orgID)
+	if err != nil {
+		return definitions.Route{}, err
+	}
+	if err := nps.validator(storedProvenance, provenance); err != nil {
+		return definitions.Route{}, err
+	}
+
 	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
@@ -137,14 +161,6 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	} // TODO should be error?
 
 	return *route, nil
-}
-
-func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
-	receivers := map[string]struct{}{}
-	for _, receiver := range records {
-		receivers[receiver.Name] = struct{}{}
-	}
-	return receivers, nil
 }
 
 func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
@@ -243,6 +259,9 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	for _, matcher := range r.Matchers {
 		writeString(matcher.String())
 	}
+	for _, matcher := range r.ObjectMatchers {
+		writeString(matcher.String())
+	}
 	for _, timeInterval := range r.MuteTimeIntervals {
 		writeString(timeInterval)
 	}
@@ -253,6 +272,7 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	writeDuration(r.GroupWait)
 	writeDuration(r.GroupInterval)
 	writeDuration(r.RepeatInterval)
+	writeString(string(r.Provenance))
 	for _, route := range r.Routes {
 		writeToHash(sum, route)
 	}

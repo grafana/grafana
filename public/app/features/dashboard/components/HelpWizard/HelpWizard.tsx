@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
@@ -192,13 +192,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
               >
                 <Trans i18nKey="help-wizard.github-comment">Copy Github comment</Trans>
               </ClipboardButton>
-              <Button
-                icon="eye"
-                onClick={service.onPreviewDashboard}
-                title="Open support snapshot dashboard in a new tab"
-              >
-                <Trans i18nKey="help-wizard.preview-snapshot">Preview snapshot</Trans>
-              </Button>
             </Stack>
           </Field>
 

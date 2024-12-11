@@ -5,6 +5,7 @@ import path from 'path';
 // @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import { Configuration } from 'webpack';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 import { DIST_DIR } from './constants';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
@@ -20,6 +21,10 @@ function skipFiles(f: string): boolean {
   }
   if (f.includes('/package.json')) {
     // avoid copying package.json
+    return false;
+  }
+  if (f.includes('/project.json')) {
+    // avoid copying project.json
     return false;
   }
   return true;
@@ -58,6 +63,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'react-redux',
       'redux',
       'rxjs',
+      'rxjs/operators',
       'react-router',
       'd3',
       'angular',
@@ -208,6 +214,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                 path.basename(process.cwd()),
                 '.eslintcache'
               ),
+              configType: 'flat',
             }),
           ]
         : []),
@@ -224,6 +231,11 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
   };
+
+  if (env.stats) {
+    baseConfig.stats = 'normal';
+    baseConfig.plugins?.push(new BundleAnalyzerPlugin());
+  }
 
   return baseConfig;
 };

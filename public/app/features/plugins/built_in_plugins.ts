@@ -20,8 +20,6 @@ const prometheusPlugin = async () =>
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
-import { config } from '@grafana/runtime';
-
 // Async loaded panels
 const alertListPanel = async () =>
   await import(/* webpackChunkName: "alertListPanel" */ 'app/plugins/panel/alertlist/module');
@@ -67,13 +65,7 @@ const welcomeBanner = async () =>
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
-const xychartPanel = async () => {
-  if (config.featureToggles.autoMigrateXYChartPanel) {
-    return await import(/* webpackChunkName: "xychart2" */ 'app/plugins/panel/xychart/v2/module');
-  } else {
-    return await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
-  }
-};
+const xychartPanel = async () => await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
 const tableOldPanel = async () =>

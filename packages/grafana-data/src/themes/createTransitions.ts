@@ -56,7 +56,7 @@ export function create(props: string | string[] = ['all'], options: CreateTransi
 type ReducedMotionProps = 'no-preference' | 'reduce';
 
 export function handleMotion(...props: ReducedMotionProps[]) {
-  return props.map((prop) => `@media (prefers-reduced-motion: ${prop})`).join(',');
+  return `@media ${props.map((prop) => `(prefers-reduced-motion: ${prop})`).join(',')}`;
 }
 
 export function getAutoHeightDuration(height: number) {

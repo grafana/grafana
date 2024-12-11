@@ -2,12 +2,12 @@ import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from '../AnnotationSettings';
 
 import { SettingsPageProps } from './types';
 
-export function AnnotationsSettings({ dashboard, editIndex, sectionNav, toolbar }: SettingsPageProps) {
+export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: SettingsPageProps) {
   const onNew = () => {
     const newAnnotation: AnnotationQuery = {
       name: newAnnotationName,
@@ -27,7 +27,7 @@ export function AnnotationsSettings({ dashboard, editIndex, sectionNav, toolbar 
   const isEditing = editIndex != null && editIndex < dashboard.annotations.list.length;
 
   return (
-    <Page toolbar={toolbar} navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex, sectionNav.node)}>
+    <Page navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex, sectionNav.node)}>
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIndex!} />}
     </Page>

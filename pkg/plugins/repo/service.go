@@ -27,22 +27,24 @@ func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 	}
 
 	return NewManager(ManagerCfg{
-		SkipTLSVerify: false,
-		BaseURL:       baseURL,
-		Logger:        log.NewPrettyLogger("plugin.repository"),
+		SkipTLSVerify:      false,
+		BaseURL:            baseURL,
+		Logger:             log.NewPrettyLogger("plugin.repository"),
+		GrafanaComAPIToken: cfg.GrafanaComAPIToken,
 	}), nil
 }
 
 type ManagerCfg struct {
-	SkipTLSVerify bool
-	BaseURL       string
-	Logger        log.PrettyLogger
+	SkipTLSVerify      bool
+	BaseURL            string
+	GrafanaComAPIToken string
+	Logger             log.PrettyLogger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
 		baseURL: cfg.BaseURL,
-		client:  NewClient(cfg.SkipTLSVerify, cfg.Logger),
+		client:  NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.Logger),
 		log:     cfg.Logger,
 	}
 }

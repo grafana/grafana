@@ -1,4 +1,0 @@
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1,Interval,DaysOfMonth
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1,TimeIntervalSpec,TimeIntervals
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1,TimeRange,EndTime
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1,TimeRange,StartTime

@@ -1,8 +1,8 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { findVizPanelByKey } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
 describe('DefaultGridLayoutManager', () => {
@@ -47,14 +47,13 @@ describe('DefaultGridLayoutManager', () => {
 
       const vizPanel = new VizPanel({
         title: 'Panel Title',
-        key: 'panel-55',
         pluginId: 'timeseries',
         $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
       });
 
       manager.addPanel(vizPanel);
 
-      const panel = findVizPanelByKey(manager, 'panel-55')!;
+      const panel = findVizPanelByKey(manager, vizPanel.state.key)!;
       const gridItem = panel.parent as DashboardGridItem;
 
       expect(panel).toBeDefined();

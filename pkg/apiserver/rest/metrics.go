@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -73,7 +74,7 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	errStorage := reg.Register(m.storage)
 	errOutcome := reg.Register(m.outcome)
 	errSyncer := reg.Register(m.syncer)
-	errSyncerOutcome := reg.Register(m.syncer)
+	errSyncerOutcome := reg.Register(m.syncerOutcome)
 	if errLegacy != nil || errStorage != nil || errOutcome != nil || errSyncer != nil || errSyncerOutcome != nil {
 		log.Info("cloud migration metrics already registered")
 	}
@@ -97,15 +98,15 @@ func (m *dualWriterMetrics) recordOutcome(mode string, name string, areEqual boo
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
 }
 
-func (m *dualWriterMetrics) recordDataSyncerDuration(isError bool, mode string, resource string, startFrom time.Time) {
+func (m *dualWriterMetrics) recordDataSyncerDuration(isError bool, mode DualWriterMode, resource string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.syncer.WithLabelValues(strconv.FormatBool(isError), mode, resource).Observe(duration)
+	m.syncer.WithLabelValues(strconv.FormatBool(isError), fmt.Sprintf("%d", mode), resource).Observe(duration)
 }
 
-func (m *dualWriterMetrics) recordDataSyncerOutcome(mode string, resource string, synced bool) {
+func (m *dualWriterMetrics) recordDataSyncerOutcome(mode DualWriterMode, resource string, synced bool) {
 	var observeValue float64
 	if !synced {
 		observeValue = 1
 	}
-	m.syncerOutcome.WithLabelValues(mode, resource).Observe(observeValue)
+	m.syncerOutcome.WithLabelValues(fmt.Sprintf("%d", mode), resource).Observe(observeValue)
 }

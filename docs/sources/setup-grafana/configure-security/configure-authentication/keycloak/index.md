@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/keycloak/
-description: Keycloak Grafana OAuthentication Guide
+description: Grafana Keycloak Guide
 keywords:
   - grafana
   - keycloak
@@ -94,7 +94,7 @@ roles
 ```
 
 {{% admonition type="warning" %}}
-these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
+These scopes do not add group claims to the id_token. Without group claims, group synchronization will not work. Group synchronization is covered further down in this document.
 {{% /admonition %}}
 
 3. For role mapping to work with the example configuration above,
@@ -106,16 +106,18 @@ editor
 viewer
 ```
 
-## Teamsync
+## Group synchronization
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
-[Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+By using group synchronization, you can link your Keycloak groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
+This is useful if you want to give your users access to specific resources based on their group membership.
+Teams and roles get synchronized when the user logs in.
 
-To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
-This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
+To enable group synchronization, you need to add a `groups` mapper to the client configuration in Keycloak.
+This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams and roles in Grafana.
 
 1. In the client configuration, head to `Mappers` and create a mapper with the following settings:
 
@@ -141,6 +143,8 @@ If you use nested groups containing special characters such as quotes or colons,
 groups_attribute_path = reverse("Global:department")
 ```
 
+To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+
 ## Enable Single Logout
 
 To enable Single Logout, you need to add the following option to the configuration of Grafana:
@@ -159,11 +163,9 @@ Grafana supports ID token hints for single logout. Grafana automatically adds th
 
 ## Allow assigning Grafana Admin
 
-> Available in Grafana v9.2 and later versions.
-
 If the application role received by Grafana is `GrafanaAdmin` , Grafana grants the user server administrator privileges.
 
-This is useful if you want to grant server administrator privileges to a subset of users.  
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
@@ -172,8 +174,6 @@ allow_assign_grafana_admin = true
 ```
 
 ### Configure refresh token
-
-> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 

@@ -95,7 +95,6 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, store))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, store))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(store))
 	return srv
@@ -260,6 +259,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		dashFolder.Fullpath = dashFolder.Title
+		dashFolder.FullpathUIDs = dashFolder.UID
 		return dashFolder, nil
 	}
 
@@ -282,10 +282,49 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.Version = dashFolder.Version
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		f.Fullpath = f.Title // set full path to the folder title (unescaped)
+		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
+		f.FullpathUIDs = f.UID // set full path to the folder UID
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		f, err = s.setFullpath(ctx, f, q.SignedInUser)
 	}
 
 	return f, err
+}
+
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester) (*folder.Folder, error) {
+	// #TODO is some kind of intermediate conversion required as is the case with user id where
+	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
+	// part of the parsing?
+	f.CreatedByUID = user.GetUID()
+	f.UpdatedByUID = user.GetUID()
+
+	if f.ParentUID == "" {
+		return f, nil
+	}
+
+	// Fetch the parent since the permissions for fetching the newly created folder
+	// are not yet present for the user--this requires a call to ClearUserPermissionCache
+	parents, err := s.GetParents(ctx, folder.GetParentsQuery{
+		UID:   f.UID,
+		OrgID: f.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
+	// Escape forward slashes in the title
+	escapedSlash := "\\/"
+	title := strings.Replace(f.Title, "/", escapedSlash, -1)
+	f.Fullpath = title
+	f.FullpathUIDs = f.UID
+	for _, p := range parents {
+		pt := strings.Replace(p.Title, "/", escapedSlash, -1)
+		f.Fullpath = f.Fullpath + "/" + pt
+		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
+	}
+	return f, nil
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -671,6 +710,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, err
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		f, err = s.setFullpath(ctx, f, user)
+	}
+
 	return f, nil
 }
 
@@ -681,7 +724,7 @@ func (s *Service) setDefaultFolderPermissions(ctx context.Context, orgID int64, 
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
@@ -977,9 +1020,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
-			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
-			}
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
@@ -991,9 +1031,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
 		}); err != nil {
-			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
-			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 
@@ -1359,10 +1396,6 @@ func toFolderError(err error) error {
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
 		return dashboards.ErrFolderAccessDenied
-	}
-
-	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
-		return dashboards.ErrFolderSameNameExists
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {

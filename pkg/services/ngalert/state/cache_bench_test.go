@@ -43,7 +43,7 @@ func BenchmarkGetOrCreateTest(b *testing.B) {
 	// values := make([]int64, count)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_ = cache.getOrCreate(ctx, log, rule, result, nil, u)
+			_ = cache.create(ctx, log, rule, result, nil, u)
 		}
 	})
 }

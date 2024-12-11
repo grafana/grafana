@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { ReactElement, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
@@ -9,6 +9,7 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   TextBoxVariable,
+  VariableDependencyConfig,
   VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
@@ -495,48 +496,54 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
 export class HistoryEventsListObject extends SceneObjectBase {
   public static Component = HistoryEventsListObjectRenderer;
-  public constructor() {
-    super({});
-  }
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO],
+  });
 }
 
 export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
-  const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
-  // eslint-disable-next-line
-  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)! as TextBoxVariable;
-  // eslint-disable-next-line
-  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model)! as CustomVariable;
-  // eslint-disable-next-line
-  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model)! as CustomVariable;
+  // This make sure the component is re-rendered when the variables change
+  model.useState();
 
-  const valueInfilterTextBox: VariableValue = labelsFiltersVariable.getValue();
-  const valueInStateToFilter = stateToFilterVariable.getValue();
-  const valueInStateFromFilter = stateFromFilterVariable.getValue();
+  const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
+
+  const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
+  const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model);
+  const stateFromFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_FROM, model);
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
     trackUseCentralHistoryFilterByClicking({ type, key, value });
-    if (type === 'stateTo') {
+    if (type === 'stateTo' && stateToFilterVariable instanceof CustomVariable) {
       stateToFilterVariable.changeValueTo(value);
     }
-    if (type === 'stateFrom') {
+    if (type === 'stateFrom' && stateFromFilterVariable instanceof CustomVariable) {
       stateFromFilterVariable.changeValueTo(value);
     }
-    const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
-    if (type === 'label') {
+    if (type === 'label' && labelsFiltersVariable instanceof TextBoxVariable) {
+      const finalFilter = combineMatcherStrings(labelsFiltersVariable.state.value.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
     }
   };
 
-  return (
-    <HistoryEventsList
-      timeRange={timeRange}
-      valueInLabelFilter={valueInfilterTextBox}
-      addFilter={addFilter}
-      valueInStateToFilter={valueInStateToFilter}
-      valueInStateFromFilter={valueInStateFromFilter}
-    />
-  );
+  if (
+    stateToFilterVariable instanceof CustomVariable &&
+    stateFromFilterVariable instanceof CustomVariable &&
+    labelsFiltersVariable instanceof TextBoxVariable
+  ) {
+    return (
+      <HistoryEventsList
+        timeRange={timeRange}
+        valueInLabelFilter={labelsFiltersVariable.state.value}
+        addFilter={addFilter}
+        valueInStateToFilter={stateToFilterVariable.state.value}
+        valueInStateFromFilter={stateFromFilterVariable.state.value}
+      />
+    );
+  } else {
+    return null;
+  }
 }

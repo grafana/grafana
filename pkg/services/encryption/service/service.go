@@ -105,7 +105,7 @@ func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([
 	var err error
 	defer func() {
 		if err != nil {
-			s.log.Error("Decryption failed", "error", err)
+			s.log.FromContext(ctx).Error("Decryption failed", "error", err)
 		}
 	}()
 

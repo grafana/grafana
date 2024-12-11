@@ -70,6 +70,7 @@ Watch the following video for a quick tutorial on creating annotations:
 
 To add an annotation, complete the following steps:
 
+1. If you've just saved a dashboard, refresh the page.
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the panel to which you're adding the annotation.
 
@@ -85,6 +86,7 @@ Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the
 
 ### Add a region annotation
 
+1. If you've just saved a dashboard, refresh the page.
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Press Ctrl/Cmd and click and drag on the panel.
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
@@ -188,7 +190,7 @@ Following are some query options specific to the built-in annotation query.
 
 You can create new queries to fetch annotations from the built-in annotation query using the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
 
-Grafana v8.1 and later versions also support typeahead of existing tags, provide at least one tag.
+Grafana also supports typeahead of existing tags, provide at least one tag.
 
 For example, create an annotation query name `outages` and specify a tag `outage`. This query will show all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana will only show annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana will show annotations that contain any one of the tags you provided.
 

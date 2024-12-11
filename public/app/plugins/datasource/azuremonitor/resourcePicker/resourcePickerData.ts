@@ -1,4 +1,3 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
@@ -13,7 +12,8 @@ import {
   resourceToString,
 } from '../components/ResourcePicker/utils';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureMonitorDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorResource,
   AzureMonitorQuery,
@@ -31,14 +31,17 @@ const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).j
 
 export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
-export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class ResourcePickerData extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData
+> {
   private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;
   supportedMetricNamespaces = '';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: AzureMonitorDataSourceInstanceSettings,
     azureMonitorDatasource: AzureMonitorDatasource
   ) {
     super(instanceSettings);
@@ -363,6 +366,11 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
 
     let supportedMetricNamespaces: Set<string> = new Set();
+    // Include a predefined set of metric namespaces as a fallback in the case the user cannot query subscriptions
+    resourceTypes.forEach((namespace) => {
+      supportedMetricNamespaces.add(`"${namespace}"`);
+    });
+
     // We make use of these three regions as they *should* contain every possible namespace
     const regions = ['westeurope', 'eastus', 'japaneast'];
     const getNamespacesForRegion = async (region: string) => {
@@ -389,10 +397,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
-
-    resourceTypes.forEach((namespace) => {
-      supportedMetricNamespaces.add(`"${namespace}"`);
-    });
 
     this.supportedMetricNamespaces = Array.from(supportedMetricNamespaces).join(',');
   }

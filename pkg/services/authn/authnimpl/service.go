@@ -322,7 +322,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 			goto Default
 		}
 
-		clientRedirect, ok := logoutClient.Logout(ctx, user)
+		clientRedirect, ok := logoutClient.Logout(ctx, user, sessionToken)
 		if !ok {
 			goto Default
 		}
@@ -380,6 +380,20 @@ func (s *Service) IsClientEnabled(name string) bool {
 	return client.IsEnabled()
 }
 
+func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+	client, ok := s.clients[name]
+	if !ok {
+		return nil, false
+	}
+
+	ssoSettingsAwareClient, ok := client.(authn.SSOSettingsAwareClient)
+	if !ok {
+		return nil, false
+	}
+
+	return ssoSettingsAwareClient.GetConfig(), true
+}
+
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	ctx, span := s.tracer.Start(ctx, "authn.SyncIdentity")
 	defer span.End()
@@ -394,7 +408,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	t, i, err := identity.ParseTypeAndID(typedID)
+	t, i, err := claims.ParseTypeID(typedID)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +505,7 @@ func orgIDFromHeader(req *http.Request) int64 {
 }
 
 func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identity *authn.Identity, userID int64) *auth.ExternalSession {
-	if identity.OAuthToken == nil {
+	if identity.OAuthToken == nil && identity.SAMLSession == nil {
 		return nil
 	}
 
@@ -506,18 +520,26 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 		UserAuthID: info.Id,
 		UserID:     userID,
 	}
-	extSession.AccessToken = identity.OAuthToken.AccessToken
-	extSession.RefreshToken = identity.OAuthToken.RefreshToken
-	extSession.ExpiresAt = identity.OAuthToken.Expiry
 
-	if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
-		extSession.IDToken = idToken
+	if identity.OAuthToken != nil {
+		extSession.AccessToken = identity.OAuthToken.AccessToken
+		extSession.RefreshToken = identity.OAuthToken.RefreshToken
+		extSession.ExpiresAt = identity.OAuthToken.Expiry
+
+		if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			extSession.IDToken = idToken
+		}
+
+		// As of https://openid.net/specs/openid-connect-session-1_0.html
+		if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+			extSession.SessionID = sessionState
+		}
+
+		return extSession
 	}
 
-	// As of https://openid.net/specs/openid-connect-session-1_0.html
-	if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
-		extSession.SessionID = sessionState
-	}
+	extSession.SessionID = identity.SAMLSession.SessionIndex
+	extSession.NameID = identity.SAMLSession.NameID
 
 	return extSession
 }

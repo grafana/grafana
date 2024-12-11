@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
@@ -363,16 +362,16 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	for _, queryExecutor := range queries {
 		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
-			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
+			resp.Responses[queryExecutor.getRefID()] = backend.ErrorResponseWithErrorSource(err)
 			return resp, err
 		}
 		err = queryExecutor.parseResponse(dr, queryRes, executedQueryString, logger)
 		if err != nil {
 			dr.Error = err
-			// // Default to a plugin error if there's no source
-			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
-			dr.Error = errWithSource.Unwrap()
-			dr.ErrorSource = errWithSource.ErrorSource()
+			// If the error is a downstream error, set the error source
+			if backend.IsDownstreamError(err) {
+				dr.ErrorSource = backend.ErrorSourceDownstream
+			}
 		}
 
 		resp.Responses[queryExecutor.getRefID()] = *dr
@@ -443,7 +442,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			queryInterface = cmp
 		default:
-			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
+			return nil, backend.DownstreamError(fmt.Errorf("unrecognized query type %q", query.QueryType))
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
@@ -591,7 +590,10 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
 		project, err := s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
-		return project, errorsource.DownstreamError(err, false)
+		if err != nil {
+			return project, backend.DownstreamError(err)
+		}
+		return project, nil
 	}
 	return dsInfo.defaultProject, nil
 }
@@ -610,7 +612,11 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 
 	if res.StatusCode/100 != 2 {
 		logger.Error("Request failed", "status", res.Status, "body", string(body), "statusSource", backend.ErrorSourceDownstream)
-		return cloudMonitoringResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("query failed: %s", string(body)), false)
+		statusErr := fmt.Errorf("query failed: %s", string(body))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return cloudMonitoringResponse{}, backend.DownstreamError(statusErr)
+		}
+		return cloudMonitoringResponse{}, backend.PluginError(statusErr)
 	}
 
 	var data cloudMonitoringResponse

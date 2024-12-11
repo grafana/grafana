@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -90,47 +91,40 @@ export const DataLinksInlineEditor = ({
     onChange(update);
   };
 
-  const renderFirstLink = (linkJSX: ReactNode, key: string) => {
-    if (showOneClick) {
-      return (
-        <div className={styles.oneClickOverlay} key={key}>
-          <span className={styles.oneClickSpan}>One-click link</span>
-          {linkJSX}
-        </div>
-      );
-    }
-    return linkJSX;
-  };
-
   return (
-    <>
+    <div className={styles.container}>
+      {/* one-link placeholder */}
+      {showOneClick && linksSafe.length > 0 && (
+        <div className={styles.oneClickOverlay}>
+          <span className={styles.oneClickSpan}>
+            <Trans i18nKey="grafana-ui.data-links-inline-editor.one-click-link">One-click link</Trans>
+          </span>
+        </div>
+      )}
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-links" direction="vertical">
           {(provided) => (
-            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
+            <div
+              className={styles.wrapper}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              style={{ paddingTop: showOneClick && linksSafe.length > 0 ? '28px' : '0px' }}
+            >
               {linksSafe.map((link, idx) => {
                 const key = `${link.title}/${idx}`;
-
-                const linkJSX = (
-                  <div className={styles.itemWrapper} key={key}>
-                    <DataLinksListItem
-                      key={key}
-                      index={idx}
-                      link={link}
-                      onChange={onDataLinkChange}
-                      onEdit={() => setEditIndex(idx)}
-                      onRemove={() => onDataLinkRemove(idx)}
-                      data={data}
-                      itemKey={key}
-                    />
-                  </div>
+                return (
+                  <DataLinksListItem
+                    key={key}
+                    index={idx}
+                    link={link}
+                    onChange={onDataLinkChange}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onDataLinkRemove(idx)}
+                    data={data}
+                    itemKey={key}
+                  />
                 );
-
-                if (idx === 0) {
-                  return renderFirstLink(linkJSX, key);
-                }
-
-                return linkJSX;
               })}
               {provided.placeholder}
             </div>
@@ -159,33 +153,35 @@ export const DataLinksInlineEditor = ({
       )}
 
       <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
-        Add link
+        <Trans i18nKey="grafana-ui.data-links-inline-editor.add-link">Add link</Trans>
       </Button>
-    </>
+    </div>
   );
 };
 
 const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'relative',
+  }),
   wrapper: css({
     marginBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'column',
   }),
   oneClickOverlay: css({
-    height: 'auto',
     border: `2px dashed ${theme.colors.text.link}`,
     fontSize: 10,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing(1),
+    position: 'absolute',
+    width: '100%',
+    height: '92px',
   }),
   oneClickSpan: css({
     padding: 10,
     // Negates the padding on the span from moving the underlying link
     marginBottom: -10,
     display: 'inline-block',
-  }),
-  itemWrapper: css({
-    padding: '4px 8px 8px 8px',
   }),
   button: css({
     marginLeft: theme.spacing(1),

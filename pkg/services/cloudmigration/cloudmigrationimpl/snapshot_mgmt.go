@@ -32,6 +32,11 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.FolderDataType,
 	cloudmigration.LibraryElementDataType,
 	cloudmigration.DashboardDataType,
+	cloudmigration.MuteTimingType,
+	cloudmigration.NotificationTemplateType,
+	cloudmigration.ContactPointType,
+	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -39,7 +44,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	defer span.End()
 
 	// Data sources
-	dataSources, err := s.getDataSourceCommands(ctx)
+	dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
@@ -58,9 +63,45 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Mute Timings
+	muteTimings, err := s.getAlertMuteTimings(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert mute timings", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Notification Templates
+	notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification templates", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Contact Points
+	contactPoints, err := s.getContactPoints(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert contact points", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Notification Policies
+	notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification policies", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Alert Rules
+	alertRules, err := s.getAlertRules(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rules", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders)+len(libraryElements),
+		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
 	for _, ds := range dataSources {
@@ -107,8 +148,54 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	for _, muteTiming := range muteTimings {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.MuteTimingType,
+			RefID: muteTiming.UID,
+			Name:  muteTiming.Name,
+			Data:  muteTiming,
+		})
+	}
+
+	for _, notificationTemplate := range notificationTemplates {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationTemplateType,
+			RefID: notificationTemplate.UID,
+			Name:  notificationTemplate.Name,
+			Data:  notificationTemplate,
+		})
+	}
+
+	for _, contactPoint := range contactPoints {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.ContactPointType,
+			RefID: contactPoint.UID,
+			Name:  contactPoint.Name,
+			Data:  contactPoint,
+		})
+	}
+
+	if len(notificationPolicies.Name) > 0 {
+		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationPolicyType,
+			RefID: notificationPolicies.Name, // no UID available
+			Name:  notificationPolicies.Name,
+			Data:  notificationPolicies.Routes,
+		})
+	}
+
+	for _, alertRule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: alertRule.UID,
+			Name:  alertRule.Title,
+			Data:  alertRule,
+		})
+	}
+
 	// Obtain the names of parent elements for Dashboard and Folders data types
-	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
+	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements, alertRules)
 	if err != nil {
 		s.log.Error("Failed to get parent folder names", "err", err)
 	}
@@ -121,17 +208,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	return migrationData, nil
 }
 
-func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSourceCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]datasources.AddDataSourceCommand, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDataSourceCommands")
 	defer span.End()
 
-	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	dataSources, err := s.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: signedInUser.GetOrgID()})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	result := []datasources.AddDataSourceCommand{}
+	result := make([]datasources.AddDataSourceCommand, 0, len(dataSources))
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -166,7 +253,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
 	defer span.End()
 
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
+	dashs, err := s.store.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -192,20 +279,21 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUids,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	folderCmds := make([]folder.CreateFolderCommand, len(folders))
-	for i, f := range folders {
-		folderCmds[i] = folder.CreateFolderCommand{
+	folderCmds := make([]folder.CreateFolderCommand, 0, len(folders))
+	for _, f := range folders {
+		folderCmds = append(folderCmds, folder.CreateFolderCommand{
 			UID:         f.UID,
 			Title:       f.Title,
 			Description: f.Description,
 			ParentUID:   f.ParentUID,
-		}
+		})
 	}
 
 	return dashboardCmds, folderCmds, nil
@@ -554,6 +642,7 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
@@ -573,16 +662,26 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 
 // getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
 // for dashboards, folders and library elements - the parent is the parent folder
-func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
-	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+func (s *Service) getParentNames(
+	ctx context.Context,
+	signedInUser *user.SignedInUser,
+	dashboards []dashboards.Dashboard,
+	folders []folder.CreateFolderCommand,
+	libraryElements []libraryElement,
+	alertRules []alertRule,
+) (map[cloudmigration.MigrateDataType]map[string](string), error) {
+	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string]string)
 	for _, dataType := range currentMigrationTypes {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
 
 	// Obtain list of unique folderUIDs
-	parentFolderUIDsSet := make(map[string]struct{}, len(dashboards)+len(folders)+len(libraryElements))
+	parentFolderUIDsSet := make(map[string]struct{})
 	for _, dashboard := range dashboards {
-		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		// we dont need the root folder
+		if dashboard.FolderUID != "" {
+			parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		}
 	}
 	for _, f := range folders {
 		parentFolderUIDsSet[f.ParentUID] = struct{}{}
@@ -590,6 +689,11 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	for _, libraryElement := range libraryElements {
 		if libraryElement.FolderUID != nil {
 			parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
+		}
+	}
+	for _, alertRule := range alertRules {
+		if alertRule.FolderUID != "" {
+			parentFolderUIDsSet[alertRule.FolderUID] = struct{}{}
 		}
 	}
 	parentFolderUIDsSlice := make([]string, 0, len(parentFolderUIDsSet))
@@ -614,6 +718,11 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	for _, libraryElement := range libraryElements {
 		if libraryElement.FolderUID != nil {
 			parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
+		}
+	}
+	for _, alertRule := range alertRules {
+		if alertRule.FolderUID != "" {
+			parentNamesByType[cloudmigration.AlertRuleType][alertRule.UID] = foldersUIDsToFolderName[alertRule.FolderUID]
 		}
 	}
 

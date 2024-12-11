@@ -4,7 +4,7 @@ import { Observable, Subject } from 'rxjs';
 import { Field, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { QueryResponse } from '../service';
+import { QueryResponse } from '../service/types';
 
 export function useKeyNavigationListener() {
   const eventsRef = useRef(new Subject<React.KeyboardEvent>());
@@ -17,6 +17,7 @@ export function useKeyNavigationListener() {
         case 'ArrowLeft':
         case 'ArrowRight':
         case 'Enter':
+        case 'Escape':
           eventsRef.current.next(e);
         default:
         // ignore

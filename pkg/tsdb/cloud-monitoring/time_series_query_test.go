@@ -148,4 +148,26 @@ func TestTimeSeriesQuery(t *testing.T) {
 		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{GraphPeriod: strPtr("disabled")}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), "")
 	})
+
+	t.Run("time field is appropriately named", func(t *testing.T) {
+		res := &backend.DataResponse{}
+		data, err := loadTestFile("./test-data/7-series-response-mql.json")
+		require.NoError(t, err)
+		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+		query := &cloudMonitoringTimeSeriesQuery{
+			parameters: &dataquery.TimeSeriesQuery{
+				ProjectName: "test-proj",
+				Query:       "test-query",
+			},
+			aliasBy: "",
+			timeRange: backend.TimeRange{
+				From: fromStart,
+				To:   fromStart.Add(34 * time.Minute),
+			},
+		}
+		err = query.parseResponse(res, data, "", service.logger)
+		require.NoError(t, err)
+		frames := res.Frames
+		assert.Equal(t, gdata.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
+	})
 }

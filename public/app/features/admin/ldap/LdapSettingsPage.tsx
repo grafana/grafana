@@ -108,7 +108,7 @@ export const LdapSettingsPage = () => {
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
   const {
     control,
-    formState: { isDirty },
+    formState: { isDirty, errors },
     getValues,
     setValue,
     handleSubmit,
@@ -216,7 +216,7 @@ export const LdapSettingsPage = () => {
   /**
    * Button's Actions
    */
-  const submitAndEnableLdapSettings = async (payload: LdapPayload) => {
+  const submitFormAndToggleSettings = async (payload: LdapPayload) => {
     payload.settings.enabled = !payload.settings.enabled;
     await putPayload(payload);
     reportInteraction('authentication_ldap_enabled');
@@ -254,6 +254,11 @@ export const LdapSettingsPage = () => {
     reportInteraction('authentication_ldap_abandoned');
   };
 
+  const isInvalidField = (field: string) => {
+    const err = errors?.settings?.config?.servers?.[0];
+    return typeof err === 'object' && field in err;
+  };
+
   const subTitle = (
     <Trans i18nKey="ldap-settings-page.subtitle">
       The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in
@@ -282,7 +287,7 @@ export const LdapSettingsPage = () => {
       <Page.Contents>
         {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+          <form onSubmit={handleSubmit(submitFormAndToggleSettings, onErrors)}>
             <FormPrompt confirmRedirect={isDirty} onDiscard={onDiscard} />
             {isLoading && <Loader />}
             {!isLoading && (
@@ -291,7 +296,10 @@ export const LdapSettingsPage = () => {
                   <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
                 </h3>
                 <Field
-                  label={t('ldap-settings-page.host.label', 'Server host *')}
+                  label={t('ldap-settings-page.host.label', 'Server host')}
+                  required={true}
+                  error={t('ldap-settings-page.host.error', 'Server host is a required field')}
+                  invalid={isInvalidField('host')}
                   description={t(
                     'ldap-settings-page.host.description',
                     'Hostname or IP address of the LDAP server you wish to connect to.'
@@ -331,7 +339,10 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label={t('ldap-settings-page.search_filter.label', 'Search filter *')}
+                  label={t('ldap-settings-page.search_filter.label', 'Search filter')}
+                  required={true}
+                  invalid={isInvalidField('search_filter')}
+                  error={t('ldap-settings-page.search_filter.error', 'Search filter is a required field')}
                   description={t(
                     'ldap-settings-page.search_filter.description',
                     'LDAP search filter used to locate specific entries within the directory.'
@@ -345,13 +356,17 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
+                  label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS')}
+                  required={true}
+                  invalid={isInvalidField('search_base_dns')}
+                  error={t('ldap-settings-page.search-base-dns.error', 'Search base DNS is a required field')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
                     'An array of base dns to search through.'
                   )}
                 >
                   <Controller
+                    rules={{ required: true, validate: (value) => !!value?.length }}
                     name={`${serverConfig}.search_base_dns`}
                     control={control}
                     render={({ field: { onChange, ref, ...field } }) => (
@@ -397,7 +412,7 @@ export const LdapSettingsPage = () => {
                         <Trans i18nKey="ldap-settings-page.buttons-section.disable-button">Disable</Trans>
                       </Button>
                     )}
-                    <Button variant="secondary" onClick={saveForm}>
+                    <Button variant="secondary" onClick={handleSubmit(saveForm)}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save-button">Save</Trans>
                     </Button>
                     <LinkButton href="/admin/authentication" variant="secondary">

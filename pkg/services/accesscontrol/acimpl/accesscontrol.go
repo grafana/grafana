@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
@@ -117,26 +116,35 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		eval = evaluator
 	}
 
-	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		kind, _, identifier := accesscontrol.SplitScope(scope)
-		tupleKey, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
+	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
+		// FIXME: handle action with no scopes
+		if len(scopes) == 0 {
+			return false, nil
+		}
+
+		resourceScope := scopes[0]
+		kind, _, identifier := accesscontrol.SplitScope(resourceScope)
+
+		// Parent folder always returned by scope resolver as a second value
+		var parentFolder string
+		if len(scopes) > 1 {
+			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
+		}
+
+		req, ok := zanzana.TranslateToCheckRequest(user.GetNamespace(), action, kind, parentFolder, identifier)
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
 		}
 
-		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
-		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
-			User:     tupleKey.User,
-			Relation: tupleKey.Relation,
-			Object:   tupleKey.Object,
-		})
+		a.log.Debug("evaluating zanzana", "user", user.GetUID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
+		res, err := a.zclient.Check(ctx, user, *req)
 
 		if err != nil {
 			return false, err
 		}
 
-		return allowed, nil
+		return res.Allowed, nil
 	})
 }
 
@@ -218,31 +226,4 @@ func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg
 	defer span.End()
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
-}
-
-func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckRequest) (bool, error) {
-	key := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: req.Relation,
-		Object:   req.Object,
-	}
-	in := &openfgav1.CheckRequest{TupleKey: key}
-	res, err := a.zclient.Check(ctx, in)
-	if err != nil {
-		return false, err
-	}
-	return res.Allowed, err
-}
-
-func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
-	in := &openfgav1.ListObjectsRequest{
-		Type:     req.Type,
-		User:     req.User,
-		Relation: req.Relation,
-	}
-	res, err := a.zclient.ListObjects(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	return res.Objects, err
 }

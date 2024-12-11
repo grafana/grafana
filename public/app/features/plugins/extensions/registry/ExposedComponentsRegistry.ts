@@ -2,15 +2,18 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
-import { isExposedComponentMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
-import { extensionPointEndsWithVersion } from '../validators';
+import * as errors from '../errors';
+import { isGrafanaDevMode } from '../utils';
+import { isExposedComponentMetaInfoMissing } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
+
+const logPrefix = 'Could not register exposed component. Reason:';
 
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -37,40 +40,37 @@ export class ExposedComponentsRegistry extends Registry<
 
     for (const config of configs) {
       const { id, description, title } = config;
+      const pointIdLog = this.logger.child({
+        extensionPointId: id,
+        description: description ?? '',
+        title,
+        pluginId,
+      });
 
       if (!id.startsWith(pluginId)) {
-        logWarning(
-          `Could not register exposed component with id '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
-        );
+        pointIdLog.error(`${logPrefix} ${errors.INVALID_EXPOSED_COMPONENT_ID}`);
         continue;
       }
 
-      if (!extensionPointEndsWithVersion(id)) {
-        logWarning(
-          `Exposed component with id '${id}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-        );
-      }
-
       if (registry[id]) {
-        logWarning(
-          `Could not register exposed component with id '${id}'. Reason: An exposed component with the same id already exists.`
-        );
+        pointIdLog.error(`${logPrefix} ${errors.EXPOSED_COMPONENT_ALREADY_EXISTS}`);
         continue;
       }
 
       if (!title) {
-        logWarning(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
+        pointIdLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
-      if (!description) {
-        logWarning(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
+      ) {
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
-        continue;
-      }
+      pointIdLog.debug('Exposed component extension successfully registered');
 
       registry[id] = { ...config, pluginId };
     }

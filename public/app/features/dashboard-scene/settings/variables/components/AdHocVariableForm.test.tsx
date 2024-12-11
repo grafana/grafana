@@ -63,6 +63,22 @@ describe('AdHocVariableForm', () => {
     expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
   });
 
+  it('should render the form with allow custom value true', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      allowCustomValue: true,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const allowCustomValueCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
+  });
+
   it('should not render code editor when no default keys provided', async () => {
     await setup(defaultProps);
 

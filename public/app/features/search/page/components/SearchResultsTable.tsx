@@ -14,7 +14,7 @@ import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { QueryResponse } from '../../service';
+import { QueryResponse } from '../../service/types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
@@ -225,47 +225,47 @@ export const SearchResultsTable = React.memo(
 SearchResultsTable.displayName = 'SearchResultsTable';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
+  const rowHoverBg = theme.colors.action.hover;
 
   return {
-    noData: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    `,
-    headerCell: css`
-      align-items: center;
-      display: flex;
-      overflo: hidden;
-      padding: ${theme.spacing(1)};
-    `,
-    headerRow: css`
-      background-color: ${theme.colors.background.secondary};
-      display: flex;
-      gap: ${theme.spacing(1)};
-      height: ${ROW_HEIGHT}px;
-    `,
-    selectedRow: css`
-      background-color: ${rowHoverBg};
-      box-shadow: inset 3px 0px ${theme.colors.primary.border};
-    `,
-    rowContainer: css`
-      display: flex;
-      gap: ${theme.spacing(1)};
-      height: ${ROW_HEIGHT}px;
-      label: row;
-      &:hover {
-        background-color: ${rowHoverBg};
-      }
+    noData: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+    }),
+    headerCell: css({
+      alignItems: 'center',
+      display: 'flex',
+      overflo: 'hidden',
+      padding: theme.spacing(1),
+    }),
+    headerRow: css({
+      backgroundColor: theme.colors.background.secondary,
+      display: 'flex',
+      gap: theme.spacing(1),
+      height: `${ROW_HEIGHT}px`,
+    }),
+    selectedRow: css({
+      backgroundColor: rowHoverBg,
+      boxShadow: `inset 3px 0px ${theme.colors.primary.border}`,
+    }),
+    rowContainer: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      height: `${ROW_HEIGHT}px`,
+      label: 'row',
+      '&:hover': {
+        backgroundColor: rowHoverBg,
+      },
 
-      &:not(:hover) div[role='cell'] {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    `,
+      "&:not(:hover) div[role='cell']": {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      },
+    }),
   };
 };
 
@@ -278,53 +278,53 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
     }),
-    nameCellStyle: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-      user-select: text;
-      white-space: nowrap;
-    `,
+    nameCellStyle: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      userSelect: 'text',
+      whiteSpace: 'nowrap',
+    }),
     typeCell: css({
       gap: theme.spacing(0.5),
     }),
-    typeIcon: css`
-      fill: ${theme.colors.text.secondary};
-    `,
-    datasourceItem: css`
-      span {
-        &:hover {
-          color: ${theme.colors.text.link};
-        }
-      }
-    `,
-    missingTitleText: css`
-      color: ${theme.colors.text.disabled};
-      font-style: italic;
-    `,
-    invalidDatasourceItem: css`
-      color: ${theme.colors.error.main};
-      text-decoration: line-through;
-    `,
+    typeIcon: css({
+      fill: theme.colors.text.secondary,
+    }),
+    datasourceItem: css({
+      span: {
+        '&:hover': {
+          color: theme.colors.text.link,
+        },
+      },
+    }),
+    missingTitleText: css({
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
+    }),
+    invalidDatasourceItem: css({
+      color: theme.colors.error.main,
+      textDecoration: 'line-through',
+    }),
     locationContainer: css({
       display: 'flex',
       flexWrap: 'nowrap',
       gap: theme.spacing(1),
       overflow: 'hidden',
     }),
-    locationItem: css`
-      align-items: center;
-      color: ${theme.colors.text.secondary};
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 4px;
-      overflow: hidden;
-    `,
-    explainItem: css`
-      cursor: pointer;
-    `,
-    tagList: css`
-      justify-content: flex-start;
-      flex-wrap: nowrap;
-    `,
+    locationItem: css({
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      flexWrap: 'nowrap',
+      gap: '4px',
+      overflow: 'hidden',
+    }),
+    explainItem: css({
+      cursor: 'pointer',
+    }),
+    tagList: css({
+      justifyContent: 'flex-start',
+      flexWrap: 'nowrap',
+    }),
   };
 };

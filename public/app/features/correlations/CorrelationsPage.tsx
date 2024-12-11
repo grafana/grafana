@@ -35,10 +35,10 @@ const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
 
 const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
-const loaderWrapper = css`
-  display: flex;
-  justify-content: center;
-`;
+const loaderWrapper = css({
+  display: 'flex',
+  justifyContent: 'center',
+});
 
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
@@ -255,15 +255,15 @@ function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpda
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
-  root: css`
-    display: flex;
-    align-items: center;
-  `,
-  dsLogo: css`
-    margin-right: ${theme.spacing()};
-    height: 16px;
-    width: 16px;
-  `,
+  root: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  dsLogo: css({
+    marginRight: theme.spacing(),
+    height: '16px',
+    width: '16px',
+  }),
 });
 
 const DataSourceCell = memo(
@@ -286,9 +286,9 @@ const DataSourceCell = memo(
   }
 );
 
-const noWrap = css`
-  white-space: nowrap;
-`;
+const noWrap = css({
+  whiteSpace: 'nowrap',
+});
 
 const InfoCell = memo(
   function InfoCell({ ...props }: CellProps<CorrelationData, void>) {

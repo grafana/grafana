@@ -162,16 +162,16 @@ describe('getPayloadFromDto', () => {
 
   it('should return a ModifyExportPayload with the updated rule added to a group with this rule belongs, in the same position', () => {
     // for alerting rule
-    const resultForAlerting = getPayloadToExport('uid-rule-2', formValuesForRule2Updated, groupDto);
+    const resultForAlerting = getPayloadToExport(formValuesForRule2Updated, groupDto, 'uid-rule-2');
     expect(resultForAlerting).toEqual({
       name: 'Test Group',
       rules: [rule1, expectedModifiedRule2('uid-rule-2'), rule3, rule4],
     });
     // for recording rule
     const resultForRecording = getPayloadToExport(
-      'uid-rule-4',
       { ...formValuesForRecordingRule4Updated, type: RuleFormType.grafanaRecording },
-      groupDto
+      groupDto,
+      'uid-rule-4'
     );
     expect(resultForRecording).toEqual({
       name: 'Test Group',
@@ -180,16 +180,16 @@ describe('getPayloadFromDto', () => {
   });
   it('should return a ModifyExportPayload with the updated rule added to a non empty rule where this rule does not belong, in the last position', () => {
     // for alerting rule
-    const result = getPayloadToExport('uid-rule-5', formValuesForRule2Updated, groupDto);
+    const result = getPayloadToExport(formValuesForRule2Updated, groupDto, 'uid-rule-5');
     expect(result).toEqual({
       name: 'Test Group',
       rules: [rule1, rule2, rule3, rule4, expectedModifiedRule2('uid-rule-5')],
     });
     // for recording rule
     const resultForRecording = getPayloadToExport(
-      'uid-rule-5',
       { ...formValuesForRecordingRule4Updated, type: RuleFormType.grafanaRecording },
-      groupDto
+      groupDto,
+      'uid-rule-5'
     );
     expect(resultForRecording).toEqual({
       name: 'Test Group',
@@ -202,7 +202,7 @@ describe('getPayloadFromDto', () => {
       name: 'Empty Group',
       rules: [],
     };
-    const result = getPayloadToExport('uid-rule-2', formValuesForRule2Updated, emptyGroupDto);
+    const result = getPayloadToExport(formValuesForRule2Updated, emptyGroupDto, 'uid-rule-2');
     expect(result).toEqual({
       name: 'Empty Group',
       rules: [expectedModifiedRule2('uid-rule-2')],

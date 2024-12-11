@@ -38,6 +38,7 @@ export const getSelectorApply = () => screen.getByTestId(selectors.selector.appl
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
+export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);

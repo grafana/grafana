@@ -13,8 +13,13 @@ labels:
     - oss
 menuTitle: Slack
 title: Configure Slack for Alerting
-weight: 0
+weight: 155
 refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
   nested-policy:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
@@ -36,9 +41,9 @@ There are two ways of integrating Slack into Grafana Alerting.
 
    Webhooks is the simpler way to post messages into Slack. Slack automatically creates a bot user with all the necessary permissions to post messages to one particular channel of your choice.
 
-{{< admonition type="note" >}}
-Grafana Alerting only allows one Slack channel per contact point.
-{{< /admonition >}}
+Note that you can only setup one Slack channel per contact point.
+
+You can customize the `title` and `body` of the Slack message using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with custom blocks.
 
 ## Before you begin
 
@@ -53,17 +58,12 @@ If you are using a Slack API Token, complete the following steps.
 1. Right click the channel you want to receive notifications in.
 1. Click View channel details.
 1. Scroll down and copy the Channel ID.
-   {{< admonition type="note" >}}
-   While going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
-   {{< /admonition >}}
+
+   Note that while going through these steps, Slack may prompt you to Reinstall your app in order for the changes to take effect.
 
 ### Webhook URL
 
-If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
-
-{{< admonition type="note" >}}
-Make sure you copy the Slack app Webhook URL. You need this when setting up your contact point integration in Grafana Alerting.
-{{< /admonition >}}
+If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart), and copy the Slack app Webhook URL. You need this when setting up your contact point integration in Grafana Alerting.
 
 ## Procedure
 

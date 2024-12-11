@@ -16,13 +16,14 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
-interface UsersTableProps {
+export interface UsersTableProps {
   users: UserDTO[];
   showPaging?: boolean;
   totalPages: number;
@@ -54,7 +55,7 @@ export const UsersTable = ({
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => {
           return (
-            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.id}`} title="Edit user">
+            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.uid}`} title="Edit user">
               {original.login}
             </TextLink>
           );
@@ -101,9 +102,9 @@ export const UsersTable = ({
               cell: ({ cell: { value } }: Cell<'licensedRole'>) => {
                 return value === 'None' ? (
                   <Text color={'disabled'}>
-                    Not assigned{' '}
+                    <Trans i18nKey="admin.users-table.no-licensed-roles">Not assigned</Trans>
                     <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                      <Icon name="question-circle" />
+                      <Icon name="question-circle" style={{ margin: '0 0 4 4' }} />
                     </Tooltip>
                   </Text>
                 ) : (
@@ -121,7 +122,21 @@ export const UsersTable = ({
           iconName: 'question-circle',
         },
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+          return (
+            <>
+              {value && (
+                <>
+                  {value === '10 years' ? (
+                    <Text color={'disabled'}>
+                      <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
+                    </Text>
+                  ) : (
+                    value
+                  )}
+                </>
+              )}
+            </>
+          );
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
@@ -146,7 +161,7 @@ export const UsersTable = ({
               variant="secondary"
               size="sm"
               icon="pen"
-              href={`admin/users/edit/${original.id}`}
+              href={`admin/users/edit/${original.uid}`}
               aria-label={`Edit user ${original.name}`}
               tooltip={'Edit user'}
             />

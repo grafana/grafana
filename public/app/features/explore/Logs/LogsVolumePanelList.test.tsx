@@ -52,7 +52,7 @@ describe('LogsVolumePanelList', () => {
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 
-  it('a custom message for timeout errors', async () => {
+  it('has a custom message for timeout errors', async () => {
     const onLoadCallback = jest.fn();
     renderPanel(
       {
@@ -62,7 +62,8 @@ describe('LogsVolumePanelList', () => {
       },
       onLoadCallback
     );
-    expect(screen.getByText('The logs volume query has timed out')).toBeInTheDocument();
+    expect(screen.getByText('Unable to show log volume')).toBeInTheDocument();
+    expect(screen.getByText(/The query is trying to access too much data/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onLoadCallback).toHaveBeenCalled();
   });
@@ -71,5 +72,10 @@ describe('LogsVolumePanelList', () => {
     renderPanel({ state: LoadingState.Done, data: [] });
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByText('No logs volume available')).toBeInTheDocument();
+  });
+
+  it('does not show an info message with empty responses when the current state is streaming', async () => {
+    renderPanel({ state: LoadingState.Streaming, data: [] });
+    expect(screen.queryByText('No logs volume available')).not.toBeInTheDocument();
   });
 });

@@ -1,9 +1,14 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, JsonBodyType, StrictResponse, http } from 'msw';
 
-import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import {
+  getAlertmanagerConfig,
+  getAlertmanagerStatus,
+  setAlertmanagerConfig,
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
@@ -58,11 +63,32 @@ export const alertmanagerAlertsListHandler = () =>
     ]);
   });
 
-export const getGrafanaAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
-  http.get('/api/alertmanager/grafana/config/api/v1/alerts', () => HttpResponse.json(config));
+export const getAlertmanagerConfigHandler = (responseOverride?: StrictResponse<JsonBodyType>) =>
+  http.get<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', ({ params }) => {
+    if (responseOverride) {
+      return responseOverride;
+    }
+    const { name: alertmanagerName } = params;
 
-export const getAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
-  http.get('/api/alertmanager/:name/config/api/v1/alerts', () => HttpResponse.json(config));
+    const configToReturn = getAlertmanagerConfig(alertmanagerName);
+
+    if (configToReturn) {
+      return HttpResponse.json(configToReturn);
+    }
+    return HttpResponse.json({ message: 'Not found.' }, { status: 404 });
+  });
+
+const getAlertmanagerStatusHandler = () =>
+  http.get<{ name: string }>('/api/alertmanager/:name/api/v2/status', ({ params }) => {
+    const { name: alertmanagerName } = params;
+
+    const statusToReturn = getAlertmanagerStatus(alertmanagerName);
+
+    if (statusToReturn) {
+      return HttpResponse.json(statusToReturn);
+    }
+    return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
+  });
 
 export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
@@ -92,27 +118,35 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   return null;
 };
 
-export const updateGrafanaAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
-  http.post('/api/alertmanager/grafana/config/api/v1/alerts', async ({ request }) => {
+export const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
+  http.post<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', async ({ request, params }) => {
     if (responseOverride) {
       return responseOverride;
     }
+    const { name: alertmanagerName } = params;
     const body: AlertManagerCortexConfig = await request.clone().json();
+    // TODO: Validate the config depending on alertmanager type
+    // e.g. validate other AMs differently where required for tests
     const potentialError = validateGrafanaAlertmanagerConfig(body);
-    return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
-  });
-
-const updateAlertmanagerConfigHandler = () =>
-  http.post('/api/alertmanager/:name/config/api/v1/alerts', async ({ request }) => {
-    const body: AlertManagerCortexConfig = await request.clone().json();
-    const potentialError = validateGrafanaAlertmanagerConfig(body);
+    if (!potentialError) {
+      // Only update the mock entity the endpoint is going to "succeed"
+      setAlertmanagerConfig(alertmanagerName, body);
+    }
     return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
   });
 
 const getGrafanaAlertmanagerTemplatePreview = () =>
-  http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () =>
-    // TODO: Scaffold out template preview response as needed by tests
-    HttpResponse.json({})
+  http.post<never, TemplatesTestPayload>(
+    '/api/alertmanager/grafana/config/api/v1/templates/test',
+    async ({ request }) => {
+      const body = await request.json();
+
+      if (body?.template.startsWith('{{')) {
+        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.name}` }] });
+      }
+
+      return HttpResponse.json({});
+    }
   );
 
 const getReceiversHandler = () =>
@@ -140,13 +174,12 @@ const getGroupsHandler = () =>
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
-  getGrafanaAlertmanagerConfigHandler(),
   getAlertmanagerConfigHandler(),
-  updateGrafanaAlertmanagerConfigHandler(),
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
   getReceiversHandler(),
   testReceiversHandler(),
   getGroupsHandler(),
+  getAlertmanagerStatusHandler(),
 ];
 export default handlers;

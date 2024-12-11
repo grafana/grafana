@@ -20,7 +20,7 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { getMockDataSource, TestQuery } from './__mocks__/mockDataSource';
-import { callQueryMethod, runRequest } from './runRequest';
+import { callQueryMethodWithMigration, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -40,6 +40,14 @@ jest.mock('app/features/expressions/ExpressionDatasource', () => ({
   dataSource: {
     query: jest.fn(),
   },
+}));
+
+let isMigrationHandlerMock = jest.fn().mockReturnValue(false);
+let migrateRequestMock = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  isMigrationHandler: () => isMigrationHandlerMock(),
+  migrateRequest: () => migrateRequestMock(),
 }));
 
 class ScenarioCtx {
@@ -405,7 +413,7 @@ describe('runRequest', () => {
   });
 });
 
-describe('callQueryMethod', () => {
+describe('callQueryMethodWithMigration', () => {
   let request: DataQueryRequest<TestQuery>;
   let filterQuerySpy: jest.SpyInstance;
   let querySpy: jest.SpyInstance;
@@ -417,11 +425,13 @@ describe('callQueryMethod', () => {
     filterQuery,
     getDefaultQuery,
     queryFunction,
+    migrateRequest,
   }: {
     targets: TestQuery[];
     getDefaultQuery?: (app: CoreApp) => Partial<TestQuery>;
     filterQuery?: typeof ds.filterQuery;
     queryFunction?: typeof ds.query;
+    migrateRequest?: jest.Mock;
   }) => {
     request = {
       range: {
@@ -448,8 +458,12 @@ describe('callQueryMethod', () => {
       ds.getDefaultQuery = getDefaultQuery;
       defaultQuerySpy = jest.spyOn(ds, 'getDefaultQuery');
     }
+    if (migrateRequest) {
+      isMigrationHandlerMock = jest.fn().mockReturnValue(true);
+      migrateRequestMock = migrateRequest;
+    }
     querySpy = jest.spyOn(ds, 'query');
-    callQueryMethod(ds, request, queryFunction);
+    return callQueryMethodWithMigration(ds, request, queryFunction);
   };
 
   beforeEach(() => {
@@ -589,6 +603,48 @@ describe('callQueryMethod', () => {
         ],
       })
     );
+  });
+
+  it('Should migrate a request if defined', (done) => {
+    const migrateRequest = jest.fn();
+    const res = setup({
+      targets: [
+        {
+          refId: 'A',
+          q: 'SUM(foo)',
+        },
+      ],
+      migrateRequest: migrateRequest.mockResolvedValue({
+        range: {
+          from: dateTime(),
+          to: dateTime(),
+          raw: { from: '1h', to: 'now' },
+        },
+        targets: [
+          {
+            refId: 'A',
+            qMigrated: 'SUM(foo)',
+          },
+        ],
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
+        scopedVars: {},
+        timezone: '',
+        app: '',
+        startTime: 0,
+      }),
+    });
+    expect(migrateRequest).toHaveBeenCalledTimes(1);
+    res.subscribe((res) => {
+      expect(res).toBeDefined();
+      expect(querySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targets: [{ qMigrated: 'SUM(foo)', refId: 'A' }],
+        })
+      );
+      done();
+    });
   });
 });
 

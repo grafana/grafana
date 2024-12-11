@@ -1,10 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
-import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
+import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
@@ -51,14 +51,16 @@ export function TextPanel(props: Props) {
   }
 
   return (
-    <CustomScrollbar autoHeightMin="100%" className={styles.containStrict}>
-      <DangerouslySetHtmlContent
-        allowRerender
-        html={processed.content}
-        className={styles.markdown}
-        data-testid="TextPanel-converted-content"
-      />
-    </CustomScrollbar>
+    <div className={styles.containStrict}>
+      <ScrollContainer minHeight="100%">
+        <DangerouslySetHtmlContent
+          allowRerender
+          html={processed.content}
+          className="markdown-html"
+          data-testid="TextPanel-converted-content"
+        />
+      </ScrollContainer>
+    </div>
   );
 }
 
@@ -93,19 +95,13 @@ function processContent(options: Options, interpolate: InterpolateFunction, disa
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  codeEditorContainer: css`
-    .monaco-editor .margin,
-    .monaco-editor-background {
-      background-color: ${theme.colors.background.primary};
-    }
-  `,
-  markdown: cx(
-    'markdown-html',
-    css`
-      height: 100%;
-    `
-  ),
+  codeEditorContainer: css({
+    '.monaco-editor .margin, .monaco-editor-background': {
+      backgroundColor: theme.colors.background.primary,
+    },
+  }),
   containStrict: css({
     contain: 'strict',
+    height: '100%',
   }),
 });

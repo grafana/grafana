@@ -7,7 +7,7 @@ export interface AppChromeUpdateProps {
   actions?: React.ReactNode;
 }
 /**
- * @deprecated This component is deprecated and will be removed in a future release.
+ * This is the way core pages add actions to the second chrome toolbar
  */
 export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(({ actions }: AppChromeUpdateProps) => {
   const { chrome } = useGrafana();

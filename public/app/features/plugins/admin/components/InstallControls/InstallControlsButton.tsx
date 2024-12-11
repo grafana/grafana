@@ -55,6 +55,8 @@ export function InstallControlsButton({
     plugin_id: plugin.id,
     plugin_type: plugin.type,
     path: location.pathname,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
   };
 
   useEffect(() => {
@@ -109,7 +111,7 @@ export function InstallControlsButton({
   };
 
   const onUpdate = async () => {
-    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME);
+    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME, trackingProps);
 
     await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {
@@ -117,10 +119,8 @@ export function InstallControlsButton({
     }
   };
 
-  let disableUninstall =
-    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-      ? plugin.isUninstallingFromInstance
-      : isUninstalling;
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
     disableUninstall = true;
@@ -178,4 +178,12 @@ export function InstallControlsButton({
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
+}
+
+function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
+  if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+    return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
+  }
+
+  return isUninstalling;
 }

@@ -534,6 +534,17 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
+		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
+		// TODO: Refactor to store lbac rules separate from a datasource
+		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.AllowLBACRuleUpdates {
+			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
+				"reason", "overriding_lbac_rules_from_datasource_api",
+				"datasource_id", dataSource.ID,
+				"datasource_uid", dataSource.UID)
+
+			cmd.JsonData = RetainExistingLBACRules(dataSource.JsonData, cmd.JsonData)
+		}
+
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
 			query := &datasources.GetDataSourceQuery{
 				Name:  cmd.Name,
@@ -975,4 +986,31 @@ func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource)
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)
 	}
 	return s.getCustomHeaders(ds.JsonData, values), nil
+}
+
+func RetainExistingLBACRules(storedJsonData, cmdJsonData *simplejson.Json) *simplejson.Json {
+	// If there are no stored data, we should remove the key from the command json data
+	if storedJsonData == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	previousRules := storedJsonData.Get("teamHttpHeaders").Interface()
+	// If there are no previous rules, we should remove the key from the command json data
+	if previousRules == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	if cmdJsonData == nil {
+		// It's fine to instantiate a new JsonData here
+		// Because it's done in the SQLStore.UpdateDataSource anyway
+		cmdJsonData = simplejson.New()
+	}
+	cmdJsonData.Set("teamHttpHeaders", previousRules)
+	return cmdJsonData
 }

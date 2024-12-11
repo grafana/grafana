@@ -3,7 +3,7 @@ import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
@@ -181,8 +181,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={1}>
-          <Text element="h2" variant="body" weight="medium">
+        <Stack alignItems="center" gap={1} minWidth={0}>
+          <Text element="h2" variant="body" weight="medium" truncate>
             {name}
           </Text>
         </Stack>
