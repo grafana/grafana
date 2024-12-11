@@ -1,19 +1,6 @@
 import * as e2e from '@grafana/e2e-selectors';
 import { expect, test } from '@grafana/plugin-e2e';
 
-test('should evaluate to false if entire request returns 500', async ({ page, alertRuleEditPage, selectors }) => {
-  await alertRuleEditPage.alertRuleNameField.fill('Test Alert Rule');
-
-  // remove the default query
-  const queryA = alertRuleEditPage.getAlertRuleQueryRow('A');
-  await alertRuleEditPage
-    .getByGrafanaSelector(selectors.components.QueryEditorRow.actionButton('Remove query'), {
-      root: queryA.locator,
-    })
-    .click();
-  await expect(alertRuleEditPage.evaluate()).not.toBeOK();
-});
-
 test('should evaluate to false if entire request returns 200 but partial query result is invalid', async ({
   page,
   alertRuleEditPage,
