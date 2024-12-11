@@ -341,7 +341,8 @@ We’d love hear from you about how this new feature is working. To provide feed
 {{< /admonition >}}
 
 Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
+
+To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
 
 This option is available for the following cell types: **Auto**, **Colored text**, and **Colored background**.
 

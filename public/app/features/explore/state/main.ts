@@ -5,7 +5,7 @@ import { AnyAction } from 'redux';
 import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
@@ -14,8 +14,9 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 import { createAsyncThunk, ThunkResult } from '../../../types';
 import { withUniqueRefIds } from '../utils/queries';
 
+import { DEFAULT_RANGE } from './constants';
 import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
-import { DEFAULT_RANGE, makeExplorePaneState } from './utils';
+import { makeExplorePaneState } from './utils';
 
 //
 // Actions and Payloads
@@ -157,7 +158,7 @@ export const navigateToExplore = (
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
-const initialExploreItemState = makeExplorePaneState();
+const initialExploreItemState = () => makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
@@ -265,7 +266,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       ...state,
       panes: {
         ...state.panes,
-        [action.meta.arg.exploreId]: initialExploreItemState,
+        [action.meta.arg.exploreId]: initialExploreItemState(),
       },
     };
   }
@@ -274,7 +275,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const initialPanes = Object.entries(state.panes);
     const before = initialPanes.slice(0, action.meta.arg.position);
     const after = initialPanes.slice(before.length);
-    const panes = [...before, [action.meta.arg.exploreId, initialExploreItemState] as const, ...after].reduce(
+    const panes = [...before, [action.meta.arg.exploreId, initialExploreItemState()] as const, ...after].reduce(
       (acc, [id, pane]) => ({ ...acc, [id]: pane }),
       {}
     );

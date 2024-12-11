@@ -4,20 +4,21 @@ import {
   DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
-  getDefaultRelativeTimeRange,
-  getNextRefId,
   IntervalValues,
-  rangeUtil,
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  getDefaultRelativeTimeRange,
+  getNextRefId,
+  rangeUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
@@ -54,8 +55,8 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import {
   DataSourceType,
-  getDefaultOrFirstCompatibleDataSource,
   GRAFANA_RULES_SOURCE_NAME,
+  getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';

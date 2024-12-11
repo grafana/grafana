@@ -7,11 +7,11 @@ import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-aler
 import {
   PromAlertingRuleState,
   PromRuleGroupDTO,
-  PromRulesResponse,
   PromRuleType,
+  PromRulesResponse,
 } from 'app/types/unified-alerting-dto';
 
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 export interface FetchPromRulesFilter {
