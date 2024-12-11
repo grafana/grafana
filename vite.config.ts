@@ -28,7 +28,21 @@ export default defineConfig(({ command }) => ({
     // use manifest for backend integration in production
     manifest: 'public/build/.vite/manifest.json',
     rollupOptions: {
-      input: ['./public/app/index.ts', './public/sass/grafana.dark.scss', './public/sass/grafana.light.scss'],
+      input: [
+        // trustedTypePolicies.ts is a special case because it needs to be loaded before the index.js and vendor.js
+        // otherwise the policy is not applied and grafana fails to load.
+        './public/app/core/trustedTypePolicies.ts',
+        './public/app/index.ts',
+        './public/sass/grafana.dark.scss',
+        './public/sass/grafana.light.scss',
+      ],
+      output: {
+        manualChunks(id) {
+          if (id.includes('@braintree/sanitize-url')) {
+            return 'braintree';
+          }
+        },
+      },
     },
     outDir: 'build_tmp',
     assetsDir: 'public/build',

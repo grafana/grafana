@@ -1,6 +1,5 @@
 import './viteGlobals';
 import 'vite/modulepreload-polyfill';
-import './core/trustedTypePolicies';
 
 // TODO: Vite does this differently...
 // declare let __webpack_public_path__: string;

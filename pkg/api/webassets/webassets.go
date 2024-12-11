@@ -34,6 +34,7 @@ type ViteManifestEntry struct {
 	IsDynamicEntry bool     `json:"isDynamicEntry"`
 	IsEntry        bool     `json:"isEntry"`
 	Src            string   `json:"src"`
+	Name           string   `json:"name"`
 }
 
 type Manifest map[string]ViteManifestEntry
@@ -142,8 +143,10 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
 	}
 
-	// TODO: This is a temporary hack to get the entrypoints for the vite frontend loading.
-	var entryPointJSAssets []dtos.EntryPointAsset
+	// TODO: This is temporary to get the entrypoints for the vite frontend loading.
+	// We need trusted types up front otherwise the entire app will fail to load if they're enabled.
+	var trustedTypePolicyAsset *dtos.EntryPointAsset
+	var otherJSAssets []dtos.EntryPointAsset
 	var preloadJSAssets []dtos.EntryPointAsset
 	var darkCSS, lightCSS string
 
@@ -155,7 +158,11 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 				Integrity: "",
 			}
 			if strings.HasSuffix(entry.File, ".js") {
-				entryPointJSAssets = append(entryPointJSAssets, asset)
+				if entry.Name == "trustedTypePolicies" {
+					trustedTypePolicyAsset = &asset
+				} else {
+					otherJSAssets = append(otherJSAssets, asset)
+				}
 				preloadJSAssets = getPreloadChunks(manifest, entry.Src)
 			}
 			if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
@@ -191,6 +198,14 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	// if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
 	// 	return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
 	// }
+
+	var entryPointJSAssets []dtos.EntryPointAsset
+
+	entryPointJSAssets = append([]dtos.EntryPointAsset{*trustedTypePolicyAsset}, otherJSAssets...)
+
+	if entryPointJSAssets == nil {
+		return nil, fmt.Errorf("no entrypoints found in assets manifest, try running `yarn build`")
+	}
 
 	rsp := &dtos.EntryPointAssets{
 		JSFiles:        entryPointJSAssets,

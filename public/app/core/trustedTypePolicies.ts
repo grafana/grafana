@@ -1,7 +1,6 @@
-import { textUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { sanitizeUrl } from '@braintree/sanitize-url';
 
-const CSP_REPORT_ONLY_ENABLED = config.bootData.settings.cspReportOnlyEnabled;
+const CSP_REPORT_ONLY_ENABLED = window.grafanaBootData!.settings.cspReportOnlyEnabled;
 
 export const defaultTrustedTypesPolicy = {
   createHTML: (string: string, source: string, sink: string) => {
@@ -14,7 +13,7 @@ export const defaultTrustedTypesPolicy = {
   createScript: (string: string) => string,
   createScriptURL: (string: string, source: string, sink: string) => {
     if (!CSP_REPORT_ONLY_ENABLED) {
-      return textUtil.sanitizeUrl(string);
+      return sanitizeUrl(string);
     }
     console.error('[ScriptURL not sanitized with Trusted Types]', string, source, sink);
     return string;
@@ -22,7 +21,7 @@ export const defaultTrustedTypesPolicy = {
 };
 
 if (
-  config.bootData.settings.trustedTypesDefaultPolicyEnabled &&
+  window.grafanaBootData!.settings.trustedTypesDefaultPolicyEnabled &&
   window.trustedTypes &&
   window.trustedTypes.createPolicy
 ) {
