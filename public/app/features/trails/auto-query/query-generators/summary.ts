@@ -3,7 +3,7 @@ import { AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
 import { getGeneralBaseQuery } from './baseQuery';
-import { generateCommonAutoQueryInfo } from './common/generator';
+import { generateCommonAutoQueryInfo } from './common-generator';
 
 export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryInfo {
   const suffix = metricParts.at(-1);
@@ -13,22 +13,12 @@ export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryIn
 
   const unitSuffix = metricParts.at(-2);
   const unit = getUnit(unitSuffix);
-
-  const rate = true;
-  const baseQuery = getGeneralBaseQuery(rate);
-
+  const baseQuery = getGeneralBaseQuery(true);
   const subMetric = metricParts.slice(0, -1).join('_');
-  const mainQueryExpr = createMeanExpr(`sum(${baseQuery})`);
-  const breakdownQueryExpr = createMeanExpr(`sum(${baseQuery})by(${VAR_GROUP_BY_EXP})`);
 
-  const operationDescription = `average`;
-  const description = `${subMetric} (${operationDescription})`;
-
-  function createMeanExpr(expr: string) {
-    const numerator = expr.replace(VAR_METRIC_EXPR, `${subMetric}_sum`);
-    const denominator = expr.replace(VAR_METRIC_EXPR, `${subMetric}_count`);
-    return `${numerator}/${denominator}`;
-  }
+  const description = `${subMetric} (average)`;
+  const mainQueryExpr = createMeanExpr(`sum(${baseQuery})`, subMetric);
+  const breakdownQueryExpr = createMeanExpr(`sum(${baseQuery})by(${VAR_GROUP_BY_EXP})`, subMetric);
 
   return generateCommonAutoQueryInfo({
     description,
@@ -36,4 +26,10 @@ export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryIn
     breakdownQueryExpr,
     unit,
   });
+}
+
+function createMeanExpr(expr: string, subMetric: string): string {
+  const numerator = expr.replace(VAR_METRIC_EXPR, `${subMetric}_sum`);
+  const denominator = expr.replace(VAR_METRIC_EXPR, `${subMetric}_count`);
+  return `${numerator}/${denominator}`;
 }

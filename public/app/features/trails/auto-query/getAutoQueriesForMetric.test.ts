@@ -1,4 +1,4 @@
-import { getAutoQueriesForMetric } from './AutoQueryEngine';
+import { getAutoQueriesForMetric } from './getAutoQueriesForMetric';
 
 function expandExpr(shortenedExpr: string) {
   return shortenedExpr.replace('...', '${metric}{${filters}}');
