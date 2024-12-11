@@ -68,10 +68,10 @@ Grafana enables you to share dashboards and panels with other users within your 
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
-The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance. Please note this is only supported for Grafana Enterprise and Grafana OSS. 
+The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is not available in Grafana Cloud.
+Anonymous access permission is not available in Grafana Cloud. This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 ## Share dashboards {#share-a-dashboard}
