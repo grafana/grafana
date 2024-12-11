@@ -1,11 +1,11 @@
 import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
-import { AutoQueryInfo } from '../types';
+import { AutoQueryContext, AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
-import { getGeneralBaseQuery } from './baseQuery';
 import { generateCommonAutoQueryInfo } from './common';
 
-export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryInfo {
+export function createSummaryMetricQueryDefs(context: AutoQueryContext): AutoQueryInfo {
+  const { metricParts, baseQuery } = context;
   const suffix = metricParts.at(-1);
   if (suffix !== 'sum') {
     throw new Error('createSummaryMetricQueryDefs is only to be used for metrics that end in "_sum"');
@@ -13,7 +13,6 @@ export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryIn
 
   const unitSuffix = metricParts.at(-2);
   const unit = getUnit(unitSuffix);
-  const baseQuery = getGeneralBaseQuery(true);
   const subMetric = metricParts.slice(0, -1).join('_');
 
   const description = `${subMetric} (average)`;

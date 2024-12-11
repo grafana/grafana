@@ -2,14 +2,13 @@ import { PromQuery } from '@grafana/prometheus';
 
 import { VAR_FILTERS_WITH_CURLY_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
 import { heatmapGraphBuilder, percentilesGraphBuilder, simpleGraphBuilder } from '../graphBuilders';
-import { AutoQueryDef } from '../types';
+import { AutoQueryContext, AutoQueryDef } from '../types';
 import { getUnit } from '../units';
 
-export function createHistogramMetricQueryDefs(metricParts: string[]) {
+export function createHistogramMetricQueryDefs(context: AutoQueryContext) {
+  const { metricParts } = context;
   const title = `${VAR_METRIC_EXPR}`;
-
   const unitSuffix = metricParts.at(-2);
-
   const unit = getUnit(unitSuffix);
 
   const common = {
