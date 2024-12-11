@@ -164,14 +164,13 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
-	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
-
 	// This is required for --server-side apply
 	err = provisioning.AddKnownTypes(provisioning.InternalGroupVersion, scheme)
 	if err != nil {
 		return err
 	}
 
+	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
 	// Only 1 version (for now?)
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
