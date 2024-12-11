@@ -15,19 +15,35 @@ import {
   TestResponse,
   RepositorySpec,
   JobList,
+  JobResource,
+  ListApiArg,
+  WebhookResponse,
+  HistoryItem,
+  GetRequestArg,
 } from './types';
 
 const BASE_PATH = '/repositories';
 
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    listRepository: build.query<RepositoryList, void>({
-      query: () => ({ url: BASE_PATH }),
-      providesTags: ['RepositoryList'],
-    }),
-    listJobs: build.query<JobList, void>({
-      query: () => ({ url: '/jobs' }),
+    listJobs: build.query<JobList, ListApiArg>({
+      query: (params) => ({
+        url: `/jobs`,
+        params: params || undefined,
+      }),
       providesTags: ['JobList'],
+    }),
+    getJob: build.query<JobResource, RequestArg>({
+      query: (queryArg) => ({
+        url: `/jobs/${queryArg.name}`,
+      }),
+    }),
+    listRepository: build.query<RepositoryList, ListApiArg>({
+      query: (params) => ({
+        url: `${BASE_PATH}`,
+        params: params || undefined,
+      }),
+      providesTags: ['RepositoryList'],
     }),
     createRepository: build.mutation<void, RepositoryForCreate>({
       query: (body) => ({
@@ -36,9 +52,6 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
       invalidatesTags: ['RepositoryList'],
-    }),
-    getRepository: build.query<RepositoryResource, RequestArg>({
-      query: ({ name }) => ({ url: `${BASE_PATH}/${name}` }),
     }),
     updateRepository: build.mutation<void, UpdateRequestArg>({
       query: ({ name, body }) => ({
@@ -62,6 +75,11 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
       invalidatesTags: ['RepositoryList'],
+    }),
+    getRepository: build.query<RepositoryResource, RequestArg>({
+      query: (queryArg) => ({
+        url: `${BASE_PATH}/${queryArg.name}`,
+      }),
     }),
     createRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
       query: ({ name }) => ({
@@ -110,6 +128,19 @@ const injectedRtkApi = api.injectEndpoints({
       query: ({ name, path, ref, message }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
         method: 'DELETE',
+        params: { ref, message },
+      }),
+    }),
+    listRepositoryHistory: build.query<HistoryListResponse, RequestArg>({
+      query: (queryArg) => ({
+        url: `${BASE_PATH}/${queryArg.name}/history`,
+        params: { ref: queryArg.ref },
+      }),
+    }),
+    getRepositoryHistory: build.query<HistoryItem, GetRequestArg>({
+      query: (queryArg) => ({
+        url: `${BASE_PATH}/${queryArg.name}/history/${queryArg.path}`,
+        params: { ref: queryArg.ref },
       }),
     }),
     createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref?: string }>({
@@ -148,6 +179,17 @@ const injectedRtkApi = api.injectEndpoints({
     testRepositoryConfig: build.mutation<TestResponse, Resource<RepositorySpec>>({
       query: ({ metadata }) => ({
         url: `${BASE_PATH}/${metadata.name ?? 'new'}/test`,
+        method: 'POST',
+      }),
+    }),
+    getRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
+      query: (queryArg) => ({
+        url: `${BASE_PATH}/${queryArg.name}/webhook`,
+      }),
+    }),
+    postRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
+      query: (queryArg) => ({
+        url: `${BASE_PATH}/${queryArg.name}/webhook`,
         method: 'POST',
       }),
     }),

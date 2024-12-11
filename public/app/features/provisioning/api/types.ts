@@ -56,6 +56,11 @@ export type TestResponse = {
 export interface RequestArg {
   /** Repository UID */
   name: string;
+  ref?: string;
+}
+
+export interface GetRequestArg extends RequestArg {
+  path: string;
 }
 
 export type RepositoryForCreate = ResourceForCreate<RepositorySpec>;
@@ -68,11 +73,24 @@ export type RepositoryResource = Resource<RepositorySpec, RepositoryStatus, 'Rep
 export type RepositoryList = ResourceList<RepositorySpec, RepositoryStatus, 'Repository'>;
 
 export type JobSpec = {
-  action: string;
+  action: 'export' | 'merge' | 'pr';
   ref?: string;
   pr?: number;
   hash?: string;
   url?: string;
+  commits?: CommitInfo[];
+};
+
+export type FileRef = {
+  path: string;
+  ref: string;
+};
+
+export type CommitInfo = {
+  added?: FileRef[];
+  modified?: FileRef[];
+  removed?: FileRef[];
+  sha1?: string;
 };
 
 export type JobStatus = {
@@ -162,3 +180,24 @@ export type AuthorInfo = {
   username: string;
   avatarURL?: string;
 };
+
+export type WebhookResponse = {
+  added?: string;
+  apiVersion?: string;
+  code?: number;
+  job?: JobSpec;
+  kind?: string;
+};
+
+export type ListApiArg = {
+  allowWatchBookmarks?: boolean;
+  continue?: string;
+  fieldSelector?: string;
+  labelSelector?: string;
+  limit?: number;
+  resourceVersion?: string;
+  resourceVersionMatch?: string;
+  sendInitialEvents?: boolean;
+  timeoutSeconds?: number;
+  watch?: boolean;
+} | void;
