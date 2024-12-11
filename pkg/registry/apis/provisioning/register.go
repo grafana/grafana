@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +30,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
@@ -46,6 +49,7 @@ import (
 
 const (
 	resourceNamePlaceholder = "$RESOURCE_NAME_PLACEHOLDER"
+	repoControllerWorkers   = 1
 )
 
 var (
@@ -67,7 +71,6 @@ type ProvisioningAPIBuilder struct {
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
-	informer          *repositoryInformer
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -99,13 +102,6 @@ func NewProvisioningAPIBuilder(
 			identities: identities,
 		},
 		jobs: jobs.NewJobQueue(50), // in memory for now
-	}
-
-	builder.informer = &repositoryInformer{
-		logger:         slog.Default().With("logger", "provisioning-informer"),
-		configProvider: configProvider,
-		identities:     identities,
-		getter:         builder,
 	}
 
 	return builder
@@ -493,8 +489,29 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 }
 
 func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
-	fmt.Printf("TODO... post hook: %+v\n", b.informer)
-	return nil, nil
+	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
+		"grafana-provisioning-controller": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			if err != nil {
+				return err
+			}
+			sharedInformerFactory := informers.NewSharedInformerFactory(
+				c,
+				30*time.Minute,
+			)
+
+			informer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			controller, err := NewRepositoryController(c.ProvisioningV0alpha1(), informer)
+			if err != nil {
+				return err
+			}
+
+			controller.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			return nil
+		},
+	}
+	return postStartHooks, nil
 }
 
 func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
