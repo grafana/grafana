@@ -117,7 +117,6 @@ const BrowseDashboardsPage = memo(() => {
       origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
     });
   };
-  console.log('searchState', searchState.result?.totalRows);
   return (
     <Page
       navId="dashboards/browse"
