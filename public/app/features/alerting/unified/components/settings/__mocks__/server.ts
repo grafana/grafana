@@ -20,13 +20,6 @@ import datasources from './api/datasources.json';
 import admin_config from './api/v1/ngalert/admin_config.json';
 import alertmanagers from './api/v1/ngalert/alertmanagers.json';
 
-export { datasources as DataSourcesResponse };
-export { admin_config as AdminConfigResponse };
-export { alertmanagers as AlertmanagersResponse };
-export { internalAlertmanagerConfig as InternalAlertmanagerConfiguration };
-export { vanillaAlertmanagerConfig as VanillaAlertmanagerConfiguration };
-export { history as alertmanagerConfigurationHistory };
-
 export const EXTERNAL_VANILLA_ALERTMANAGER_UID = 'vanilla-alertmanager';
 export const PROVISIONED_MIMIR_ALERTMANAGER_UID = 'provisioned-alertmanager';
 
