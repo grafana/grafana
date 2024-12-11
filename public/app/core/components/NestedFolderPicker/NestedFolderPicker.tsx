@@ -21,7 +21,6 @@ import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
 
-
 const debouncedSearch = debounce(getSearchResults, 300);
 
 async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {

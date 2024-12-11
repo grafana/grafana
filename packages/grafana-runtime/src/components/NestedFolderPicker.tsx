@@ -6,7 +6,6 @@ enum PermissionLevelString {
   Admin = 'Admin',
 }
 
-
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
   value?: string;
@@ -30,22 +29,19 @@ export interface NestedFolderPickerProps {
   clearable?: boolean;
 }
 
-
-
 // let NestedFolderPicker: NestedFolderPickerType | null = null;
 
 export type NestedFolderPickerType = React.ComponentType<NestedFolderPickerProps>;
 
 /**
-* Used to bootstrap the NestedFolderPicker during application start
-* is exposed via runtime.
-*
-* @internal
+ * Used to bootstrap the NestedFolderPicker during application start
+ * is exposed via runtime.
+ *
+ * @internal
  */
 export function setNestedFolderPicker(component: NestedFolderPickerType) {
   NestedFolderPicker = component;
 }
-
 
 export let NestedFolderPicker: NestedFolderPickerType = (props) => {
   if (NestedFolderPicker) {
