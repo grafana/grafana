@@ -5,24 +5,26 @@ import {
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
   defaultDashboardCursorSync,
+  MappingType as MappingTypeV1,
+  ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
 import {
   DashboardCursorSync,
-  MappingType,
   VariableHide,
   VariableRefresh,
   VariableSort,
   FieldConfigSource,
   SpecialValueMatch,
+  ThresholdsMode,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {
-    case VariableRefresh.Never:
+    case 'never':
       return VariableRefreshV1.never;
-    case VariableRefresh.OnDashboardLoad:
+    case 'onDashboardLoad':
       return VariableRefreshV1.onDashboardLoad;
-    case VariableRefresh.OnTimeRangeChanged:
+    case 'onTimeRangeChanged':
       return VariableRefreshV1.onTimeRangeChanged;
     default:
       return VariableRefreshV1.never;
@@ -31,11 +33,11 @@ export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): Var
 
 export function transformVariableHideToEnumV1(hide?: VariableHide): VariableHideV1 {
   switch (hide) {
-    case VariableHide.DontHide:
+    case 'dontHide':
       return VariableHideV1.dontHide;
-    case VariableHide.HideLabel:
+    case 'hideLabel':
       return VariableHideV1.hideLabel;
-    case VariableHide.HideVariable:
+    case 'hideVariable':
       return VariableHideV1.hideVariable;
     default:
       return VariableHideV1.dontHide;
@@ -44,15 +46,23 @@ export function transformVariableHideToEnumV1(hide?: VariableHide): VariableHide
 
 export function transformSortVariableToEnumV1(sort?: VariableSort): VariableSortV1 {
   switch (sort) {
-    case VariableSort.Disabled:
+    case 'disabled':
       return VariableSortV1.disabled;
-    case VariableSort.NumericalAsc:
+    case 'numericalAsc':
       return VariableSortV1.numericalAsc;
-    case VariableSort.NumericalDesc:
+    case 'alphabeticalCaseInsensitiveAsc':
+      return VariableSortV1.alphabeticalCaseInsensitiveAsc;
+    case 'alphabeticalCaseInsensitiveDesc':
+      return VariableSortV1.alphabeticalCaseInsensitiveDesc;
+    case 'numericalDesc':
       return VariableSortV1.numericalDesc;
-    case VariableSort.AlphabeticalAsc:
+    case 'naturalAsc':
+      return VariableSortV1.naturalAsc;
+    case 'naturalDesc':
+      return VariableSortV1.naturalDesc;
+    case 'alphabeticalAsc':
       return VariableSortV1.alphabeticalAsc;
-    case VariableSort.AlphabeticalDesc:
+    case 'alphabeticalDesc':
       return VariableSortV1.alphabeticalDesc;
     default:
       return VariableSortV1.disabled;
@@ -61,11 +71,11 @@ export function transformSortVariableToEnumV1(sort?: VariableSort): VariableSort
 
 export function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): DashboardCursorSyncV1 {
   switch (cursorSync) {
-    case DashboardCursorSync.Crosshair:
+    case 'Crosshair':
       return DashboardCursorSyncV1.Crosshair;
-    case DashboardCursorSync.Tooltip:
+    case 'Tooltip':
       return DashboardCursorSyncV1.Tooltip;
-    case DashboardCursorSync.Off:
+    case 'Off':
       return DashboardCursorSyncV1.Off;
     default:
       return defaultDashboardCursorSync;
@@ -74,24 +84,35 @@ export function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): Dash
 
 function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
   switch (match) {
-    case SpecialValueMatch.True:
+    case 'true':
       return SpecialValueMatchV1.True;
-    case SpecialValueMatch.False:
+    case 'false':
       return SpecialValueMatchV1.False;
-    case SpecialValueMatch.Null:
+    case 'null':
       return SpecialValueMatchV1.Null;
-    case SpecialValueMatch.NotANumber:
+    case 'nan':
       return SpecialValueMatchV1.NaN;
-    case SpecialValueMatch.NullAndNaN:
+    case 'null+nan':
       return SpecialValueMatchV1.NullAndNaN;
-    case SpecialValueMatch.Empty:
+    case 'empty':
       return SpecialValueMatchV1.Empty;
     default:
       throw new Error(`Unknown match type: ${match}`);
   }
 }
 
-export function transformValueMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+  const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
+    switch (mode) {
+      case 'absolute':
+        return ThresholdsModeV1.Absolute;
+      case 'percentage':
+        return ThresholdsModeV1.Percentage;
+      default:
+        return ThresholdsModeV1.Absolute;
+    }
+  };
+
   return {
     ...fieldConfig,
     defaults: {
@@ -101,17 +122,17 @@ export function transformValueMappingsToV1(fieldConfig: FieldConfigSource): Fiel
           case 'value':
             return {
               ...mapping,
-              type: MappingType.ValueToText,
+              type: MappingTypeV1.ValueToText,
             };
           case 'range':
             return {
               ...mapping,
-              type: MappingType.RangeToText,
+              type: MappingTypeV1.RangeToText,
             };
           case 'regex':
             return {
               ...mapping,
-              type: MappingType.RegexToText,
+              type: MappingTypeV1.RegexToText,
             };
           case 'special':
             return {
@@ -120,12 +141,16 @@ export function transformValueMappingsToV1(fieldConfig: FieldConfigSource): Fiel
                 ...mapping.options,
                 match: transformSpecialValueMatchToV1(mapping.options.match),
               },
-              type: MappingType.SpecialValue,
+              type: MappingTypeV1.SpecialValue,
             };
           default:
             return mapping;
         }
       }),
+      thresholds: fieldConfig.defaults.thresholds && {
+        ...fieldConfig.defaults.thresholds,
+        mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
+      },
     },
   };
 }

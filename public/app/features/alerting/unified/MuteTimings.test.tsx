@@ -1,7 +1,7 @@
 import { InitialEntry } from 'history';
 import { last } from 'lodash';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, within, userEvent, screen } from 'test/test-utils';
+import { render, screen, userEvent, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
