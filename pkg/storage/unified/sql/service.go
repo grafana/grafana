@@ -3,9 +3,10 @@ package sql
 import (
 	"context"
 
-	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var (
@@ -69,6 +71,11 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
+	// reg can be nil when running unified storage in standalone mode
+	if reg == nil {
+		reg = prometheus.DefaultRegisterer
+	}
+
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
 	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing, &grpc.Authenticator{})
@@ -99,7 +106,11 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg, authzClient)
+	// TODO, for standalone this will need to be started from enterprise
+	// Connecting to the correct remote services (cloudconfig for DS info and usage stats)
+	docs := search.ProvideDocumentBuilders(nil)
+
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, docs, s.tracing, s.reg, authzClient)
 	if err != nil {
 		return err
 	}

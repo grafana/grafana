@@ -40,7 +40,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
 
   updateFromUrl(values: SceneObjectUrlValues) {
     const newBreakdownLayout = values.breakdownLayout;
-    if (newBreakdownLayout === 'string' && isBreakdownLayoutType(newBreakdownLayout)) {
+    if (typeof newBreakdownLayout === 'string' && isBreakdownLayoutType(newBreakdownLayout)) {
       if (this.state.activeBreakdownLayout !== newBreakdownLayout) {
         this.setState({ activeBreakdownLayout: newBreakdownLayout });
       }

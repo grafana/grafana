@@ -2,13 +2,13 @@ package sql
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -19,7 +19,9 @@ import (
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
+func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -29,7 +31,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		Reg: reg,
 	}
 	if ac != nil {
-		opts.AccessClient = resource.NewAuthzLimitedClient(ac)
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer})
 	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
@@ -53,37 +55,28 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
+	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
+		opts.Search = resource.SearchOptions{
+			Backend: search.NewBleveBackend(search.BleveOptions{
+				Root:          cfg.IndexPath,
+				FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+				BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
+			}, tracer),
+			Resources:     docs,
+			WorkerThreads: cfg.IndexWorkers,
+			InitMinCount:  cfg.IndexMinCount,
+		}
+
+		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
+		if err != nil {
+			slog.Warn("Failed to register indexer metrics", "error", err)
+		}
 	}
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	// Initialize the indexer if one is configured
-	if opts.Index != nil {
-		// TODO: Create a proper identity for the indexer
-		orgId := int64(1)
-		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-			Type:           claims.TypeServiceAccount, // system:apiserver
-			UserID:         1,
-			OrgID:          int64(1),
-			Name:           "admin",
-			Login:          "admin",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: true,
-			Permissions: map[int64]map[string][]string{
-				orgId: {
-					"*": {"*"}, // all resources, all scopes
-				},
-			},
-		})
-		_, err = rs.(resource.ResourceIndexer).Index(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return rs, nil

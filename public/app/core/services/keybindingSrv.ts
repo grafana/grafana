@@ -3,8 +3,8 @@ import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import {

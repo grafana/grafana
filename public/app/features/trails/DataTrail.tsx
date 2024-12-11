@@ -7,8 +7,8 @@ import {
   GrafanaTheme2,
   MetricFindValue,
   RawTimeRange,
-  VariableHide,
   urlUtil,
+  VariableHide,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
@@ -25,6 +25,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -49,7 +50,13 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
-import { sortResources, getOtelJoinQuery, getOtelResourcesObject, updateOtelJoinWithGroupLeft } from './otel/util';
+import {
+  getOtelJoinQuery,
+  getOtelResourcesObject,
+  getProdOrDefaultOption,
+  sortResources,
+  updateOtelJoinWithGroupLeft,
+} from './otel/util';
 import { getOtelExperienceToggleState } from './services/store';
 import {
   getVariablesWithOtelJoinQueryConstant,
@@ -92,8 +99,8 @@ export interface DataTrailState extends SceneObjectState {
   metricSearch?: string;
 }
 
-export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
+export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -116,7 +123,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       useOtelExperience: state.useOtelExperience ?? false,
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
-      showPreviews: true,
+      showPreviews: state.showPreviews ?? true,
       ...state,
     });
 
@@ -170,11 +177,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
         // fresh check for otel experience
         this.checkDataSourceForOTelResources();
-        // clear filters on resetting the data source
-        const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-        if (adhocVariable instanceof AdHocFiltersVariable) {
-          adhocVariable.setState({ filters: [] });
-        }
       }
 
       // update otel variables when changed
@@ -277,9 +279,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return stateUpdate;
   }
 
-  getUrlState() {
-    const { metric, metricSearch } = this.state;
-    return { metric, metricSearch };
+  getUrlState(): SceneObjectUrlValues {
+    const { metric, metricSearch, showPreviews } = this.state;
+    return {
+      metric,
+      metricSearch,
+      ...{ showPreviews: showPreviews === false ? 'false' : null },
+    };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -298,6 +304,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.metricSearch = values.metricSearch;
     } else if (values.metric == null) {
       stateUpdate.metricSearch = undefined;
+    }
+
+    if (typeof values.showPreviews === 'string') {
+      stateUpdate.showPreviews = values.showPreviews !== 'false';
     }
 
     this.setState(stateUpdate);
@@ -357,7 +367,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           // We have to have a default value because custom variable requires it
           // we choose one default value to help filter metrics
           // The work flow for OTel begins with users selecting a deployment environment
-          const defaultDepEnv = options[0].value; // usually production
+          // default to production
+          let defaultDepEnv = getProdOrDefaultOption(options) ?? '';
           // On starting the explore metrics workflow, the custom variable has no value
           // Even if there is state, the value is always ''
           // The only reference to state values are in the text

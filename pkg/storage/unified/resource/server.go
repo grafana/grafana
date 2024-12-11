@@ -95,7 +95,15 @@ type StorageBackend interface {
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
-	Namespaces(ctx context.Context) ([]string, error)
+	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
+	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+}
+
+type ResourceStats struct {
+	NamespacedResource
+
+	Count           int64
+	ResourceVersion int64
 }
 
 // This interface is not exposed to end users directly
@@ -123,6 +131,21 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
+// Passed as input to the constructor
+type SearchOptions struct {
+	// The raw index backend (eg, bleve, frames, parquet, etc)
+	Backend SearchBackend
+
+	// The supported resource types
+	Resources DocumentBuilderSupplier
+
+	// How many threads should build indexes
+	WorkerThreads int
+
+	// Skip building index on startup for small indexes
+	InitMinCount int
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
@@ -133,8 +156,8 @@ type ResourceServerOptions struct {
 	// The blob configuration
 	Blob BlobConfig
 
-	// Requests based on a search index
-	Index ResourceIndexServer
+	// Search options
+	Search SearchOptions
 
 	// Diagnostics
 	Diagnostics DiagnosticsServer
@@ -214,7 +237,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		tracer:      opts.Tracer,
 		log:         logger,
 		backend:     opts.Backend,
-		index:       opts.Index,
 		blob:        blobstore,
 		diagnostics: opts.Diagnostics,
 		access:      opts.AccessClient,
@@ -223,6 +245,20 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
+	}
+
+	if opts.Search.Resources != nil {
+		var err error
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := s.Init(ctx)
+	if err != nil {
+		s.log.Error("error initializing resource server", "error", err)
+		return nil, err
 	}
 
 	return s, nil
@@ -235,7 +271,7 @@ type server struct {
 	log          *slog.Logger
 	backend      StorageBackend
 	blob         BlobSupport
-	index        ResourceIndexServer
+	search       *searchSupport
 	diagnostics  DiagnosticsServer
 	access       authz.AccessClient
 	writeHooks   WriteAccessHooks
@@ -262,6 +298,11 @@ func (s *server) Init(ctx context.Context) error {
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
+		}
+
+		// initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.initErr = s.search.init(ctx)
 		}
 
 		// Start watching for changes
@@ -411,10 +452,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-
 	rsp := &CreateResponse{}
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -452,10 +489,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 
 	rsp := &UpdateResponse{}
 	user, ok := claims.From(ctx)
@@ -506,10 +539,6 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 
 	rsp := &DeleteResponse{}
 	if req.ResourceVersion < 0 {
@@ -599,9 +628,6 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
 		return &ReadResponse{
@@ -658,9 +684,6 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			}}, nil
 	}
 
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	if req.Limit < 1 {
 		req.Limit = 50 // default max 50 items in a page
 	}
@@ -750,10 +773,6 @@ func (s *server) initWatcher() error {
 //nolint:gocyclo
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	ctx := srv.Context()
-
-	if err := s.Init(ctx); err != nil {
-		return err
-	}
 
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -894,60 +913,41 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 }
 
-func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+	return s.search.Search(ctx, req)
+}
+
+// GetStats implements ResourceServer.
+func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-	return s.index.Search(ctx, req)
+	if s.search == nil {
+		// If the backend implements "GetStats", we can use it
+		srv, ok := s.backend.(ResourceIndexServer)
+		if ok {
+			return srv.GetStats(ctx, req)
+		}
+		return nil, fmt.Errorf("search index not configured")
+	}
+	return s.search.GetStats(ctx, req)
 }
 
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-	return s.index.History(ctx, req)
+	return s.search.History(ctx, req)
 }
 
 // Origin implements ResourceServer.
 func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-	return s.index.Origin(ctx, req)
-}
-
-// Index returns the search index. If the index is not initialized, it will be initialized.
-func (s *server) Index(ctx context.Context) (*Index, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
-
-	index := s.index.(*IndexServer)
-	if index.index == nil {
-		err := index.Init(ctx, s)
-		if err != nil {
-			return nil, err
-		}
-
-		err = index.Load(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		err = index.Watch(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return index.index, nil
+	return s.search.Origin(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
-	}
 	return s.diagnostics.IsHealthy(ctx, req)
 }
 
@@ -958,9 +958,6 @@ func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResp
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
 		}}, nil
-	}
-	if err := s.Init(ctx); err != nil {
-		return nil, err
 	}
 
 	rsp, err := s.blob.PutResourceBlob(ctx, req)
@@ -1002,10 +999,6 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
 		}}, nil
-	}
-
-	if err := s.Init(ctx); err != nil {
-		return nil, err
 	}
 
 	// The linked blob is stored in the resource metadata attributes

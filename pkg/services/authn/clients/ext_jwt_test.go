@@ -27,7 +27,7 @@ type (
 
 var (
 	validAccessTokenClaims = accessTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -40,7 +40,7 @@ var (
 		},
 	}
 	validIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -51,7 +51,7 @@ var (
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -62,7 +62,7 @@ var (
 		},
 	}
 	validIDTokenClaimsWithDeprecatedStackClaimSet = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -73,7 +73,7 @@ var (
 		},
 	}
 	validAccessTokenClaimsWildcard = accessTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -83,7 +83,7 @@ var (
 		},
 	}
 	validAccessTokenClaimsWithStackSet = accessTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -93,7 +93,7 @@ var (
 		},
 	}
 	validAccessTokenClaimsWithDeprecatedStackClaimSet = accessTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -103,7 +103,7 @@ var (
 		},
 	}
 	invalidNamespaceIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "user:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -114,7 +114,7 @@ var (
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
+		Claims: jwt.Claims{
 			Subject:  "service-account:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -459,7 +459,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when the subject is not an access-policy",
 			accessToken: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "user:2",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -523,7 +523,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iss",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
@@ -538,7 +538,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing expiry",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -553,7 +553,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "expired token",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -569,7 +569,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing aud",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					ID:       "1234567890",
@@ -584,7 +584,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "wrong aud",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://some-other-host:3000"},
@@ -605,7 +605,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing sub",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Audience: jwt.Audience{"http://localhost:3000"},
 					ID:       "1234567890",
@@ -620,7 +620,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iat",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -635,7 +635,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "iat later than current time",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -651,7 +651,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "unsupported alg",
 			payload: &accessTokenClaims{
-				Claims: &jwt.Claims{
+				Claims: jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},

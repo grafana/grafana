@@ -22,7 +22,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
@@ -44,7 +43,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -60,7 +58,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
@@ -87,6 +84,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  provisioning?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
@@ -114,7 +112,6 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesDashboardsAPI?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -159,7 +156,9 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
+  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
   sqlExpressions?: boolean;
@@ -240,4 +239,7 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  azureMonitorEnableUserAuth?: boolean;
+  alertingNotificationsStepMode?: boolean;
+  feedbackButton?: boolean;
 }

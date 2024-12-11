@@ -5,6 +5,8 @@ import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { config } from '../../../../core/config';
+import { AccessControlAction } from '../../../../types';
+import { grantUserPermissions } from '../../../alerting/unified/mocks';
 import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
@@ -22,13 +24,15 @@ describe('ShareMenu', () => {
   afterEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('should render menu items', async () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    config.featureToggles.publicDashboards = true;
+    grantUserPermissions([AccessControlAction.SnapshotsCreate]);
+
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
     setup({ meta: { canEdit: true } });
@@ -37,8 +41,8 @@ describe('ShareMenu', () => {
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
+
   it('should not share externally when public dashboard is disabled', async () => {
-    config.featureToggles.publicDashboards = false;
     config.publicDashboardsEnabled = false;
     setup();
 
@@ -64,7 +68,7 @@ describe('ShareMenu', () => {
 
       expect(screen.queryByTestId(selector.shareSnapshot)).not.toBeInTheDocument();
     });
-    it('should not share snapshot when dashboard cannot edit', async () => {
+    it('should not share snapshot without permissions', async () => {
       Object.defineProperty(contextSrv, 'isSignedIn', {
         value: true,
       });

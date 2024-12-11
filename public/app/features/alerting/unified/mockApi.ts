@@ -1,5 +1,5 @@
-import { http, HttpResponse } from 'msw';
-import { setupServer, SetupServer } from 'msw/node';
+import { HttpResponse, http } from 'msw';
+import { SetupServer, setupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
@@ -20,8 +21,8 @@ import {
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
-  AlertmanagerConfig,
   AlertManagerCortexConfig,
+  AlertmanagerConfig,
   AlertmanagerReceiver,
   EmailConfig,
   GrafanaManagedReceiverConfig,
@@ -158,23 +159,11 @@ export class AlertmanagerReceiverBuilder {
   }
 }
 
-export function mockApi(server: SetupServer) {
-  return {
-    getAlertmanagerConfig: (amName: string, configure: (builder: AlertmanagerConfigBuilder) => void) => {
-      const builder = new AlertmanagerConfigBuilder();
-      configure(builder);
-
-      server.use(
-        http.get(`api/alertmanager/${amName}/config/api/v1/alerts`, () =>
-          HttpResponse.json<AlertManagerCortexConfig>({
-            alertmanager_config: builder.build(),
-            template_files: {},
-          })
-        )
-      );
-    },
-  };
-}
+export const getMockConfig = (configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig => {
+  const builder = new AlertmanagerConfigBuilder();
+  configure(builder);
+  return { alertmanager_config: builder.build(), template_files: {} };
+};
 
 export function mockAlertRuleApi(server: SetupServer) {
   return {
@@ -297,6 +286,7 @@ export function setupMswServer() {
     // Reset any other necessary mock entities/state
     setupAlertmanagerConfigMapDefaultState();
     setupAlertmanagerStatusMapDefaultState();
+    resetRoutingTreeMap();
   });
 
   afterAll(() => {

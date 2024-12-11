@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,8 +26,8 @@ import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  logInfo,
   LogMessages,
+  logInfo,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
@@ -44,15 +44,15 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { DataSourceType } from '../../../utils/datasource';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
+  MANUAL_ROUTING_KEY,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
-  MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
@@ -67,7 +67,11 @@ import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
-import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
+import {
+  QueryAndExpressionsStep,
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+} from '../query-and-alert-condition/QueryAndExpressionsStep';
 import { translateRouteParamToRuleType } from '../util';
 
 type Props = {
@@ -163,6 +167,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ? getRuleGroupLocationFromRuleWithLocation(existing)
       : getRuleGroupLocationFromFormValues(values);
 
+    const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
@@ -171,7 +176,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-      const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
       await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,
         ruleIdentifier,
@@ -181,19 +185,21 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       );
     }
 
-    const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
+    const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
     if (exitOnSave) {
-      const returnToUrl = returnTo || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+      const returnToUrl = returnTo || getReturnToUrl(targetRuleGroupIdentifier, ruleDefinition);
 
       locationService.push(returnToUrl);
       return;
-    }
+    } else {
+      // we stay in the same page
 
-    // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
-    // After successful update we need to update the URL to avoid displaying 404 errors
-    if (isCloudRulerRule(ruleDefinition)) {
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+      // After successful update we need to update the URL to avoid displaying 404 errors
+      if (isCloudRulerRule(ruleDefinition)) {
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      }
     }
   };
 
@@ -384,15 +390,17 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     };
   }
 
-  return setInstantOrRange(
-    ignoreHiddenQueries({
-      ...getDefaultFormValues(),
-      ...ruleFromQueryParams,
-      annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-      queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-      type: type || RuleFormType.grafana,
-      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-    })
+  return setQueryEditorSettings(
+    setInstantOrRange(
+      ignoreHiddenQueries({
+        ...getDefaultFormValues(),
+        ...ruleFromQueryParams,
+        annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+        queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+        type: type || RuleFormType.grafana,
+        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+      })
+    )
   );
 }
 
@@ -401,6 +409,35 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
+  const isQuerySwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+
+  if (!isQuerySwitchModeEnabled) {
+    return {
+      ...values,
+      editorSettings: {
+        simplifiedQueryEditor: false,
+        simplifiedNotificationEditor: true, // actually it doesn't matter in this case
+      },
+    };
+  }
+
+  // data queries only
+  const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+
+  // expression queries only
+  const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+
+  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
+  return {
+    ...values,
+    editorSettings: {
+      simplifiedQueryEditor: queryParamsAreTransformable,
+      simplifiedNotificationEditor: true,
+    },
+  };
 }
 
 function setInstantOrRange(values: RuleFormValues): RuleFormValues {

@@ -1,5 +1,5 @@
 import 'core-js/stable/structured-clone';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen } from 'test/test-utils';
 
@@ -59,7 +59,7 @@ describe('Edit contact point', () => {
     // If this isn't correct, then we haven't set the correct initial state for the radio buttons/tabs
     expect(await screen.findByLabelText(/custom template value/i)).toHaveValue('some custom value');
 
-    await user.click(screen.getByRole('radio', { name: /select existing template/i }));
+    await user.click(screen.getByRole('radio', { name: /select notification template/i }));
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'slack-template');
 
     expect(await getTemplatePreviewContent()).toHaveTextContent(/some example preview for slack-template/i);

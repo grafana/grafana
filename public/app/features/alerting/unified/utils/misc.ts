@@ -29,6 +29,7 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import { SupportedErrors, getErrorMessageFromCode, isApiMachineryError } from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
@@ -243,9 +244,29 @@ export function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
+export function getErrorCode(error: Error): unknown {
+  return isApiMachineryError(error) ? error.data.details.uid : error.cause;
+}
+
+/* this function will check if the error passed as the first argument contains an error code */
+export function isErrorMatchingCode(error: Error | undefined, code: SupportedErrors): boolean {
+  if (!error) {
+    return false;
+  }
+
+  return getErrorCode(error) === code;
+}
+
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
+    if (isApiMachineryError(error)) {
+      const message = getErrorMessageFromCode(error.data.details.uid);
+      if (message) {
+        return message;
+      }
+    }
+
     if (error.message) {
       return error.message;
     }
@@ -261,6 +282,15 @@ export function stringifyErrorLike(error: unknown): string {
 
   if (!isErrorLike(error)) {
     return String(error);
+  }
+
+  // if the error is one we know how to translate via an error code:
+  const code = getErrorCode(error);
+  if (typeof code === 'string') {
+    const message = getErrorMessageFromCode(code);
+    if (message) {
+      return message;
+    }
   }
 
   if (error.cause) {

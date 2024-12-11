@@ -49,14 +49,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "publicDashboards",
-			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaSharingSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
@@ -207,12 +199,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "mysqlParseTime",
-			Description: "Ensure the parseTime flag is set for MySQL driver",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
 			Stage:             FeatureStageGeneralAvailability,
@@ -325,14 +311,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:           "lokiMetricDataplane",
-			Description:    "Changes metric responses from Loki to be compliant with the dataplane specification.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
@@ -372,10 +350,12 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Name:              "unifiedRequestLog",
+			Description:       "Writes error logs to the request logger",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaBackendGroup,
+			Expression:        "true",
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "renderAuthJWT",
@@ -513,6 +493,13 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			RequiresDevMode: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "provisioning",
+			Description:     "Next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
@@ -725,13 +712,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:            "kubernetesDashboardsAPI",
-			Description:     "Use the kubernetes API in the backend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "kubernetesFolders",
@@ -1065,11 +1045,25 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
+			Name:        "onPremToCloudMigrationsAuthApiMig",
+			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:              "scopeApi",
+			Description:       "In-development feature flag for the scope api using the app platform.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAppPlatformSquad,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 		{
 			Name:        "promQLScope",
@@ -1241,7 +1235,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false", // disabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1429,8 +1423,9 @@ var (
 		{
 			Name:        "newFiltersUI",
 			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
@@ -1448,9 +1443,10 @@ var (
 		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
@@ -1621,8 +1617,9 @@ var (
 		{
 			Name:        "zipkinBackendMigration",
 			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",
@@ -1657,6 +1654,27 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:        "azureMonitorEnableUserAuth",
+			Description: "Enables user auth for Azure Monitor datasource only",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
+		},
+		{
+			Name:         "alertingNotificationsStepMode",
+			Description:  "Enables simplified step mode in the notifications section",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
 		},
 	}
 )
