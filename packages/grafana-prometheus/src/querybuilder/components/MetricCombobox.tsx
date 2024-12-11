@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, ComponentSize, InlineField, InlineFieldRow, useTheme2 } from '@grafana/ui';
+import { Button, ComponentSize, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 import { getPropertiesForButtonSize } from '@grafana/ui/src/components/Forms/commonStyles';
 
@@ -91,12 +91,7 @@ export function MetricCombobox({
 
   const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
 
-  const theme = useTheme2();
-  const { height } = getPropertiesForButtonSize(BUTTON_SIZE, theme);
-  const buttonSpace = parseInt(theme.spacing(height), 10);
-  const inlineFieldSpace = parseInt(theme.spacing(INLINE_FIELD_WIDTH), 10);
-  const widthToSubstract = inlineFieldSpace + buttonSpace;
-  const styles = getMectricComboboxStyles(buttonSpace, widthToSubstract);
+  const styles = useStyles2(getMectricComboboxStyles);
 
   const asyncSelect = () => {
     return (
@@ -189,21 +184,27 @@ const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?:
   return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
 };
 
-const getMectricComboboxStyles = (buttonToSubstract: number, widthToSubstract: number) => ({
-  adaptToParentQueryEditor: css({
-    // Take metrics explorer button into account
-    maxWidth: `calc(100% - ${buttonToSubstract}px)`,
-  }),
-  adaptToParentVariableEditor: css({
-    maxWidth: '100%',
-    display: 'flex',
-    '[class*="InlineFieldRow"]': {
-      '> div': {
-        'label + div': {
-          // Take label and the metrics explorer button into account
-          maxWidth: `calc(100% - ${widthToSubstract}px)`,
+const getMectricComboboxStyles = (theme: GrafanaTheme2) => {
+  const { height } = getPropertiesForButtonSize(BUTTON_SIZE, theme);
+  const buttonSpace = parseInt(theme.spacing(height), 10);
+  const inlineFieldSpace = parseInt(theme.spacing(INLINE_FIELD_WIDTH), 10);
+  const widthToSubstract = inlineFieldSpace + buttonSpace;
+  return {
+    adaptToParentQueryEditor: css({
+      // Take metrics explorer button into account
+      maxWidth: `calc(100% - ${buttonSpace}px)`,
+    }),
+    adaptToParentVariableEditor: css({
+      maxWidth: '100%',
+      display: 'flex',
+      '[class*="InlineFieldRow"]': {
+        '> div': {
+          'label + div': {
+            // Take label and the metrics explorer button into account
+            maxWidth: `calc(100% - ${widthToSubstract}px)`,
+          },
         },
       },
-    },
-  }),
-});
+    }),
+  };
+};
