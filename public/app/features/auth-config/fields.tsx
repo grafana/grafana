@@ -31,7 +31,7 @@ export const sectionFields: Section = {
         'clientId',
         'clientSecret',
         'managedIdentityClientId',
-        'audience',
+        'federatedCredentialAudience',
         'scopes',
         'authUrl',
         'tokenUrl',
@@ -283,7 +283,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The managed identity client Id of the federated identity credential of your OAuth2 app.',
     },
-    audience: {
+    federatedCredentialAudience: {
       label: 'FIC audience',
       type: 'text',
       description: 'The audience of the federated identity credential of your OAuth2 app.',
