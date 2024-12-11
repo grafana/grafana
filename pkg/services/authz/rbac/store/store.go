@@ -79,7 +79,7 @@ func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuer
 	}
 
 	if !rows.Next() {
-		return nil, fmt.Errorf("no basic roles found for the user")
+		return nil, fmt.Errorf("user could not be found")
 	}
 
 	var userIDs UserIdentifiers
