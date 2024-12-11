@@ -28,16 +28,11 @@ const BASE_PATH = '/repositories';
 
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    listJobs: build.query<JobList, ListApiArg>({
+    listJobs: build.query<JobList, ListApiArg | void>({
       query: (queryArg) => {
-        const { fieldSelector, labelSelector, ...params } = queryArg || {};
         return {
           url: `/jobs`,
-          params: {
-            fieldSelector: fieldSelector ? parseListOptionsSelector(fieldSelector) : undefined,
-            labelSelector: labelSelector ? parseListOptionsSelector(labelSelector) : undefined,
-            ...params,
-          },
+          params: getListParams(queryArg),
         };
       },
       providesTags: ['JobList'],
@@ -47,10 +42,10 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/jobs/${queryArg.name}`,
       }),
     }),
-    listRepository: build.query<RepositoryList, ListApiArg>({
+    listRepository: build.query<RepositoryList, ListApiArg | void>({
       query: (params) => ({
         url: `${BASE_PATH}`,
-        params: params || undefined,
+        params: getListParams(params),
       }),
       providesTags: ['RepositoryList'],
     }),
@@ -230,3 +225,15 @@ export const {
   useTestRepositoryQuery,
   useTestRepositoryConfigMutation,
 } = injectedRtkApi;
+
+function getListParams(queryArg: ListApiArg | void) {
+  if (!queryArg) {
+    return undefined;
+  }
+  const { fieldSelector, labelSelector, ...params } = queryArg;
+  return {
+    fieldSelector: fieldSelector ? parseListOptionsSelector(fieldSelector) : undefined,
+    labelSelector: labelSelector ? parseListOptionsSelector(labelSelector) : undefined,
+    ...params,
+  };
+}

@@ -1,12 +1,6 @@
 import { AlertVariant } from '@grafana/ui';
 
-import {
-  ListOptionsFieldSelector,
-  ListOptionsLabelSelector,
-  Resource,
-  ResourceForCreate,
-  ResourceList,
-} from '../../apiserver/types';
+import { ListOptions, Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
 
 export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
@@ -195,15 +189,11 @@ export type WebhookResponse = {
   kind?: string;
 };
 
-export type ListApiArg = {
+export interface ListApiArg extends ListOptions {
   allowWatchBookmarks?: boolean;
-  continue?: string;
-  fieldSelector?: ListOptionsFieldSelector;
-  labelSelector?: ListOptionsLabelSelector;
-  limit?: number;
   resourceVersion?: string;
   resourceVersionMatch?: string;
   sendInitialEvents?: boolean;
   timeoutSeconds?: number;
   watch?: boolean;
-} | void;
+}
