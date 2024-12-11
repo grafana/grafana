@@ -166,7 +166,11 @@ type AlertingRule struct {
 // swagger:model
 type Rule struct {
 	// required: true
+	UID string `json:"uid"`
+	// required: true
 	Name string `json:"name"`
+	// required: true
+	FolderUID string `json:"folderUid"`
 	// required: true
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitempty"`

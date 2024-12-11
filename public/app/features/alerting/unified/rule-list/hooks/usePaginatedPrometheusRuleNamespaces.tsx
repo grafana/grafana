@@ -1,34 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
+import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groupRulesByFileName } from '../../api/prometheus';
-import { prometheusApi } from '../../api/prometheusApi';
 import { isLoading, useAsync } from '../../hooks/useAsync';
-import { getDatasourceAPIUid } from '../../utils/datasource';
 
-const { useLazyGroupsQuery } = prometheusApi;
+import { useRuleGroupsGenerator } from './prometheusGroupsGenerator';
 
-export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pageSize: number) {
+export function usePaginatedPrometheusRuleNamespaces(
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier,
+  pageSize: number
+) {
   const [currentPage, setCurrentPage] = useState(1);
   const [groups, setGroups] = useState<PromRuleGroupDTO[]>([]);
   const [lastPage, setLastPage] = useState<number | undefined>(undefined);
 
-  const { groupsGenerator } = usePrometheusGroupsGenerator(ruleSourceName, pageSize);
+  const { groupsGenerator } = usePrometheusGroupsGenerator(rulesSourceIdentifier, pageSize);
 
   const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
     let done = false;
     const currentGroups: PromRuleGroupDTO[] = [];
 
     while (currentGroups.length < groupsCount) {
-      const group = await groupsGenerator.next();
-      if (group.done) {
+      const generatorResult = await groupsGenerator.next();
+      if (generatorResult.done) {
         done = true;
         break;
       }
-
-      currentGroups.push(group.value);
+      const [, group] = generatorResult.value;
+      currentGroups.push(group);
     }
 
     if (done) {
@@ -62,76 +64,28 @@ export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pag
   if (shouldFetchNextPage && !fetchInProgress) {
     fetchMoreGroups(pageSize);
   }
-
   const pageNamespaces = useMemo(() => {
     const pageGroups = groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
     // groupRulesByFileName mutates the array and RTKQ query freezes the response data
-    return groupRulesByFileName(structuredClone(pageGroups), ruleSourceName);
-  }, [groups, ruleSourceName, currentPage, pageSize]);
+    return groupRulesByFileName(structuredClone(pageGroups), rulesSourceIdentifier.name);
+  }, [groups, currentPage, pageSize, rulesSourceIdentifier.name]);
 
   return { isLoading: fetchInProgress, page: pageNamespaces, nextPage, previousPage, canMoveForward, canMoveBackward };
 }
 
-function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) {
-  const [fetchGroups, { isLoading }] = useLazyGroupsQuery();
+function usePrometheusGroupsGenerator(ruleSourceIdentifier: ExternalRulesSourceIdentifier, pageSize: number) {
+  const prevRuleSourceIdentifier = usePrevious(ruleSourceIdentifier);
+  const { prometheusGroupsGenerator } = useRuleGroupsGenerator();
 
-  const prevRuleSourceName = usePrevious(ruleSourceName);
-  // Generator lazily provides groups one by one only when needed
-  // This might look a bit complex but it allows us to have one API for paginated and non-paginated Prometheus data sources
-  // For unpaginated data sources we just fetch everything in one go
-  // For paginated we fetch the next page when needed
-  const getGroups = useCallback(
-    async function* (ruleSourceName: string, maxGroups: number) {
-      const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
-
-      const response = await fetchGroups({
-        ruleSource: { uid: ruleSourceUid },
-        groupLimit: maxGroups,
-      });
-
-      if (!response.isSuccess) {
-        return;
-      }
-
-      if (response.data?.data) {
-        yield* response.data.data.groups;
-      }
-
-      let lastToken: string | undefined = undefined;
-      if (response.data?.data?.groupNextToken) {
-        lastToken = response.data.data.groupNextToken;
-      }
-
-      while (lastToken) {
-        const response = await fetchGroups({
-          ruleSource: { uid: ruleSourceUid },
-          groupNextToken: lastToken,
-          groupLimit: maxGroups,
-        });
-
-        if (!response.isSuccess) {
-          return;
-        }
-
-        if (response.data?.data) {
-          yield* response.data.data.groups;
-        }
-
-        lastToken = response.data?.data?.groupNextToken;
-      }
-    },
-    [fetchGroups]
-  );
-
-  const [groupsGenerator, setGroupsGenerator] = useState<AsyncGenerator<PromRuleGroupDTO, void, unknown>>(
-    getGroups(ruleSourceName, pageSize)
+  const [groupsGenerator, setGroupsGenerator] = useState<ReturnType<typeof prometheusGroupsGenerator>>(
+    prometheusGroupsGenerator(ruleSourceIdentifier, pageSize)
   );
 
   const resetGenerator = useCallback(() => {
-    setGroupsGenerator(getGroups(ruleSourceName, pageSize));
-  }, [ruleSourceName, getGroups, pageSize]);
+    setGroupsGenerator(prometheusGroupsGenerator(ruleSourceIdentifier, pageSize));
+  }, [ruleSourceIdentifier, prometheusGroupsGenerator, pageSize]);
 
-  if (prevRuleSourceName && prevRuleSourceName !== ruleSourceName) {
+  if (prevRuleSourceIdentifier && prevRuleSourceIdentifier !== ruleSourceIdentifier) {
     resetGenerator();
   }
 

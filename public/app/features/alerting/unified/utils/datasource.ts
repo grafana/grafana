@@ -218,6 +218,7 @@ export function getExternalRulesSources(): ExternalRulesSourceIdentifier[] {
   return getRulesDataSources().map((ds) => ({
     name: ds.name,
     uid: ds.uid,
+    ruleSourceType: 'external',
   }));
 }
 

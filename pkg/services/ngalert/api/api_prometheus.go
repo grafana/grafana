@@ -514,7 +514,9 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		newRule := apimodels.Rule{
+			UID:            rule.UID,
 			Name:           rule.Title,
+			FolderUID:      rule.NamespaceUID,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
 			Health:         status.Health,
 			LastError:      errorOrEmpty(status.LastError),

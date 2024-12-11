@@ -157,10 +157,14 @@ export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
 export interface ExternalRulesSourceIdentifier {
   uid: string;
   name: string;
+  // discriminator
+  ruleSourceType: 'external';
 }
 export interface GrafanaRulesSourceIdentifier {
   uid: typeof GrafanaRulesSourceSymbol;
   name: typeof GRAFANA_RULES_SOURCE_NAME;
+  // discriminator
+  ruleSourceType: 'grafana';
 }
 
 export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;

@@ -1,13 +1,11 @@
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
-import { useCallback } from 'react';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { prometheusApi } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -15,66 +13,29 @@ import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/dataso
 import { parseMatcher } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
+import { useRuleGroupsGenerator } from './prometheusGroupsGenerator';
+
 export interface RuleWithOrigin {
   rule: PromRuleDTO;
   groupIdentifier: DataSourceRuleGroupIdentifier;
 }
 
-const { useLazyGroupsQuery } = prometheusApi;
-
 export function useFilteredRulesIteratorProvider() {
-  const [fetchGroups] = useLazyGroupsQuery();
   const allExternalRulesSources = getExternalRulesSources();
 
-  /**
-   * This async generator will continue to yield rule groups and will keep fetching backend pages as long as the consumer
-   * is iterating.
-   */
-  const fetchRuleSourceGroups = useCallback(
-    async function* (ruleSource: ExternalRulesSourceIdentifier, maxGroups: number) {
-      const response = await fetchGroups({ ruleSource: { uid: ruleSource.uid }, groupLimit: maxGroups });
-
-      if (!response.isSuccess) {
-        return;
-      }
-
-      if (response.data?.data) {
-        yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
-      }
-
-      let lastToken: string | undefined = undefined;
-      if (response.data?.data?.groupNextToken) {
-        lastToken = response.data.data.groupNextToken;
-      }
-
-      while (lastToken) {
-        const response = await fetchGroups({
-          ruleSource: { uid: ruleSource.uid },
-          groupNextToken: lastToken,
-          groupLimit: maxGroups,
-        });
-
-        if (!response.isSuccess) {
-          return;
-        }
-
-        if (response.data?.data) {
-          yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
-        }
-
-        lastToken = response.data?.data?.groupNextToken;
-      }
-    },
-    [fetchGroups]
-  );
+  const { prometheusGroupsGenerator } = useRuleGroupsGenerator();
 
   const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
-      ? filterState.dataSourceNames.map((ds) => ({ name: ds, uid: getDatasourceAPIUid(ds) }))
+      ? filterState.dataSourceNames.map<ExternalRulesSourceIdentifier>((ds) => ({
+          name: ds,
+          uid: getDatasourceAPIUid(ds),
+          ruleSourceType: 'external',
+        }))
       : allExternalRulesSources;
 
     // This split into the first one and the rest is only for compatibility with the merge function from ix
-    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
+    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => prometheusGroupsGenerator(ds, groupLimit));
 
     return merge(source, ...iterables).pipe(
       filter(([_, group]) => groupFilter(group, filterState)),

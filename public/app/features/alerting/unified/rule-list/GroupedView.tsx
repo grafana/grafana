@@ -5,13 +5,18 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, IconButton, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { DataSourceNamespaceIdentifier, DataSourceRuleGroupIdentifier, RuleGroup } from 'app/types/unified-alerting';
+import {
+  DataSourceNamespaceIdentifier,
+  DataSourceRuleGroupIdentifier,
+  ExternalRulesSourceIdentifier,
+  RuleGroup,
+} from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
-import { getDatasourceAPIUid, getExternalRulesSources } from '../utils/datasource';
+import { getExternalRulesSources } from '../utils/datasource';
 import { hashRule } from '../utils/rule-id';
 
 import { AlertRuleLoader } from './AlertRuleLoader';
@@ -31,23 +36,24 @@ export function GroupedView() {
     <Stack direction="column" gap={1} role="list">
       <GrafanaDataSourceLoader />
       {externalRuleSources.map((ruleSource) => {
-        return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
+        return <DataSourceLoader key={ruleSource.uid} rulesSourceIdentifier={ruleSource} />;
       })}
     </Stack>
   );
 }
 
 interface DataSourceLoaderProps {
-  name: string;
-  uid: string;
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
 }
 
 export function GrafanaDataSourceLoader() {
   return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true}></DataSourceSection>;
 }
 
-export function DataSourceLoader({ uid, name }: DataSourceLoaderProps) {
-  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
+export function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
+  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
+
+  const { uid, name } = rulesSourceIdentifier;
 
   if (isLoading) {
     return <DataSourceSection loader={<Skeleton width={250} height={16} />} uid={uid} name={name} />;
@@ -57,9 +63,8 @@ export function DataSourceLoader({ uid, name }: DataSourceLoaderProps) {
   if (dataSourceInfo) {
     return (
       <PaginatedDataSourceLoader
-        ruleSourceName={dataSourceInfo.name}
-        uid={uid}
-        name={name}
+        key={rulesSourceIdentifier.uid}
+        rulesSourceIdentifier={rulesSourceIdentifier}
         application={dataSourceInfo.application}
       />
     );
@@ -69,12 +74,13 @@ export function DataSourceLoader({ uid, name }: DataSourceLoaderProps) {
 }
 
 // TODO Try to use a better rules source identifier
-interface PaginatedDataSourceLoaderProps
-  extends Required<Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'>> {
-  ruleSourceName: string;
+interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
 }
 
-function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: PaginatedDataSourceLoaderProps) {
+function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
+  const { uid, name } = rulesSourceIdentifier;
+
   const {
     page: ruleNamespaces,
     nextPage,
@@ -82,7 +88,7 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, GROUP_PAGE_SIZE);
+  } = usePaginatedPrometheusRuleNamespaces(rulesSourceIdentifier, GROUP_PAGE_SIZE);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -101,9 +107,9 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
           >
             {namespace.groups.map((group) => (
               <RuleGroupListItem
-                key={`${ruleSourceName}-${namespace.name}-${group.name}`}
+                key={`${rulesSourceIdentifier.uid}-${namespace.name}-${group.name}`}
                 group={group}
-                ruleSourceName={ruleSourceName}
+                rulesSourceIdentifier={rulesSourceIdentifier}
                 namespaceId={namespace}
               />
             ))}
@@ -121,24 +127,24 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
 }
 
 interface RuleGroupListItemProps {
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
   group: RuleGroup;
-  ruleSourceName: string;
   namespaceId: DataSourceNamespaceIdentifier;
 }
 
-function RuleGroupListItem({ group, ruleSourceName, namespaceId }: RuleGroupListItemProps) {
+function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceId }: RuleGroupListItemProps) {
   const rulesWithGroupId = useMemo(
     () =>
       group.rules.map((rule) => {
         const groupIdentifier: DataSourceRuleGroupIdentifier = {
-          rulesSource: { uid: getDatasourceAPIUid(ruleSourceName), name: ruleSourceName },
+          rulesSource: rulesSourceIdentifier,
           namespace: namespaceId,
           groupName: group.name,
           groupOrigin: 'datasource',
         };
         return { rule, groupIdentifier };
       }),
-    [group, namespaceId, ruleSourceName]
+    [group, namespaceId, rulesSourceIdentifier]
   );
 
   return (
