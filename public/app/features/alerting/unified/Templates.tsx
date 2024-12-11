@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { withErrorBoundary } from '@grafana/ui';
 

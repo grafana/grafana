@@ -1874,19 +1874,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesDashboardsAPI",
-        "resourceVersion": "1729017284006",
-        "creationTimestamp": "2024-10-15T18:34:44Z"
-      },
-      "spec": {
-        "description": "Use the kubernetes API in the backend for dashboards",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-18T05:32:44Z"
@@ -2292,18 +2279,6 @@
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage"
-      }
-    },
-    {
-      "metadata": {
-        "name": "mysqlParseTime",
-        "resourceVersion": "1724750152191",
-        "creationTimestamp": "2024-08-27T11:16:04Z"
-      },
-      "spec": {
-        "description": "Ensure the parseTime flag is set for MySQL driver",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }

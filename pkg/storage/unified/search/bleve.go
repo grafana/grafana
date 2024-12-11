@@ -251,7 +251,7 @@ func (b *bleveIndex) Search(
 		searchrequest.Fields = f
 	}
 
-	res, err := index.Search(searchrequest)
+	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -294,9 +294,25 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
-func (b *bleveIndex) DocCount() (int, error) {
-	count, err := b.index.DocCount()
-	return int(count), err
+func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	if folder == "" {
+		count, err := b.index.DocCount()
+		return int64(count), err
+	}
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query: &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		},
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // make sure the request key matches the index
