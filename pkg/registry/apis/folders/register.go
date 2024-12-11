@@ -294,7 +294,10 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		}
 	}
 
-	f, _ := obj.(*v0alpha1.Folder)
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
