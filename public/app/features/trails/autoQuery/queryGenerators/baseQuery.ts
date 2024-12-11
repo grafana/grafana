@@ -9,12 +9,10 @@ const RATE_BASE_QUERY_UTF8_METRIC_TEMPLATE = `rate(${BASE_QUERY_UTF8_METRIC_TEMP
 export function generateBaseQuery({
   isRateQuery = false,
   groupings = [],
-  aggregation = '',
   isUtf8Metric = false,
 }: {
   isRateQuery?: boolean;
   groupings?: string[];
-  aggregation?: string;
   isUtf8Metric?: boolean;
 }): string {
   // Determine base query template
@@ -26,13 +24,10 @@ export function generateBaseQuery({
       ? RATE_BASE_QUERY_TEMPLATE
       : BASE_QUERY_TEMPLATE;
 
-  // Apply aggregation (e.g., sum, avg) if provided
-  const aggregatedQuery = aggregation ? `${aggregation} (${baseQuery})` : baseQuery;
-
   // Apply groupings (e.g., `sum by(le, instance)`)
   if (groupings.length > 0) {
-    return `sum by(${groupings.join(', ')}) (${aggregatedQuery}) ${VAR_OTEL_JOIN_QUERY_EXPR}`;
+    return `sum by(${groupings.join(', ')}) (${baseQuery} ${VAR_OTEL_JOIN_QUERY_EXPR})`;
   }
 
-  return `${aggregatedQuery} ${VAR_OTEL_JOIN_QUERY_EXPR}`;
+  return `${baseQuery} ${VAR_OTEL_JOIN_QUERY_EXPR}`;
 }

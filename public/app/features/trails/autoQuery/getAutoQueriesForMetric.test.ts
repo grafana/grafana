@@ -406,10 +406,9 @@ describe('generateBaseQuery', () => {
         isRateQuery: true,
         isUtf8Metric: false,
         groupings: ['le', 'job'],
-        aggregation: 'sum',
       })
     ).toBe(
-      `sum by(le, job) (sum (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval]))) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+      `sum by(le, job) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval])${VAR_OTEL_JOIN_QUERY_EXPR})`
     );
   });
 
@@ -419,10 +418,9 @@ describe('generateBaseQuery', () => {
         isRateQuery: true,
         isUtf8Metric: true,
         groupings: ['le', 'instance'],
-        aggregation: 'avg',
       })
     ).toBe(
-      `sum by(le, instance) (avg (rate({${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}}[$__rate_interval]))) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+      `sum by(le, instance) (rate({${VAR_METRIC_EXPR}, ${VAR_FILTERS_EXPR}}[$__rate_interval])${VAR_OTEL_JOIN_QUERY_EXPR})`
     );
   });
 });

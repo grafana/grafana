@@ -1,9 +1,9 @@
-import { PromQuery } from '@grafana/prometheus';
-
-import { VAR_FILTERS_WITH_CURLY_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
+import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { heatmapGraphBuilder, percentilesGraphBuilder, simpleGraphBuilder } from '../graphBuilders';
 import { AutoQueryContext, AutoQueryDef } from '../types';
 import { getUnit } from '../units';
+
+import { generateBaseQuery } from './baseQuery';
 
 export function createHistogramMetricQueryDefs(context: AutoQueryContext) {
   const { metricParts } = context;
@@ -19,50 +19,45 @@ export function createHistogramMetricQueryDefs(context: AutoQueryContext) {
   const p50: AutoQueryDef = {
     ...common,
     variant: 'p50',
-    queries: [percentileQuery(50)],
+    queries: [percentileQuery(context, 50)],
     vizBuilder: () => simpleGraphBuilder(p50),
   };
 
   const breakdown: AutoQueryDef = {
     ...common,
     variant: 'p50',
-    queries: [percentileQuery(50, [VAR_GROUP_BY_EXP])],
+    queries: [percentileQuery(context, 50, [VAR_GROUP_BY_EXP])],
     vizBuilder: () => simpleGraphBuilder(breakdown),
   };
 
   const percentiles: AutoQueryDef = {
     ...common,
     variant: 'percentiles',
-    queries: [99, 90, 50].map((p) => percentileQuery(p)),
+    queries: [99, 90, 50].map((p) => percentileQuery(context, p)),
     vizBuilder: () => percentilesGraphBuilder(percentiles),
   };
 
   const heatmap: AutoQueryDef = {
     ...common,
     variant: 'heatmap',
-    queries: [heatMapQuery()],
+    queries: [
+      {
+        refId: 'Heatmap',
+        expr: generateBaseQuery({
+          isRateQuery: true,
+          isUtf8Metric: context.isUtf8Metric,
+          groupings: ['le'],
+        }),
+        format: 'heatmap',
+      },
+    ],
     vizBuilder: () => heatmapGraphBuilder(heatmap),
   };
 
   return { preview: heatmap, main: heatmap, variants: [percentiles, heatmap], breakdown: breakdown };
 }
 
-const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval])${VAR_OTEL_JOIN_QUERY_EXPR}`;
-
-function baseQuery(groupings: string[] = []) {
-  const sumByList = ['le', ...groupings];
-  return `sum by(${sumByList.join(', ')}) (${BASE_QUERY})`;
-}
-
-function heatMapQuery(groupings: string[] = []): PromQuery {
-  return {
-    refId: 'Heatmap',
-    expr: baseQuery(groupings),
-    format: 'heatmap',
-  };
-}
-
-function percentileQuery(percentile: number, groupings: string[] = []) {
+function percentileQuery(context: AutoQueryContext, percentile: number, groupings: string[] = []) {
   const percent = percentile / 100;
 
   let legendFormat = `${percentile}th Percentile`;
@@ -72,9 +67,15 @@ function percentileQuery(percentile: number, groupings: string[] = []) {
     legendFormat = `{{${groupings[0]}}}`;
   }
 
+  const query = generateBaseQuery({
+    isRateQuery: true,
+    isUtf8Metric: context.isUtf8Metric,
+    groupings: ['le', ...groupings],
+  });
+
   return {
     refId: `Percentile${percentile}`,
-    expr: `histogram_quantile(${percent}, ${baseQuery(groupings)})`,
+    expr: `histogram_quantile(${percent}, ${query})`,
     legendFormat,
   };
 }
