@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
@@ -160,8 +161,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, 
     <>
       {hasOnCallError && (
         <Alert severity="error" title="Loading OnCall integration failed">
-          Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
-          plugin configuration
+          <Trans i18nKey="alerting.contact-points.on-call-unreachable">
+            Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
+            plugin configuration
+          </Trans>
         </Alert>
       )}
 
