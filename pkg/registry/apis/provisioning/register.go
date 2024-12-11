@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net/url"
 	"path"
-	"slices"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -198,6 +197,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		jobs:   b.jobs,
 		logger: b.logger.With("connector", "webhook"),
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
+		getter: b,
+		logger: b.logger.With("connector", "test"),
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
@@ -238,7 +241,10 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
 	}
+	return b.AsRepository(ctx, r)
+}
 
+func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver)
@@ -446,11 +452,10 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		return err
 	}
 
-	// Typed validation
-	list := repo.Validate()
-	cfg := repo.Config()
+	list := ValidateRepository(repo)
 
 	if a.GetOperation() == admission.Update {
+		cfg := repo.Config()
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
 		if err != nil {
 			return fmt.Errorf("get old repository for update: %w", err)
@@ -462,36 +467,10 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		}
 	}
 
-	if cfg.Spec.Title == "" {
-		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
-	}
-
-	// Reserved names (for now)
-	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file"}
-	if slices.Contains(reserved, cfg.Name) {
-		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
-	}
-
-	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "local"),
-			cfg.Spec.GitHub, "Local config only valid when type is local"))
-	}
-
-	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github"),
-			cfg.Spec.GitHub, "Github config only valid when type is github"))
-	}
-
-	if cfg.Spec.Type != provisioning.S3RepositoryType && cfg.Spec.S3 != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "s3"),
-			cfg.Spec.GitHub, "S3 config only valid when type is s3"))
-	}
-
 	if len(list) > 0 {
-		return apierrors.NewInvalid(schema.GroupKind{
-			Group: provisioning.GROUP,
-			Kind:  "Repository", //??
-		}, a.GetName(), list)
+		return apierrors.NewInvalid(
+			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+			a.GetName(), list)
 	}
 	return nil
 }
@@ -512,6 +491,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
 
 	// TODO: we might want to register some extras for subresources here.
 	sub := oas.Paths.Paths[repoprefix+"/hello"]
@@ -526,6 +506,23 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 					Description: "Who should get the nice greeting?",
 					Schema:      spec.StringProperty(),
 					Required:    false,
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/test"]
+	if sub != nil {
+		repoSchema := defs[defsBase+"Repository"].Schema
+		sub.Post.Description = "Check if the configuration is valid"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": &spec3.MediaType{
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &repoSchema,
+						},
+					},
 				},
 			},
 		}
@@ -597,7 +594,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList"].Schema
+		s := defs[defsBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 

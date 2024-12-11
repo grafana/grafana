@@ -43,8 +43,8 @@ func (r *s3Repository) Validate() (list field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *s3Repository) Test(ctx context.Context, logger *slog.Logger) error {
-	return &errors.StatusError{
+func (r *s3Repository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
+	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,

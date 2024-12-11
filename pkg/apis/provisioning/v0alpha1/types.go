@@ -258,6 +258,24 @@ type FileItem struct {
 
 // HistoryList is a list of versions of a resource
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type TestResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// HTTP status code
+	Code int `json:"code"`
+
+	// Is the connection healthy
+	Success bool `json:"success"`
+
+	// Error descriptions
+	Errors []string `json:"errors,omitempty"`
+
+	// Optional details
+	Details *common.Unstructured `json:"details,omitempty"`
+}
+
+// HistoryList is a list of versions of a resource
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
