@@ -102,7 +102,7 @@ export function mimirDataSource() {
       url: 'https://mimir.local:9000',
       jsonData: {
         manageAlerts: true,
-        // implementation: 'mimir',
+        implementation: 'mimir',
       },
     },
     { alerting: true, module: 'core:plugin/prometheus' }
