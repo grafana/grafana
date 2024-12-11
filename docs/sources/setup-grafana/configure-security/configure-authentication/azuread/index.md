@@ -222,22 +222,22 @@ Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature 
 resource "grafana_sso_settings" "azuread_sso_settings" {
   provider_name = "azuread"
   oauth2_settings {
-    name                       = "Azure AD"
-    auth_url                   = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
-    token_url                  = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
-    client_authentication      = "CLIENT_AUTHENTICATION_OPTION"
-    client_id                  = "APPLICATION_ID"
-    managed_identity_client_id = "MANAGED_IDENTITY_CLIENT_ID"
-    audience                   = "FEDERATED_CREDENTIAL_AUDIENCE"
-    client_secret              = "CLIENT_SECRET"
-    allow_sign_up              = true
-    auto_login                 = false
-    scopes                     = "openid email profile"
-    allowed_organizations      = "TENANT_ID"
-    role_attribute_strict      = false
-    allow_assign_grafana_admin = false
-    skip_org_role_sync         = false
-    use_pkce                   = true
+    name                          = "Azure AD"
+    auth_url                      = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
+    token_url                     = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
+    client_authentication         = "CLIENT_AUTHENTICATION_OPTION"
+    client_id                     = "APPLICATION_ID"
+    client_secret                 = "CLIENT_SECRET"
+    managed_identity_client_id    = "MANAGED_IDENTITY_CLIENT_ID"
+    federated_credential_audience = "FEDERATED_CREDENTIAL_AUDIENCE"
+    allow_sign_up                 = true
+    auto_login                    = false
+    scopes                        = "openid email profile"
+    allowed_organizations         = "TENANT_ID"
+    role_attribute_strict         = false
+    allow_assign_grafana_admin    = false
+    skip_org_role_sync            = false
+    use_pkce                      = true
   }
 }
 ```
@@ -260,9 +260,9 @@ allow_sign_up = true
 auto_login = false
 client_authentication = CLIENT_AUTHENTICATION_OPTION
 client_id = APPLICATION_ID
-managed_identity_client_id = MANAGED_IDENTITY_CLIENT_ID
-audience = FEDERATED_CREDENTIAL_AUDIENCE
 client_secret = CLIENT_SECRET
+managed_identity_client_id = MANAGED_IDENTITY_CLIENT_ID
+federated_credential_audience = FEDERATED_CREDENTIAL_AUDIENCE
 scopes = openid email profile
 auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
@@ -275,14 +275,14 @@ skip_org_role_sync = false
 use_pkce = true
 ```
 
-You can also use these environment variables to configure **client_authentication**, **client_id**, **managed_identity_client_id**, **audience**, and **client_secret**:
+You can also use these environment variables to configure **client_authentication**, **client_id**, **client_secret**, **managed_identity_client_id**, and **federated_credential_audience**:
 
 ```
 GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION
 GF_AUTH_AZUREAD_CLIENT_ID
-GF_AUTH_AZUREAD_MANAGED_IDENTITY_CLIENT_ID
-GF_AUTH_AZUREAD_AUDIENCE
 GF_AUTH_AZUREAD_CLIENT_SECRET
+GF_AUTH_AZUREAD_MANAGED_IDENTITY_CLIENT_ID
+GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE
 ```
 
 {{% admonition type="note" %}}
