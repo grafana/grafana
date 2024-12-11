@@ -71,7 +71,7 @@ type OAuthInfo struct {
 	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
 	ClientSecret                string            `mapstructure:"client_secret" toml:"-"`
 	ManagedIdentityClientID     string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
-	FederatedCredentialAudience string            `mapstructure:"audience" toml:"federated_credential_audience"`
+	FederatedCredentialAudience string            `mapstructure:"federated_credential_audience" toml:"federated_credential_audience"`
 	EmailAttributeName          string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath          string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
 	EmptyScopes                 bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`
