@@ -13,8 +13,8 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
-  mockDataSources,
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
+  mockDataSources,
   setupVanillaAlertmanagerServer,
 } from './__mocks__/server';
 
