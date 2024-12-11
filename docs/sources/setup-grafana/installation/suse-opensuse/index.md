@@ -95,7 +95,7 @@ Complete the following steps to install Grafana using the standalone binaries:
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
-1. Create a user account for Grafana:
+1. Create a user account for Grafana on your system:
    ```shell
    sudo useradd -r -s /bin/false grafana
    ```
@@ -103,6 +103,29 @@ Complete the following steps to install Grafana using the standalone binaries:
    ```shell
    sudo chown -R grafana:users /usr/local/grafana
    ```
+1. Create a Grafana server `systemd` unit file:
+   ```shell
+   sudo touch /etc/systemd/system/grafana-server.service
+   ```
+1. Add the following to the unit file in a text editor of your choice:
+
+   ```ini
+   [Unit]
+   Description=Grafana Server
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=grafana
+   Group=users
+   ExecStart=/usr/local/grafana/bin/grafana server --config=/usr/local/grafana/conf/grafana.ini --homepath=/usr/local/grafana
+   Restart=on-failure
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+1. Optional (maybe addd info about bindding to ports below 1024?)
 1. [Configure the Grafana server to start at boot time using systemd]({{< relref "../../start-restart-grafana#configure-the-grafana-server-to-start-at-boot-using-systemd" >}}).
 
 ## Uninstall on SUSE or openSUSE
