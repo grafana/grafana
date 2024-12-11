@@ -335,7 +335,7 @@ export function TableNG(props: TableNGProps) {
 
       for (const { columnKey } of sortColumns) {
         const compare = comparators[sortIndex];
-        const result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
+        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
 
         if (result !== 0) {
           break;
