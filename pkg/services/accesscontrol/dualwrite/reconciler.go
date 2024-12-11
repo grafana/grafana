@@ -35,7 +35,7 @@ type ZanzanaReconciler struct {
 }
 
 func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
-	return &ZanzanaReconciler{
+	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:    cfg,
 		log:    log.New("zanzana.reconciler"),
 		client: client,
@@ -90,14 +90,21 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
+		},
+	}
+
+	if cfg.AnonymousEnabled {
+		zanzanaReconciler.reconcilers = append(zanzanaReconciler.reconcilers,
 			newResourceReconciler(
 				"anonymous role binding",
 				anonymousRoleBindingsCollector(cfg, store),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
-		},
+		)
 	}
+
+	return zanzanaReconciler
 }
 
 // Reconcile schedules as job that will run and reconcile resources between
