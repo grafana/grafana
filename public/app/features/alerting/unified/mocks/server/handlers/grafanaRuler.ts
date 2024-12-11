@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
