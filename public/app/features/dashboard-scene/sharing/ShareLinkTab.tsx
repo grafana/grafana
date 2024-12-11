@@ -56,7 +56,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  async buildUrl(queryOptions?: UrlQueryMap) {
+  buildUrl = async (queryOptions?: UrlQueryMap) => {
     this.setState({ isBuildUrlLoading: true });
     const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = getDashboardSceneFor(this);
@@ -92,7 +92,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     });
 
     this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
-  }
+  };
 
   public getTabLabel() {
     return t('share-modal.tab-title.link', 'Link');
