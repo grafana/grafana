@@ -13,7 +13,7 @@ type SceneTransformWrapperProps = {
 export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransformWrapperProps) => {
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
-    scene.scale = scale;
+    // scene.scale = scale;
 
     if (scene.shouldInfinitePan) {
       const isScaleZoomedOut = scale < 1;
@@ -27,7 +27,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
 
   const onZoomStop = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
-    scene.scale = scale;
+    // scene.scale = scale;
     updateMoveable(scale);
   };
 
@@ -40,7 +40,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
     }
   ) => {
     const scale = state.scale;
-    scene.scale = scale;
+    // scene.scale = scale;
     updateMoveable(scale);
   };
 
@@ -89,12 +89,12 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
   };
 
   // Set panel content overflow to hidden to prevent canvas content from overflowing
-  scene.div?.parentElement?.parentElement?.parentElement?.parentElement?.setAttribute('style', `overflow: hidden`);
+  // scene.div?.parentElement?.parentElement?.parentElement?.parentElement?.setAttribute('style', `overflow: hidden`);
 
   return (
     <TransformWrapper
       doubleClick={{ mode: 'reset' }}
-      ref={scene.transformComponentRef}
+      // ref={scene.transformComponentRef}
       onZoom={onZoom}
       onZoomStop={onZoomStop}
       onTransformed={onTransformed}
