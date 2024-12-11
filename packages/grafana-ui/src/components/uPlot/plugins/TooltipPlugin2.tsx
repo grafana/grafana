@@ -126,11 +126,7 @@ export const TooltipPlugin2 = ({
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(
-    mergeState,
-    null,
-    initState
-  );
+  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize>();
   const styles = useStyles2(getStyles, maxWidth);

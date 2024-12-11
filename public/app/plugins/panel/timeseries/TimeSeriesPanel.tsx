@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync, outerJoinDataFrames } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -75,21 +75,6 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  const getDataLinks = useCallback(
-    (seriesIdx: number, dataIdx: number) => {
-      let alignedFrame = outerJoinDataFrames({ frames });
-      if (alignedFrame) {
-        const field = alignedFrame.fields[seriesIdx]!;
-        if (field?.getLinks) {
-          return field.getLinks({ valueRowIndex: dataIdx });
-        }
-      }
-
-      return [];
-    },
-    [frames]
-  );
-
   return (
     <TimeSeries
       frames={frames}
@@ -121,7 +106,10 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                getDataLinks={getDataLinks}
+                getDataLinks={(seriesIdx: number, dataIdx: number) => {
+                  const field = alignedFrame.fields[seriesIdx]!;
+                  return field.getLinks ? field.getLinks({ valueRowIndex: dataIdx }) : [];
+                }}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
