@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { TeamPicker } from './TeamPicker';
 
-jest.mock('@grafana/runtime', () => ({
+jest.mock('../services/backendSrv', () => ({
   getBackendSrv: () => {
     return {
       get: () => {
