@@ -5,7 +5,7 @@ import {
   PromApplication,
   RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
-import { getDataSourceUID, getRulesDataSourceByUID, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceUID, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
 import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo';

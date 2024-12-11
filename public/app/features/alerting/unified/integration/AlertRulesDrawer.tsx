@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 

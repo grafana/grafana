@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
