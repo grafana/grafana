@@ -6,6 +6,7 @@ import { ActionMeta, Button, Drawer, Field, FieldValidationMessage, Stack, TextL
 import { Trans } from 'app/core/internationalization';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { GrafanaReceiverForm } from 'app/features/alerting/unified/components/receivers/form/GrafanaReceiverForm';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -18,6 +19,10 @@ export interface ContactPointSelectorProps {
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
   const { control, watch, trigger, setError } = useFormContext<RuleFormValues>();
+
+  const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateContactPoint
+  );
   const [showContactPointDrawer, setShowContactPointDrawer] = useState<boolean>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
@@ -64,17 +69,19 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                     selectedContactPointName={contactPointInForm}
                     onError={handleError}
                   />
-                  <Button
-                    onClick={() => {
-                      setShowContactPointDrawer(true);
-                    }}
-                    type="button"
-                    icon="plus"
-                    fill="outline"
-                    variant="secondary"
-                  >
-                    <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
-                  </Button>
+                  {addContactPointSupported && addContactPointAllowed && (
+                    <Button
+                      onClick={() => {
+                        setShowContactPointDrawer(true);
+                      }}
+                      type="button"
+                      icon="plus"
+                      fill="outline"
+                      variant="secondary"
+                    >
+                      <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+                    </Button>
+                  )}
                   <LinkToContactPoints />
                 </Stack>
 
