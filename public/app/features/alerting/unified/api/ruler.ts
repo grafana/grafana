@@ -7,7 +7,7 @@ import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerti
 
 import { containsPathSeparator } from '../components/rule-editor/util';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 
 import { getRulesFilterSearchParams } from './prometheus';
 

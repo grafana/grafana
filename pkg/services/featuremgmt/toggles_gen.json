@@ -1874,19 +1874,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesDashboardsAPI",
-        "resourceVersion": "1729017284006",
-        "creationTimestamp": "2024-10-15T18:34:44Z"
-      },
-      "spec": {
-        "description": "Use the kubernetes API in the backend for dashboards",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-18T05:32:44Z"
@@ -2298,18 +2285,6 @@
     },
     {
       "metadata": {
-        "name": "mysqlParseTime",
-        "resourceVersion": "1724750152191",
-        "creationTimestamp": "2024-08-27T11:16:04Z"
-      },
-      "spec": {
-        "description": "Ensure the parseTime flag is set for MySQL driver",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage"
-      }
-    },
-    {
-      "metadata": {
         "name": "nestedFolders",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-10-26T14:15:14Z",
@@ -2327,10 +2302,10 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1726241874335",
+        "resourceVersion": "1733231733564",
         "creationTimestamp": "2024-05-03T15:02:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-13 15:37:54.335099 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-12-03 13:15:33.564083 +0000 UTC"
         }
       },
       "spec": {
@@ -2338,7 +2313,7 @@
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2358,13 +2333,17 @@
     {
       "metadata": {
         "name": "newFiltersUI",
-        "resourceVersion": "1724228641625",
-        "creationTimestamp": "2024-08-30T12:48:13Z"
+        "resourceVersion": "1733391902652",
+        "creationTimestamp": "2024-08-30T12:48:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-05 09:45:02.652078 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad"
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "true"
       }
     },
     {
