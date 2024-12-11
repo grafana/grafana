@@ -41,7 +41,23 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	if errors.As(err, &opErr) {
 		res.Message = "Network error: Failed to connect to the server"
 		if opErr != nil && opErr.Err != nil {
-			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
+			errMessage := opErr.Err.Error()
+			if strings.HasSuffix(opErr.Err.Error(), "no such host") {
+				errMessage = "no such host"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "unknown port") {
+				errMessage = "unknown port"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "invalid port") {
+				errMessage = "invalid port"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "missing port in address") {
+				errMessage = "missing port in address"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "invalid syntax") {
+				errMessage = "invalid syntax found in the address"
+			}
+			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 		details["verboseMessage"] = err.Error()
 		details["errorDetailsLink"] = "https://grafana.com/docs/grafana/latest/datasources/mysql/#configure-the-data-source"
