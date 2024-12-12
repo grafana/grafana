@@ -242,4 +242,5 @@ export interface FeatureToggles {
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
+  unifiedHistory?: boolean;
 }
