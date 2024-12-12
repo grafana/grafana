@@ -1,8 +1,12 @@
-import { VAR_FILTERS_EXPR, VAR_FILTERS_WITH_CURLY_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
+import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
 
-const BASE_QUERY_TEMPLATE = `${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}`;
+// For usual non-utf8-metrics we use filters in the curly braces
+// metric_name{filter_label="filter_value"}
+const BASE_QUERY_TEMPLATE = `${VAR_METRIC_EXPR}{${VAR_FILTERS_EXPR}}`;
 const RATE_BASE_QUERY_TEMPLATE = `rate(${BASE_QUERY_TEMPLATE}[$__rate_interval])`;
 
+// For utf8 metrics we need to put the metric name inside curly braces with filters
+// {"utf8.metric", filter_label="filter_val"}
 const BASE_QUERY_UTF8_METRIC_TEMPLATE = `{"${VAR_METRIC_EXPR}", ${VAR_FILTERS_EXPR}}`;
 const RATE_BASE_QUERY_UTF8_METRIC_TEMPLATE = `rate(${BASE_QUERY_UTF8_METRIC_TEMPLATE}[$__rate_interval])`;
 

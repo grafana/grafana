@@ -1,4 +1,4 @@
-import { VAR_FILTERS_EXPR, VAR_FILTERS_WITH_CURLY_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../shared';
+import { VAR_FILTERS_EXPR, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../shared';
 
 import { getAutoQueriesForMetric } from './getAutoQueriesForMetric';
 import { generateBaseQuery } from './queryGenerators/baseQuery';
@@ -378,13 +378,13 @@ describe('getAutoQueriesForMetric', () => {
 describe('generateBaseQuery', () => {
   it('should generate a non-rate non-UTF8 base query', () => {
     expect(generateBaseQuery({ isRateQuery: false, isUtf8Metric: false })).toBe(
-      `${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR} ${VAR_OTEL_JOIN_QUERY_EXPR}`
+      `${VAR_METRIC_EXPR}{${VAR_FILTERS_EXPR}} ${VAR_OTEL_JOIN_QUERY_EXPR}`
     );
   });
 
   it('should generate a rate non-UTF8 base query', () => {
     expect(generateBaseQuery({ isRateQuery: true, isUtf8Metric: false })).toBe(
-      `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR}`
+      `rate(${VAR_METRIC_EXPR}{${VAR_FILTERS_EXPR}}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR}`
     );
   });
 
@@ -408,7 +408,7 @@ describe('generateBaseQuery', () => {
         groupings: ['le', 'job'],
       })
     ).toBe(
-      `sum by(le, job) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_WITH_CURLY_EXPR}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR})`
+      `sum by(le, job) (rate(${VAR_METRIC_EXPR}{${VAR_FILTERS_EXPR}}[$__rate_interval]) ${VAR_OTEL_JOIN_QUERY_EXPR})`
     );
   });
 

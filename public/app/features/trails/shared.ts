@@ -15,7 +15,6 @@ export const TRAILS_ROUTE = '/explore/metrics/trail';
 export const HOME_ROUTE = '/explore/metrics';
 
 export const VAR_FILTERS = 'filters';
-export const VAR_FILTERS_WITH_CURLY_EXPR = '{${filters}}';
 export const VAR_FILTERS_EXPR = '${filters}';
 export const VAR_METRIC = 'metric';
 export const VAR_METRIC_EXPR = '${metric}';
