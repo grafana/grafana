@@ -243,5 +243,5 @@ export interface FeatureToggles {
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
-  prometheusQuotesAndSpecialCharsInLabelValues?: boolean;
+  prometheusSpecialCharsInLabelValues?: boolean;
 }

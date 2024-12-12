@@ -245,9 +245,9 @@ describe('PrometheusDatasource', () => {
     const DEFAULT_QUERY_EXPRESSION = 'metric{job="foo"} - metric';
     const target: PromQuery = { expr: DEFAULT_QUERY_EXPRESSION, refId: 'A' };
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues disabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = false;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
       });
 
       it('should not modify expression with no filters', async () => {
@@ -309,9 +309,9 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues enabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = true;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
       });
 
       it('should not modify expression with no filters', async () => {
@@ -528,9 +528,9 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Prometheus regular escaping', () => {
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues disabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = false;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
       });
 
       it('should not escape non-string', () => {
@@ -550,9 +550,9 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues enabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = true;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
       });
 
       it('should not escape non-string', () => {
@@ -590,9 +590,9 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Prometheus regexes escaping', () => {
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues disabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = false;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
       });
 
       it('should not escape strings without special characters', () => {
@@ -611,9 +611,9 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues enabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = true;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
       });
 
       it('should not escape strings without special characters', () => {
@@ -676,9 +676,9 @@ describe('PrometheusDatasource', () => {
       };
     });
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues disabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = false;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
       });
 
       describe('and value is a string', () => {
@@ -688,9 +688,9 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    describe('with prometheusQuotesAndSpecialCharsInLabelValues enabled', () => {
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
       beforeAll(() => {
-        config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues = true;
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
       });
 
       describe('and value is a string', () => {

@@ -1050,7 +1050,7 @@ export function prometheusRegularEscape<T>(value: T) {
     return value;
   }
 
-  if (config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues) {
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
     // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
     // don't escape the encapsulating quotes
     if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
@@ -1073,7 +1073,7 @@ export function prometheusSpecialRegexEscape<T>(value: T) {
     return value;
   }
 
-  if (config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues) {
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
     return value
       .replace(/\\/g, '\\\\\\\\') // escape backslashes
       .replace(/"/g, '\\\\\\"') // escape double quotes

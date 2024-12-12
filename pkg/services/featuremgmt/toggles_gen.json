@@ -2870,7 +2870,8 @@
       "metadata": {
         "name": "prometheusQuotesAndSpecialCharsInLabelValues",
         "resourceVersion": "1734047425944",
-        "creationTimestamp": "2024-12-12T23:50:25Z"
+        "creationTimestamp": "2024-12-12T23:50:25Z",
+        "deletionTimestamp": "2024-12-12T23:52:48Z"
       },
       "spec": {
         "description": "Adds support for quotes and special characters in label values for Prometheus queries",
@@ -2889,6 +2890,19 @@
         "description": "Enables running Prometheus queries in parallel",
         "stage": "privatePreview",
         "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusSpecialCharsInLabelValues",
+        "resourceVersion": "1734047568531",
+        "creationTimestamp": "2024-12-12T23:52:48Z"
+      },
+      "spec": {
+        "description": "Adds support for quotes and special characters in label values for Prometheus queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true
       }
     },
     {
