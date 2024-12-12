@@ -97,7 +97,9 @@ export const LogRows = ({
   enableLogDetails,
   ...props
 }: Props) => {
-  const [previewSize, setPreviewSize] = useState(renderPreview ? Math.ceil(window.innerHeight / 20) : Infinity);
+  const [previewSize, setPreviewSize] = useState(
+    renderPreview ? Math.max(Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
+  );
   const [popoverState, setPopoverState] = useState<PopoverStateType>({
     selection: '',
     selectedRow: null,
