@@ -41,6 +41,8 @@ const config: ConfigFile = {
       schemaFile: '../public/app/features/provisioning/api/spec.json',
       apiImport: 'baseAPI',
       filterEndpoints,
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
     },
   },
 };
