@@ -104,17 +104,17 @@ beforeAll(() => {
 });
 
 const dataSources = {
-  am: mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'Alertmanager',
-    type: DataSourceType.Alertmanager,
-    jsonData: {
-      handleGrafanaManagedAlerts: true,
+  am: mockDataSource<AlertManagerDataSourceJsonData>(
+    {
+      name: 'Alertmanager',
+      type: DataSourceType.Alertmanager,
+      jsonData: { handleGrafanaManagedAlerts: true },
     },
-  }),
-  mimir: mockDataSource({ uid: 'mimir', name: 'Mimir' }),
-  prometheus: mockDataSource({ uid: 'prometheus', name: 'Prometheus' }),
+    { module: 'core:plugin/alertmanager' }
+  ),
+  mimir: mockDataSource({ uid: 'mimir', name: 'Mimir' }, { module: 'core:plugin/prometheus' }),
+  prometheus: mockDataSource({ uid: 'prometheus', name: 'Prometheus' }, { module: 'core:plugin/prometheus' }),
 };
-setupDataSources(...Object.values(dataSources));
 
 describe('RuleViewer', () => {
   describe('Grafana managed alert rule', () => {
@@ -219,6 +219,10 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleExternalRead,
         AccessControlAction.AlertingRuleExternalWrite,
       ]);
+    });
+
+    beforeEach(() => {
+      setupDataSources(...Object.values(dataSources));
     });
 
     it('should render a data source managed alert rule', () => {
