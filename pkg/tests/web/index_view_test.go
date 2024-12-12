@@ -47,7 +47,9 @@ func TestIntegrationIndexView(t *testing.T) {
 	})
 
 	t.Run("CSP disabled", func(t *testing.T) {
-		grafDir, cfgPath := testinfra.CreateGrafDir(t)
+		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			EnableCSP: false,
+		})
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
