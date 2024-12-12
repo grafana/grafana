@@ -113,6 +113,7 @@ type JobProcessor interface {
 type FileReplicator interface {
 	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
 	Replicate(ctx context.Context, fileInfo *FileInfo) error
+	ReplicateTree(ctx context.Context, ref string) error
 	Delete(ctx context.Context, fileInfo *FileInfo) error
 }
 

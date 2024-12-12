@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,13 +22,15 @@ type ReplicatorFactory struct {
 	repo      repository.Repository
 	client    *ClientFactory
 	namespace string
+	ignore    provisioning.IgnoreFile
 }
 
-func NewReplicatorFactory(client *ClientFactory, namespace string, repo repository.Repository) *ReplicatorFactory {
+func NewReplicatorFactory(client *ClientFactory, namespace string, repo repository.Repository, ignore provisioning.IgnoreFile) *ReplicatorFactory {
 	return &ReplicatorFactory{
 		client:    client,
 		namespace: namespace,
 		repo:      repo,
+		ignore:    ignore,
 	}
 }
 
@@ -51,6 +54,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 		client:     dynamicClient,
 		folders:    folders,
 		repository: f.repo,
+		ignore:     f.ignore,
 	}, nil
 }
 
@@ -60,6 +64,48 @@ type replicator struct {
 	parser     *Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
+	ignore     provisioning.IgnoreFile
+}
+
+// ReplicateTree replicates all files in the repository.
+func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
+	logger := r.logger
+	tree, err := r.repository.ReadTree(ctx, logger, ref)
+	if err != nil {
+		return fmt.Errorf("read tree: %w", err)
+	}
+
+	for _, entry := range tree {
+		logger := logger.With("file", entry.Path)
+		if !entry.Blob {
+			logger.DebugContext(ctx, "ignoring non-blob entry")
+			continue
+		}
+
+		if r.ignore(entry.Path) {
+			logger.DebugContext(ctx, "ignoring file")
+			continue
+		}
+
+		info, err := r.repository.Read(ctx, logger, entry.Path, ref)
+		if err != nil {
+			return fmt.Errorf("read file: %w", err)
+		}
+
+		// The parse function will fill in the repository metadata, so copy it over here
+		info.Hash = entry.Hash
+		info.Modified = nil // modified?
+
+		if err := r.Replicate(ctx, info); err != nil {
+			if errors.Is(err, ErrUnableToReadResourceBytes) {
+				logger.InfoContext(ctx, "file does not contain a resource")
+				continue
+			}
+			return fmt.Errorf("replicate file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // Replicate creates a new resource in the cluster.

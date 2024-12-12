@@ -584,41 +584,8 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 
 	if lastSyncCommit == "" {
 		logger.Info("initial sync")
-		// TODO: this essentially the import endpoint. Refactor to reuse that code
-		tree, err := r.ReadTree(ctx, logger, r.config.Spec.GitHub.Branch)
-		if err != nil {
-			return nil, fmt.Errorf("read tree: %w", err)
-		}
-
-		for _, entry := range tree {
-			logger := logger.With("file", entry.Path)
-			if !entry.Blob {
-				logger.DebugContext(ctx, "ignoring non-blob entry")
-				continue
-			}
-
-			if r.ignore(entry.Path) {
-				logger.DebugContext(ctx, "ignoring file")
-				continue
-			}
-
-			info, err := r.Read(ctx, logger, entry.Path, r.config.Spec.GitHub.Branch)
-			if err != nil {
-				return nil, fmt.Errorf("read file: %w", err)
-			}
-
-			// The parse function will fill in the repository metadata, so copy it over here
-			info.Hash = entry.Hash
-			info.Modified = nil // modified?
-
-			if err := replicator.Replicate(ctx, info); err != nil {
-				// TODO: fix import cycles
-				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				// 	logger.InfoContext(ctx, "file does not contain a resource")
-				// 	continue
-				// }
-				return nil, fmt.Errorf("replicate file: %w", err)
-			}
+		if err := replicator.ReplicateTree(ctx, latest); err != nil {
+			return nil, fmt.Errorf("replicate tree: %w", err)
 		}
 	} else {
 		files, err := r.gh.CompareCommits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, lastSyncCommit, latest)

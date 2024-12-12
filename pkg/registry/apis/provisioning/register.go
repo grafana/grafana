@@ -174,6 +174,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger:         b.logger.With("worker", "github"),
 		resourceClient: b.client,
 		identities:     b.identities,
+		ignore:         provisioning.IncludeYamlOrJSON,
 	})
 
 	repositoryStorage.AfterCreate = b.afterCreate

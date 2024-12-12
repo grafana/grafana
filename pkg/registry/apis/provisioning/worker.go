@@ -18,9 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-var (
-	_ jobs.Worker = (*JobWorker)(nil)
-)
+var _ jobs.Worker = (*JobWorker)(nil)
 
 // FIXME: this is in the root package and should not be -- when we pull the processing steps out
 // of the github repo directly, we should move it to a more appropriate place
@@ -30,6 +28,7 @@ type JobWorker struct {
 	resourceClient *resources.ClientFactory
 	identities     auth.BackgroundIdentityService
 	logger         *slog.Logger
+	ignore         provisioning.IgnoreFile
 }
 
 // Process implements jobs.Worker.
@@ -53,7 +52,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo)
+	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo, g.ignore)
 	replicator, err := factory.New()
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
@@ -94,6 +93,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		}
 	}
 	return &provisioning.JobStatus{
-		State: "finished", //success
+		State: "finished", // success
 	}, nil
 }
