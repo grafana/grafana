@@ -197,7 +197,10 @@ describe('AlertRule abilities', () => {
   });
 
   it('should report no permissions while we are loading data for cloud rule', async () => {
-    const rule = getCloudRule();
+    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+    setupDataSources(mimirDs);
+
+    const rule = getCloudRule({}, { rulesSource: mimirDs });
 
     const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
 

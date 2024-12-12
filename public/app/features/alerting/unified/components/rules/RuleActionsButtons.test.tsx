@@ -67,7 +67,8 @@ setPluginLinksHook(() => ({
 }));
 
 const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
-setupDataSources(mimirDs);
+const prometheusDs = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
+setupDataSources(mimirDs, prometheusDs);
 
 const clickCopyLink = async () => {
   const user = userEvent.setup();
@@ -122,7 +123,7 @@ describe('RuleActionsButtons', () => {
     document.addEventListener('click', interceptLinkClicks);
 
     grantAllPermissions();
-    const mockRule = getCloudRule({ name: 'special !@#$%^&*() chars' });
+    const mockRule = getCloudRule({ name: 'special !@#$%^&*() chars' }, { rulesSource: mimirDs });
     const { user } = render(<RuleActionsButtons rule={mockRule} rulesSource={mimirDs} showViewButton />, {
       renderWithRouter: true,
     });
@@ -185,16 +186,14 @@ describe('RuleActionsButtons', () => {
     });
 
     it('copies correct URL for cloud rule', async () => {
-      const promDataSource = mockDataSource({ name: 'Prometheus-2' });
+      const mockRule = getCloudRule({ name: 'pod-1-cpu-firing' }, { rulesSource: prometheusDs });
 
-      const mockRule = getCloudRule({ name: 'pod-1-cpu-firing' });
-
-      render(<RuleActionsButtons rule={mockRule} rulesSource={promDataSource} />);
+      render(<RuleActionsButtons rule={mockRule} rulesSource={prometheusDs} />);
 
       await clickCopyLink();
 
       expect(await navigator.clipboard.readText()).toBe(
-        'http://localhost:3000/sub/alerting/Prometheus-2/pod-1-cpu-firing/find'
+        'http://localhost:3000/sub/alerting/Prometheus/pod-1-cpu-firing/find'
       );
     });
   });
