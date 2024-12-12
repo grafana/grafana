@@ -29,13 +29,13 @@ import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { Alert, Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
+import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef } from '../autoQuery/types';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
 import { getSortByPreference } from '../services/store';
