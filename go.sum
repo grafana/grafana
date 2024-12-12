@@ -2290,8 +2290,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8 h1:77+Y8w2sXpMqTEyyyGE6WDk5U8v6ynCO9lBkMEqzyIo=
 github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/authlib v0.0.0-20241202090931-5f1dcf611f9c h1:10aFnI5iFk0XSw19FD26oS4nIwCunfbkYT800hpHBzo=
-github.com/grafana/authlib v0.0.0-20241202090931-5f1dcf611f9c/go.mod h1:x7df73G3xuSD35Xv9cjaMLyPJCgM9Z/Wj5ISouoAfiI=
+github.com/grafana/authlib v0.0.0-20241212110159-5ae10177a923 h1:M5WFasIUNOO48W8OpmryvEKkfnlmPBPG10uWiAmeB1k=
+github.com/grafana/authlib v0.0.0-20241212110159-5ae10177a923/go.mod h1:x7df73G3xuSD35Xv9cjaMLyPJCgM9Z/Wj5ISouoAfiI=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 h1:3DHH81RJCi8Bcgn2MdBh7vgWUshmAFjZzBCVuxiQ0uk=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d h1:hrXbGJ5jgp6yNITzs5o+zXq0V5yT3siNJ+uM8LGwWKk=
