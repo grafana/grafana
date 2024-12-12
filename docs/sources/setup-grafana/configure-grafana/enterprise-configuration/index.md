@@ -152,7 +152,7 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 ### max_attachment_size_mb
 
-Set the maximum file size in megabytes for the CSV attachments.
+Set the maximum file size in megabytes for the email report attachments.
 
 ### fonts_path
 
