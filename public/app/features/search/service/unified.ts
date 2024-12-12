@@ -77,12 +77,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const qry = query.query ?? '*';
     let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
     const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
-    if (resp.facets?.tags?.terms) {
-      return resp.facets.tags.terms.map((t) => {
-        return { term: t.term, count: t.count };
-      });
-    }
-    return [];
+    return resp.facets?.tags?.terms || [];
   }
 
   // TODO: Implement this correctly
