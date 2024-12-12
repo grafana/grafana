@@ -18,7 +18,7 @@ labels:
     - enterprise
     - oss
 title: Configure mute timings
-weight: 450
+weight: 430
 refs:
   alertmanager-architecture:
     - pattern: /docs/grafana/
@@ -39,7 +39,7 @@ refs:
 
 # Configure mute timings
 
-A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
+A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period or weekends.
 
 {{< admonition type="note" >}}
 Mute timings are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
@@ -68,6 +68,8 @@ Mute timings are assigned to a [specific Alertmanager](ref:alertmanager-architec
 
 A time interval is a specific duration during which alerts are suppressed. The duration typically consists of a specific time range and the days of the week, month, or year.
 
+A mute timing can contain multiple time intervals.
+
 Supported time interval options are:
 
 - Time range: The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time).
@@ -79,9 +81,13 @@ Supported time interval options are:
 
 All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
-If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
+If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match.
 
-If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
+If you want to specify an exact duration, specify all the options.
+
+**Example**
+
+If you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
 
 - Time range:
   - Start time: `12:00`

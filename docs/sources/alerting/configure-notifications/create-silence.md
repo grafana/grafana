@@ -51,14 +51,11 @@ refs:
 
 # Configure silences
 
-Silences stop notifications from getting created and last for only a specified window of time.
+Silences stop notifications from getting created and last for only a specified window of time. Use them to temporarily prevent alert notifications, such as during incident response or a maintenance window.
 
 {{< admonition type="note" >}}
-
-- Inhibition rules are not supported in the Grafana Alertmanager.
-- The preview of silenced alerts only applies to alerts in firing state.
-- Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
-  {{< /admonition >}}
+Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+{{< /admonition >}}
 
 {{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -111,3 +108,12 @@ To remove a silence, complete the following steps.
 Rule-specific silences are silences that apply only to a specific alert rule. They're created when you silence an alert rule directly using the **Silence notifications** action in the UI.
 
 As opposed to general silences, rule-specific silence access is tied directly to the alert rule they act on. They can be created manually by including the specific label matcher: `__alert_rule_uid__=<alert rule UID>`.
+
+## Inhibition rules
+
+- Inhibition rules are not supported in the Grafana Alertmanager.
+  For more information, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/73447).
+
+## Preview silences
+
+- The preview of silenced alerts only applies to alerts in firing state.

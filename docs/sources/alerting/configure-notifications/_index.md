@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Configure notifications
 title: Configure notifications
-weight: 125
+weight: 600
 refs:
   intro-notifications:
     - pattern: /docs/grafana/
