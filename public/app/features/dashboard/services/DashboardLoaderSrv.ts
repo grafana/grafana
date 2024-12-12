@@ -17,9 +17,101 @@ import { getDashboardAPI } from '../api/dashboard_api';
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
-export class DashboardLoaderSrv {
-  constructor() {}
-  _dashboardLoadFailed(title: string, snapshot?: boolean): DashboardDTO {
+interface DashboardLoaderSrvLike<T> {
+  _dashboardLoadFailed(title: string, snapshot?: boolean): T;
+  loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    params?: UrlQueryMap,
+    useV2?: boolean
+  ): Promise<T>;
+}
+
+abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
+  abstract _dashboardLoadFailed(title: string, snapshot?: boolean): T;
+  abstract loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    params?: UrlQueryMap
+  ): Promise<T>;
+
+  protected loadScriptedDashboard(file: string) {
+    const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
+
+    return getBackendSrv()
+      .get(url)
+      .then(this.executeScript.bind(this))
+      .then(
+        (result: any) => {
+          return {
+            meta: {
+              fromScript: true,
+              canDelete: false,
+              canSave: false,
+              canStar: false,
+            },
+            dashboard: result.data,
+          };
+        },
+        (err) => {
+          console.error('Script dashboard error ' + err);
+          appEvents.emit(AppEvents.alertError, [
+            'Script Error',
+            'Please make sure it exists and returns a valid dashboard',
+          ]);
+          return this._dashboardLoadFailed('Scripted dashboard');
+        }
+      );
+  }
+
+  private executeScript(result: any) {
+    const services = {
+      dashboardSrv: getDashboardSrv(),
+      datasourceSrv: getDatasourceSrv(),
+    };
+    const scriptFunc = new Function(
+      'ARGS',
+      'kbn',
+      'dateMath',
+      '_',
+      'moment',
+      'window',
+      'document',
+      '$',
+      'jQuery',
+      'services',
+      result
+    );
+    const scriptResult = scriptFunc(
+      locationService.getSearchObject(),
+      kbn,
+      dateMath,
+      _,
+      moment,
+      window,
+      document,
+      $,
+      $,
+      services
+    );
+
+    // Handle async dashboard scripts
+    if (isFunction(scriptResult)) {
+      return new Promise((resolve) => {
+        scriptResult((dashboard: any) => {
+          resolve({ data: dashboard });
+        });
+      });
+    }
+
+    return { data: scriptResult };
+  }
+}
+
+export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
+  _dashboardLoadFailed(title: string, snapshot?: boolean) {
     snapshot = snapshot || false;
     return {
       meta: {
@@ -45,7 +137,7 @@ export class DashboardLoaderSrv {
     let promise;
 
     if (type === 'script' && slug) {
-      promise = this._loadScriptedDashboard(slug);
+      promise = this.loadScriptedDashboard(slug);
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv()
         .getSnapshot(slug)
@@ -114,78 +206,6 @@ export class DashboardLoaderSrv {
     });
 
     return promise;
-  }
-
-  _loadScriptedDashboard(file: string) {
-    const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
-
-    return getBackendSrv()
-      .get(url)
-      .then(this._executeScript.bind(this))
-      .then(
-        (result: any) => {
-          return {
-            meta: {
-              fromScript: true,
-              canDelete: false,
-              canSave: false,
-              canStar: false,
-            },
-            dashboard: result.data,
-          };
-        },
-        (err) => {
-          console.error('Script dashboard error ' + err);
-          appEvents.emit(AppEvents.alertError, [
-            'Script Error',
-            'Please make sure it exists and returns a valid dashboard',
-          ]);
-          return this._dashboardLoadFailed('Scripted dashboard');
-        }
-      );
-  }
-
-  _executeScript(result: any) {
-    const services = {
-      dashboardSrv: getDashboardSrv(),
-      datasourceSrv: getDatasourceSrv(),
-    };
-    const scriptFunc = new Function(
-      'ARGS',
-      'kbn',
-      'dateMath',
-      '_',
-      'moment',
-      'window',
-      'document',
-      '$',
-      'jQuery',
-      'services',
-      result
-    );
-    const scriptResult = scriptFunc(
-      locationService.getSearchObject(),
-      kbn,
-      dateMath,
-      _,
-      moment,
-      window,
-      document,
-      $,
-      $,
-      services
-    );
-
-    // Handle async dashboard scripts
-    if (isFunction(scriptResult)) {
-      return new Promise((resolve) => {
-        scriptResult((dashboard: any) => {
-          resolve({ data: dashboard });
-        });
-      });
-    }
-
-    return { data: scriptResult };
   }
 }
 
