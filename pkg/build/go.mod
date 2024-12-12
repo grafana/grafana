@@ -12,7 +12,6 @@ require (
 	dagger.io/dagger v0.11.9
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aws/aws-sdk-go v1.55.3
-	github.com/blang/semver/v4 v4.0.0
 	github.com/docker/docker v1.13.1
 	github.com/drone/drone-cli v1.8.0
 	github.com/google/go-cmp v0.6.0
@@ -20,7 +19,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli v1.22.15
-	github.com/urfave/cli/v2 v2.25.0
+	github.com/urfave/cli/v2 v2.27.1
 	golang.org/x/mod v0.17.0
 	golang.org/x/oauth2 v0.21.0
 	google.golang.org/api v0.189.0
@@ -89,12 +88,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.27.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
