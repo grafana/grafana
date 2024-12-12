@@ -851,10 +851,10 @@ export class ElasticDatasource
           // equal query type filter, or via type map translation
           for (const objField in obj) {
             if (objField === 'object') {
-              return false;
+              continue;
             }
             if (obj[objField].metadata_field) {
-              return false;
+              continue;
             }
 
             if (!type || type.length === 0) {
