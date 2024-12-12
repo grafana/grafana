@@ -17,10 +17,16 @@ import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
 
-const fetch = jest.fn().mockResolvedValue({ correlations: [] });
+const getCorrelationsBySourceUIDs = jest.fn().mockResolvedValue({
+  correlations: [],
+  page: 0,
+  limit: 20,
+  totalCount: 0,
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch }),
+  getCorrelationsBySourceUIDs: () => getCorrelationsBySourceUIDs(),
 }));
 
 jest.mock('rxjs', () => ({
