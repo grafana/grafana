@@ -11,17 +11,17 @@ import (
 
 // The default list of open source document builders
 type StandardDocumentBuilders struct {
-	sql db.DB
+	sql       db.DB
+	sprinkles DashboardStats
 }
 
 // Hooked up so wire can fill in different sprinkles
-func ProvideDocumentBuilders(sql db.DB) resource.DocumentBuilderSupplier {
-	return &StandardDocumentBuilders{sql}
+func ProvideDocumentBuilders(sql db.DB, sprinkles DashboardStats) resource.DocumentBuilderSupplier {
+	return &StandardDocumentBuilders{sql, sprinkles}
 }
 
 func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		stats := NewDashboardStatsLookup(nil) // empty stats
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
 		ns, err := claims.ParseNamespace(namespace)
 		if err != nil && s.sql != nil {
@@ -43,6 +43,14 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 				dsinfo = append(dsinfo, info)
 			}
 		}
+
+		// Fetch dashboard sprinkles for the namespace
+		// This could take a while if namespace has a lot of dashboards
+		stats, err := s.sprinkles.GetStats(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+
 		return &DashboardDocumentBuilder{
 			Namespace:        namespace,
 			Blob:             blob,

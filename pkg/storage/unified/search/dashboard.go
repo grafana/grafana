@@ -75,7 +75,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
-				Stats:            NewDashboardStatsLookup(nil),
+				Stats:            nil,
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
 					// empty values (does not resolve anything)
 				}),
@@ -95,7 +95,7 @@ type DashboardDocumentBuilder struct {
 
 	// Cached stats for this namespace
 	// TODO, load this from apiserver request
-	Stats DashboardStatsLookup
+	Stats map[string]map[string]int
 
 	// data source lookup
 	DatasourceLookup dashboard.DatasourceLookup
@@ -104,16 +104,11 @@ type DashboardDocumentBuilder struct {
 	Blob resource.BlobSupport
 }
 
-type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
-
-func NewDashboardStatsLookup(stats map[string]map[string]int64) DashboardStatsLookup {
-	return func(ctx context.Context, uid string) map[string]int64 {
-		if stats == nil {
-			return nil
-		}
-		return stats[uid]
-	}
+type DashboardStats interface {
+	GetStats(ctx context.Context, namespace string) (map[string]map[string]int, error)
 }
+
+type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 
 var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
 
@@ -211,8 +206,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	// Add the stats fields
-	stats := s.Stats(ctx, key.Name) // summary.UID
-	for k, v := range stats {
+	for k, v := range s.Stats[summary.UID] {
 		doc.Fields[k] = v
 	}
 
