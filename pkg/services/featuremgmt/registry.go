@@ -70,7 +70,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaSharingSquad,
-			Expression:   "false", // enabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
@@ -897,7 +897,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false", // enabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSceneSolo",
@@ -905,7 +905,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false", // enabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardScene",
@@ -913,7 +913,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false", // enabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
