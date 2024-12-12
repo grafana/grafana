@@ -1261,6 +1261,8 @@
       "title-with-name": "Tabelle - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
       "copy-link-abs-time": "Absolute URL kopieren",
@@ -2200,9 +2202,6 @@
     },
     "new-folder": {
       "title": "Neuer Ordner"
-    },
-    "observability": {
-      "title": "Beobachtbarkeit"
     },
     "oncall": {
       "title": "OnCall"
