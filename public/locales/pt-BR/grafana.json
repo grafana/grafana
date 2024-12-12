@@ -1758,6 +1758,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
