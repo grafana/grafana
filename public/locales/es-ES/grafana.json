@@ -1261,6 +1261,8 @@
       "title-with-name": "Tabla - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Barra de herramientas de Explore",
       "copy-link": "Copiar URL",
       "copy-link-abs-time": "",
@@ -2200,9 +2202,6 @@
     },
     "new-folder": {
       "title": "Nueva carpeta"
-    },
-    "observability": {
-      "title": "Observabilidad"
     },
     "oncall": {
       "title": "OnCall"
