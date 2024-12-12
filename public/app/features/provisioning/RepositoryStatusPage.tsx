@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
@@ -25,10 +24,13 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { ScopedResourceClient } from '../apiserver/client';
-
-import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery, useTestRepositoryQuery } from './api';
-import { JobSpec, JobStatus, RepositoryResource, FileDetails, TestResponse } from './api/types';
+import {
+  useGetRepositoryStatusQuery,
+  useListJobsQuery,
+  useListRepositoryFilesQuery,
+  useTestRepositoryQuery,
+} from './api';
+import { RepositoryResource, FileDetails, TestResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
@@ -202,37 +204,30 @@ function FilesView({ repo }: RepoProps) {
   );
 }
 
-const jobsClient = new ScopedResourceClient<JobSpec, JobStatus, 'Job'>({
-  group: 'provisioning.grafana.app',
-  version: 'v0alpha1',
-  resource: 'jobs',
-});
-
 function JobsView({ repo }: RepoProps) {
   const name = repo.metadata.name;
-  const jobs = useAsync(async () => {
-    return jobsClient.list({
-      labelSelector: [
-        {
-          key: 'repository',
-          operator: '=',
-          value: name,
-        },
-      ],
-    });
-  }, [name]);
+  const query = useListJobsQuery({
+    labelSelector: [
+      {
+        key: 'repository',
+        operator: '=',
+        value: name,
+      },
+    ],
+  });
+  const items = query?.data?.items ?? [];
 
-  if (jobs.loading) {
+  if (query.isLoading) {
     return <Spinner />;
   }
-  if (jobs.error) {
+  if (query.isError) {
     return (
       <Alert title="error loading jobs">
-        <pre>{JSON.stringify(jobs.error)}</pre>
+        <pre>{JSON.stringify(query.error)}</pre>
       </Alert>
     );
   }
-  if (!jobs.value?.items?.length) {
+  if (!items?.length) {
     return (
       <div>
         No recent events...
@@ -244,7 +239,7 @@ function JobsView({ repo }: RepoProps) {
 
   return (
     <div>
-      {jobs.value.items.map((item) => {
+      {items.map((item) => {
         return (
           <Card key={item.metadata.resourceVersion}>
             <Card.Heading>

@@ -89,6 +89,36 @@ func (_m *MockClient) Commits(ctx context.Context, owner string, repository stri
 	return r0, r1
 }
 
+// CompareCommits provides a mock function with given fields: ctx, owner, repository, base, head
+func (_m *MockClient) CompareCommits(ctx context.Context, owner string, repository string, base string, head string) ([]CommitFile, error) {
+	ret := _m.Called(ctx, owner, repository, base, head)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CompareCommits")
+	}
+
+	var r0 []CommitFile
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]CommitFile, error)); ok {
+		return rf(ctx, owner, repository, base, head)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) []CommitFile); ok {
+		r0 = rf(ctx, owner, repository, base, head)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]CommitFile)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, base, head)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateBranch provides a mock function with given fields: ctx, owner, repository, sourceBranch, branchName
 func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository string, sourceBranch string, branchName string) error {
 	ret := _m.Called(ctx, owner, repository, sourceBranch, branchName)
@@ -231,6 +261,34 @@ func (_m *MockClient) EditWebhook(ctx context.Context, owner string, repository 
 	}
 
 	return r0
+}
+
+// GetBranch provides a mock function with given fields: ctx, owner, repository, branchName
+func (_m *MockClient) GetBranch(ctx context.Context, owner string, repository string, branchName string) (Branch, error) {
+	ret := _m.Called(ctx, owner, repository, branchName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBranch")
+	}
+
+	var r0 Branch
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (Branch, error)); ok {
+		return rf(ctx, owner, repository, branchName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) Branch); ok {
+		r0 = rf(ctx, owner, repository, branchName)
+	} else {
+		r0 = ret.Get(0).(Branch)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branchName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetContents provides a mock function with given fields: ctx, owner, repository, path, ref

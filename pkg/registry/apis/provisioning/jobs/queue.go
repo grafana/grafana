@@ -142,9 +142,15 @@ func (s *jobStore) drainPending() {
 		} else {
 			status, err = worker.Process(ctx, *job)
 			if err != nil {
+				s.logger.Error("error processing job", "job", job.Name, "error", err)
 				status = &provisioning.JobStatus{
+<<<<<<< HEAD
 					State:   "error",
 					Message: []string{err.Error()},
+=======
+					State:  provisioning.JobStateError,
+					Errors: []string{err.Error()},
+>>>>>>> origin/grafana-git-ui-sync
 				}
 			} else if status.State == "" {
 				status.State = provisioning.JobStateFinished

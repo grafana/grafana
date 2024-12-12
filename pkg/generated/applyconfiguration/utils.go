@@ -20,14 +20,10 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=provisioning.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithKind("CommitInfo"):
-		return &provisioningv0alpha1.CommitInfoApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("EditingOptions"):
 		return &provisioningv0alpha1.EditingOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("FileAction"):
 		return &provisioningv0alpha1.FileActionApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("FileRef"):
-		return &provisioningv0alpha1.FileRefApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):

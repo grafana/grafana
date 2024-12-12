@@ -11,12 +11,10 @@ import (
 // JobSpecApplyConfiguration represents a declarative configuration of the JobSpec type for use
 // with apply.
 type JobSpecApplyConfiguration struct {
-	Action  *v0alpha1.JobAction            `json:"action,omitempty"`
-	Hash    *string                        `json:"hash,omitempty"`
-	PR      *int                           `json:"pr,omitempty"`
-	URL     *string                        `json:"url,omitempty"`
-	Ref     *string                        `json:"ref,omitempty"`
-	Commits []CommitInfoApplyConfiguration `json:"commits,omitempty"`
+	Action *v0alpha1.JobAction `json:"action,omitempty"`
+	Hash   *string             `json:"hash,omitempty"`
+	PR     *int                `json:"pr,omitempty"`
+	URL    *string             `json:"url,omitempty"`
 }
 
 // JobSpecApplyConfiguration constructs a declarative configuration of the JobSpec type for use with
@@ -54,26 +52,5 @@ func (b *JobSpecApplyConfiguration) WithPR(value int) *JobSpecApplyConfiguration
 // If called multiple times, the URL field is set to the value of the last call.
 func (b *JobSpecApplyConfiguration) WithURL(value string) *JobSpecApplyConfiguration {
 	b.URL = &value
-	return b
-}
-
-// WithRef sets the Ref field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Ref field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithRef(value string) *JobSpecApplyConfiguration {
-	b.Ref = &value
-	return b
-}
-
-// WithCommits adds the given value to the Commits field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the Commits field.
-func (b *JobSpecApplyConfiguration) WithCommits(values ...*CommitInfoApplyConfiguration) *JobSpecApplyConfiguration {
-	for i := range values {
-		if values[i] == nil {
-			panic("nil value passed to WithCommits")
-		}
-		b.Commits = append(b.Commits, *values[i])
-	}
 	return b
 }

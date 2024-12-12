@@ -27,35 +27,55 @@ import (
 )
 
 type LocalFolderResolver struct {
-	// Local path to data directory
-	ProvisioningPath string
-
-	// Path to development environment
-	DevenvPath string
+	PermittedPrefixes []string
+	HomePath          string
 }
 
-var ErrInvalidLocalFolder = apierrors.NewBadRequest("the path given is invalid")
+type InvalidLocalFolderError struct {
+	Path           string
+	AdditionalInfo string
+}
+
+var (
+	_ error               = (*InvalidLocalFolderError)(nil)
+	_ apierrors.APIStatus = (*InvalidLocalFolderError)(nil)
+)
+
+func (e *InvalidLocalFolderError) Error() string {
+	return fmt.Sprintf("the path given ('%s') is invalid for a local repository (%s)", e.Path, e.AdditionalInfo)
+}
+
+func (e *InvalidLocalFolderError) Status() metav1.Status {
+	return metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusBadRequest,
+		Reason:  metav1.StatusReasonBadRequest,
+		Message: e.Error(),
+	}
+}
 
 func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
-	parts := strings.SplitN(p, "/", 2)
-	if len(parts) != 2 {
-		return "", ErrInvalidLocalFolder
+	if len(r.PermittedPrefixes) == 0 {
+		return "", &InvalidLocalFolderError{p, "no permitted prefixes were configured"}
 	}
 
-	switch parts[0] {
-	case "provisioning":
-		if r.ProvisioningPath == "" {
-			return "", ErrInvalidLocalFolder
+	originalPath := p
+	if !path.IsAbs(p) {
+		var err error
+		p, err = safepath.Join(r.HomePath, p)
+		if err != nil {
+			return "", &InvalidLocalFolderError{originalPath, "the path could not be safely resolved"}
 		}
-		return safepath.Join(r.ProvisioningPath, parts[1])
-
-	case "devenv":
-		if r.DevenvPath == "" {
-			return "", ErrInvalidLocalFolder
-		}
-		return safepath.Join(r.DevenvPath, parts[1])
+	} else {
+		p = safepath.Clean(p)
 	}
-	return "", ErrInvalidLocalFolder
+
+	for _, permitted := range r.PermittedPrefixes {
+		if strings.HasPrefix(p, safepath.Clean(permitted)) {
+			return p, nil
+		}
+	}
+	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
 }
 
 var _ Repository = (*localRepository)(nil)
@@ -326,7 +346,7 @@ func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionMergeBranch, // sync the latest changes
+			Action: provisioning.JobActionSync, // sync the latest changes
 		},
 	}, nil
 }

@@ -15,12 +15,10 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.CommitInfo":             schema_pkg_apis_provisioning_v0alpha1_CommitInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileAction":             schema_pkg_apis_provisioning_v0alpha1_FileAction(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef":                schema_pkg_apis_provisioning_v0alpha1_FileRef(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus":           schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":             schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
@@ -76,65 +74,6 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 				Required: []string{"name", "username"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_CommitInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"sha1": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"added": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef"),
-									},
-								},
-							},
-						},
-					},
-					"modified": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef"),
-									},
-								},
-							},
-						},
-					},
-					"removed": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileRef"},
 	}
 }
 
@@ -337,33 +276,6 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_FileRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"ref", "path"},
-			},
-		},
 	}
 }
 
@@ -717,11 +629,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"merge\"` Merge the remote branch with the grafana instance\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Make sure grafana looks like the the repository ?? should we have a different action for incremental? or use the hash?",
+							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"export", "merge", "pr", "sync"},
+							Enum:        []interface{}{"export", "pr", "sync"},
 						},
 					},
 					"hash": {
@@ -745,33 +657,10 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch of commit hash Deprecated: do we need this?",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"commits": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When we know the commits, these will be passed along Deprecated: do we need this?",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.CommitInfo"),
-									},
-								},
-							},
-						},
-					},
 				},
 				Required: []string{"action"},
 			},
 		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.CommitInfo"},
 	}
 }
 

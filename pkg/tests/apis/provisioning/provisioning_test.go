@@ -28,6 +28,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	provisioningPath := t.TempDir()
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
@@ -35,6 +36,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
 		},
+		PermittedProvisioningPaths: ".|" + provisioningPath,
 	})
 	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
 		client := github.NewMockClient(ttc)

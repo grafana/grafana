@@ -73,6 +73,9 @@ type Client interface {
 	// Commits returns the commits for the given path
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
+	// CompareCommits returns the changes between two commits.
+	CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error)
+
 	// RepoExists checks if a repository exists.
 	RepoExists(ctx context.Context, owner, repository string) (bool, error)
 
@@ -80,6 +83,8 @@ type Client interface {
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
 	// BranchExists checks if a branch exists in the repository.
 	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
+	// GetBranch returns the branch of the repository.
+	GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
@@ -110,6 +115,11 @@ type RepositoryContent interface {
 	GetSHA() string
 	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
 	GetSize() int64
+}
+
+type Branch struct {
+	Name string
+	Sha  string
 }
 
 type CommitAuthor struct {
