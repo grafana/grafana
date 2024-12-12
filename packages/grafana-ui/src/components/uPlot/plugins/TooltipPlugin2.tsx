@@ -27,6 +27,8 @@ export const enum TooltipHoverMode {
   xyOne,
 }
 
+type GeDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
@@ -40,6 +42,7 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelectRange?: OnSelectRangeCallback;
+  getDataLinks?: GeDataLinksCallback;
 
   render: (
     u: uPlot,
@@ -54,7 +57,6 @@ interface TooltipPlugin2Props {
   ) => React.ReactNode;
 
   maxWidth?: number;
-  getDataLinks?: (seriesIdx: number, dataIdx: number) => LinkModel[];
 }
 
 interface TooltipContainerState {
@@ -104,6 +106,8 @@ const MIN_ZOOM_DIST = 5;
 
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
+const getDataLinksFallback: GeDataLinksCallback = () => [];
+
 /**
  * @alpha
  */
@@ -117,7 +121,7 @@ export const TooltipPlugin2 = ({
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
-  getDataLinks,
+  getDataLinks = getDataLinksFallback,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -133,6 +137,9 @@ export const TooltipPlugin2 = ({
 
   const renderRef = useRef(render);
   renderRef.current = render;
+
+  const getLinksRef = useRef(getDataLinks);
+  getLinksRef.current = getDataLinks;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -328,9 +335,7 @@ export const TooltipPlugin2 = ({
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
-            if (getDataLinks) {
-              dataLinks = getDataLinks(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
-            }
+            dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
 
             setTimeout(() => {
               _isPinned = true;
