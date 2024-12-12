@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1261,6 +1265,8 @@
       "title-with-name": "Tabelle - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
       "copy-link-abs-time": "Absolute URL kopieren",
@@ -1752,6 +1758,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2200,9 +2212,6 @@
     },
     "new-folder": {
       "title": "Neuer Ordner"
-    },
-    "observability": {
-      "title": "Beobachtbarkeit"
     },
     "oncall": {
       "title": "OnCall"
