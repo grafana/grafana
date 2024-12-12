@@ -23,9 +23,3 @@ func ProvideDashboardPluginService(
 ) dashboards.PluginService {
 	return orig
 }
-
-func ProvideDashboardReadService(
-	features featuremgmt.FeatureToggles, orig *DashboardServiceImpl,
-) dashboards.DashboardReadService {
-	return orig
-}

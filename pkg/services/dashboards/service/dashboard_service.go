@@ -634,41 +634,52 @@ func (dk8s *dashk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic
 	return dyn.Resource(dk8s.gvr).Namespace(dk8s.namespacer(orgID)), true
 }
 
-func (dr *DashboardServiceImpl) getK8sContext(ctx context.Context) (context.Context, error) {
-	user, ok := k8sRequest.UserFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("user not found")
+func (dr *DashboardServiceImpl) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
+	requester, requesterErr := identity.GetRequester(ctx)
+	if requesterErr != nil {
+		return nil, nil, requesterErr
+	}
+
+	user, exists := k8sRequest.UserFrom(ctx)
+	if !exists {
+		// add in k8s user if not there yet
+		var ok bool
+		user, ok = requester.(k8sUser.Info)
+		if !ok {
+			return nil, nil, fmt.Errorf("could not convert user to k8s user")
+		}
 	}
 
 	newCtx := k8sRequest.WithUser(context.Background(), user)
 	newCtx = log.WithContextualAttributes(newCtx, log.FromContext(ctx))
-	requester, err := identity.GetRequester(ctx)
-	if err == nil {
+	// TODO: after GLSA token workflow is removed, make this return early
+	// and move the else below to be unconditional
+	if requesterErr == nil {
 		newCtxWithRequester := identity.WithRequester(newCtx, requester)
 		newCtx = newCtxWithRequester
 	}
 
-	return newCtx, nil
+	// inherit the deadline from the original context, if it exists
+	deadline, ok := ctx.Deadline()
+	if ok {
+		var newCancel context.CancelFunc
+		newCtx, newCancel = context.WithTimeout(newCtx, time.Until(deadline))
+		return newCtx, newCancel, nil
+	}
+
+	return newCtx, nil, nil
 }
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	// TODO: once getting dashboards by ID in unified storage is supported, we can remove the restraint of the uid being provided
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) && query.UID != "" {
-		// add in k8s user if does not exist in context yet
-		_, exists := k8sRequest.UserFrom(ctx)
-		if !exists {
-			reqUser, err := identity.GetRequester(ctx)
-			if err != nil {
-				return nil, err
-			}
-			ctx = k8sRequest.WithUser(ctx, reqUser.(k8sUser.Info))
-		}
-
 		// create a new context - prevents issues when the request stems from the k8s api itself
 		// otherwise the context goes through the handlers twice and causes issues
-		newCtx, err := dr.getK8sContext(ctx)
+		newCtx, cancel, err := dr.getK8sContext(ctx)
 		if err != nil {
 			return nil, err
+		} else if cancel != nil {
+			defer cancel()
 		}
 
 		client, ok := dr.k8sclient.getClient(newCtx, query.OrgID)
@@ -946,7 +957,11 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 }
 
 func UnstructuredToLegacyDashboard(item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
-	spec := item.Object["spec"].(map[string]any)
+	spec, ok := item.Object["spec"].(map[string]any)
+	if !ok {
+		return nil, errors.New("error parsing dashboard from k8s response")
+	}
+
 	out := dashboards.Dashboard{
 		OrgID: orgID,
 		Data:  simplejson.NewFromAny(spec),

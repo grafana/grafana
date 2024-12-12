@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -80,12 +81,18 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 			return
 		}
 
-		finalRsp, err := r.unified.Restore(ctx, &resource.RestoreRequest{
+		rsp, err := r.unified.Restore(ctx, &resource.RestoreRequest{
 			ResourceVersion: rv,
 			Key:             key,
 		})
-		if err != nil || finalRsp == nil || finalRsp.Error != nil {
-			responder.Error(fmt.Errorf("could not re-create resource: %s", res))
+		if err != nil {
+			responder.Error(err)
+			return
+		} else if rsp == nil || (rsp.Error != nil && rsp.Error.Code == http.StatusNotFound) {
+			responder.Error(storage.NewKeyNotFoundError(uid, rv))
+			return
+		} else if rsp.Error != nil {
+			responder.Error(fmt.Errorf("could not re-create object: %s", rsp.Error.Message))
 			return
 		}
 
@@ -93,7 +100,7 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            key.Name,
 				Namespace:       key.Namespace,
-				ResourceVersion: strconv.FormatInt(finalRsp.ResourceVersion, 10),
+				ResourceVersion: strconv.FormatInt(rsp.ResourceVersion, 10),
 			},
 		}
 

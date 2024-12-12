@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -81,8 +82,14 @@ func (l *latestREST) Connect(ctx context.Context, uid string, opts runtime.Objec
 			ResourceVersion: 0, // 0 will return the latest version that was not a delete event
 			IncludeDeleted:  true,
 		})
-		if err != nil || rsp == nil || rsp.Error != nil {
-			responder.Error(fmt.Errorf("could not find old resource: %s", err.Error()))
+		if err != nil {
+			responder.Error(err)
+			return
+		} else if rsp == nil || (rsp.Error != nil && rsp.Error.Code == http.StatusNotFound) {
+			responder.Error(storage.NewKeyNotFoundError(uid, 0))
+			return
+		} else if rsp.Error != nil {
+			responder.Error(fmt.Errorf("could not retrieve object: %s", rsp.Error.Message))
 			return
 		}
 
