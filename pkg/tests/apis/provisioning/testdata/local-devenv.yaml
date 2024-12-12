@@ -10,6 +10,6 @@ spec:
     create: true
     update: true
     delete: true
-  type: local 
+  type: local
   local:
     path: devenv/dev-dashboards
