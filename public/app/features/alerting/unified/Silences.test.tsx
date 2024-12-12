@@ -5,14 +5,12 @@ import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testin
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockAlertRuleApi } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
-import {
-  MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
-  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
-} from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -25,12 +23,10 @@ import {
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_LACKING_PERMISSIONS,
   grantUserPermissions,
-  mockDataSource,
   mockSilences,
 } from './mocks';
 import { grafanaRulerRule } from './mocks/grafanaRulerApi';
-import { setupDataSources } from './testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 const TEST_TIMEOUT = 60000;
 
@@ -47,18 +43,6 @@ const renderSilences = (location = '/alerting/silences/') => {
       },
     }
   );
-};
-
-const dataSources = {
-  am: mockDataSource({
-    name: GRAFANA_RULES_SOURCE_NAME,
-    type: DataSourceType.Alertmanager,
-  }),
-  [MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]: mockDataSource({
-    uid: MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
-    name: MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
-    type: DataSourceType.Alertmanager,
-  }),
 };
 
 const ui = {
@@ -106,10 +90,9 @@ const addAdditionalMatcher = async () => {
   await user.click(ui.editor.addMatcherButton.get());
 };
 
-const server = setupMswServer();
+const { server } = setupAlertingTestEnv();
 
 beforeEach(() => {
-  setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
   grantUserPermissions([
     AccessControlAction.AlertingInstanceRead,
     AccessControlAction.AlertingInstanceCreate,

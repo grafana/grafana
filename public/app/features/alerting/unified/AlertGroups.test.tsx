@@ -2,14 +2,13 @@ import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
-import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
+import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
-import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
 const mocks = {
@@ -26,13 +25,6 @@ const renderAmNotifications = () => {
   );
 };
 
-const dataSources = {
-  am: mockDataSource({
-    name: 'Alertmanager',
-    type: DataSourceType.Alertmanager,
-  }),
-};
-
 const ui = {
   group: byTestId('alert-group'),
   groupCollapseToggle: byTestId('alert-group-collapse-toggle'),
@@ -46,6 +38,8 @@ const ui = {
   loadingIndicator: byText('Loading notifications'),
 };
 
+setupAlertingTestEnv();
+
 describe('AlertGroups', () => {
   beforeAll(() => {
     grantUserPermissions([
@@ -54,10 +48,6 @@ describe('AlertGroups', () => {
       AccessControlAction.AlertingInstancesExternalRead,
       AccessControlAction.AlertingRuleRead,
     ]);
-  });
-
-  beforeEach(() => {
-    setupDataSources(dataSources.am);
   });
 
   afterEach(() => {

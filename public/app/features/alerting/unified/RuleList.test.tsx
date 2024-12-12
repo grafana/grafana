@@ -1,20 +1,17 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
-import { SetupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
-import { mockUserApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
+import { locationService, usePluginLinks } from '@grafana/runtime';
+import { mockUserApi } from 'app/features/alerting/unified/mockApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getMockUser } from 'app/features/users/__mocks__/userMocks';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -26,7 +23,6 @@ import { fetchRulerRules } from './api/ruler';
 import {
   getPotentiallyPausedRulerRules,
   grantUserPermissions,
-  mockDataSource,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
@@ -37,7 +33,7 @@ import {
   someRulerRules,
 } from './mocks';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -52,7 +48,6 @@ jest.mock('./api/ruler');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 jest.spyOn(apiRuler, 'rulerUrlBuilder');
 
-setAppEvents(appEvents);
 setupPluginsExtensionsHook();
 
 const mocks = {
@@ -76,28 +71,6 @@ const renderRuleList = () => {
     </TestProvider>,
     { renderWithRouter: false }
   );
-};
-
-const dataSources = {
-  prom: mockDataSource({
-    name: 'Prometheus',
-    type: DataSourceType.Prometheus,
-  }),
-  promdisabled: mockDataSource({
-    name: 'Prometheus-disabled',
-    type: DataSourceType.Prometheus,
-    jsonData: {
-      manageAlerts: false,
-    },
-  }),
-  loki: mockDataSource({
-    name: 'Loki',
-    type: DataSourceType.Loki,
-  }),
-  promBroken: mockDataSource({
-    name: 'Prometheus-broken',
-    type: DataSourceType.Prometheus,
-  }),
 };
 
 const ui = {
@@ -134,16 +107,11 @@ const ui = {
   },
 };
 
-const server = setupMswServer();
-
-const configureMockServer = (server: SetupServer) => {
-  mockUserApi(server).user(getMockUser());
-  setAlertmanagerChoices(AlertmanagerChoice.All, 1);
-};
+const { server, dataSources } = setupAlertingTestEnv();
 
 describe('RuleList', () => {
   beforeEach(() => {
-    configureMockServer(server);
+    mockUserApi(server).user(getMockUser());
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -181,11 +149,11 @@ describe('RuleList', () => {
     });
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
-      if (dataSourceName === dataSources.prom.name) {
+      if (dataSourceName === dataSources.prometheus.name) {
         return Promise.resolve([
           mockPromRuleNamespace({
             name: 'default',
-            dataSourceName: dataSources.prom.name,
+            dataSourceName: dataSources.prometheus.name,
             groups: [
               mockPromRuleGroup({
                 name: 'group-2',
@@ -272,7 +240,7 @@ describe('RuleList', () => {
     });
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
-      if (dataSourceName !== dataSources.prom.name) {
+      if (dataSourceName !== dataSources.prometheus.name) {
         return Promise.resolve([]);
       } else {
         return Promise.resolve([
@@ -421,7 +389,7 @@ describe('RuleList', () => {
 
     mocks.api.fetchRulerRules.mockResolvedValue({});
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
-      if (dataSourceName !== dataSources.prom.name) {
+      if (dataSourceName !== dataSources.prometheus.name) {
         return Promise.resolve([]);
       } else {
         return Promise.resolve([
@@ -656,7 +624,7 @@ describe('RuleList', () => {
    */
   describe.skip('edit lotex groups, namespaces', () => {
     const testDatasources = {
-      prom: dataSources.prom,
+      prom: dataSources.prometheus,
     };
 
     function testCase(name: string, fn: () => Promise<void>) {

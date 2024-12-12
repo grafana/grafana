@@ -22,6 +22,9 @@ import app from './app';
 
 const prepareInit = async () => {
   if (process.env.frontend_dev_mock_api) {
+    const mockDataSourcesModules = await import('app/features/alerting/unified/testSetup/datasources');
+    mockDataSourcesModules.setupAlertingDataSources();
+
     return import('test/mock-api/worker').then((workerModule) => {
       workerModule.default.start({ onUnhandledRequest: 'bypass' });
     });
