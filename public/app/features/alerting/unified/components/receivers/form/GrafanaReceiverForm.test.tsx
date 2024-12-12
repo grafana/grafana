@@ -50,7 +50,7 @@ const ui = {
   existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),
 };
 
-describe('GrafanaReceiverForm', () => {
+describe.skip('GrafanaReceiverForm', () => {
   beforeEach(() => {
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsRead,

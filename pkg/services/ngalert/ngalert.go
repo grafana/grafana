@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -78,34 +79,36 @@ func ProvideService(
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
+	pluginsContextProvider *plugincontext.Provider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                  cfg,
-		FeatureToggles:       featureToggles,
-		DataSourceCache:      dataSourceCache,
-		DataSourceService:    dataSourceService,
-		RouteRegister:        routeRegister,
-		SQLStore:             sqlStore,
-		KVStore:              kvStore,
-		ExpressionService:    expressionService,
-		DataProxy:            dataProxy,
-		QuotaService:         quotaService,
-		SecretsService:       secretsService,
-		Metrics:              m,
-		Log:                  log.New("ngalert"),
-		NotificationService:  notificationService,
-		folderService:        folderService,
-		accesscontrol:        ac,
-		dashboardService:     dashboardService,
-		renderService:        renderService,
-		bus:                  bus,
-		AccesscontrolService: accesscontrolService,
-		annotationsRepo:      annotationsRepo,
-		pluginsStore:         pluginsStore,
-		tracer:               tracer,
-		store:                ruleStore,
-		httpClientProvider:   httpClientProvider,
-		ResourcePermissions:  resourcePermissions,
+		Cfg:                    cfg,
+		FeatureToggles:         featureToggles,
+		DataSourceCache:        dataSourceCache,
+		DataSourceService:      dataSourceService,
+		RouteRegister:          routeRegister,
+		SQLStore:               sqlStore,
+		KVStore:                kvStore,
+		ExpressionService:      expressionService,
+		DataProxy:              dataProxy,
+		QuotaService:           quotaService,
+		SecretsService:         secretsService,
+		Metrics:                m,
+		Log:                    log.New("ngalert"),
+		NotificationService:    notificationService,
+		folderService:          folderService,
+		accesscontrol:          ac,
+		dashboardService:       dashboardService,
+		renderService:          renderService,
+		bus:                    bus,
+		AccesscontrolService:   accesscontrolService,
+		annotationsRepo:        annotationsRepo,
+		pluginsStore:           pluginsStore,
+		tracer:                 tracer,
+		store:                  ruleStore,
+		httpClientProvider:     httpClientProvider,
+		ResourcePermissions:    resourcePermissions,
+		pluginsContextProvider: pluginsContextProvider,
 	}
 
 	if ng.IsDisabled() {
@@ -154,9 +157,10 @@ type AlertNG struct {
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
-	bus          bus.Bus
-	pluginsStore pluginstore.Store
-	tracer       tracing.Tracer
+	bus                    bus.Bus
+	pluginsStore           pluginstore.Store
+	tracer                 tracing.Tracer
+	pluginsContextProvider *plugincontext.Provider
 }
 
 func (ng *AlertNG) init() error {
@@ -442,6 +446,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		ng.pluginsContextProvider,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -453,6 +458,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		ng.pluginsContextProvider,
 	)
 
 	// Provisioning
