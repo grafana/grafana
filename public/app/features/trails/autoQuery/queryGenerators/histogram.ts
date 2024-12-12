@@ -6,10 +6,9 @@ import { generateBaseQuery } from './baseQuery';
 
 export function createHistogramMetricQueryDefs(context: AutoQueryContext) {
   const { unit } = context;
-  const title = `${VAR_METRIC_EXPR}`;
 
   const common = {
-    title,
+    title: VAR_METRIC_EXPR,
     unit,
   };
 

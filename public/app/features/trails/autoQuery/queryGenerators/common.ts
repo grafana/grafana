@@ -16,7 +16,7 @@ export function generateCommonAutoQueryInfo({
   unit,
 }: CommonQueryInfoParams): AutoQueryInfo {
   const common = {
-    title: `${VAR_METRIC_EXPR}`,
+    title: VAR_METRIC_EXPR,
     unit,
   };
 
@@ -36,7 +36,6 @@ export function generateCommonAutoQueryInfo({
 
   const preview = {
     ...common,
-    title: `${VAR_METRIC_EXPR}`,
     queries: [{ ...mainQuery, legendFormat: description }],
     vizBuilder: () => simpleGraphBuilder(preview),
     variant: 'preview',
