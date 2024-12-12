@@ -1405,16 +1405,6 @@
         },
         "description": "(empty)"
       },
-      "getUsers": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GetUsersBody"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "goneError": {
         "content": {
           "application/json": {
@@ -5124,21 +5114,6 @@
         },
         "type": "object"
       },
-      "EmailSchema": {
-        "description": "Implementation of SCIM specification email schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2",
-        "properties": {
-          "primary": {
-            "type": "boolean"
-          },
-          "type": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "EmbeddedContactPoint": {
         "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
         "properties": {
@@ -5849,35 +5824,6 @@
           },
           "uid": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "GetUsersBody": {
-        "properties": {
-          "Resources": {
-            "items": {
-              "$ref": "#/components/schemas/UserSchema"
-            },
-            "type": "array"
-          },
-          "itemsPerPage": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "startIndex": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalResults": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -7178,29 +7124,6 @@
         },
         "type": "array"
       },
-      "MetaSchema": {
-        "description": "Implementation of SCIM specification meta schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-3.1",
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "lastModified": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "resourceType": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "Metadata": {
         "additionalProperties": {
           "type": "boolean"
@@ -7423,24 +7346,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "NameSchema": {
-        "description": "Implementation of SCIM specification name schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "familyName": {
-            "type": "string"
-          },
-          "formatted": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "middleName": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -12301,45 +12206,6 @@
           },
           "updatedAt": {
             "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UserSchema": {
-        "description": "Implementation of SCIM specification user schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "active": {
-            "type": "boolean"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "emails": {
-            "items": {
-              "$ref": "#/components/schemas/EmailSchema"
-            },
-            "type": "array"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/MetaSchema"
-          },
-          "name": {
-            "$ref": "#/components/schemas/NameSchema"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "userName": {
             "type": "string"
           }
         },
@@ -22613,113 +22479,6 @@
         "summary": "It performs Single Logout (SLO) callback.",
         "tags": [
           "saml",
-          "enterprise"
-        ]
-      }
-    },
-    "/scim/users/": {
-      "delete": {
-        "operationId": "deleteUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Deletes user.",
-        "tags": [
-          "user",
-          "enterprise"
-        ]
-      },
-      "get": {
-        "operationId": "getUsers",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getUsers"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Fetches all users in UserSchema format.",
-        "tags": [
-          "users",
-          "enterprise"
-        ]
-      },
-      "post": {
-        "operationId": "createUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Creates user.",
-        "tags": [
-          "users",
-          "enterprise"
-        ]
-      }
-    },
-    "/scim/users/:id": {
-      "get": {
-        "operationId": "getUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets user by id.",
-        "tags": [
-          "user",
           "enterprise"
         ]
       }
