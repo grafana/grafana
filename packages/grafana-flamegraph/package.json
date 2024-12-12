@@ -68,7 +68,7 @@
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.13",
-    "@types/node": "20.16.15",
+    "@types/node": "22.10.2",
     "@types/react": "18.3.3",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
