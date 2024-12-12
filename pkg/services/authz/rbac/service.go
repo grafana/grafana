@@ -78,10 +78,17 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 	if req.GetNamespace() == "" {
 		return nil, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	namespace := req.GetNamespace()
-	ns, err := claims.ParseNamespace(namespace)
+	authInfo, has := claims.From(ctx)
+	if !has {
+		return nil, status.Error(codes.Internal, "could not get auth info from context")
+	}
+	if !claims.NamespaceMatches(authInfo.GetNamespace(), req.GetNamespace()) {
+		return nil, status.Error(codes.PermissionDenied, "namespace does not match")
+	}
+
+	ns, err := claims.ParseNamespace(req.GetNamespace())
 	if err != nil {
-		ctxLogger.Error("could not parse namespace", "namespace", namespace, "error", err)
+		ctxLogger.Error("could not parse namespace", "namespace", req.GetNamespace(), "error", err)
 		return nil, err
 	}
 
