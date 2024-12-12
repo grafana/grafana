@@ -94,8 +94,8 @@ type DashboardDocumentBuilder struct {
 	Namespace string
 
 	// Cached stats for this namespace
-	// TODO, load this from apiserver request
-	Stats map[string]map[string]int
+	// maps dashboard UID to stats
+	Stats map[string]map[string]int64
 
 	// data source lookup
 	DatasourceLookup dashboard.DatasourceLookup
@@ -105,7 +105,7 @@ type DashboardDocumentBuilder struct {
 }
 
 type DashboardStats interface {
-	GetStats(ctx context.Context, namespace string) (map[string]map[string]int, error)
+	GetStats(ctx context.Context, namespace string) (map[string]map[string]int64, error)
 }
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64

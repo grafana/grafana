@@ -46,7 +46,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 
 		// Fetch dashboard sprinkles for the namespace
 		// This could take a while if namespace has a lot of dashboards
-		var stats map[string]map[string]int
+		var stats map[string]map[string]int64
 		if s.sprinkles != nil {
 			stats, err = s.sprinkles.GetStats(ctx, namespace)
 			if err != nil {
