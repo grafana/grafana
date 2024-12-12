@@ -13,16 +13,16 @@ const bucketFieldName = "__bucket"
 func transformExemplarToFrame(name string, series *tempopb.TimeSeries, isHistogram bool) *data.Frame {
 	exemplars := series.Exemplars
 
-	var fields []*data.Field
-
 	// Setup fields for basic data
-	fields = append(fields, data.NewField("Time", nil, []time.Time{}))
-	fields = append(fields, data.NewField("Value", nil, []float64{}))
-	traceIdField := data.NewField("traceId", nil, []string{})
-	traceIdField.Config = &data.FieldConfig{
+	fields := []*data.Field{
+		data.NewField("Time", nil, []time.Time{}),
+		data.NewField("Value", nil, []float64{}),
+		data.NewField("traceId", nil, []string{}),
+	}
+
+	fields[2].Config = &data.FieldConfig{
 		DisplayName: "Trace ID",
 	}
-	fields = append(fields, traceIdField)
 
 	// Add fields for each label to be able to link exemplars to the series
 	for _, label := range series.Labels {

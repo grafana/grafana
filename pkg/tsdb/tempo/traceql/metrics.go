@@ -14,10 +14,11 @@ import (
 )
 
 func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRangeResponse) []*data.Frame {
-	var frames []*data.Frame
+	// prealloc frames
+	frames := make([]*data.Frame, len(resp.Series))
 	var exemplarFrames []*data.Frame
 
-	for _, series := range resp.Series {
+	for i, series := range resp.Series {
 		name, labels := transformLabelsAndGetName(series.Labels)
 
 		valueField := data.NewField(name, labels, []float64{})
@@ -53,7 +54,7 @@ func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRan
 			exemplarFrames = append(exemplarFrames, exFrame)
 		}
 
-		frames = append(frames, frame)
+		frames[i] = frame
 	}
 	return append(frames, exemplarFrames...)
 }
