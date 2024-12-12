@@ -163,6 +163,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
               name: 'Time range changed',
               description: tooltip,
               url: window.location.href,
+              time: Date.now(),
             })
           );
         }
