@@ -157,6 +157,7 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
+  secretsManagementAppPlatform?: boolean;
   alertingSaveStatePeriodic?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;

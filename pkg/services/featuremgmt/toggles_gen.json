@@ -3182,6 +3182,18 @@
     },
     {
       "metadata": {
+        "name": "secretsManagementAppPlatform",
+        "resourceVersion": "1734017153108",
+        "creationTimestamp": "2024-12-12T15:25:53Z"
+      },
+      "spec": {
+        "description": "Enable the secrets management API and services under app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-10-14T13:51:05Z"
