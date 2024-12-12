@@ -53,16 +53,11 @@ describe('RuleList - FilterView', () => {
 
     await loadMoreResults();
 
-    const matchingRule = await screen.findByRole(
-      'treeitem',
-      {
-        name: /test-rule-8 test-mimir-namespace test-group-4501/,
-      },
-      { timeout: 3000 } // increasing the timeout here since it might take a while to find the correct result
-    );
+    const matchingRule = (await screen.findAllByRole('treeitem')).at(0);
     expect(matchingRule).toBeInTheDocument();
 
     expect(matchingRule).toHaveTextContent('test-rule-8');
+    expect(matchingRule).toHaveTextContent('test-mimir-namespace');
     expect(matchingRule).toHaveTextContent('test-group-4501');
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
   });
