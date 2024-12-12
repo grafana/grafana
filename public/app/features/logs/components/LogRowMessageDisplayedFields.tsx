@@ -52,8 +52,7 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
       }
 
       const field = fields.find((field) => {
-        const { keys } = field;
-        return keys[0] === parsedKey;
+        return field.keys[0] === parsedKey;
       });
 
       if (field != null) {

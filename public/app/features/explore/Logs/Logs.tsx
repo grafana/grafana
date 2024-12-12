@@ -983,11 +983,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
                   containerRendered={!!logsContainerRef}
+                  scrollElement={logsContainerRef.current}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
                   onUnpinLine={onPinToContentOutlineClick}
                   onPinLine={onPinToContentOutlineClick}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  renderPreview
                 />
               </InfiniteScroll>
             </div>

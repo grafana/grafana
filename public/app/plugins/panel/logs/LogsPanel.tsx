@@ -430,6 +430,7 @@ export const LogsPanel = ({
           >
             <LogRows
               containerRendered={logsContainerRef.current !== null}
+              scrollElement={scrollElement ?? undefined}
               scrollIntoView={scrollIntoView}
               permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
@@ -465,6 +466,7 @@ export const LogsPanel = ({
               onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
               logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
+              renderPreview
             />
           </InfiniteScroll>
           {showCommonLabels && isAscending && renderCommonLabels()}
