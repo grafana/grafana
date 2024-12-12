@@ -140,7 +140,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
         ],
         "interval": ">10s",
         "policy": "default",
-        "query": "RawDummyQuery",
+        "query": "SELECT \"value\" FROM \"measurement\"",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series",
@@ -173,7 +173,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 
 		res, err := QueryParse(query, nil)
 		require.NoError(t, err)
-		require.Equal(t, "RawDummyQuery", res.RawQuery)
+		require.Equal(t, `SELECT "value" FROM "measurement"`, res.RawQuery)
 		require.Len(t, res.GroupBy, 2)
 		require.Len(t, res.Selects, 1)
 		require.Empty(t, res.Tags)
