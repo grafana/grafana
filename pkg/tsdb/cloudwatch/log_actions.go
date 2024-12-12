@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
@@ -101,7 +100,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
 				resultChan <- backend.Responses{
-					query.RefID: errorsource.Response(err),
+					query.RefID: backend.ErrorResponseWithErrorSource(err),
 				}
 				return nil
 			}
@@ -182,12 +181,12 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	if logsQuery.LogGroupName == "" {
-		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"))
 	}
 	queryRequest.SetLogGroupName(logsQuery.LogGroupName)
 
 	if logsQuery.LogStreamName == "" {
-		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"))
 	}
 	queryRequest.SetLogStreamName(logsQuery.LogStreamName)
 
@@ -201,7 +200,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, errorsource.DownstreamError(err, false)
+		return nil, backend.DownstreamError(err)
 	}
 
 	messages := make([]*string, 0)
@@ -230,7 +229,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
-		return nil, errorsource.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
 	}
 	if logsQuery.QueryLanguage == nil {
 		cwli := dataquery.LogsQueryLanguageCWLI
@@ -290,7 +289,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 			e.logger.FromContext(ctx).Debug("ExecuteStartQuery rate exceeded", "err", awsErr)
 			err = &AWSError{Code: throttlingException, Message: err.Error()}
 		}
-		err = errorsource.DownstreamError(err, false)
+		err = backend.DownstreamError(err)
 	}
 	return resp, err
 }
@@ -335,7 +334,7 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
 		} else {
-			err = errorsource.DownstreamError(err, false)
+			err = backend.DownstreamError(err)
 		}
 	}
 
@@ -365,7 +364,7 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 		if errors.As(err, &awsErr) {
 			err = &AWSError{Code: awsErr.Code(), Message: err.Error()}
 		}
-		err = errorsource.DownstreamError(err, false)
+		err = backend.DownstreamError(err)
 	}
 	return getQueryResultsResponse, err
 }
