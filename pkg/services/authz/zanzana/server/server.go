@@ -29,6 +29,8 @@ var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
+type zanzanaRequestMiddlware = func()
+
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
@@ -36,12 +38,13 @@ type Server struct {
 	openfga       openfgav1.OpenFGAServiceServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
-	cfg      setting.ZanzanaSettings
-	logger   log.Logger
-	modules  []transformer.ModuleFile
-	stores   map[string]storeInfo
-	storesMU *sync.Mutex
-	cache    *localcache.CacheService
+	cfg              setting.ZanzanaSettings
+	logger           log.Logger
+	modules          []transformer.ModuleFile
+	stores           map[string]storeInfo
+	storesMU         *sync.Mutex
+	cache            *localcache.CacheService
+	contextualTuples []*openfgav1.TupleKey
 }
 
 type storeInfo struct {
@@ -90,4 +93,19 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 	}
 
 	return s, nil
+}
+
+func (s *Server) addAuthorizationContext(req *openfgav1.CheckRequest) {
+	if len(s.contextualTuples) == 0 {
+		return
+	}
+
+	if req.ContextualTuples == nil {
+		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
+	}
+	if req.ContextualTuples.TupleKeys == nil {
+		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
+	}
+
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, s.contextualTuples...)
 }
