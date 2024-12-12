@@ -113,9 +113,17 @@ export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
 
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
+export type Enrichment = {
+  key: string;
+  active: boolean;
+  url?: string;
+  query?: string;
+}
+
 export type Route = {
   receiver?: string | null;
   group_by?: string[];
+  enrichments?: Enrichment[];
   continue?: boolean;
   object_matchers?: ObjectMatcher[];
   matchers?: string[];

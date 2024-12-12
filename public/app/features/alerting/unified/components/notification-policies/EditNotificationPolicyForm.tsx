@@ -36,6 +36,7 @@ import {
   stringsToSelectableValues,
 } from '../../utils/amroutes';
 
+import { EnrichmentForm } from './EnrichmentForm';
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 import { routeTimingsFields } from './routeTimingsFields';
@@ -158,6 +159,8 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           Add matcher
         </Button>
       </Stack>
+
+      <EnrichmentForm control={control} register={register} />
 
       <Field label="Contact point">
         <Controller
@@ -312,6 +315,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     noMatchersWarning: css({
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       marginBottom: theme.spacing(1),
+    }),
+    enrichmentContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      borderRadius: `2px`,
+      border: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(1),
     }),
   };
 };
