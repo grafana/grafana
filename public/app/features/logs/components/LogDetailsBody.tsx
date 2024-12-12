@@ -65,7 +65,7 @@ export const LogDetailsBody = (props: Props) => {
 
   const toggleFieldButton =
     displayedFields != null && displayedFields.includes(LOG_LINE_BODY_FIELD_NAME) ? (
-      <IconButton variant="primary" tooltip="Hide log line body" name="eye" onClick={hideField} />
+      <IconButton variant="primary" tooltip="Hide log line" name="eye" onClick={hideField} />
     ) : (
       <IconButton tooltip="Show log line body" name="eye" onClick={showField} />
     );
