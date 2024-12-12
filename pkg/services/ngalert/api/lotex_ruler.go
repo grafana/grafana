@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -232,6 +233,10 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 		return "", err
 	}
 
+	return r.getPrefixForDatasourceSubtype(ctx, ds, ctx.Query(subtypeQuery))
+}
+
+func (r *LotexRuler) getPrefixForDatasourceSubtype(ctx *contextmodel.ReqContext, ds *datasources.DataSource, subtype string) (string, error) {
 	// Validate URL
 	if ds.URL == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
@@ -249,7 +254,6 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 
 	// A Prometheus datasource, can have many subtypes: Cortex, Mimir and vanilla Prometheus.
 	// Based on these subtypes, we want to use a different proxying path.
-	subtype := ctx.Query(subtypeQuery)
 	subTypePrefix, ok := subtypeToPrefix[subtype]
 	if !ok {
 		r.log.Debug(

@@ -479,6 +479,7 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "import-alert-rules": "Import from a datasource",
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
@@ -1506,6 +1507,7 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
+  "import-alert-rules-button": "Import",
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1759,6 +1761,7 @@
       "more": "more"
     }
   },
+  "migrate-alert-rules-from-datasource": "Migrate your alert rules from a datasource into Grafana.",
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
