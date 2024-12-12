@@ -475,6 +475,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
