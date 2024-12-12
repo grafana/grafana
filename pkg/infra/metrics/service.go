@@ -144,10 +144,10 @@ func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
 			_, exists := names[*m.Name]
 			// prevent duplicate metric names
 			if exists {
-				// we can skip go_ metrics without returning an error
+				// we can skip go_ and process_ metrics without returning an error
 				// because they are known to be duplicates in both
 				// the k8s and prometheus gatherers.
-				if strings.HasPrefix(*m.Name, "go_") {
+				if strings.HasPrefix(*m.Name, "go_") || strings.HasPrefix(*m.Name, "process_") {
 					continue
 				}
 				errs = append(errs, fmt.Errorf("duplicate metric name: %s", *m.Name))
