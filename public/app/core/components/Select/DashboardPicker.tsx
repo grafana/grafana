@@ -7,6 +7,7 @@ import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isUIReadyForDashSchemaV2 } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -61,10 +62,11 @@ export const DashboardPicker = ({
       // isV2Mode is set to true when the feature toggle of dashboardSchemaV2 and useV2DashboardsAPI is enabled
       // We could create a different feature toggle with better naming if we want, but the idea of using
       // dashboardSchemaV2 is to indicate that this component is ready to process the new schema
-      const isV2Mode = config.featureToggles.dashboardSchemaV2 && config.featureToggles.useV2DashboardsAPI;
+      const isUIReadyForV2 = config.featureToggles.useV2DashboardsAPI;
 
-      if (isV2Mode) {
+      if (isUIReadyForV2) {
         const resWithSchemaV2 = await getDashboardAPI({ useV2Mode: true }).getDashboardDTO(value, undefined);
+
         setCurrent({
           value: {
             uid: resWithSchemaV2.metadata.name,
@@ -77,6 +79,7 @@ export const DashboardPicker = ({
       } else {
         // this means that the dashboard returned is a v1 schema
         const resWithSchemaV1 = await getDashboardAPI().getDashboardDTO(value, undefined);
+
         if (resWithSchemaV1.dashboard) {
           setCurrent({
             value: {

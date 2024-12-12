@@ -10,18 +10,18 @@ import {
   ResourceClient,
 } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV2Spec } from './utils';
+import { isDashboardResource } from './utils';
 
-export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>> {
+export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
   private client: ResourceClient<DashboardV2Spec>;
 
-  constructor() {
+  constructor(private convertToV1: boolean) {
     this.client = new ScopedResourceClient<DashboardV2Spec>({
       group: 'dashboard.grafana.app',
       version: 'v2alpha1',
@@ -32,19 +32,13 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-    let result: DashboardWithAccessInfo<DashboardV2Spec>;
+    let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
 
     // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-    // if the dashboard is a resource, meaning is in k8s, and is not a v2 spec, then convert it to a v2 spec
-    if (isDashboardResource(dashboard) && !isDashboardV2Spec(dashboard)) {
-      //this mean the dashboard is in v0 format
-      const dto = dashboard as unknown as DashboardWithAccessInfo<DashboardDataDTO>;
-      // convert to v1 schema
-      const v1Response = ResponseTransformers.ensureV1ResponseFromV0(dto);
-      // FIXME: this method is not complete, we will be loosing some data here
-      result = ResponseTransformers.ensureV2Response(v1Response);
+    const backendAPINotReady = true; // this should be removed once the backend API is ready
+    if (backendAPINotReady) {
+      result = ResponseTransformers.ensureV2Response(dashboard);
     } else {
-      // if the dashboard is already in v2 format, then just return it
       result = dashboard;
     }
 
@@ -59,6 +53,14 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
         console.error('Failed to load a folder', e);
       }
     }
+
+    // Depending on the ui components readiness, we might need to convert the response to v1
+    if (this.convertToV1) {
+      // Always return V1 format
+      result = ResponseTransformers.ensureV1Response(result);
+      return result;
+    }
+    // return the v2 response
     return result;
   }
 
