@@ -3,7 +3,6 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -18,7 +17,6 @@ import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import {
-  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
   mockRulerAlertingRule,
@@ -74,7 +72,7 @@ describe('CloneRuleEditor', function () {
 
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
-      setDataSourceSrv(new MockDataSourceSrv({}));
+      setupDataSources();
 
       render(
         <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,

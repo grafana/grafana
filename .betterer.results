@@ -1663,14 +1663,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
     ],
-    "public/app/features/alerting/unified/components/settings/__mocks__/server.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`DataSourcesResponse\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`AdminConfigResponse\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`AlertmanagersResponse\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`InternalAlertmanagerConfiguration\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`VanillaAlertmanagerConfiguration\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`alertmanagerConfigurationHistory\`)", "5"]
-    ],
     "public/app/features/alerting/unified/components/silences/MatchersField.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
