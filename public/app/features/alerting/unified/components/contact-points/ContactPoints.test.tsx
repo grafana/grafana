@@ -3,6 +3,7 @@ import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { flushMicrotasks, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
@@ -16,7 +17,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 
 import { ContactPoint } from './ContactPoint';
 import { ContactPointsPageContents } from './ContactPoints';
-import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
+import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './__mocks__/vanillaAlertmanagerServer';
