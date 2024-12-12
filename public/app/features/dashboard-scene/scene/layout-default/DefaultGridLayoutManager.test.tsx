@@ -197,6 +197,7 @@ describe('DefaultGridLayoutManager', () => {
       const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
       expect(newGridItem.state.height).toBe(1);
+      expect(newGridItem.state.itemHeight).toBe(1);
     });
 
     it('Should duplicate a repeated panel', () => {
