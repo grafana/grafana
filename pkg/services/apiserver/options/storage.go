@@ -23,7 +23,8 @@ const (
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
-type StorageOptions struct { // The desired storage type
+type StorageOptions struct {
+	// The desired storage type
 	StorageType StorageType
 
 	// For unified-grpc, the address is required
