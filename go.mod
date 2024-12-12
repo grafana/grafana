@@ -125,7 +125,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
 	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
-	github.com/microsoft/go-mssqldb v1.7.2 // @grafana/grafana-bi-squad
+	github.com/microsoft/go-mssqldb v1.8.0 // @grafana/partner-datasources
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.3.1 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-backend
@@ -477,6 +477,8 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
+
+require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 // @grafana/alerting-backend
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect

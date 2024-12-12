@@ -124,11 +124,15 @@ export const RowsList = (props: RowsListProps) => {
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
-      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+      if (!panelContext || !enableSharedCrosshair) {
         return;
       }
 
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      if (!timeField) {
+        return;
+      }
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
@@ -311,7 +315,7 @@ export const RowsList = (props: RowsListProps) => {
           key={key}
           {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => onRowHover(index, data)}
+          onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
