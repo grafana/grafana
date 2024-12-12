@@ -57,7 +57,7 @@ describe('v2 dashboard API', () => {
 
     const convertToV1 = false;
     const api = new K8sDashboardV2APIStub(convertToV1);
-    // because the API can currently rturn both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
+    // because the API can currently return both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
     // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
     // access
     const result = (await api.getDashboardDTO('test')) as DashboardWithAccessInfo<DashboardV2Spec>;

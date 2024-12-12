@@ -10,12 +10,20 @@ import { K8sDashboardV2APIStub } from './v2';
 type DashboardAPIClients = {
   legacy: DashboardAPI<DashboardDTO>;
   v0: DashboardAPI<DashboardDTO>;
+  // v1: DashboardDTO; TODO[schema]: enable v1 when available
   v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
 };
 
 type DashboardReturnTypes = DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
 
 let clients: Partial<DashboardAPIClients> | undefined;
+
+export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardAPI can be only overridden in test environment');
+  }
+  clients = override;
+}
 
 // Overloads
 export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
@@ -41,11 +49,4 @@ export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<Dashboar
   }
 
   return clients[v];
-}
-
-export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('dashboardAPI can be only overridden in test environment');
-  }
-  clients = override;
 }
