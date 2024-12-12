@@ -254,7 +254,7 @@
   "dependencies": {
     "@bsull/augurs": "^0.7.0",
     "@emotion/css": "11.13.5",
-    "@emotion/react": "11.13.5",
+    "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@floating-ui/react": "0.26.28",
     "@formatjs/intl-durationformat": "^0.6.0",
