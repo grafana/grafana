@@ -205,7 +205,21 @@ func InstallAPIs(
 			// Moving from one version to the next can only happen after the previous step has
 			// successfully synchronized.
 			requestInfo := getRequestInfo(gr, namespaceMapper)
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, legacy, storage, key, mode, reg, serverLock, requestInfo)
+
+			syncerCfg := &grafanarest.SyncerConfig{
+				Kind:                      key,
+				RequestInfo:               requestInfo,
+				Mode:                      mode,
+				LegacyStorage:             legacy,
+				Storage:                   storage,
+				ServerLockService:         serverLock,
+				DataSyncerInterval:        storageOpts.DataSyncerInterval,
+				DataSyncerMaxRecordsLimit: storageOpts.DataSyncerMaxRecordsLimit,
+				Reg:                       reg,
+			}
+
+			// This also sets the currentMode on the syncer config.
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
 			if err != nil {
 				return nil, err
 			}
@@ -216,9 +230,10 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
-
 			if dualWriterPeriodicDataSyncJobEnabled {
-				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+					return nil, err
+				}
 			}
 
 			// when unable to use
