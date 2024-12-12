@@ -263,8 +263,15 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 			r.Spec.GitHub.WebhookURL = strings.ReplaceAll(r.Spec.GitHub.WebhookURL, resourceNamePlaceholder, r.GetName())
 		}
 
+		// TODO: why do we have to create a client everywhere?
+		dynamicClient, _, err := b.client.New(r.GetNamespace())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+
+		ifce := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
 		linterFactory := lint.NewDashboardLinterFactory()
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer, ifce), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
@@ -521,7 +528,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
-					"application/json": &spec3.MediaType{
+					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &repoSchema,
 						},
