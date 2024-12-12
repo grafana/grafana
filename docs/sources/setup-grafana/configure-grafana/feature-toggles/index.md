@@ -120,6 +120,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `useSessionStorageForRedirection` | Use session storage for handling the redirection after login                                                                                                                                 |
 | `reportingUseRawTimeRange`        | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                |
+| `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 
 ## Experimental feature toggles
 

@@ -1,4 +1,4 @@
-import { cloneDeep, first as _first, isNumber, isObject, isString, map as _map, find } from 'lodash';
+import { cloneDeep, first as _first, isNumber, isString, map as _map, find, isObject } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -46,6 +46,7 @@ import {
   BackendSrvRequest,
   TemplateSrv,
   getTemplateSrv,
+  config,
 } from '@grafana/runtime';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
@@ -197,7 +198,7 @@ export class ElasticDatasource
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const url = '_mapping';
+    const url = config.featureToggles.elasticsearchCrossClusterSearch ? '_field_caps' : '_mapping';
 
     const indexUrlList = indexList.map((index) => {
       // make sure `index` does not end with a slash
@@ -743,6 +744,10 @@ export class ElasticDatasource
    * or fix the implementation.
    */
   getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+    if (config.featureToggles.elasticsearchCrossClusterSearch) {
+      return this.getFieldsCrossCluster(type, range);
+    }
+
     const typeMap: Record<string, string> = {
       float: 'number',
       double: 'number',
@@ -812,6 +817,67 @@ export class ElasticDatasource
 
             const properties = mappings.properties;
             getFieldsRecursively(properties);
+          }
+        }
+
+        // transform to array
+        return _map(fields, (value) => {
+          return value;
+        });
+      })
+    );
+  }
+
+  getFieldsCrossCluster(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+    const typeMap: Record<string, string> = {
+      float: 'number',
+      double: 'number',
+      integer: 'number',
+      long: 'number',
+      date: 'date',
+      date_nanos: 'date',
+      string: 'string',
+      text: 'string',
+      scaled_float: 'number',
+      nested: 'nested',
+      histogram: 'number',
+    };
+    return this.requestAllIndices(range).pipe(
+      map((result) => {
+        interface FieldInfo {
+          metadata_field: string;
+        }
+        const shouldAddField = (obj: Record<string, Record<string, FieldInfo>>) => {
+          // equal query type filter, or via type map translation
+          for (const objField in obj) {
+            if (objField === 'object') {
+              continue;
+            }
+            if (obj[objField].metadata_field) {
+              continue;
+            }
+
+            if (!type || type.length === 0) {
+              return true;
+            }
+
+            if (type.includes(objField) || type.includes(typeMap[objField])) {
+              return true;
+            }
+          }
+          return false;
+        };
+
+        const fields: Record<string, { text: string; type: string }> = {};
+
+        const fieldsData = result['fields'];
+        for (const fieldName in fieldsData) {
+          const fieldInfo = fieldsData[fieldName];
+          if (shouldAddField(fieldInfo)) {
+            fields[fieldName] = {
+              text: fieldName,
+              type: fieldInfo.type,
+            };
           }
         }
 
