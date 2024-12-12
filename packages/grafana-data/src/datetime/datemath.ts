@@ -1,6 +1,6 @@
 import { isDate } from 'lodash';
 
-import { TimeZone } from '../types/time';
+import { TimeZone } from '@grafana/schema';
 
 import {
   DateTime,
