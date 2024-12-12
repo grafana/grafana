@@ -1,8 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-// TODO: Need to do something with this, maybe formatValueName should be in some other package
-import { formatValueName } from '@grafana/prometheus/src/datasource';
+import { formatValueName } from '@grafana/prometheus/src/format_value_name';
 
 import { config } from '../config';
 import { parseLogsFrame } from '../logs/logsFrame';

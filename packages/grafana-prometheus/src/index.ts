@@ -59,7 +59,7 @@ export { PromQail } from './querybuilder/components/promQail/PromQail';
 
 // SRC/
 // Main export
-export { PrometheusDatasource, InstantQueryRefIdIndex, formatValueName } from './datasource';
+export { PrometheusDatasource } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
 export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
@@ -85,3 +85,4 @@ export {
   type StandardPromVariableQuery,
 } from './types';
 export { PrometheusVariableSupport } from './variables';
+export { InstantQueryRefIdIndex, formatValueName } from './format_value_name';

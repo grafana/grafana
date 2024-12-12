@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
-import { formatValueName } from '@grafana/prometheus';
+import { formatValueName } from '@grafana/prometheus/src/format_value_name';
 import { useStyles2 } from '@grafana/ui/';
 
 import { rawListItemColumnWidth } from './RawListItem';

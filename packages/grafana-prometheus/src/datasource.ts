@@ -47,6 +47,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { InstantQueryRefIdIndex } from './format_value_name';
 import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
@@ -81,8 +82,6 @@ const GET_AND_POST_METADATA_ENDPOINTS = [
   'api/v1/labels',
   'suggestions',
 ];
-
-export const InstantQueryRefIdIndex = '-Instant';
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -1041,13 +1040,6 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
     {}
   );
 }
-
-export const formatValueName = (name: string): string => {
-  if (name.includes(InstantQueryRefIdIndex)) {
-    return name.replace(InstantQueryRefIdIndex, '');
-  }
-  return name;
-};
 
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
