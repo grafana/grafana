@@ -906,4 +906,8 @@ const (
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch datasource
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
+
+	// FlagPrometheusQuotesAndSpecialCharsInLabelValues
+	// Adds support for quotes and special characters in label values for Prometheus queries
+	FlagPrometheusQuotesAndSpecialCharsInLabelValues = "prometheusQuotesAndSpecialCharsInLabelValues"
 )

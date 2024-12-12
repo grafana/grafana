@@ -1050,14 +1050,17 @@ export function prometheusRegularEscape<T>(value: T) {
     return value;
   }
 
-  // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
-  // don't escape the encapsulating quotes
-  if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
-    return value;
+  if (config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues) {
+    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+    // don't escape the encapsulating quotes
+    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+      return value;
+    }
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   }
 
-  // otherwise escape backslashes and double quotes
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  // (classic behavior) escape single quotes and backslashes
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'");
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
@@ -1065,8 +1068,15 @@ export function prometheusSpecialRegexEscape<T>(value: T) {
     return value;
   }
 
+  if (config.featureToggles.prometheusQuotesAndSpecialCharsInLabelValues) {
+    return value
+      .replace(/\\/g, '\\\\\\\\') // escape backslashes
+      .replace(/"/g, '\\\\\\"') // escape double quotes
+      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+  }
+
+  // classic behavior
   return value
     .replace(/\\/g, '\\\\\\\\') // escape backslashes
-    .replace(/"/g, '\\\\\\"') // escape double quotes
-    .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }
