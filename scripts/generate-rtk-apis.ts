@@ -40,9 +40,13 @@ const config: ConfigFile = {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
       schemaFile: '../public/app/features/provisioning/api/spec.json',
       apiImport: 'baseAPI',
-      filterEndpoints: [/Repository/, /Job/, /Webhook/, /History/, /File/, /Test/, /^(?!.*ForAllNamespaces).*$/],
+      filterEndpoints,
     },
   },
 };
+
+function filterEndpoints(name: string) {
+  return !name.toLowerCase().includes('forallnamespaces') && !name.toLowerCase().includes('getapiresources');
+}
 
 export default config;
