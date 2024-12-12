@@ -51,7 +51,7 @@ func TestGathererPrefixWrapper_Gather(t *testing.T) {
 func TestMultiRegistry_Gather(t *testing.T) {
 	one := &mockGatherer{}
 	two := &mockGatherer{}
-	g := newMultiRegistry(one, two)
+	g := NewMultiRegistry(one, two)
 
 	t.Run("should merge and sort metrics", func(t *testing.T) {
 		one.GatherFunc = func() ([]*dto.MetricFamily, error) {

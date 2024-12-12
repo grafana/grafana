@@ -66,7 +66,7 @@ func ProvideRegisterer() prometheus.Registerer {
 
 func ProvideGatherer() prometheus.Gatherer {
 	k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
-	return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
+	return NewMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
 }
 
 func ProvideRegistererForTest() prometheus.Registerer {
@@ -125,7 +125,7 @@ type multiRegistry struct {
 	gatherers []prometheus.Gatherer
 }
 
-func newMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
+func NewMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
 	return &multiRegistry{
 		gatherers: gatherers,
 	}
