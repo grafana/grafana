@@ -61,6 +61,12 @@ func (s *SyncerConfig) Validate() error {
 	if s.LegacyStorage == nil {
 		return fmt.Errorf("legacy storage must be specified")
 	}
+	if s.DataSyncerInterval == 0 {
+		s.DataSyncerInterval = time.Hour
+	}
+	if s.DataSyncerMaxRecordsLimit == 0 {
+		s.DataSyncerMaxRecordsLimit = 1000
+	}
 	if s.Reg == nil {
 		s.Reg = prometheus.DefaultRegisterer
 	}

@@ -73,6 +73,9 @@ func TestSetDualWritingMode(t *testing.T) {
 			ServerLockService: &fakeServerLock{},
 			RequestInfo:       &request.RequestInfo{},
 			Reg:               p,
+
+			DataSyncerMaxRecordsLimit: 1000,
+			DataSyncerInterval:        time.Hour,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dwMode)
