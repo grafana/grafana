@@ -22,6 +22,9 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
   const styles = useStyles2(getStyles);
   const ruleFormType = watch('type');
 
+  // Include an ID to make the label + datasource picker linked + properly accessible
+  const id = 'cloud-data-source-picker';
+
   return (
     <>
       <div className={styles.flexRow}>
@@ -31,11 +34,13 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             label={disabled ? 'Data source' : 'Select data source'}
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
+            htmlFor={id}
           >
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}
+                  id={id}
                   disabled={disabled}
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset expression as they don't need to persist after changing datasources

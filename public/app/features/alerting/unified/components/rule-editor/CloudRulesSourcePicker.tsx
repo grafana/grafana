@@ -11,9 +11,10 @@ interface Props {
   value: string | null;
   onBlur?: () => void;
   name?: string;
+  id?: string;
 }
 
-export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JSX.Element {
+export function CloudRulesSourcePicker({ value, disabled, id, ...props }: Props): JSX.Element {
   const { rulesSourcesWithRuler: dataSourcesWithRuler, isLoading } = useRulesSourcesWithRuler();
 
   const dataSourceFilter = useCallback(
@@ -30,6 +31,7 @@ export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JS
       alerting
       filter={dataSourceFilter}
       current={value}
+      inputId={id}
       {...props}
     />
   );
