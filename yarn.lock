@@ -9511,7 +9511,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=10.0.0, @types/node@npm:>=13.7.0, @types/node@npm:^22.0.0":
+"@types/node@npm:*, @types/node@npm:>=13.7.0, @types/node@npm:^22.0.0":
   version: 22.9.0
   resolution: "@types/node@npm:22.9.0"
   dependencies:
@@ -9535,6 +9535,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~6.19.2"
   checksum: 10/f4706676fdff05c7fb188399da578bbcce9260f889cfd767f1c3ee4fb33c369eb1ffa24161651ea3ef5b6a33e2e9b66f393949cab2be77d019277a1e16a7af36
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:>=10.0.0, @types/node@npm:>=13.7.4":
+  version: 22.10.1
+  resolution: "@types/node@npm:22.10.1"
+  dependencies:
+    undici-types: "npm:~6.20.0"
+  checksum: 10/c802a526da2f3fa3ccefd00a71244e7cb825329951719e79e8fec62b1dbc2855388c830489770611584665ce10be23c05ed585982038b24924e1ba2c2cce03fd
   languageName: node
   linkType: hard
 
@@ -11727,6 +11736,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bezier-easing@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "bezier-easing@npm:2.1.0"
+  checksum: 10/086dfd042ccf91c3a9de811b635381aa6580e9f83d1951ed4ce4d4007645d8f3cebd491cb6259719ce9320df213316b99dd8e39e78997944b1c252a1d4b424b5
+  languageName: node
+  linkType: hard
+
 "big.js@npm:^5.2.2":
   version: 5.2.2
   resolution: "big.js@npm:5.2.2"
@@ -13489,6 +13505,13 @@ __metadata:
     webpack:
       optional: true
   checksum: 10/1abd52e24a72a4c54762330bab2e0e816778db5bc711a8fc1b1ee99470a1728f2aa9b54b9ebbf2278a1730d68b76303094cc855f9119b2ffc0424fe57fea3bc6
+  languageName: node
+  linkType: hard
+
+"css-mediaquery@npm:^0.1.2":
+  version: 0.1.2
+  resolution: "css-mediaquery@npm:0.1.2"
+  checksum: 10/f2f7512daa015f98b82bd65bbdd7c2100b16dddf22784bde2a8085f10f11e8775da57108016fe767f5e400afe64581c15d4e649c47725af7eac5f4094fa7ae43
   languageName: node
   linkType: hard
 
@@ -16663,6 +16686,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fishery@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "fishery@npm:2.2.2"
+  dependencies:
+    lodash.mergewith: "npm:^4.6.2"
+  checksum: 10/68120995b0cd7827f0d50ef3b552a74289c99fa6195cafb6e5d376aa14421f12873274e1fc5aa101073fdae35ad6543cb5b04687bb295d8c37ff3b99dbdeb9ae
+  languageName: node
+  linkType: hard
+
 "flat-cache@npm:^3.0.4":
   version: 3.1.1
   resolution: "flat-cache@npm:3.1.1"
@@ -17724,6 +17756,7 @@ __metadata:
     fast-deep-equal: "npm:^3.1.3"
     fast-json-patch: "npm:3.1.1"
     file-saver: "npm:2.0.5"
+    fishery: "npm:^2.2.2"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     glob: "npm:11.0.0"
     history: "npm:4.10.1"
@@ -17736,6 +17769,7 @@ __metadata:
     immer: "npm:10.1.1"
     immutable: "npm:4.3.7"
     ini: "npm:^4.1.3"
+    ix: "npm:^7.0.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.10"
@@ -17746,6 +17780,7 @@ __metadata:
     jest-watch-typeahead: "npm:^2.2.2"
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
+    jsdom-testing-mocks: "npm:^1.13.1"
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
@@ -19633,6 +19668,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ix@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "ix@npm:7.0.0"
+  dependencies:
+    "@types/node": "npm:>=13.7.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/913cfbf645e04820f831bb2bd74f51e734284aa6b64819959964aaa2d8ee88ef246460f5a1cb4d71b4bda07dab241e3098210342dfb05ff73cfd20c9b2797f51
+  languageName: node
+  linkType: hard
+
 "jackspeak@npm:^3.1.2":
   version: 3.1.2
   resolution: "jackspeak@npm:3.1.2"
@@ -20310,6 +20355,16 @@ __metadata:
   version: 4.1.0
   resolution: "jsdoc-type-pratt-parser@npm:4.1.0"
   checksum: 10/30d88f95f6cbb4a1aa6d4b0d0ae46eb1096e606235ecaf9bab7a3ed5da860516b5d1cd967182765002f292c627526db918f3e56d34637bcf810e6ef84d403f3f
+  languageName: node
+  linkType: hard
+
+"jsdom-testing-mocks@npm:^1.13.1":
+  version: 1.13.1
+  resolution: "jsdom-testing-mocks@npm:1.13.1"
+  dependencies:
+    bezier-easing: "npm:^2.1.0"
+    css-mediaquery: "npm:^0.1.2"
+  checksum: 10/434acae65fc89f4d8e0e2dc23b830ebaf4568483d5127da60bf825c8357c489955105b98a5d95ed5c4e1ed48f2fa5369b138f141d55b290cd656008493ac6a65
   languageName: node
   linkType: hard
 
@@ -21193,6 +21248,13 @@ __metadata:
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
   checksum: 10/d0ea2dd0097e6201be083865d50c3fb54fbfbdb247d9cc5950e086c991f448b7ab0cdab0d57eacccb43473d3f2acd21e134db39f22dac2d6c9ba6bf26978e3d6
+  languageName: node
+  linkType: hard
+
+"lodash.mergewith@npm:^4.6.2":
+  version: 4.6.2
+  resolution: "lodash.mergewith@npm:4.6.2"
+  checksum: 10/aea75a4492541a4902ac7e551dc6c54b722da0c187f84385d02e8fc33a7ae3454b837822446e5f63fcd5ad1671534ea408740b776670ea4d9c7890b10105fce0
   languageName: node
   linkType: hard
 
@@ -29774,6 +29836,13 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.20.0":
+  version: 6.20.0
+  resolution: "undici-types@npm:6.20.0"
+  checksum: 10/583ac7bbf4ff69931d3985f4762cde2690bb607844c16a5e2fbb92ed312fe4fa1b365e953032d469fa28ba8b224e88a595f0b10a449332f83fa77c695e567dbe
   languageName: node
   linkType: hard
 
