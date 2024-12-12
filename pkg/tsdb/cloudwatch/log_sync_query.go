@@ -23,7 +23,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		errorsource.AddErrorToResponse(req.Queries[0].RefID, resp, err)
+		resp.Responses[req.Queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
 		return resp, nil
 	}
 
