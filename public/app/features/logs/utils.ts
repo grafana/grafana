@@ -376,7 +376,7 @@ function getDataSourceLabelType(labelType: string, datasourceType: string) {
     case 'loki':
       switch (labelType) {
         case 'I':
-          return 'Indexed';
+          return 'Indexed label';
         case 'S':
           return 'Structured metadata';
         case 'P':
