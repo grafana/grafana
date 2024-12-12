@@ -96,7 +96,7 @@ func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
 		info.Hash = entry.Hash
 		info.Modified = nil // modified?
 
-		if err := r.Replicate(ctx, info); err != nil {
+		if err := r.ReplicateFile(ctx, info); err != nil {
 			if errors.Is(err, ErrUnableToReadResourceBytes) {
 				logger.InfoContext(ctx, "file does not contain a resource")
 				continue
@@ -108,9 +108,9 @@ func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
 	return nil
 }
 
-// Replicate creates a new resource in the cluster.
+// ReplicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -195,7 +195,29 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *replicator) ReplicateChanges(ctx context.Context, changes []repository.FileChange) error {
+	for _, change := range changes {
+		fileInfo, err := r.repository.Read(ctx, r.logger, change.Path, change.Ref)
+		if err != nil {
+			return fmt.Errorf("read file: %w", err)
+		}
+
+		switch change.Action {
+		case repository.FileActionCreated, repository.FileActionUpdated:
+			if err := r.ReplicateFile(ctx, fileInfo); err != nil {
+				return fmt.Errorf("replicate file: %w", err)
+			}
+		case repository.FileActionDeleted:
+			if err := r.DeleteFile(ctx, fileInfo); err != nil {
+				return fmt.Errorf("delete file: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err

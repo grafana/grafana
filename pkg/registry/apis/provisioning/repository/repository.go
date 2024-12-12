@@ -58,6 +58,20 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+type FileAction string
+
+const (
+	FileActionCreated FileAction = "created"
+	FileActionUpdated FileAction = "updated"
+	FileActionDeleted FileAction = "deleted"
+)
+
+type FileChange struct {
+	Path   string
+	Ref    string
+	Action FileAction
+}
+
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -112,9 +126,10 @@ type JobProcessor interface {
 // FileReplicator is an interface for replicating files
 type FileReplicator interface {
 	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
-	Replicate(ctx context.Context, fileInfo *FileInfo) error
+	ReplicateChanges(ctx context.Context, changes []FileChange) error
+	ReplicateFile(ctx context.Context, fileInfo *FileInfo) error
 	ReplicateTree(ctx context.Context, ref string) error
-	Delete(ctx context.Context, fileInfo *FileInfo) error
+	DeleteFile(ctx context.Context, fileInfo *FileInfo) error
 }
 
 // FileReplicatorFactory is an interface for creating FileReplicators

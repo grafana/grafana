@@ -593,56 +593,52 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 			return nil, fmt.Errorf("compare commits: %w", err)
 		}
 
+		changes := make([]FileChange, 0)
 		for _, f := range files {
+			if r.ignore(f.GetFilename()) {
+				continue
+			}
+
 			// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 			switch f.GetStatus() {
-			case "added", "modified", "changed":
-				ref := latest
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Replicate(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
+			case "added":
+				changes = append(changes, FileChange{
+					Path:   f.GetFilename(),
+					Ref:    latest,
+					Action: FileActionCreated,
+				})
+			case "modified", "changed":
+				changes = append(changes, FileChange{
+					Path:   f.GetFilename(),
+					Ref:    latest,
+					Action: FileActionUpdated,
+				})
 			case "renamed":
 				// delete the old file
-				oldFile, err := r.Read(ctx, logger, f.GetPreviousFilename(), lastSyncCommit)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read old resource", "file", f.GetPreviousFilename(), "error", err)
-					continue
-				}
-
-				if err := replicator.Delete(ctx, oldFile); err != nil {
-					logger.ErrorContext(ctx, "failed to delete old resource", "file", f.GetPreviousFilename(), "error", err)
-					continue
-				}
+				changes = append(changes, FileChange{
+					Path:   f.GetPreviousFilename(),
+					Ref:    lastSyncCommit,
+					Action: FileActionDeleted,
+				})
 				// replicate the new file
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), latest)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Replicate(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
+				changes = append(changes, FileChange{
+					Path:   f.GetFilename(),
+					Ref:    latest,
+					Action: FileActionCreated,
+				})
 			case "removed":
-				ref := lastSyncCommit
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Delete(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to delete resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
+				changes = append(changes, FileChange{
+					Ref:    lastSyncCommit,
+					Path:   f.GetFilename(),
+					Action: FileActionDeleted,
+				})
 			default:
 				logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 			}
+		}
+
+		if err := replicator.ReplicateChanges(ctx, changes); err != nil {
+			return nil, fmt.Errorf("replicate changes: %w", err)
 		}
 	}
 
