@@ -116,6 +116,7 @@ For details, refer to [Configuring using Workload Identity](#configuring-using-w
 | **Application (client) ID** | Sets the application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                           |
 | **Client secret**           | Sets the application client secret for the Azure AD app registration to use for authentication. For details, see the [Azure application secret docs](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret). |
 | **Default subscription**    | _(Optional)_ Sets a default subscription for template variables to use.                                                                                                                                                                                                                               |
+| **Enable Basic Logs**       | Allows this data source to execute queries against [Basic Logs tables](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) in supported Log Analytics Workspaces. These queries may incur additional costs.                                                    |
 
 ### Provision the data source
 
