@@ -99,6 +99,10 @@ Complete the following steps to install Grafana using the standalone binaries:
    ```shell
    sudo useradd -r -s /bin/false grafana
    ```
+1. Move the unpacked binary to `/usr/local/grafana`:
+   ```shell
+   sudo mv <your_grafana_download> /usr/local/grafana
+   ```
 1. Change the owner of `/usr/local/grafana` to Grafana users:
    ```shell
    sudo chown -R grafana:users /usr/local/grafana
@@ -125,7 +129,15 @@ Complete the following steps to install Grafana using the standalone binaries:
    WantedBy=multi-user.target
    ```
 
-1. Optional (maybe addd info about bindding to ports below 1024?)
+1. Use the binary to manually start the Grafana server:
+   ```bash
+   /usr/local/grafana/bin/grafana-server --homepath /usr/local/grafana
+   ```
+1. Press `CTRL+C` to stop the Grafana server.
+1. Change the owner of `/usr/local/grafana` to Grafana users again to apply the ownership to the newly created `/data` directory:
+   ```shell
+   sudo chown -R grafana:users /usr/local/grafana
+   ```
 1. [Configure the Grafana server to start at boot time using systemd]({{< relref "../../start-restart-grafana#configure-the-grafana-server-to-start-at-boot-using-systemd" >}}).
 
 ## Uninstall on SUSE or openSUSE
