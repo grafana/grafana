@@ -75,11 +75,15 @@ func (r sqlResourceRequest) Validate() error {
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Folder    string
 	MinCount  int
 }
 
 func (r sqlStatsRequest) Validate() error {
-	return nil // TODO
+	if r.Folder != "" && r.Namespace == "" {
+		return fmt.Errorf("folder constraint requires a namespace")
+	}
+	return nil
 }
 
 type historyPollResponse struct {

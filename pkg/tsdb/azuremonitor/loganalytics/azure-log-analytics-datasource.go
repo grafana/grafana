@@ -320,14 +320,22 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	logLimitDisabled := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
+
 	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat, logLimitDisabled)
 	if err != nil {
 		return nil, err
 	}
+
 	frame = appendErrorNotice(frame, logResponse.Error)
 	if frame == nil {
-		dataResponse := backend.DataResponse{}
-		return &dataResponse, nil
+		return &backend.DataResponse{}, nil
+	}
+
+	// Ensure Meta.Custom is initialized
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = &LogAnalyticsMeta{
+			ColumnTypes: make([]string, 0),
+		}
 	}
 
 	queryUrl, err := getQueryUrl(query.Query, query.Resources, dsInfo.Routes["Azure Portal"].URL, query.TimeRange)
@@ -335,30 +343,37 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
-		frame.Meta.PreferredVisualization = data.VisTypeTrace
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTable {
-		frame.Meta.PreferredVisualization = data.VisTypeTable
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatLogs {
-		frame.Meta.PreferredVisualization = data.VisTypeLogs
-		frame.Meta.Custom = &LogAnalyticsMeta{
-			ColumnTypes:     frame.Meta.Custom.(*LogAnalyticsMeta).ColumnTypes,
-			AzurePortalLink: queryUrl,
+	// Set the preferred visualization
+	switch query.ResultFormat {
+	case dataquery.ResultFormatTrace:
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql {
+			frame.Meta.PreferredVisualization = data.VisTypeTrace
 		}
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTimeSeries {
+	case dataquery.ResultFormatTable:
+		frame.Meta.PreferredVisualization = data.VisTypeTable
+	case dataquery.ResultFormatLogs:
+		frame.Meta.PreferredVisualization = data.VisTypeLogs
+		if logMeta, ok := frame.Meta.Custom.(*LogAnalyticsMeta); ok {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				ColumnTypes:     logMeta.ColumnTypes,
+				AzurePortalLink: queryUrl,
+			}
+		} else {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				AzurePortalLink: queryUrl,
+			}
+		}
+	case dataquery.ResultFormatTimeSeries:
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {
-				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "could not convert frame to time series, returning raw table: " + err.Error(),
+				})
 			}
 		}
 	}
