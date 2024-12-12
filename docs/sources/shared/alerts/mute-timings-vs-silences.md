@@ -7,7 +7,7 @@ title: 'Mute timings vs silences'
 
 ## Mute timings vs silences
 
-[Mute timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to supress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
+[Mute timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
 The following table highlights the key differences between mute timings and silences.
 
