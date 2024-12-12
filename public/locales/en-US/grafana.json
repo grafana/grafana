@@ -1290,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
+      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
