@@ -34,6 +34,8 @@ export const VAR_OTEL_GROUP_BY = 'otel_groupby';
 export const VAR_OTEL_GROUP_BY_EXPR = '${otel_groupby}';
 export const VAR_OTEL_GROUP_LEFT = 'otel_group_left';
 export const VAR_OTEL_GROUP_LEFT_EXPR = '${otel_group_left}';
+export const VAR_MISSING_OTEL_TARGETS = 'missing_otel_targets';
+export const VAR_MISSING_OTEL_TARGETS_EXPR = '${missing_otel_targets}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
