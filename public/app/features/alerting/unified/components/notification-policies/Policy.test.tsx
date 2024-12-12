@@ -6,7 +6,7 @@ import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AlertmanagerGroup, MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';

@@ -142,7 +142,7 @@ export const QueryWrapper = ({
   function HeaderExtras({
     query,
     // TODO: Use and display the error, as this is otherwise unused
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     error,
     index,
     isAdvancedMode = true,

@@ -30,7 +30,7 @@ export const datasourceBuildInfoHandler = () =>
 
 // TODO: Add more accurate endpoint responses as tests require
 const labelValuesHandler = () =>
-  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/label/__name__/values', ({ params }) => {
+  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/label/__name__/values', () => {
     return HttpResponse.json({ status: 'sucess', data: [] });
   });
 

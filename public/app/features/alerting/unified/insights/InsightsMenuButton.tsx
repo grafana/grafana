@@ -39,7 +39,7 @@ const getPrometheusExploreUrl = ({
   const urlState: ExploreUrlState = {
     datasource: (queries?.length && queries[0].datasource?.uid) || null,
     queries:
-      queries?.map(({ expr, refId }, i) => {
+      queries?.map(({ expr, refId }) => {
         return { expr, refId };
       }) || [],
     range: toURLRange(range ? { from: range.from, to: range.to } : { from: 'now-1h', to: 'now' }),

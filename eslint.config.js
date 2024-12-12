@@ -257,11 +257,12 @@ module.exports = [
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
       'unicorn/no-unused-properties': 'error',
-      'no-unused-vars': [
+      '@typescript-eslint/no-unused-vars': [
         'error',
         {
           destructuredArrayIgnorePattern: '^_',
           ignoreRestSiblings: true,
+          caughtErrors: 'none',
         },
       ],
     },
