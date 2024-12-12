@@ -298,7 +298,7 @@ Here's an example of what the HTML code might look like:
 ></iframe>
 ```
 
-The result is an interactive Grafana visualization embedded in an iframe. This is only supported on Grafana OSS. You cannot embed a private or public panel within Grafana Cloud. 
+The result is an interactive Grafana visualization embedded in an iframe.
 
 ### Share a snapshot {#panel-snapshot}
 
