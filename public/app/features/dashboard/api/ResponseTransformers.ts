@@ -7,12 +7,12 @@ import { transformCursorSynctoEnum } from 'app/features/dashboard-scene/serializ
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Resource, isDashboardV2Resource } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
-  if (isDashboardResource(dto) && isDashboardV2Resource(dto)) {
+  if (isDashboardResource(dto) && isDashboardV2Spec(dto.spec)) {
     return dto as DashboardWithAccessInfo<DashboardV2Spec>;
   }
 
@@ -110,7 +110,7 @@ export function ensureV1Response(
 
   const spec = dashboard.spec;
   // if dashboard is on v0 schema
-  if (isDashboardV0Resource(spec)) {
+  if (isDashboardV0Spec(spec)) {
     return {
       meta: {
         ...dashboard.access,

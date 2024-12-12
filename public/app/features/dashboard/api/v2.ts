@@ -16,7 +16,6 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
-import { isDashboardResource } from './utils';
 
 export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
   private client: ResourceClient<DashboardV2Spec>;
@@ -35,12 +34,7 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
     let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
 
     // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-    const backendAPINotReady = true; // this should be removed once the backend API is ready
-    if (backendAPINotReady) {
-      result = ResponseTransformers.ensureV2Response(dashboard);
-    } else {
-      result = dashboard;
-    }
+    result = ResponseTransformers.ensureV2Response(dashboard);
 
     // load folder info if available
     if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {

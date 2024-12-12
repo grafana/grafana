@@ -65,7 +65,7 @@ export const DashboardPicker = ({
       const isUIReadyForV2 = config.featureToggles.useV2DashboardsAPI;
 
       if (isUIReadyForV2) {
-        const resWithSchemaV2 = await getDashboardAPI({ useV2Mode: true }).getDashboardDTO(value, undefined);
+        const resWithSchemaV2 = await getDashboardAPI('v2').getDashboardDTO(value, undefined);
 
         setCurrent({
           value: {

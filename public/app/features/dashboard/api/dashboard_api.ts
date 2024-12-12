@@ -13,19 +13,14 @@ type DashboardAPIClients = {
   v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
 };
 
-type V2ModeOptions = {
-  useV2Mode: true;
-};
-
 let clients: Partial<DashboardAPIClients>;
 
 // Overloads
 export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
-export function getDashboardAPI(opts: V2ModeOptions): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
-
-export function getDashboardAPI(opts?: V2ModeOptions): DashboardAPI<any> {
+export function getDashboardAPI(requestV2Response: 'v2'): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
+export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<any> {
   const v = getDashboardsApiVersion();
-  const isConvertingToV1 = opts?.useV2Mode ? false : true;
+  const isConvertingToV1 = !requestV2Response;
 
   if (!clients) {
     clients = {
@@ -35,8 +30,8 @@ export function getDashboardAPI(opts?: V2ModeOptions): DashboardAPI<any> {
     };
   }
 
-  if (v === 'v2' && opts?.useV2Mode) {
-    return new K8sDashboardV2APIStub(isConvertingToV1);
+  if (v === 'v2' && requestV2Response === 'v2') {
+    return new K8sDashboardV2APIStub(false);
   }
 
   if (!clients[v]) {
