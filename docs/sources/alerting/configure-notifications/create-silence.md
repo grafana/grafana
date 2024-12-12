@@ -22,11 +22,16 @@ labels:
 title: Configure silences
 weight: 440
 refs:
-  alertmanager-architecture:
+  configure-alertmanager:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  silence-url:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#alert
   shared-alert-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
@@ -69,9 +74,11 @@ To add a silence, complete the following steps.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Silenced alert instances** field
+1. In the **Label** and **Value** fields, enter one or more _Matching Labels_ to determine which alerts the silence applies to.
 
    {{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+   Any matching alerts (in the firing state only) will show under **Affected alert rule instances**.
 
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
@@ -84,14 +91,6 @@ To edit a silence, complete the following steps.
 1. Click **Silences** to view the list of existing silences.
 1. Find the silence you want to edit, then click **Edit** (pen icon).
 1. Make the desired changes, then click **Submit** to save your changes.
-
-## Create a URL to link to a silence form
-
-When linking to a silence form, provide the default matching labels and comment via `matcher` and `comment` query parameters. The `matcher` parameter should be in the following format `[label][operator][value]` where the `operator` parameter can be one of the following: `=` (equals, not regular expression), `!=` (not equals, not regular expression), `=~` (equals, regular expression), `!~` (not equals, regular expression).
-The URL can contain many query parameters with the key `matcher`.
-For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/alerting/silence/new?matcher=severity%3Dcritical&matcher=cluster!~europe-*&comment=Silence%20critical%20EU%20alert`.
-
-To link to a new silence page for an external Alertmanager, add a `alertmanager` query parameter with the Alertmanager data source name.
 
 ## Remove silences
 
@@ -109,11 +108,26 @@ Rule-specific silences are silences that apply only to a specific alert rule. Th
 
 As opposed to general silences, rule-specific silence access is tied directly to the alert rule they act on. They can be created manually by including the specific label matcher: `__alert_rule_uid__=<alert rule UID>`.
 
+## URL link to a silence form
+
+Default notification messages often include a link to silence alerts.
+
+In custom notification templates, you can use [`.Alert.SilenceURL`](ref:silence-url) to redirect users to the UI where they can silence the given alert.
+
+If [`.Alert.SilenceURL`](ref:silence-url) doesn’t fit your specific use case, you can also create a custom silence link for your custom templates.
+
+{{< collapse title="Create a custom silence link" >}}
+
+When linking to a silence form, provide the default matching labels and comment via `matcher` and `comment` query parameters. The `matcher` parameter should be in the following format `[label][operator][value]` where the `operator` parameter can be one of the following: `=` (equals, not regular expression), `!=` (not equals, not regular expression), `=~` (equals, regular expression), `!~` (not equals, regular expression).
+The URL can contain many query parameters with the key `matcher`.
+For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/alerting/silence/new?matcher=severity%3Dcritical&matcher=cluster!~europe-*&comment=Silence%20critical%20EU%20alert`.
+
+To link to a new silence page for an external Alertmanager, add a `alertmanager` query parameter with the Alertmanager data source name.
+
+{{< /collapse >}}
+
 ## Inhibition rules
 
-- Inhibition rules are not supported in the Grafana Alertmanager.
-  For more information, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/73447).
+Inhibition rules are supported in the Prometheus Alertmanager. You can [configure a Prometheus Alertmanager](ref:configure-alertmanager) to handle the notification of alerts and supress notifications via inhibition rules.
 
-## Preview silences
-
-- The preview of silenced alerts only applies to alerts in firing state.
+Inhibition rules are not currently supported in the Grafana Alertmanager. For tracking the progress of this feature request, follow [this GitHub issue](https://github.com/grafana/grafana/issues/68822).
