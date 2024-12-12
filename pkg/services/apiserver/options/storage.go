@@ -3,7 +3,6 @@ package options
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -42,11 +41,6 @@ type StorageOptions struct {
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
-
-	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
-	DataSyncerInterval time.Duration
-	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
-	DataSyncerRecordsLimit int
 }
 
 func NewStorageOptions() *StorageOptions {

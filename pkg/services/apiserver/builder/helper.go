@@ -186,12 +186,18 @@ func InstallAPIs(
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
 
-			var dualWriterPeriodicDataSyncJobEnabled bool
+			var (
+				dualWriterPeriodicDataSyncJobEnabled bool
+				dataSyncerInterval                   = time.Hour
+				dataSyncerRecordsLimit               = 1000
+			)
 
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dataSyncerInterval = resourceConfig.DataSyncerInterval
+				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
 
 			// Force using storage only -- regardless of internal synchronization state
@@ -213,8 +219,8 @@ func InstallAPIs(
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,
-				DataSyncerInterval:     storageOpts.DataSyncerInterval,
-				DataSyncerRecordsLimit: storageOpts.DataSyncerRecordsLimit,
+				DataSyncerInterval:     dataSyncerInterval,
+				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
 				Reg:                    reg,
 			}
 
@@ -231,6 +237,8 @@ func InstallAPIs(
 			default:
 			}
 			if dualWriterPeriodicDataSyncJobEnabled {
+				// The mode might have changed in SetDualWritingMode, so apply current mode first.
+				syncerCfg.Mode = currentMode
 				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
 					return nil, err
 				}

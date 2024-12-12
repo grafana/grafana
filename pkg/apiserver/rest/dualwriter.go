@@ -214,9 +214,6 @@ func SetDualWritingMode(
 			return Mode0, err
 		}
 		if !syncOk {
-			// Setting the config to the current mode, as we don't return any error,
-			// but the upgrade also wasn't successful. Maybe we should return an error here.
-			cfg.Mode = currentMode
 			klog.Info("data syncer not ok for mode:", m)
 			return currentMode, nil
 		}
