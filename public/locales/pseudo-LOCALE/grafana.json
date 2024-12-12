@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "filter-view": {
+        "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
+        "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
+      },
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
     },
     "rule-state": {
@@ -1753,6 +1757,12 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Øľđęř ľőģş"
+    },
+    "log-details": {
+      "fields": "Fįęľđş",
+      "links": "Ŀįŉĸş",
+      "log-line": "Ŀőģ ľįŉę",
+      "no-details": "Ńő đęŧäįľş äväįľäþľę"
     },
     "log-row-message": {
       "ellipsis": "… ",
