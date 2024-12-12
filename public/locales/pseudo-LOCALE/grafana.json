@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "filter-view": {
+        "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
+        "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
+      },
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
     },
     "rule-state": {

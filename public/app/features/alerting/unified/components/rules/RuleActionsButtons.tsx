@@ -14,9 +14,10 @@ import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-ale
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { getRuleGroupLocationFromCombinedRule, isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
@@ -64,7 +65,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const sourceName = getRulesSourceName(rulesSource);
 
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
-  const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
+  const groupId = groupIdentifier.fromCombinedRule(rule);
 
   if (showViewButton) {
     buttons.push(
@@ -104,10 +105,10 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         rulerRule={rule.rulerRule}
         promRule={rule.promRule}
         identifier={identifier}
-        groupIdentifier={groupIdentifier}
+        groupIdentifier={groupId}
         handleDelete={() => {
           if (rule.rulerRule) {
-            showDeleteModal(rule.rulerRule, groupIdentifier);
+            showDeleteModal(rule.rulerRule, groupId);
           }
         }}
         handleSilence={() => setShowSilenceDrawer(true)}
