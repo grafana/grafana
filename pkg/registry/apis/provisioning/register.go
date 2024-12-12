@@ -5,10 +5,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
-	"path"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -48,8 +48,9 @@ const (
 )
 
 var (
-	_ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
-	_ RepoGetter              = (*ProvisioningAPIBuilder)(nil)
+	_                          builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
+	_                          RepoGetter              = (*ProvisioningAPIBuilder)(nil)
+	ErrLocalRepositoryDisabled                         = errors.New("the local repository type has been disabled due to having no permitted local paths")
 )
 
 // This is used just so wire has something unique to return
@@ -122,9 +123,8 @@ func RegisterAPIService(
 	}
 
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
-		ProvisioningPath: safepath.Clean(cfg.ProvisioningPath),
-		// We're not going to use safepath.Join here. We trust the configuration a reasonable amount.
-		DevenvPath: safepath.Clean(path.Join(cfg.HomePath, "devenv")),
+		PermittedPrefixes: cfg.PermittedProvisioningPaths,
+		HomePath:          safepath.Clean(cfg.HomePath),
 	}, func(namespace string) string {
 		return cfg.AppURL
 	}, cfg.SecretKey, identities, features, render, store, ghFactory)
@@ -247,6 +247,9 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
+		if len(b.localFileResolver.PermittedPrefixes) == 0 {
+			return nil, ErrLocalRepositoryDisabled
+		}
 		return repository.NewLocal(r, b.localFileResolver)
 	case provisioning.GitHubRepositoryType:
 		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
