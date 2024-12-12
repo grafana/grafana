@@ -15,8 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
@@ -210,7 +212,7 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 	}
 }
 
-func TestFolderAPIBuilder_Validate(t *testing.T) {
+func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	type input struct {
 		obj         *v0alpha1.Folder
 		annotations map[string]string
@@ -316,7 +318,7 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				tt.input.name,
 				v0alpha1.SchemeGroupVersion.WithResource("folders"),
 				"",
-				"create",
+				"CREATE",
 				nil,
 				true,
 				&user.SignedInUser{},
@@ -328,6 +330,83 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				require.ErrorIs(t, err, tt.err)
 				return
 			}
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
+	tests := []struct {
+		name          string
+		statsResponse *resource.ResourceStatsResponse_Stats
+		wantErr       bool
+	}{
+		{
+			name:          "should allow deletion when folder is empty",
+			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 0},
+		},
+		{
+			name:          "should return folder not empty when the folder is not empty",
+			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 2},
+			wantErr:       true,
+		},
+	}
+
+	s := (grafanarest.Storage)(nil)
+	m := &mock.Mock{}
+	us := storageMock{m, s}
+	sm := searcherMock{Mock: m}
+
+	obj := &v0alpha1.Folder{
+		Spec: v0alpha1.Spec{
+			Title: "foo",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "stacks-123",
+			Name:      "valid-name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var setupFn = func(m *mock.Mock, stats *resource.ResourceStatsResponse_Stats) {
+				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
+					&resource.ResourceStatsResponse{Stats: []*resource.ResourceStatsResponse_Stats{stats}},
+					nil,
+				).Once()
+			}
+
+			setupFn(m, tt.statsResponse)
+
+			b := &FolderAPIBuilder{
+				gv:            resourceInfo.GroupVersion(),
+				features:      nil,
+				namespacer:    func(_ int64) string { return "123" },
+				folderSvc:     foldertest.NewFakeService(),
+				storage:       us,
+				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
+				searcher:      sm,
+			}
+
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				obj,
+				nil,
+				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				obj.Namespace,
+				obj.Name,
+				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"DELETE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			),
+				nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }
