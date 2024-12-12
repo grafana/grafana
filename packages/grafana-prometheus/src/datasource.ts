@@ -1056,11 +1056,16 @@ export function prometheusRegularEscape<T>(value: T) {
     if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
       return value;
     }
-    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+    return value
+      .replace(/\\/g, '\\\\') // escape backslashes
+      .replace(/"/g, '\\"'); // escape double quotes
   }
 
-  // (classic behavior) escape single quotes and backslashes
-  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'");
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\') // escape backslashes
+    .replace(/'/g, "\\\\'"); // escape single quotes
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
