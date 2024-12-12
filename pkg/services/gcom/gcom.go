@@ -131,7 +131,7 @@ func (client *GcomClient) GetPlugins(ctx context.Context, requestID string) (map
 	}
 
 	// Return only active or enterprise plugins
-	resPlugins := make(map[string]Plugin)
+	resPlugins := make(map[string]Plugin, len(body.Items))
 	for _, plugin := range body.Items {
 		if plugin.Status == "active" || plugin.Status == "enterprise" {
 			resPlugins[plugin.Slug] = plugin
