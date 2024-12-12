@@ -74,7 +74,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20241202090931-5f1dcf611f9c // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20241212110159-5ae10177a923 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
@@ -113,7 +113,7 @@ require (
 	github.com/huandu/xstrings v1.5.0 // @grafana/partner-datasources
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/observability-metrics
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
-	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
+	github.com/jmespath/go-jmespath v0.4.0 // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
