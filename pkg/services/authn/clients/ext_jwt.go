@@ -100,12 +100,12 @@ func (s *ExtendedJWT) authenticateAsUser(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
 	// Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
-	if !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), idTokenClaims.Rest.Namespace) {
+	if !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, idTokenClaims.Rest.Namespace) {
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
@@ -155,7 +155,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 

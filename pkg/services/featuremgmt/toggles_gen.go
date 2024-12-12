@@ -107,10 +107,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagMysqlParseTime
-	// Ensure the parseTime flag is set for MySQL driver
-	FlagMysqlParseTime = "mysqlParseTime"
-
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
@@ -386,10 +382,6 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
-
-	// FlagKubernetesDashboardsAPI
-	// Use the kubernetes API in the backend for dashboards
-	FlagKubernetesDashboardsAPI = "kubernetesDashboardsAPI"
 
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
@@ -906,4 +898,8 @@ const (
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
+
+	// FlagFeedbackButton
+	// Enables a button to send feedback from the Grafana UI
+	FlagFeedbackButton = "feedbackButton"
 )

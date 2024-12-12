@@ -10,8 +10,9 @@ import {
   createDataFrame,
   ScopedVars,
   urlUtil,
+  toDataFrame,
 } from '@grafana/data';
-import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
   config,
@@ -60,8 +61,15 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     }
 
     if (target.query) {
-      if (config.featureToggles.zipkinBackendMigration && !this.nodeGraph?.enabled) {
-        return super.query(options);
+      if (config.featureToggles.zipkinBackendMigration) {
+        return super.query(options).pipe(
+          map((response) => {
+            if (this.nodeGraph?.enabled) {
+              return addNodeGraphFramesToResponse(response);
+            }
+            return response;
+          })
+        );
       }
       const query = this.applyTemplateVariables(target, options.scopedVars);
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
@@ -138,6 +146,21 @@ function responseToDataQueryResponse(response: { data: ZipkinSpan[] }, nodeGraph
     data.push(...createGraphFrames(response?.data));
   }
   return {
+    data,
+  };
+}
+
+export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQueryResponse {
+  if (!response.data || response.data.length === 0) {
+    return response;
+  }
+
+  // This is frame, but it is not typed, so we use toDataFrame to convert it to DataFrame
+  const frame = toDataFrame(response.data[0]);
+  const data = [...response.data];
+  data.push(...createNodeGraphFrames(frame));
+  return {
+    ...response,
     data,
   };
 }

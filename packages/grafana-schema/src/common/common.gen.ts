@@ -577,6 +577,10 @@ export type TimelineValueAlignment = ('center' | 'left' | 'right');
  */
 export interface VizTextDisplayOptions {
   /**
+   * Explicit percent text size
+   */
+  percentSize?: number;
+  /**
    * Explicit title text size
    */
   titleSize?: number;

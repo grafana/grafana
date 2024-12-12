@@ -630,7 +630,11 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
+
+### brute_force_login_protection_max_attempts
+
+Configure how many login attempts a user have within a 5 minute window before the account will be locked. Default is `5`.
 
 ### cookie_secure
 
@@ -1765,7 +1769,7 @@ Configures the batch size for the annotation clean-up job. This setting is used 
 
 ### tags_length
 
-Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+Enforces the maximum allowed amount of tags for any newly introduced annotations. This value can be between 500 and 4096 (inclusive). The default value is 500. Setting it to a higher value would impact performance and is therefore not recommended.
 
 ## [annotations.dashboard]
 
@@ -2283,6 +2287,24 @@ Force download of the public key for verifying plugin signature on startup. The 
 ### disable_plugins
 
 Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
+
+### preinstall
+
+Enter a comma-separated list of plugin identifiers to preinstall. These plugins will be installed on startup, using the Grafana catalog as the source. Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
+
+To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
+
+To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
+
+By default, Grafana preinstalls some suggested plugins. Check the default configuration file for the list of plugins.
+
+### preinstall_async
+
+By default, plugins are preinstalled asynchronously, as a background process. This means that Grafana will start up faster, but the plugins may not be available immediately. If you need a plugin to be installed for provisioning, set this option to `false`. This causes Grafana to wait for the plugins to be installed before starting up (and fail if a plugin can't be installed).
+
+### preinstall_disabled
+
+This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
 
 <hr>
 

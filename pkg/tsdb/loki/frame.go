@@ -10,19 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// we adjust the dataframes to be the way frontend & alerting
-// wants them.
 func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool, logsDataplane bool) error {
-	fields := frame.Fields
-
-	if len(fields) < 2 {
-		return fmt.Errorf("missing fields in frame")
-	}
-
 	// metric-fields have "timefield, valuefield"
 	// logs-fields have "labelsfield, timefield, ..."
-
-	secondField := fields[1]
+	secondField := frame.Fields[1]
 
 	if secondField.Type() == data.FieldTypeFloat64 {
 		return adjustMetricFrame(frame, query, setMetricFrameName)

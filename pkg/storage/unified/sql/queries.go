@@ -31,6 +31,7 @@ var (
 	sqlResourceInsert          = mustTemplate("resource_insert.sql")
 	sqlResourceUpdate          = mustTemplate("resource_update.sql")
 	sqlResourceRead            = mustTemplate("resource_read.sql")
+	sqlResourceStats           = mustTemplate("resource_stats.sql")
 	sqlResourceList            = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList     = mustTemplate("resource_history_list.sql")
 	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
@@ -71,6 +72,20 @@ func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
 }
 
+type sqlStatsRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Folder    string
+	MinCount  int
+}
+
+func (r sqlStatsRequest) Validate() error {
+	if r.Folder != "" && r.Namespace == "" {
+		return fmt.Errorf("folder constraint requires a namespace")
+	}
+	return nil
+}
+
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
@@ -101,7 +116,7 @@ func (r *sqlResourceHistoryPollRequest) Validate() error {
 func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
 	prevRV := r.Response.PreviousRV
 	if prevRV == nil {
-		*prevRV = int64(0)
+		prevRV = new(int64)
 	}
 	return &historyPollResponse{
 		Key: resource.ResourceKey{
