@@ -459,6 +459,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.PermittedProvisioningPaths != "" {
+		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
+		require.NoError(t, err)
+	}
 
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
