@@ -357,11 +357,16 @@ func (b *bleveIndex) getIndex(
 }
 
 func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+	facets := bleve.FacetsRequest{}
+	for _, f := range req.Facet {
+		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
+	}
 	searchrequest := &bleve.SearchRequest{
 		Fields:  req.Fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
 		Explain: req.Explain,
+		Facets:  facets,
 	}
 
 	// Currently everything is within an AND query

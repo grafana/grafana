@@ -26,6 +26,14 @@ type SearchHit = {
 
 type SearchAPIResponse = {
   hits: SearchHit[];
+  facets?: {
+    tags?: {
+      terms?: {
+        term: string;
+        count: number;
+      }[]
+    }
+  }
 };
 
 const folderViewSort = 'name_sort';
@@ -66,28 +74,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const req = {
-      ...query,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tags' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
-    };
-
-    const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    const hits = resp.hits;
-
-    if (hits[0]?.name === loadingFrameName) {
-      return this.fallbackSearcher.tags(query);
+    const qry = query.query ?? '*';
+    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    if (resp.facets?.tags?.terms) {
+      return resp.facets.tags.terms.map((t) => {
+        return { term: t.term, count: t.count };
+      });
     }
-
-    // TODO: need to return facets in the SearchAPIResponse
-    // for (const hit of hits) {
-    //   if (hit.name === 'tags') {
-    //     return getTermCountsFrom(frame);
-    //   }
-    // }
-
     return [];
   }
 
@@ -120,9 +114,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    // const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    // TODO: should be a post like the old api above?
-    // need to pass filters (tags), facets (to display the tags), etc
+    // TODO: need to pass filters (tags)
     let uri = searchURI;
     if (req.query) {
       uri += `?query=${encodeURIComponent(req.query)}`;
@@ -232,17 +224,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
 const firstPageSize = 50;
 const nextPageSizes = 100;
-
-// TODO: get from facet response
-// function getTermCountsFrom(frame: DataFrame): TermCount[] {
-//   const tags = frame.fields[0].values;
-//   const vals = frame.fields[1].values;
-//   const counts: TermCount[] = [];
-//   for (let i = 0; i < frame.length; i++) {
-//     counts.push({ term: tags[i], count: vals[i] });
-//   }
-//   return counts;
-// }
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
