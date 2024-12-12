@@ -368,10 +368,10 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel) {
   if (!labelType) {
     return null;
   }
-  return resolveDataSourceLabelType(labelType, row.datasourceType);
+  return getDataSourceLabelType(labelType, row.datasourceType);
 }
 
-function resolveDataSourceLabelType(labelType: string, datasourceType: string) {
+function getDataSourceLabelType(labelType: string, datasourceType: string) {
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {
