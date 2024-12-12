@@ -35,7 +35,7 @@ require (
 	go.opentelemetry.io/otel v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.30.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/crypto v0.31.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.32.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team

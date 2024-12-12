@@ -183,6 +183,7 @@ export class DefaultGridLayoutManager
       x: gridItem.state.x,
       y: gridItem.state.y,
       height: gridItem.state.height,
+      itemHeight: gridItem.state.height,
       width: gridItem.state.width,
       variableName: gridItem.state.variableName,
       repeatDirection: gridItem.state.repeatDirection,
