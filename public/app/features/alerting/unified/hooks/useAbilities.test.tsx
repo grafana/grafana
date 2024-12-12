@@ -3,6 +3,7 @@ import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -86,7 +87,7 @@ describe('alertmanager abilities', () => {
   it('should report everything except exporting for Mimir alertmanager', () => {
     setupDataSources(
       mockDataSource<AlertManagerDataSourceJsonData>({
-        name: 'mimir',
+        name: MIMIR_DATASOURCE_UID,
         type: DataSourceType.Alertmanager,
         jsonData: {
           implementation: AlertManagerImplementation.mimir,

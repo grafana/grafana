@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
+import server from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
@@ -23,7 +23,6 @@ import { FolderDTO } from 'app/types';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
-import { buildInfoResponse } from '../../testSetup/featureDiscovery';
 import { DataSourceType } from '../../utils/datasource';
 import { ApiMachineryError } from '../../utils/k8s/errors';
 
@@ -101,7 +100,6 @@ export function mimirDataSource() {
       type: DataSourceType.Prometheus,
       name: MIMIR_DATASOURCE_UID,
       uid: MIMIR_DATASOURCE_UID,
-      url: 'https://mimir.local:9000',
       jsonData: {
         manageAlerts: true,
         implementation: 'mimir',
@@ -111,7 +109,6 @@ export function mimirDataSource() {
   );
 
   setupDataSources(dataSource);
-  mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSource, buildInfoResponse.mimir);
 
   return { dataSource };
 }
