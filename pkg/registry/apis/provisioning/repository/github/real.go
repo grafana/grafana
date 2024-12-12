@@ -281,6 +281,51 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 	return ret, nil
 }
 
+func (r *realImpl) CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error) {
+	// FIXME: we may have to paginate the results if there are too many files
+	compare, _, err := r.gh.Repositories.CompareCommits(ctx, owner, repository, base, head, nil)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if !errors.As(err, &ghErr) {
+			return nil, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, ErrResourceNotFound
+		}
+		return nil, err
+	}
+	ret := make([]CommitFile, 0, len(compare.Files))
+	for _, f := range compare.Files {
+		ret = append(ret, f)
+	}
+	return ret, nil
+}
+
+func (r *realImpl) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
+	branch, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if !errors.As(err, &ghErr) {
+			return Branch{}, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return Branch{}, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return Branch{}, ErrResourceNotFound
+		}
+		return Branch{}, err
+	}
+
+	return Branch{
+		Name: branch.GetName(),
+		Sha:  branch.GetCommit().GetSHA(),
+	}, nil
+}
+
 func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
 	// Fail if the branch already exists
 	if _, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0); err == nil {

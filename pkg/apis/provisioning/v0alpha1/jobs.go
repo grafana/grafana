@@ -31,8 +31,8 @@ const (
 	// Update a pull request -- send preview images, links etc
 	JobActionPullRequest JobAction = "pr"
 
-	// Merge the remote branch with the grafana instance
-	JobActionMergeBranch JobAction = "merge"
+	// Sync the remote branch with the grafana instance
+	JobActionSync JobAction = "sync"
 
 	// Export from grafana into the remote repository
 	JobActionExport JobAction = "export"
@@ -67,22 +67,6 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
-
-	// When we know the commits, these will be passed along
-	Commits []CommitInfo `json:"commits,omitempty"`
-}
-
-type CommitInfo struct {
-	SHA1 string `json:"sha1,omitempty"`
-
-	Added    []FileRef `json:"added,omitempty"`
-	Modified []FileRef `json:"modified,omitempty"`
-	Removed  []FileRef `json:"removed,omitempty"`
-}
-
-type FileRef struct {
-	Ref  string `json:"ref"`
-	Path string `json:"path"`
 }
 
 // The job status

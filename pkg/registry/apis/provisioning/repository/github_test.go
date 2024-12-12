@@ -79,26 +79,7 @@ func TestParseWebhooks(t *testing.T) {
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
 			Job: &provisioning.JobSpec{
-				Action: provisioning.JobActionMergeBranch,
-				Commits: []provisioning.CommitInfo{{
-					SHA1: "5c816f9812e391c62b0c5555d0b473b296d9179c",
-					Added: []provisioning.FileRef{
-						{
-							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
-							Path: "nested-1/dash-1.json",
-						},
-						{
-							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
-							Path: "nested-1/nested-2/dash-2.json",
-						},
-					},
-					Modified: []provisioning.FileRef{
-						{
-							Ref:  "5c816f9812e391c62b0c5555d0b473b296d9179c",
-							Path: "first-dashboard.json",
-						},
-					},
-				}},
+				Action: provisioning.JobActionSync,
 			},
 		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{

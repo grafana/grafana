@@ -346,7 +346,7 @@ func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionMergeBranch, // sync the latest changes
+			Action: provisioning.JobActionSync, // sync the latest changes
 		},
 	}, nil
 }
