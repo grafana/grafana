@@ -1,7 +1,7 @@
 import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
-import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
+import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 

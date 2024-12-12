@@ -13,9 +13,9 @@ import {
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { getUnitFromMetric } from '../autoQuery/units';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
 import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_OTEL_GROUP_LEFT } from '../shared';
