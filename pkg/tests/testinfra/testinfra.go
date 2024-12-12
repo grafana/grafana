@@ -460,6 +460,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 				require.NoError(t, err)
 			}
 		}
+		if o.PermittedProvisioningPaths != "" {
+			_, err = pathsSect.NewKey("permitted_provisioning_paths", o.PermittedProvisioningPaths)
+			require.NoError(t, err)
+		}
 	}
 
 	dbSection, err := getOrCreateSection("database")
@@ -512,6 +516,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	PermittedProvisioningPaths            string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
