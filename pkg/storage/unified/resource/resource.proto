@@ -399,6 +399,9 @@ message ResourceSearchRequest {
 
   // explain each result (added to the each row)
   bool explain = 9;
+
+  // filters
+  repeated string filters = 10;
 }
 
 message ResourceSearchResponse {

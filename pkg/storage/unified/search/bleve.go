@@ -390,12 +390,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		}
 	}
 
-	if req.Query != "" {
-		// ??? Should expose the full power of query parsing here?
-		// it is great for exploration, but also hard to change in the future
-		q := bleve.NewQueryStringQuery(req.Query)
-		queries = append(queries, q)
-	}
+	queries = append(queries, newQuery(req))
 
 	if access != nil {
 		// TODO AUTHZ!!!!
@@ -579,4 +574,32 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		}
 	}
 	return fields, nil
+}
+
+func newQuery(req *resource.ResourceSearchRequest) query.Query {
+	textQuery := newTextQuery(req)
+	tagsQuery := newTagsQuery(req)
+	if tagsQuery != nil {
+		return bleve.NewConjunctionQuery(textQuery, tagsQuery)
+	}
+	return textQuery
+}
+
+func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
+	if req.Query == "" || req.Query == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	return bleve.NewMatchQuery(req.Query)
+}
+
+func newTagsQuery(req *resource.ResourceSearchRequest) query.Query {
+	if len(req.Filters) == 0 {
+		return nil
+	}
+	orQuery := bleve.NewDisjunctionQuery()
+	for _, filter := range req.Filters {
+		matchQuery := bleve.NewMatchQuery(filter)
+		orQuery.AddQuery(matchQuery)
+	}
+	return orQuery
 }

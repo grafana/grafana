@@ -109,11 +109,17 @@ export class UnifiedSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    // TODO: need to pass filters (tags)
     let uri = searchURI;
-    if (req.query) {
-      uri += `?query=${encodeURIComponent(req.query)}`;
+    const qry = req.query || "*";
+    uri += `?query=${encodeURIComponent(qry)}`;
+    if (req.limit) {
+      uri += `&limit=${req.limit}`;
     }
+
+    if (req.tags) {
+      uri += '&' + req.tags.map((tag) => `filters=${encodeURIComponent(tag)}`).join('&');
+    }
+    
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
     const first = toDashboardResults(rsp.hits);

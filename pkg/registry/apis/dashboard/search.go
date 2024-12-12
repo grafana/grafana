@@ -277,6 +277,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// The filters
+	filters, ok := queryParams["filters"]
+	if ok {
+		searchRequest.Filters = filters
+	}
+
 	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
