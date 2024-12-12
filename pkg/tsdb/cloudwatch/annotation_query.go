@@ -58,7 +58,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 
 	cli, err := e.getCWClient(ctx, pluginCtx, region)
 	if err != nil {
-		result = errorsource.AddDownstreamErrorToResponse(query.RefID, result, fmt.Errorf("%v: %w", "failed to get client", err))
+		result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(fmt.Errorf("%v: %w", "failed to get client", err))
 		return result, nil
 	}
 
