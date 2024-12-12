@@ -40,6 +40,7 @@ const config: ConfigFile = {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
       schemaFile: '../public/app/features/provisioning/api/spec.json',
       apiImport: 'baseAPI',
+      filterEndpoints: [/Repository/, /Job/, /Webhook/, /History/, /File/, /Test/, /^(?!.*ForAllNamespaces).*$/],
     },
   },
 };
