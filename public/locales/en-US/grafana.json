@@ -1758,6 +1758,12 @@
     "infinite-scroll": {
       "older-logs": "Older logs"
     },
+    "log-details": {
+      "fields": "Fields",
+      "links": "Links",
+      "log-line": "Log line",
+      "no-details": "No details available"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
