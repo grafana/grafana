@@ -1261,6 +1261,8 @@
       "title-with-name": "Tableau – {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "Copier l'URL",
       "copy-link-abs-time": "",
@@ -2200,9 +2202,6 @@
     },
     "new-folder": {
       "title": "Nouveau dossier"
-    },
-    "observability": {
-      "title": "Observabilité"
     },
     "oncall": {
       "title": "OnCall"
