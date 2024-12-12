@@ -64,9 +64,9 @@ describe('LogDetails', () => {
 
       setup({ displayedFields: ['key1'], onClickShowField }, { labels: { key1: 'label1' } });
       expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
-      expect(screen.getByLabelText('Show log line body')).toBeInTheDocument();
+      expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Show log line body'));
+      await userEvent.click(screen.getByLabelText('Show log line'));
 
       expect(onClickShowField).toHaveBeenCalledTimes(1);
     });
@@ -75,16 +75,16 @@ describe('LogDetails', () => {
 
       setup({ displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField }, { labels: { key1: 'label1' } });
       expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
-      expect(screen.getByLabelText('Hide log line body')).toBeInTheDocument();
+      expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Hide log line body'));
+      await userEvent.click(screen.getByLabelText('Hide log line'));
 
       expect(onClickHideField).toHaveBeenCalledTimes(1);
     });
     it('should not show an option to display the log line when displayed fields are not used', () => {
       setup({ displayedFields: undefined }, { labels: { key1: 'label1' } });
       expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
-      expect(screen.queryByLabelText('Show log line body')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Show log line')).not.toBeInTheDocument();
     });
     it('should render filter controls when the callbacks are provided', () => {
       setup(
