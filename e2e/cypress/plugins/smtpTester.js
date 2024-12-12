@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { Jimp, diff } = require('jimp');
+const pdf = require('pdf-parse');
 const ms = require('smtp-tester');
 
 const PORT = 7777;
@@ -13,6 +14,7 @@ const initialize = (on, config) => {
 
   // process all emails
   mailServer.bind((addr, id, email) => {
+    console.log('received email');
     lastEmail[email.headers.to] = email;
   });
 
@@ -74,29 +76,16 @@ const initialize = (on, config) => {
 
   on('task', {
     async comparePDFs({expectedPDFFilepath, newPDFContent, updateExpectedPDF = false}) {
-      const { pdf } = await import('pdf-to-img');
-
       const inputBuffer = Buffer.from(newPDFContent.data);
       if (updateExpectedPDF) {
         fs.writeFileSync(expectedPDFFilepath, inputBuffer);
         return true;
       }
 
-      const inputDoc = await pdf(inputBuffer, { scale: 2 });
-      const expectedDoc = await pdf(expectedPDFFilepath, { scale: 2 });
-      if (expectedDoc.length !== inputDoc.length) {
-        return false;
-      }
+      const inputDoc = await pdf(inputBuffer);
+      const expectedDoc = await pdf(expectedPDFFilepath);
 
-      for await (const expectedImage of expectedDoc) {
-        for await (const inputImage of inputDoc) {
-          if (!(await compareImages(expectedImage, inputImage))) {
-            return false;
-          }
-        }
-      }
-
-      return true;
+      return inputDoc.numpages === expectedDoc.numpages && inputDoc.text === expectedDoc.text;
     }
   });
 };
