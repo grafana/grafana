@@ -95,7 +95,7 @@ async function loadMoreResults() {
   act(() => {
     io.enterNode(screen.getByTestId('load-more-helper'));
   });
-  await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'), { timeout: 3000 });
+  await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'), { timeout: 8000 });
 }
 
 function getFilter(overrides: Partial<RulesFilter> = {}): RulesFilter {

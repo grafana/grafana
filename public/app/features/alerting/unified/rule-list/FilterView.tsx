@@ -98,7 +98,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     return (
       <EmptyState variant="not-found" message="No matching rules found">
         <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
-          No alert- or recording rules matched your current set of filters.
+          No alert or recording rules matched your current set of filters.
         </Trans>
       </EmptyState>
     );

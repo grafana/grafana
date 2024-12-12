@@ -18,17 +18,17 @@ export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafan
 export function paginatedHandlerFor(
   groups: PromRuleGroupDTO[]
 ): HttpResponseResolver<PathParams, DefaultBodyType, PromRulesResponse> {
+  const orderedGroupsWithCursor = groups.map((group) => ({
+    ...group,
+    id: Buffer.from(`${group.file}-${group.name}`).toString('base64url'),
+  }));
+
   return ({ request }) => {
     const { searchParams } = new URL(request.url);
     const groupLimitParam = searchParams.get('group_limit');
     const groupNextToken = searchParams.get('group_next_token');
 
     const groupLimit = groupLimitParam ? parseInt(groupLimitParam, 10) : undefined;
-
-    const orderedGroupsWithCursor = groups.map((group) => ({
-      ...group,
-      id: Buffer.from(`${group.file}-${group.name}`).toString('base64url'),
-    }));
 
     const startIndex = groupNextToken ? orderedGroupsWithCursor.findIndex((group) => group.id === groupNextToken) : 0;
     const endIndex = groupLimit ? startIndex + groupLimit : orderedGroupsWithCursor.length;
