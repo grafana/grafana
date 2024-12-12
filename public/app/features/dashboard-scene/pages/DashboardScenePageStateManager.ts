@@ -107,12 +107,12 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         default:
           const queryParams = params
             ? {
-              version: params.version,
-              scopes: params.scopes,
-              from: params.timeRange.from,
-              to: params.timeRange.to,
-              ...params.variables,
-            }
+                version: params.version,
+                scopes: params.scopes,
+                from: params.timeRange.from,
+                to: params.timeRange.to,
+                ...params.variables,
+              }
             : undefined;
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 

@@ -26,14 +26,14 @@ export function ensureV2Response(
 
   const accessAndMeta = isDashboardResource(dto)
     ? {
-      ...dto.access,
-      created: dto.metadata.creationTimestamp,
-      createdBy: dto.metadata.annotations?.['grafana.app/createdBy'],
-      updatedBy: dto.metadata.annotations?.['grafana.app/updatedBy'],
-      updated: dto.metadata.annotations?.['grafana.app/updatedTimestamp'],
-      folderUid: dto.metadata.annotations?.['grafana.app/folder'],
-      slug: dto.metadata.annotations?.['grafana.app/slug'],
-    }
+        ...dto.access,
+        created: dto.metadata.creationTimestamp,
+        createdBy: dto.metadata.annotations?.['grafana.app/createdBy'],
+        updatedBy: dto.metadata.annotations?.['grafana.app/updatedBy'],
+        updated: dto.metadata.annotations?.['grafana.app/updatedTimestamp'],
+        folderUid: dto.metadata.annotations?.['grafana.app/folder'],
+        slug: dto.metadata.annotations?.['grafana.app/slug'],
+      }
     : dto.meta;
 
   const spec: DashboardV2Spec = {
