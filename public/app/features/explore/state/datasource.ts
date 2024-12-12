@@ -1,8 +1,8 @@
 // Libraries
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi, HistoryItem, getCorrelationsBySourceUIDs } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { reportInteraction, getCorrelationsBySourceUIDs } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';

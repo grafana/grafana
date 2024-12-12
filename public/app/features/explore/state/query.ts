@@ -11,7 +11,6 @@ import {
   DataQueryResponse,
   DataSourceApi,
   dateTimeForTimeZone,
-  getCorrelationsBySourceUIDs,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
@@ -23,7 +22,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, getCorrelationsBySourceUIDs } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   buildQueryTransaction,

@@ -4,7 +4,6 @@ import { map, mergeMap } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
-  attachCorrelationsToDataFrames,
   DataFrame,
   FieldType,
   getDisplayProcessor,
@@ -15,7 +14,7 @@ import {
   getRawDisplayProcessor,
   DataSourceApi,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, attachCorrelationsToDataFrames } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';

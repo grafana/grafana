@@ -40,6 +40,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setLinkSrv,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -83,6 +84,7 @@ import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/Embe
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { getLinkSrv } from './features/panel/panellinks/link_srv';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -152,6 +154,7 @@ export class GrafanaApp {
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
+      setLinkSrv(getLinkSrv());
 
       initAuthConfig();
 

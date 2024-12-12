@@ -6,12 +6,12 @@ import {
   HistoryItem,
   DataSourceApi,
   ExplorePanelsState,
-  getCorrelationsBySourceUIDs,
   PreferredVisualisationType,
   RawTimeRange,
   ExploreCorrelationHelperData,
   EventBusExtended,
 } from '@grafana/data';
+import { getCorrelationsBySourceUIDs } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';

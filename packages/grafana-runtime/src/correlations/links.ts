@@ -1,64 +1,53 @@
 import { first, uniqBy } from 'lodash';
-import { useCallback } from 'react';
 
 import {
-  Field,
-  LinkModel,
-  TimeRange,
-  mapInternalLinkToExplore,
-  InterpolateFunction,
-  ScopedVars,
-  DataFrame,
-  getFieldDisplayValuesProxy,
-  SplitOpen,
-  DataLink,
-  DisplayValue,
-  DataLinkConfigOrigin,
   CoreApp,
-  SplitOpenOptions,
-  DataLinkPostProcessor,
-  ExploreUrlState,
-  urlUtil,
+  DataFrame,
   DataFrameType,
+  DataLink,
+  DataLinkConfigOrigin,
+  DataLinkPostProcessor,
+  DataQuery,
+  DisplayValue,
+  Field,
+  getFieldDisplayValuesProxy,
+  InterpolateFunction,
+  mapInternalLinkToExplore,
+  ScopedVars,
+  SplitOpen,
+  SplitOpenOptions,
+  TimeRange,
+  userHasPermission,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getTransformationVars } from 'app/features/correlations/transformations';
-import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
-import { ExploreItemState } from 'app/types/explore';
 
-import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { AccessControlAction } from '../access-controll/types';
+import { config, getLinkSrv, reportInteraction } from '../index';
+import { parseDataplaneLogsFrame } from '../logs/logsFrame';
+import { getTemplateSrv, VariableInterpolation } from '../services';
 
-//Remove
+import { getTransformationVars } from './transformations';
+import { ExploreFieldLinkModel } from './types';
+
+const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
+
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
-// Remove
 const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
-  return !link.internal || contextSrv.hasAccessToExplore();
+  return (
+    !link.internal ||
+    (userHasPermission(AccessControlAction.DataSourcesExplore, config.bootData.user) && config.exploreEnabled)
+  );
+  // return !link.internal || contextSrv.hasAccessToExplore();
 };
 
 /**
  * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will not
  * be passed back to the visualization.
  */
-//Remove
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
-/**
- * This extension of the LinkModel was done to support correlations, which need the variables' names
- * and values split out for display purposes
- *
- * Correlations are internal links only so the variables property will always be defined (but possibly empty)
- * for internal links and undefined for non-internal links
- */
-export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables: VariableInterpolation[];
-}
-
-// Remove
-const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
+export const correlationsDataLinkPostProcessorFactory = (timeRange: TimeRange) =>
+  exploreDataLinkPostProcessorFactory(undefined, timeRange);
 
 /**
  * Creates an internal link supplier specific to Explore
@@ -249,52 +238,6 @@ export const getFieldLinksForExplore = (options: {
   return [];
 };
 
-/**
- * @internal
- */
-export function getTitleFromHref(href: string): string {
-  // The URL constructor needs the url to have protocol
-  if (href.indexOf('://') < 0) {
-    // Doesn't really matter what protocol we use.
-    href = `http://${href}`;
-  }
-  let title;
-  try {
-    const parsedUrl = new URL(href);
-    title = parsedUrl.hostname;
-  } catch (_e) {
-    // Should be good enough fallback, user probably did not input valid url.
-    title = href;
-  }
-  return title;
-}
-
-/**
- * Hook that returns a function that can be used to retrieve all the links for a row. This returns all the links from
- * all the fields so is useful for visualisation where the whole row is represented as single clickable item like a
- * service map.
- */
-export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
-  return useCallback(
-    (dataFrame: DataFrame, rowIndex: number) => {
-      return dataFrame.fields.flatMap((f) => {
-        if (f.config?.links && f.config?.links.length) {
-          return getFieldLinksForExplore({
-            field: f,
-            rowIndex: rowIndex,
-            range,
-            dataFrame,
-            splitOpenFn,
-          });
-        } else {
-          return [];
-        }
-      });
-    },
-    [range, splitOpenFn]
-  );
-}
-
 // See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 const builtInVariables = [
   '__from',
@@ -351,25 +294,22 @@ function getStringsFromObject(obj: Object): string {
   return acc;
 }
 
-type StateEntry = [string, ExploreItemState];
-const isStateEntry = (entry: [string, ExploreItemState | undefined]): entry is StateEntry => {
-  return entry[1] !== undefined;
-};
-
-export const constructAbsoluteUrl = (panes: Record<string, ExploreItemState | undefined>) => {
-  const urlStates = Object.entries(panes)
-    .filter(isStateEntry)
-    .map(([exploreId, pane]) => {
-      const urlState = getUrlStateFromPaneState(pane);
-      urlState.range = {
-        to: pane.range.to.valueOf().toString(),
-        from: pane.range.from.valueOf().toString(),
-      };
-      const panes: [string, ExploreUrlState] = [exploreId, urlState];
-      return panes;
-    })
-    .reduce((acc, [exploreId, urlState]) => {
-      return { ...acc, [exploreId]: urlState };
-    }, {});
-  return urlUtil.renderUrl('/explore', { schemaVersion: 1, panes: JSON.stringify(urlStates) });
-};
+/**
+ * @internal
+ */
+function getTitleFromHref(href: string): string {
+  // The URL constructor needs the url to have protocol
+  if (href.indexOf('://') < 0) {
+    // Doesn't really matter what protocol we use.
+    href = `http://${href}`;
+  }
+  let title;
+  try {
+    const parsedUrl = new URL(href);
+    title = parsedUrl.hostname;
+  } catch (_e) {
+    // Should be good enough fallback, user probably did not input valid url.
+    title = href;
+  }
+  return title;
+}

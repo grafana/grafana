@@ -1,30 +1,29 @@
 import { lastValueFrom } from 'rxjs';
 
-import {
-  CorrelationData,
-  CorrelationsData,
-  CorrelationsResponse,
-  getData,
-  toEnrichedCorrelationsData,
-} from '../../../../public/app/features/correlations/useCorrelations';
-import { formatValueName } from '../../../../public/app/features/explore/PrometheusListView/ItemLabels';
-import { exploreDataLinkPostProcessorFactory } from '../../../../public/app/features/explore/utils/links';
-import { parseLogsFrame } from '../../../../public/app/features/logs/logsFrame';
-import { config, getBackendSrv } from '../../../grafana-runtime/src/index';
-import { DataFrame } from '../types/dataFrame';
-import { DataLinkConfigOrigin } from '../types/dataLink';
-import { DataLinkPostProcessor } from '../types/fieldOverrides';
-import { TimeRange } from '../types/time';
+import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+// TODO: Need to do something with this, maybe formatValueName should be in some other package
+import { formatValueName } from '@grafana/prometheus/src/datasource';
 
-export type DataFrameRefIdToDataSourceUid = Record<string, string>;
+import { config } from '../config';
+import { parseLogsFrame } from '../logs/logsFrame';
+import { getBackendSrv } from '../services/backendSrv';
 
-export type { CorrelationsData, CorrelationData } from '../../../../public/app/features/correlations/useCorrelations';
+import { CorrelationData, CorrelationsData, CorrelationsResponse, DataFrameRefIdToDataSourceUid } from './types';
+import { toEnrichedCorrelationsData } from './useCorrelations';
 
-/**
- * Creates an correlations link supplier
- */
-export const correlationsDataLinkPostProcessorFactory = (range: TimeRange): DataLinkPostProcessor => {
-  return exploreDataLinkPostProcessorFactory(undefined, range);
+export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {
+  return lastValueFrom(
+    getBackendSrv().fetch<CorrelationsResponse>({
+      url: `/api/datasources/correlations`,
+      method: 'GET',
+      showErrorAlert: false,
+      params: {
+        sourceUID: sourceUIDs,
+      },
+    })
+  )
+    .then((response) => response.data)
+    .then(toEnrichedCorrelationsData);
 };
 
 /**
@@ -112,19 +111,4 @@ const fixLokiDataplaneFields = (correlations: CorrelationData[], dataFrame: Data
     }
     return correlation;
   });
-};
-
-export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {
-  return lastValueFrom(
-    getBackendSrv().fetch<CorrelationsResponse>({
-      url: `/api/datasources/correlations`,
-      method: 'GET',
-      showErrorAlert: false,
-      params: {
-        sourceUID: sourceUIDs,
-      },
-    })
-  )
-    .then(getData)
-    .then(toEnrichedCorrelationsData);
 };

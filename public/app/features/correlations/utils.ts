@@ -26,4 +26,5 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
   });
 };
 
+// Remove
 export const correlationsLogger = createMonitoringLogger('features.correlations');

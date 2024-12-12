@@ -26,6 +26,7 @@ export interface CorrelationsResponse {
   totalCount: number;
 }
 
+// Remove
 export type CorrelationData =
   | (Omit<CorrelationExternal, 'sourceUID'> & {
       source: DataSourceInstanceSettings;
@@ -35,6 +36,7 @@ export type CorrelationData =
       target: DataSourceInstanceSettings;
     });
 
+// Remove
 export interface CorrelationsData {
   correlations: CorrelationData[];
   page: number;
@@ -42,6 +44,7 @@ export interface CorrelationsData {
   totalCount: number;
 }
 
+// Remove
 const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource =
@@ -86,8 +89,10 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
   return undefined;
 };
 
+// Remove
 const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
 
+// Remove
 export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
   return {
     ...correlationsResponse,

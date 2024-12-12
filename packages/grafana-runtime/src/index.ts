@@ -57,3 +57,9 @@ export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermis
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
+export { toEnrichedCorrelationsData } from './correlations/useCorrelations';
+export { attachCorrelationsToDataFrames, getCorrelationsBySourceUIDs } from './correlations/utils';
+export { correlationsDataLinkPostProcessorFactory } from './correlations/links';
+export * from './correlations/types';
+export * from './access-controll/types';
+export { getLinkSrv, setLinkSrv, type LinkService } from './services/LinkSrv';

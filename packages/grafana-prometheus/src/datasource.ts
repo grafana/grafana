@@ -1042,6 +1042,13 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
+export const formatValueName = (name: string): string => {
+  if (name.includes(InstantQueryRefIdIndex)) {
+    return name.replace(InstantQueryRefIdIndex, '');
+  }
+  return name;
+};
+
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.

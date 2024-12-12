@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
-import { InstantQueryRefIdIndex } from '@grafana/prometheus';
+import { formatValueName } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui/';
 
 import { rawListItemColumnWidth } from './RawListItem';
@@ -20,13 +20,6 @@ const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       borderBottom: expanded ? `1px solid ${theme.colors.border.medium}` : '',
     }),
   };
-};
-
-export const formatValueName = (name: string): string => {
-  if (name.includes(InstantQueryRefIdIndex)) {
-    return name.replace(InstantQueryRefIdIndex, '');
-  }
-  return name;
 };
 
 export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; expanded: boolean }) => {

@@ -147,20 +147,6 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
-export const safeStringifyValue = (value: unknown, space?: number) => {
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  try {
-    return JSON.stringify(value, null, space);
-  } catch (error) {
-    console.error(error);
-  }
-
-  return '';
-};
-
 export function generateKey(index = 0): string {
   return `Q-${uuidv4()}-${index}`;
 }

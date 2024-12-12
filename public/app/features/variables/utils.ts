@@ -9,9 +9,9 @@ import {
   VariableRefresh,
   VariableWithOptions,
   QueryVariableModel,
+  safeStringifyValue,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
-import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
 import { StoreState } from '../../types';

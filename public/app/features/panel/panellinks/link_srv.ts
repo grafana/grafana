@@ -19,7 +19,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, LinkService } from '@grafana/runtime';
 import { DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 
@@ -239,16 +239,6 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   };
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
-
-export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
-  getAnchorInfo: (link: DashboardLink) => {
-    href: string;
-    title: string;
-    tooltip: string;
-  };
-  getLinkUrl: (link: DashboardLink) => string;
-}
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
