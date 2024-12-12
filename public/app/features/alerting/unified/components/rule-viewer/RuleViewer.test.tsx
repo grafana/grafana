@@ -18,7 +18,6 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
   mockPromAlertingRule,
-  mockPromRuleNamespace,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
