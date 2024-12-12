@@ -12,7 +12,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	secretV0Alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	storage "github.com/grafana/grafana/pkg/registry/apis/secret/storage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -71,17 +71,21 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 // UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	secureValueResource := secretV0Alpha1.SecureValuesResourceInfo
+	keeperResource := secretV0Alpha1.KeeperResourceInfo
 
 	// rest.Storage is a generic interface for RESTful storage services.
 	// The constructors need to at least implement this interface, but will most likely implement
 	// other interfaces that equal to different operations like `get`, `list` and so on.
-	secureValueStorage := map[string]rest.Storage{
+	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
-		// The `storage.GenericStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): storage.NewGenericStorage(secureValueResource),
+		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(secureValueResource),
+
+		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(keeperResource),
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = secureValueStorage
+	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = secureRestStorage
 	return nil
 }
 

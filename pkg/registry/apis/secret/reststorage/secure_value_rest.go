@@ -17,73 +17,63 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*GenericStorage)(nil)
-	_ rest.SingularNameProvider = (*GenericStorage)(nil)
-	_ rest.Getter               = (*GenericStorage)(nil)
-	_ rest.Lister               = (*GenericStorage)(nil)
-	_ rest.Storage              = (*GenericStorage)(nil)
-	_ rest.Creater              = (*GenericStorage)(nil)
-	_ rest.Updater              = (*GenericStorage)(nil)
-	_ rest.GracefulDeleter      = (*GenericStorage)(nil)
+	_ rest.Scoper               = (*SecureValueRest)(nil)
+	_ rest.SingularNameProvider = (*SecureValueRest)(nil)
+	_ rest.Getter               = (*SecureValueRest)(nil)
+	_ rest.Lister               = (*SecureValueRest)(nil)
+	_ rest.Storage              = (*SecureValueRest)(nil)
+	_ rest.Creater              = (*SecureValueRest)(nil)
+	_ rest.Updater              = (*SecureValueRest)(nil)
+	_ rest.GracefulDeleter      = (*SecureValueRest)(nil)
 )
 
-var (
-	// Exclude these annotations
-	skipAnnotations = map[string]bool{
-		"kubectl.kubernetes.io/last-applied-configuration": true, // force server side apply
-		utils.AnnoKeyCreatedBy:                             true,
-		utils.AnnoKeyUpdatedBy:                             true,
-		utils.AnnoKeyUpdatedTimestamp:                      true,
-	}
-)
-
-// GenericStorage is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
-type GenericStorage struct {
+// SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
+type SecureValueRest struct {
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
-// NewGenericStorage is a returns a constructed `*GenericStorage`.
-func NewGenericStorage(resource utils.ResourceInfo) *GenericStorage {
-	return &GenericStorage{resource, resource.TableConverter()}
+// NewSecureValueRest is a returns a constructed `*SecureValueRest`.
+func NewSecureValueRest(resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{resource, resource.TableConverter()}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
-func (s *GenericStorage) New() runtime.Object {
+func (s *SecureValueRest) New() runtime.Object {
 	return s.resource.NewFunc()
 }
 
 // Destroy is called when? [TODO]
-func (s *GenericStorage) Destroy() {}
+func (s *SecureValueRest) Destroy() {}
 
 // NamespaceScoped returns `true` because the storage is namespaced (== org).
-func (s *GenericStorage) NamespaceScoped() bool {
+func (s *SecureValueRest) NamespaceScoped() bool {
 	return true
 }
 
 // GetSingularName is used by `kubectl` discovery to have singular name representation of resources.
-func (s *GenericStorage) GetSingularName() string {
+func (s *SecureValueRest) GetSingularName() string {
 	return s.resource.GetSingularName()
 }
 
 // NewList returns an empty `*SecureValueList` that is used by the `List` method.
-func (s *GenericStorage) NewList() runtime.Object {
+func (s *SecureValueRest) NewList() runtime.Object {
 	return s.resource.NewListFunc()
 }
 
 // ConvertToTable is used by Kubernetes and converts objects to `metav1.Table`.
-func (s *GenericStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
-func (s *GenericStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: implement me
 	return nil, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
-func (s *GenericStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	// TODO: implement me
 	return nil, nil
 }
@@ -106,7 +96,7 @@ func checkRefOrValue(s *secret.SecureValue, mustExist bool) error {
 }
 
 // Create a new `securevalue`. Does some validation and allows empty `name` (generated).
-func (s *GenericStorage) Create(
+func (s *SecureValueRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
 
@@ -148,19 +138,8 @@ func (s *GenericStorage) Create(
 	return nil, nil
 }
 
-func cleanAnnotations(anno map[string]string) map[string]string {
-	copy := make(map[string]string)
-	for k, v := range anno {
-		if skipAnnotations[k] {
-			continue
-		}
-		copy[k] = v
-	}
-	return copy
-}
-
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
-func (s *GenericStorage) Update(
+func (s *SecureValueRest) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
@@ -223,7 +202,7 @@ func (s *GenericStorage) Update(
 
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was intant or not. It always is for `securevalues`.
-func (s *GenericStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	// TODO: Make sure the second parameter is always `true` when `err == nil`.
 	// Even when there is nothing to delete, because this is a `securevalue` and
 	// we don't want to first do a `Get` to check whether the secret exists or not.
