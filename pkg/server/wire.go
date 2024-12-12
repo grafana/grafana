@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -474,4 +475,9 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
+}
+
+func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
+	wire.Build(wireDocumentBuildersSet)
+	return &unifiedsearch.StandardDocumentBuilders{}, nil
 }
