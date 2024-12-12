@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
@@ -13,8 +13,8 @@ import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
-type DeleteModalHook = [JSX.Element, (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifier) => void, () => void];
-type DeleteRuleInfo = { rule: RulerRuleDTO; groupIdentifier: RuleGroupIdentifier } | undefined;
+type DeleteModalHook = [JSX.Element, (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void, () => void];
+type DeleteRuleInfo = { rule: RulerRuleDTO; groupIdentifier: RuleGroupIdentifierV2 } | undefined;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
@@ -27,7 +27,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
     setRuleToDelete(undefined);
   }, []);
 
-  const showModal = useCallback((rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifier) => {
+  const showModal = useCallback((rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => {
     setRuleToDelete({ rule, groupIdentifier });
   }, []);
 
@@ -38,18 +38,24 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
 
     const { rule, groupIdentifier } = ruleToDelete;
 
-    const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(groupIdentifier, rule);
-    await deleteRuleFromGroup.execute(groupIdentifier, ruleIdentifier);
+    const groupIdentifierV1: RuleGroupIdentifier = {
+      dataSourceName: groupIdentifier.rulesSource.name,
+      namespaceName:
+        'uid' in groupIdentifier.namespace ? groupIdentifier.namespace.uid : groupIdentifier.namespace.name,
+      groupName: groupIdentifier.groupName,
+    };
+    const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(groupIdentifierV1, rule);
+    await deleteRuleFromGroup.execute(groupIdentifierV1, ruleIdentifier);
 
     // refetch rules for this rules source
     // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: groupIdentifier.dataSourceName }));
+    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: groupIdentifier.rulesSource.name }));
 
     if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
       await waitForRemoval(ruleIdentifier);
     } else {
       // Without this the delete popup will close and the user will still see the deleted rule
-      await dispatch(fetchRulerRulesAction({ rulesSourceName: groupIdentifier.dataSourceName }));
+      await dispatch(fetchRulerRulesAction({ rulesSourceName: groupIdentifier.rulesSource.name }));
     }
 
     dismissModal();

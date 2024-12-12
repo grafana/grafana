@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -14,11 +15,12 @@ import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
-import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
+import { ALERTING_API_SERVER_BASE_URL, paginatedHandlerFor } from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { buildInfoResponse } from '../../testSetup/featureDiscovery';
@@ -112,6 +114,10 @@ export function mimirDataSource() {
   mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSource, buildInfoResponse.mimir);
 
   return { dataSource };
+}
+
+export function setPrometheusRules(ds: DataSourceInstanceSettings, groups: PromRuleGroupDTO[]) {
+  server.use(http.get(`/api/prometheus/${ds.uid}/api/v1/rules`, paginatedHandlerFor(groups)));
 }
 
 /** Make a given plugin ID respond with a 404, as if it isn't installed at all */
