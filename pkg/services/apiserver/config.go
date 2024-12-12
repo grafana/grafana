@@ -5,6 +5,7 @@ import (
 	"net"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -54,6 +55,8 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.StorageOptions.BlobStoreURL = apiserverCfg.Key("blob_url").MustString(o.StorageOptions.BlobStoreURL)
+	o.StorageOptions.DataSyncerMaxRecordsLimit = apiserverCfg.Key("data_syncer_max_records_limit").MustInt(1000)
+	o.StorageOptions.DataSyncerInterval = apiserverCfg.Key("data_syncer_interval").MustDuration(time.Hour)
 
 	// unified storage configs look like
 	// [unified_storage.<group>.<resource>]

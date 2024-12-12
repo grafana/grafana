@@ -42,7 +42,7 @@ type StorageOptions struct { // The desired storage type
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
 
-	// DataSyncerInterval defines how often the data syncer should run for a resource.
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
 	DataSyncerInterval time.Duration
 	// DataSyncerMaxRecordsLimits defines how many records will be processed at max during a sync invocation.
 	DataSyncerMaxRecordsLimit int
@@ -59,8 +59,6 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-type", string(o.StorageType), "Storage type")
 	fs.StringVar(&o.DataPath, "grafana-apiserver-storage-path", o.DataPath, "Storage path for file storage")
 	fs.StringVar(&o.Address, "grafana-apiserver-storage-address", o.Address, "Remote grpc address endpoint")
-	fs.DurationVar(&o.DataSyncerInterval, "datasyncer.interval", time.Hour, "Defines how often the data syncer should run for a resource")
-	fs.IntVar(&o.DataSyncerMaxRecordsLimit, "datasyncer.maxrecordslimit", 1000, "Defines how many records will be processed at max during a sync invocation")
 }
 
 func (o *StorageOptions) Validate() []error {

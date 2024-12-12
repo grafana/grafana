@@ -73,7 +73,8 @@ func (s *SyncerConfig) Validate() error {
 	return nil
 }
 
-// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
+// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer, syncing the data
+// from the hosted grafana backend into the unified storage backend. This is run in the grafana instance.
 func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("invalid syncer config: %w", err)
