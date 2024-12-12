@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -152,14 +153,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return queries.filter((query) => isExpressionQueryInAlert(query));
   }, [queries]);
 
-  useEffect(() => {
+  useEffectOnce(() => {
     // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
     // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
 
     if (!editingExistingRule && isOptimizeReducerEnabled) {
       dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
     }
-  }, [dataQueries, expressionQueries, editingExistingRule, isOptimizeReducerEnabled]);
+  });
 
   const [type, condition, dataSourceName, editorSettings] = watch([
     'type',
@@ -289,6 +290,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -298,7 +305,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
