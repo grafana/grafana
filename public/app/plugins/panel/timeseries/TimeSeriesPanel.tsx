@@ -106,10 +106,9 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                getDataLinks={(seriesIdx: number, dataIdx: number) => {
-                  const field = alignedFrame.fields[seriesIdx]!;
-                  return field.getLinks ? field.getLinks({ valueRowIndex: dataIdx }) : [];
-                }}
+                getDataLinks={(seriesIdx: number, dataIdx: number) =>
+                  alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
