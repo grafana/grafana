@@ -1,4 +1,5 @@
-import { http } from 'msw';
+import { render } from 'test/test-utils';
+import { byTestId } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
@@ -6,25 +7,64 @@ import { AccessControlAction } from 'app/types';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
-import { paginatedHandlerFor } from '../mocks/server/utils';
+
+import RuleList from './RuleList.v2';
+
+// This tests only checks if proper components are rendered, so we mock them
+// Both FilterView and GroupedView are tested in their own tests
+jest.mock('./FilterView', () => ({
+  FilterView: () => <div data-testid="filter-view">Filter View</div>,
+}));
+
+jest.mock('./GroupedView', () => ({
+  GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
+}));
+
+const ui = {
+  filterView: byTestId('filter-view'),
+  groupedView: byTestId('grouped-view'),
+};
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-const server = setupMswServer();
+setupMswServer();
 
-const mimirGroups = alertingFactory.group.buildList(5000, { file: 'test-mimir-namespace' });
-alertingFactory.group.rewindSequence();
-const prometheusGroups = alertingFactory.group.buildList(200, { file: 'test-prometheus-namespace' });
+alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
+alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
-const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
-const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
+describe('RuleList v2', () => {
+  it('should show grouped view by default', () => {
+    render(<RuleList />);
 
-beforeEach(() => {
-  server.use(http.get(`/api/prometheus/${mimirDs.uid}/api/v1/rules`, paginatedHandlerFor(mimirGroups)));
-  server.use(http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, paginatedHandlerFor(prometheusGroups)));
+    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(ui.filterView.query()).not.toBeInTheDocument();
+  });
+
+  it('should show grouped view when invalid view parameter is provided', () => {
+    render(<RuleList />, {
+      historyOptions: {
+        initialEntries: ['/?view=invalid'],
+      },
+    });
+
+    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(ui.filterView.query()).not.toBeInTheDocument();
+  });
+
+  it('should show list view when "view=list" URL parameter is present', () => {
+    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(ui.groupedView.query()).not.toBeInTheDocument();
+  });
+
+  it('should show list view when a filter is applied', () => {
+    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=rule:cpu-alert'] } });
+
+    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(ui.groupedView.query()).not.toBeInTheDocument();
+  });
 });
-
-// @TODO: Add tests for RuleList.v2
