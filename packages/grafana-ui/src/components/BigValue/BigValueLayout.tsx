@@ -19,6 +19,7 @@ const VALUE_FONT_WEIGHT = 500;
 export abstract class BigValueLayout {
   titleFontSize: number;
   valueFontSize: number;
+  percentFontSize: number;
   chartHeight: number;
   chartWidth: number;
   valueColor: string;
@@ -41,6 +42,7 @@ export abstract class BigValueLayout {
     this.titleToAlignTo = this.textValues.titleToAlignTo;
     this.titleFontSize = 0;
     this.valueFontSize = 0;
+    this.percentFontSize = 0;
     this.chartHeight = 0;
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
@@ -55,6 +57,9 @@ export abstract class BigValueLayout {
       if (text.valueSize) {
         this.valueFontSize = text.valueSize;
         this.valueToAlignTo = '';
+      }
+      if (text.percentSize) {
+        this.percentFontSize = text.percentSize;
       }
     }
   }
@@ -111,8 +116,8 @@ export abstract class BigValueLayout {
   ): PercentChangeStyles {
     const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
-    const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
-    let iconSize = Math.max(this.valueFontSize / 3, 10);
+    const percentFontSize = this.percentFontSize || Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
+    let iconSize = this.percentFontSize ? this.percentFontSize - 3 : Math.max(this.valueFontSize / 3, 10);
     const themeVisualizationColors = this.props.theme.visualization;
     const color = getPercentChangeColor(percentChange, percentChangeColorMode, valueStyles, themeVisualizationColors);
 

@@ -38,4 +38,17 @@ export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
     },
     defaultValue: undefined,
   });
+
+  builder.addNumberInput({
+    path: 'text.percentSize',
+    category: ['Text size'],
+    name: 'Percent change',
+    settings: {
+      placeholder: 'Auto',
+      integer: false,
+      min: 1,
+      max: 200,
+    },
+    defaultValue: undefined,
+  });
 }
