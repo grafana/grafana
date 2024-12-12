@@ -107,28 +107,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 func idTokenExtractorInternal(ctx context.Context) (string, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
-		orgId := int64(1) // TODO: This isn't right.
-		staticRequester := &identity.StaticRequester{
-			Type:           claims.TypeServiceAccount, // system:apiserver
-			UserID:         1,
-			OrgID:          orgId,
-			Name:           "admin",
-			Login:          "admin",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: true,
-			Permissions: map[int64]map[string][]string{
-				orgId: {
-					"*": {"*"}, // all resources, all scopes
-				},
-			},
-		}
-		token, _, err := createInternalToken(staticRequester)
-		if err != nil {
-			return "", fmt.Errorf("failed to create internal token: %w", err)
-		}
-
-		staticRequester.IDToken = token
-		return token, nil
+		return "", nil
 	}
 
 	extra := authInfo.GetExtra()
@@ -147,7 +126,7 @@ func idTokenExtractorInternal(ctx context.Context) (string, error) {
 		return token, nil
 	}
 
-	return "", fmt.Errorf("id-token not found")
+	return "", nil
 }
 
 func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
@@ -185,7 +164,7 @@ func idTokenExtractorCloud(ctx context.Context) (string, error) {
 		return token[0], nil
 	}
 
-	return "", fmt.Errorf("id-token not found")
+	return "", nil
 }
 
 func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
