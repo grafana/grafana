@@ -348,6 +348,11 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 		return nil
 	}
 
+	if true {
+		fmt.Printf("skipping.... avoid inf loop")
+		return nil
+	}
+
 	client, _, err := b.client.New(cfg.GetNamespace())
 	if err != nil {
 		return err
@@ -508,6 +513,11 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			if err != nil {
 				return err
 			}
+
+			// Add worker dependencies
+			repoController.repoGetter = b
+			repoController.logger = slog.Default().With("logger", "provisioning-repo-controller")
+			repoController.identities = b.identities
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 			return nil

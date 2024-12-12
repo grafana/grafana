@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,10 +14,12 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -24,6 +27,11 @@ type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
+
+	// Converts config to instance
+	repoGetter RepoGetter
+	logger     *slog.Logger
+	identities auth.BackgroundIdentityService
 
 	// To allow injection for testing.
 	syncFn            func(key string) error
@@ -65,7 +73,7 @@ func NewRepositoryController(
 }
 
 func repoKeyFunc(obj any) (string, error) {
-	repo, ok := obj.(*v0alpha1.Repository)
+	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return "", fmt.Errorf("expected a Repository but got %T", obj)
 	}
@@ -160,10 +168,53 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
-	repo := cachedRepo.DeepCopy()
-	// TODO: do something with repo status here
+	now := time.Now().UnixMilli()
+	elapsed := now - cachedRepo.Status.Health.Checked
+	if time.Duration(elapsed)*time.Millisecond < time.Second*30 {
+		// We checked status recently!
+		// avoids inf loop!!!
+		// This logic is not totally right -- we want to force this if anything in spec changed :thinkign:
+		return nil
+	}
 
-	_, err = rc.client.Repositories(repo.GetNamespace()).UpdateStatus(context.TODO(), repo, metav1.UpdateOptions{})
+	// This is used for the health check client
+	id, err := rc.identities.WorkerIdentity(context.Background(), namespace)
+	if err != nil {
+		return err
+	}
+	ctx := identity.WithRequester(context.Background(), id)
+
+	// Make a copy we can mutate
+	cfg := cachedRepo.DeepCopy()
+	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
+	if err != nil {
+		return err // or update status????
+	}
+
+	res, err := TestRepository(ctx, repo, rc.logger)
+	if err != nil {
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"error running test repository",
+				err.Error(),
+			},
+		}
+	}
+	cfg.Status.Health = provisioning.HealthStatus{
+		Checked: now,
+		Healthy: res.Success,
+		Message: res.Errors,
+	}
+
+	// State should not be empty
+	if cfg.Status.Sync.State == "" {
+		cfg.Status.Sync.State = provisioning.JobStatePending
+	}
+
+	_, err = rc.client.Repositories(cfg.GetNamespace()).
+		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
+
 	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
 		// deleted or changed in the meantime, we'll get called again
 		return nil
@@ -171,6 +222,5 @@ func (rc *RepositoryController) sync(key string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
