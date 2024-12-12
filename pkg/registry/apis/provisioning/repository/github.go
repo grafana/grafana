@@ -475,30 +475,15 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
-		r.logger.Debug("ignoring push event as it is not for the configured branch")
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	job := &provisioning.JobSpec{
-		Action: provisioning.JobActionMergeBranch,
-	}
-
-	beforeRef := event.GetBefore()
+	var count int
 	for _, commit := range event.Commits {
-		commitInfo := provisioning.CommitInfo{
-			SHA1: commit.GetID(),
-		}
-
-		count := 0
 		for _, file := range commit.Added {
 			if r.ignore(file) {
 				continue
 			}
-
-			commitInfo.Added = append(commitInfo.Added, provisioning.FileRef{
-				Ref:  commit.GetID(),
-				Path: file,
-			})
 			count++
 		}
 
@@ -506,10 +491,6 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			if r.ignore(file) {
 				continue
 			}
-			commitInfo.Modified = append(commitInfo.Modified, provisioning.FileRef{
-				Ref:  commit.GetID(),
-				Path: file,
-			})
 			count++
 		}
 
@@ -517,21 +498,11 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			if r.ignore(file) {
 				continue
 			}
-
-			commitInfo.Removed = append(commitInfo.Removed, provisioning.FileRef{
-				Ref:  beforeRef,
-				Path: file,
-			})
 			count++
 		}
-
-		if count > 0 {
-			job.Commits = append(job.Commits, commitInfo)
-		}
-		beforeRef = commit.GetID()
 	}
 
-	if len(job.Commits) == 0 {
+	if count == 0 {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no files require updates",
@@ -540,7 +511,9 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
-		Job:  job,
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionSync,
+		},
 	}, nil
 }
 
@@ -568,7 +541,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != cfg.Branch {
+	if pr.GetBase().GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: "ignoring pull request event as it is not for the configured branch",
@@ -611,69 +584,128 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		return r.processPR(ctx, logger, job, replicator)
 	}
 
-	// NOTE: Everything below here is not git specific
-	for _, commit := range job.Commits {
-		// NOT PR, this is processing the actual files
-		for _, v := range commit.Added {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read added resource", "file", v, "error", err)
-				continue
-			}
-
-			err = replicator.Replicate(ctx, fileInfo)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to replicate added resource", "file", v, "error", err)
-				continue
-			}
-		}
-		for _, v := range commit.Modified {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read modified resource", "file", v, "error", err)
-				continue
-			}
-
-			err = replicator.Replicate(ctx, fileInfo)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to replicate modified resource", "file", v, "error", err)
-				continue
-			}
-		}
-
-		for _, v := range commit.Removed {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read removed resource", "file", v, "error", err)
-				continue
-			}
-
-			if err := replicator.Delete(ctx, fileInfo); err != nil {
-				logger.ErrorContext(ctx, "failed to delete resource", "file", v, "error", err)
-				continue
-			}
-		}
-
-		// TODO: why having to fetch this one again?
-		resource, err := r.iface.Get(ctx, r.config.Name, metav1.GetOptions{})
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to get repository", "error", err)
-			continue
-		}
-
-		unstructuredResource := resource.DeepCopy()
-		if err := unstructured.SetNestedField(unstructuredResource.Object, commit.SHA1, "status", "currentGitCommit"); err != nil {
-			logger.ErrorContext(ctx, "failed to set current git commit status", "error", err)
-			continue
-		}
-
-		if _, err := r.iface.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
-			logger.ErrorContext(ctx, "failed to update repository status", "error", err)
-			continue
-		}
-
-		logger.InfoContext(ctx, "repository status updated", "commit", commit.SHA1)
+	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
+	if err != nil {
+		return fmt.Errorf("get branch: %w", err)
 	}
+
+	latest := branch.Sha
+	lastSyncCommit := r.config.Status.CurrentGitCommit
+
+	if lastSyncCommit == "" {
+		logger.Info("initial sync")
+		// TODO: this essentially the import endpoint. Refactor to reuse that code
+		tree, err := r.ReadTree(ctx, logger, r.config.Spec.GitHub.Branch)
+		if err != nil {
+			return fmt.Errorf("read tree: %w", err)
+		}
+
+		for _, entry := range tree {
+			logger := logger.With("file", entry.Path)
+			if !entry.Blob {
+				logger.DebugContext(ctx, "ignoring non-blob entry")
+				continue
+			}
+
+			if r.ignore(entry.Path) {
+				logger.DebugContext(ctx, "ignoring file")
+				continue
+			}
+
+			info, err := r.Read(ctx, logger, entry.Path, r.config.Spec.GitHub.Branch)
+			if err != nil {
+				return fmt.Errorf("read file: %w", err)
+			}
+
+			// The parse function will fill in the repository metadata, so copy it over here
+			info.Hash = entry.Hash
+			info.Modified = nil // modified?
+
+			if err := replicator.Replicate(ctx, info); err != nil {
+				// TODO: fix import cycles
+				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+				// 	logger.InfoContext(ctx, "file does not contain a resource")
+				// 	continue
+				// }
+				return fmt.Errorf("replicate file: %w", err)
+			}
+		}
+	} else {
+		files, err := r.gh.CompareCommits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, lastSyncCommit, latest)
+		if err != nil {
+			return fmt.Errorf("compare commits: %w", err)
+		}
+
+		for _, f := range files {
+			// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+			switch f.GetStatus() {
+			case "added", "modified", "changed":
+				ref := latest
+				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
+				if err != nil {
+					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+				if err := replicator.Replicate(ctx, fileInfo); err != nil {
+					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+			case "renamed":
+				// delete the old file
+				oldFile, err := r.Read(ctx, logger, f.GetPreviousFilename(), lastSyncCommit)
+				if err != nil {
+					logger.ErrorContext(ctx, "failed to read old resource", "file", f.GetPreviousFilename(), "error", err)
+					continue
+				}
+
+				if err := replicator.Delete(ctx, oldFile); err != nil {
+					logger.ErrorContext(ctx, "failed to delete old resource", "file", f.GetPreviousFilename(), "error", err)
+					continue
+				}
+				// replicate the new file
+				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), latest)
+				if err != nil {
+					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+				if err := replicator.Replicate(ctx, fileInfo); err != nil {
+					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+			case "removed":
+				ref := lastSyncCommit
+				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
+				if err != nil {
+					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+				if err := replicator.Delete(ctx, fileInfo); err != nil {
+					logger.ErrorContext(ctx, "failed to delete resource", "file", f.GetFilename(), "error", err)
+					continue
+				}
+			default:
+				logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
+			}
+		}
+	}
+
+	// TODO: why having to fetch this one again?
+	resource, err := r.iface.Get(ctx, r.config.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("get repository: %w", err)
+	}
+
+	// TODO: Can we use typed client for this?
+	unstructuredResource := resource.DeepCopy()
+	if err := unstructured.SetNestedField(unstructuredResource.Object, latest, "status", "currentGitCommit"); err != nil {
+		return fmt.Errorf("set currentGitCommit: %w", err)
+	}
+
+	if _, err := r.iface.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update repository status: %w", err)
+	}
+
+	logger.InfoContext(ctx, "repository status updated", "commit", latest)
 
 	return nil
 }
