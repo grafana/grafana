@@ -902,4 +902,8 @@ const (
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
+
+	// FlagElasticsearchCrossClusterSearch
+	// Enables cross cluster search in the Elasticsearch datasource
+	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 )
