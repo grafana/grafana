@@ -24,7 +24,7 @@ export const datasourceBuildInfoHandler = () =>
         const response = buildInfoResponse[datasourceUid];
         return HttpResponse.json(response);
       }
-      return HttpResponse.json({});
+      return HttpResponse.json({}, { status: 404 });
     }
   );
 

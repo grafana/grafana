@@ -3,9 +3,8 @@ import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -14,15 +13,16 @@ import {
   getGrafanaRule,
   getVanillaPromRule,
   grantUserPermissions,
+<<<<<<< HEAD
   mockCombinedCloudRuleNamespace,
   mockDataSource,
+=======
+>>>>>>> eca9309bdd8 (--wip-- [skip ci])
   mockPluginLinkExtension,
   mockPromAlertingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
-import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
-import { DataSourceType } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
@@ -62,7 +62,7 @@ const ELEMENTS = {
   },
 };
 
-setupMswServer();
+setupAlertingTestEnv();
 
 setPluginLinksHook(() => ({
   links: [

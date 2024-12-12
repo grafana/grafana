@@ -4,19 +4,17 @@ import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
-  mockDataSources,
   setupVanillaAlertmanagerServer,
 } from 'app/features/alerting/unified/components/settings/__mocks__/server';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
 import ContactPoints from './components/contact-points/ContactPoints';
 import EditContactPoint from './components/contact-points/EditContactPoint';
 import NewReceiverView from './components/receivers/NewReceiverView';
 
-const server = setupMswServer();
+const { server } = setupAlertingTestEnv();
 
 const expectSaveWasSuccessful = async () => {
   // TODO: Have a better way to assert that the contact point was saved. This is instead asserting on some
@@ -53,7 +51,6 @@ beforeEach(() => {
   ]);
 
   setupVanillaAlertmanagerServer(server);
-  setupDataSources(mockDataSources[PROVISIONED_MIMIR_ALERTMANAGER_UID]);
 });
 
 it('can save a contact point with a select dropdown', async () => {

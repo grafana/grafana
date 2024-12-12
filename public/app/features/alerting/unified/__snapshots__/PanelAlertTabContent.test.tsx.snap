@@ -21,11 +21,11 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
   "name": "mypanel",
   "queries": [
     {
-      "datasourceUid": "mock-ds-2",
+      "datasourceUid": "prometheus-uid",
       "model": {
         "datasource": {
           "type": "prometheus",
-          "uid": "mock-ds-2",
+          "uid": "prometheus-uid",
         },
         "expr": "sum(some_metric [15s])) by (app)",
         "interval": "",

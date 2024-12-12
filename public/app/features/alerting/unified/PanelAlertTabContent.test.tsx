@@ -1,9 +1,8 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
-import { PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
@@ -15,51 +14,25 @@ import * as alertingAbilities from './hooks/useAbilities';
 import { mockAlertRuleApi, setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
-  mockDataSource,
   mockPromAlert,
   mockPromAlertingRule,
   mockRulerAlertingRule,
   mockRulerRuleGroup,
 } from './mocks';
 import { captureRequests } from './mocks/server/events';
+import { changeDataSourceSettings, setupAlertingDataSources } from './testSetup/datasources';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/ruler');
+jest.mock('../../../core/hooks/useMediaQueryChange');
+
+jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
+jest.spyOn(apiRuler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
-const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
-
-const dataSources = {
-  prometheus: mockDataSource<PromOptions>(
-    {
-      name: 'Prometheus',
-      type: DataSourceType.Prometheus,
-      isDefault: false,
-      jsonData: { manageAlerts: true },
-    },
-    prometheusModuleSettings
-  ),
-  default: mockDataSource<PromOptions>(
-    {
-      name: 'Default',
-      type: DataSourceType.Prometheus,
-      isDefault: true,
-      jsonData: { manageAlerts: true },
-    },
-    prometheusModuleSettings
-  ),
-  prometheusMinInterval: mockDataSource<PromOptions>(
-    {
-      name: 'Prometheus Min Interval',
-      type: DataSourceType.Prometheus,
-      isDefault: false,
-      jsonData: { manageAlerts: true, timeInterval: '7m' },
-    },
-    prometheusModuleSettings
-  ),
-};
+const { dataSources } = setupAlertingDataSources();
 
 const mocks = {
   useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
@@ -196,7 +169,7 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
-    setupDataSources(...Object.values(dataSources));
+    setupAlertingDataSources();
 
     setPluginLinksHook(() => ({
       links: [],
@@ -235,7 +208,7 @@ describe('PanelAlertTabContent', () => {
       refId: 'A',
       datasource: {
         type: 'prometheus',
-        uid: 'mock-ds-2',
+        uid: dataSources.prometheus.uid,
       },
       interval: '',
       intervalMs: 300000,
@@ -244,6 +217,9 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will work with default datasource', async () => {
+    changeDataSourceSettings('prometheus', {
+      isDefault: true,
+    });
     renderAlertTabContent(
       dashboard,
       new PanelModel({
@@ -265,7 +241,7 @@ describe('PanelAlertTabContent', () => {
       refId: 'A',
       datasource: {
         type: 'prometheus',
-        uid: 'mock-ds-3',
+        uid: dataSources.prometheus.uid,
       },
       interval: '',
       intervalMs: 300000,
@@ -297,6 +273,9 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account datasource minInterval', async () => {
+    changeDataSourceSettings('prometheus', {
+      jsonData: { manageAlerts: true, timeInterval: '7m', implementation: 'prometheus' },
+    });
     renderAlertTabContent(
       dashboard,
       new PanelModel({
@@ -304,7 +283,7 @@ describe('PanelAlertTabContent', () => {
         maxDataPoints: 100,
         datasource: {
           type: 'prometheus',
-          uid: dataSources.prometheusMinInterval.uid,
+          uid: dataSources.prometheus.uid,
         },
       })
     );
@@ -320,7 +299,7 @@ describe('PanelAlertTabContent', () => {
       refId: 'A',
       datasource: {
         type: 'prometheus',
-        uid: 'mock-ds-4',
+        uid: dataSources.prometheus.uid,
       },
       interval: '',
       intervalMs: 420000,

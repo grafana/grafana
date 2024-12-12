@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { setupAlertingTestEnv } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
-import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
@@ -40,9 +39,9 @@ const ui = {
   cancelButton: byRole('button', { name: /Cancel/ }),
 };
 
-describe('Alerting Settings', () => {
-  setupMswServer();
+const { server } = setupAlertingTestEnv();
 
+describe('Alerting Settings', () => {
   beforeEach(() => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
@@ -73,11 +72,8 @@ describe('Alerting Settings', () => {
 });
 
 describe('vanilla Alertmanager', () => {
-  const server = setupMswServer();
-
   beforeEach(() => {
     setupVanillaAlertmanagerServer(server);
-    setupDataSources(...Object.values(mockDataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
