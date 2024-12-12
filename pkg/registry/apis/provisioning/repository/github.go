@@ -662,10 +662,14 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		}
 
 		unstructuredResource := resource.DeepCopy()
-		unstructured.SetNestedField(unstructuredResource.Object, commit.SHA1, "status", "currentGitCommit")
+		if err := unstructured.SetNestedField(unstructuredResource.Object, commit.SHA1, "status", "currentGitCommit"); err != nil {
+			logger.ErrorContext(ctx, "failed to set current git commit status", "error", err)
+			continue
+		}
 
 		if _, err := r.iface.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
 			logger.ErrorContext(ctx, "failed to update repository status", "error", err)
+			continue
 		}
 
 		logger.InfoContext(ctx, "repository status updated", "commit", commit.SHA1)
