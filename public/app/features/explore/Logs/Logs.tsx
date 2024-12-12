@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
@@ -189,6 +189,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     loadMoreLogs,
     panelState,
     eventBus,
+    onPinLineCallback,
   } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
@@ -230,9 +231,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   // Get pinned log lines
   const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
-  const pinnedLogs = logsParent?.children
+  const pinnedLogs = useMemo(() => logsParent?.children
     ?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE)
-    .map((pinnedLogs) => pinnedLogs.id);
+    .map((pinnedLogs) => pinnedLogs.id), [logsParent?.children]);
 
   const getPinnedLogsCount = useCallback(() => {
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
@@ -338,7 +339,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
       displayedFields = Object.values(panelState?.logs?.displayedFields);
     }
-    setDisplayedFields(displayedFields);
   }, [panelState?.logs?.displayedFields]);
 
   useEffect(() => {
@@ -644,7 +644,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef?.current();
   }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
 
-  const onOpenContext = (row: LogRowModel, onClose: () => void) => {
+  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     setContextOpen(true);
     setContextRow(row);
@@ -653,9 +653,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       logRowUid: row.uid,
     });
     onCloseCallbackRef.current = onClose;
-  };
+  }, []);
 
-  const onPermalinkClick = async (row: LogRowModel) => {
+  const onPermalinkClick = useCallback(async (row: LogRowModel) => {
     // this is an extra check, to be sure that we are not
     // creating permalinks for logs without an id-field.
     // normally it should never happen, because we do not
@@ -683,7 +683,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       logRowUid: row.uid,
       logRowLevel: row.logLevel,
     });
-  };
+  }, [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]);
 
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
@@ -697,7 +697,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     topLogsRef.current?.scrollIntoView();
   }, [logsContainerRef, topLogsRef]);
 
-  const onPinToContentOutlineClick = (row: LogRowModel, allowUnPin = true) => {
+  const onPinToContentOutlineClick = useCallback((row: LogRowModel, allowUnPin = true) => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
       contentOutlineTrackPinLimitReached();
       return;
@@ -737,16 +737,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       contentOutlineTrackPinAdded();
     }
 
-    props.onPinLineCallback?.();
-  };
+    onPinLineCallback?.();
+  }, [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]);
 
-  const hasUnescapedContent = checkUnescapedContent(logRows);
-  const filteredLogs = filterRows(logRows, hiddenLogLevels);
-  const { dedupedRows, dedupCount } = dedupRows(filteredLogs, dedupStrategy);
-  const navigationRange = createNavigationRange(logRows);
-  const infiniteScrollAvailable = !logsQueries?.some(
+  const hasUnescapedContent = useMemo(() => checkUnescapedContent(logRows), [logRows]);
+  const filteredLogs = useMemo(() => filterRows(logRows, hiddenLogLevels), [hiddenLogLevels, logRows]);
+  const { dedupedRows, dedupCount } = useMemo(() => dedupRows(filteredLogs, dedupStrategy), [dedupStrategy, filteredLogs]);
+  const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
+  const infiniteScrollAvailable = useMemo(() => !logsQueries?.some(
     (query) => 'direction' in query && query.direction === LokiQueryDirection.Scan
-  );
+  ), [logsQueries]);
 
   return (
     <>
@@ -1100,21 +1100,22 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
   };
 };
 
-const checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
+const checkUnescapedContent = (logRows: LogRowModel[]) => {
   return logRows.some((r) => r.hasUnescapedContent);
-});
+};
 
-const dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
+const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
+  console.log(logRows, dedupStrategy)
   const dedupedRows = dedupLogRows(logRows, dedupStrategy);
   const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
   return { dedupedRows, dedupCount };
-});
+};
 
-const filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
+const filterRows = (logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
   return filterLogLevels(logRows, new Set(hiddenLogLevels));
-});
+};
 
-const createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+const createNavigationRange = (logRows: LogRowModel[]): { from: number; to: number } | undefined => {
   if (!logRows || logRows.length === 0) {
     return undefined;
   }
@@ -1126,4 +1127,4 @@ const createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: numbe
   }
 
   return { from: firstTimeStamp, to: lastTimeStamp };
-});
+};

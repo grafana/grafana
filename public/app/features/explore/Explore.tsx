@@ -323,6 +323,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
   };
 
+  onPinLineCallback = () => {
+    this.setState({ contentOutlineVisible: true });
+  };
+
   renderEmptyState(exploreContainerStyles: string) {
     return (
       <div className={cx(exploreContainerStyles)}>
@@ -440,9 +444,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
-          onPinLineCallback={() => {
-            this.setState({ contentOutlineVisible: true });
-          }}
+          onPinLineCallback={this.onPinLineCallback}
         />
       </ContentOutlineItem>
     );
