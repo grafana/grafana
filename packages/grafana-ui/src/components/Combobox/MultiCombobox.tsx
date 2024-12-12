@@ -24,7 +24,7 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value } = props;
+  const { options, placeholder, onChange, value, width } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -43,8 +43,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
 
   const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
+  const finalWidth = width && width !== 'auto' ? width : containerWidth;
 
-  useMeasureMultiCombobox(containerWidth, suffixWidth, selectedItems, setShownItems);
+  useMeasureMultiCombobox(finalWidth, suffixWidth, selectedItems, setShownItems);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -130,6 +131,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   return (
     <div>
       <div
+        style={{ width: width === 'auto' ? undefined : width }}
         className={multiStyles.wrapper}
         ref={measureRef}
         onClick={() => selectedItems.length > 0 && setIsOpen(!isOpen)}
