@@ -141,6 +141,10 @@ func SetupConfig(
 
 	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
 
+	if err := AddPostStartHooks(serverConfig, builders); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -259,5 +263,28 @@ func InstallAPIs(
 		}
 	}
 
+	return nil
+}
+
+// AddPostStartHooks adds post start hooks to a generic API server config
+func AddPostStartHooks(
+	config *genericapiserver.RecommendedConfig,
+	builders []APIGroupBuilder,
+) error {
+	for _, b := range builders {
+		hookProvider, ok := b.(APIGroupPostStartHookProvider)
+		if !ok {
+			continue
+		}
+		hooks, err := hookProvider.GetPostStartHooks()
+		if err != nil {
+			return err
+		}
+		for name, hook := range hooks {
+			if err := config.AddPostStartHook(name, hook); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }

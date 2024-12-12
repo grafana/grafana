@@ -653,8 +653,7 @@ func (dr *DashboardServiceImpl) getK8sContext(ctx context.Context) (context.Cont
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	// TODO: once getting dashboards by ID in unified storage is supported, we can remove the restraint of the uid being provided
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) &&
-		dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) && query.UID != "" {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) && query.UID != "" {
 		// add in k8s user if does not exist in context yet
 		_, exists := k8sRequest.UserFrom(ctx)
 		if !exists {

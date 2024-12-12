@@ -277,7 +277,7 @@ func TestGetDashboard(t *testing.T) {
 		k8sClientMock := new(mockDashK8sCli)
 		k8sResourceMock := new(mockResourceInterface)
 		service.k8sclient = k8sClientMock
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboardsAPI, featuremgmt.FlagKubernetesCliDashboards)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
 		query := &dashboards.GetDashboardQuery{
 			UID:   "test-uid",
 			OrgID: 1,
@@ -319,7 +319,7 @@ func TestGetDashboard(t *testing.T) {
 		k8sClientMock := new(mockDashK8sCli)
 		k8sResourceMock := new(mockResourceInterface)
 		service.k8sclient = k8sClientMock
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboardsAPI, featuremgmt.FlagKubernetesCliDashboards)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
 		query := &dashboards.GetDashboardQuery{
 			UID:   "test-uid",
 			OrgID: 1,
@@ -341,7 +341,7 @@ func TestGetDashboard(t *testing.T) {
 		k8sClientMock := new(mockDashK8sCli)
 		k8sResourceMock := new(mockResourceInterface)
 		service.k8sclient = k8sClientMock
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboardsAPI, featuremgmt.FlagKubernetesCliDashboards)
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
 		query := &dashboards.GetDashboardQuery{
 			UID:   "test-uid",
 			OrgID: 1,
