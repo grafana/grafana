@@ -199,13 +199,12 @@ func SetDualWritingMode(
 		}
 	case cfg.Mode >= Mode3 && currentMode < Mode3:
 		// Transitioning to Mode3 or higher requires data synchronization.
-		// Use the current mode for now, then run the syncer to catch up.
 		cfgModeTmp := cfg.Mode
 		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
 		// once in the current active mode before we can upgrade.
 		cfg.Mode = currentMode
 		syncOk, err := runDataSyncer(ctx, cfg)
-		// Once we are done with running the syncer, we can change the mode back on the config.
+		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
 		cfg.Mode = cfgModeTmp
 		if err != nil {
 			klog.Info("data syncer failed for mode:", m)
