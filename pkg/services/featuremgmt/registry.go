@@ -199,12 +199,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "mysqlParseTime",
-			Description: "Ensure the parseTime flag is set for MySQL driver",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
 			Stage:             FeatureStageGeneralAvailability,
@@ -718,13 +712,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:            "kubernetesDashboardsAPI",
-			Description:     "Use the kubernetes API in the backend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "kubernetesFolders",
@@ -1630,8 +1617,9 @@ var (
 		{
 			Name:        "zipkinBackendMigration",
 			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",
