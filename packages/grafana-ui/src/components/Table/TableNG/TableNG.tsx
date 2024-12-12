@@ -322,20 +322,29 @@ export function TableNG(props: TableNGProps) {
 
   // Sort rows
   const sortedRows = useMemo(() => {
+    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
+    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
+
     if (sortColumns.length === 0) {
       return rows;
     }
 
-    return [...rows].sort((a, b) => {
-      for (const sort of sortColumns) {
-        const { columnKey, direction } = sort;
-        const comparator = getComparator(columnTypes[columnKey]);
-        const compResult = comparator(a[columnKey], b[columnKey]);
-        if (compResult !== 0) {
-          return direction === 'ASC' ? compResult : -compResult;
+    return rows.slice().sort((a, b) => {
+      let result = 0;
+      let sortIndex = 0;
+
+      for (const { columnKey } of sortColumns) {
+        const compare = comparators[sortIndex];
+        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
+
+        if (result !== 0) {
+          break;
         }
+
+        sortIndex += 1;
       }
-      return 0; // false
+
+      return result;
     });
   }, [rows, sortColumns, columnTypes]);
 
@@ -480,6 +489,8 @@ function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.R
 
 type Comparator = (a: any, b: any) => number;
 
+const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+
 function getComparator(sortColumnType: string): Comparator {
   switch (sortColumnType) {
     case FieldType.time:
@@ -489,7 +500,7 @@ function getComparator(sortColumnType: string): Comparator {
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+      return (a, b) => compare(String(a), String(b));
   }
 }
 
