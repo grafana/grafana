@@ -1,7 +1,7 @@
 import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -339,13 +339,12 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE).unshift(all);
     }
 
-    const otelWarning = useRef(false);
+    const [dismissOtelWarning, updateDismissOtelWarning] = useState(false);
     const missingOtelTargets = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail)?.getValue();
-    if (missingOtelTargets && !otelWarning.current) {
+    if (missingOtelTargets && !dismissOtelWarning) {
       reportExploreMetrics('missing_otel_labels_by_truncating_job_and_instance', {
         metric: trail.state.metric,
       });
-      otelWarning.current = true;
     }
 
     useEffect(() => {
@@ -379,12 +378,12 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               </Field>
             )}
           </div>
-          {missingOtelTargets && (
+          {missingOtelTargets && !dismissOtelWarning && (
             <Alert
               title={`Warning: There may be missing Open Telemetry resource attributes.`}
               severity={'warning'}
               key={'warning'}
-              onRemove={() => {}}
+              onRemove={() => updateDismissOtelWarning(true)}
               className={styles.truncatedOTelResources}
             >
               <Trans i18nKey={'explore-metrics.breakdown.missing-otel-labels'}>
