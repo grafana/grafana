@@ -95,6 +95,11 @@ exports[`VariableQueryEditor renders correctly 1`] = `
               className="css-1d3xu67-Icon"
               height={16}
               id="public/img/icons/unicons/angle-down.svg"
+              loader={
+                <div
+                  className="css-ua55tz-Icon"
+                />
+              }
               title=""
               width={16}
             />
