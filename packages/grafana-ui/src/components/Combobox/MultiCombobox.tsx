@@ -103,11 +103,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
           setIsOpen(false);
-          return {
-            ...changes,
-            isOpen: false,
-            inputValue: '',
-          };
+          return changes;
         default:
           return changes;
       }
