@@ -55,8 +55,12 @@ describe('v2 dashboard API', () => {
       updatedBy: '',
     });
 
-    const api = new K8sDashboardV2APIStub();
-    const result = await api.getDashboardDTO('test');
+    const convertToV1 = false;
+    const api = new K8sDashboardV2APIStub(convertToV1);
+    // because the API can currently rturn both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
+    // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
+    // access
+    const result = (await api.getDashboardDTO('test')) as DashboardWithAccessInfo<DashboardV2Spec>;
     expect(result.metadata.annotations![AnnoKeyFolderId]).toBe(1);
     expect(result.metadata.annotations![AnnoKeyFolderTitle]).toBe('New Folder');
     expect(result.metadata.annotations![AnnoKeyFolderUrl]).toBe('/folder/url');

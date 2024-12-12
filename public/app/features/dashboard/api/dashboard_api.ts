@@ -13,12 +13,14 @@ type DashboardAPIClients = {
   v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
 };
 
-let clients: Partial<DashboardAPIClients>;
+type DashboardReturnTypes = DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
+
+let clients: Partial<DashboardAPIClients> | undefined;
 
 // Overloads
 export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
 export function getDashboardAPI(requestV2Response: 'v2'): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
-export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<any> {
+export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<DashboardReturnTypes> {
   const v = getDashboardsApiVersion();
   const isConvertingToV1 = !requestV2Response;
 
@@ -39,4 +41,11 @@ export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<any> {
   }
 
   return clients[v];
+}
+
+export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefined) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardAPI can be only overridden in test environment');
+  }
+  clients = override;
 }
