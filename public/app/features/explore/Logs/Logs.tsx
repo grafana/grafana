@@ -1105,7 +1105,6 @@ const checkUnescapedContent = (logRows: LogRowModel[]) => {
 };
 
 const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
-  console.log(logRows, dedupStrategy)
   const dedupedRows = dedupLogRows(logRows, dedupStrategy);
   const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
   return { dedupedRows, dedupCount };
