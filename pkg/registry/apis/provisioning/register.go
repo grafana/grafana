@@ -348,11 +348,6 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 		return nil
 	}
 
-	if true {
-		fmt.Printf("skipping.... avoid inf loop")
-		return nil
-	}
-
 	client, _, err := b.client.New(cfg.GetNamespace())
 	if err != nil {
 		return err
