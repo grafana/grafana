@@ -641,7 +641,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: f.value,
+      value: prometheusRegularEscape(f.value),
       op: f.operator,
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
@@ -673,7 +673,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: f.value,
+      value: prometheusRegularEscape(f.value),
       op: f.operator,
     }));
 
@@ -889,17 +889,13 @@ export class PrometheusDatasource
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
-        // For regex matches, only escape quotes and backslashes, but preserve regex metacharacters
         value = prometheusRegularEscape(value);
-      } else {
-        // For exact matches, use the adhoc filter escaping
-        value = prometheusAdhocFilterEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
     }, expr);
-
     return finalQuery;
   }
+
   // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
@@ -1046,21 +1042,22 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: `prometheusRegularEscape` and `prometheusSpecialRegexEscape` are similar
-// to the escapeLabelValueIn* functions in language_utils.ts, but they are not exactly
-// the same algorithm, and we found no way to reuse one in the another or vice versa.
+// NOTE: these two functions are similar to the escapeLabelValueIn* functions
+// in language_utils.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
   if (typeof value !== 'string') {
     return value;
   }
 
-  return (
-    value
-      // escape backslashes
-      .replace(/\\/g, '\\\\')
-      // escape single quotes with double backslashes
-      .replace(/'/g, "\\\\'")
-  );
+  // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+  // don't escape the encapsulating quotes
+  if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+    return value;
+  }
+
+  // otherwise escape backslashes and double quotes
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
@@ -1068,27 +1065,8 @@ export function prometheusSpecialRegexEscape<T>(value: T) {
     return value;
   }
 
-  return (
-    value
-      // escape backslashes with four backslashes since this is used in regex context
-      .replace(/\\/g, '\\\\\\\\')
-      // escape single quotes with double backslashes
-      .replace(/'/g, "\\\\'")
-      // escape special regex characters with double backslash
-      .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&')
-  );
-}
-
-export function prometheusAdhocFilterEscape<T>(value: T) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  return (
-    value
-      // escape backslashes
-      .replace(/\\/g, '\\\\')
-      // escape double quotes
-      .replace(/"/g, '\\"')
-  );
+  return value
+    .replace(/\\/g, '\\\\\\\\') // escape backslashes
+    .replace(/"/g, '\\\\\\"') // escape double quotes
+    .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }
