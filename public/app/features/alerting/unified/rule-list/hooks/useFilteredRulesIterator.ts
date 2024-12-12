@@ -1,3 +1,4 @@
+import { from } from 'ix/asynciterable/index';
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
@@ -35,7 +36,9 @@ export function useFilteredRulesIteratorProvider() {
       : allExternalRulesSources;
 
     // This split into the first one and the rest is only for compatibility with the merge function from ix
-    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => prometheusGroupsGenerator(ds, groupLimit));
+    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
+      return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
+    });
 
     return merge(source, ...iterables).pipe(
       filter(([_, group]) => groupFilter(group, filterState)),

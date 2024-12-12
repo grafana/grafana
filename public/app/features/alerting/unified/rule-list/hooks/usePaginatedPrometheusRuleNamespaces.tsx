@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { ExternalRulesSourceIdentifier, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groupRulesByFileName } from '../../api/prometheus';
@@ -9,19 +9,18 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
 
 import { useRuleGroupsGenerator } from './prometheusGroupsGenerator';
 
-export function usePaginatedPrometheusRuleNamespaces(
-  rulesSourceIdentifier: ExternalRulesSourceIdentifier,
+export function usePaginatedPrometheusRuleNamespaces<TGroup extends PromRuleGroupDTO>(
+  groupsGenerator: AsyncGenerator<TGroup, void, unknown>,
+  rulesSourceIdentifier: RulesSourceIdentifier,
   pageSize: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [groups, setGroups] = useState<PromRuleGroupDTO[]>([]);
+  const [groups, setGroups] = useState<TGroup[]>([]);
   const [lastPage, setLastPage] = useState<number | undefined>(undefined);
-
-  const { groupsGenerator } = usePrometheusGroupsGenerator(rulesSourceIdentifier, pageSize);
 
   const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
     let done = false;
-    const currentGroups: PromRuleGroupDTO[] = [];
+    const currentGroups: TGroup[] = [];
 
     while (currentGroups.length < groupsCount) {
       const generatorResult = await groupsGenerator.next();
@@ -29,7 +28,7 @@ export function usePaginatedPrometheusRuleNamespaces(
         done = true;
         break;
       }
-      const [, group] = generatorResult.value;
+      const group = generatorResult.value;
       currentGroups.push(group);
     }
 
@@ -41,6 +40,7 @@ export function usePaginatedPrometheusRuleNamespaces(
     setGroups((groups) => [...groups, ...currentGroups]);
   });
 
+  // lastPage could be computed from groups.length and pageSize
   const fetchInProgress = isLoading(groupsRequestState);
   const canMoveForward = !fetchInProgress && (!lastPage || currentPage < lastPage);
   const canMoveBackward = currentPage > 1 && !fetchInProgress;

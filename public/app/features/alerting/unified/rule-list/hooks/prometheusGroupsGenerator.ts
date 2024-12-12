@@ -2,7 +2,12 @@ import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
+import {
+  ExternalRulesSourceIdentifier,
+  GrafanaRulesSourceIdentifier,
+  RulesSourceIdentifier,
+} from 'app/types/unified-alerting';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { BaseQueryFnArgs } from '../../api/alertingApi';
 import { prometheusApi, PromRulesResponse } from '../../api/prometheusApi';
@@ -14,6 +19,13 @@ interface FetchGroupsOptions {
   groupNextToken?: string;
 }
 
+// export function useGroupsGenerator(
+//   rulesSourceIdentifier: ExternalRulesSourceIdentifier
+// ): AsyncGenerator<readonly [ExternalRulesSourceIdentifier, PromRuleGroupDTO<PromRuleDTO>], void, unknown>;
+// export function useGroupsGenerator(rulesSourceIdentifier: GrafanaRulesSourceIdentifier);
+// export function useGroupsGenerator(rulesSourceIdentifier: RulesSourceIdentifier) {}
+
+// TODO Split into two hooks
 export function useRuleGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
@@ -23,9 +35,7 @@ export function useRuleGroupsGenerator() {
       const getRuleSourceGroups = (options: FetchGroupsOptions) =>
         getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
 
-      for await (const group of genericGroupsGenerator(getRuleSourceGroups, groupLimit)) {
-        yield [ruleSource, group] as const;
-      }
+      yield* genericGroupsGenerator(getRuleSourceGroups, groupLimit);
     },
     [getGroups]
   );

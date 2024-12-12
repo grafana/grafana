@@ -22,7 +22,10 @@ interface PromRulesOptions {
   groupNextToken?: string;
 }
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'>;
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'> & {
+  dashboardUid?: string;
+  panelId?: number;
+};
 
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

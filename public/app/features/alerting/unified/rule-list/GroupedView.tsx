@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import { PropsWithChildren, ReactNode, useMemo, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,14 +9,19 @@ import {
   DataSourceNamespaceIdentifier,
   DataSourceRuleGroupIdentifier,
   ExternalRulesSourceIdentifier,
+  GrafanaNamespaceIdentifier,
+  GrafanaRuleGroupIdentifier,
+  GrafanaRulesSourceIdentifier,
+  GrafanaRulesSourceSymbol,
   RuleGroup,
+  RulesSourceIdentifier,
 } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
-import { getExternalRulesSources } from '../utils/datasource';
+import { getExternalRulesSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { hashRule } from '../utils/rule-id';
 
 import { AlertRuleLoader } from './AlertRuleLoader';
@@ -24,6 +29,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { DataSourceIcon } from './components/Namespace';
 import { LoadingIndicator } from './components/RuleGroup';
+import { useRuleGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusRuleNamespaces } from './hooks/usePaginatedPrometheusRuleNamespaces';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -47,7 +53,16 @@ interface DataSourceLoaderProps {
 }
 
 export function GrafanaDataSourceLoader() {
-  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true}></DataSourceSection>;
+  return (
+    <PaginatedDataSourceLoader
+      rulesSourceIdentifier={{
+        uid: GrafanaRulesSourceSymbol,
+        name: GRAFANA_RULES_SOURCE_NAME,
+        ruleSourceType: 'grafana',
+      }}
+      application="grafana"
+    />
+  );
 }
 
 export function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
@@ -75,11 +90,18 @@ export function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProp
 
 // TODO Try to use a better rules source identifier
 interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
-  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+  rulesSourceIdentifier: RulesSourceIdentifier;
 }
 
 function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
   const { uid, name } = rulesSourceIdentifier;
+  const { prometheusGroupsGenerator, grafanaGroupsGenerator } = useRuleGroupsGenerator();
+
+  const groupsGenerator = useRef(
+    rulesSourceIdentifier.ruleSourceType === 'external'
+      ? prometheusGroupsGenerator(rulesSourceIdentifier, GROUP_PAGE_SIZE)
+      : grafanaGroupsGenerator(GROUP_PAGE_SIZE)
+  );
 
   const {
     page: ruleNamespaces,
@@ -88,7 +110,7 @@ function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: Pagin
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusRuleNamespaces(rulesSourceIdentifier, GROUP_PAGE_SIZE);
+  } = usePaginatedPrometheusRuleNamespaces(groupsGenerator.current, rulesSourceIdentifier, GROUP_PAGE_SIZE);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -107,7 +129,7 @@ function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: Pagin
           >
             {namespace.groups.map((group) => (
               <RuleGroupListItem
-                key={`${rulesSourceIdentifier.uid}-${namespace.name}-${group.name}`}
+                key={`${String(rulesSourceIdentifier.uid)}-${namespace.name}-${group.name}`}
                 group={group}
                 rulesSourceIdentifier={rulesSourceIdentifier}
                 namespaceId={namespace}
@@ -126,26 +148,47 @@ function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: Pagin
   );
 }
 
-interface RuleGroupListItemProps {
-  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+interface RuleGroupListItemProps<T extends ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier> {
+  rulesSourceIdentifier: T;
   group: RuleGroup;
-  namespaceId: DataSourceNamespaceIdentifier;
+  namespaceId: T extends ExternalRulesSourceIdentifier
+    ? DataSourceNamespaceIdentifier
+    : T extends GrafanaRulesSourceIdentifier
+      ? GrafanaNamespaceIdentifier
+      : never;
 }
 
-function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceId }: RuleGroupListItemProps) {
-  const rulesWithGroupId = useMemo(
-    () =>
-      group.rules.map((rule) => {
-        const groupIdentifier: DataSourceRuleGroupIdentifier = {
-          rulesSource: rulesSourceIdentifier,
-          namespace: namespaceId,
-          groupName: group.name,
-          groupOrigin: 'datasource',
-        };
-        return { rule, groupIdentifier };
-      }),
-    [group, namespaceId, rulesSourceIdentifier]
-  );
+function RuleGroupListItem<T extends RulesSourceIdentifier>({
+  rulesSourceIdentifier,
+  group,
+  namespaceId,
+}: RuleGroupListItemProps<T>) {
+  const rulesWithGroupId = useMemo(() => {
+    switch (rulesSourceIdentifier.ruleSourceType) {
+      case 'external':
+        return group.rules.map((rule) => {
+          const groupIdentifier: DataSourceRuleGroupIdentifier = {
+            rulesSource: rulesSourceIdentifier,
+            namespace: namespaceId,
+            groupName: group.name,
+            groupOrigin: 'datasource',
+          };
+          return { rule, groupIdentifier };
+        });
+      case 'grafana':
+        return group.rules.map((rule) => {
+          const groupIdentifier: GrafanaRuleGroupIdentifier = {
+            rulesSource: rulesSourceIdentifier,
+            namespace: namespaceId,
+            groupName: group.name,
+            groupOrigin: 'grafana',
+          };
+          return { rule, groupIdentifier };
+        });
+      default:
+        return [];
+    }
+  }, [group, namespaceId, rulesSourceIdentifier]);
 
   return (
     <ListGroup
@@ -178,7 +221,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceId }: RuleGr
 }
 
 interface DataSourceSectionProps extends PropsWithChildren {
-  uid: string;
+  uid: RulesSourceIdentifier['uid'];
   name: string;
   loader?: ReactNode;
   application?: RulesSourceApplication;
@@ -198,15 +241,15 @@ const DataSourceSection = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <section aria-labelledby={`datasource-${uid}-heading`} role="listitem">
+    <section aria-labelledby={`datasource-${String(uid)}-heading`} role="listitem">
       <Stack direction="column" gap={1}>
         <Stack direction="column" gap={0}>
-          {isLoading && <LoadingIndicator datasourceUid={uid} />}
+          {isLoading && <LoadingIndicator datasourceUid={String(uid)} />}
           <div className={styles.dataSourceSectionTitle}>
             {loader ?? (
               <Stack alignItems="center">
                 {application && <DataSourceIcon application={application} />}
-                <Text variant="body" weight="bold" element="h2" id={`datasource-${uid}-heading`}>
+                <Text variant="body" weight="bold" element="h2" id={`datasource-${String(uid)}-heading`}>
                   {name}
                 </Text>
                 {description && (
@@ -219,7 +262,7 @@ const DataSourceSection = ({
                 <WithReturnButton
                   title="alert rules"
                   component={
-                    <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
+                    <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${String(uid)}`}>
                       <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
                     </LinkButton>
                   }
