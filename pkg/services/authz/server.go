@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
@@ -25,7 +26,7 @@ import (
 )
 
 func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) {
-	server := rbac.NewService(db, log.New("authz-grpc-server"), tracer)
+	server := rbac.NewService(db, legacy.NewLegacySQLStores(db), log.New("authz-grpc-server"), tracer)
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
