@@ -208,7 +208,7 @@ func SetDualWritingMode(
 		cfg.Mode = cfgModeTmp
 		if err != nil {
 			klog.Info("data syncer failed for mode:", m)
-			return currentMode, err
+			return Mode0, err
 		}
 		if !syncOk {
 			// Setting the config to the current mode, as we don't return any error,
@@ -219,14 +219,14 @@ func SetDualWritingMode(
 		}
 		// If sync is successful, update the mode to the desired one.
 		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
-			return currentMode, errDualWriterSetCurrentMode
+			return Mode0, errDualWriterSetCurrentMode
 		}
 		return cfg.Mode, nil
 	case cfg.Mode >= Mode3 && currentMode >= Mode3:
 		// If already in Mode3 or higher, simply update to the desired mode.
 		currentMode = cfg.Mode
 		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
-			return currentMode, errDualWriterSetCurrentMode
+			return Mode0, errDualWriterSetCurrentMode
 		}
 	default:
 		// Handle any unexpected cases (should not normally happen).
