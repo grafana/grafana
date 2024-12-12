@@ -46,7 +46,11 @@ const config: ConfigFile = {
 };
 
 function filterEndpoints(name: string) {
-  return !name.toLowerCase().includes('forallnamespaces') && !name.toLowerCase().includes('getapiresources');
+  return (
+    !name.toLowerCase().includes('forallnamespaces') &&
+    !name.toLowerCase().includes('getapiresources') &&
+    !name.toLowerCase().includes('watch')
+  );
 }
 
 export default config;
