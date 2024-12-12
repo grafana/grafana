@@ -48,7 +48,7 @@ interface Props {
   readOnly?: boolean;
   editMode?: boolean;
   /** Callback method invoked when contact points was successfully created */
-  onCreate: () => void;
+  onCreate: (contactPoint: { name: string }) => void;
 }
 
 const { useGrafanaNotifiersQuery } = alertmanagerApi;
@@ -108,7 +108,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, 
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      onCreate();
+      onCreate(newReceiver);
     } catch (error) {
       // React form validation will handle this for us
     }

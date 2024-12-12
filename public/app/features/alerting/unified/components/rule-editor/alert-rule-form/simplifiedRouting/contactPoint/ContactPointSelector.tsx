@@ -9,16 +9,17 @@ import { GrafanaReceiverForm } from 'app/features/alerting/unified/components/re
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 
 import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
 export interface ContactPointSelectorProps {
   alertManager: string;
-  onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
+  onSelectContactPoint: (contactPoint?: GrafanaManagedContactPoint) => void;
 }
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
-  const { control, watch, trigger, setError } = useFormContext<RuleFormValues>();
+  const { control, watch, trigger, setValue, setError } = useFormContext<RuleFormValues>();
 
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
@@ -105,8 +106,9 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
       {showContactPointDrawer && (
         <Drawer onClose={() => setShowContactPointDrawer(false)}>
           <GrafanaReceiverForm
-            onCreate={() => {
+            onCreate={(contactPointDetails) => {
               setShowContactPointDrawer(false);
+              setValue(`contactPoints.${alertManager}.selectedContactPoint`, contactPointDetails.name);
             }}
           />
         </Drawer>
