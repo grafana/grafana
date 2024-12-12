@@ -57,8 +57,8 @@ type HitKind string
 
 // PluginType values
 const (
-	HitTypeDash   HitKind = "Dashboard"
-	HitTypeFolder HitKind = "Folder"
+	HitTypeDash   HitKind = "dashboard"
+	HitTypeFolder HitKind = "folder"
 )
 
 type DashboardHit struct {
@@ -69,9 +69,9 @@ type DashboardHit struct {
 	// The display nam
 	Title string `json:"title"`
 	// Filter tags
-	Tags []string `json:"tags,omitempty"`
+	Tags []string `json:"tags"`
 	// The UID/name for the folder
-	Folder string `json:"folder,omitempty"`
+	Folder string `json:"location"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitempty"`
 	// Explain the score (if possible)

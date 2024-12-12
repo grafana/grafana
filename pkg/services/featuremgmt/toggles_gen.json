@@ -3550,6 +3550,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchUI",
+        "resourceVersion": "1733866135478",
+        "creationTimestamp": "2024-12-10T21:28:55Z"
+      },
+      "spec": {
+        "description": "Enable unified storage search UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",

@@ -1,6 +1,5 @@
 import {
   DataFrame,
-  DataFrameJSON,
   DataFrameView,
   getDisplayProcessor,
   SelectableValue,
@@ -16,10 +15,17 @@ import { replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = 'api/unified-search';
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`
+
+type SearchHit = {
+  kind: string;
+  name: string;
+  title: string;
+  location: string;
+}
 
 type SearchAPIResponse = {
-  frames: DataFrameJSON[];
+  hits: SearchHit[];
 };
 
 const folderViewSort = 'name_sort';
@@ -69,17 +75,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
 
     const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    const frames = resp.frames.map((f) => toDataFrame(f));
+    const hits = resp.hits;
 
-    if (frames[0]?.name === loadingFrameName) {
+    if (hits[0]?.name === loadingFrameName) {
       return this.fallbackSearcher.tags(query);
     }
 
-    for (const frame of frames) {
-      if (frame.name === 'tags') {
-        return getTermCountsFrom(frame);
-      }
-    }
+    // TODO: need to return facets in the SearchAPIResponse
+    // for (const hit of hits) {
+    //   if (hit.name === 'tags') {
+    //     return getTermCountsFrom(frame);
+    //   }
+    // }
 
     return [];
   }
@@ -113,11 +120,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    const frames = rsp.frames.map((f) => toDataFrame(f));
+    // const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    // TODO: should be a post like the old api above?
+    // need to pass filters (tags), facets (to display the tags), etc
+    let uri = searchURI;
+    if (req.query) {
+      uri += `?query=${encodeURIComponent(req.query)}`;
+    }
+    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
-    const first = frames.length ? toDataFrame(frames[0]) : { fields: [], length: 0 };
-
+    const first = toDashboardResults(rsp.hits);
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
     }
@@ -155,6 +167,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
     const getNextPage = async () => {
+      // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
         const from = view.dataFrame.length;
         if (from >= meta.count) {
@@ -165,7 +178,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
           from,
           limit: nextPageSizes,
         });
-        const frame = toDataFrame(resp.frames[0]);
+        const frame = toDashboardResults(resp.hits);
 
         if (!frame) {
           console.log('no results', frame);
@@ -220,15 +233,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
 const firstPageSize = 50;
 const nextPageSizes = 100;
 
-function getTermCountsFrom(frame: DataFrame): TermCount[] {
-  const tags = frame.fields[0].values;
-  const vals = frame.fields[1].values;
-  const counts: TermCount[] = [];
-  for (let i = 0; i < frame.length; i++) {
-    counts.push({ term: tags[i], count: vals[i] });
-  }
-  return counts;
-}
+// TODO: get from facet response
+// function getTermCountsFrom(frame: DataFrame): TermCount[] {
+//   const tags = frame.fields[0].values;
+//   const vals = frame.fields[1].values;
+//   const counts: TermCount[] = [];
+//   for (let i = 0; i < frame.length; i++) {
+//     counts.push({ term: tags[i], count: vals[i] });
+//   }
+//   return counts;
+// }
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
@@ -257,4 +271,18 @@ function getSortFieldDisplayName(name: string) {
     }
   }
   return name;
+}
+
+
+function toDashboardResults(hits: SearchHit[]): DataFrame {
+  if (hits.length < 1) {
+    return { fields: [], length: 0 };
+  }
+  const dashboardHits = hits.map((hit) => {
+    return {
+      ...hit,
+      name: hit.title,
+    };
+  });
+  return toDataFrame(dashboardHits);
 }

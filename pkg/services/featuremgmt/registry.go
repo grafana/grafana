@@ -1681,6 +1681,14 @@ var (
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:              "unifiedStorageSearchUI",
+			Description:       "Enable unified storage search UI",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
