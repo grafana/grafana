@@ -13,7 +13,7 @@ import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString }
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
-import { useMeasureMulticombobox } from './useMeasureMulticombobox';
+import { useMeasureMultiCombobox } from './useMeasureMultiCombobox';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -43,7 +43,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
 
-  useMeasureMulticombobox(containerWidth, suffixWidth, selectedItems, setShownItems);
+  useMeasureMultiCombobox(containerWidth, suffixWidth, selectedItems, setShownItems);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),

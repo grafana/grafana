@@ -10,7 +10,7 @@ const EXTRA_PILL_SIZE = 50;
 /**
  * Updates the number of shown items in the multi combobox based on the available width.
  */
-export function useMeasureMulticombobox<T extends string | number>(
+export function useMeasureMultiCombobox<T extends string | number>(
   containerWidth: number,
   suffixWidth: number,
   selectedItems: Array<ComboboxOption<T>>,
