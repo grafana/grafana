@@ -119,7 +119,10 @@ export const TrendPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                getDataLinks={(seriesIdx: number, dataIdx: number) =>
+                  alignedDataFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                }
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
                   return (
                     <TimeSeriesTooltip
                       series={alignedDataFrame}
@@ -130,6 +133,7 @@ export const TrendPanel = ({
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
+                      dataLinks={dataLinks}
                     />
                   );
                 }}
