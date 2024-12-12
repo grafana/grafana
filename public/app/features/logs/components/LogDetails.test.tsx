@@ -342,7 +342,7 @@ describe('LogDetails', () => {
           rowId: '1',
         }
       );
-  
+
       // Show labels and links
       expect(screen.getByText('label1')).toBeInTheDocument();
       expect(screen.getByText('value1')).toBeInTheDocument();
@@ -367,7 +367,7 @@ describe('LogDetails', () => {
           rowId: '1',
         }
       );
-  
+
       // Show labels and links
       expect(screen.getByText('label1')).toBeInTheDocument();
       expect(screen.getByText('value1')).toBeInTheDocument();
