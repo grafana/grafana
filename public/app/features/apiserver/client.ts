@@ -65,38 +65,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().delete<MetaStatus>(`${this.url}/${name}`);
   }
 
-  private parseListOptionsSelector(
-    selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined
-  ): string | undefined {
-    if (!Array.isArray(selector)) {
-      return selector;
-    }
-
-    return selector
-      .map((label) => {
-        const key = String(label.key);
-        const operator = label.operator;
-
-        switch (operator) {
-          case '=':
-          case '!=':
-            return `${key}${operator}${label.value}`;
-
-          case 'in':
-          case 'notin':
-            return `${key} ${operator} (${label.value.join(',')})`;
-
-          case '':
-          case '!':
-            return `${operator}${key}`;
-
-          default:
-            return null;
-        }
-      })
-      .filter(Boolean)
-      .join(',');
-  }
+  private parseListOptionsSelector = parseListOptionsSelector;
 }
 
 // add the origin annotations so we know what was set from the UI
@@ -137,3 +106,34 @@ export class DatasourceAPIVersions {
     return apiVersions[pluginID];
   }
 }
+
+export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
+  if (!Array.isArray(selector)) {
+    return selector;
+  }
+
+  return selector
+    .map((label) => {
+      const key = String(label.key);
+      const operator = label.operator;
+
+      switch (operator) {
+        case '=':
+        case '!=':
+          return `${key}${operator}${label.value}`;
+
+        case 'in':
+        case 'notin':
+          return `${key} ${operator} (${label.value.join(',')})`;
+
+        case '':
+        case '!':
+          return `${operator}${key}`;
+
+        default:
+          return null;
+      }
+    })
+    .filter(Boolean)
+    .join(',');
+};
