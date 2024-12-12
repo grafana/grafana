@@ -46,6 +46,9 @@ type SyncerConfig struct {
 }
 
 func (s *SyncerConfig) Validate() error {
+	if s == nil {
+		return fmt.Errorf("syncer config is nil")
+	}
 	if s.Kind == "" {
 		return fmt.Errorf("kind must be specified")
 	}
@@ -113,8 +116,8 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 // runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
 // The sync implementation depends on the DualWriter mode
 func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
-	if cfg == nil {
-		return false, fmt.Errorf("syncer config is nil")
+	if err := cfg.Validate(); err != nil {
+		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
 	// ensure that execution takes no longer than necessary
 	timeout := cfg.DataSyncerInterval - time.Minute
@@ -132,8 +135,8 @@ func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
 }
 
 func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
-	if cfg == nil {
-		return false, fmt.Errorf("syncer config is nil")
+	if err := cfg.Validate(); err != nil {
+		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
 	metrics := &dualWriterMetrics{}
 	metrics.init(cfg.Reg)
