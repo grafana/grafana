@@ -39,8 +39,8 @@ type SyncerConfig struct {
 	Storage           Storage
 	ServerLockService ServerLockService
 
-	DataSyncerInterval        time.Duration
-	DataSyncerMaxRecordsLimit int
+	DataSyncerInterval     time.Duration
+	DataSyncerRecordsLimit int
 
 	Reg prometheus.Registerer
 }
@@ -64,8 +64,8 @@ func (s *SyncerConfig) Validate() error {
 	if s.DataSyncerInterval == 0 {
 		s.DataSyncerInterval = time.Hour
 	}
-	if s.DataSyncerMaxRecordsLimit == 0 {
-		s.DataSyncerMaxRecordsLimit = 1000
+	if s.DataSyncerRecordsLimit == 0 {
+		s.DataSyncerRecordsLimit = 1000
 	}
 	if s.Reg == nil {
 		s.Reg = prometheus.DefaultRegisterer
@@ -159,15 +159,15 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 		ctx = request.WithRequestInfo(ctx, cfg.RequestInfo)
 
 		storageList, err := getList(ctx, cfg.Storage, &metainternalversion.ListOptions{
-			Limit: int64(cfg.DataSyncerMaxRecordsLimit),
+			Limit: int64(cfg.DataSyncerRecordsLimit),
 		})
 		if err != nil {
 			log.Error(err, "unable to extract list from storage")
 			return
 		}
 
-		if len(storageList) >= cfg.DataSyncerMaxRecordsLimit {
-			errSync = fmt.Errorf("unified storage has more than %d records. Aborting sync", cfg.DataSyncerMaxRecordsLimit)
+		if len(storageList) >= cfg.DataSyncerRecordsLimit {
+			errSync = fmt.Errorf("unified storage has more than %d records. Aborting sync", cfg.DataSyncerRecordsLimit)
 			log.Error(errSync, "Unified storage has more records to be synced than allowed")
 			return
 		}

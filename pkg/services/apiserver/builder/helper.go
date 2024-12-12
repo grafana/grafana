@@ -207,15 +207,15 @@ func InstallAPIs(
 			requestInfo := getRequestInfo(gr, namespaceMapper)
 
 			syncerCfg := &grafanarest.SyncerConfig{
-				Kind:                      key,
-				RequestInfo:               requestInfo,
-				Mode:                      mode,
-				LegacyStorage:             legacy,
-				Storage:                   storage,
-				ServerLockService:         serverLock,
-				DataSyncerInterval:        storageOpts.DataSyncerInterval,
-				DataSyncerMaxRecordsLimit: storageOpts.DataSyncerMaxRecordsLimit,
-				Reg:                       reg,
+				Kind:                   key,
+				RequestInfo:            requestInfo,
+				Mode:                   mode,
+				LegacyStorage:          legacy,
+				Storage:                storage,
+				ServerLockService:      serverLock,
+				DataSyncerInterval:     storageOpts.DataSyncerInterval,
+				DataSyncerRecordsLimit: storageOpts.DataSyncerRecordsLimit,
+				Reg:                    reg,
 			}
 
 			// This also sets the currentMode on the syncer config.

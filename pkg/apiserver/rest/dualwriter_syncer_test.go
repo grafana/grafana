@@ -205,8 +205,8 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
-				DataSyncerMaxRecordsLimit: 1000,
-				DataSyncerInterval:        time.Hour,
+				DataSyncerRecordsLimit: 1000,
+				DataSyncerInterval:     time.Hour,
 			})
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -245,8 +245,8 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
-				DataSyncerMaxRecordsLimit: 1000,
-				DataSyncerInterval:        time.Hour,
+				DataSyncerRecordsLimit: 1000,
+				DataSyncerInterval:     time.Hour,
 			})
 			if tt.wantErr {
 				assert.Error(t, err)

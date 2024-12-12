@@ -74,8 +74,8 @@ func TestSetDualWritingMode(t *testing.T) {
 			RequestInfo:       &request.RequestInfo{},
 			Reg:               p,
 
-			DataSyncerMaxRecordsLimit: 1000,
-			DataSyncerInterval:        time.Hour,
+			DataSyncerRecordsLimit: 1000,
+			DataSyncerInterval:     time.Hour,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dwMode)

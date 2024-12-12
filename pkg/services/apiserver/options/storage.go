@@ -44,8 +44,8 @@ type StorageOptions struct { // The desired storage type
 
 	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
 	DataSyncerInterval time.Duration
-	// DataSyncerMaxRecordsLimits defines how many records will be processed at max during a sync invocation.
-	DataSyncerMaxRecordsLimit int
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 func NewStorageOptions() *StorageOptions {
