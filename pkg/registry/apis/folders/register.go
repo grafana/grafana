@@ -17,11 +17,13 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -29,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -127,9 +128,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("count")] = &subCountREST{
-		searcher: b.searcher,
-	}
+	storage[resourceInfo.StoragePath("count")] = &subCountREST{searcher: b.searcher}
 
 	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {
@@ -241,12 +240,6 @@ var folderValidationRules = struct {
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
-	for _, invalidName := range folderValidationRules.invalidNames {
-		if id == invalidName {
-			return dashboards.ErrFolderInvalidUID
-		}
-	}
-
 	obj := a.GetObject()
 	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
@@ -256,7 +249,55 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	if !ok {
 		return fmt.Errorf("obj is not v0alpha1.Folder")
 	}
+	verb := a.GetOperation()
 
+	switch verb {
+	case admission.Create:
+		return b.validateOnCreate(ctx, id, obj)
+	case admission.Delete:
+		return b.validateOnDelete(ctx, f)
+	case admission.Update:
+		return nil
+	case admission.Connect:
+		return nil
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Folder) error {
+	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	if err != nil {
+		return err
+	}
+
+	if resp != nil && resp.Error != nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	if resp.Stats == nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	for _, v := range resp.Stats {
+		if v.Count > 0 {
+			return folder.ErrFolderNotEmpty
+		}
+	}
+
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
+	for _, invalidName := range folderValidationRules.invalidNames {
+		if id == invalidName {
+			return dashboards.ErrFolderInvalidUID
+		}
+	}
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
