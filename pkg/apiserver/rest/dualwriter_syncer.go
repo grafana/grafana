@@ -113,6 +113,9 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 // runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
 // The sync implementation depends on the DualWriter mode
 func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+	if cfg == nil {
+		return false, fmt.Errorf("syncer config is nil")
+	}
 	// ensure that execution takes no longer than necessary
 	timeout := cfg.DataSyncerInterval - time.Minute
 	ctx, cancelFn := context.WithTimeout(ctx, timeout)
@@ -129,6 +132,9 @@ func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
 }
 
 func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+	if cfg == nil {
+		return false, fmt.Errorf("syncer config is nil")
+	}
 	metrics := &dualWriterMetrics{}
 	metrics.init(cfg.Reg)
 

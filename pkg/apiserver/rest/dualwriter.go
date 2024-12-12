@@ -150,6 +150,9 @@ func SetDualWritingMode(
 	kvs NamespacedKVStore,
 	cfg *SyncerConfig,
 ) (DualWriterMode, error) {
+	if cfg == nil {
+		return Mode0, errors.New("syncer config is nil")
+	}
 	// Mode0 means no DualWriter
 	if cfg.Mode == Mode0 {
 		return Mode0, nil
