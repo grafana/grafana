@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -128,7 +129,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   return (
     <div>
-      <div className={multiStyles.wrapper} ref={measureRef} onClick={() => setIsOpen(!isOpen)}>
+      <div
+        className={multiStyles.wrapper}
+        ref={measureRef}
+        onClick={() => selectedItems.length > 0 && setIsOpen(!isOpen)}
+      >
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -160,7 +165,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             </Box>
           )}
           <input
-            className={multiStyles.input}
+            className={cx(multiStyles.input, {
+              [multiStyles.inputClosed]: !isOpen && selectedItems.length > 0,
+            })}
             {...getInputProps(
               getDropdownProps({
                 preventKeyAction: isOpen,

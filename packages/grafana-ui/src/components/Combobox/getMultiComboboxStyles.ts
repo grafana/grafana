@@ -25,8 +25,6 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2, isOpen: boolean) =>
       border: 'none',
       outline: 'none',
       background: 'transparent',
-      width: '4px',
-      pointerEvents: 'none',
       flexGrow: 1,
       minWidth: '0',
       '&::placeholder': {
@@ -35,6 +33,12 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2, isOpen: boolean) =>
       '&:focus': {
         outline: 'none',
       },
+    }),
+    inputClosed: css({
+      width: 0,
+      flexGrow: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
     }),
     pillWrapper: css({
       display: 'inline-flex',
