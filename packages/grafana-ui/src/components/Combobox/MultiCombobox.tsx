@@ -98,9 +98,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           return {
             ...changes,
             isOpen: true,
-            defaultHighlightedIndex: 0,
+            highlightedIndex: state.highlightedIndex,
           };
         case useCombobox.stateChangeTypes.InputBlur:
+          setInputValue('');
+          setIsOpen(false);
           return {
             ...changes,
             isOpen: false,
