@@ -112,11 +112,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
-      console.log('state change', type);
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          console.log(newSelectedItem);
           if (newSelectedItem) {
             if (!isOptionSelected(newSelectedItem)) {
               onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
