@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/access"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
@@ -106,7 +105,8 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 }
 
 func idTokenExtractorInternal(ctx context.Context) (string, error) {
-	if access.IsRunningAsGrafana(ctx) {
+	authInfo, ok := claims.From(ctx)
+	if !ok {
 		orgId := int64(1) // TODO: This isn't right.
 		staticRequester := &identity.StaticRequester{
 			Type:           claims.TypeServiceAccount, // system:apiserver
@@ -129,10 +129,6 @@ func idTokenExtractorInternal(ctx context.Context) (string, error) {
 
 		staticRequester.IDToken = token
 		return token, nil
-	}
-	authInfo, ok := claims.From(ctx)
-	if !ok {
-		return "", fmt.Errorf("no claims found")
 	}
 
 	extra := authInfo.GetExtra()
@@ -179,12 +175,9 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 }
 
 func idTokenExtractorCloud(ctx context.Context) (string, error) {
-	if access.IsRunningAsGrafana(ctx) {
-		return "", nil
-	}
 	authInfo, ok := claims.From(ctx)
 	if !ok {
-		return "", fmt.Errorf("no claims found")
+		return "", nil
 	}
 
 	extra := authInfo.GetExtra()

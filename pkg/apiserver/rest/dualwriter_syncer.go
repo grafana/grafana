@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource/access"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -106,7 +105,6 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 		startSync := time.Now()
 
 		ctx = klog.NewContext(ctx, log)
-		ctx = access.RunAsGrafana(ctx)
 
 		storageList, err := getList(ctx, storage, &metainternalversion.ListOptions{
 			Limit: maxRecordsSync,
