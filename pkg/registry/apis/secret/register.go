@@ -12,6 +12,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	secretV0Alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	storage "github.com/grafana/grafana/pkg/registry/apis/secret/storage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -69,33 +70,18 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 // UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	// secureValueResource := secretV0Alpha1.SecureValuesResourceInfo
+	secureValueResource := secretV0Alpha1.SecureValuesResourceInfo
 
-	// // rest.Storage is a generic interface for RESTful storage services.
-	// // The constructors need to at least implement this interface, but will most likely implement
-	// // other interfaces that equal to different operations like `get`, `list` and so on.
-	// secureValueStorage := map[string]rest.Storage{
-	// 	// Default path for `securevalue`.
-	// 	// The `reststorage.GenericStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
-	// 	secureValueResource.StoragePath(): reststorage.NewGenericStorage(b.store, secureValueResource),
+	// rest.Storage is a generic interface for RESTful storage services.
+	// The constructors need to at least implement this interface, but will most likely implement
+	// other interfaces that equal to different operations like `get`, `list` and so on.
+	secureValueStorage := map[string]rest.Storage{
+		// Default path for `securevalue`.
+		// The `storage.GenericStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
+		secureValueResource.StoragePath(): storage.NewGenericStorage(secureValueResource),
+	}
 
-	// 	// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
-	// 	// Not yet supported by grafana-app-sdk or unified storage.
-	// 	secureValueResource.StoragePath("decrypt"): reststorage.NewDecryptStorage(b.config, b.store),
-
-	// 	// This is a subresrouce from `securevalue`. It gets accessed like `securevalue/xyz/history`.
-	// 	// Not yet supported by grafana-app-sdk or unified storage.
-	// 	secureValueResource.StoragePath("history"): reststorage.NewHistoryStorage(b.store),
-	// }
-
-	// // This does not do anything here. Shouldn't it also use the keymanager resource? TODO!
-	// err := b.manager.InitStorage(opts.Scheme, secureValueStorage, opts.OptsGetter)
-	// if err != nil {
-	// 	return fmt.Errorf("secret manager init storage: %w", err)
-	// }
-
-	storage := map[string]rest.Storage{}
-	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = secureValueStorage
 	return nil
 }
 
