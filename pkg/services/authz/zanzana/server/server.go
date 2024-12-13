@@ -97,7 +97,15 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 }
 
 func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav1.TupleKey, error) {
-	// TODO: add caching for reads
+	cacheKey := "global_authorization_context"
+	contextualTuples := make([]*openfgav1.TupleKey, 0)
+
+	cached, found := s.cache.Get(cacheKey)
+	if found {
+		contextualTuples = cached.([]*openfgav1.TupleKey)
+		return contextualTuples, nil
+	}
+
 	res, err := s.Read(ctx, &authzextv1.ReadRequest{
 		Namespace: "global",
 	})
@@ -106,10 +114,10 @@ func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav
 	}
 
 	tuples := common.ToOpenFGATuples(res.Tuples)
-	contextualTuples := make([]*openfgav1.TupleKey, 0)
 	for _, t := range tuples {
 		contextualTuples = append(contextualTuples, t.GetKey())
 	}
+	s.cache.SetDefault(cacheKey, contextualTuples)
 
 	return contextualTuples, nil
 }
