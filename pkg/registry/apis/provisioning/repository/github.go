@@ -590,7 +590,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 	}
 
 	latest := branch.Sha
-	lastSyncCommit := r.config.Status.CurrentGitCommit
+	lastSyncCommit := r.config.Status.Sync.Hash
 
 	if lastSyncCommit == "" {
 		logger.Info("initial sync")
@@ -697,7 +697,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 
 	// TODO: Can we use typed client for this?
 	unstructuredResource := resource.DeepCopy()
-	if err := unstructured.SetNestedField(unstructuredResource.Object, latest, "status", "currentGitCommit"); err != nil {
+	if err := unstructured.SetNestedField(unstructuredResource.Object, latest, "status", "sync", "hash"); err != nil {
 		return fmt.Errorf("set currentGitCommit: %w", err)
 	}
 

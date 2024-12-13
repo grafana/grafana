@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -30,7 +29,6 @@ type RepositoryController struct {
 
 	// Converts config to instance
 	repoGetter RepoGetter
-	logger     *slog.Logger
 	identities auth.BackgroundIdentityService
 
 	// To allow injection for testing.
@@ -38,13 +36,16 @@ type RepositoryController struct {
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue workqueue.TypedRateLimitingInterface[string]
+	queue  workqueue.TypedRateLimitingInterface[string]
+	logger *slog.Logger
 }
 
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
+	repoGetter RepoGetter,
+	identities auth.BackgroundIdentityService,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -52,8 +53,13 @@ func NewRepositoryController(
 		repoSynced: repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{Name: "provisioningRepositoryController"},
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "provisioningRepositoryController",
+			},
 		),
+		repoGetter: repoGetter,
+		identities: identities,
+		logger:     slog.Default().With("logger", "provisioning-repository-controller"),
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -84,23 +90,22 @@ func repoKeyFunc(obj any) (string, error) {
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
-	logger := klog.FromContext(ctx)
 
-	klog.Info("Starting RepositoryController")
-	defer klog.Info("Shutting down RepositoryController")
+	rc.logger.Info("Starting RepositoryController")
+	defer rc.logger.Info("Shutting down RepositoryController")
 
 	if !cache.WaitForCacheSync(ctx.Done(), rc.repoSynced) {
 		return
 	}
 
-	logger.Info("Starting workers", "count", workerCount)
+	rc.logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, rc.runWorker, time.Second)
 	}
 
-	logger.Info("Started workers")
+	rc.logger.Info("Started workers")
 	<-ctx.Done()
-	logger.Info("Shutting down workers")
+	rc.logger.Info("Shutting down workers")
 }
 
 func (rc *RepositoryController) runWorker(ctx context.Context) {
@@ -126,20 +131,26 @@ func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
 }
 
 func (rc *RepositoryController) deleteRepository(obj interface{}) {
-	rc.enqueueRepository(obj)
+	repo, ok := obj.(*provisioning.Repository)
+	if !ok {
+		rc.logger.Error("expected a Repository but got %T", obj)
+		return
+	}
+	// TODO: Add job that will remove everything owned by that repository
+	rc.logger.Info("TODO, remove everything from repository", "name", repo.Name)
+	// rc.enqueueRepository(repo)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	logger := klog.FromContext(ctx)
 	key, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
 	defer rc.queue.Done(key)
 
-	logger.Info("RepositoryController processing key", "key", key)
+	rc.logger.Info("RepositoryController processing key", "key", key)
 
 	err := rc.syncFn(key)
 	if err == nil {
@@ -188,28 +199,30 @@ func (rc *RepositoryController) sync(key string) error {
 	cfg := cachedRepo.DeepCopy()
 	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
 	if err != nil {
-		return err // or update status????
-	}
-
-	res, err := TestRepository(ctx, repo, rc.logger)
-	if err != nil {
-		res = &provisioning.TestResults{
-			Success: false,
-			Errors: []string{
-				"error running test repository",
+		cfg.Status.Health = provisioning.HealthStatus{
+			Checked: now,
+			Healthy: false,
+			Message: []string{
+				"Unable to create repository from configuration",
 				err.Error(),
 			},
 		}
-	}
-	cfg.Status.Health = provisioning.HealthStatus{
-		Checked: now,
-		Healthy: res.Success,
-		Message: res.Errors,
-	}
-
-	// State should not be empty
-	if cfg.Status.Sync.State == "" {
-		cfg.Status.Sync.State = provisioning.JobStatePending
+	} else {
+		res, err := TestRepository(ctx, repo, rc.logger)
+		if err != nil {
+			res = &provisioning.TestResults{
+				Success: false,
+				Errors: []string{
+					"error running test repository",
+					err.Error(),
+				},
+			}
+		}
+		cfg.Status.Health = provisioning.HealthStatus{
+			Checked: now,
+			Healthy: res.Success,
+			Message: res.Errors,
+		}
 	}
 
 	_, err = rc.client.Repositories(cfg.GetNamespace()).

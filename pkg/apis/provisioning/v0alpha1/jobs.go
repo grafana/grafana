@@ -63,6 +63,10 @@ type JobSpec struct {
 	// For a sync job, having a value will indicate
 	Hash string `json:"hash,omitempty"`
 
+	// The hash for requested job (if known/appropriate)
+	// For a sync job, having a value will indicate
+	Ref string `json:"ref,omitempty"`
+
 	// Pull request number (when appropriate)
 	PR int `json:"pr,omitempty"`
 

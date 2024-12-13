@@ -260,7 +260,7 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 		if len(b.localFileResolver.PermittedPrefixes) == 0 {
 			return nil, ErrLocalRepositoryDisabled
 		}
-		return repository.NewLocal(r, b.localFileResolver)
+		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
 		if err != nil {
@@ -508,21 +508,21 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				30*time.Minute, // TODO: is this a good resync period for repos?
+				15*time.Minute, // Health check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
-			repoController, err := NewRepositoryController(c.ProvisioningV0alpha1(), repoInformer)
+			repoController, err := NewRepositoryController(
+				c.ProvisioningV0alpha1(),
+				repoInformer,
+				b, // repoGetter
+				b.identities,
+			)
 			if err != nil {
 				return err
 			}
-
-			// Add worker dependencies
-			repoController.repoGetter = b
-			repoController.logger = slog.Default().With("logger", "provisioning-repo-controller")
-			repoController.identities = b.identities
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 			return nil
