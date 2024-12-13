@@ -54,6 +54,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
+import { NestedFolderPicker } from './core/components/NestedFolderPicker/NestedFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
@@ -111,7 +112,6 @@ import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
-import { NestedFolderPicker } from './core/components/NestedFolderPicker/NestedFolderPicker';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
