@@ -50,7 +50,17 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 
 	// This should come from the keeper. From this point on, we should not have a need to read value/ref.
 	externalID := "TODO"
-	sv.Spec.Value = ""
+
+	a := string(sv.Spec.Value)
+	fmt.Printf("\n\nCast it to a string, you can see it! %v\n\n", a)
+
+	exposedSecret := sv.Spec.Value.DangerouslyExposeDecryptedValue()
+	fmt.Printf("\n\nSECRET IS EXPOSED!! %v\n\n", exposedSecret)
+	_ = exposedSecret // Do something with it
+
+	exposedSecret2 := sv.Spec.Value.DangerouslyExposeDecryptedValue() // this will return empty now
+	fmt.Printf("\n\nSECRET IS EXPOSED AGAIN?? %v\n\n", exposedSecret2)
+
 	sv.Spec.Ref = ""
 
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
