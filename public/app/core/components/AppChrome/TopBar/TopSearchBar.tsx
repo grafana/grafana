@@ -32,6 +32,8 @@ export const TopSearchBar = memo(function TopSearchBar() {
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
   const profileNode = navIndex['profile'];
 
+  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
+
   let homeUrl = config.appSubUrl || '/';
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
@@ -53,7 +55,7 @@ export const TopSearchBar = memo(function TopSearchBar() {
 
       <TopSearchBarSection align="right">
         <QuickAdd />
-        <HistoryContainer />
+        {unifiedHistoryEnabled && <HistoryContainer />}
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />

@@ -50,6 +50,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const profileNode = navIndex['profile'];
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   return (
     <div className={styles.layout}>
@@ -73,7 +74,7 @@ export const SingleTopBar = memo(function SingleTopBar({
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
-        <HistoryContainer />
+        {unifiedHistoryEnabled && <HistoryContainer />}
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
