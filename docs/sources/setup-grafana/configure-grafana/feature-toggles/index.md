@@ -84,6 +84,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `zipkinBackendMigration`               | Enables querying Zipkin data source without the proxy                                                                                                              | Yes                |
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                           | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                                                | Yes                |
+| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                      | Yes                |
 
 ## Public preview feature toggles
 

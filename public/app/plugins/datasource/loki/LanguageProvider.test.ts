@@ -428,17 +428,51 @@ describe('Language completion provider', () => {
       expect(instance.request).toHaveBeenCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
     });
 
-    it('should use series endpoint for request with stream selector', async () => {
-      const datasourceWithLabels = setup({});
-      datasourceWithLabels.languageProvider.request = jest.fn();
+    describe('without labelNames feature toggle', () => {
+      const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
+      beforeAll(() => {
+        config.featureToggles.lokiLabelNamesQueryApi = false;
+      });
+      afterAll(() => {
+        config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
+      });
 
-      const instance = new LanguageProvider(datasourceWithLabels);
-      instance.request = jest.fn();
-      await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
-      expect(instance.request).toHaveBeenCalledWith('series', {
-        end: 1560163909000,
-        'match[]': '{foo="bar"}',
-        start: 1560153109000,
+      it('should use series endpoint for request with stream selector', async () => {
+        const datasourceWithLabels = setup({});
+        datasourceWithLabels.languageProvider.request = jest.fn();
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        instance.request = jest.fn();
+        await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
+        expect(instance.request).toHaveBeenCalledWith('series', {
+          end: 1560163909000,
+          'match[]': '{foo="bar"}',
+          start: 1560153109000,
+        });
+      });
+    });
+
+    describe('with labelNames feature toggle', () => {
+      const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
+      beforeAll(() => {
+        config.featureToggles.lokiLabelNamesQueryApi = true;
+      });
+      afterAll(() => {
+        config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
+      });
+
+      it('should use series endpoint for request with stream selector', async () => {
+        const datasourceWithLabels = setup({});
+        datasourceWithLabels.languageProvider.request = jest.fn();
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        instance.request = jest.fn();
+        await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
+        expect(instance.request).toHaveBeenCalledWith('labels', {
+          end: 1560163909000,
+          query: '{foo="bar"}',
+          start: 1560153109000,
+        });
       });
     });
 
