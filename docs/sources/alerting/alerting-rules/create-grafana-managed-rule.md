@@ -29,11 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
-  modify-the-no-data-and-error-state:
+  modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-and-error-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-and-error-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
   pending-period:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
@@ -241,7 +241,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-   For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data and error state](ref:modify-the-no-data-and-error-state).
+   For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data or error state](ref:modify-the-no-data-or-error-state).
 
 ## Configure notifications
 
