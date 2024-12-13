@@ -23,7 +23,7 @@
     "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.0.1",
+    "@testing-library/react": "16.1.0",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.13",
     "@types/node": "22.10.2",

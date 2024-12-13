@@ -2811,7 +2811,7 @@ __metadata:
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -2853,7 +2853,7 @@ __metadata:
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -2883,7 +2883,7 @@ __metadata:
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -2924,7 +2924,7 @@ __metadata:
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3-random": "npm:^3.0.2"
     "@types/jest": "npm:29.5.14"
@@ -2965,7 +2965,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -3006,7 +3006,7 @@ __metadata:
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -3037,7 +3037,7 @@ __metadata:
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -3066,7 +3066,7 @@ __metadata:
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.17.13"
     "@types/node": "npm:22.10.2"
@@ -3102,7 +3102,7 @@ __metadata:
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.14"
@@ -3158,7 +3158,7 @@ __metadata:
     "@opentelemetry/semantic-conventions": "npm:1.28.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
@@ -3209,7 +3209,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.13"
     "@types/node": "npm:22.10.2"
@@ -3474,7 +3474,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
@@ -3560,7 +3560,7 @@ __metadata:
     "@grafana/ui": "npm:11.5.0-pre"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/node": "npm:22.10.2"
@@ -3645,7 +3645,7 @@ __metadata:
     "@swc/helpers": "npm:0.5.15"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
@@ -3740,7 +3740,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@rollup/plugin-terser": "npm:0.4.4"
     "@testing-library/dom": "npm:10.4.0"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
@@ -3879,7 +3879,7 @@ __metadata:
     "@react-awesome-query-builder/ui": "npm:6.6.4"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
@@ -3960,7 +3960,7 @@ __metadata:
     "@tanstack/react-virtual": "npm:^3.5.1"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/chance": "npm:1.1.6"
     "@types/common-tags": "npm:^1.8.0"
@@ -8528,23 +8528,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:16.0.1":
-  version: 16.0.1
-  resolution: "@testing-library/react@npm:16.0.1"
+"@testing-library/react@npm:16.1.0":
+  version: 16.1.0
+  resolution: "@testing-library/react@npm:16.1.0"
   dependencies:
     "@babel/runtime": "npm:^7.12.5"
   peerDependencies:
     "@testing-library/dom": ^10.0.0
-    "@types/react": ^18.0.0
-    "@types/react-dom": ^18.0.0
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    "@types/react": ^18.0.0 || ^19.0.0
+    "@types/react-dom": ^18.0.0 || ^19.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
     "@types/react-dom":
       optional: true
-  checksum: 10/904b48881cf5bd208e25899e168f5c99c78ed6d77389544838d9d861a038d2c5c5385863ee9a367436770cbf7d21c5e05a991b9e24a33806e9ac985df2448185
+  checksum: 10/2a20e0dbfadbc93d45a84e82281ed47deed54a6a5fc1461a523172d7fbc0481e8502cf98a2080f38aba94290b3d745671a1c9e320e6f76ad6afcca67c580b963
   languageName: node
   linkType: hard
 
@@ -17613,7 +17613,7 @@ __metadata:
     "@swc/helpers": "npm:0.5.15"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
-    "@testing-library/react": "npm:16.0.1"
+    "@testing-library/react": "npm:16.1.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
