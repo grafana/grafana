@@ -135,7 +135,7 @@ func (s *jobStore) drainPending() {
 		if worker == nil {
 			status = &provisioning.JobStatus{
 				State: provisioning.JobStateError,
-				Message: []string{
+				Errors: []string{
 					"no registered worker supports this job",
 				},
 			}
@@ -144,8 +144,8 @@ func (s *jobStore) drainPending() {
 			if err != nil {
 				s.logger.Error("error processing job", "job", job.Name, "error", err)
 				status = &provisioning.JobStatus{
-					State:   provisioning.JobStateError,
-					Message: []string{err.Error()},
+					State:  provisioning.JobStateError,
+					Errors: []string{err.Error()},
 				}
 			} else if status.State == "" {
 				status.State = provisioning.JobStateFinished

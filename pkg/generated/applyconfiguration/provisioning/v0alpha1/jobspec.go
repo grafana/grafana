@@ -12,8 +12,9 @@ import (
 // with apply.
 type JobSpecApplyConfiguration struct {
 	Action *v0alpha1.JobAction `json:"action,omitempty"`
-	Hash   *string             `json:"hash,omitempty"`
+	Ref    *string             `json:"ref,omitempty"`
 	PR     *int                `json:"pr,omitempty"`
+	Hash   *string             `json:"hash,omitempty"`
 	URL    *string             `json:"url,omitempty"`
 }
 
@@ -31,11 +32,11 @@ func (b *JobSpecApplyConfiguration) WithAction(value v0alpha1.JobAction) *JobSpe
 	return b
 }
 
-// WithHash sets the Hash field in the declarative configuration to the given value
+// WithRef sets the Ref field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Hash field is set to the value of the last call.
-func (b *JobSpecApplyConfiguration) WithHash(value string) *JobSpecApplyConfiguration {
-	b.Hash = &value
+// If called multiple times, the Ref field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithRef(value string) *JobSpecApplyConfiguration {
+	b.Ref = &value
 	return b
 }
 
@@ -44,6 +45,14 @@ func (b *JobSpecApplyConfiguration) WithHash(value string) *JobSpecApplyConfigur
 // If called multiple times, the PR field is set to the value of the last call.
 func (b *JobSpecApplyConfiguration) WithPR(value int) *JobSpecApplyConfiguration {
 	b.PR = &value
+	return b
+}
+
+// WithHash sets the Hash field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Hash field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithHash(value string) *JobSpecApplyConfiguration {
+	b.Hash = &value
 	return b
 }
 

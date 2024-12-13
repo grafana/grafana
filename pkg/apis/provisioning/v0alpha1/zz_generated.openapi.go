@@ -636,9 +636,9 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Enum:        []interface{}{"export", "pr", "sync"},
 						},
 					},
-					"hash": {
+					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The hash for requested job (if known/appropriate) For a sync job, having a value will indicate",
+							Description: "The branch of commit hash",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -648,6 +648,12 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Description: "Pull request number (when appropriate)",
 							Type:        []string{"integer"},
 							Format:      "int32",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"url": {
@@ -692,6 +698,12 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 						},
 					},
 					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"errors": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{

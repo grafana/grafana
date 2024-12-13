@@ -59,16 +59,12 @@ const (
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
-	// The hash for requested job (if known/appropriate)
-	// For a sync job, having a value will indicate
-	Hash string `json:"hash,omitempty"`
-
-	// The hash for requested job (if known/appropriate)
-	// For a sync job, having a value will indicate
+	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
 	// Pull request number (when appropriate)
-	PR int `json:"pr,omitempty"`
+	PR   int    `json:"pr,omitempty"`
+	Hash string `json:"hash,omitempty"` // used in PR code... not sure it is necessary
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
@@ -79,7 +75,8 @@ type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
 	Started  int64    `json:"started,omitempty"`
 	Finished int64    `json:"finished,omitempty"`
-	Message  []string `json:"message,omitempty"`
+	Message  string   `json:"message,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
 
 	// What did we do
 	Actions []FileAction `json:"actions,omitempty"`

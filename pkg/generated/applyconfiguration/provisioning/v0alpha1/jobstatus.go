@@ -14,7 +14,8 @@ type JobStatusApplyConfiguration struct {
 	State    *v0alpha1.JobState             `json:"state,omitempty"`
 	Started  *int64                         `json:"started,omitempty"`
 	Finished *int64                         `json:"finished,omitempty"`
-	Message  []string                       `json:"message,omitempty"`
+	Message  *string                        `json:"message,omitempty"`
+	Errors   []string                       `json:"errors,omitempty"`
 	Actions  []FileActionApplyConfiguration `json:"actions,omitempty"`
 }
 
@@ -48,12 +49,20 @@ func (b *JobStatusApplyConfiguration) WithFinished(value int64) *JobStatusApplyC
 	return b
 }
 
-// WithMessage adds the given value to the Message field in the declarative configuration
+// WithMessage sets the Message field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Message field is set to the value of the last call.
+func (b *JobStatusApplyConfiguration) WithMessage(value string) *JobStatusApplyConfiguration {
+	b.Message = &value
+	return b
+}
+
+// WithErrors adds the given value to the Errors field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the Message field.
-func (b *JobStatusApplyConfiguration) WithMessage(values ...string) *JobStatusApplyConfiguration {
+// If called multiple times, values provided by each call will be appended to the Errors field.
+func (b *JobStatusApplyConfiguration) WithErrors(values ...string) *JobStatusApplyConfiguration {
 	for i := range values {
-		b.Message = append(b.Message, values[i])
+		b.Errors = append(b.Errors, values[i])
 	}
 	return b
 }
