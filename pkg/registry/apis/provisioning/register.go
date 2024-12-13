@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"path"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +29,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
@@ -36,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -45,6 +48,7 @@ import (
 
 const (
 	resourceNamePlaceholder = "$RESOURCE_NAME_PLACEHOLDER"
+	repoControllerWorkers   = 1
 )
 
 var (
@@ -79,9 +83,10 @@ func NewProvisioningAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
 	blobstore blob.PublicBlobStore,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
-	return &ProvisioningAPIBuilder{
+	builder := &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
@@ -97,6 +102,8 @@ func NewProvisioningAPIBuilder(
 		},
 		jobs: jobs.NewJobQueue(50), // in memory for now
 	}
+
+	return builder
 }
 
 func RegisterAPIService(
@@ -107,6 +114,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
@@ -122,12 +130,11 @@ func RegisterAPIService(
 	}
 
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
-		ProvisioningPath: safepath.Clean(cfg.ProvisioningPath),
-		// We're not going to use safepath.Join here. We trust the configuration a reasonable amount.
-		DevenvPath: safepath.Clean(path.Join(cfg.HomePath, "devenv")),
+		PermittedPrefixes: cfg.PermittedProvisioningPaths,
+		HomePath:          safepath.Clean(cfg.HomePath),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, store, ghFactory)
+	}, cfg.SecretKey, identities, features, render, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -161,6 +168,7 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
 	// Only 1 version (for now?)
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
@@ -171,12 +179,13 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	b.jobs.Register(&GithubWorker{
-		getter:         b,
-		logger:         b.logger.With("worker", "github"),
-		resourceClient: b.client,
-		identities:     b.identities,
-	})
+	b.jobs.Register(jobs.NewJobWorker(
+		b,
+		b.client,
+		b.identities,
+		b.logger.With("worker", "github"),
+		provisioning.IncludeYamlOrJSON,
+	))
 
 	repositoryStorage.AfterCreate = b.afterCreate
 	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
@@ -210,16 +219,15 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		logger:     b.logger.With("connector", "history"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
 		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "import"),
-		ignore:     provisioning.IncludeYamlOrJSON,
+		jobs:       b.jobs,
+		logger:     b.logger.With("connector", "sync"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
-		client:     b.client,
 		logger:     b.logger.With("connector", "export"),
+		queue:      b.jobs,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
@@ -247,7 +255,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver)
+		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
 		if err != nil {
@@ -320,7 +328,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 
 	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
-		return nil, err
+		b.logger.Warn("error in begin update", "err", err)
 	}
 
 	return func(ctx context.Context, success bool) {
@@ -479,9 +487,36 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 	return provisioning.GetOpenAPIDefinitions
 }
 
-func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: this is where we could inject a non-k8s managed handler... webhook maybe?
-	return nil
+func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
+		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
+			if err != nil {
+				return err
+			}
+			sharedInformerFactory := informers.NewSharedInformerFactory(
+				c,
+				15*time.Minute, // Health check interval
+			)
+
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+
+			repoController, err := NewRepositoryController(
+				c.ProvisioningV0alpha1(),
+				repoInformer,
+				b, // repoGetter
+				b.identities,
+			)
+			if err != nil {
+				return err
+			}
+
+			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			return nil
+		},
+	}
+	return postStartHooks, nil
 }
 
 func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -518,7 +553,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
-					"application/json": &spec3.MediaType{
+					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &repoSchema,
 						},
@@ -561,11 +596,6 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 			Schema:      spec.StringProperty(),
 			Required:    false,
 		},
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/import"]
-	if sub != nil && sub.Post != nil {
-		sub.Post.Parameters = []*spec3.Parameter{ref}
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/history"]

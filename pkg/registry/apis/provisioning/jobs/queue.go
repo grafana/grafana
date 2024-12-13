@@ -31,7 +31,7 @@ func NewJobQueue(capacity int) JobQueue {
 type jobStore struct {
 	logger   *slog.Logger
 	capacity int
-	workers  []Worker
+	worker   Worker
 
 	// All jobs
 	jobs      []provisioning.Job
@@ -44,9 +44,7 @@ type jobStore struct {
 
 // Register a worker (inline for now)
 func (s *jobStore) Register(worker Worker) {
-	s.mutex.Lock()
-	s.workers = append(s.workers, worker)
-	s.mutex.Unlock()
+	s.worker = worker
 }
 
 // Add implements JobQueue.
@@ -55,10 +53,6 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 		return nil, fmt.Errorf("expecting namespace")
 	}
 	_, ok := job.Labels["repository"]
-	if !ok {
-		return nil, fmt.Errorf("expecting repository name label")
-	}
-	_, ok = job.Labels["repository.type"] // TODO: ideally just based on the action type
 	if !ok {
 		return nil, fmt.Errorf("expecting repository name label")
 	}
@@ -123,16 +117,10 @@ func (s *jobStore) drainPending() {
 		if job == nil {
 			return // done
 		}
+		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 
 		var status *provisioning.JobStatus
-		var worker Worker
-		for _, w := range s.workers {
-			if w.Supports(ctx, job) {
-				worker = w
-				break
-			}
-		}
-		if worker == nil {
+		if s.worker == nil {
 			status = &provisioning.JobStatus{
 				State: provisioning.JobStateError,
 				Errors: []string{
@@ -140,21 +128,24 @@ func (s *jobStore) drainPending() {
 				},
 			}
 		} else {
-			status, err = worker.Process(ctx, *job)
+			status, err = s.worker.Process(ctx, *job)
 			if err != nil {
+				logger.ErrorContext(ctx, "error processing job", "error", err)
 				status = &provisioning.JobStatus{
-					State:  "error",
+					State:  provisioning.JobStateError,
 					Errors: []string{err.Error()},
 				}
 			} else if status.State == "" {
 				status.State = provisioning.JobStateFinished
 			}
+			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
-			s.logger.Error("error running job", "job", job.Name, "error", err)
+			logger.ErrorContext(ctx, "error running job", "error", err)
 		}
+		logger.DebugContext(ctx, "job has been fully completed")
 	}
 }
 

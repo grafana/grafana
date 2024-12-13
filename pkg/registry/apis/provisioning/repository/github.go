@@ -470,30 +470,15 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
-		r.logger.Debug("ignoring push event as it is not for the configured branch")
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	job := &provisioning.JobSpec{
-		Action: provisioning.JobActionMergeBranch,
-	}
-
-	beforeRef := event.GetBefore()
+	var count int
 	for _, commit := range event.Commits {
-		commitInfo := provisioning.CommitInfo{
-			SHA1: commit.GetID(),
-		}
-
-		count := 0
 		for _, file := range commit.Added {
 			if r.ignore(file) {
 				continue
 			}
-
-			commitInfo.Added = append(commitInfo.Added, provisioning.FileRef{
-				Ref:  commit.GetID(),
-				Path: file,
-			})
 			count++
 		}
 
@@ -501,10 +486,6 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			if r.ignore(file) {
 				continue
 			}
-			commitInfo.Modified = append(commitInfo.Modified, provisioning.FileRef{
-				Ref:  commit.GetID(),
-				Path: file,
-			})
 			count++
 		}
 
@@ -512,21 +493,11 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 			if r.ignore(file) {
 				continue
 			}
-
-			commitInfo.Removed = append(commitInfo.Removed, provisioning.FileRef{
-				Ref:  beforeRef,
-				Path: file,
-			})
 			count++
 		}
-
-		if count > 0 {
-			job.Commits = append(job.Commits, commitInfo)
-		}
-		beforeRef = commit.GetID()
 	}
 
-	if len(job.Commits) == 0 {
+	if count == 0 {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK, // Nothing needed
 			Message: "no files require updates",
@@ -535,7 +506,9 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
-		Job:  job,
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionSync,
+		},
 	}, nil
 }
 
@@ -563,7 +536,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != cfg.Branch {
+	if pr.GetBase().GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: "ignoring pull request event as it is not for the configured branch",
@@ -592,69 +565,83 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-// Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, factory FileReplicatorFactory) error {
-	job := wrap.Spec
-
-	// TODO... verify added vs removed vs modified... should not process 2x!
-	replicator, err := factory.New()
+func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
-		return fmt.Errorf("create replicator: %w", err)
+		return "", fmt.Errorf("get branch: %w", err)
 	}
 
-	if job.PR > 0 {
-		return r.processPR(ctx, logger, job, replicator)
-	}
-
-	// NOTE: Everything below here is not git specific
-	for _, commit := range job.Commits {
-		// NOT PR, this is processing the actual files
-		for _, v := range commit.Added {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read added resource", "file", v, "error", err)
-				continue
-			}
-
-			err = replicator.Replicate(ctx, fileInfo)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to replicate added resource", "file", v, "error", err)
-				continue
-			}
-		}
-		for _, v := range commit.Modified {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read modified resource", "file", v, "error", err)
-				continue
-			}
-
-			err = replicator.Replicate(ctx, fileInfo)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to replicate modified resource", "file", v, "error", err)
-				continue
-			}
-		}
-
-		for _, v := range commit.Removed {
-			fileInfo, err := r.Read(ctx, logger, v.Path, v.Ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read removed resource", "file", v, "error", err)
-				continue
-			}
-
-			if err := replicator.Delete(ctx, fileInfo); err != nil {
-				logger.ErrorContext(ctx, "failed to delete resource", "file", v, "error", err)
-				continue
-			}
-		}
-	}
-
-	return nil
+	return branch.Sha, nil
 }
 
-// Process a pull request
-func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.JobSpec, replicator FileReplicator) error {
+func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
+	if ref == "" {
+		var err error
+		ref, err = r.LatestRef(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get latest ref: %w", err)
+		}
+	}
+
+	lastSyncCommit := r.config.Status.Sync.Hash
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	files, err := r.gh.CompareCommits(ctx, owner, repo, lastSyncCommit, ref)
+	if err != nil {
+		return nil, fmt.Errorf("compare commits: %w", err)
+	}
+
+	changes := make([]FileChange, 0)
+	for _, f := range files {
+		if r.ignore(f.GetFilename()) {
+			continue
+		}
+		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+		switch f.GetStatus() {
+		case "added":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "modified", "changed":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionUpdated,
+			})
+		case "renamed":
+			// delete the old file
+			changes = append(changes, FileChange{
+				Path:   f.GetPreviousFilename(),
+				Ref:    lastSyncCommit,
+				Action: FileActionDeleted,
+			})
+			// replicate the new file
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "removed":
+			changes = append(changes, FileChange{
+				Ref:    lastSyncCommit,
+				Path:   f.GetFilename(),
+				Action: FileActionDeleted,
+			})
+		default:
+			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
+		}
+	}
+
+	return changes, nil
+}
+
+// Process is a backend job
+// TODO: move out the pull request processing to a separate worker / processor
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) error {
+	job := wrap.Spec
+
 	// Get the files changed in the pull request
 	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, job.PR)
 	if err != nil {

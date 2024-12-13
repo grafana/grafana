@@ -37,20 +37,6 @@ import { RowActions } from './row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../saving/getDashboardChangesFromScene', () => ({
-  // It compares the initial and changed save models and returns the differences
-  // By default we assume there are differences to have the dirty state test logic tested
-  getDashboardChangesFromScene: jest.fn(() => ({
-    changedSaveModel: {},
-    initialSaveModel: {},
-    diffs: [],
-    diffCount: 0,
-    hasChanges: true,
-    hasTimeChanges: false,
-    isNew: false,
-    hasVariableValueChanges: false,
-  })),
-}));
 jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

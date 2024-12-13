@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "filter-view": {
+        "no-more-results": "No more results – showing {{numberOfRules}} rules",
+        "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
@@ -1286,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
+      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
@@ -1753,6 +1758,12 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Older logs"
+    },
+    "log-details": {
+      "fields": "Fields",
+      "links": "Links",
+      "log-line": "Log line",
+      "no-details": "No details available"
     },
     "log-row-message": {
       "ellipsis": "… ",

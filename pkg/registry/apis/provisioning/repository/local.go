@@ -27,58 +27,76 @@ import (
 )
 
 type LocalFolderResolver struct {
-	// Local path to data directory
-	ProvisioningPath string
-
-	// Path to development environment
-	DevenvPath string
+	PermittedPrefixes []string
+	HomePath          string
 }
 
-var ErrInvalidLocalFolder = apierrors.NewBadRequest("the path given is invalid")
+type InvalidLocalFolderError struct {
+	Path           string
+	AdditionalInfo string
+}
+
+var (
+	_ error               = (*InvalidLocalFolderError)(nil)
+	_ apierrors.APIStatus = (*InvalidLocalFolderError)(nil)
+)
+
+func (e *InvalidLocalFolderError) Error() string {
+	return fmt.Sprintf("the path given ('%s') is invalid for a local repository (%s)", e.Path, e.AdditionalInfo)
+}
+
+func (e *InvalidLocalFolderError) Status() metav1.Status {
+	return metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusBadRequest,
+		Reason:  metav1.StatusReasonBadRequest,
+		Message: e.Error(),
+	}
+}
 
 func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
-	parts := strings.SplitN(p, "/", 2)
-	if len(parts) != 2 {
-		return "", ErrInvalidLocalFolder
+	if len(r.PermittedPrefixes) == 0 {
+		return "", &InvalidLocalFolderError{p, "no permitted prefixes were configured"}
 	}
 
-	switch parts[0] {
-	case "provisioning":
-		if r.ProvisioningPath == "" {
-			return "", ErrInvalidLocalFolder
+	originalPath := p
+	if !path.IsAbs(p) {
+		var err error
+		p, err = safepath.Join(r.HomePath, p)
+		if err != nil {
+			return "", &InvalidLocalFolderError{originalPath, "the path could not be safely resolved"}
 		}
-		return safepath.Join(r.ProvisioningPath, parts[1])
-
-	case "devenv":
-		if r.DevenvPath == "" {
-			return "", ErrInvalidLocalFolder
-		}
-		return safepath.Join(r.DevenvPath, parts[1])
+	} else {
+		p = safepath.Clean(p)
 	}
-	return "", ErrInvalidLocalFolder
+
+	for _, permitted := range r.PermittedPrefixes {
+		if strings.HasPrefix(p, safepath.Clean(permitted)) {
+			return p, nil
+		}
+	}
+	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
 }
 
 var _ Repository = (*localRepository)(nil)
 
 type localRepository struct {
-	config *provisioning.Repository
+	config   *provisioning.Repository
+	resolver *LocalFolderResolver
 
 	// validated path that can be read if not empty
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) (*localRepository, error) {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
-		config: config,
+		config:   config,
+		resolver: resolver,
 	}
 	if config.Spec.Local != nil {
-		var err error
-		r.path, err = resolver.LocalPath(config.Spec.Local.Path)
-		if err != nil {
-			return nil, err
-		}
+		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 	}
-	return r, nil
+	return r
 }
 
 func (r *localRepository) Config() *provisioning.Repository {
@@ -87,14 +105,6 @@ func (r *localRepository) Config() *provisioning.Repository {
 
 // Validate implements provisioning.Repository.
 func (r *localRepository) Validate() (fields field.ErrorList) {
-	if r.config.Spec.Type != provisioning.LocalRepositoryType {
-		fields = append(fields, &field.Error{
-			Type:   field.ErrorTypeInvalid,
-			Field:  "spec.type",
-			Detail: "Local repository requires spec.type=local",
-		})
-	}
-
 	cfg := r.config.Spec.Local
 	if cfg == nil {
 		fields = append(fields, &field.Error{
@@ -108,9 +118,6 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 	if cfg.Path == "" {
 		fields = append(fields, field.Required(field.NewPath("spec", "local", "path"),
 			"must enter a path to local file"))
-	} else if r.path == "" {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, "configured path is not allowed, see system allow list"))
 	}
 
 	return fields
@@ -119,23 +126,34 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
-	if r.path == "" {
+	if r.config.Spec.Local.Path == "" {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("invalid path: %s", r.config.Spec.Local.Path),
+				"no path is configured",
 			},
 		}, nil
 	}
 
-	_, err := os.Stat(r.path)
+	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []string{
+				err.Error(),
+			},
+		}, nil
+	}
+
+	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("file not found: %s", r.config.Spec.Local.Path),
+				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
 			},
 		}, nil
 	}
@@ -152,6 +170,10 @@ func (r *localRepository) validateRequest(ref string) error {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
+		_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+		if err != nil {
+			return err
+		}
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
@@ -326,7 +348,7 @@ func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionMergeBranch, // sync the latest changes
+			Action: provisioning.JobActionSync, // sync the latest changes
 		},
 	}, nil
 }
