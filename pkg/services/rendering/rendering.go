@@ -329,7 +329,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return nil, err
 	}
 	rs.log.Debug("Successfully rendered image", "path", opts.Path)
-	
+
 	return res, nil
 }
 
