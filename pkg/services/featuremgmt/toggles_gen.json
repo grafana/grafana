@@ -1876,6 +1876,18 @@
     },
     {
       "metadata": {
+        "name": "kubernetesCliDashboards",
+        "resourceVersion": "1733520389522",
+        "creationTimestamp": "2024-12-06T21:26:29Z"
+      },
+      "spec": {
+        "description": "Use the k8s client to retrieve dashboards internally",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-06-05T14:34:23Z"
