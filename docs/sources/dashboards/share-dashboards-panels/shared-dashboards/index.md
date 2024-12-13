@@ -292,7 +292,7 @@ guaranteed because plugin developers can override this functionality. The follow
 ## Limitations
 
 - Panels that use frontend data sources will fail to fetch data.
-- Template variables are not supported.
+- Variables and queries including variables are not supported.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
