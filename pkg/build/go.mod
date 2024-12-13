@@ -31,19 +31,19 @@ require (
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect; @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.57.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.32.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.31.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.22.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.31.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.32.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.10.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.67.1 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.68.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
@@ -115,7 +115,7 @@ require (
 	go.opentelemetry.io/otel/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
