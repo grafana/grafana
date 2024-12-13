@@ -117,7 +117,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (req.tags) {
-      uri += '&' + req.tags.map((tag) => `filters=${encodeURIComponent(tag)}`).join('&');
+      uri += '&' + req.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }
     
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);

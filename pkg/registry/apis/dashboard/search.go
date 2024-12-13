@@ -277,10 +277,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The filters
-	filters, ok := queryParams["filters"]
+	// The tags filter
+	tags, ok := queryParams["tag"]
 	if ok {
-		searchRequest.Filters = filters
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "tags",
+			Operator: "=",
+			Values:   tags,
+		}}
 	}
 
 	// Run the query

@@ -594,13 +594,18 @@ func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
 }
 
 func newTagsQuery(req *resource.ResourceSearchRequest) query.Query {
-	if len(req.Filters) == 0 {
+	if len(req.Options.Fields) == 0 {
 		return nil
 	}
 	orQuery := bleve.NewDisjunctionQuery()
-	for _, filter := range req.Filters {
-		matchQuery := bleve.NewMatchQuery(filter)
-		orQuery.AddQuery(matchQuery)
+	for _, filter := range req.Options.Fields {
+		if filter.Key == resource.SEARCH_FIELD_TAGS {
+			for _, v := range filter.Values {
+				matchQuery := bleve.NewMatchQuery(v)
+				orQuery.AddQuery(matchQuery)
+			}
+			break
+		}
 	}
 	return orQuery
 }
