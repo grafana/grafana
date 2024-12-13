@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -76,8 +78,18 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// TODO: implement me
-	return nil, nil
+	namespace := request.NamespaceValue(ctx)
+
+	sv, err := s.storage.Read(ctx, namespace, name)
+	if err != nil {
+		if errors.Is(err, secretstorage.ErrSecureValueNotFound) {
+			return nil, s.resource.NewNotFound(name)
+		}
+
+		return nil, fmt.Errorf("failed to read secure value: %w", err)
+	}
+
+	return sv, nil
 }
 
 func checkRefOrValue(s *secret.SecureValue, mustExist bool) error {
@@ -126,18 +138,20 @@ func (s *SecureValueRest) Create(
 			return nil, err
 		}
 
-		// If the prefix is empty, we use `s`. Should we use `sv`?
 		optionalPrefix := sv.GenerateName
 		if optionalPrefix == "" {
-			optionalPrefix = "s"
+			optionalPrefix = "sv-"
 		}
 
-		// A suffix is also automatically added by Kubernetes, and is separated by `-`. Our prefix is not. Should it?
 		sv.Name = optionalPrefix + generatedName
 	}
 
-	// TODO: implement creation in storage
-	return nil, nil
+	createdSecureValue, err := s.storage.Create(ctx, sv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secure value: %w", err)
+	}
+
+	return createdSecureValue, nil
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
