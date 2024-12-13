@@ -597,15 +597,19 @@ func newTagsQuery(req *resource.ResourceSearchRequest) query.Query {
 	if len(req.Options.Fields) == 0 {
 		return nil
 	}
-	orQuery := bleve.NewDisjunctionQuery()
+
 	for _, filter := range req.Options.Fields {
 		if filter.Key == resource.SEARCH_FIELD_TAGS {
+			if len(filter.Values) == 0 {
+				return nil
+			}
+			orQuery := bleve.NewDisjunctionQuery()
 			for _, v := range filter.Values {
 				matchQuery := bleve.NewMatchQuery(v)
 				orQuery.AddQuery(matchQuery)
 			}
-			break
+			return orQuery
 		}
 	}
-	return orQuery
+	return nil
 }
