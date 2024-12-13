@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -1048,14 +1047,14 @@ func getParents(f *folder.Folder) (map[string]bool, error) {
 }
 
 func toFolderCounts(obj *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	spec, ok := obj.Object["spec"].(v0alpha1.DescendantCounts)
-	if !ok {
+	dc, err := folderalpha1.UnstructedToDescendantCounts(obj)
+	if err != nil {
 		return nil, fmt.Errorf("cannot convert object to descendant counts")
 	}
 
 	var counts = make(folder.DescendantCounts)
 
-	for _, item := range spec.Counts {
+	for _, item := range dc.Counts {
 		counts[item.Resource] = item.Count
 	}
 
