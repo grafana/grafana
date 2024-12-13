@@ -65,7 +65,6 @@ import {
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
-  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
@@ -732,11 +731,6 @@ function getVariableSet(
         name: VAR_OTEL_GROUP_LEFT,
         value: undefined,
         hide: VariableHide.hideVariable,
-      }),
-      new ConstantVariable({
-        name: VAR_MISSING_OTEL_TARGETS,
-        hide: VariableHide.hideVariable,
-        value: false,
       }),
     ],
   });

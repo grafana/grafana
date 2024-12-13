@@ -30,20 +30,16 @@ func TestAnonymous_Authenticate(t *testing.T) {
 			desc: "should success with valid org configured",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				Anonymous: setting.AnonymousSettings{
-					OrgRole: "Viewer",
-					OrgName: "some org",
-				},
+				AnonymousOrgName: "some org",
+				AnonymousOrgRole: "Viewer",
 			},
 		},
 		{
 			desc: "should return error if any error occurs during org lookup",
 			err:  fmt.Errorf("some error"),
 			cfg: &setting.Cfg{
-				Anonymous: setting.AnonymousSettings{
-					OrgRole: "Viewer",
-					OrgName: "some org",
-				},
+				AnonymousOrgName: "some org",
+				AnonymousOrgRole: "Viewer",
 			},
 		},
 	}
@@ -67,7 +63,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				assert.Equal(t, "anonymous:0", user.GetID())
 				assert.Equal(t, tt.org.ID, user.OrgID)
 				assert.Equal(t, tt.org.Name, user.OrgName)
-				assert.Equal(t, tt.cfg.Anonymous.OrgRole, string(user.GetOrgRole()))
+				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(user.GetOrgRole()))
 			}
 		})
 	}
@@ -90,9 +86,7 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 			desc: "should return error when org id is not the configured one",
 			org:  &org.Org{ID: 2, Name: "some org"},
 			cfg: &setting.Cfg{
-				Anonymous: setting.AnonymousSettings{
-					OrgName: "some org",
-				},
+				AnonymousOrgName: "some org",
 			},
 			orgID:       1,
 			typ:         claims.TypeAnonymous,
@@ -103,9 +97,7 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 			desc: "should return error when namespace id does not match anonymous namespace id",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				Anonymous: setting.AnonymousSettings{
-					OrgName: "some org",
-				},
+				AnonymousOrgName: "some org",
 			},
 			orgID:       1,
 			typ:         claims.TypeAnonymous,
@@ -116,9 +108,7 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 			desc: "should resolve identity",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				Anonymous: setting.AnonymousSettings{
-					OrgName: "some org",
-				},
+				AnonymousOrgName: "some org",
 			},
 			orgID: 1,
 			typ:   claims.TypeAnonymous,

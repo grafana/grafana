@@ -17,7 +17,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -30,60 +29,12 @@ type syncItem struct {
 	accessorLegacy  utils.GrafanaMetaAccessor
 }
 
-type SyncerConfig struct {
-	Kind        string
-	RequestInfo *request.RequestInfo
+const dataSyncerInterval = 60 * time.Minute
 
-	Mode              DualWriterMode
-	LegacyStorage     LegacyStorage
-	Storage           Storage
-	ServerLockService ServerLockService
-
-	DataSyncerInterval     time.Duration
-	DataSyncerRecordsLimit int
-
-	Reg prometheus.Registerer
-}
-
-func (s *SyncerConfig) Validate() error {
-	if s == nil {
-		return fmt.Errorf("syncer config is nil")
-	}
-	if s.Kind == "" {
-		return fmt.Errorf("kind must be specified")
-	}
-	if s.RequestInfo == nil {
-		return fmt.Errorf("requestInfo must be specified")
-	}
-	if s.ServerLockService == nil {
-		return fmt.Errorf("serverLockService must be specified")
-	}
-	if s.Storage == nil {
-		return fmt.Errorf("storage must be specified")
-	}
-	if s.LegacyStorage == nil {
-		return fmt.Errorf("legacy storage must be specified")
-	}
-	if s.DataSyncerInterval == 0 {
-		s.DataSyncerInterval = time.Hour
-	}
-	if s.DataSyncerRecordsLimit == 0 {
-		s.DataSyncerRecordsLimit = 1000
-	}
-	if s.Reg == nil {
-		s.Reg = prometheus.DefaultRegisterer
-	}
-	return nil
-}
-
-// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer, syncing the data
-// from the hosted grafana backend into the unified storage backend. This is run in the grafana instance.
-func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("invalid syncer config: %w", err)
-	}
-
-	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", cfg.Mode, "resource", cfg.Kind)
+// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
+func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
+	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
+	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", mode, "resource", kind)
 
 	log.Info("Starting periodic data syncer")
 
@@ -96,67 +47,62 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 		time.Sleep(time.Second * time.Duration(jitterSeconds))
 
 		// run it immediately
-		syncOK, err := runDataSyncer(ctx, cfg)
+		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
 		log.Info("data syncer finished", "syncOK", syncOK, "error", err)
 
-		ticker := time.NewTicker(cfg.DataSyncerInterval)
+		ticker := time.NewTicker(dataSyncerInterval)
 		for {
 			select {
 			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, cfg)
+				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
 				log.Info("data syncer finished", "syncOK", syncOK, ", error", err)
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
-	return nil
 }
 
 // runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
 // The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
-	if err := cfg.Validate(); err != nil {
-		return false, fmt.Errorf("invalid syncer config: %w", err)
-	}
+func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
+	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
 	// ensure that execution takes no longer than necessary
-	timeout := cfg.DataSyncerInterval - time.Minute
+	const timeout = dataSyncerInterval - time.Minute
 	ctx, cancelFn := context.WithTimeout(ctx, timeout)
 	defer cancelFn()
 
 	// implementation depends on the current DualWriter mode
-	switch cfg.Mode {
+	switch mode {
 	case Mode1, Mode2:
-		return legacyToUnifiedStorageDataSyncer(ctx, cfg)
+		return legacyToUnifiedStorageDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
 	default:
-		klog.Info("data syncer not implemented for mode:", cfg.Mode)
+		klog.Info("data syncer not implemented for mode mode:", mode)
 		return false, nil
 	}
 }
 
-func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
-	if err := cfg.Validate(); err != nil {
-		return false, fmt.Errorf("invalid syncer config: %w", err)
-	}
+func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage, resource string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
 	metrics := &dualWriterMetrics{}
-	metrics.init(cfg.Reg)
+	metrics.init(reg)
 
-	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", cfg.Mode, "resource", cfg.Kind)
+	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", mode, "resource", resource)
 
 	everythingSynced := false
 	outOfSync := 0
 	syncSuccess := 0
 	syncErr := 0
 
-	maxInterval := cfg.DataSyncerInterval + 5*time.Minute
+	maxInterval := dataSyncerInterval + 5*time.Minute
 
 	var errSync error
+	const maxRecordsSync = 1000
 
 	// LockExecuteAndRelease ensures that just a single Grafana server acquires a lock at a time
 	// The parameter 'maxInterval' is a timeout safeguard, if the LastExecution in the
 	// database is older than maxInterval, we will assume the lock as timeouted. The 'maxInterval' parameter should be so long
 	// that is impossible for 2 processes to run at the same time.
-	err := cfg.ServerLockService.LockExecuteAndRelease(ctx, fmt.Sprintf("legacyToUnifiedStorageDataSyncer-%d-%s", cfg.Mode, cfg.Kind), maxInterval, func(context.Context) {
+	err := serverLockService.LockExecuteAndRelease(ctx, fmt.Sprintf("legacyToUnifiedStorageDataSyncer-%d-%s", mode, resource), maxInterval, func(context.Context) {
 		log.Info("starting legacyToUnifiedStorageDataSyncer")
 		startSync := time.Now()
 
@@ -164,26 +110,26 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 
 		ctx = klog.NewContext(ctx, log)
 		ctx = identity.WithRequester(ctx, getSyncRequester(orgId))
-		ctx = request.WithNamespace(ctx, cfg.RequestInfo.Namespace)
-		ctx = request.WithRequestInfo(ctx, cfg.RequestInfo)
+		ctx = request.WithNamespace(ctx, requestInfo.Namespace)
+		ctx = request.WithRequestInfo(ctx, requestInfo)
 
-		storageList, err := getList(ctx, cfg.Storage, &metainternalversion.ListOptions{
-			Limit: int64(cfg.DataSyncerRecordsLimit),
+		storageList, err := getList(ctx, storage, &metainternalversion.ListOptions{
+			Limit: maxRecordsSync,
 		})
 		if err != nil {
 			log.Error(err, "unable to extract list from storage")
 			return
 		}
 
-		if len(storageList) >= cfg.DataSyncerRecordsLimit {
-			errSync = fmt.Errorf("unified storage has more than %d records. Aborting sync", cfg.DataSyncerRecordsLimit)
+		if len(storageList) >= maxRecordsSync {
+			errSync = fmt.Errorf("unified storage has more than %d records. Aborting sync", maxRecordsSync)
 			log.Error(errSync, "Unified storage has more records to be synced than allowed")
 			return
 		}
 
 		log.Info("got items from unified storage", "items", len(storageList))
 
-		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{})
+		legacyList, err := getList(ctx, legacy, &metainternalversion.ListOptions{})
 		if err != nil {
 			log.Error(err, "unable to extract list from legacy storage")
 			return
@@ -243,7 +189,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 				}
 
 				objInfo := rest.DefaultUpdatedObjectInfo(item.objLegacy, []rest.TransformFunc{}...)
-				res, _, err := cfg.Storage.Update(ctx,
+				res, _, err := storage.Update(ctx,
 					name,
 					objInfo,
 					func(ctx context.Context, obj runtime.Object) error { return nil },
@@ -264,15 +210,15 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 				outOfSync++
 
 				ctx = request.WithRequestInfo(ctx, &request.RequestInfo{
-					APIGroup:  cfg.RequestInfo.APIGroup,
-					Resource:  cfg.RequestInfo.Resource,
+					APIGroup:  requestInfo.APIGroup,
+					Resource:  requestInfo.Resource,
 					Name:      name,
-					Namespace: cfg.RequestInfo.Namespace,
+					Namespace: requestInfo.Namespace,
 				})
 
 				log.Info("deleting item from unified storage", "name", name)
 
-				deletedS, _, err := cfg.Storage.Delete(ctx, name, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+				deletedS, _, err := storage.Delete(ctx, name, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 				if err != nil && !apierrors.IsNotFound(err) {
 					log.WithValues("objectList", deletedS).Error(err, "could not delete from storage")
 					syncErr++
@@ -285,8 +231,8 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 
 		everythingSynced = outOfSync == syncSuccess
 
-		metrics.recordDataSyncerOutcome(cfg.Mode, cfg.Kind, everythingSynced)
-		metrics.recordDataSyncerDuration(err != nil, cfg.Mode, cfg.Kind, startSync)
+		metrics.recordDataSyncerOutcome(mode, resource, everythingSynced)
+		metrics.recordDataSyncerDuration(err != nil, mode, resource, startSync)
 
 		log.Info("finished syncing items", "items", len(itemsByName), "updated", syncSuccess, "failed", syncErr, "outcome", everythingSynced)
 	})

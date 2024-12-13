@@ -2,7 +2,6 @@ package setting
 
 import (
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -30,17 +29,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dualWriter periodic data syncer config
 		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
 
-		// parse dataSyncerRecordsLimit from resource section
-		dataSyncerRecordsLimit := section.Key("dataSyncerRecordsLimit").MustInt(1000)
-
-		// parse dataSyncerInterval from resource section
-		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
-
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
-			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
-			DataSyncerInterval:                   dataSyncerInterval,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig

@@ -271,16 +271,6 @@ func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, o
 }
 
 func (rs *RenderingService) render(ctx context.Context, renderType RenderType, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
-	if !rs.IsAvailable(ctx) {
-		rs.log.Warn("Could not render image, no image renderer found/installed. " +
-			"For image rendering support please install the grafana-image-renderer plugin. " +
-			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-		if opts.ErrorRenderUnavailable {
-			return nil, ErrRenderUnavailable
-		}
-		return rs.renderUnavailableImage(), nil
-	}
-
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
@@ -297,10 +287,15 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}, nil
 	}
 
-	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
-	}()
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
+	if !rs.IsAvailable(ctx) {
+		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+			"For image rendering support please install the grafana-image-renderer plugin. " +
+			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		if opts.ErrorRenderUnavailable {
+			return nil, ErrRenderUnavailable
+		}
+		return rs.renderUnavailableImage(), nil
+	}
 
 	if renderType == RenderPDF {
 		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
@@ -323,14 +318,12 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 
 	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
-	res, err := rs.renderAction(ctx, renderType, renderKey, opts)
-	if err != nil {
-		rs.log.Error("Failed to render image", "path", opts.Path, "error", err)
-		return nil, err
-	}
-	rs.log.Debug("Successfully rendered image", "path", opts.Path)
+	defer func() {
+		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
+	}()
 
-	return res, nil
+	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
+	return rs.renderAction(ctx, renderType, renderKey, opts)
 }
 
 func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {

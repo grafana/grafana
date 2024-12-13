@@ -6,7 +6,6 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
-import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesTable } from './RulesTable';
 
@@ -38,8 +37,6 @@ const ui = {
 
 const user = userEvent.setup();
 setupMswServer();
-
-const { dataSource: mimirDs } = mimirDataSource();
 
 describe('RulesTable RBAC', () => {
   beforeEach(() => {
@@ -155,7 +152,7 @@ describe('RulesTable RBAC', () => {
   });
 
   describe('Cloud rules action buttons', () => {
-    const cloudRule = getCloudRule({ name: 'Cloud' }, { rulesSource: mimirDs });
+    const cloudRule = getCloudRule({ name: 'Cloud' });
 
     it('Should not render Edit button for users without the update permission', async () => {
       mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {

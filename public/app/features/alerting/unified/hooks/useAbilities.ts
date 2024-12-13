@@ -13,7 +13,7 @@ import {
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { CombinedRule, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -165,7 +165,7 @@ export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleActi
 
 export function useRulerRuleAbility(
   rule: RulerRuleDTO | undefined,
-  groupIdentifier: RuleGroupIdentifierV2,
+  groupIdentifier: RuleGroupIdentifier,
   action: AlertRuleAction
 ): Ability {
   const abilities = useAllRulerRuleAbilities(rule, groupIdentifier);
@@ -177,7 +177,7 @@ export function useRulerRuleAbility(
 
 export function useRulerRuleAbilities(
   rule: RulerRuleDTO,
-  groupIdentifier: RuleGroupIdentifierV2,
+  groupIdentifier: RuleGroupIdentifier,
   actions: AlertRuleAction[]
 ): Ability[] {
   const abilities = useAllRulerRuleAbilities(rule, groupIdentifier);
@@ -240,9 +240,9 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
 
 export function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
-  groupIdentifier: RuleGroupIdentifierV2
+  groupIdentifier: RuleGroupIdentifier
 ): Abilities<AlertRuleAction> {
-  const rulesSourceName = groupIdentifier.rulesSource.name;
+  const rulesSourceName = groupIdentifier.dataSourceName;
 
   const { isEditable, isRemovable, isRulerAvailable = false, loading } = useIsRuleEditable(rulesSourceName, rule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);

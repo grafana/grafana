@@ -906,12 +906,4 @@ const (
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
-
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch datasource
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
-
-	// FlagUnifiedHistory
-	// Displays the navigation history so the user can navigate back to previous pages
-	FlagUnifiedHistory = "unifiedHistory"
 )

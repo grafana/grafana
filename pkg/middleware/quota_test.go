@@ -182,5 +182,5 @@ func getQuotaHandler(reached bool, target string) web.Handler {
 }
 
 func configure(cfg *setting.Cfg) {
-	cfg.Anonymous.Enabled = false
+	cfg.AnonymousEnabled = false
 }

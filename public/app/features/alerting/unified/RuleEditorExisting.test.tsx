@@ -4,7 +4,6 @@ import { render, screen } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { DashboardSearchItemType } from 'app/features/search/types';
 
@@ -76,7 +75,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     const dataSources = {
       default: mockDataSource({
-        uid: MIMIR_DATASOURCE_UID,
+        uid: 'mimir',
         type: 'prometheus',
         name: 'Mimir',
         isDefault: true,

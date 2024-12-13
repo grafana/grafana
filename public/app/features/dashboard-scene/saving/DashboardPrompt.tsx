@@ -3,12 +3,13 @@ import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
-import { DashboardScene, isV2Dashboard } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
@@ -22,7 +23,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
-      if (ignoreChanges(dashboard)) {
+      if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
         return;
       }
 
@@ -71,7 +72,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (ignoreChanges(dashboard)) {
+    if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
       return true;
     }
 
@@ -152,13 +153,7 @@ const getStyles = () => ({
 /**
  * For some dashboards and users changes should be ignored *
  */
-export function ignoreChanges(scene: DashboardScene | null) {
-  const original = scene?.getInitialSaveModel();
-
-  if (original && isV2Dashboard(original)) {
-    throw new Error('isV2Dashboard is not implemented');
-  }
-
+export function ignoreChanges(current: DashboardScene | null, original?: Dashboard) {
   if (!original) {
     return true;
   }
@@ -173,11 +168,11 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  if (!scene) {
+  if (!current) {
     return true;
   }
 
-  const { canSave, fromScript, fromFile } = scene.state.meta;
+  const { canSave, fromScript, fromFile } = current.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }

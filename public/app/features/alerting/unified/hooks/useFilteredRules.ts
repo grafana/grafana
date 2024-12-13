@@ -192,6 +192,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const ufuzzy = getSearchInstance(groupNameFilter);
 
       const escapedQuery = escapeQueryRegex(groupNameFilter);
+
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
         escapedQuery,

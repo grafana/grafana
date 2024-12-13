@@ -39,9 +39,9 @@ func (a *Anonymous) Name() string {
 }
 
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
-		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.Anonymous.OrgName, "error", err)
+		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
 		return nil, err
 	}
 
@@ -64,7 +64,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 }
 
 func (a *Anonymous) IsEnabled() bool {
-	return a.cfg.Anonymous.Enabled
+	return a.cfg.AnonymousEnabled
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
@@ -77,7 +77,7 @@ func (a *Anonymous) IdentityType() claims.IdentityType {
 }
 
 func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
-	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.Anonymous.OrgName})
+	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
 
 	// Add stats about anonymous auth
 	m["stats.anonymous.customized_role.count"] = 0
-	if !strings.EqualFold(a.cfg.Anonymous.OrgRole, "Viewer") {
+	if !strings.EqualFold(a.cfg.AnonymousOrgRole, "Viewer") {
 		m["stats.anonymous.customized_role.count"] = 1
 	}
 
@@ -116,7 +116,7 @@ func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
 		Type:         claims.TypeAnonymous,
 		OrgID:        o.ID,
 		OrgName:      o.Name,
-		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.Anonymous.OrgRole)},
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
 		ClientParams: authn.ClientParams{SyncPermissions: true},
 	}
 }

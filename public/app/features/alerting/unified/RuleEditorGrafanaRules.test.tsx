@@ -5,13 +5,13 @@ import { screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
+import { buildInfoResponse } from './testSetup/featureDiscovery';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -19,7 +19,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-setupMswServer();
+const server = setupMswServer();
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
@@ -47,7 +47,6 @@ describe('RuleEditor grafana managed rules', () => {
         {
           type: 'prometheus',
           name: 'Prom',
-          uid: PROMETHEUS_DATASOURCE_UID,
           isDefault: true,
         },
         { alerting: false }
@@ -55,6 +54,7 @@ describe('RuleEditor grafana managed rules', () => {
     };
 
     setupDataSources(dataSources.default);
+    mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
 
     const { user } = renderRuleEditor();
 

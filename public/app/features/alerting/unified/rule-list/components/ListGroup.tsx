@@ -60,7 +60,7 @@ const GroupHeader = (props: GroupHeaderProps) => {
             onClick={onToggle}
             aria-label={t('common.collapse', 'Collapse')}
           />
-          <Text truncate variant="body" element="h4">
+          <Text truncate variant="body">
             {name}
           </Text>
         </Stack>

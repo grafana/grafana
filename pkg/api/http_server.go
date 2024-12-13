@@ -716,7 +716,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	data := healthResponse{
 		Database: "ok",
 	}
-	if !hs.Cfg.Anonymous.HideVersion {
+	if !hs.Cfg.AnonymousHideVersion {
 		data.Version = hs.Cfg.BuildVersion
 		data.Commit = hs.Cfg.BuildCommit
 		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {

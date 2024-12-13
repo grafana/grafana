@@ -2,7 +2,6 @@
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '@grafana/prometheus';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
@@ -97,7 +96,6 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
-/** @deprecated use RulesSourceIdentifier instead */
 export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
@@ -151,51 +149,13 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
-export const GrafanaRulesSourceSymbol = Symbol('grafana');
-export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
-
-export interface ExternalRulesSourceIdentifier {
-  uid: string;
-  name: string;
-}
-export interface GrafanaRulesSourceIdentifier {
-  uid: typeof GrafanaRulesSourceSymbol;
-  name: typeof GRAFANA_RULES_SOURCE_NAME;
-}
-
-export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
-
-/** @deprecated use RuleGroupIdentifierV2 instead */
+// identifier for where we can find a RuleGroup
 export interface RuleGroupIdentifier {
   dataSourceName: string;
   /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
   groupName: string;
 }
-
-export interface GrafanaNamespaceIdentifier {
-  uid: string;
-}
-
-export interface DataSourceNamespaceIdentifier {
-  name: string;
-}
-
-export interface GrafanaRuleGroupIdentifier {
-  rulesSource: GrafanaRulesSourceIdentifier;
-  groupName: string;
-  namespace: GrafanaNamespaceIdentifier;
-  groupOrigin: 'grafana';
-}
-
-export interface DataSourceRuleGroupIdentifier {
-  rulesSource: ExternalRulesSourceIdentifier;
-  groupName: string;
-  namespace: DataSourceNamespaceIdentifier;
-  groupOrigin: 'datasource';
-}
-
-export type RuleGroupIdentifierV2 = GrafanaRuleGroupIdentifier | DataSourceRuleGroupIdentifier;
 
 export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 

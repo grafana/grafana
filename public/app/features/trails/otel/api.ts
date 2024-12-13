@@ -5,7 +5,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { callSuggestionsApi } from '../utils';
 
 import { OtelResponse, LabelResponse, OtelTargetType } from './types';
-import { limitOtelMatchTerms, sortResources } from './util';
+import { sortResources } from './util';
 
 const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
 /**
@@ -242,16 +242,14 @@ export async function getFilteredResourceAttributes(
   // OTel metrics require unique identifies for the resource. Job+instance is the unique identifier.
   // If there are none, we cannot join on a target_info resource
   if (metricResources.jobs.length === 0 || metricResources.instances.length === 0) {
-    return { attributes: [], missingOtelTargets: false };
+    return [];
   }
 
   // The URL for the labels endpoint
   const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
 
   // The match param for the metric to get all possible labels for this metric
-  const metricMatchTerms = limitOtelMatchTerms([], metricResources.jobs, metricResources.instances);
-
-  let metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+  const metricMatchParam = `${metric}{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
@@ -274,7 +272,7 @@ export async function getFilteredResourceAttributes(
   const metricLabels = metricResponse.data ?? [];
 
   // only get the resource attributes filtered by job and instance values present on the metric
-  let targetInfoMatchParam = `target_info{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+  const targetInfoMatchParam = `target_info{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
 
   const targetInfoParams: Record<string, string | number> = {
     start,
@@ -305,5 +303,5 @@ export async function getFilteredResourceAttributes(
   // return a string array
   const resourceAttributes = sortedResourceAttributes.map((el) => el.text);
 
-  return { attributes: resourceAttributes, missingOtelTargets: metricMatchTerms.missingOtelTargets };
+  return resourceAttributes;
 }

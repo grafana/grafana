@@ -121,8 +121,7 @@ func TestRenderLimitImage(t *testing.T) {
 
 	rs := RenderingService{
 		Cfg: &setting.Cfg{
-			HomePath:    path,
-			RendererUrl: "http://localhost:8081/render",
+			HomePath: path,
 		},
 		inProgressCount: 2,
 		log:             log.New("test"),
@@ -162,9 +161,7 @@ func TestRenderLimitImage(t *testing.T) {
 
 func TestRenderLimitImageError(t *testing.T) {
 	rs := RenderingService{
-		Cfg: &setting.Cfg{
-			RendererUrl: "http://localhost:8081/render",
-		},
+		Cfg:             &setting.Cfg{},
 		inProgressCount: 2,
 		log:             log.New("test"),
 	}
