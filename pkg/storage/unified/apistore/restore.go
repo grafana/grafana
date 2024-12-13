@@ -82,7 +82,6 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 			return
 		}
 		reqBody := &v0alpha1.RestoreOptions{}
-		//fmt.Println(fmt.Sprintf("%+v", req.Body))
 		err = json.Unmarshal(body, &reqBody)
 		if err != nil {
 			responder.Error(fmt.Errorf("unable to unmarshal request body: %s", err.Error()))
@@ -90,7 +89,7 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 		}
 
 		if reqBody.ResourceVersion == 0 {
-			responder.Error(fmt.Errorf("resource verison required"))
+			responder.Error(fmt.Errorf("resource version required"))
 			return
 		}
 

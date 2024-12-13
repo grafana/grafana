@@ -78,7 +78,10 @@ func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-	commonv0alpha1.AddToScheme(Scheme)
+	err := commonv0alpha1.AddToScheme(Scheme)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type Service interface {
