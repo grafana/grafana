@@ -206,7 +206,7 @@ func framesKeyedByRefID(frames []*data.Frame) map[string][]*data.Frame {
 	return keyed
 }
 
-func mergeFrames(frames []*data.Frame) {
+func normalizeSchemas(frames []*data.Frame) {
 	fields := map[string]*data.Field{}
 	for _, f := range frames {
 		for _, fld := range f.Fields {
@@ -289,11 +289,11 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		convertedFrames = append(convertedFrames, copy)
 	}
 
-	frameByRef := framesKeyedByRefID(convertedFrames)
+	framesByRef := framesKeyedByRefID(convertedFrames)
 
-	for _, singleRefFrame := range frameByRef {
+	for _, singleRefFrames := range framesByRef {
 		// Convert from `multi-numeric` to `long` by merging frames that share the same refID
-		mergeFrames(singleRefFrame)
+		normalizeSchemas(singleRefFrames)
 
 		// TODO: this singleRefFrame should now only have a single entry
 		// Consider replacing with `longFrame := singleRefFrame[0]`
@@ -301,7 +301,7 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		// TODO TODO: Actually not true!
 		// The above `mergeFrames` only makes sure that all frames have the same fields
 		// It doesn't merge the data
-		for _, longFrame := range singleRefFrame {
+		for _, longFrame := range singleRefFrames {
 
 			txt, err := longFrame.StringTable(-1, -1)
 			if err != nil {
