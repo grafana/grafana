@@ -26,10 +26,6 @@ type JobQueue interface {
 }
 
 type Worker interface {
-	// This worker can handle this kind of job
-	// NOTE: we can/should likely replace with controller pattern... but this is an easy 1st step
-	Supports(ctx context.Context, job *provisioning.Job) bool
-
 	// Process a single job
 	Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error)
 }

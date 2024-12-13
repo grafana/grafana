@@ -16,9 +16,7 @@ import (
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
@@ -33,7 +31,6 @@ type githubRepository struct {
 	linterFactory lint.LinterFactory
 	renderer      PreviewRenderer
 	ignore        provisioning.IgnoreFile
-	iface         dynamic.ResourceInterface
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -45,7 +42,6 @@ func NewGitHub(
 	baseURL *url.URL,
 	linterFactory lint.LinterFactory,
 	renderer PreviewRenderer,
-	iface dynamic.ResourceInterface,
 ) *githubRepository {
 	return &githubRepository{
 		config:        config,
@@ -55,7 +51,6 @@ func NewGitHub(
 		linterFactory: linterFactory,
 		renderer:      renderer,
 		ignore:        provisioning.IncludeYamlOrJSON,
-		iface:         iface,
 	}
 }
 
@@ -571,22 +566,17 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 }
 
 // Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, factory FileReplicatorFactory) error {
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.RepositoryStatus, error) {
 	job := wrap.Spec
 
-	// TODO... verify added vs removed vs modified... should not process 2x!
-	replicator, err := factory.New()
-	if err != nil {
-		return fmt.Errorf("create replicator: %w", err)
-	}
-
 	if job.PR > 0 {
-		return r.processPR(ctx, logger, job, replicator)
+		err := r.processPR(ctx, logger, job, replicator)
+		return nil, err // don't update status for PR
 	}
 
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
 	if err != nil {
-		return fmt.Errorf("get branch: %w", err)
+		return nil, fmt.Errorf("get branch: %w", err)
 	}
 
 	latest := branch.Sha
@@ -597,7 +587,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		// TODO: this essentially the import endpoint. Refactor to reuse that code
 		tree, err := r.ReadTree(ctx, logger, r.config.Spec.GitHub.Branch)
 		if err != nil {
-			return fmt.Errorf("read tree: %w", err)
+			return nil, fmt.Errorf("read tree: %w", err)
 		}
 
 		for _, entry := range tree {
@@ -614,7 +604,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 
 			info, err := r.Read(ctx, logger, entry.Path, r.config.Spec.GitHub.Branch)
 			if err != nil {
-				return fmt.Errorf("read file: %w", err)
+				return nil, fmt.Errorf("read file: %w", err)
 			}
 
 			// The parse function will fill in the repository metadata, so copy it over here
@@ -627,13 +617,13 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 				// 	logger.InfoContext(ctx, "file does not contain a resource")
 				// 	continue
 				// }
-				return fmt.Errorf("replicate file: %w", err)
+				return nil, fmt.Errorf("replicate file: %w", err)
 			}
 		}
 	} else {
 		files, err := r.gh.CompareCommits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, lastSyncCommit, latest)
 		if err != nil {
-			return fmt.Errorf("compare commits: %w", err)
+			return nil, fmt.Errorf("compare commits: %w", err)
 		}
 
 		for _, f := range files {
@@ -689,25 +679,10 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		}
 	}
 
-	// TODO: why having to fetch this one again?
-	resource, err := r.iface.Get(ctx, r.config.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("get repository: %w", err)
-	}
-
-	// TODO: Can we use typed client for this?
-	unstructuredResource := resource.DeepCopy()
-	if err := unstructured.SetNestedField(unstructuredResource.Object, latest, "status", "currentGitCommit"); err != nil {
-		return fmt.Errorf("set currentGitCommit: %w", err)
-	}
-
-	if _, err := r.iface.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("update repository status: %w", err)
-	}
-
 	logger.InfoContext(ctx, "repository status updated", "commit", latest)
-
-	return nil
+	return &provisioning.RepositoryStatus{
+		CurrentGitCommit: latest,
+	}, nil
 }
 
 // Process a pull request
