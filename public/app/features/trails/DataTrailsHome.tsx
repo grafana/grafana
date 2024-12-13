@@ -57,8 +57,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     };
 
     return (
-      <div className={styles.container}>
-        <div className={styles.homepageBox}>
+      <article className={styles.container}>
+        <section className={styles.homepageBox}>
           <Stack direction="column" alignItems="center">
             <div>{theme.isDark ? <DarkModeRocket /> : <LightModeRocket />}</div>
             <Text element="h1" textAlignment="center" weight="medium">
@@ -87,10 +87,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               </Button>
             </div>
           </Stack>
-        </div>
+        </section>
         <DataTrailsRecentMetrics onSelect={model.onSelectRecentTrail} />
         <DataTrailsBookmarks onSelect={model.onSelectBookmark} onDelete={onDelete} />
-      </div>
+      </article>
     );
   };
 }
