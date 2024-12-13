@@ -81,24 +81,22 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 var _ Repository = (*localRepository)(nil)
 
 type localRepository struct {
-	config *provisioning.Repository
+	config   *provisioning.Repository
+	resolver *LocalFolderResolver
 
 	// validated path that can be read if not empty
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) (*localRepository, error) {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
-		config: config,
+		config:   config,
+		resolver: resolver,
 	}
 	if config.Spec.Local != nil {
-		var err error
-		r.path, err = resolver.LocalPath(config.Spec.Local.Path)
-		if err != nil {
-			return nil, err
-		}
+		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 	}
-	return r, nil
+	return r
 }
 
 func (r *localRepository) Config() *provisioning.Repository {
@@ -107,14 +105,6 @@ func (r *localRepository) Config() *provisioning.Repository {
 
 // Validate implements provisioning.Repository.
 func (r *localRepository) Validate() (fields field.ErrorList) {
-	if r.config.Spec.Type != provisioning.LocalRepositoryType {
-		fields = append(fields, &field.Error{
-			Type:   field.ErrorTypeInvalid,
-			Field:  "spec.type",
-			Detail: "Local repository requires spec.type=local",
-		})
-	}
-
 	cfg := r.config.Spec.Local
 	if cfg == nil {
 		fields = append(fields, &field.Error{
@@ -128,9 +118,6 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 	if cfg.Path == "" {
 		fields = append(fields, field.Required(field.NewPath("spec", "local", "path"),
 			"must enter a path to local file"))
-	} else if r.path == "" {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, "configured path is not allowed, see system allow list"))
 	}
 
 	return fields
@@ -139,23 +126,34 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
-	if r.path == "" {
+	if r.config.Spec.Local.Path == "" {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("invalid path: %s", r.config.Spec.Local.Path),
+				"no path is configured",
 			},
 		}, nil
 	}
 
-	_, err := os.Stat(r.path)
+	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []string{
+				err.Error(),
+			},
+		}, nil
+	}
+
+	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("file not found: %s", r.config.Spec.Local.Path),
+				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
 			},
 		}, nil
 	}
@@ -172,6 +170,10 @@ func (r *localRepository) validateRequest(ref string) error {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
+		_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+		if err != nil {
+			return err
+		}
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
