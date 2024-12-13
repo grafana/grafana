@@ -153,7 +153,7 @@ Based on your needs, you can choose your ideal upgrade strategy. Here’s what t
 Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
 
 For each strategy, you should:
+
 - Stay informed about patch releases that fix security vulnerabilities (released monthly, plus ad-hoc releases).
 - Most [plugins](https://grafana.com/grafana/plugins/) are released separately from Grafana. Keep plugins up to date, and always [update them](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before or while updating Grafana. Before updating to a new major version of a plugin, review its breaking changes at [https://grafana.com/grafana/plugins/](https://grafana.com/grafana/plugins/).
 - Test upgrades in realistic dev and test instances. Roll back and report issues if you experience problems in dev or test.
-
