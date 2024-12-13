@@ -67,6 +67,7 @@ type ProvisioningAPIBuilder struct {
 	logger            *slog.Logger
 	renderer          *renderer
 	client            *resources.ClientFactory
+	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
@@ -86,15 +87,20 @@ func NewProvisioningAPIBuilder(
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
+	clientFactory := resources.NewFactory(identities)
 	builder := &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecretKey,
-		client:            resources.NewFactory(identities),
 		features:          features,
 		ghFactory:         ghFactory,
 		identities:        identities,
+		client:            clientFactory,
+		parsers: &resources.ParserFactory{
+			Client: clientFactory,
+			Logger: slog.Default().With("logger", "provisioning-parser-factory"),
+		},
 		renderer: &renderer{
 			render:     render,
 			blobstore:  blobstore,
@@ -210,9 +216,9 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger: b.logger.With("connector", "test"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
-		getter: b,
-		client: b.client,
-		logger: b.logger.With("connector", "files"),
+		getter:  b,
+		parsers: b.parsers,
+		logger:  b.logger.With("connector", "files"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,

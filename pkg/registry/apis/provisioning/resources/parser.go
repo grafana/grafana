@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,6 +25,49 @@ import (
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
+
+type ParserFactory struct {
+	Client *ClientFactory
+	Logger *slog.Logger
+}
+
+func (f *ParserFactory) NewParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
+	config := repo.Config()
+	client, kinds, err := f.Client.New(config.Namespace) // As system user
+	if err != nil {
+		return nil, err
+	}
+	logger := f.Logger.With("parser", config.Name)
+
+	parser := &Parser{
+		repo:   config,
+		client: client,
+		kinds:  kinds,
+	}
+	if repo.Config().Spec.Linting {
+		linterFactory := lint.NewDashboardLinterFactory()
+		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), "")
+
+		var linter lint.Linter
+		switch {
+		case err == nil:
+			logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+			linter, err = linterFactory.NewFromConfig(cfg.Data)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create linter: %w", err)
+			}
+		case apierrors.IsNotFound(err):
+			logger.InfoContext(ctx, "no linter config found, using default")
+			linter = linterFactory.New()
+		default:
+			return nil, fmt.Errorf("failed to read linter config: %w", err)
+		}
+
+		parser.linter = linter
+	}
+
+	return parser, nil
+}
 
 type Parser struct {
 	// The target repository
@@ -41,10 +85,6 @@ func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds Kinds
 		client: client,
 		kinds:  kinds,
 	}
-}
-
-func (r *Parser) SetLinter(l lint.Linter) {
-	r.linter = l
 }
 
 type ParsedResource struct {
