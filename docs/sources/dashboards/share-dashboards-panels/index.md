@@ -60,7 +60,7 @@ You must have an authorized viewer permission to see an image rendered by a dire
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
+As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud. This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 When you share a panel or dashboard as a snapshot, a snapshot (which is a panel or dashboard at the moment you take the snapshot) is publicly available on the web. Anyone with a link to it can access it. Because snapshots do not require any authorization to view, Grafana removes information related to the account it came from, as well as any sensitive data from the snapshot.
@@ -220,10 +220,10 @@ The snapshot is immediately deleted. You may need to clear your browser cache or
 
 ### Embed panel
 
-You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph.
+You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud even for panels in [Public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/). This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 Here is an example of the HTML code:
