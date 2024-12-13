@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,13 +23,15 @@ type ReplicatorFactory struct {
 	repo      repository.Repository
 	client    *ClientFactory
 	namespace string
+	ignore    provisioning.IgnoreFile
 }
 
-func NewReplicatorFactory(client *ClientFactory, namespace string, repo repository.Repository) *ReplicatorFactory {
+func NewReplicatorFactory(client *ClientFactory, namespace string, repo repository.Repository, ignore provisioning.IgnoreFile) *ReplicatorFactory {
 	return &ReplicatorFactory{
 		client:    client,
 		namespace: namespace,
 		repo:      repo,
+		ignore:    ignore,
 	}
 }
 
@@ -51,6 +55,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 		client:     dynamicClient,
 		folders:    folders,
 		repository: f.repo,
+		ignore:     f.ignore,
 	}, nil
 }
 
@@ -60,11 +65,105 @@ type replicator struct {
 	parser     *Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
+	ignore     provisioning.IgnoreFile
 }
 
-// Replicate creates a new resource in the cluster.
+// Sync replicates all files in the repository.
+func (r *replicator) Sync(ctx context.Context) error {
+	cfg := r.repository.Config()
+	lastCommit := cfg.Status.Sync.Hash
+	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
+
+	var latest string
+	if !isVersioned || lastCommit == "" {
+		if err := r.ReplicateTree(ctx, ""); err != nil {
+			return fmt.Errorf("replicate tree: %w", err)
+		}
+	} else {
+		var err error
+		latest, err = versionedRepo.LatestRef(ctx, r.logger)
+		if err != nil {
+			return fmt.Errorf("latest ref: %w", err)
+		}
+
+		changes, err := versionedRepo.CompareFiles(ctx, r.logger, latest)
+		if err != nil {
+			return fmt.Errorf("compare files: %w", err)
+		}
+
+		if err := r.ReplicateChanges(ctx, changes); err != nil {
+			return fmt.Errorf("replicate changes: %w", err)
+		}
+	}
+
+	status := &provisioning.SyncStatus{
+		// TODO: rename to ref
+		Hash: latest,
+		// TODO: add timestamp
+	}
+
+	cfg.Status.Sync = *status
+
+	// TODO: Can we use typed client for this?
+	client := r.client.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+	unstructuredResource := &unstructured.Unstructured{}
+	jj, _ := json.Marshal(cfg)
+	err := json.Unmarshal(jj, &unstructuredResource.Object)
+	if err != nil {
+		return fmt.Errorf("error loading config json: %w", err)
+	}
+
+	if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update repository status: %w", err)
+	}
+
+	return nil
+}
+
+// ReplicateTree replicates all files in the repository.
+func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
+	logger := r.logger
+	tree, err := r.repository.ReadTree(ctx, logger, ref)
+	if err != nil {
+		return fmt.Errorf("read tree: %w", err)
+	}
+
+	for _, entry := range tree {
+		logger := logger.With("file", entry.Path)
+		if !entry.Blob {
+			logger.DebugContext(ctx, "ignoring non-blob entry")
+			continue
+		}
+
+		if r.ignore(entry.Path) {
+			logger.DebugContext(ctx, "ignoring file")
+			continue
+		}
+
+		info, err := r.repository.Read(ctx, logger, entry.Path, ref)
+		if err != nil {
+			return fmt.Errorf("read file: %w", err)
+		}
+
+		// The parse function will fill in the repository metadata, so copy it over here
+		info.Hash = entry.Hash
+		info.Modified = nil // modified?
+
+		if err := r.ReplicateFile(ctx, info); err != nil {
+			if errors.Is(err, ErrUnableToReadResourceBytes) {
+				logger.InfoContext(ctx, "file does not contain a resource")
+				continue
+			}
+			return fmt.Errorf("replicate file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// ReplicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -149,7 +248,29 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *replicator) ReplicateChanges(ctx context.Context, changes []repository.FileChange) error {
+	for _, change := range changes {
+		fileInfo, err := r.repository.Read(ctx, r.logger, change.Path, change.Ref)
+		if err != nil {
+			return fmt.Errorf("read file: %w", err)
+		}
+
+		switch change.Action {
+		case repository.FileActionCreated, repository.FileActionUpdated:
+			if err := r.ReplicateFile(ctx, fileInfo); err != nil {
+				return fmt.Errorf("replicate file: %w", err)
+			}
+		case repository.FileActionDeleted:
+			if err := r.DeleteFile(ctx, fileInfo); err != nil {
+				return fmt.Errorf("delete file: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err

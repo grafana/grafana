@@ -565,128 +565,83 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-// Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.SyncStatus, error) {
-	job := wrap.Spec
-
-	if job.PR > 0 {
-		err := r.processPR(ctx, logger, job, replicator)
-		return nil, err // don't update status for PR
-	}
-
-	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
+func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
-		return nil, fmt.Errorf("get branch: %w", err)
+		return "", fmt.Errorf("get branch: %w", err)
 	}
 
-	latest := branch.Sha
-	lastSyncCommit := r.config.Status.Sync.Hash
-
-	if lastSyncCommit == "" {
-		logger.Info("initial sync")
-		// TODO: this essentially the import endpoint. Refactor to reuse that code
-		tree, err := r.ReadTree(ctx, logger, r.config.Spec.GitHub.Branch)
-		if err != nil {
-			return nil, fmt.Errorf("read tree: %w", err)
-		}
-
-		for _, entry := range tree {
-			logger := logger.With("file", entry.Path)
-			if !entry.Blob {
-				logger.DebugContext(ctx, "ignoring non-blob entry")
-				continue
-			}
-
-			if r.ignore(entry.Path) {
-				logger.DebugContext(ctx, "ignoring file")
-				continue
-			}
-
-			info, err := r.Read(ctx, logger, entry.Path, r.config.Spec.GitHub.Branch)
-			if err != nil {
-				return nil, fmt.Errorf("read file: %w", err)
-			}
-
-			// The parse function will fill in the repository metadata, so copy it over here
-			info.Hash = entry.Hash
-			info.Modified = nil // modified?
-
-			if err := replicator.Replicate(ctx, info); err != nil {
-				// TODO: fix import cycles
-				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				// 	logger.InfoContext(ctx, "file does not contain a resource")
-				// 	continue
-				// }
-				return nil, fmt.Errorf("replicate file: %w", err)
-			}
-		}
-	} else {
-		files, err := r.gh.CompareCommits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, lastSyncCommit, latest)
-		if err != nil {
-			return nil, fmt.Errorf("compare commits: %w", err)
-		}
-
-		for _, f := range files {
-			// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
-			switch f.GetStatus() {
-			case "added", "modified", "changed":
-				ref := latest
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Replicate(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-			case "renamed":
-				// delete the old file
-				oldFile, err := r.Read(ctx, logger, f.GetPreviousFilename(), lastSyncCommit)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read old resource", "file", f.GetPreviousFilename(), "error", err)
-					continue
-				}
-
-				if err := replicator.Delete(ctx, oldFile); err != nil {
-					logger.ErrorContext(ctx, "failed to delete old resource", "file", f.GetPreviousFilename(), "error", err)
-					continue
-				}
-				// replicate the new file
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), latest)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Replicate(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to replicate resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-			case "removed":
-				ref := lastSyncCommit
-				fileInfo, err := r.Read(ctx, logger, f.GetFilename(), ref)
-				if err != nil {
-					logger.ErrorContext(ctx, "failed to read resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-				if err := replicator.Delete(ctx, fileInfo); err != nil {
-					logger.ErrorContext(ctx, "failed to delete resource", "file", f.GetFilename(), "error", err)
-					continue
-				}
-			default:
-				logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
-			}
-		}
-	}
-
-	logger.InfoContext(ctx, "repository status updated", "commit", latest)
-	return &provisioning.SyncStatus{
-		Hash: latest,
-	}, nil
+	return branch.Sha, nil
 }
 
-// Process a pull request
-func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.JobSpec, replicator FileReplicator) error {
+func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
+	if ref == "" {
+		var err error
+		ref, err = r.LatestRef(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get latest ref: %w", err)
+		}
+	}
+
+	lastSyncCommit := r.config.Status.Sync.Hash
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	files, err := r.gh.CompareCommits(ctx, owner, repo, lastSyncCommit, ref)
+	if err != nil {
+		return nil, fmt.Errorf("compare commits: %w", err)
+	}
+
+	changes := make([]FileChange, 0)
+	for _, f := range files {
+		if r.ignore(f.GetFilename()) {
+			continue
+		}
+		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+		switch f.GetStatus() {
+		case "added":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "modified", "changed":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionUpdated,
+			})
+		case "renamed":
+			// delete the old file
+			changes = append(changes, FileChange{
+				Path:   f.GetPreviousFilename(),
+				Ref:    lastSyncCommit,
+				Action: FileActionDeleted,
+			})
+			// replicate the new file
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "removed":
+			changes = append(changes, FileChange{
+				Ref:    lastSyncCommit,
+				Path:   f.GetFilename(),
+				Action: FileActionDeleted,
+			})
+		default:
+			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
+		}
+	}
+
+	return changes, nil
+}
+
+// Process is a backend job
+// TODO: move out the pull request processing to a separate worker / processor
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) error {
+	job := wrap.Spec
+
 	// Get the files changed in the pull request
 	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, job.PR)
 	if err != nil {

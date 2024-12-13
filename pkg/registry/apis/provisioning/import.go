@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -65,7 +64,7 @@ func (c *importConnector) Connect(
 	}
 	cfg := repo.Config()
 	ns := cfg.GetNamespace()
-	replicatorFactory := resources.NewReplicatorFactory(c.client, ns, repo)
+	replicatorFactory := resources.NewReplicatorFactory(c.client, ns, repo, c.ignore)
 
 	// TODO: We need some way to filter what we import.
 
@@ -80,46 +79,10 @@ func (c *importConnector) Connect(
 		ref := r.URL.Query().Get("ref")
 		logger := logger.With("ref", ref)
 
-		tree, err := repo.ReadTree(r.Context(), logger, ref)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to read tree", "error", err)
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read tree: %w", err)))
+		if err := replicator.ReplicateTree(r.Context(), ref); err != nil {
+			logger.ErrorContext(ctx, "failed to replicate tree", "error", err)
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to replicate tree: %w", err)))
 			return
-		}
-
-		for _, entry := range tree {
-			logger := logger.With("file", entry.Path)
-			if !entry.Blob {
-				logger.DebugContext(ctx, "ignoring non-blob entry")
-				continue
-			}
-
-			if c.ignore(entry.Path) {
-				logger.DebugContext(ctx, "ignoring file")
-				continue
-			}
-
-			info, err := repo.Read(r.Context(), logger, entry.Path, ref)
-			if err != nil {
-				logger.ErrorContext(ctx, "failed to read file", "error", err)
-				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read %s: %w", entry.Path, err)))
-				return
-			}
-
-			// The parse function will fill in the repository metadata, so copy it over here
-			info.Hash = entry.Hash
-			info.Modified = nil // modified?
-
-			if err := replicator.Replicate(r.Context(), info); err != nil {
-				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-					logger.InfoContext(ctx, "file does not contain a resource")
-					continue
-				}
-
-				logger.ErrorContext(ctx, "failed to replicate file", "error", err)
-				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to replicate %s: %w", entry.Path, err)))
-				return
-			}
 		}
 
 		responder.Object(http.StatusOK, &provisioning.ResourceWrapper{})
