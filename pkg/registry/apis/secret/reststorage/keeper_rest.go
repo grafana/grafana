@@ -79,7 +79,7 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 	namespace := request.NamespaceValue(ctx)
 
 	kp, err := s.storage.Read(ctx, namespace, name)
-	if err == nil {
+	if err != nil {
 		if errors.Is(err, secretstorage.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
 		}
@@ -103,11 +103,7 @@ func (s *KeeperRest) Create(
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
 
-	// Make sure only one type of keeper is configured
-	err := checkKeeperType(kp, true)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: Make sure only one type of keeper is configured
 
 	// A `keeper` may be created without a `name`, which means it gets generated on-the-fly.
 	if kp.Name == "" {
@@ -158,25 +154,4 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 
 	// TODO: implement delete in storage
 	return nil, false, nil
-}
-
-func checkKeeperType(s *secretv0alpha1.Keeper, mustExist bool) error {
-	sqlK := s.Spec.SQL
-	awsK := s.Spec.AWS
-	azureK := s.Spec.Azure
-	gcpK := s.Spec.GCP
-	hashiCorpK := s.Spec.HashiCorp
-
-	if sqlK == nil && awsK == nil && azureK == nil && gcpK == nil && hashiCorpK == nil {
-		if mustExist {
-			return fmt.Errorf("expecting keeper type to exist")
-		}
-		return nil
-	}
-	// TODO: compare with all other types
-	if sqlK != nil && awsK != nil {
-		return fmt.Errorf("only sql *or* aws may be configured at the same time")
-	}
-
-	return nil
 }

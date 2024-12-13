@@ -40,7 +40,7 @@ func CleanAnnotations(anno map[string]string) map[string]string {
 
 type Keeper struct {
 	// K8 Metadata
-	GUID        string `xorm:"pk 'gid'"`
+	GUID        string `xorm:"pk 'guid'"`
 	Name        string `xorm:"'name'"`
 	Namespace   string `xorm:"'namespace'"`
 	Annotations string `xorm:"'annotations'"` // map[string]string
@@ -54,6 +54,10 @@ type Keeper struct {
 	Title   string `xorm:"'title'"`
 	Type    string `xorm:"'type'"`
 	Payload string `xorm:"'payload'"` // map[string]interface{}
+}
+
+func (*Keeper) TableName() string {
+	return TableNameKeeper
 }
 
 // Convert everything from row structure to k8s representation.
@@ -95,7 +99,7 @@ func (kp *Keeper) toK8s() (*secretv0alpha1.Keeper, error) {
 	meta.SetCreationTimestamp(metav1.NewTime(time.Unix(kp.Created, 0).UTC()))
 	meta.SetUpdatedBy(kp.UpdatedBy)
 	meta.SetUpdatedTimestamp(&updated)
-	// meta.SetResourceVersionInt64(kp.Updated)
+	meta.SetResourceVersionInt64(kp.Updated)
 
 	return resource, nil
 }
