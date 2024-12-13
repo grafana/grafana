@@ -1,7 +1,8 @@
+// @ts-check
 import { betterer } from '@betterer/betterer';
-import { camelCase } from 'lodash';
+import _ from 'lodash';
 
-function logStat(name: string, value: number) {
+function logStat(name, value) {
   // Note that this output format must match the parsing in ci-frontend-metrics.sh
   // which expects the two values to be separated by a space
   console.log(`${name} ${value}`);
@@ -12,11 +13,11 @@ async function main() {
 
   for (const testResults of results.resultSummaries) {
     const countByMessage = {};
-    const name = camelCase(testResults.name);
+    const name = _.camelCase(testResults.name);
     Object.values(testResults.details)
       .flatMap((v) => v)
       .forEach((detail) => {
-        const message = camelCase(detail.message);
+        const message = _.camelCase(detail.message);
         const metricName = `${name}_${message}`;
         if (metricName in countByMessage) {
           countByMessage[metricName]++;
@@ -25,7 +26,7 @@ async function main() {
         }
       });
 
-    for (const [metricName, count] of Object.entries<number>(countByMessage)) {
+    for (const [metricName, count] of Object.entries(countByMessage)) {
       logStat(metricName, count);
     }
   }
