@@ -8,7 +8,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+import { SingleStatBaseOptions, SortWithReducer, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -84,6 +84,21 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
         },
       },
       defaultValue: '',
+    });
+
+    builder.addRadio({
+      path: 'reduceOptions.sort',
+      name: 'Sort',
+      description: 'Sort by field display name',
+      category: valueOptionsCategory,
+      settings: {
+        options: [
+          { value: SortWithReducer.None, label: 'None' },
+          { value: SortWithReducer.Az, label: 'A-Z' },
+          { value: SortWithReducer.Za, label: 'Z-A' },
+        ],
+      },
+      defaultValue: SortWithReducer.None,
     });
   }
 }
