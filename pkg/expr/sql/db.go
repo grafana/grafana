@@ -167,17 +167,152 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	}
 }
 
+func clone(frame *data.Frame) *data.Frame {
+	copy := data.NewFrame(frame.Name, frame.Fields...)
+	copy.Meta = frame.Meta
+	copy.RefID = frame.RefID
+	return copy
+}
+
+func labelsToFields(frame *data.Frame) {
+	fields := []*data.Field{}
+	for _, fld := range frame.Fields {
+		if fld.Labels != nil {
+			for lbl, val := range fld.Labels {
+				newFld := newField(lbl, val, frame.Rows())
+				fields = append(fields, newFld)
+			}
+		}
+	}
+	frame.Fields = append(frame.Fields, fields...)
+}
+
+func newField(name string, val string, size int) *data.Field {
+	values := make([]string, size)
+	newField := data.NewField(name, nil, values)
+	for i := 0; i < size; i++ {
+		newField.Set(i, val)
+	}
+	return newField
+}
+
+func framesKeyedByRefID(frames []*data.Frame) map[string][]*data.Frame {
+	keyed := make(map[string][]*data.Frame)
+	for _, frame := range frames {
+		keyed[frame.RefID] = append(keyed[frame.RefID], frame)
+	}
+	return keyed
+}
+
+func mergeFrames(frames []*data.Frame) {
+	fields := map[string]*data.Field{}
+	for _, f := range frames {
+		for _, fld := range f.Fields {
+			fields[fld.Name] = fld
+		}
+	}
+	for _, fld := range fields {
+		for _, f := range frames {
+			found := false
+			for _, fld2 := range f.Fields {
+				if fld2.Name == fld.Name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				makeArray := maker[fld.Type()]
+				arr := makeArray(f.Rows())
+				nullField := data.NewField(fld.Name, fld.Labels, arr)
+				f.Fields = append(f.Fields, nullField)
+			}
+		}
+	}
+}
+
+var maker = map[data.FieldType]func(length int) any{
+	data.FieldTypeFloat64:         func(length int) any { return makeArray[float64](length) },
+	data.FieldTypeFloat32:         func(length int) any { return makeArray[float32](length) },
+	data.FieldTypeInt16:           func(length int) any { return makeArray[int16](length) },
+	data.FieldTypeInt64:           func(length int) any { return makeArray[int64](length) },
+	data.FieldTypeInt8:            func(length int) any { return makeArray[int8](length) },
+	data.FieldTypeUint8:           func(length int) any { return makeArray[uint8](length) },
+	data.FieldTypeUint16:          func(length int) any { return makeArray[uint16](length) },
+	data.FieldTypeUint32:          func(length int) any { return makeArray[uint32](length) },
+	data.FieldTypeUint64:          func(length int) any { return makeArray[uint64](length) },
+	data.FieldTypeNullableFloat64: func(length int) any { return makeArray[*float64](length) },
+	data.FieldTypeNullableFloat32: func(length int) any { return makeArray[*float32](length) },
+	data.FieldTypeNullableInt16:   func(length int) any { return makeArray[*int16](length) },
+	data.FieldTypeNullableInt64:   func(length int) any { return makeArray[*int64](length) },
+	data.FieldTypeNullableInt8:    func(length int) any { return makeArray[*int8](length) },
+	data.FieldTypeNullableUint8:   func(length int) any { return makeArray[*uint8](length) },
+	data.FieldTypeNullableUint16:  func(length int) any { return makeArray[*uint16](length) },
+	data.FieldTypeNullableUint32:  func(length int) any { return makeArray[*uint32](length) },
+	data.FieldTypeNullableUint64:  func(length int) any { return makeArray[*uint64](length) },
+	data.FieldTypeString:          func(length int) any { return makeArray[string](length) },
+	data.FieldTypeNullableString:  func(length int) any { return makeArray[*string](length) },
+	data.FieldTypeTime:            func(length int) any { return makeArray[time.Time](length) },
+	data.FieldTypeNullableTime:    func(length int) any { return makeArray[*time.Time](length) },
+}
+
+func makeArray[T any](length int) []T {
+	return make([]T, length)
+}
+
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
 	pro := memory.NewDBProvider(db.inMemoryDb)
 	session := memory.NewSession(mysql.NewBaseSession(), pro)
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
+	// SSE may have "mutilated" the DataFrames from long to multi format
+	// Before we write to the database, we convert back to long format
+
+	// create a slice of DataFrames to hold the converted DataFrames
+	var convertedFrames []*data.Frame
+
 	for _, frame := range frames {
-		// We have both `frame` and `f` in this function. Consider renaming one or both.
-		// Potentially `f` to `outputFrame`
-		err := db.writeDataframeToDb(ctx, tableName, frame)
+		// Clone DataFrames to avoid modifying the originals
+		copy := clone(frame)
+
+		// convert fields' labels to fields
+		labelsToFields(copy)
+
+		txt, err := copy.StringTable(-1, -1)
 		if err != nil {
 			return err
+		}
+
+		fmt.Printf("GOT: %s", txt)
+
+		convertedFrames = append(convertedFrames, copy)
+	}
+
+	frameByRef := framesKeyedByRefID(convertedFrames)
+
+	for _, singleRefFrame := range frameByRef {
+		// Convert from `multi-numeric` to `long` by merging frames that share the same refID
+		mergeFrames(singleRefFrame)
+
+		// TODO: this singleRefFrame should now only have a single entry
+		// Consider replacing with `longFrame := singleRefFrame[0]`
+		// Or better, have `mergeFrames` return a single frame
+		// TODO TODO: Actually not true!
+		// The above `mergeFrames` only makes sure that all frames have the same fields
+		// It doesn't merge the data
+		for _, longFrame := range singleRefFrame {
+
+			txt, err := longFrame.StringTable(-1, -1)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Now got: %s", txt)
+
+			// We have both `frame` and `f` in this function. Consider renaming one or both.
+			// Potentially `f` to `outputFrame`
+			err = db.writeDataframeToDb(ctx, tableName, longFrame)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
