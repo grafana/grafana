@@ -147,6 +147,10 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 }
 
 func (s *Server) check(ctx context.Context, req *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	s.addAuthorizationContext(req)
+	err := s.addAuthorizationContext(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
 	return s.openfga.Check(ctx, req)
 }

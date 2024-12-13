@@ -18,16 +18,21 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 		return nil, err
 	}
 
-	res, err := s.openfga.Read(ctx, &openfgav1.ReadRequest{
-		StoreId: storeInf.ID,
-		TupleKey: &openfgav1.ReadRequestTupleKey{
+	readReq := &openfgav1.ReadRequest{
+		StoreId:           storeInf.ID,
+		PageSize:          req.GetPageSize(),
+		ContinuationToken: req.GetContinuationToken(),
+	}
+
+	if req.TupleKey != nil {
+		readReq.TupleKey = &openfgav1.ReadRequestTupleKey{
 			User:     req.GetTupleKey().GetUser(),
 			Relation: req.GetTupleKey().GetRelation(),
 			Object:   req.GetTupleKey().GetObject(),
-		},
-		PageSize:          req.GetPageSize(),
-		ContinuationToken: req.GetContinuationToken(),
-	})
+		}
+	}
+
+	res, err := s.openfga.Read(ctx, readReq)
 	if err != nil {
 		return nil, err
 	}

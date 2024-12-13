@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -95,9 +97,22 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 	return s, nil
 }
 
-func (s *Server) addAuthorizationContext(req *openfgav1.CheckRequest) {
+func (s *Server) addAuthorizationContext(ctx context.Context, req *openfgav1.CheckRequest) error {
+	res, err := s.Read(ctx, &authzextv1.ReadRequest{
+		Namespace: "global",
+	})
+	if err != nil {
+		return err
+	}
+
+	tuples := common.ToOpenFGATuples(res.Tuples)
+	contextualTuples := make([]*openfgav1.TupleKey, 0)
+	for _, t := range tuples {
+		contextualTuples = append(contextualTuples, t.GetKey())
+	}
+
 	if len(s.contextualTuples) == 0 {
-		return
+		return nil
 	}
 
 	if req.ContextualTuples == nil {
@@ -107,5 +122,6 @@ func (s *Server) addAuthorizationContext(req *openfgav1.CheckRequest) {
 		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
 	}
 
-	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, s.contextualTuples...)
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, contextualTuples...)
+	return nil
 }
