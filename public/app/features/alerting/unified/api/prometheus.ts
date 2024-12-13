@@ -105,14 +105,16 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
         }
       }
     });
-    if (!nsMap[group.file]) {
-      nsMap[group.file] = {
+
+    const namespaceName = group.file;
+    if (!nsMap[namespaceName]) {
+      nsMap[namespaceName] = {
         dataSourceName,
-        name: group.file,
+        name: namespaceName,
         groups: [group],
       };
     } else {
-      nsMap[group.file].groups.push(group);
+      nsMap[namespaceName].groups.push(group);
     }
   });
 
@@ -166,4 +168,8 @@ export async function fetchRules(
   });
 
   return groupRulesByFileName(response.data.data.groups, dataSourceName);
+}
+
+export function decodeFileName(fileName: string): string {
+  return fileName.replace('\\/', '/');
 }
