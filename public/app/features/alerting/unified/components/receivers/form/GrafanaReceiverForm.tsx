@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
@@ -47,11 +47,13 @@ interface Props {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
+  /** Callback method invoked when contact points was successfully created */
+  onCreate: (contactPoint: { name: string }) => void;
 }
 
 const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
-export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
+export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, onCreate }: Props) => {
   const dispatch = useDispatch();
   const useK8sAPI = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   const [createContactPoint] = useCreateContactPoint({
@@ -106,7 +108,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      locationService.push('/alerting/notifications');
+      onCreate(newReceiver);
     } catch (error) {
       // React form validation will handle this for us
     }
@@ -159,8 +161,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     <>
       {hasOnCallError && (
         <Alert severity="error" title="Loading OnCall integration failed">
-          Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
-          plugin configuration
+          <Trans i18nKey="alerting.contact-points.on-call-unreachable">
+            Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
+            plugin configuration
+          </Trans>
         </Alert>
       )}
 
