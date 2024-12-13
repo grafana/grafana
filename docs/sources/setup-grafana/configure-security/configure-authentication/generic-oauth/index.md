@@ -299,11 +299,7 @@ Payload:
 
 ```json
 {
-    "roles": [
-        "org_foo",
-        "org_bar",
-        "another_org"
-    ],
+  "roles": ["org_foo", "org_bar", "another_org"]
 }
 ```
 
