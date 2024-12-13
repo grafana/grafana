@@ -6,11 +6,15 @@ import { expect, type E2ESelectorGroups, type GrafanaPage } from '@grafana/plugi
  * @param grafanaPage - The Grafana page object containing the editor
  * @param selectors - Grafana selectors object for finding UI elements
  */
-export async function setEditorToCodeMode<P extends GrafanaPage>(grafanaPage: P, selectors: E2ESelectorGroups) {
+export async function setEditorMode<P extends GrafanaPage>(
+  grafanaPage: P,
+  selectors: E2ESelectorGroups,
+  mode: 'code' | 'builder'
+) {
   const editorModeToggle = await grafanaPage.getByGrafanaSelector(
     selectors.components.DataSource.Prometheus.queryEditor.editorToggle
   );
-  const codeModeButton = await editorModeToggle.locator('css=input[id*="option-code"]'); // the id contains a random string, so we use a partial match
+  const codeModeButton = await editorModeToggle.locator(`css=input[id*="option-${mode}"]`); // the id contains a random string, so we use a partial match
   await expect(codeModeButton).toBeVisible();
   await codeModeButton.click();
 }
