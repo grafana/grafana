@@ -1,10 +1,7 @@
 package v0alpha1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -78,52 +75,4 @@ type ResourceStats struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
 	Count    int64  `json:"count"`
-}
-
-func UnstructuedToResouceStats(u *unstructured.Unstructured) (*ResourceStats, error) {
-	group, _, err := unstructured.NestedString(u.Object, "group")
-	if err != nil {
-		return nil, err
-	}
-
-	resource, _, err := unstructured.NestedString(u.Object, "resource")
-	if err != nil {
-		return nil, err
-	}
-
-	count, _, err := unstructured.NestedInt64(u.Object, "count")
-	if err != nil {
-		return nil, err
-	}
-
-	return &ResourceStats{
-		Group:    group,
-		Resource: resource,
-		Count:    count,
-	}, nil
-}
-
-func UnstructedToDescendantCounts(u *unstructured.Unstructured) (*DescendantCounts, error) {
-	counts, ok := u.Object["counts"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("counts is not an array")
-	}
-
-	stats := make([]ResourceStats, 0, len(counts))
-	for _, c := range counts {
-		count, ok := c.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("count is not a map")
-		}
-
-		s, err := UnstructuedToResouceStats(&unstructured.Unstructured{Object: count})
-		if err != nil {
-			return nil, err
-		}
-		stats = append(stats, *s)
-	}
-
-	return &DescendantCounts{
-		Counts: stats,
-	}, nil
 }

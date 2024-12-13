@@ -1046,17 +1046,36 @@ func getParents(f *folder.Folder) (map[string]bool, error) {
 	return folderIDs, nil
 }
 
-func toFolderCounts(obj *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	dc, err := folderalpha1.UnstructedToDescendantCounts(obj)
-	if err != nil {
-		return nil, fmt.Errorf("cannot convert object to descendant counts")
+func toFolderCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
+	counts, ok := u.Object["counts"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("counts is not a slice")
 	}
 
-	var counts = make(folder.DescendantCounts)
+	var out = make(folder.DescendantCounts)
 
-	for _, item := range dc.Counts {
-		counts[item.Resource] = item.Count
+	for _, item := range counts {
+		item, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("item is not a map")
+		}
+		r, ok := item["resource"]
+		if !ok {
+			return nil, fmt.Errorf("resource not found")
+		}
+		rstr, ok := r.(string)
+		if !ok {
+			return nil, fmt.Errorf("resource is not a string")
+		}
+		c, ok := item["count"]
+		if !ok {
+			return nil, fmt.Errorf("count not found")
+		}
+		countint, ok := c.(int64)
+		if !ok {
+			return nil, fmt.Errorf("count is not an int64")
+		}
+		out[rstr] = countint
 	}
-
-	return &counts, nil
+	return &out, nil
 }

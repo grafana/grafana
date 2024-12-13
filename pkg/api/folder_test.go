@@ -787,13 +787,83 @@ func TestToFolderCounts(t *testing.T) {
 			},
 		},
 		{
-			name: "malformed input",
+			name: "non iterative counts",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
-					"something": []interface{}{
+					"counts":     42,
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "count element not a map",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts":     []interface{}{3},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "resource field not found",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
 						map[string]interface{}{
-							"something": "else",
+							"group":    "alpha",
+							"something-else": "folders",
+							"count":    int64(1),
+						},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "count field not found",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"something-else":    int64(1),
+						},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "count not an integer",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"count":    "counting",
+						},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "resource not a string",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": map[string]string{"bla": "bla"},
+							"count":   int64(1),
 						},
 					},
 				},
