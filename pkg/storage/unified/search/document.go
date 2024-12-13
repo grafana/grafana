@@ -49,6 +49,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		var stats map[string]map[string]int64
 		if s.sprinkles != nil {
 			stats, err = s.sprinkles.GetStats(ctx, namespace)
+			// Should we just log a warning here if it fails? Seems overkill to return an error for sprinkles and fail the index startup
 			if err != nil {
 				return nil, err
 			}
