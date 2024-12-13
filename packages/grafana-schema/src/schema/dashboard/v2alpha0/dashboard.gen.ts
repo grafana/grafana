@@ -700,7 +700,7 @@ export interface PanelSpec {
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
-	transparent: boolean;
+	transparent?: boolean;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
@@ -710,7 +710,6 @@ export const defaultPanelSpec = (): PanelSpec => ({
 	links: [],
 	data: defaultQueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
-	transparent: false,
 });
 
 export interface PanelKind {
