@@ -221,6 +221,7 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  unifiedStorageSearchSprinkles?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
