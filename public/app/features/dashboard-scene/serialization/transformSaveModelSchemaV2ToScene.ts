@@ -238,7 +238,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    displayMode: panel.spec.displayMode,
+    displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
