@@ -38,13 +38,6 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	return s.listGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 }
 
-func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	if s.cfg.UseStreamedListObjects {
-		return s.streamedListObjects(ctx, req)
-	}
-	return s.openfga.ListObjects(ctx, req)
-}
-
 func (s *Server) listTyped(ctx context.Context, subject, relation string, info common.TypeInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
 	if !info.IsValidRelation(relation) {
 		return &authzextv1.ListResponse{}, nil
@@ -137,4 +130,16 @@ func folderObject(objects []string) []string {
 		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
 	}
 	return objects
+}
+
+func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	err := s.addListAuthorizationContext(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to add authorization context", "error", err)
+	}
+
+	if s.cfg.UseStreamedListObjects {
+		return s.streamedListObjects(ctx, req)
+	}
+	return s.openfga.ListObjects(ctx, req)
 }

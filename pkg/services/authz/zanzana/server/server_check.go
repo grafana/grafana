@@ -147,7 +147,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 }
 
 func (s *Server) check(ctx context.Context, req *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	err := s.addAuthorizationContext(ctx, req)
+	err := s.addCheckAuthorizationContext(ctx, req)
 	if err != nil {
 		s.logger.Error("failed to add authorization context", "error", err)
 	}

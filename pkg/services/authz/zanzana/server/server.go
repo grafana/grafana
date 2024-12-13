@@ -96,19 +96,49 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 	return s, nil
 }
 
-func (s *Server) addAuthorizationContext(ctx context.Context, req *openfgav1.CheckRequest) error {
+func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav1.TupleKey, error) {
 	// TODO: add caching for reads
 	res, err := s.Read(ctx, &authzextv1.ReadRequest{
 		Namespace: "global",
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tuples := common.ToOpenFGATuples(res.Tuples)
 	contextualTuples := make([]*openfgav1.TupleKey, 0)
 	for _, t := range tuples {
 		contextualTuples = append(contextualTuples, t.GetKey())
+	}
+
+	return contextualTuples, nil
+}
+
+func (s *Server) addCheckAuthorizationContext(ctx context.Context, req *openfgav1.CheckRequest) error {
+	contextualTuples, err := s.getGlobalAuthorizationContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(contextualTuples) == 0 {
+		return nil
+	}
+
+	if req.ContextualTuples == nil {
+		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
+	}
+	if req.ContextualTuples.TupleKeys == nil {
+		req.ContextualTuples.TupleKeys = make([]*openfgav1.TupleKey, 0)
+	}
+
+	req.ContextualTuples.TupleKeys = append(req.ContextualTuples.TupleKeys, contextualTuples...)
+	return nil
+}
+
+func (s *Server) addListAuthorizationContext(ctx context.Context, req *openfgav1.ListObjectsRequest) error {
+	contextualTuples, err := s.getGlobalAuthorizationContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	if len(contextualTuples) == 0 {
