@@ -1,8 +1,8 @@
 // @ts-ignore
-import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -30,7 +30,28 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
-export function getDashboardChanges(
+// TODO[schema v2]
+export function getRawDashboardV2Changes(
+  initial: DashboardV2Spec,
+  changed: DashboardV2Spec,
+  saveTimeRange?: boolean,
+  saveVariables?: boolean,
+  saveRefresh?: boolean
+) {
+  return {
+    changedSaveModel: changed,
+    initialSaveModel: initial,
+    diffs: jsonDiff(initial, changed),
+    diffCount: 0,
+    hasChanges: false,
+    hasTimeChanges: false,
+    isNew: false,
+    hasVariableValueChanges: false,
+    hasRefreshChange: false,
+  };
+}
+
+export function getRawDashboardChanges(
   initial: Dashboard,
   changed: Dashboard,
   saveTimeRange?: boolean,

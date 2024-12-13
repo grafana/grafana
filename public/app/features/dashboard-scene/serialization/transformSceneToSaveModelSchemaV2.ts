@@ -57,7 +57,7 @@ type DeepPartial<T> = T extends object
     }
   : T;
 
-export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2Spec> {
+export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const oldDash = scene.state;
   const timeRange = oldDash.$timeRange!.state;
 

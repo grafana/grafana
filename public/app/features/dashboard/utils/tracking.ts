@@ -7,9 +7,9 @@ import { PanelModel } from '../state/PanelModel';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
-  const variables = getVariables(dashboard.templating.list);
+  const variables = getV1SchemaVariables(dashboard.templating.list);
   // Count the different types of panels
-  const panels = getPanelCounts(dashboard.panels);
+  const panels = getV1SchemaPanelCounts(dashboard.panels);
 
   DashboardInteractions.dashboardInitialized({
     uid: dashboard.uid,
@@ -28,28 +28,17 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
 }
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
-  const initialSaveModel = dashboard.getInitialSaveModel();
-  if (initialSaveModel) {
-    const panels = getPanelCounts(initialSaveModel.panels || []);
-    const variables = getVariables(initialSaveModel.templating?.list || []);
-    DashboardInteractions.dashboardInitialized({
-      uid: initialSaveModel.uid,
-      title: initialSaveModel.title,
-      theme: undefined,
-      schemaVersion: initialSaveModel.schemaVersion,
-      version_before_migration: initialSaveModel.version,
-      panels_count: initialSaveModel.panels?.length || 0,
-      ...panels,
-      ...variables,
-      settings_nowdelay: undefined,
-      settings_livenow: !!initialSaveModel.liveNow,
-      duration,
-      isScene: true,
-    });
-  }
+  const trackingInformation = dashboard.getTrackingInformation();
+
+  DashboardInteractions.dashboardInitialized({
+    theme: undefined,
+    duration,
+    isScene: true,
+    ...trackingInformation,
+  });
 }
 
-function getPanelCounts(panels: Panel[] | PanelModel[]) {
+export function getV1SchemaPanelCounts(panels: Panel[] | PanelModel[]) {
   return panels
     .map((p) => p.type)
     .reduce((r: Record<string, number>, p) => {
@@ -58,7 +47,7 @@ function getPanelCounts(panels: Panel[] | PanelModel[]) {
     }, {});
 }
 
-function getVariables(variableList: VariableModel[]) {
+export function getV1SchemaVariables(variableList: VariableModel[]) {
   return variableList
     .map((v) => v.type)
     .reduce((r: Record<string, number>, k) => {
@@ -67,5 +56,5 @@ function getVariables(variableList: VariableModel[]) {
     }, {});
 }
 
-const variableName = (type: string) => `variable_type_${type}_count`;
+export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;

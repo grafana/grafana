@@ -90,9 +90,10 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { jsonText } = model.useState();
 
     const onSave = async (overwrite: boolean) => {
-      const result = await onSaveDashboard(dashboard, JSON.parse(model.state.jsonText), {
+      const result = await onSaveDashboard(dashboard, {
         folderUid: dashboard.state.meta.folderUid,
         overwrite,
+        rawDashboardJSON: JSON.parse(model.state.jsonText),
       });
 
       setIsSaving(true);

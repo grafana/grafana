@@ -3,14 +3,15 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
-  changedSaveModel: Dashboard;
-  initialSaveModel: Dashboard;
+  changedSaveModel: Dashboard | DashboardV2Spec;
+  initialSaveModel: Dashboard | DashboardV2Spec;
   diffs: Diffs;
   diffCount: number;
   hasChanges: boolean;
