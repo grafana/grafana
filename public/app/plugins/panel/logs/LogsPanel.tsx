@@ -29,9 +29,8 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { config } from '@grafana/runtime';
+import { config, getFieldLinksForExplore } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';

@@ -3,7 +3,7 @@ import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen } from '@grafana/data';
-import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { exploreDataLinkPostProcessorFactory, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -13,7 +13,6 @@ import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/t
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
-import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;

@@ -19,13 +19,13 @@ import {
   TraceToLogsTag,
 } from '@grafana/o11y-ds-frontend';
 import { PromQuery } from '@grafana/prometheus';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getFieldLinksForExplore, getTemplateSrv, getVariableUsageInfo } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { ExploreFieldLinkModel } from '../utils/links';
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';

@@ -3,10 +3,9 @@ import { createMonitoringLogger } from '../utils/logging';
 
 import { Correlation, CorrelationData, CorrelationsData, CorrelationsResponse } from './types';
 
-// TODO: Remove export?
-export const correlationsLogger = createMonitoringLogger('features.correlations');
+const correlationsLogger = createMonitoringLogger('features.correlations');
 
-const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
+export const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource =
     correlation.type === 'query' ? getDataSourceSrv().getInstanceSettings(correlation.targetUID) : undefined;

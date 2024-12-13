@@ -1,4 +1,4 @@
-import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { ExploreItemState } from 'app/types';
 
 import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
@@ -25,6 +25,3 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
       : '';
   });
 };
-
-// Remove
-export const correlationsLogger = createMonitoringLogger('features.correlations');

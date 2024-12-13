@@ -4,6 +4,7 @@ import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
+import { getTransformationVars } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
@@ -11,7 +12,6 @@ import {
   getTransformOptions,
   TransformationFieldDetails,
 } from '../correlations/Forms/types';
-import { getTransformationVars } from '../correlations/transformations';
 
 interface CorrelationTransformationAddModalProps {
   onCancel: () => void;

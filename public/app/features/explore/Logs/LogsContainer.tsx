@@ -22,7 +22,7 @@ import {
   DataSourceWithQueryModificationSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getFieldLinksForExplore } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -39,7 +39,6 @@ import {
 } from '../state/query';
 import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
-import { getFieldLinksForExplore } from '../utils/links';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';

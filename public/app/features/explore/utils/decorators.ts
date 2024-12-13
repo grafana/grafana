@@ -14,12 +14,11 @@ import {
   getRawDisplayProcessor,
   DataSourceApi,
 } from '@grafana/data';
-import { config, attachCorrelationsToDataFrames } from '@grafana/runtime';
+import { config, attachCorrelationsToDataFrames, CorrelationData } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
-import { CorrelationData } from '../../correlations/useCorrelations';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
 import { hasPanelPlugin } from '../../plugins/importPanelPlugin';

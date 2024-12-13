@@ -17,12 +17,10 @@ import {
   transformDataFrame,
   ValueLinkConfig,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getFieldLinksForExplore } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
-
-import { getFieldLinksForExplore } from '../utils/links';
 
 import { FieldNameMeta } from './LogsTableWrap';
 
