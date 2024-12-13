@@ -38,6 +38,9 @@ export interface Team extends WithAccessControlMetadata {
    * OrgId is the ID of an organisation the team belongs to.
    */
   orgId: number;
+}
+
+export interface TeamWithRoles extends Team {
   /**
    * RBAC roles assigned to the team.
    */
