@@ -50,6 +50,9 @@ const transformedContent = content
   // Replace lowercase 'com' prefix specific match with 'body'
   .replace(/\bcomGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1[A-Za-z0-9_]*/g, 'body')
 
+  // Replace ioK8SApimachineryPkgApisMetaV1 prefix specific match with 'body'
+  .replace(/\bioK8SApimachineryPkgApisMetaV1[A-Za-z0-9_]*/g, 'body')
+
   // Remove duplicate types in union type definitions
   .replace(/(export type [A-Za-z0-9]+ = [^;]+);/g, (match: string, typeDef: string) => {
     return `${removeDuplicateTypes(typeDef)};`;
