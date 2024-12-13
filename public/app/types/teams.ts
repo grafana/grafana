@@ -1,5 +1,4 @@
 import { Role } from './accessControl';
-import { TeamPermissionLevel } from './acl';
 
 export interface TeamDTO {
   /**
@@ -41,10 +40,6 @@ export interface Team {
    * OrgId is the ID of an organisation the team belongs to.
    */
   orgId: number;
-  /**
-   * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
-   */
-  permission: TeamPermissionLevel;
   /**
    * RBAC roles assigned to the team.
    */
