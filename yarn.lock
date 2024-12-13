@@ -8956,10 +8956,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.0.3":
-  version: 3.0.3
-  resolution: "@types/d3-scale-chromatic@npm:3.0.3"
-  checksum: 10/cc5488af1136c3f9e28aa3c3ee2dc3e5e843c666f64360fb3870f0b8679cd2ee844edaa5a93504a9665deb98cb3c2ae2257d610c338fa8caa4a31ab6fdeb2f15
+"@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.1.0":
+  version: 3.1.0
+  resolution: "@types/d3-scale-chromatic@npm:3.1.0"
+  checksum: 10/6b04af931b7cd4aa09f21519970cab44aaae181faf076013ab93ccb0d550ec16f4c8d444c1e9dee1493be4261a8a8bb6f8e6356e6f4c6ba0650011b1e8a38aef
   languageName: node
   linkType: hard
 
@@ -17624,7 +17624,7 @@ __metadata:
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
-    "@types/d3-scale-chromatic": "npm:3.0.3"
+    "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
     "@types/eslint": "npm:9.6.1"
