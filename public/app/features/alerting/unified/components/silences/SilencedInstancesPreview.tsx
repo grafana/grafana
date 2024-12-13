@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
