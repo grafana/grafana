@@ -7,6 +7,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -37,11 +38,12 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
     const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
-
-    const changeInfo = model.state.dashboardRef
-      .resolve()
-      .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
-
+    const changeInfo = getDashboardChangesFromScene(
+      model.state.dashboardRef.resolve(),
+      saveTimeRange,
+      saveVariables,
+      saveRefresh
+    );
     const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();

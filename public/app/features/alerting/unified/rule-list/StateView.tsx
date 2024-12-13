@@ -10,10 +10,14 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { usePagination } from '..//hooks/usePagination';
 import { calculateTotalInstances } from '../components/rule-viewer/RuleViewer';
 import { ListSection } from '../rule-list/components/ListSection';
-import { groupIdentifier } from '../utils/groupIdentifier';
 import { createViewLink } from '../utils/misc';
 import { hashRule } from '../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
+import {
+  getRuleGroupLocationFromCombinedRule,
+  getRulePluginOrigin,
+  isAlertingRule,
+  isGrafanaRulerRule,
+} from '../utils/rules';
 
 import { AlertRuleListItem } from './components/AlertRuleListItem';
 import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
@@ -98,7 +102,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 
         const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
         const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
-        const groupId = groupIdentifier.fromCombinedRule(rule);
+        const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
 
         if (!promRule) {
           return null;
@@ -122,7 +126,12 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
             group={rule.group.name}
             actions={
               rule.rulerRule ? (
-                <RuleActionsButtons compact rule={rule.rulerRule} promRule={promRule} groupIdentifier={groupId} />
+                <RuleActionsButtons
+                  compact
+                  rule={rule.rulerRule}
+                  promRule={promRule}
+                  groupIdentifier={groupIdentifier}
+                />
               ) : (
                 <ActionsLoader />
               )

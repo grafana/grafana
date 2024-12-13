@@ -196,18 +196,7 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
-				Mode:              Mode1,
-				LegacyStorage:     ls,
-				Storage:           us,
-				Kind:              "test.kind",
-				Reg:               p,
-				ServerLockService: &fakeServerLock{},
-				RequestInfo:       &request.RequestInfo{},
-
-				DataSyncerRecordsLimit: 1000,
-				DataSyncerInterval:     time.Hour,
-			})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode1, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -236,18 +225,7 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
-				Mode:              Mode2,
-				LegacyStorage:     ls,
-				Storage:           us,
-				Kind:              "test.kind",
-				Reg:               p,
-				ServerLockService: &fakeServerLock{},
-				RequestInfo:       &request.RequestInfo{},
-
-				DataSyncerRecordsLimit: 1000,
-				DataSyncerInterval:     time.Hour,
-			})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode2, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

@@ -15,18 +15,9 @@ import {
   LogRowModel,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  ClipboardButton,
-  DataLinkButton,
-  IconButton,
-  PopoverContent,
-  Themeable2,
-  Tooltip,
-  withTheme2,
-} from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
-import { getLabelTypeFromRow } from '../utils';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -59,19 +50,6 @@ interface State {
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    labelType: css({
-      border: `solid 1px ${theme.colors.text.secondary}`,
-      color: theme.colors.text.secondary,
-      borderRadius: theme.shape.radius.circle,
-      fontSize: theme.spacing(1),
-      lineHeight: theme.spacing(1.25),
-      height: theme.spacing(1.5),
-      width: theme.spacing(1.5),
-      display: 'flex',
-      justifyContent: 'center',
-      verticalAlign: 'middle',
-      marginLeft: theme.spacing(1),
-    }),
     wordBreakAll: css({
       label: 'wordBreakAll',
       wordBreak: 'break-all',
@@ -297,7 +275,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = app === CoreApp.Explore && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
-    const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], row) : null;
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -344,7 +321,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           </td>
 
-          <td>{labelType && <LabelTypeBadge type={labelType} styles={styles} />}</td>
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
@@ -384,7 +360,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         </tr>
         {showFieldsStats && singleKey && singleVal && (
           <tr>
-            <td colSpan={2}>
+            <td>
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
@@ -408,16 +384,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </>
     );
   }
-}
-
-function LabelTypeBadge({ type, styles }: { type: string; styles: ReturnType<typeof getStyles> }) {
-  return (
-    <Tooltip content={type}>
-      <div className={styles.labelType}>
-        <span>{type.substring(0, 1)}</span>
-      </div>
-    </Tooltip>
-  );
 }
 
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {

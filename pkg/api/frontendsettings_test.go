@@ -160,7 +160,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			hs.Cfg.Anonymous.HideVersion = test.hideVersion
+			hs.Cfg.AnonymousHideVersion = test.hideVersion
 			expected := test.expected
 
 			recorder := httptest.NewRecorder()

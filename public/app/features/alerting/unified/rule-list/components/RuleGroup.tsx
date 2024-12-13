@@ -75,11 +75,11 @@ export const EvaluationGroupLoader = ({
   );
 };
 
-export const LoadingIndicator = ({ datasourceUid }: { datasourceUid: string }) => {
+export const LoadingIndicator = () => {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
   return (
-    <div ref={ref} data-testid={`ds-loading-indicator-${datasourceUid}`}>
+    <div ref={ref}>
       <LoadingBar width={width} />
     </div>
   );

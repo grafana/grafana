@@ -12,15 +12,14 @@ interface ListItemProps {
   meta?: ReactNode[];
   metaRight?: ReactNode[];
   actions?: ReactNode;
-  'data-testid'?: string;
 }
 
 export const ListItem = (props: ListItemProps) => {
   const styles = useStyles2(getStyles);
-  const { icon = null, title, description, meta, metaRight, actions, 'data-testid': testId } = props;
+  const { icon = null, title, description, meta, metaRight, actions } = props;
 
   return (
-    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false" data-testid={testId}>
+    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="start" gap={1} wrap={false}>
         {/* icon */}
         {icon}

@@ -93,7 +93,7 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 		},
 	}
 
-	if cfg.Anonymous.Enabled {
+	if cfg.AnonymousEnabled {
 		zanzanaReconciler.reconcilers = append(zanzanaReconciler.reconcilers,
 			newResourceReconciler(
 				"anonymous role binding",

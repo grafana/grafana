@@ -1,5 +1,5 @@
 import { t } from 'app/core/internationalization';
-import { GrafanaRuleGroupIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { pauseRuleAction } from '../../reducers/ruler/ruleGroups';
@@ -18,18 +18,15 @@ export function usePauseRuleInGroup() {
   const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
   const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
 
-  return useAsync(async (ruleGroup: GrafanaRuleGroupIdentifier, uid: string, pause: boolean) => {
-    const groupIdentifierV1: RuleGroupIdentifier = {
-      dataSourceName: ruleGroup.rulesSource.name,
-      namespaceName: ruleGroup.namespace.uid,
-      groupName: ruleGroup.groupName,
-    };
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
+    const { namespaceName } = ruleGroup;
+
     const action = pauseRuleAction({ uid, pause });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(groupIdentifierV1, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
     return upsertRuleGroup({
       rulerConfig,
-      namespace: ruleGroup.namespace.uid,
+      namespace: namespaceName,
       payload: newRuleGroupDefinition,
       notificationOptions: {
         successMessage: pause ? rulePausedMessage : ruleResumedMessage,

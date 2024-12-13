@@ -3,7 +3,6 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';
-import { getDatasourceAPIUid } from '../utils/datasource';
 import { isGrafanaRulerRule } from '../utils/rules';
 
 import { useFolder } from './useFolder';
@@ -17,7 +16,7 @@ interface ResultBag {
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
   const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
-    uid: getDatasourceAPIUid(rulesSourceName),
+    rulesSourceName,
   });
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;

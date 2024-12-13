@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type StorageType string
@@ -22,8 +21,7 @@ const (
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
-type StorageOptions struct {
-	// The desired storage type
+type StorageOptions struct { // The desired storage type
 	StorageType StorageType
 
 	// For unified-grpc, the address is required

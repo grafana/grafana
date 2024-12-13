@@ -109,7 +109,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		"from":          []string{from},
 		"until":         []string{until},
 		"format":        []string{"json"},
-		"maxDataPoints": []string{fmt.Sprintf("%d", q.MaxDataPoints)},
+		"maxDataPoints": []string{"500"},
 		"target":        []string{},
 	}
 

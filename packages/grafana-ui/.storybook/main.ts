@@ -87,6 +87,12 @@ const mainConfig: StorybookConfig = {
       },
     });
 
+    // use the asset module for SVGS for compatibility with grafana/ui Icon component.
+    config.module?.rules?.push({
+      test: /(unicons|mono|custom)[\\/].*\.svg$/,
+      type: 'asset/source',
+    });
+
     return config;
   },
 };

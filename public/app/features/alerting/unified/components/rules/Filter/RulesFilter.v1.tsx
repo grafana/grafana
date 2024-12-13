@@ -15,10 +15,12 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import {
   LogMessages,
   logInfo,
+  trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
@@ -27,11 +29,33 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+const ViewOptions: SelectableValue[] = [
+  {
+    icon: 'folder',
+    label: 'Grouped',
+    value: 'grouped',
+  },
+  {
+    icon: 'list-ul',
+    label: 'List',
+    value: 'list',
+  },
+  {
+    icon: 'heart-rate',
+    label: 'State',
+    value: 'state',
+  },
+];
 
 const RuleTypeOptions: SelectableValue[] = [
-  { label: 'Alert ', value: PromRuleType.Alerting },
-  { label: 'Recording ', value: PromRuleType.Recording },
+  {
+    label: 'Alert ',
+    value: PromRuleType.Alerting,
+  },
+  {
+    label: 'Recording ',
+    value: PromRuleType.Recording,
+  },
 ];
 
 const RuleHealthOptions: SelectableValue[] = [
@@ -51,6 +75,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
+  const [queryParams, updateQueryParams] = useURLSearchParams();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
@@ -115,6 +140,11 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     onClear();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
+  };
+
+  const handleViewChange = (view: string) => {
+    updateQueryParams({ view });
+    trackRulesListViewChange({ view });
   };
 
   const handleContactPointChange = (contactPoint: string) => {
@@ -288,7 +318,11 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           </form>
           <div>
             <Label>View as</Label>
-            <RulesViewModeSelector />
+            <RadioButtonGroup
+              options={ViewOptions}
+              value={queryParams.get('view') ?? ViewOptions[0].value}
+              onChange={handleViewChange}
+            />
           </div>
         </Stack>
         {hasActiveFilters && (

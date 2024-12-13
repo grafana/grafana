@@ -675,7 +675,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
-	var f *folder.Folder
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
 			return toFolderError(err)
@@ -697,18 +696,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			return err
 		}
 
-		f = dashboards.FromDashboard(dash)
-		if nestedFolder != nil && nestedFolder.ParentUID != "" {
-			f.ParentUID = nestedFolder.ParentUID
-		}
-		if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
-			return err
-		}
-
 		return nil
 	})
-
 	if err != nil {
+		return nil, err
+	}
+
+	f := dashboards.FromDashboard(dash)
+	if nestedFolder != nil && nestedFolder.ParentUID != "" {
+		f.ParentUID = nestedFolder.ParentUID
+	}
+	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
 		return nil, err
 	}
 
