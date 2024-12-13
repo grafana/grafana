@@ -6038,14 +6038,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.48.2":
-  version: 1.48.2
-  resolution: "@playwright/test@npm:1.48.2"
+"@playwright/test@npm:1.49.1":
+  version: 1.49.1
+  resolution: "@playwright/test@npm:1.49.1"
   dependencies:
-    playwright: "npm:1.48.2"
+    playwright: "npm:1.49.1"
   bin:
     playwright: cli.js
-  checksum: 10/8557f9d60b93b9a60b66599d46f991b56df26b691f9285e8755298dabd9f42d1421c330a7d7578b76445fdd56040fe790d3f1081daa80e5e89a380170e0fd217
+  checksum: 10/bb0d5eda58ee0b5bbca732d2aa57782fadf420d101e08e16d5760179459c667907bd8d224ee3d6f43f3088378e377ef63d32ed605fec37605debf217c3efe8da
   languageName: node
   linkType: hard
 
@@ -17601,7 +17601,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.28.0"
-    "@playwright/test": "npm:1.48.2"
+    "@playwright/test": "npm:1.49.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.20"
@@ -23912,27 +23912,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.48.2":
-  version: 1.48.2
-  resolution: "playwright-core@npm:1.48.2"
+"playwright-core@npm:1.49.1":
+  version: 1.49.1
+  resolution: "playwright-core@npm:1.49.1"
   bin:
     playwright-core: cli.js
-  checksum: 10/dd029f797b1afb2240713a032fecc50e1ffc5464a39c075570cf10e929c145da3a8d0951a3f2b279e33b2f09cbeb8ff4330822cb1078452c0c75cc4ce34ca171
+  checksum: 10/baa39a53024ec7744708410f2b952ac3aa2e1a6d311dabfa303523712848eba142fce5c20f1b2ed2a66fbd9a415d22ea8642b0f70423360aaebd4b41c47d364e
   languageName: node
   linkType: hard
 
-"playwright@npm:1.48.2":
-  version: 1.48.2
-  resolution: "playwright@npm:1.48.2"
+"playwright@npm:1.49.1":
+  version: 1.49.1
+  resolution: "playwright@npm:1.49.1"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.48.2"
+    playwright-core: "npm:1.49.1"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/331af352504336f419cdf1369f0ef399c6f0e905fdb79a5e97c41f33e74766efd21430ab6ae2de0b237ae765ebfbe701e119a990d8dc01bcdac3bc43c1fa1fbf
+  checksum: 10/49fb063f4a107b8090f66d2d351ebd51fbb66843a8f95a161fa0c0e0b5156515961e75cc10f4249f61b9d2af51f762dda505c62b096d8f61cd47d1ff73ab39d2
   languageName: node
   linkType: hard
 
