@@ -566,7 +566,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 }
 
 // Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.RepositoryStatus, error) {
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.SyncStatus, error) {
 	job := wrap.Spec
 
 	if job.PR > 0 {
@@ -580,7 +580,7 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 	}
 
 	latest := branch.Sha
-	lastSyncCommit := r.config.Status.CurrentGitCommit
+	lastSyncCommit := r.config.Status.Sync.Hash
 
 	if lastSyncCommit == "" {
 		logger.Info("initial sync")
@@ -680,8 +680,8 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 	}
 
 	logger.InfoContext(ctx, "repository status updated", "commit", latest)
-	return &provisioning.RepositoryStatus{
-		CurrentGitCommit: latest,
+	return &provisioning.SyncStatus{
+		Hash: latest,
 	}, nil
 }
 

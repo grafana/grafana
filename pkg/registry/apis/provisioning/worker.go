@@ -77,18 +77,16 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		}
 
 		// TODO: Can we use typed client for this?
+		cfg := repo.Config()
+		cfg.Status.Sync = *status
+
 		client := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
 		unstructuredResource := &unstructured.Unstructured{}
-		jj, _ := json.Marshal(repo.Config())
+		jj, _ := json.Marshal(cfg)
 		err = json.Unmarshal(jj, &unstructuredResource.Object)
 		if err != nil {
 			return nil, fmt.Errorf("error loading config json: %w", err)
 		}
-
-		if err := unstructured.SetNestedField(unstructuredResource.Object, status.CurrentGitCommit, "status", "currentGitCommit"); err != nil {
-			return nil, fmt.Errorf("set currentGitCommit: %w", err)
-		}
-
 		if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
