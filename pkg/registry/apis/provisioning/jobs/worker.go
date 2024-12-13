@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -10,12 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-var _ jobs.Worker = (*JobWorker)(nil)
+type RepoGetter interface {
+	GetRepository(ctx context.Context, name string) (repository.Repository, error)
+}
+
+var _ Worker = (*JobWorker)(nil)
 
 // FIXME: this is in the root package and should not be -- when we pull the processing steps out
 // of the github repo directly, we should move it to a more appropriate place
@@ -27,7 +30,16 @@ type JobWorker struct {
 	ignore         provisioning.IgnoreFile
 }
 
-// Process implements jobs.Worker.
+func NewJobWorker(getter RepoGetter, resourceClient *resources.ClientFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
+	return &JobWorker{
+		getter:         getter,
+		resourceClient: resourceClient,
+		identities:     identities,
+		logger:         logger,
+		ignore:         ignore,
+	}
+}
+
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {

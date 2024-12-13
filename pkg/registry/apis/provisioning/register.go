@@ -169,13 +169,13 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	b.jobs.Register(&JobWorker{
-		getter:         b,
-		logger:         b.logger.With("worker", "github"),
-		resourceClient: b.client,
-		identities:     b.identities,
-		ignore:         provisioning.IncludeYamlOrJSON,
-	})
+	b.jobs.Register(jobs.NewJobWorker(
+		b,
+		b.client,
+		b.identities,
+		b.logger.With("worker", "github"),
+		provisioning.IncludeYamlOrJSON,
+	))
 
 	repositoryStorage.AfterCreate = b.afterCreate
 	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
