@@ -111,7 +111,7 @@ func (s *Server) addAuthorizationContext(ctx context.Context, req *openfgav1.Che
 		contextualTuples = append(contextualTuples, t.GetKey())
 	}
 
-	if len(s.contextualTuples) == 0 {
+	if len(contextualTuples) == 0 {
 		return nil
 	}
 
