@@ -1,7 +1,7 @@
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   QueryVariable,
   SceneDataTransformer,
   SceneObject,
@@ -54,8 +54,8 @@ export function validateVariable<
     expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
     expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
   }
-  if (sceneVariable instanceof GroupByVariable && variableKind.kind === 'CustomVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.query);
+  if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
+    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
   }
 }
 
