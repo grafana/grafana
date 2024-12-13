@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -45,12 +45,6 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("expecting namespace")
-	}
-
-	// the current folder
 	obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -64,12 +58,9 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		info := &v0alpha1.FolderInfoList{
 			Items: []v0alpha1.FolderInfo{},
 		}
-
-		// Walk up the tree
 		for folder != nil {
 			parent := ""
 			meta, _ := utils.MetaAccessor(folder)
-			folder = nil
 			if meta != nil {
 				parent = meta.GetFolder()
 			}
@@ -83,31 +74,26 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			if parent != "" {
 				obj, err = r.getter.Get(ctx, parent, &v1.GetOptions{})
 				if err != nil {
-
-				}
-				folder, ok := obj.(*v0alpha1.Folder)
-				if !ok {
-					return nil, fmt.Errorf("expecting folder, found: %T", folder)
+					info.Items = append(info.Items, v0alpha1.FolderInfo{
+						Name:        parent,
+						Detached:    true,
+						Description: err.Error(),
+					})
+				} else {
+					folder, ok = obj.(*v0alpha1.Folder)
+					if !ok {
+						info.Items = append(info.Items, v0alpha1.FolderInfo{
+							Name:        parent,
+							Detached:    true,
+							Description: fmt.Sprintf("expected folder, found: %T", obj),
+						})
+					}
 				}
 			}
 		}
 
-		parents, err := r.service.GetParents(ctx, folder.GetParentsQuery{
-			UID:   name,
-			OrgID: ns.OrgID,
-		})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		for _, parent := range parents {
-			info.Items = append(info.Items, v0alpha1.FolderInfo{
-				UID:    parent.UID,
-				Title:  parent.Title,
-				Parent: parent.ParentUID,
-			})
-		}
+		// Start from the root
+		slices.Reverse(info.Items)
 		responder.Object(http.StatusOK, info)
 	}), nil
 }
