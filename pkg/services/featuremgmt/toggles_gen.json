@@ -3593,13 +3593,17 @@
     {
       "metadata": {
         "name": "useSessionStorageForRedirection",
-        "resourceVersion": "1727082618788",
-        "creationTimestamp": "2024-09-23T09:31:23Z"
+        "resourceVersion": "1734109542033",
+        "creationTimestamp": "2024-09-23T09:31:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-13 17:05:42.033262 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use session storage for handling the redirection after login",
-        "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
       }
     },
     {
