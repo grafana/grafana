@@ -105,4 +105,10 @@ export interface ParserAndLabelKeysResult {
   unwrapLabelKeys: string[];
 }
 
-export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[]; chunkRangeMs: number; stepMs: number; intervalMs: number; };
+export type LokiGroupedRequest = {
+  request: DataQueryRequest<LokiQuery>;
+  partition: TimeRange[];
+  chunkRangeMs: number;
+  stepMs: number;
+  intervalMs: number;
+};
