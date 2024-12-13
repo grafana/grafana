@@ -3964,7 +3964,7 @@ __metadata:
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.3.0"
-    "@types/react-transition-group": "npm:4.4.11"
+    "@types/react-transition-group": "npm:4.4.12"
     "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
@@ -9712,12 +9712,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:4.4.11, @types/react-transition-group@npm:^4.4.0":
-  version: 4.4.11
-  resolution: "@types/react-transition-group@npm:4.4.11"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10/a7f4de6e5f57d9fcdea027e22873c633f96a803c96d422db8b99a45c36a9cceb7882d152136bbc31c7158fc1827e37aea5070d369724bb71dd11b5687332bc4d
+"@types/react-transition-group@npm:4.4.12, @types/react-transition-group@npm:^4.4.0":
+  version: 4.4.12
+  resolution: "@types/react-transition-group@npm:4.4.12"
+  peerDependencies:
+    "@types/react": "*"
+  checksum: 10/ea14bc84f529a3887f9954b753843820ac8a3c49fcdfec7840657ecc6a8800aad98afdbe4b973eb96c7252286bde38476fcf64b1c09527354a9a9366e516d9a2
   languageName: node
   linkType: hard
 
@@ -17643,7 +17643,7 @@ __metadata:
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.3.0"
-    "@types/react-transition-group": "npm:4.4.11"
+    "@types/react-transition-group": "npm:4.4.12"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
