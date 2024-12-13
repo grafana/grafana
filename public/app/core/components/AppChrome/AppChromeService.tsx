@@ -19,7 +19,6 @@ export interface AppChromeState {
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
-  searchBarHidden?: boolean;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
@@ -58,7 +57,7 @@ export class AppChromeService {
 
   public headerHeightObservable = this.state
     .pipe(
-      map(({ actions, chromeless, kioskMode, searchBarHidden }) => {
+      map(({ actions, chromeless, kioskMode }) => {
         if (kioskMode || chromeless) {
           return 0;
         } else if (actions) {
@@ -173,21 +172,6 @@ export class AppChromeService {
     reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,
-    });
-  };
-
-  public onToggleSearchBar = () => {
-    const { searchBarHidden, kioskMode } = this.state.getValue();
-    const newSearchBarHidden = !searchBarHidden;
-    store.set(this.searchBarStorageKey, newSearchBarHidden);
-
-    if (kioskMode) {
-      locationService.partial({ kiosk: null });
-    }
-
-    this.update({ searchBarHidden: newSearchBarHidden, kioskMode: null });
-    reportInteraction('grafana_search_bar', {
-      visible: !newSearchBarHidden,
     });
   };
 

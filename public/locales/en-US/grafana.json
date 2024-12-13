@@ -2342,12 +2342,6 @@
       "list-label": "Navigation",
       "open": "Open menu",
       "undock": "Undock menu"
-    },
-    "toolbar": {
-      "close-menu": "Close menu",
-      "enable-kiosk": "Enable kiosk mode",
-      "open-menu": "Open menu",
-      "toggle-search-bar": "Toggle top search bar"
     }
   },
   "news": {
@@ -3041,7 +3035,6 @@
     "mode": "Mode",
     "mode-kiosk": "Kiosk",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Share playlist"
   },
   "shared": {
