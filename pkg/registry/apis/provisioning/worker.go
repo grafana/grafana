@@ -2,9 +2,12 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -16,29 +19,21 @@ import (
 )
 
 var (
-	_ jobs.Worker = (*GithubWorker)(nil)
+	_ jobs.Worker = (*JobWorker)(nil)
 )
 
 // FIXME: this is in the root package and should not be -- when we pull the processing steps out
 // of the github repo directly, we should move it to a more appropriate place
-type GithubWorker struct {
+type JobWorker struct {
+	client         *resources.ClientFactory
 	getter         RepoGetter
 	resourceClient *resources.ClientFactory
 	identities     auth.BackgroundIdentityService
 	logger         *slog.Logger
 }
 
-// Supports implements jobs.Worker.
-func (g *GithubWorker) Supports(ctx context.Context, job *provisioning.Job) bool {
-	t, ok := job.Labels["repository.type"]
-	if ok && t == "github" {
-		return true
-	}
-	return false // for now
-}
-
 // Process implements jobs.Worker.
-func (g *GithubWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
+func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
 		return nil, err
@@ -58,15 +53,43 @@ func (g *GithubWorker) Process(ctx context.Context, job provisioning.Job) (*prov
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	processor, ok := repo.(repository.JobProcessor)
-	if !ok {
-		return nil, fmt.Errorf("processor not implemented yet")
+	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo)
+	replicator, err := factory.New()
+	if err != nil {
+		return nil, fmt.Errorf("error creating replicator")
 	}
 
-	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo)
-	err = processor.Process(ctx, g.logger, job, factory)
+	processor, ok := repo.(repository.JobProcessor)
+	if !ok {
+		// TODO... handle sync job for everything
+		// EG, move over the "import" logic here
+		return nil, fmt.Errorf("job not supported by this worker")
+	}
+
+	status, err := processor.Process(ctx, g.logger, job, replicator)
 	if err != nil {
 		return nil, err
+	}
+	if status != nil {
+		dynamicClient, _, err := g.client.New(job.Namespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+
+		// TODO: Can we use typed client for this?
+		cfg := repo.Config()
+		cfg.Status.Sync = *status
+
+		client := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+		unstructuredResource := &unstructured.Unstructured{}
+		jj, _ := json.Marshal(cfg)
+		err = json.Unmarshal(jj, &unstructuredResource.Object)
+		if err != nil {
+			return nil, fmt.Errorf("error loading config json: %w", err)
+		}
+		if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
 	}
 	return &provisioning.JobStatus{
 		State: "finished", //success

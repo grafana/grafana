@@ -80,8 +80,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: namespace,
 					Labels: map[string]string{
-						"repository":      name,
-						"repository.type": string(repo.Config().Spec.Type),
+						"repository": name,
 					},
 				},
 				Spec: *rsp.Job,

@@ -3,6 +3,10 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
+	"os"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -65,6 +69,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 		Namespace: "default", // actually org1
 		GVR: schema.GroupVersionResource{
 			Group: "folder.grafana.app", Version: "v0alpha1", Resource: "folders",
+		},
+	})
+
+	dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR: schema.GroupVersionResource{
+			Group: "dashboard.grafana.app", Version: "v2alpha1", Resource: "dashboards",
 		},
 	})
 
@@ -340,9 +352,69 @@ func TestIntegrationProvisioning(t *testing.T) {
 		_, err = client.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 		require.Error(t, err, "invalid path should not be fine")
 	})
+
+	t.Run("import all-panels from local-repository", func(t *testing.T) {
+		// This test will prooobably break if we change import to be an async job.
+
+		// Just make sure the folder doesn't exist in advance.
+		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+		}
+
+		const repo = "local-tmp"
+		err = client.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+		}
+
+		// Create the repository.
+		repoPath := path.Join(provisioningPath, repo, randomAsciiStr(10))
+		err = os.MkdirAll(repoPath, 0700)
+		require.NoError(t, err, "should be able to create repo path")
+		localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.yaml")
+		require.NoError(t, unstructured.SetNestedField(localTmp.Object, repoPath, "spec", "local", "path"))
+
+		_, err = client.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = os.WriteFile(path.Join(repoPath, "all-panels.json"), helper.LoadFile("testdata/all-panels.json"), 0600)
+		require.NoError(t, err, "expecting to be able to create file")
+
+		// Make sure the repo can see the file
+		_, err = client.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
+		require.NoError(t, err, "valid path should be fine")
+
+		// But the dashboard shouldn't exist yet
+		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
+		require.Error(t, err, "no all-panels dashboard should exist")
+
+		// Now, we import it, such that it may exist
+		result := restClient.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("import").
+			Do(ctx)
+		require.NoError(t, result.Error(), "expecting to be able to import repository")
+
+		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
+		require.NoError(t, err, "all-panels dashboard should now exist")
+	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, _ := unstructured.NestedString(obj, fields...)
 	return v
+}
+
+func randomAsciiStr(n int) string {
+	const alphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := strings.Builder{}
+	b.Grow(n)
+	for range n {
+		char := alphabet[rand.Intn(len(alphabet))]
+		b.WriteByte(char)
+	}
+	return b.String()
 }

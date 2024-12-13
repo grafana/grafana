@@ -179,7 +179,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	b.jobs.Register(&GithubWorker{
+	b.jobs.Register(&JobWorker{
 		getter:         b,
 		logger:         b.logger.With("worker", "github"),
 		resourceClient: b.client,
@@ -268,15 +268,8 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 			r.Spec.GitHub.WebhookURL = strings.ReplaceAll(r.Spec.GitHub.WebhookURL, resourceNamePlaceholder, r.GetName())
 		}
 
-		// TODO: why do we have to create a client everywhere?
-		dynamicClient, _, err := b.client.New(r.GetNamespace())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
-		}
-
-		ifce := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
 		linterFactory := lint.NewDashboardLinterFactory()
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer, ifce), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
