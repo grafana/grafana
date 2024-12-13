@@ -1,3 +1,5 @@
+import { WithAccessControlMetadata } from '@grafana/data';
+
 import { Role } from './accessControl';
 
 export interface TeamDTO {
@@ -12,14 +14,10 @@ export interface TeamDTO {
 }
 
 // This is the team resource with permissions and metadata expanded
-export interface Team {
+export interface Team extends WithAccessControlMetadata {
   id: number; // TODO switch to UUID
   uid: string; // Prefer UUID
 
-  /**
-   * AccessControl metadata associated with a given resource.
-   */
-  accessControl?: Record<string, boolean>;
   /**
    * AvatarUrl is the team's avatar URL.
    */
