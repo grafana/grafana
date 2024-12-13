@@ -8,7 +8,6 @@ export interface FolderListItemDTO {
 export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;
 
 export interface FolderDTO extends WithAccessControlMetadata {
-  canAdmin: boolean;
   canDelete: boolean;
   canEdit: boolean;
   canSave: boolean;

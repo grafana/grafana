@@ -6,7 +6,6 @@ export function mockFolderDTO(seed = 1, partial?: Partial<FolderDTO>): FolderDTO
   const random = Chance(seed);
   const uid = random.guid();
   return {
-    canAdmin: true,
     canDelete: true,
     canEdit: true,
     canSave: true,
