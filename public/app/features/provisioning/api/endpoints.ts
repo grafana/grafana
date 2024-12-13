@@ -147,11 +147,10 @@ const injectedRtkApi = api.injectEndpoints({
         params: { ref: queryArg.ref },
       }),
     }),
-    createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref?: string }>({
-      query: ({ name, ref }) => ({
-        url: `${BASE_PATH}/${name}/import`,
+    createRepositorySync: build.mutation<ResourceWrapper, { name: string }>({
+      query: ({ name }) => ({
+        url: `${BASE_PATH}/${name}/sync`,
         method: 'POST',
-        params: { ref },
       }),
     }),
     getRepositoryStatus: build.query<RepositoryResource, RequestArg>({
@@ -218,7 +217,7 @@ export const {
   useUpdateRepositoryFilesMutation,
   useCreateRepositoryFilesMutation,
   useDeleteRepositoryFilesMutation,
-  useCreateRepositoryImportMutation,
+  useCreateRepositorySyncMutation,
   useGetRepositoryStatusQuery,
   useUpdateRepositoryStatusMutation,
   usePatchRepositoryStatusMutation,
