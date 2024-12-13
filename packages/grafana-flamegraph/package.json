@@ -63,7 +63,7 @@
     "@rollup/plugin-node-resolve": "15.3.0",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "^6.1.2",
-    "@testing-library/react": "16.0.1",
+    "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",

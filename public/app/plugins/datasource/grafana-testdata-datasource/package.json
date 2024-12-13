@@ -25,7 +25,7 @@
     "@grafana/e2e-selectors": "11.5.0-pre",
     "@grafana/plugin-configs": "11.5.0-pre",
     "@testing-library/dom": "10.4.0",
-    "@testing-library/react": "16.0.1",
+    "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
     "@types/d3-random": "^3.0.2",
     "@types/jest": "29.5.14",
