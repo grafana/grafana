@@ -362,6 +362,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 			queries = append(queries, q)
 		}
 	}
+	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
 			q, err := requirementQuery(v, "")
@@ -372,7 +373,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		}
 	}
 
-	queries = append(queries, newQuery(req))
+	queries = append(queries, newTextQuery(req))
 
 	if access != nil {
 		// TODO AUTHZ!!!!
@@ -438,13 +439,23 @@ var textSortFields = map[string]string{
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
-		if len(req.Values) != 1 {
-			return nil, resource.NewBadRequestError("equals query can have one value")
+		if len(req.Values) == 0 {
+			return query.NewMatchAllQuery(), nil
 		}
-		q := query.NewMatchQuery(req.Values[0])
-		q.FieldVal = prefix + req.Key
-		return q, nil
+		if len(req.Values[0]) == 1 {
+			q := query.NewMatchQuery(req.Values[0])
+			q.FieldVal = prefix + req.Key
+			return q, nil
+		}
 
+		conjuncts := []query.Query{}
+		for _, v := range req.Values {
+			q := query.NewMatchQuery(v)
+			q.FieldVal = prefix + req.Key
+			conjuncts = append(conjuncts, q)
+		}
+
+		return query.NewConjunctionQuery(conjuncts), nil
 	case selection.NotEquals:
 	case selection.DoesNotExist:
 	case selection.GreaterThan:
@@ -577,39 +588,9 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 	return f
 }
 
-func newQuery(req *resource.ResourceSearchRequest) query.Query {
-	textQuery := newTextQuery(req)
-	tagsQuery := newTagsQuery(req)
-	if tagsQuery != nil {
-		return bleve.NewConjunctionQuery(textQuery, tagsQuery)
-	}
-	return textQuery
-}
-
 func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
 	if req.Query == "" || req.Query == "*" {
 		return bleve.NewMatchAllQuery()
 	}
 	return bleve.NewMatchQuery(req.Query)
-}
-
-func newTagsQuery(req *resource.ResourceSearchRequest) query.Query {
-	if len(req.Options.Fields) == 0 {
-		return nil
-	}
-
-	for _, filter := range req.Options.Fields {
-		if filter.Key == resource.SEARCH_FIELD_TAGS {
-			if len(filter.Values) == 0 {
-				return nil
-			}
-			orQuery := bleve.NewDisjunctionQuery()
-			for _, v := range filter.Values {
-				matchQuery := bleve.NewMatchQuery(v)
-				orQuery.AddQuery(matchQuery)
-			}
-			return orQuery
-		}
-	}
-	return nil
 }
