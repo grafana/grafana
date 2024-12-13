@@ -16,12 +16,12 @@ export interface TeamDTO {
 // This is the team resource with permissions and metadata expanded
 export interface Team extends WithAccessControlMetadata {
   /**
-   * internal id of team
+   * Internal id of team
    * @deprecated use uid instead
    */
-  id: number; // TODO switch to UUID
+  id: number;
   /**
-   * AvatarUrl is the team's avatar URL.
+   * A unique identifier for the team.
    */
   uid: string; // Prefer UUID
   /**
