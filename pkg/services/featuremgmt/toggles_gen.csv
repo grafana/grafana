@@ -225,3 +225,4 @@ alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,t
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
+lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
