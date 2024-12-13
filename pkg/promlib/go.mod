@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b
-	github.com/grafana/grafana-plugin-sdk-go v0.260.2
+	github.com/grafana/grafana-plugin-sdk-go v0.260.3
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.20.5
@@ -20,7 +20,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240626203959-61d1e3462e30 // indirect
-	github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718 // indirect
+	github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/goccy/go-json v0.10.3 // indirect
+	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
@@ -116,7 +116,7 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.27.0 // indirect
+	golang.org/x/tools v0.28.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect

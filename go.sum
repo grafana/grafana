@@ -1507,8 +1507,8 @@ github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOL
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
-github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718 h1:PU02L4p0twskcStssUQ6cE+Ow7OXWguTcEl5m7H68GA=
-github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718/go.mod h1:fmaOz8N725zJcHWXv3rLZyTVAXr1q8Yqa8GBDsVh7mc=
+github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30 h1:hXVi7QKuCQ0E8Yujfu9b0f0RnzZ72efpWvPnZgnJPrE=
+github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30/go.mod h1:RNuWDIiGjq5nndL2PyQrndUy9nMLwheA3uWaAV7fe4U=
 github.com/apache/arrow/go/arrow v0.0.0-20210223225224-5bea62493d91/go.mod h1:c9sxoIT3YgLxH4UhLOCKaBlEojuMhVYpk4Ntv3opUTQ=
 github.com/apache/arrow/go/v10 v10.0.1/go.mod h1:YvhnlEePVnBS4+0z3fhPfUy7W1Ikj0Ih0vcRo/gZ1M0=
 github.com/apache/arrow/go/v11 v11.0.0/go.mod h1:Eg5OsL5H+e299f7u5ssuXsuHQVEGC4xei5aX110hRiI=
@@ -2064,8 +2064,8 @@ github.com/gobwas/pool v0.2.1/go.mod h1:q8bcK0KcYlCgd9e7WYLm9LpyS+YeLd8JVDW6Wezm
 github.com/gobwas/ws v1.2.1/go.mod h1:hRKAFb8wOxFROYNsT1bqfWnhX+b5MFeJM9r2ZSwg/KY=
 github.com/goccy/go-json v0.9.11/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/goccy/go-json v0.10.2/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
-github.com/goccy/go-json v0.10.3 h1:KZ5WoDbxAIgm2HNbYckL0se1fHD6rz5j4ywS6ebzDqA=
-github.com/goccy/go-json v0.10.3/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
+github.com/goccy/go-json v0.10.4 h1:JSwxQzIqKfmFX1swYPpUThQZp/Ka4wzJdK0LWVytLPM=
+github.com/goccy/go-json v0.10.4/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/goccy/go-yaml v1.9.5/go.mod h1:U/jl18uSupI5rdI2jmuCswEA2htH9eXfferR3KfscvA=
 github.com/goccy/go-yaml v1.9.8/go.mod h1:JubOolP3gh0HpiBc4BLRD4YmjEjHAmIIB2aaXKkTfoE=
 github.com/goccy/go-yaml v1.11.0/go.mod h1:H+mJrWtjPTJAHvRbV09MCK9xYwODM+wRTVFFTWckfng=
@@ -2328,8 +2328,8 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.260.2 h1:VXQyc7eg+DMBoyh7PkJ6cxPPwsrqmhZjx5AvBgYkouE=
-github.com/grafana/grafana-plugin-sdk-go v0.260.2/go.mod h1:qpKFAZegXPXb0+iOox1ZHCDNUhoYOMYiIvT5kajJzXE=
+github.com/grafana/grafana-plugin-sdk-go v0.260.3 h1:7ri52MhUMouQKf2q9z3RsxSX464FLD3mSJZCv65ux5g=
+github.com/grafana/grafana-plugin-sdk-go v0.260.3/go.mod h1:X+6ipUy022esjdomutNjHbH67CbJJzEhkrvvfMbvL8A=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 h1:JFB5dvs0XwBh/RiDNA5OrqcF3eWCQmTYBm6Hy79PDMQ=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7/go.mod h1:AVvGgNqHsruJINRjKkhhY5NZMh5ke6Ei2bywuQ4Uuus=
 github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f h1:zZN/Jy7PjoqtrMiBRV5O3x4xAArcSbUznuyAPACrKXI=
@@ -4073,8 +4073,8 @@ golang.org/x/tools v0.17.0/go.mod h1:xsh6VxdV005rRVaS6SSAf9oiAqljS7UZUacMZ8Bnsps
 golang.org/x/tools v0.18.0/go.mod h1:GL7B4CwcLLeo59yx/9UWWuNOW1n3VZ4f5axWfML7Lcg=
 golang.org/x/tools v0.19.0/go.mod h1:qoJWxmGSIBmAeriMx19ogtrEPrGtDbPK634QFIcLAhc=
 golang.org/x/tools v0.20.0/go.mod h1:WvitBU7JJf6A4jOdg4S1tviW9bhUxkgeCui/0JHctQg=
-golang.org/x/tools v0.27.0 h1:qEKojBykQkQ4EynWy4S8Weg69NumxKdn40Fce3uc/8o=
-golang.org/x/tools v0.27.0/go.mod h1:sUi0ZgbwW9ZPAq26Ekut+weQPR5eIM6GQLQ1Yjm1H0Q=
+golang.org/x/tools v0.28.0 h1:WuB6qZ4RPCQo5aP3WdKZS7i595EdWqWR8vqJTlwTVK8=
+golang.org/x/tools v0.28.0/go.mod h1:dcIOrVd3mfQKTgrDVQHqCPMWy6lnhfhtX3hLXYVLfRw=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

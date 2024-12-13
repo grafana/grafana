@@ -32,7 +32,7 @@ require (
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.33.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.1.1 // @grafana/partner-datasources
-	github.com/apache/arrow-go/v18 v18.0.1-0.20241204174348-9d44f3448718 // @grafana/plugins-platform-backend
+	github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30 // @grafana/plugins-platform-backend
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
@@ -89,7 +89,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.260.2 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.260.3 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
@@ -179,7 +179,7 @@ require (
 	golang.org/x/sync v0.10.0 // @grafana/alerting-backend
 	golang.org/x/text v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.27.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.28.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.68.1 // @grafana/plugins-platform-backend
@@ -283,7 +283,7 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
-	github.com/goccy/go-json v0.10.3 // indirect
+	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
