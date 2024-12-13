@@ -47,8 +47,20 @@ func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Obje
 	if err != nil {
 		return
 	}
-	_ = meta.SetStatus(nil)
 	meta.SetGeneration(1)
+	objCopy := obj.DeepCopyObject()
+	err = runtime.SetZeroValue(objCopy)
+	if err != nil {
+		return
+	}
+	metaCopy, err := utils.MetaAccessor(objCopy)
+	if err != nil {
+		return
+	}
+	status, err := metaCopy.GetStatus()
+	if err == nil {
+		_ = meta.SetStatus(status)
+	}
 }
 
 func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
