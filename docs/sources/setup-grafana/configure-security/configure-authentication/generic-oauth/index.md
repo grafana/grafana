@@ -241,14 +241,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineer",
-            "admin",
-        ],
-        ...
-    },
+    "groups": [
+        "engineer",
+        "admin",
+    ],
     ...
 }
 ```
@@ -268,13 +264,9 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "roles": [
-            "admin",
-        ],
-        ...
-    },
+    "roles": [
+        "admin",
+    ],
     ...
 }
 ```
@@ -307,17 +299,11 @@ Payload:
 
 ```json
 {
-    ...
-    "info": {
-        ...
-        "roles": [
-            "org_foo",
-            "org_bar",
-            "another_org"
-        ],
-        ...
-    },
-    ...
+    "roles": [
+        "org_foo",
+        "org_bar",
+        "another_org"
+    ],
 }
 ```
 
@@ -326,7 +312,7 @@ Config:
 ```ini
 role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || 'None'
 allow_assign_grafana_admin = true
-org_attribute_path = info.roles
+org_attribute_path = roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ```
 
@@ -347,7 +333,7 @@ To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../
 Configuration:
 
 ```bash
-groups_attribute_path = info.groups
+groups_attribute_path = groups
 ```
 
 Payload:
@@ -355,14 +341,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineers",
-            "analysts",
-        ],
-        ...
-    },
+    "groups": [
+        "engineers",
+        "analysts",
+    ],
     ...
 }
 ```
