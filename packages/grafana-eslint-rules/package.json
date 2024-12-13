@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@typescript-eslint/types": "^8.9.0",
-    "eslint": "9.14.0",
+    "eslint": "9.16.0",
     "tslib": "2.7.0"
   },
   "private": true
