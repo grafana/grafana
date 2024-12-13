@@ -182,6 +182,8 @@ func labelsToFields(frame *data.Frame) {
 				newFld := newField(lbl, val, frame.Rows())
 				fields = append(fields, newFld)
 			}
+			// Now remove the labels from the original field
+			fld.Labels = nil
 		}
 	}
 	frame.Fields = append(frame.Fields, fields...)
