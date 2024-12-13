@@ -1683,6 +1683,12 @@ var (
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:        "elasticsearchCrossClusterSearch",
+			Description: "Enables cross cluster search in the Elasticsearch datasource",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 

@@ -243,4 +243,5 @@ export interface FeatureToggles {
   alertingNotificationsStepMode?: boolean;
   useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
 }
