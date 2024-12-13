@@ -62,7 +62,7 @@ Notification setup is essential for an effective alerting system to scale across
 The topics in this section include step-by-step instructions for:
 
 - [Configuring contact points](ref:configure-contact-points) to specify where to receive alert notifications.
-- [Configuring notification policies](ref:configure-notification-policies) to determine  how alerts are routed to contact points.
+- [Configuring notification policies](ref:configure-notification-policies) to determine how alerts are routed to contact points.
 - [Templating notifications](ref:configure-templates) to customize notification messages.
 - [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
 
