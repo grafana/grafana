@@ -910,4 +910,8 @@ const (
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch datasource
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
+
+	// FlagUnifiedHistory
+	// Displays the navigation history so the user can navigate back to previous pages
+	FlagUnifiedHistory = "unifiedHistory"
 )

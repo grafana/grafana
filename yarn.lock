@@ -2647,7 +2647,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.28, @floating-ui/react@npm:^0.26.16":
+"@floating-ui/react@npm:0.27.0":
+  version: 0.27.0
+  resolution: "@floating-ui/react@npm:0.27.0"
+  dependencies:
+    "@floating-ui/react-dom": "npm:^2.1.2"
+    "@floating-ui/utils": "npm:^0.2.8"
+    tabbable: "npm:^6.0.0"
+  peerDependencies:
+    react: ">=17.0.0"
+    react-dom: ">=17.0.0"
+  checksum: 10/b04e8b356c6ffebbd7033cfb0ba7c08e83b3c0314b28e860ff1502595ca6eb245ef8b935b8879af044edca38a27335fefff15eddaabe3a7d39bcfd255b7fcd86
+  languageName: node
+  linkType: hard
+
+"@floating-ui/react@npm:^0.26.16":
   version: 0.26.28
   resolution: "@floating-ui/react@npm:0.26.28"
   dependencies:
@@ -2678,14 +2692,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/ecma402-abstract@npm:2.2.4":
-  version: 2.2.4
-  resolution: "@formatjs/ecma402-abstract@npm:2.2.4"
+"@formatjs/ecma402-abstract@npm:2.3.1":
+  version: 2.3.1
+  resolution: "@formatjs/ecma402-abstract@npm:2.3.1"
   dependencies:
-    "@formatjs/fast-memoize": "npm:2.2.3"
-    "@formatjs/intl-localematcher": "npm:0.5.8"
+    "@formatjs/fast-memoize": "npm:2.2.5"
+    "@formatjs/intl-localematcher": "npm:0.5.9"
+    decimal.js: "npm:10"
     tslib: "npm:2"
-  checksum: 10/f7ab8be1e93f417a4a62c7be645618fec5652d412e55beffeeeada2b74660ad86b1876e3617ef0725f1454b193255dbb37ae779d8bb17ea71643e611e7edab02
+  checksum: 10/b88814e060a6875994719d9795f79332017ddb8ee6a619e8e5292350ca1b7e98a7634fe7c427b0698228309a62d03381f1c4e4c5b1f00862353d5ace609ed0de
   languageName: node
   linkType: hard
 
@@ -2698,12 +2713,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/fast-memoize@npm:2.2.3":
-  version: 2.2.3
-  resolution: "@formatjs/fast-memoize@npm:2.2.3"
+"@formatjs/fast-memoize@npm:2.2.5":
+  version: 2.2.5
+  resolution: "@formatjs/fast-memoize@npm:2.2.5"
   dependencies:
     tslib: "npm:2"
-  checksum: 10/a9634acb5e03d051e09881eea5484ab02271f7d6b5f96ae9485674ab3c359aa881bc45fc07a1181ae4b2d6e288dadc169f578d142d698913ebbefa373014cac2
+  checksum: 10/1009b9f782c7b8c0530cde86a68d174bc8055bbf3207eb662429016c2f793bef534e950a13d012861826860ec97d0240fd89eda619267a8191270f581c025f1b
   languageName: node
   linkType: hard
 
@@ -2728,14 +2743,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-durationformat@npm:^0.6.0":
-  version: 0.6.4
-  resolution: "@formatjs/intl-durationformat@npm:0.6.4"
+"@formatjs/intl-durationformat@npm:^0.7.0":
+  version: 0.7.1
+  resolution: "@formatjs/intl-durationformat@npm:0.7.1"
   dependencies:
-    "@formatjs/ecma402-abstract": "npm:2.2.4"
-    "@formatjs/intl-localematcher": "npm:0.5.8"
+    "@formatjs/ecma402-abstract": "npm:2.3.1"
+    "@formatjs/intl-localematcher": "npm:0.5.9"
     tslib: "npm:2"
-  checksum: 10/aa7c045e94322f0a5723584e79dd1395b3c08e5d1d79432748ae98c0b0c1727059bd1aa5c04090df916ff1aea768336184a2d09ecfd2ece2fb090c472bbd8250
+  checksum: 10/cb8b723425241ddf8775a27f61c3dd58e49262a90a03be1eb23c6f9b0549b88d3419734d61ed137c796f486f7411d95ef58f9b7a165a5ce70ada1d0265429cbc
   languageName: node
   linkType: hard
 
@@ -2748,12 +2763,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-localematcher@npm:0.5.8":
-  version: 0.5.8
-  resolution: "@formatjs/intl-localematcher@npm:0.5.8"
+"@formatjs/intl-localematcher@npm:0.5.9":
+  version: 0.5.9
+  resolution: "@formatjs/intl-localematcher@npm:0.5.9"
   dependencies:
     tslib: "npm:2"
-  checksum: 10/760fa292762d68904c133faa5d2900167fac03ee825e04e005438ae6e979facccbb4d12bba04906193feafd705348f191e4c3079c7bf54e0b66956a1199ad1df
+  checksum: 10/79b0009dc997dab90619bc0c1405bc541c288eeac10eb5f1aef8d6526611fca71de789a4b62efe781c0c2ccafba9f0a1da4088af436b84e439681df9cd657d7c
   languageName: node
   linkType: hard
 
@@ -3140,7 +3155,7 @@ __metadata:
     "@lezer/lr": "npm:1.4.2"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.27.0"
+    "@opentelemetry/semantic-conventions": "npm:1.28.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.0.1"
@@ -3608,7 +3623,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
-    "@floating-ui/react": "npm:0.26.28"
+    "@floating-ui/react": "npm:0.27.0"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/experimental": "npm:2.1.5"
@@ -3911,7 +3926,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.26.28"
+    "@floating-ui/react": "npm:0.27.0"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -5813,10 +5828,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.27.0, @opentelemetry/semantic-conventions@npm:^1.27.0":
+"@opentelemetry/semantic-conventions@npm:1.27.0":
   version: 1.27.0
   resolution: "@opentelemetry/semantic-conventions@npm:1.27.0"
   checksum: 10/98166522f299e2fe3d43376adbdeb92679b75ebb172e2a3c4c71f2942bd91585e9537618efbbae6dc08177699e5719368edf66d7e69e8636f360b85217bbdbe1
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/semantic-conventions@npm:1.28.0, @opentelemetry/semantic-conventions@npm:^1.27.0":
+  version: 1.28.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.28.0"
+  checksum: 10/c182a3206769b5d5a8ab89a5c674d046fd789421cef27ea55af179990e314732433c98e5017aa23e99f15fd2b0e13cb129bb6c2282da6860ce9419adf32b2e87
   languageName: node
   linkType: hard
 
@@ -6016,14 +6038,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.48.2":
-  version: 1.48.2
-  resolution: "@playwright/test@npm:1.48.2"
+"@playwright/test@npm:1.49.1":
+  version: 1.49.1
+  resolution: "@playwright/test@npm:1.49.1"
   dependencies:
-    playwright: "npm:1.48.2"
+    playwright: "npm:1.49.1"
   bin:
     playwright: cli.js
-  checksum: 10/8557f9d60b93b9a60b66599d46f991b56df26b691f9285e8755298dabd9f42d1421c330a7d7578b76445fdd56040fe790d3f1081daa80e5e89a380170e0fd217
+  checksum: 10/bb0d5eda58ee0b5bbca732d2aa57782fadf420d101e08e16d5760179459c667907bd8d224ee3d6f43f3088378e377ef63d32ed605fec37605debf217c3efe8da
   languageName: node
   linkType: hard
 
@@ -6500,16 +6522,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.25.0":
-  version: 3.25.0
-  resolution: "@react-types/shared@npm:3.25.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/fa31eb6153c223210c2eee46934a63b922917bcde0ee583f2cfe59675db122c10e1cbae6549b1fea4284391fdbeca6888b36e9dc797231ad4a76def01490aea5
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.26.0":
+"@react-types/shared@npm:3.26.0, @react-types/shared@npm:^3.26.0":
   version: 3.26.0
   resolution: "@react-types/shared@npm:3.26.0"
   peerDependencies:
@@ -14321,10 +14334,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"decimal.js@npm:^10.4.1":
-  version: 10.4.2
-  resolution: "decimal.js@npm:10.4.2"
-  checksum: 10/f762ffe7191102584bcaa00eabf24f5ceaba4dafa9aea600dc1d1d73bf88d15d126d40b649449523f71a2439defedfc7788a2bfffe36b2c721c75e24d750c3ba
+"decimal.js@npm:10, decimal.js@npm:^10.4.1":
+  version: 10.4.3
+  resolution: "decimal.js@npm:10.4.3"
+  checksum: 10/de663a7bc4d368e3877db95fcd5c87b965569b58d16cdc4258c063d231ca7118748738df17cd638f7e9dd0be8e34cec08d7234b20f1f2a756a52fc5a38b188d0
   languageName: node
   linkType: hard
 
@@ -17536,8 +17549,8 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.28"
-    "@formatjs/intl-durationformat": "npm:^0.6.0"
+    "@floating-ui/react": "npm:0.27.0"
+    "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.5.0"
     "@grafana/azure-sdk": "npm:0.0.5"
@@ -17578,8 +17591,8 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.27.0"
-    "@playwright/test": "npm:1.48.2"
+    "@opentelemetry/semantic-conventions": "npm:1.28.0"
+    "@playwright/test": "npm:1.49.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.20"
@@ -17590,7 +17603,7 @@ __metadata:
     "@react-types/button": "npm:3.10.1"
     "@react-types/menu": "npm:3.9.13"
     "@react-types/overlays": "npm:3.8.11"
-    "@react-types/shared": "npm:3.25.0"
+    "@react-types/shared": "npm:3.26.0"
     "@reduxjs/toolkit": "npm:2.3.0"
     "@rsdoctor/webpack-plugin": "npm:^0.4.6"
     "@rtk-query/codegen-openapi": "npm:^1.2.0"
@@ -23890,27 +23903,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.48.2":
-  version: 1.48.2
-  resolution: "playwright-core@npm:1.48.2"
+"playwright-core@npm:1.49.1":
+  version: 1.49.1
+  resolution: "playwright-core@npm:1.49.1"
   bin:
     playwright-core: cli.js
-  checksum: 10/dd029f797b1afb2240713a032fecc50e1ffc5464a39c075570cf10e929c145da3a8d0951a3f2b279e33b2f09cbeb8ff4330822cb1078452c0c75cc4ce34ca171
+  checksum: 10/baa39a53024ec7744708410f2b952ac3aa2e1a6d311dabfa303523712848eba142fce5c20f1b2ed2a66fbd9a415d22ea8642b0f70423360aaebd4b41c47d364e
   languageName: node
   linkType: hard
 
-"playwright@npm:1.48.2":
-  version: 1.48.2
-  resolution: "playwright@npm:1.48.2"
+"playwright@npm:1.49.1":
+  version: 1.49.1
+  resolution: "playwright@npm:1.49.1"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.48.2"
+    playwright-core: "npm:1.49.1"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/331af352504336f419cdf1369f0ef399c6f0e905fdb79a5e97c41f33e74766efd21430ab6ae2de0b237ae765ebfbe701e119a990d8dc01bcdac3bc43c1fa1fbf
+  checksum: 10/49fb063f4a107b8090f66d2d351ebd51fbb66843a8f95a161fa0c0e0b5156515961e75cc10f4249f61b9d2af51f762dda505c62b096d8f61cd47d1ff73ab39d2
   languageName: node
   linkType: hard
 

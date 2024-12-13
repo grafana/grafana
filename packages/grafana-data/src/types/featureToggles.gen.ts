@@ -244,4 +244,5 @@ export interface FeatureToggles {
   useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
+  unifiedHistory?: boolean;
 }
