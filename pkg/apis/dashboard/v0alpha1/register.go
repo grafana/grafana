@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -98,7 +97,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&metav1.Table{},
 		&SearchResults{},
 		&SortableFields{},
-		&v0alpha1.RestoreOptions{},
 	)
 	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
 	return nil

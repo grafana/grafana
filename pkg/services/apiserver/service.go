@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -78,10 +77,6 @@ func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-	err := commonv0alpha1.AddToScheme(Scheme)
-	if err != nil {
-		panic(err)
-	}
 }
 
 type Service interface {

@@ -15,7 +15,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -63,6 +62,10 @@ func (r *restoreREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
+type RestoreOptions struct {
+	ResourceVersion int64 `json:"resourceVersion"`
+}
+
 func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -82,7 +85,7 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 			responder.Error(fmt.Errorf("unable to read request body: %s", err.Error()))
 			return
 		}
-		reqBody := &v0alpha1.RestoreOptions{}
+		reqBody := &RestoreOptions{}
 		err = json.Unmarshal(body, &reqBody)
 		if err != nil {
 			responder.Error(fmt.Errorf("unable to unmarshal request body: %s", err.Error()))
