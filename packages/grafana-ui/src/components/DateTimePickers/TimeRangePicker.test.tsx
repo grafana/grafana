@@ -91,3 +91,25 @@ describe('TimePicker', () => {
     expect(unsyncButtons.length).toBe(2);
   });
 });
+
+it('does not submit wrapping forms', async () => {
+  const onSubmit = jest.fn();
+  const container = render(
+    <form onSubmit={onSubmit}>
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={(value) => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    </form>
+  );
+
+  const clicks = container.getAllByRole('button').map((button) => userEvent.click(button));
+
+  await Promise.all(clicks);
+
+  expect(onSubmit).not.toHaveBeenCalled();
+});
