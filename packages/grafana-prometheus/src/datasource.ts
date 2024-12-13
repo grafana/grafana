@@ -537,15 +537,11 @@ export class PrometheusDatasource
     const annotation = options.annotation;
     const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
-    const scopedVars = {
-      ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
-    };
-
-    const step = rangeUtil.intervalToSeconds(
-      this.interpolateString(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT, scopedVars)
-    ) * 1000;
-
+    const input = frames[0].meta?.executedQueryString || '';
+    const regex = /Step:\s*([\d\w]+)/;
+    const match = input.match(regex);
+    const stepValue = match ? match[1] : null;
+    const step = rangeUtil.intervalToSeconds(stepValue || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
     const tagKeysArray = tagKeys.split(',');
 
     const eventList: AnnotationEvent[] = [];
