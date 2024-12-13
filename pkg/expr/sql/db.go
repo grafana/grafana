@@ -167,26 +167,26 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	}
 }
 
-func clone(frame *data.Frame) *data.Frame {
-	copy := data.NewFrame(frame.Name, frame.Fields...)
-	copy.Meta = frame.Meta
-	copy.RefID = frame.RefID
-	return copy
-}
+func labelsToFields(frame *data.Frame) *data.Frame {
+	// Create a result frame with the same name and meta as the input frame
+	result := data.NewFrame(frame.Name)
+	result.Meta = frame.Meta
+	result.RefID = frame.RefID
 
-func labelsToFields(frame *data.Frame) {
-	fields := []*data.Field{}
 	for _, fld := range frame.Fields {
-		if fld.Labels != nil {
+		if fld.Labels == nil {
+			result.Fields = append(result.Fields, fld)
+		} else {
 			for lbl, val := range fld.Labels {
 				newFld := newField(lbl, val, frame.Rows())
-				fields = append(fields, newFld)
+				result.Fields = append(result.Fields, newFld)
 			}
-			// Now remove the labels from the original field
-			fld.Labels = nil
+			// // Now remove the labels from the original field
+			fld.Labels = nil // TODO: Don't mutate the original DataFrame's fields
+			result.Fields = append(result.Fields, fld)
 		}
 	}
-	frame.Fields = append(frame.Fields, fields...)
+	return result
 }
 
 func newField(name string, val string, size int) *data.Field {
@@ -274,10 +274,10 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 
 	for _, frame := range frames {
 		// Clone DataFrames to avoid modifying the originals
-		copy := clone(frame)
+		// copy := clone(frame)
 
 		// convert fields' labels to fields
-		labelsToFields(copy)
+		copy := labelsToFields(frame)
 
 		txt, err := copy.StringTable(-1, -1)
 		if err != nil {
