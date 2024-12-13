@@ -598,11 +598,6 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		},
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/import"]
-	if sub != nil && sub.Post != nil {
-		sub.Post.Parameters = []*spec3.Parameter{ref}
-	}
-
 	sub = oas.Paths.Paths[repoprefix+"/history"]
 	if sub != nil {
 		sub.Get.Description = "Get the history of the repository"
