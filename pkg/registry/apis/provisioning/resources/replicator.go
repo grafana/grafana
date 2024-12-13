@@ -10,43 +10,41 @@ import (
 	"path/filepath"
 	"strings"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type ReplicatorFactory struct {
-	repo      repository.Repository
-	client    *ClientFactory
-	namespace string
-	ignore    provisioning.IgnoreFile
-	logger    *slog.Logger
+	repo    repository.Repository
+	parsers *ParserFactory
+	ignore  provisioning.IgnoreFile
+	logger  *slog.Logger
 }
 
-func NewReplicatorFactory(client *ClientFactory, namespace string, repo repository.Repository, ignore provisioning.IgnoreFile, logger *slog.Logger) *ReplicatorFactory {
+func NewReplicatorFactory(repo repository.Repository, parsers *ParserFactory, ignore provisioning.IgnoreFile, logger *slog.Logger) *ReplicatorFactory {
 	return &ReplicatorFactory{
-		client:    client,
-		namespace: namespace,
-		repo:      repo,
-		ignore:    ignore,
-		logger:    logger,
+		parsers: parsers,
+		repo:    repo,
+		ignore:  ignore,
+		logger:  logger,
 	}
 }
 
 func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
-	dynamicClient, kinds, err := f.client.New(f.namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get client for namespace %s: %w", f.namespace, err)
-	}
-
 	// The replicator does not need a linter
-	parser := NewParser(f.repo.Config(), dynamicClient, kinds)
+	parser, err := f.parsers.GetParser(f.repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parser for %s: %w", f.repo.Config().Name, err)
+	}
+	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Version:  "v0alpha1",
