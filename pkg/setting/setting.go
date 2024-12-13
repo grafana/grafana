@@ -533,6 +533,7 @@ type Cfg struct {
 	IndexMaxBatchSize  int
 	IndexFileThreshold int
 	IndexMinCount      int
+	SprinklesApiServer string
 }
 
 type UnifiedStorageConfig struct {
