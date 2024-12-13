@@ -12,5 +12,7 @@ type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 
 	// Given a repository configuration, return it as a repository instance
+	// This will only error for un-recoverable system errors
+	// the repository instance may or may not be valid/healthy
 	AsRepository(ctx context.Context, cfg *provisioning.Repository) (repository.Repository, error)
 }
