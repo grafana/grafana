@@ -7,6 +7,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -16,7 +17,7 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
-import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
+import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
@@ -248,7 +249,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         case DashboardRoutes.Home:
           rsp = await getBackendSrv().get('/api/dashboards/home');
 
-          debugger;
           if (rsp.redirectUri) {
             return rsp;
           }
@@ -424,21 +424,20 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       switch (route) {
         case DashboardRoutes.New:
-          throw new Error('Method not implemented.');
-          // rsp = await buildNewDashboardSaveModel(urlFolderUid);
+          rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
         case DashboardRoutes.Home:
-          throw new Error('Method not implemented.');
-          // rsp = await getBackendSrv().get('/api/dashboards/home');
+          // throw new Error('Method not implemented.');
+          const dto = await getBackendSrv().get<DashboardDTO>('/api/dashboards/home');
+          rsp = ResponseTransformers.ensureV2Response(dto);
+          rsp.access.canSave = false;
+          rsp.access.canShare = false;
+          rsp.access.canStar = false;
 
           // if (rsp.redirectUri) {
           //   return rsp;
           // }
-          // if (rsp?.meta) {
-          //   rsp.meta.canSave = false;
-          //   rsp.meta.canShare = false;
-          //   rsp.meta.canStar = false;
-          // }
+
           break;
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);

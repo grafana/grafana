@@ -5,6 +5,7 @@ import {
   DashboardV2Spec,
   DatasourceVariableKind,
   defaultDashboardV2Spec,
+  defaultFieldConfigSource,
   defaultTimeSettingsSpec,
   PanelQueryKind,
   QueryVariableKind,
@@ -264,7 +265,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
         vizConfig: {
           kind: p.type,
           spec: {
-            fieldConfig: p.fieldConfig as any,
+            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
             options: p.options as any,
             pluginVersion: p.pluginVersion!,
           },
