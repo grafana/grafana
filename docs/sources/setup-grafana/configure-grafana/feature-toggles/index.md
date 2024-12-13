@@ -84,6 +84,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `zipkinBackendMigration`               | Enables querying Zipkin data source without the proxy                                                                                                              | Yes                |
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                           | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                                                | Yes                |
+| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                      | Yes                |
 
 ## Public preview feature toggles
 
@@ -120,6 +121,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `useSessionStorageForRedirection` | Use session storage for handling the redirection after login                                                                                                                                 |
 | `reportingUseRawTimeRange`        | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                |
+| `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 
 ## Experimental feature toggles
 
@@ -227,6 +229,7 @@ Experimental features might be changed or removed without prior notice.
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
 | `jaegerBackendMigration`                      | Enables querying the Jaeger data source without the proxy                                                                                                                                                                                                                         |
 | `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section                                                                                                                                                                                                                         |
+| `unifiedHistory`                              | Displays the navigation history so the user can navigate back to previous pages                                                                                                                                                                                                   |
 
 ## Development feature toggles
 

@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.3.0",
-    "@types/node": "20.16.15",
+    "@types/node": "22.10.2",
     "@types/semver": "7.5.8",
     "esbuild": "0.24.0",
     "rimraf": "6.0.1",
