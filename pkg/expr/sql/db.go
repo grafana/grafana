@@ -100,52 +100,6 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	return nil
 }
 
-// TODO: Check if it really makes sense to receive a shared context here, rather than creating a new one
-func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *data.Frame) error {
-	if frame == nil {
-		return fmt.Errorf("input frame is nil")
-	}
-	tableName = strings.ToLower(frame.RefID)
-
-	// Create schema based on frame fields
-	schema := make(mysql.Schema, len(frame.Fields))
-	for i, field := range frame.Fields {
-		schema[i] = &mysql.Column{
-			Name:     field.Name,
-			Type:     convertDataType(field.Type()),
-			Nullable: field.Type().Nullable(),
-			Source:   tableName,
-		}
-	}
-
-	// Create table with the dynamic schema
-	table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
-	db.inMemoryDb.AddTable(tableName, table)
-
-	// Insert data from the frame
-	for i := 0; i < frame.Rows(); i++ {
-		row := make(mysql.Row, len(frame.Fields))
-		for j, field := range frame.Fields {
-			if schema[j].Nullable {
-				if field.At(i) == nil {
-					continue
-				}
-				v, _ := field.ConcreteAt(i)
-				row[j] = v
-				continue
-			}
-			row[j] = field.At(i)
-		}
-
-		err := table.Insert(ctx, row)
-		if err != nil {
-			return fmt.Errorf("error inserting row %d: %v", i, err)
-		}
-	}
-
-	return nil
-}
-
 // Helper function to convert data.FieldType to types.Type
 func convertDataType(fieldType data.FieldType) mysql.Type {
 	switch fieldType {
@@ -295,25 +249,54 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		// Convert from `multi-numeric` to `long` by merging frames that share the same refID
 		normalizeSchemas(singleRefFrames)
 
-		// TODO: this singleRefFrame should now only have a single entry
-		// Consider replacing with `longFrame := singleRefFrame[0]`
-		// Or better, have `mergeFrames` return a single frame
-		// TODO TODO: Actually not true!
-		// The above `mergeFrames` only makes sure that all frames have the same fields
-		// It doesn't merge the data
-		for _, longFrame := range singleRefFrames {
+		// Create db table only for the first normalizedFrame
+		// subsequent frames will have their rows inserted into the table
+		// TODO: Guard against nil or zero-length slice here
+		normalizedFrame := singleRefFrames[0]
+		if normalizedFrame == nil {
+			return fmt.Errorf("input normalizedFrame is nil")
+		}
+		tableName = strings.ToLower(normalizedFrame.RefID)
 
-			txt, err := longFrame.StringTable(-1, -1)
-			if err != nil {
-				return err
+		// Create schema based on normalizedFrame fields
+		schema := make(mysql.Schema, len(normalizedFrame.Fields))
+		for i, field := range normalizedFrame.Fields {
+			schema[i] = &mysql.Column{
+				Name:     field.Name,
+				Type:     convertDataType(field.Type()),
+				Nullable: field.Type().Nullable(),
+				Source:   tableName,
 			}
-			fmt.Printf("Now got: %s", txt)
+		}
 
-			// We have both `frame` and `f` in this function. Consider renaming one or both.
-			// Potentially `f` to `outputFrame`
-			err = db.writeDataframeToDb(ctx, tableName, longFrame)
-			if err != nil {
-				return err
+		// Create table with the dynamic schema
+		table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
+		db.inMemoryDb.AddTable(tableName, table)
+
+		for _, normalizedFrame := range singleRefFrames {
+			if normalizedFrame == nil {
+				return fmt.Errorf("input normalizedFrame is nil")
+			}
+
+			// Insert data from the normalizedFrame
+			for i := 0; i < normalizedFrame.Rows(); i++ {
+				row := make(mysql.Row, len(normalizedFrame.Fields))
+				for j, field := range normalizedFrame.Fields {
+					if schema[j].Nullable {
+						if field.At(i) == nil {
+							continue
+						}
+						v, _ := field.ConcreteAt(i)
+						row[j] = v
+						continue
+					}
+					row[j] = field.At(i)
+				}
+
+				err := table.Insert(ctx, row)
+				if err != nil {
+					return fmt.Errorf("error inserting row %d: %v", i, err)
+				}
 			}
 		}
 	}
