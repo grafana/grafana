@@ -13,7 +13,7 @@ load(
 def cache_cleanup_step():
     return {
         'name': 'cleanup-prometheus-cache',
-        'image': 'grafana/build-container:1.7.3',
+        'image': images["node"],
         'commands': [
             # Rotate cache files when total size exceeds 1GB
             'while [ "$(du -sm /var/lib/drone/cache/prometheus-devenv | cut -f1)" -gt 1024 ]; do',
@@ -39,6 +39,7 @@ def prometheus_devenv_step():
         'name': 'setup-prometheus-devenv',
         'image': 'grafana/build-container:1.7.3',
         'commands': [
+            'apk add --update make',
             'make devenv sources=prometheus',
         ],
         'environment': {
