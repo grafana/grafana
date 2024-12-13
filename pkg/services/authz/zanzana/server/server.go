@@ -40,13 +40,12 @@ type Server struct {
 	openfga       openfgav1.OpenFGAServiceServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
-	cfg              setting.ZanzanaSettings
-	logger           log.Logger
-	modules          []transformer.ModuleFile
-	stores           map[string]storeInfo
-	storesMU         *sync.Mutex
-	cache            *localcache.CacheService
-	contextualTuples []*openfgav1.TupleKey
+	cfg      setting.ZanzanaSettings
+	logger   log.Logger
+	modules  []transformer.ModuleFile
+	stores   map[string]storeInfo
+	storesMU *sync.Mutex
+	cache    *localcache.CacheService
 }
 
 type storeInfo struct {

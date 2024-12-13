@@ -19,12 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzExtentionService_List_FullMethodName                       = "/authz.extention.v1.AuthzExtentionService/List"
-	AuthzExtentionService_BatchCheck_FullMethodName                 = "/authz.extention.v1.AuthzExtentionService/BatchCheck"
-	AuthzExtentionService_Capabilities_FullMethodName               = "/authz.extention.v1.AuthzExtentionService/Capabilities"
-	AuthzExtentionService_Read_FullMethodName                       = "/authz.extention.v1.AuthzExtentionService/Read"
-	AuthzExtentionService_Write_FullMethodName                      = "/authz.extention.v1.AuthzExtentionService/Write"
-	AuthzExtentionService_UpdateAuthorizationContext_FullMethodName = "/authz.extention.v1.AuthzExtentionService/UpdateAuthorizationContext"
+	AuthzExtentionService_List_FullMethodName         = "/authz.extention.v1.AuthzExtentionService/List"
+	AuthzExtentionService_BatchCheck_FullMethodName   = "/authz.extention.v1.AuthzExtentionService/BatchCheck"
+	AuthzExtentionService_Capabilities_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Capabilities"
+	AuthzExtentionService_Read_FullMethodName         = "/authz.extention.v1.AuthzExtentionService/Read"
+	AuthzExtentionService_Write_FullMethodName        = "/authz.extention.v1.AuthzExtentionService/Write"
 )
 
 // AuthzExtentionServiceClient is the client API for AuthzExtentionService service.
@@ -36,7 +35,6 @@ type AuthzExtentionServiceClient interface {
 	Capabilities(ctx context.Context, in *CapabilitiesRequest, opts ...grpc.CallOption) (*CapabilitiesResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
-	UpdateAuthorizationContext(ctx context.Context, in *UpdateAuthorizationContextRequest, opts ...grpc.CallOption) (*UpdateAuthorizationContextResponse, error)
 }
 
 type authzExtentionServiceClient struct {
@@ -97,16 +95,6 @@ func (c *authzExtentionServiceClient) Write(ctx context.Context, in *WriteReques
 	return out, nil
 }
 
-func (c *authzExtentionServiceClient) UpdateAuthorizationContext(ctx context.Context, in *UpdateAuthorizationContextRequest, opts ...grpc.CallOption) (*UpdateAuthorizationContextResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateAuthorizationContextResponse)
-	err := c.cc.Invoke(ctx, AuthzExtentionService_UpdateAuthorizationContext_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AuthzExtentionServiceServer is the server API for AuthzExtentionService service.
 // All implementations should embed UnimplementedAuthzExtentionServiceServer
 // for forward compatibility
@@ -116,7 +104,6 @@ type AuthzExtentionServiceServer interface {
 	Capabilities(context.Context, *CapabilitiesRequest) (*CapabilitiesResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
-	UpdateAuthorizationContext(context.Context, *UpdateAuthorizationContextRequest) (*UpdateAuthorizationContextResponse, error)
 }
 
 // UnimplementedAuthzExtentionServiceServer should be embedded to have forward compatible implementations.
@@ -137,9 +124,6 @@ func (UnimplementedAuthzExtentionServiceServer) Read(context.Context, *ReadReque
 }
 func (UnimplementedAuthzExtentionServiceServer) Write(context.Context, *WriteRequest) (*WriteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
-}
-func (UnimplementedAuthzExtentionServiceServer) UpdateAuthorizationContext(context.Context, *UpdateAuthorizationContextRequest) (*UpdateAuthorizationContextResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAuthorizationContext not implemented")
 }
 
 // UnsafeAuthzExtentionServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -243,24 +227,6 @@ func _AuthzExtentionService_Write_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthzExtentionService_UpdateAuthorizationContext_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAuthorizationContextRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthzExtentionServiceServer).UpdateAuthorizationContext(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthzExtentionService_UpdateAuthorizationContext_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthzExtentionServiceServer).UpdateAuthorizationContext(ctx, req.(*UpdateAuthorizationContextRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AuthzExtentionService_ServiceDesc is the grpc.ServiceDesc for AuthzExtentionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -287,10 +253,6 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Write",
 			Handler:    _AuthzExtentionService_Write_Handler,
-		},
-		{
-			MethodName: "UpdateAuthorizationContext",
-			Handler:    _AuthzExtentionService_UpdateAuthorizationContext_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -15,7 +15,6 @@ service AuthzExtentionService {
 
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
-  rpc UpdateAuthorizationContext(UpdateAuthorizationContextRequest) returns (UpdateAuthorizationContextResponse);
 }
 
 message ListRequest {
@@ -126,9 +125,3 @@ message CapabilitiesRequest {
 message CapabilitiesResponse {
   repeated string capabilities = 1;
 }
-
-message UpdateAuthorizationContextRequest {
-  repeated TupleKey tuple_keys = 1;
-}
-
-message UpdateAuthorizationContextResponse {}
