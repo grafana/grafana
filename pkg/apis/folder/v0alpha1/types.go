@@ -109,7 +109,7 @@ func UnstructedToDescendantCounts(u *unstructured.Unstructured) (*DescendantCoun
 		return nil, fmt.Errorf("counts is not an array")
 	}
 
-	var stats []ResourceStats
+	stats := make([]ResourceStats, 0, len(counts))
 	for _, c := range counts {
 		count, ok := c.(map[string]interface{})
 		if !ok {
