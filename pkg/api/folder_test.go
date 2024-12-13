@@ -757,7 +757,7 @@ func TestToFolderCounts(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name: "happy path",
+			name: "with only counts from unified storage",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
@@ -787,85 +787,64 @@ func TestToFolderCounts(t *testing.T) {
 			},
 		},
 		{
-			name: "non iterative counts",
-			input: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "folder.grafana.app/v0alpha1",
-					"counts":     42,
-				},
-			},
-			expectError: true,
-		},
-		{
-			name: "count element not a map",
-			input: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "folder.grafana.app/v0alpha1",
-					"counts":     []interface{}{3},
-				},
-			},
-			expectError: true,
-		},
-		{
-			name: "resource field not found",
+			name: "with only counts from both storages",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
 					"counts": []interface{}{
 						map[string]interface{}{
 							"group":    "alpha",
-							"something-else": "folders",
+							"resource": "folders",
 							"count":    int64(1),
 						},
-					},
-				},
-			},
-			expectError: true,
-		},
-		{
-			name: "count field not found",
-			input: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "folder.grafana.app/v0alpha1",
-					"counts": []interface{}{
 						map[string]interface{}{
 							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
 							"resource": "folders",
-							"something-else":    int64(1),
+							"count":    int64(0),
 						},
 					},
 				},
 			},
-			expectError: true,
+			expected: &folder.DescendantCounts{
+				"folders":    1,
+				"dashboards": 3,
+			},
 		},
 		{
-			name: "count not an integer",
+			name: "it uses the values from sql-fallaback if not found in unified storage",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
 					"counts": []interface{}{
 						map[string]interface{}{
 							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
 							"resource": "folders",
-							"count":    "counting",
+							"count":    int64(2),
 						},
 					},
 				},
 			},
-			expectError: true,
+			expected: &folder.DescendantCounts{
+				"folders":    2,
+				"dashboards": 3,
+			},
 		},
 		{
-			name: "resource not a string",
+			name: "malformed input",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
-					"counts": []interface{}{
-						map[string]interface{}{
-							"group":    "alpha",
-							"resource": map[string]string{"bla": "bla"},
-							"count":   int64(1),
-						},
-					},
+					"counts":     map[string]interface{}{},
 				},
 			},
 			expectError: true,
@@ -874,7 +853,7 @@ func TestToFolderCounts(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := toFolderCounts(tc.input)
+			actual, err := toFolderLegacyCounts(tc.input)
 			if tc.expectError {
 				require.Error(t, err)
 				return

@@ -761,7 +761,7 @@ func (fk8s *folderK8sHandler) countFolderContent(c *contextmodel.ReqContext) {
 		return
 	}
 
-	out, err := toFolderCounts(counts)
+	out, err := toFolderLegacyCounts(counts)
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -1046,36 +1046,23 @@ func getParents(f *folder.Folder) (map[string]bool, error) {
 	return folderIDs, nil
 }
 
-func toFolderCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	counts, ok := u.Object["counts"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("counts is not a slice")
+func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
+	ds, err := folderalpha1.UnstructuredToDescendantCounts(u)
+	if err != nil {
+		return nil, err
 	}
 
 	var out = make(folder.DescendantCounts)
-
-	for _, item := range counts {
-		item, ok := item.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("item is not a map")
+	for _, v := range ds.Counts {
+		// if stats come from unified storage, we will use them
+		if v.Group != "sql-fallback" {
+			out[v.Resource] = v.Count
+			continue
 		}
-		r, ok := item["resource"]
-		if !ok {
-			return nil, fmt.Errorf("resource not found")
+		// if stats are from single tenant DB and they are not in unified storage, we will use them
+		if _, ok := out[v.Resource]; !ok {
+			out[v.Resource] = v.Count
 		}
-		rstr, ok := r.(string)
-		if !ok {
-			return nil, fmt.Errorf("resource is not a string")
-		}
-		c, ok := item["count"]
-		if !ok {
-			return nil, fmt.Errorf("count not found")
-		}
-		countint, ok := c.(int64)
-		if !ok {
-			return nil, fmt.Errorf("count is not an int64")
-		}
-		out[rstr] = countint
 	}
 	return &out, nil
 }
