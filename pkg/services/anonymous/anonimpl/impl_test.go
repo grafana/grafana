@@ -259,7 +259,7 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	}
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.AnonymousEnabled = true
+	cfg.Anonymous.Enabled = true
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
@@ -291,7 +291,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 	// Setup test environment
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.AnonymousDeviceLimit = 1 // Set device limit to 1 for testing
+	cfg.Anonymous.DeviceLimit = 1 // Set device limit to 1 for testing
 	anonService := ProvideAnonymousDeviceService(
 		&usagestats.UsageStatsMock{},
 		&authntest.FakeService{},

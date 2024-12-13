@@ -139,7 +139,7 @@ func TestCollectingUsageStats(t *testing.T) {
 	s := createService(t, &setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
-		AnonymousEnabled:     true,
+		Anonymous:            setting.AnonymousSettings{Enabled: true},
 		BasicAuthEnabled:     true,
 		LDAPAuthEnabled:      true,
 		AuthProxy:            setting.AuthProxySettings{Enabled: true},

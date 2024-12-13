@@ -155,18 +155,18 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	// TODO: get user & user's permissions from the request context
 
 	var usr *user.SignedInUser
-	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+	if s.cfg.Anonymous.Enabled && backendUser.Email == "" && backendUser.Login == "" {
+		getOrg := org.GetOrgByNameQuery{Name: s.cfg.Anonymous.OrgName}
 		orga, err := s.orgService.GetByName(ctx, &getOrg)
 		if err != nil {
-			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
+			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.Anonymous.OrgName, "error", err)
 			return nil, err
 		}
 
 		usr = &user.SignedInUser{
 			OrgID:       orga.ID,
 			OrgName:     orga.Name,
-			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
+			OrgRole:     org.RoleType(s.cfg.Anonymous.OrgRole),
 			IsAnonymous: true,
 		}
 	} else {
