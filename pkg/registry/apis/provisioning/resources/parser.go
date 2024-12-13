@@ -31,7 +31,7 @@ type ParserFactory struct {
 	Logger *slog.Logger
 }
 
-func (f *ParserFactory) NewParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
+func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 	config := repo.Config()
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {
@@ -45,19 +45,21 @@ func (f *ParserFactory) NewParser(ctx context.Context, repo repository.Repositor
 		kinds:  kinds,
 	}
 	if repo.Config().Spec.Linting {
+		ctx := context.Background()
+
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), "")
 
 		var linter lint.Linter
 		switch {
 		case err == nil:
-			logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+			logger.Info("linter config found", "config", string(cfg.Data))
 			linter, err = linterFactory.NewFromConfig(cfg.Data)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create linter: %w", err)
 			}
 		case apierrors.IsNotFound(err):
-			logger.InfoContext(ctx, "no linter config found, using default")
+			logger.Info("no linter config found, using default")
 			linter = linterFactory.New()
 		default:
 			return nil, fmt.Errorf("failed to read linter config: %w", err)
@@ -121,6 +123,10 @@ type ParsedResource struct {
 
 	// If we got some Errors
 	Errors []error
+}
+
+func (r *Parser) Client() *DynamicClient {
+	return r.client
 }
 
 func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {

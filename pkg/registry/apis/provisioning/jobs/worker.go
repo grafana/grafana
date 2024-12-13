@@ -22,6 +22,7 @@ var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
 	getter         RepoGetter
+	parsers        *resources.ParserFactory
 	resourceClient *resources.ClientFactory
 	identities     auth.BackgroundIdentityService
 	logger         *slog.Logger
@@ -58,7 +59,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo, g.ignore)
+	factory := resources.NewReplicatorFactory(repo, g.parsers, g.ignore)
 	replicator, err := factory.New()
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")

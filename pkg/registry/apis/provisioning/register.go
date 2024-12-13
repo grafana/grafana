@@ -225,11 +225,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		logger:     b.logger.With("connector", "history"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
 		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "import"),
-		ignore:     provisioning.IncludeYamlOrJSON,
+		jobs:       b.jobs,
+		logger:     b.logger.With("connector", "sync"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
@@ -603,11 +602,6 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 			Schema:      spec.StringProperty(),
 			Required:    false,
 		},
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/import"]
-	if sub != nil && sub.Post != nil {
-		sub.Post.Parameters = []*spec3.Parameter{ref}
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/history"]

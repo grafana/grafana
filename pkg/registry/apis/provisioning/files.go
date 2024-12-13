@@ -147,7 +147,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
-	parser, err := s.parsers.NewParser(ctx, repo)
+	parser, err := s.parsers.GetParser(repo)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -194,7 +194,7 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		Ref:  ref,
 	}
 
-	parser, err := s.parsers.NewParser(ctx, repo)
+	parser, err := s.parsers.GetParser(repo)
 	if err != nil {
 		return nil, err
 	}
