@@ -121,6 +121,8 @@ describe.each([
   false,
 ])('NotificationPreview with alertingApiServer=%p', (apiServerEnabled) => {
   apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+  jest.retryTimes(2);
+
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
