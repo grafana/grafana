@@ -71,7 +71,7 @@ You must have an authorized viewer permission to see an image rendered by a dire
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is not available in Grafana Cloud.
+Anonymous access permission is not available in Grafana Cloud. This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 ## Share dashboards {#share-a-dashboard}
@@ -267,10 +267,10 @@ https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&t
 
 ### Share an embed
 
-You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel.
+You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is no longer available for Grafana Cloud.
+Anonymous access permission is no longer available for Grafana Cloud even for panels in [externally shared dashboards](ref:shared-dashboards). This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 To create a panel that can be embedded, follow these steps:
