@@ -147,13 +147,13 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
-	storage[dash.StoragePath("restore")] = apistore.NewRestoreConnector(
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
 		b.unified,
 		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
 		defaultOpts,
 	)
 
-	storage[dash.StoragePath("latest")] = apistore.NewLatestConnector(
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
 		b.unified,
 		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
 		defaultOpts,

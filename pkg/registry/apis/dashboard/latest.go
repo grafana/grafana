@@ -1,4 +1,4 @@
-package apistore
+package dashboard
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -64,7 +65,7 @@ func (l *latestREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (l *latestREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	info, err := NamespaceInfoFrom(ctx, true)
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package apistore
+package dashboard
 
 import (
 	"context"

@@ -1,6 +1,7 @@
-package apistore
+package dashboard
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -51,9 +52,7 @@ func TestRestore(t *testing.T) {
 		Group:    "group",
 		Resource: "resource",
 	}
-	ctx, _, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	assert.NoError(t, err)
+	ctx := context.Background()
 	mockResponder := &mockResponder{}
 	mockClient := &mockResourceClient{}
 	r := &restoreREST{
@@ -70,10 +69,10 @@ func TestRestore(t *testing.T) {
 	ctx = request.WithNamespace(context.Background(), "default")
 
 	t.Run("invalid resourceVersion", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/restore?resourceVersion=invalid", nil)
+		req := httptest.NewRequest("POST", "/restore", bytes.NewReader([]byte(`{"resourceVersion":0}`)))
 		w := httptest.NewRecorder()
 
-		expectedError := fmt.Errorf("invalid resourceVersion: invalid")
+		expectedError := fmt.Errorf("resource version required")
 		mockResponder.On("Error", mock.MatchedBy(func(err error) bool {
 			return err.Error() == expectedError.Error()
 		}))
@@ -86,7 +85,7 @@ func TestRestore(t *testing.T) {
 	})
 
 	t.Run("happy path", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/restore?resourceVersion=123", nil)
+		req := httptest.NewRequest("POST", "/restore", bytes.NewReader([]byte(`{"resourceVersion":123}`)))
 		w := httptest.NewRecorder()
 		restoreReq := &resource.RestoreRequest{
 			ResourceVersion: 123,
