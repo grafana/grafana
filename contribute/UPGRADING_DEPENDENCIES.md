@@ -23,8 +23,8 @@ The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__mo
 
 To add or update a new dependency, use the `go get` command:
 
-  * To update to the latest version of a package: `go get example.com/some/module/pkg`
-  * To update to a specific version of a package: `go get example.com/some/module/pkg@vX.Y.Z`
+- To update to the latest version of a package: `go get example.com/some/module/pkg`
+- To update to a specific version of a package: `go get example.com/some/module/pkg@vX.Y.Z`
 
 Unless you're backporting, tidy up the dependency files with `go mod tidy`.
 If you are backporting, be careful about this; it may be fine, but you should avoid it if it would entail changing the `go` version directive (which defines the minimum Go version).
