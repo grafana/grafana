@@ -50,7 +50,7 @@ refs:
 
 Configuring how, when, and where to send alert notifications is an essential part of your alerting system.
 
-By default, Grafana Alerting provides default notification messages with relevant alert information, so you don't need to configure messages initially. In the alert rule, you need to configure how to forward their alerts:
+By default, Grafana Alerting provides default notification messages with relevant alert information, so you don't need to configure messages initially. In the alert rule, you need to configure how to forward alerts:
 
 1. Directly to a contact point.
 2. To a contact point via notification policies (more flexible).
