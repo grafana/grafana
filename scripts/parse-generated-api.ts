@@ -32,6 +32,9 @@ const transformedContent = content
   // Remove comments (block comments and line comments)
   .replace(/(?:\/\*\*[\s\S]*?\*\/)|(?:\/\/.*)/g, '')
 
+  // Remove namespace property from all types
+  .replace(/namespace: string;/g, '')
+
   // Remove any lines that are now just whitespace or empty
   .replace(/^\s*[\r\n]/gm, '')
 
@@ -43,6 +46,9 @@ const transformedContent = content
 
   // Remove the specific URL segment
   .replace(/\/apis\/provisioning\.grafana\.app\/v0alpha1\/namespaces\/\$\{queryArg\['namespace']}/g, '')
+
+  // Replace lowercase 'com' prefix specific match with 'body'
+  .replace(/\bcomGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1[A-Za-z0-9_]*/g, 'body')
 
   // Remove duplicate types in union type definitions
   .replace(/(export type [A-Za-z0-9]+ = [^;]+);/g, (match: string, typeDef: string) => {
@@ -66,6 +72,9 @@ const transformedContent = content
     /(Post|post)([A-Z][a-zA-Z]*)/g,
     (match: string, p1: string, suffix: string) => `${p1 === 'Post' ? 'Create' : 'create'}${suffix}`
   )
+
+  // Modify any 'List...Arg>' to 'List...Arg | void>'
+  .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>')
 
   // Add headers for content-type in patch endpoints
   .replace(/(method: 'PATCH',)/g, "$1\n\t\t\t\theaders: { 'Content-Type': 'application/merge-patch+json' },");
