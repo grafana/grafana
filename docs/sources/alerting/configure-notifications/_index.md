@@ -55,7 +55,7 @@ By default, Grafana Alerting provides default notification messages with relevan
 1. Directly to a contact point.
 2. To a contact point via notification policies (more flexible).
 
-{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="In the alert rule, you can configure to forward alerts directly to a contact point or through notification policies" >}}
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="In the alert rule, you can configure alert forwarding directly to a contact point or through notification policies" >}}
 
 The notification setup is essential for an effective alerting system to scale across multiple teams and services. For a quick overview about the various components involved in handling notifications, refer to the [introduction about notifications](ref:intro-notifications).
 
