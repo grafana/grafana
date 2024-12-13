@@ -260,5 +260,11 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
   if (hits.length < 1) {
     return { fields: [], length: 0 };
   }
-  return toDataFrame(hits);
+  const dashboardHits = hits.map((hit) => {
+    return {
+      ...hit,
+      name: hit.title,
+    };
+  });
+  return toDataFrame(dashboardHits);
 }

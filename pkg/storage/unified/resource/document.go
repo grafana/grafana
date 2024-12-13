@@ -146,6 +146,19 @@ func (m ResourceReferences) Less(i, j int) bool {
 // Create a new indexable document based on a generic k8s resource
 func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
 	title := obj.FindTitle(key.Name)
+	if title == key.Name {
+		// TODO: something wrong with FindTitle
+		spec, err := obj.GetSpec()
+		if err == nil {
+			specValue, ok := spec.(map[string]any)
+			if ok {
+				specTitle, ok := specValue["title"].(string)
+				if ok {
+					title = specTitle
+				}
+			}
+		}
+	}
 	doc := &IndexableDocument{
 		Key:       key,
 		RV:        rv,
@@ -187,7 +200,6 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *Resour
 	}
 
 	doc := NewIndexableDocument(key, rv, obj)
-	doc.Title = obj.FindTitle(key.Name)
 	return doc, nil
 }
 

@@ -309,7 +309,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
 			Kind:   dashboardv0alpha1.HitKind(row.Key.Resource[:len(row.Key.Resource)-1]),
-			Name:   string(row.Cells[0]),
+			Name:   row.Key.Name,
+			Title:  string(row.Cells[0]),
 			Folder: string(row.Cells[1]),
 		}
 		if row.Cells[2] != nil {
