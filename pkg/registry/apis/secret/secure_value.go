@@ -20,6 +20,8 @@ type ExposedSecureValue struct {
 
 var (
 	_ fmt.Stringer   = (*ExposedSecureValue)(nil)
+	_ fmt.Formatter  = (*ExposedSecureValue)(nil)
+	_ fmt.GoStringer = (*ExposedSecureValue)(nil)
 	_ json.Marshaler = (*ExposedSecureValue)(nil)
 	_ yaml.Marshaler = (*ExposedSecureValue)(nil)
 )
@@ -37,6 +39,16 @@ func (s ExposedSecureValue) DangerouslyExposeDecryptedValue() string {
 
 // String must not return the exposed secure value.
 func (s ExposedSecureValue) String() string {
+	return redacted
+}
+
+// Format must not return the exposed secure value.
+func (s ExposedSecureValue) Format(f fmt.State, _verb rune) {
+	_, _ = fmt.Fprint(f, redacted)
+}
+
+// GoString must not return the exposed secure value.
+func (s ExposedSecureValue) GoString() string {
 	return redacted
 }
 
