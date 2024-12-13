@@ -59,6 +59,9 @@ type IndexableDocument struct {
 	// The generic display name
 	Title string `json:"title,omitempty"`
 
+	// internal sort field for title ( don't set this directly )
+	TitleSort string `json:"title_sort,omitempty"`
+
 	// A generic description -- helpful in global search
 	Description string `json:"description,omitempty"`
 
@@ -97,6 +100,10 @@ type IndexableDocument struct {
 
 	// When the resource is managed by an upstream repository
 	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
+}
+
+func (m *IndexableDocument) Type() string {
+	return m.Key.Resource
 }
 
 type ResourceReference struct {
@@ -138,10 +145,12 @@ func (m ResourceReferences) Less(i, j int) bool {
 
 // Create a new indexable document based on a generic k8s resource
 func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
+	title := obj.FindTitle(key.Name)
 	doc := &IndexableDocument{
 		Key:       key,
 		RV:        rv,
-		Title:     obj.FindTitle(key.Name), // We always want *something* to display
+		Title:     title, // We always want *something* to display
+		TitleSort: title,
 		Labels:    obj.GetLabels(),
 		Folder:    obj.GetFolder(),
 		CreatedBy: obj.GetCreatedBy(),
@@ -225,6 +234,7 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
+const SEARCH_FIELD_TITLE_SORT = "title_sort"
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one

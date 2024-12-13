@@ -68,7 +68,7 @@
   "rows": [
     {
       "cells": [
-        "ns/g/dash/ccc",
+        "ns/g/dashboards/ccc",
         "ccc (dash)",
         [
           "aa"
@@ -81,7 +81,7 @@
         null
       ],
       "object": {
-        "kind": "dash",
+        "kind": "dashboards",
         "apiVersion": "g",
         "metadata": {
           "name": "ccc",
@@ -92,7 +92,7 @@
     },
     {
       "cells": [
-        "ns/g/dash/bbb",
+        "ns/g/dashboards/bbb",
         "bbb (dash)",
         [
           "aa"
@@ -105,7 +105,7 @@
         null
       ],
       "object": {
-        "kind": "dash",
+        "kind": "dashboards",
         "apiVersion": "g",
         "metadata": {
           "name": "bbb",
@@ -116,7 +116,7 @@
     },
     {
       "cells": [
-        "ns/g/dash/aaa",
+        "ns/g/dashboards/aaa",
         "aaa (dash)",
         [
           "aa",
@@ -130,7 +130,7 @@
         null
       ],
       "object": {
-        "kind": "dash",
+        "kind": "dashboards",
         "apiVersion": "g",
         "metadata": {
           "name": "aaa",

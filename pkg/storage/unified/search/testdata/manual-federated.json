@@ -20,25 +20,10 @@
     {
       "cells": [
         "aaa (dash)",
-        "ns/g/dash/bbb"
+        "ns/g/dashboards/aaa"
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
-        "metadata": {
-          "name": "bbb",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
-        "bbb (dash)",
-        "ns/g/dash/aaa"
-      ],
-      "object": {
-        "kind": "dash",
+        "kind": "dashboards",
         "apiVersion": "g",
         "metadata": {
           "name": "aaa",
@@ -49,11 +34,26 @@
     },
     {
       "cells": [
-        "ccc (dash)",
-        "ns/g/dash/ccc"
+        "bbb (dash)",
+        "ns/g/dashboards/bbb"
       ],
       "object": {
-        "kind": "dash",
+        "kind": "dashboards",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ccc (dash)",
+        "ns/g/dashboards/ccc"
+      ],
+      "object": {
+        "kind": "dashboards",
         "apiVersion": "g",
         "metadata": {
           "name": "ccc",
@@ -65,10 +65,10 @@
     {
       "cells": [
         "yyy (folder)",
-        "ns/g/folder/yyy"
+        "ns/g/folders/yyy"
       ],
       "object": {
-        "kind": "folder",
+        "kind": "folders",
         "apiVersion": "g",
         "metadata": {
           "name": "yyy",
@@ -80,10 +80,10 @@
     {
       "cells": [
         "zzz (folder)",
-        "ns/g/folder/zzz"
+        "ns/g/folders/zzz"
       ],
       "object": {
-        "kind": "folder",
+        "kind": "folders",
         "apiVersion": "g",
         "metadata": {
           "name": "zzz",

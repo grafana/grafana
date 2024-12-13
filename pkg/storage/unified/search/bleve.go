@@ -265,27 +265,9 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// Write frame as JSON
-	//response.Frame, err = frame.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
 	// parse the facet fields
 	for k, v := range res.Facets {
-		f := &resource.ResourceSearchResponse_Facet{
-			Field:   v.Field,
-			Total:   int64(v.Total),
-			Missing: int64(v.Missing),
-		}
-		if v.Terms != nil {
-			for _, t := range v.Terms.Terms() {
-				f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
-					Term:  t.Term,
-					Count: int64(t.Count),
-				})
-			}
-		}
+		f := newResponseFacet(v)
 		if response.Facet == nil {
 			response.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
 		}
@@ -418,36 +400,38 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	}
 
 	// Add the sort fields
-	for _, sort := range req.SortBy {
-		// hardcoded (for now)
-		if strings.HasPrefix(sort.Field, "stats.") {
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   sort.Field,
-				Desc:    sort.Desc,
-				Type:    search.SortFieldAsNumber, // force for now!
-				Mode:    search.SortFieldDefault,  // ???
-				Missing: search.SortFieldMissingLast,
-			})
-			continue
-		}
-
-		// Default support
-		input := sort.Field
-		if sort.Desc {
-			input = "-" + sort.Field
-		}
-		s := search.ParseSearchSortString(input)
-		searchrequest.Sort = append(searchrequest.Sort, s)
-	}
+	sorting := getSortFields(req)
+	searchrequest.SortBy(sorting)
 
 	// Always sort by *something*, otherwise the order is unstable
-	if len(searchrequest.Sort) == 0 {
+	if len(sorting) == 0 {
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
 			Desc: false,
 		})
 	}
 
 	return searchrequest, nil
+}
+
+func getSortFields(req *resource.ResourceSearchRequest) []string {
+	sorting := []string{}
+	for _, sort := range req.SortBy {
+		input := sort.Field
+		if field, ok := textSortFields[input]; ok {
+			input = field
+		}
+
+		if sort.Desc {
+			input = "-" + input
+		}
+		sorting = append(sorting, input)
+	}
+	return sorting
+}
+
+// fields that we went to sort by the full text
+var textSortFields = map[string]string{
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
 }
 
 // Convert a "requirement" into a bleve query
@@ -574,6 +558,23 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		}
 	}
 	return fields, nil
+}
+
+func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Facet {
+	f := &resource.ResourceSearchResponse_Facet{
+		Field:   v.Field,
+		Total:   int64(v.Total),
+		Missing: int64(v.Missing),
+	}
+	if v.Terms != nil {
+		for _, t := range v.Terms.Terms() {
+			f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
+				Term:  t.Term,
+				Count: int64(t.Count),
+			})
+		}
+	}
+	return f
 }
 
 func newQuery(req *resource.ResourceSearchRequest) query.Query {
