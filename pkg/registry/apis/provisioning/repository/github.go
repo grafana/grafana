@@ -565,6 +565,79 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
+func (r *githubRepository) latestRef(ctx context.Context) (string, error) {
+	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
+	if err != nil {
+		return "", fmt.Errorf("get branch: %w", err)
+	}
+
+	return branch.Sha, nil
+}
+
+func (r *githubRepository) FilesChanged(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
+	if ref == "" {
+		var err error
+		ref, err = r.latestRef(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get latest ref: %w", err)
+		}
+	}
+
+	lastSyncCommit := r.config.Status.CurrentGitCommit
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	files, err := r.gh.CompareCommits(ctx, owner, repo, r.config.Status.CurrentGitCommit, ref)
+	if err != nil {
+		return nil, fmt.Errorf("compare commits: %w", err)
+	}
+
+	changes := make([]FileChange, 0)
+	for _, f := range files {
+		if r.ignore(f.GetFilename()) {
+			continue
+		}
+		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+		switch f.GetStatus() {
+		case "added":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "modified", "changed":
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionUpdated,
+			})
+		case "renamed":
+			// delete the old file
+			changes = append(changes, FileChange{
+				Path:   f.GetPreviousFilename(),
+				Ref:    lastSyncCommit,
+				Action: FileActionDeleted,
+			})
+			// replicate the new file
+			changes = append(changes, FileChange{
+				Path:   f.GetFilename(),
+				Ref:    ref,
+				Action: FileActionCreated,
+			})
+		case "removed":
+			changes = append(changes, FileChange{
+				Ref:    lastSyncCommit,
+				Path:   f.GetFilename(),
+				Action: FileActionDeleted,
+			})
+		default:
+			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
+		}
+
+	}
+
+	return changes, nil
+}
+
 // Process is a backend job
 func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.RepositoryStatus, error) {
 	job := wrap.Spec
@@ -574,12 +647,11 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 		return nil, err // don't update status for PR
 	}
 
-	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.config.Spec.GitHub.Branch)
+	latest, err := r.latestRef(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get branch: %w", err)
+		return nil, fmt.Errorf("get latest ref: %w", err)
 	}
 
-	latest := branch.Sha
 	lastSyncCommit := r.config.Status.CurrentGitCommit
 
 	if lastSyncCommit == "" {
@@ -588,53 +660,9 @@ func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wra
 			return nil, fmt.Errorf("replicate tree: %w", err)
 		}
 	} else {
-		files, err := r.gh.CompareCommits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, lastSyncCommit, latest)
+		changes, err := r.FilesChanged(ctx, logger, latest)
 		if err != nil {
-			return nil, fmt.Errorf("compare commits: %w", err)
-		}
-
-		changes := make([]FileChange, 0)
-		for _, f := range files {
-			if r.ignore(f.GetFilename()) {
-				continue
-			}
-
-			// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
-			switch f.GetStatus() {
-			case "added":
-				changes = append(changes, FileChange{
-					Path:   f.GetFilename(),
-					Ref:    latest,
-					Action: FileActionCreated,
-				})
-			case "modified", "changed":
-				changes = append(changes, FileChange{
-					Path:   f.GetFilename(),
-					Ref:    latest,
-					Action: FileActionUpdated,
-				})
-			case "renamed":
-				// delete the old file
-				changes = append(changes, FileChange{
-					Path:   f.GetPreviousFilename(),
-					Ref:    lastSyncCommit,
-					Action: FileActionDeleted,
-				})
-				// replicate the new file
-				changes = append(changes, FileChange{
-					Path:   f.GetFilename(),
-					Ref:    latest,
-					Action: FileActionCreated,
-				})
-			case "removed":
-				changes = append(changes, FileChange{
-					Ref:    lastSyncCommit,
-					Path:   f.GetFilename(),
-					Action: FileActionDeleted,
-				})
-			default:
-				logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
-			}
+			return nil, fmt.Errorf("files changed: %w", err)
 		}
 
 		if err := replicator.ReplicateChanges(ctx, changes); err != nil {
