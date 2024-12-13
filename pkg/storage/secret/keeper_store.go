@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 // KeeperStorage is the interface for wiring and dependency injection.
@@ -88,17 +89,17 @@ func (s *keeperStorage) Read(ctx context.Context, namespace string, name string)
 
 }
 
-// func (s *keeperStorage) Update(ctx context.Context, obj *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-// 	// TODO: implement
-// 	return nil, nil
-// }
+func (s *keeperStorage) Update(ctx context.Context, obj *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+	// TODO: implement
+	return nil, nil
+}
 
-// func (s *keeperStorage) Delete(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, bool, error) {
-// 	// TODO: implement
-// 	return nil, false, nil
-// }
+func (s *keeperStorage) Delete(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, bool, error) {
+	// TODO: implement
+	return nil, false, nil
+}
 
-// func (s *keeperStorage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.Keeper, error) {
-// 	// TODO: implement
-// 	return nil, nil
-// }
+func (s *keeperStorage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.Keeper, error) {
+	// TODO: implement
+	return nil, nil
+}
