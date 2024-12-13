@@ -238,8 +238,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    // FIXME: Transparent is not added to the schema yet
-    // displayMode: panel.spec.transparent ? 'transparent' : undefined,
+    displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
