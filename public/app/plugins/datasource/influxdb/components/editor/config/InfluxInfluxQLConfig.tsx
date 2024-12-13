@@ -139,6 +139,26 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
         />
       </Field>
+
+      <Field
+        horizontal
+        label={
+          <InlineLabel
+            width={WIDTH_SHORT}
+            tooltip="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
+          >
+            Autocomplete range
+          </InlineLabel>
+        }
+        className={styles.horizontalField}
+      >
+        <Input
+          className="width-20"
+          placeholder="12h"
+          value={options.jsonData.showTagTime || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'showTagTime')}
+        />
+      </Field>
     </>
   );
 };
