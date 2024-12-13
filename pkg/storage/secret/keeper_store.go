@@ -86,7 +86,6 @@ func (s *keeperStorage) Read(ctx context.Context, namespace string, name string)
 	}
 
 	return keeper, nil
-
 }
 
 func (s *keeperStorage) Update(ctx context.Context, obj *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
