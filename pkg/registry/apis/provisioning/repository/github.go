@@ -583,10 +583,10 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 		}
 	}
 
-	lastSyncCommit := r.config.Status.CurrentGitCommit
+	lastSyncCommit := r.config.Status.Sync.Hash
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	files, err := r.gh.CompareCommits(ctx, owner, repo, r.config.Status.CurrentGitCommit, ref)
+	files, err := r.gh.CompareCommits(ctx, owner, repo, lastSyncCommit, ref)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}

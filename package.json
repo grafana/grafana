@@ -57,7 +57,7 @@
     "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
     "betterer:merge": "betterer merge --tsconfig ./scripts/cli/tsconfig.json",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
+    "betterer:stats": "node ./scripts/cli/reportBettererStats.mjs",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
@@ -125,7 +125,7 @@
     "@types/lodash": "4.17.13",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/node": "20.16.15",
+    "@types/node": "22.10.2",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
@@ -139,7 +139,7 @@
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.20",
     "@types/react-test-renderer": "18.3.0",
-    "@types/react-transition-group": "4.4.11",
+    "@types/react-transition-group": "4.4.12",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/react-window": "1.8.8",
     "@types/react-window-infinite-loader": "^1",
@@ -254,7 +254,7 @@
   "dependencies": {
     "@bsull/augurs": "^0.7.0",
     "@emotion/css": "11.13.5",
-    "@emotion/react": "11.13.5",
+    "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@floating-ui/react": "0.26.28",
     "@formatjs/intl-durationformat": "^0.6.0",
@@ -295,10 +295,10 @@
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.27.0",
     "@popperjs/core": "2.11.8",
-    "@react-aria/dialog": "3.5.19",
-    "@react-aria/focus": "3.18.4",
-    "@react-aria/overlays": "3.23.4",
-    "@react-aria/utils": "3.25.3",
+    "@react-aria/dialog": "3.5.20",
+    "@react-aria/focus": "3.19.0",
+    "@react-aria/overlays": "3.24.0",
+    "@react-aria/utils": "3.26.0",
     "@react-awesome-query-builder/ui": "6.6.4",
     "@reduxjs/toolkit": "2.3.0",
     "@testing-library/react-hooks": "^8.0.1",
@@ -448,7 +448,7 @@
     ]
   },
   "engines": {
-    "node": ">= 20"
+    "node": ">= 22"
   },
   "packageManager": "yarn@4.5.3",
   "dependenciesMeta": {

@@ -70,7 +70,8 @@ type replicator struct {
 
 // Sync replicates all files in the repository.
 func (r *replicator) Sync(ctx context.Context) error {
-	lastCommit := r.repository.Config().Status.CurrentGitCommit
+	cfg := r.repository.Config()
+	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
 	var latest string
@@ -95,23 +96,21 @@ func (r *replicator) Sync(ctx context.Context) error {
 		}
 	}
 
-	status := &provisioning.RepositoryStatus{
+	status := &provisioning.SyncStatus{
 		// TODO: rename to ref
-		CurrentGitCommit: latest,
+		Hash: latest,
 		// TODO: add timestamp
 	}
+
+	cfg.Status.Sync = *status
 
 	// TODO: Can we use typed client for this?
 	client := r.client.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
 	unstructuredResource := &unstructured.Unstructured{}
-	jj, _ := json.Marshal(r.repository.Config())
+	jj, _ := json.Marshal(cfg)
 	err := json.Unmarshal(jj, &unstructuredResource.Object)
 	if err != nil {
 		return fmt.Errorf("error loading config json: %w", err)
-	}
-
-	if err := unstructured.SetNestedField(unstructuredResource.Object, status.CurrentGitCommit, "status", "currentGitCommit"); err != nil {
-		return fmt.Errorf("set currentGitCommit: %w", err)
 	}
 
 	if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {

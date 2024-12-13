@@ -97,7 +97,12 @@ var (
 
 func init() {
 	localSchemeBuilder.Register(func(s *runtime.Scheme) error {
-		return AddKnownTypes(SchemeGroupVersion, s)
+		err := AddKnownTypes(SchemeGroupVersion, s)
+		if err != nil {
+			return err
+		}
+		metav1.AddToGroupVersion(s, SchemeGroupVersion)
+		return nil
 	})
 }
 
