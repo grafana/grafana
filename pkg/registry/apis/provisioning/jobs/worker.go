@@ -21,21 +21,20 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
-	getter         RepoGetter
-	parsers        *resources.ParserFactory
-	resourceClient *resources.ClientFactory
-	identities     auth.BackgroundIdentityService
-	logger         *slog.Logger
-	ignore         provisioning.IgnoreFile
+	getter     RepoGetter
+	parsers    *resources.ParserFactory
+	identities auth.BackgroundIdentityService
+	logger     *slog.Logger
+	ignore     provisioning.IgnoreFile
 }
 
-func NewJobWorker(getter RepoGetter, resourceClient *resources.ClientFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
+func NewJobWorker(getter RepoGetter, parsers *resources.ParserFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
 	return &JobWorker{
-		getter:         getter,
-		resourceClient: resourceClient,
-		identities:     identities,
-		logger:         logger,
-		ignore:         ignore,
+		getter:     getter,
+		parsers:    parsers,
+		identities: identities,
+		logger:     logger,
+		ignore:     ignore,
 	}
 }
 

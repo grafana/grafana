@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -59,6 +61,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
 		},
 	})
+
+	jobClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR: schema.GroupVersionResource{
+			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "jobs",
+		},
+	})
+
 	// Repo client, but less guard rails.
 	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
 		Group: "provisioning.grafana.app", Version: "v0alpha1",
@@ -151,15 +162,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
-					"name": "repositories/import",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "ResourceWrapper",
-					"verbs": [
-						"create"
-					]
-				},
-				{
 					"name": "repositories/status",
 					"singularName": "",
 					"namespaced": true,
@@ -168,6 +170,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 						"get",
 						"patch",
 						"update"
+					]
+				},
+				{
+					"name": "repositories/sync",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "Job",
+					"verbs": [
+						"create"
 					]
 				},
 				{
@@ -394,9 +405,31 @@ func TestIntegrationProvisioning(t *testing.T) {
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
-			SubResource("import").
+			SubResource("sync").
 			Do(ctx)
-		require.NoError(t, result.Error(), "expecting to be able to import repository")
+
+		obj, err := result.Get()
+		require.NoError(t, err, "expecting to be able to sync repository")
+
+		obj2, ok := obj.(*unstructured.Unstructured)
+		if !ok {
+			require.Fail(t, "expected unstructured response, %T", obj)
+		}
+		job := obj2.GetName()
+		require.NotEmpty(t, job)
+
+		// Wait for the async job to finish
+		for i := 0; i < 10; i++ {
+			time.Sleep(time.Millisecond * 250)
+			job, err := jobClient.Resource.Get(ctx, job, metav1.GetOptions{})
+			require.NoError(t, err)
+
+			state, _, err := unstructured.NestedString(job.Object, "status", "state")
+			require.NoError(t, err)
+			if state == string(provisioning.JobStateFinished) || state == string(provisioning.JobStateError) {
+				break
+			}
+		}
 
 		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
 		require.NoError(t, err, "all-panels dashboard should now exist")
