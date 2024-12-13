@@ -15,20 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
 
 type SecretAPIBuilder struct {
+	secureValueStorage secretstorage.SecureValueStorage
 }
 
-func NewSecretAPIBuilder() *SecretAPIBuilder {
-	return &SecretAPIBuilder{}
+func NewSecretAPIBuilder(secureValueStorage secretstorage.SecureValueStorage) *SecretAPIBuilder {
+	return &SecretAPIBuilder{secureValueStorage}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
+	secureValueStorage secretstorage.SecureValueStorage,
 ) *SecretAPIBuilder {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -36,7 +39,7 @@ func RegisterAPIService(
 		return nil
 	}
 
-	builder := NewSecretAPIBuilder()
+	builder := NewSecretAPIBuilder(secureValueStorage)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -80,7 +83,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueStorage, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(keeperResource),

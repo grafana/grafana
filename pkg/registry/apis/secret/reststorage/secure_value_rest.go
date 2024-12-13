@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,13 +30,14 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
+	storage        secretstorage.SecureValueStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{resource, resource.TableConverter()}
+func NewSecureValueRest(storage secretstorage.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{storage, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
