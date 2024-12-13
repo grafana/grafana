@@ -7,7 +7,7 @@ import (
 )
 
 type WriteEvent struct {
-	Type       WatchEvent_Type // ADDED, MODIFIED, DELETED, RESTORED
+	Type       WatchEvent_Type // ADDED, MODIFIED, DELETED
 	Key        *ResourceKey    // the request key
 	PreviousRV int64           // only for Update+Delete
 

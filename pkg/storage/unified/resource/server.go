@@ -394,7 +394,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 
 		// restores will restore with a different k8s uid
 		if event.ObjectOld.GetUID() != obj.GetUID() {
-			event.Type = WatchEvent_RESTORED
+			event.Type = WatchEvent_ADDED
 		} else {
 			event.Type = WatchEvent_MODIFIED
 		}

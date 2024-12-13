@@ -160,13 +160,14 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	// TODO: validate key ?
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
+		if event.ObjectOld != nil {
+			return b.restore(ctx, event)
+		}
 		return b.create(ctx, event)
 	case resource.WatchEvent_MODIFIED:
 		return b.update(ctx, event)
 	case resource.WatchEvent_DELETED:
 		return b.delete(ctx, event)
-	case resource.WatchEvent_RESTORED:
-		return b.restore(ctx, event)
 	default:
 		return 0, fmt.Errorf("unsupported event type")
 	}

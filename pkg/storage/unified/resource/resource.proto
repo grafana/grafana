@@ -305,7 +305,6 @@ message WatchEvent {
     DELETED = 3;
     BOOKMARK = 4;
     ERROR = 5;
-    RESTORED = 6;
   }
 
   message Resource {

@@ -606,7 +606,7 @@ func TestBackend_restore(t *testing.T) {
 	require.NoError(t, err)
 	oldMeta.SetUID("old-uid")
 	event := resource.WriteEvent{
-		Type:      resource.WatchEvent_RESTORED,
+		Type:      resource.WatchEvent_ADDED,
 		Key:       resKey,
 		Object:    meta,
 		ObjectOld: oldMeta,
