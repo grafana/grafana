@@ -57,7 +57,7 @@ By default, Grafana Alerting provides default notification messages with relevan
 
 {{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="In the alert rule, you can configure alert forwarding directly to a contact point or through notification policies" >}}
 
-The notification setup is essential for an effective alerting system to scale across multiple teams and services. For a quick overview about the various components involved in handling notifications, refer to the [introduction about notifications](ref:intro-notifications).
+Notification setup is essential for an effective alerting system to scale across multiple teams and services. For a quick overview about the various components involved in handling notifications, refer to the [introduction about notifications](ref:intro-notifications).
 
 The topics in this section include step-by-step instructions for:
 
