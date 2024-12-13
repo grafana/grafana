@@ -300,7 +300,7 @@
     "@react-aria/overlays": "3.24.0",
     "@react-aria/utils": "3.26.0",
     "@react-awesome-query-builder/ui": "6.6.4",
-    "@reduxjs/toolkit": "2.3.0",
+    "@reduxjs/toolkit": "2.5.0",
     "@testing-library/react-hooks": "^8.0.1",
     "@visx/event": "3.3.0",
     "@visx/gradient": "3.3.0",
