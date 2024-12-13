@@ -100,7 +100,7 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 // GetAuthorizer: [TODO] who can create secrets? must be multi-tenant first
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// This is TBD being defined with IAM.
+	// This is TBD being defined with IAM. Test
 
 	return nil // start with the default authorizer
 }
