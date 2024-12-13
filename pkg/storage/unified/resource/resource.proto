@@ -192,7 +192,9 @@ message ReadRequest {
   ResourceKey key = 1;
 
   // Optionally pick an explicit resource version
-  int64 resource_version = 3;
+  int64 resource_version = 2;
+  // Optionally decide to return the latest RV if deleted
+  bool include_deleted = 3;
 }
 
 message ReadResponse {
@@ -643,6 +645,25 @@ message ResourceTableRow {
   bytes object = 4;
 }
 
+//----------------------------
+// Restore Support
+//----------------------------
+
+message RestoreRequest {
+  // Full key must be set
+  ResourceKey key = 1;
+  
+  // The resource version to restore
+  int64 resource_version = 2;
+}
+
+message RestoreResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
 
 //----------------------------
 // Blob Support
@@ -730,6 +751,7 @@ service ResourceStore {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Restore(RestoreRequest) returns (RestoreResponse);
 
   // The results *may* include values that should not be returned to the user
   // This will perform best-effort filtering to increase performace.

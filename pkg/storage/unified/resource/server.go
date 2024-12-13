@@ -10,12 +10,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
@@ -378,7 +380,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
-		event.Type = WatchEvent_MODIFIED
 		check.Verb = "update"
 
 		temp := &unstructured.Unstructured{}
@@ -389,6 +390,13 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
 			return nil, AsErrorResult(err)
+		}
+
+		// restores will restore with a different k8s uid
+		if event.ObjectOld.GetUID() != obj.GetUID() {
+			event.Type = WatchEvent_ADDED
+		} else {
+			event.Type = WatchEvent_MODIFIED
 		}
 	}
 
@@ -747,6 +755,125 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
+	// check that the user has access
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+		Namespace: req.Key.Namespace,
+	})
+	if err != nil {
+		return &RestoreResponse{Error: AsErrorResult(err)}, nil
+	}
+	if checker == nil {
+		return &RestoreResponse{Error: &ErrorResult{
+			Code: http.StatusForbidden,
+		}}, nil
+	}
+
+	// get the asked for resource version to restore
+	readRsp, err := s.Read(ctx, &ReadRequest{
+		Key:             req.Key,
+		ResourceVersion: req.ResourceVersion,
+		IncludeDeleted:  true,
+	})
+	if err != nil || readRsp == nil || readRsp.Error != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusNotFound,
+				Message: fmt.Sprintf("could not find old resource: %s", readRsp.Error.Message),
+			},
+		}, nil
+	}
+
+	// generate a new k8s UID when restoring. The name will remain the same
+	// (for dashboards, this will be the dashboard uid), but since controllers
+	// will see this as a create event, we do not want the same k8s UID, or
+	// there may be unintended behavior
+	newUid := types.UID(uuid.NewString())
+	tmp := &unstructured.Unstructured{}
+	err = tmp.UnmarshalJSON(readRsp.Value)
+	if err != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusNotFound,
+				Message: fmt.Sprintf("could not unmarhsal: %s", err.Error()),
+			},
+		}, nil
+	}
+	obj, err := utils.MetaAccessor(tmp)
+	if err != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusNotFound,
+				Message: fmt.Sprintf("could not get object: %s", err.Error()),
+			},
+		}, nil
+	}
+	obj.SetUID(newUid)
+
+	rtObj, ok := obj.GetRuntimeObject()
+	if !ok {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusNotFound,
+				Message: "could not get runtime object",
+			},
+		}, nil
+	}
+
+	newObj, err := json.Marshal(rtObj)
+	if err != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusNotFound,
+				Message: fmt.Sprintf("could not marshal object: %s", err.Error()),
+			},
+		}, nil
+	}
+
+	// finally, send to the backend to create & update the history of the restored object
+	event, errRes := s.newEvent(ctx, user, req.Key, newObj, readRsp.Value)
+	if errRes != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: fmt.Sprintf("could not create restore resource event: %s", errRes.Message),
+			},
+		}, nil
+	}
+	rv, err := s.backend.WriteEvent(ctx, *event)
+	if err != nil {
+		return &RestoreResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: fmt.Sprintf("could not restore resource: %s", err.Error()),
+			},
+		}, nil
+	}
+
+	return &RestoreResponse{
+		Error:           nil,
+		ResourceVersion: rv,
+	}, nil
 }
 
 func (s *server) initWatcher() error {
