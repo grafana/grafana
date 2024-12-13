@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -48,9 +47,8 @@ const (
 )
 
 var (
-	_                          builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
-	_                          RepoGetter              = (*ProvisioningAPIBuilder)(nil)
-	ErrLocalRepositoryDisabled                         = errors.New("the local repository type has been disabled due to having no permitted local paths")
+	_ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
+	_ RepoGetter              = (*ProvisioningAPIBuilder)(nil)
 )
 
 // This is used just so wire has something unique to return
@@ -247,10 +245,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		if len(b.localFileResolver.PermittedPrefixes) == 0 {
-			return nil, ErrLocalRepositoryDisabled
-		}
-		return repository.NewLocal(r, b.localFileResolver)
+		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
 		if err != nil {
