@@ -232,6 +232,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			"folder",
 			"tags",
 		},
+		Federated: []*resource.ResourceKey{{
+			Namespace: user.GetNamespace(),
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+		}},
 	}
 
 	// Add the folder constraint. Note this does not do recursive search
@@ -303,9 +308,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
-			Kind:   dashboardv0alpha1.HitTypeDash,
-			Name:   row.Key.Name,
-			Title:  string(row.Cells[0]),
+			Kind:   dashboardv0alpha1.HitKind(row.Key.Resource[:len(row.Key.Resource)-1]),
+			Name:   string(row.Cells[0]),
 			Folder: string(row.Cells[1]),
 		}
 		if row.Cells[2] != nil {
