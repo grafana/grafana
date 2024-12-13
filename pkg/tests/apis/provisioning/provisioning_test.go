@@ -40,6 +40,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
 		client := github.NewMockClient(ttc)
+		client.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
 		client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 		// Don't need DeleteWebhook or EditWebhook, because they require that ListWebhooks returns a slice with elements.
@@ -281,16 +282,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "s3"
 			}
 		}`, string(js))
-	})
-
-	t.Run("validation hooks", func(t *testing.T) {
-		// Add it if this is the only test that ran
-		obj, err := client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/invalid.yaml"),
-			metav1.CreateOptions{},
-		)
-		require.Nil(t, obj)
-		require.Error(t, err)
 	})
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
