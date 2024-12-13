@@ -1,7 +1,7 @@
 import { DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { buildNewDashboardSaveModelV1, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
+import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
 
 const fakeDsMock: DataSourceApi = {
   name: 'fake-std',
@@ -60,7 +60,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('buildNewDashboardSaveModelV1', () => {
   it('should not have template variables defined by default', async () => {
-    const result = await buildNewDashboardSaveModelV1();
+    const result = await buildNewDashboardSaveModel();
     expect(result.dashboard.templating).toBeUndefined();
   });
 
@@ -73,14 +73,14 @@ describe('buildNewDashboardSaveModelV1', () => {
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {
-      const result = await buildNewDashboardSaveModelV1();
+      const result = await buildNewDashboardSaveModel();
       expect(result.dashboard.templating?.list).toHaveLength(2);
       expect(result.dashboard.templating?.list?.[0].type).toBe('adhoc');
       expect(result.dashboard.templating?.list?.[1].type).toBe('groupby');
     });
 
     it("should set the new dashboard's timezone to the user's timezone", async () => {
-      const result = await buildNewDashboardSaveModelV1();
+      const result = await buildNewDashboardSaveModel();
       expect(result.dashboard.timezone).toEqual('Africa/Abidjan');
     });
   });

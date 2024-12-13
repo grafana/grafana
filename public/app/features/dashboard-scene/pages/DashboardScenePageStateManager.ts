@@ -2,13 +2,9 @@ import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
@@ -39,7 +35,7 @@ const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry {
-  dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
+  dashboard: DashboardDTO;
   ts: number;
   cacheKey: string;
 }
@@ -72,7 +68,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     route,
     urlFolderUid,
     params,
-  }: LoadDashboardOptions): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null> {
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
     if (!params) {
@@ -83,16 +79,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
     }
 
-    let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null = null;
+    let rsp: DashboardDTO;
 
     try {
       switch (route) {
         case DashboardRoutes.New:
-          // TODO[schema]: handle v2
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
+
           break;
         case DashboardRoutes.Home:
-          rsp = (await getBackendSrv().get('/api/dashboards/home')) as DashboardDTO;
+          rsp = await getBackendSrv().get('/api/dashboards/home');
 
           if (rsp.redirectUri) {
             return rsp;
@@ -121,19 +117,12 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
-            if (isDashboardResource(rsp)) {
-              // TODO[schema]: handle v2
-            } else {
-              rsp.meta.isEmbedded = true;
-            }
+            rsp.meta.isEmbedded = true;
           }
       }
 
-      const dashUrl = isDashboardResource(rsp) ? rsp.access.url : rsp.meta.url;
-      const folderUid = isDashboardResource(rsp) ? rsp.metadata.annotations?.[AnnoKeyFolder] : rsp.meta.folderUid;
-
-      if (dashUrl && route === DashboardRoutes.Normal) {
-        const dashboardUrl = locationUtil.stripBaseFromUrl(dashUrl);
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
+        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
 
         if (dashboardUrl !== currentPath) {
@@ -147,8 +136,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Populate nav model in global store according to the folder
-      if (folderUid) {
-        await updateNavModel(folderUid);
+      if (rsp.meta.folderUid) {
+        await updateNavModel(rsp.meta.folderUid);
       }
 
       // Do not cache new dashboards
@@ -178,13 +167,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
 
-    if (isDashboardResource(rsp)) {
-      // TODO[schema]: handle v2
-    } else {
-      if (rsp?.dashboard) {
-        const scene = transformSaveModelToScene(rsp);
-        return scene;
-      }
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+      return scene;
     }
 
     throw new Error('Snapshot not found');
@@ -194,7 +179,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
       const dashboard = await this.loadScene(options);
-
       if (!dashboard) {
         return;
       }
@@ -223,13 +207,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
     const stateOptions = this.state.options;
+
     if (!stateOptions) {
       return;
     }
+
     const options = {
       ...stateOptions,
       params,
     };
+
     // We shouldn't check all params since:
     // - version doesn't impact the new dashboard, and it's there for increased compatibility
     // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
@@ -240,28 +227,28 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     ) {
       return;
     }
+
     try {
       this.setState({ isLoading: true });
+
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (isDashboardResource(rsp)) {
-        // TODO[schema]: handle v2
-        throw new Error('v2 schema handling not implemented');
-      } else {
-        if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-          this.setState({ isLoading: false });
-          return;
-        }
-
-        if (!rsp?.dashboard) {
-          this.setState({ isLoading: false, loadError: 'Dashboard not found' });
-          return;
-        }
-        const scene = transformSaveModelToScene(rsp);
-        this.setSceneCache(options.uid, scene);
-        this.setState({ dashboard: scene, isLoading: false, options });
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        this.setState({ isLoading: false });
+        return;
       }
+
+      if (!rsp?.dashboard) {
+        this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+        return;
+      }
+
+      const scene = transformSaveModelToScene(rsp);
+
+      this.setSceneCache(options.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false, options });
     } catch (err) {
       const msg = getMessageFromError(err);
       this.setState({ isLoading: false, loadError: msg });
@@ -274,35 +261,25 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.getSceneFromCache(options.uid);
+    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      return fromCache;
+    }
 
-    if (isDashboardResource(rsp)) {
-      if (fromCache && fromCache.state.version === parseInt(rsp.metadata.resourceVersion, 10)) {
-        return fromCache;
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      if (options.uid) {
+        this.setSceneCache(options.uid, scene);
       }
 
-      // TODO[schema]: handle v2
-      throw new Error('v2 schema handling not implemented');
-    } else {
-      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-        return fromCache;
-      }
+      return scene;
+    }
 
-      if (rsp?.dashboard) {
-        const scene = transformSaveModelToScene(rsp);
-
-        // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-        if (options.uid) {
-          this.setSceneCache(options.uid, scene);
-        }
-
-        return scene;
-      }
-
-      if (rsp?.redirectUri) {
-        const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-        locationService.replace(newUrl);
-        return null;
-      }
+    if (rsp?.redirectUri) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
     }
 
     throw new Error('Dashboard not found');
@@ -333,7 +310,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     });
   }
 
-  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
+  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 

@@ -10,17 +10,17 @@ import {
   ResourceClient,
 } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>> {
+export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
   private client: ResourceClient<DashboardV2Spec>;
 
-  constructor() {
+  constructor(private convertToV1: boolean) {
     this.client = new ScopedResourceClient<DashboardV2Spec>({
       group: 'dashboard.grafana.app',
       version: 'v2alpha1',
@@ -31,9 +31,12 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-    // For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-    const result = ResponseTransformers.ensureV2Response(dashboard);
+    let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
 
+    // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
+    result = ResponseTransformers.ensureV2Response(dashboard);
+
+    // load folder info if available
     if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
       try {
         const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
@@ -45,6 +48,13 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
       }
     }
 
+    // Depending on the ui components readiness, we might need to convert the response to v1
+    if (this.convertToV1) {
+      // Always return V1 format
+      result = ResponseTransformers.ensureV1Response(result);
+      return result;
+    }
+    // return the v2 response
     return result;
   }
 

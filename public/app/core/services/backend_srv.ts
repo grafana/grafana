@@ -21,7 +21,6 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -511,15 +510,11 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  async getDashboardByUid(uid: string): Promise<DashboardDTO> {
+  getDashboardByUid(uid: string): Promise<DashboardDTO> {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-
-    const dashboard = await getDashboardAPI().getDashboardDTO(uid);
-
-    // Since we have a deprecated method here, let's transoform the response to the format that the consumers are using (v1 schema)
-    return ResponseTransformers.ensureV1Response(dashboard);
+    return getDashboardAPI().getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {

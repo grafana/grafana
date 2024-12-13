@@ -14,17 +14,7 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
-export async function buildNewDashboardSaveModel(
-  urlFolderUid?: string
-): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
-  if (config.featureToggles.useV2DashboardsAPI) {
-    return buildNewDashboardSaveModelV2(urlFolderUid);
-  }
-
-  return buildNewDashboardSaveModelV1(urlFolderUid);
-}
-
-export async function buildNewDashboardSaveModelV1(urlFolderUid?: string): Promise<DashboardDTO> {
+export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
   if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {

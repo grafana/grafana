@@ -32,7 +32,6 @@ import {
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
-import { isDashboardResource } from '../api/utils';
 import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
@@ -65,10 +64,6 @@ async function fetchDashboard(
         const stateManager = getDashboardScenePageStateManager();
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
-        if (isDashboardResource(cachedDashboard)) {
-          throw new Error('v2 schema not supported');
-        }
-
         if (cachedDashboard) {
           return cachedDashboard;
         }
@@ -90,20 +85,11 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.Public: {
-        const dashboard = await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
-
-        if (isDashboardResource(dashboard)) {
-          throw new Error('v2 schema not supported');
-        }
-
-        return dashboard;
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
       }
       case DashboardRoutes.Normal: {
-        const dashDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (isDashboardResource(dashDTO)) {
-          throw new Error('v2 schema not supported');
-        }
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
@@ -138,13 +124,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        const dash = await buildNewDashboardSaveModel(args.urlFolderUid);
-
-        if (isDashboardResource(dash)) {
-          throw new Error('v2 schema not supported');
-        }
-
-        return dash;
+        return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };
