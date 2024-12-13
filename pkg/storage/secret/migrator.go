@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	TableNameSecureValue = "secret_secure_value"
+)
+
 func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
 	mg := migrator.NewScopedMigrator(engine, cfg, "secret")
 	mg.AddCreateMigration()
@@ -26,7 +30,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 	tables := []migrator.Table{}
 
 	tables = append(tables, migrator.Table{
-		Name: "secret_secure_value",
+		Name: TableNameSecureValue,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
