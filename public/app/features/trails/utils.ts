@@ -32,6 +32,7 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
+import { sortResources } from './otel/util';
 import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
@@ -151,7 +152,8 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
 export function limitAdhocProviders(
   dataTrail: DataTrail,
   filtersVariable: SceneVariable<SceneVariableState> | null,
-  datasourceHelper: MetricDatasourceHelper
+  datasourceHelper: MetricDatasourceHelper,
+  useOtelExperience?: boolean,
 ) {
   if (!(filtersVariable instanceof AdHocFiltersVariable)) {
     return;
@@ -187,8 +189,14 @@ export function limitAdhocProviders(
         opts.queries = [];
       }
 
-      const values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      let values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
+
+      if (useOtelExperience) {
+        // sort the values for showing otel resources at the top
+        values = sortResources(values, filters.map((f) => f.key));
+      }
+
       return { replace: true, values };
     },
     getTagValuesProvider: async (
@@ -277,3 +285,28 @@ export async function callSuggestionsApi(
     })
   );
 }
+
+
+/**
+ * Consolidate OTel resources into label filters
+ *
+ * 1. The adhoc filters will contain all the otel resources (happens by default because list contains target_info)
+ *   [x] the filter list will sort otel resources to the top
+ * 2. Hide the otel resources variable
+ *   a. remove the updates when it is changed
+ *   b. migrate any old otel selected url values to adhoc to show them in the new filter
+ * 2. When a filter is selected, we need to identify the following
+ *   a. an otel resource (on target_info)
+ *   b. It is not promoted as a label on metric
+ *     - How to identify otel resource? Add function to make a collection
+ *     - Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
+ *     - call for list of target_info labels and list of labels minut target info
+ *     - find the otel resources that do not exist in the labels
+ *     - these are the non promoted resources
+ *     - if it is a resource attribute, it should be stored as such so it can be filtered in the join
+ *   d. Add selected otel resources to the hidden variable
+ * 3. Remove special the deployment environment variable totally
+ *   a. automatically select deployment_environment OR environment if it exists
+ *   b. if deployment environment is promoted, this is fine and we can support more otel data sources
+ *      - we did not support those that did not have them on target_info before
+ */
