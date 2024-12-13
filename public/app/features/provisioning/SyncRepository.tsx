@@ -9,16 +9,16 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { Resource } from '../apiserver/types';
 import { Loader } from '../plugins/admin/components/Loader';
 
-import { useCreateRepositoryImportMutation, useListRepositoryQuery } from './api';
+import { useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
 import { RepositorySpec } from './api/types';
 
 interface Props {
   repository: Resource<RepositorySpec>;
 }
 
-export function ImportFromRepository({ repository }: Props) {
+export function SyncRepository({ repository }: Props) {
   const query = useListRepositoryQuery();
-  const [importResource, importQuery] = useCreateRepositoryImportMutation();
+  const [syncResource, syncQuery] = useCreateRepositorySyncMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const name = repository.metadata?.name;
@@ -30,28 +30,30 @@ export function ImportFromRepository({ repository }: Props) {
   });
 
   useEffect(() => {
+    // TODO... not true anymore --
+    // clicking sync just means we queued the job; can watch it until finished
     const appEvents = getAppEvents();
-    if (importQuery.isSuccess) {
+    if (syncQuery.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Resources imported'],
       });
       // TODO the URL will be different based on the type of resource imported
       navigate(`/dashboards${folder ? `/f/${folder}` : ''}`);
-    } else if (importQuery.isError) {
+    } else if (syncQuery.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error importing resources', importQuery.error],
+        payload: ['Error importing resources', syncQuery.error],
       });
     }
-  }, [folder, importQuery.error, importQuery.isError, importQuery.isSuccess, navigate]);
+  }, [folder, syncQuery.error, syncQuery.isError, syncQuery.isSuccess, navigate]);
 
   const onClick = () => {
     if (!name) {
       return;
     }
 
-    importResource({ name });
+    syncResource({ name });
   };
 
   if (query.isLoading) {
@@ -60,14 +62,14 @@ export function ImportFromRepository({ repository }: Props) {
 
   return (
     <>
-      <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={importQuery.isLoading || !name}>
-        Import from repository
+      <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={syncQuery.isLoading || !name}>
+        Sync
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
-        title={'Import resources from repository'}
+        title={'Synchronize resources from repository'}
         body={`This will pull all resources from the repository into your instance into the "${value?.spec?.title}" folder. Existing dashboards with the same UID will be overwritten. Proceed?`}
-        confirmText={importQuery.isLoading ? 'Importing...' : 'Import'}
+        confirmText={syncQuery.isLoading ? 'Importing...' : 'Import'}
         onConfirm={onClick}
         onDismiss={() => setIsModalOpen(false)}
       />
