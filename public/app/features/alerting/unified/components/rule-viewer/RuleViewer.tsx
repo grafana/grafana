@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from '@grafana/ui/src/utils/i18n';
+import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -21,6 +21,7 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import {
+  RulePluginOrigin,
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
@@ -28,7 +29,6 @@ import {
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
-  RulePluginOrigin,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
