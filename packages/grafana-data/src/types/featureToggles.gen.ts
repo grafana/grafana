@@ -244,4 +244,5 @@ export interface FeatureToggles {
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
+  lokiLabelNamesQueryApi?: boolean;
 }

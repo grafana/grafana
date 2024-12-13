@@ -2097,6 +2097,19 @@
     },
     {
       "metadata": {
+        "name": "lokiLabelNamesQueryApi",
+        "resourceVersion": "1734096677730",
+        "creationTimestamp": "2024-12-13T13:31:17Z"
+      },
+      "spec": {
+        "description": "Defaults to using the Loki `/labels` API instead of `/series`",
+        "stage": "GA",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiLogsDataplane",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-13T07:58:00Z"
