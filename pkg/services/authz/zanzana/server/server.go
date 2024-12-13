@@ -97,6 +97,7 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 }
 
 func (s *Server) addAuthorizationContext(ctx context.Context, req *openfgav1.CheckRequest) error {
+	// TODO: add caching for reads
 	res, err := s.Read(ctx, &authzextv1.ReadRequest{
 		Namespace: "global",
 	})
