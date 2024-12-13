@@ -38,7 +38,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? '' : undefined,
       shareView: state.shareView,
       orgId: contextSrv.user.orgId.toString(),
     };
@@ -166,8 +166,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.kiosk === 'string') {
       if (values.kiosk === 'true' || values.kiosk === '') {
         update.kioskMode = KioskMode.Full;
-      } else if (values.kiosk === 'tv') {
-        update.kioskMode = KioskMode.TV;
       }
     }
 

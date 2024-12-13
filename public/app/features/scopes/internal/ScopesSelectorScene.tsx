@@ -3,7 +3,6 @@ import { isEqual } from 'lodash';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -380,10 +379,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
       display: 'flex',
       flexDirection: 'row',
       paddingLeft: menuDockedAndOpen ? theme.spacing(2) : 'unset',
-      ...(!config.featureToggles.singleTopNav && {
-        paddingLeft: theme.spacing(2),
-        borderLeft: `1px solid ${theme.colors.border.weak}`,
-      }),
     }),
     dashboards: css({
       color: theme.colors.text.secondary,

@@ -39,7 +39,6 @@ export function ShortLinkButtonMenu() {
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   const onCopyLink = (shorten: boolean, absTime: boolean, url?: string) => {
     if (shorten) {
       createAndCopyShortLink(url || global.location.href);
@@ -136,8 +135,7 @@ export function ShortLinkButtonMenu() {
       <ToolbarButton
         tooltip={lastSelected.label}
         icon={lastSelected.icon}
-        iconOnly={!isSingleTopNav}
-        variant={isSingleTopNav ? 'canvas' : 'default'}
+        variant={'canvas'}
         narrow={true}
         onClick={() => {
           const url = lastSelected.getUrl();
@@ -145,12 +143,12 @@ export function ShortLinkButtonMenu() {
         }}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
-        {isSingleTopNav && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
+        <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
       </ToolbarButton>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <ToolbarButton
           narrow={true}
-          variant={isSingleTopNav ? 'canvas' : 'default'}
+          variant={'canvas'}
           isOpen={isOpen}
           aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
         />

@@ -37,7 +37,6 @@ export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
-  private isSingleTopNav = config.featureToggles.singleTopNav;
 
   private megaMenuDocked = Boolean(
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
@@ -50,8 +49,6 @@ export class AppChromeService {
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
-    // TODO remove this state once singleTopNav is live
-    searchBarHidden: this.isSingleTopNav ? false : store.getBool(this.searchBarStorageKey, false),
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
@@ -62,22 +59,12 @@ export class AppChromeService {
   public headerHeightObservable = this.state
     .pipe(
       map(({ actions, chromeless, kioskMode, searchBarHidden }) => {
-        if (config.featureToggles.singleTopNav) {
-          if (kioskMode || chromeless) {
-            return 0;
-          } else if (actions) {
-            return TOP_BAR_LEVEL_HEIGHT * 2;
-          } else {
-            return TOP_BAR_LEVEL_HEIGHT;
-          }
+        if (kioskMode || chromeless) {
+          return 0;
+        } else if (actions) {
+          return TOP_BAR_LEVEL_HEIGHT * 2;
         } else {
-          if (kioskMode || chromeless) {
-            return 0;
-          } else if (searchBarHidden) {
-            return TOP_BAR_LEVEL_HEIGHT;
-          } else {
-            return TOP_BAR_LEVEL_HEIGHT * 2;
-          }
+          return TOP_BAR_LEVEL_HEIGHT;
         }
       })
     )
@@ -173,7 +160,6 @@ export class AppChromeService {
     }
     reportInteraction('grafana_mega_menu_open', {
       state: newOpenState,
-      singleTopNav: Boolean(config.featureToggles.singleTopNav),
     });
     this.update({
       megaMenuOpen: newOpenState,
@@ -211,7 +197,6 @@ export class AppChromeService {
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
     reportInteraction('grafana_kiosk_mode', {
       action: 'toggle',
-      singleTopNav: Boolean(config.featureToggles.singleTopNav),
       mode: nextMode,
     });
   };
@@ -221,7 +206,6 @@ export class AppChromeService {
     locationService.partial({ kiosk: null });
     reportInteraction('grafana_kiosk_mode', {
       action: 'exit',
-      singleTopNav: Boolean(config.featureToggles.singleTopNav),
     });
   }
 
@@ -229,11 +213,6 @@ export class AppChromeService {
     let newKioskMode: KioskMode | undefined;
 
     switch (kiosk) {
-      case 'tv':
-        if (!this.isSingleTopNav) {
-          newKioskMode = KioskMode.TV;
-        }
-        break;
       case '1':
       case true:
         newKioskMode = KioskMode.Full;
@@ -246,8 +225,6 @@ export class AppChromeService {
 
   public getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {
-      case KioskMode.TV:
-        return 'tv';
       case KioskMode.Full:
         return true;
       default:
@@ -256,18 +233,8 @@ export class AppChromeService {
   }
 
   private getNextKioskMode() {
-    const { kioskMode, searchBarHidden } = this.state.getValue();
-
-    if (searchBarHidden || kioskMode === KioskMode.TV || config.featureToggles.singleTopNav) {
-      appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
-      return KioskMode.Full;
-    }
-
-    if (!kioskMode) {
-      return KioskMode.TV;
-    }
-
-    return null;
+    appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
+    return KioskMode.Full;
   }
 }
 
