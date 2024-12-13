@@ -24,7 +24,7 @@ func newGlobalReconciler(name string, globalCollector globalTupleCollector, zanz
 }
 
 func (r globalReconciler) reconcile(ctx context.Context) error {
-	namespace := zanzana.GlobalStoreNamespace
+	namespace := zanzana.ClusterNamespace
 
 	// 1. Fetch grafana resources stored in grafana db.
 	res, err := r.globalCollector(ctx)

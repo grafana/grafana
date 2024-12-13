@@ -105,7 +105,7 @@ func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav
 	}
 
 	res, err := s.Read(ctx, &authzextv1.ReadRequest{
-		Namespace: common.GlobalStoreNamespace,
+		Namespace: common.ClusterNamespace,
 	})
 	if err != nil {
 		return nil, err

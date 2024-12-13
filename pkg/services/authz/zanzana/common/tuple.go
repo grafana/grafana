@@ -82,7 +82,7 @@ var RelationsFolder = append(
 	RelationDelete,
 )
 
-const GlobalStoreNamespace = "global"
+const ClusterNamespace = "cluster"
 
 func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
