@@ -1,5 +1,6 @@
-# Ensures that e2e/plugin-e2e/prometheus tests have access to
-# the `gdev-prometheus` data source.
+"""
+Ensures that e2e/plugin-e2e/prometheus tests have access to the `gdev-prometheus` data source.
+"""
 load(
     'scripts/drone/steps/lib.star',
     'pipeline',
