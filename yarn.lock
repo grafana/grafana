@@ -7573,15 +7573,15 @@ __metadata:
   linkType: hard
 
 "@stylistic/eslint-plugin-ts@npm:^2.9.0":
-  version: 2.10.1
-  resolution: "@stylistic/eslint-plugin-ts@npm:2.10.1"
+  version: 2.12.1
+  resolution: "@stylistic/eslint-plugin-ts@npm:2.12.1"
   dependencies:
-    "@typescript-eslint/utils": "npm:^8.12.2"
+    "@typescript-eslint/utils": "npm:^8.13.0"
     eslint-visitor-keys: "npm:^4.2.0"
     espree: "npm:^10.3.0"
   peerDependencies:
     eslint: ">=8.40.0"
-  checksum: 10/e3a966e30e4986f795592a4a574bea4133d42d3ae0489799bfd8498d6c7d1c5b4b0c0016e825fbb521156602041bccbed60f4909e0056a3c225d63cb8bffe324
+  checksum: 10/8633eed9ec775b11ffeaf3066fb01890374bd70bef1ea5838663f2304f5399e20bc609a95606cb4ef21d97f406c5bff32955e2281ded6178bee393a5cb7e24c5
   languageName: node
   linkType: hard
 
@@ -10268,7 +10268,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:^6.0.0 || ^7.0.0 || ^8.0.0, @typescript-eslint/utils@npm:^8.12.2, @typescript-eslint/utils@npm:^8.13.0, @typescript-eslint/utils@npm:^8.9.0":
+"@typescript-eslint/utils@npm:^6.0.0 || ^7.0.0 || ^8.0.0, @typescript-eslint/utils@npm:^8.13.0, @typescript-eslint/utils@npm:^8.9.0":
   version: 8.14.0
   resolution: "@typescript-eslint/utils@npm:8.14.0"
   dependencies:
