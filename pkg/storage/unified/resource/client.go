@@ -159,7 +159,8 @@ func idTokenExtractorCloud(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	// This is a workaround to allow background job to use internal token.
+	// This is a mechanism to allow background job to use the underlying access_token permissions.
+	// Those must add a StaticRequester of type service account with IsGrafanaAdmin set to true.
 	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
 		if staticRequester.Type != claims.TypeServiceAccount {
 			return "", fmt.Errorf("unexpected identity type: %s", staticRequester.Type)
