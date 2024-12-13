@@ -16,6 +16,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -104,7 +106,12 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 		log.Info("starting legacyToUnifiedStorageDataSyncer")
 		startSync := time.Now()
 
+		orgId := int64(1)
+
 		ctx = klog.NewContext(ctx, log)
+		ctx = identity.WithRequester(ctx, getSyncRequester(orgId))
+		ctx = request.WithNamespace(ctx, requestInfo.Namespace)
+		ctx = request.WithRequestInfo(ctx, requestInfo)
 
 		storageList, err := getList(ctx, storage, &metainternalversion.ListOptions{
 			Limit: maxRecordsSync,
@@ -244,4 +251,21 @@ func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalvers
 	}
 
 	return meta.ExtractList(ll)
+}
+
+func getSyncRequester(orgId int64) *identity.StaticRequester {
+	return &identity.StaticRequester{
+		Type:           claims.TypeServiceAccount, // system:apiserver
+		UserID:         1,
+		OrgID:          orgId,
+		Name:           "admin",
+		Login:          "admin",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+		Permissions: map[int64]map[string][]string{
+			orgId: {
+				"*": {"*"}, // all resources, all scopes
+			},
+		},
+	}
 }

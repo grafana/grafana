@@ -107,7 +107,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 func idTokenExtractorInternal(ctx context.Context) (string, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
-		return "", nil
+		return "", fmt.Errorf("no claims found")
 	}
 
 	extra := authInfo.GetExtra()
@@ -156,6 +156,17 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 func idTokenExtractorCloud(ctx context.Context) (string, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
+		return "", fmt.Errorf("no claims found")
+	}
+
+	// This is a workaround to allow background job to use internal token.
+	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
+		if staticRequester.Type != claims.TypeServiceAccount {
+			return "", fmt.Errorf("unexpected identity type: %s", staticRequester.Type)
+		}
+		if staticRequester.IsGrafanaAdmin == false {
+			return "", fmt.Errorf("unexpected Grafana admin status: %t", staticRequester.IsGrafanaAdmin)
+		}
 		return "", nil
 	}
 

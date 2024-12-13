@@ -10,22 +10,17 @@ import (
 )
 
 func TestIDTokenExtractorInternal(t *testing.T) {
-	t.Run("should return empty when no claims found", func(t *testing.T) {
+	t.Run("should return an error when no claims found", func(t *testing.T) {
 		ctx := context.Background()
 		token, err := idTokenExtractorInternal(ctx)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
 
 	t.Run("should create internal token for StaticRequester", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type:           claims.TypeServiceAccount,
-			UserID:         1,
-			OrgID:          1,
-			Name:           "foo",
-			Login:          "foo",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: false,
+			IsGrafanaAdmin: true,
 		})
 		token, err := idTokenExtractorInternal(ctx)
 		assert.NoError(t, err)
@@ -34,22 +29,18 @@ func TestIDTokenExtractorInternal(t *testing.T) {
 }
 
 func TestIDTokenExtractorCloud(t *testing.T) {
-	t.Run("should return an empty string when no claims found", func(t *testing.T) {
+	t.Run("should return an error when no claims found", func(t *testing.T) {
 		token, err := idTokenExtractorCloud(context.Background())
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
-	t.Run("should return an error for StaticRequester", func(t *testing.T) {
+	t.Run("should return an empty token for static requester of type service account as grafana admin ", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type:           claims.TypeServiceAccount,
-			UserID:         1,
-			OrgID:          1,
-			Name:           "foo",
-			Login:          "foo",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: false,
+			IsGrafanaAdmin: true,
 		})
-		_, err := idTokenExtractorCloud(ctx)
-		assert.Error(t, err)
+		token, err := idTokenExtractorCloud(ctx)
+		assert.NoError(t, err)
+		assert.Empty(t, token)
 	})
 }
