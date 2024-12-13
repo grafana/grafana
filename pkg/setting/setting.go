@@ -538,6 +538,10 @@ type Cfg struct {
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
+	DataSyncerInterval time.Duration
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 type InstallPlugin struct {
@@ -599,7 +603,7 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
-		"GF_ENTITY_API_DB_PASS",
+		"API_DB_PASS",
 		"ID_FORWARDING_TOKEN$",
 		"AUTHENTICATION_TOKEN$",
 		"AUTH_TOKEN$",

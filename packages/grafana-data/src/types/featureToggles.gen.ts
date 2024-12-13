@@ -43,7 +43,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -113,7 +112,6 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesDashboardsAPI?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -244,4 +242,5 @@ export interface FeatureToggles {
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
 }

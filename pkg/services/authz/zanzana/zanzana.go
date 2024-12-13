@@ -13,11 +13,13 @@ import (
 const (
 	TypeUser           = common.TypeUser
 	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
 	TypeTeam           = common.TypeTeam
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder
 	TypeResource       = common.TypeResource
-	TypeNamespace      = common.TypeNamespace
+	TypeNamespace      = common.TypeGroupResouce
 )
 
 const (
@@ -30,28 +32,25 @@ const (
 	RelationSetEdit  = common.RelationSetEdit
 	RelationSetAdmin = common.RelationSetAdmin
 
-	RelationRead             = common.RelationRead
-	RelationWrite            = common.RelationWrite
-	RelationCreate           = common.RelationCreate
-	RelationDelete           = common.RelationDelete
-	RelationPermissionsRead  = common.RelationPermissionsRead
-	RelationPermissionsWrite = common.RelationPermissionsWrite
+	RelationGet    = common.RelationGet
+	RelationUpdate = common.RelationUpdate
+	RelationCreate = common.RelationCreate
+	RelationDelete = common.RelationDelete
 
 	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
 	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
 	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
 
-	RelationFolderResourceRead             = common.RelationFolderResourceRead
-	RelationFolderResourceWrite            = common.RelationFolderResourceWrite
-	RelationFolderResourceCreate           = common.RelationFolderResourceCreate
-	RelationFolderResourceDelete           = common.RelationFolderResourceDelete
-	RelationFolderResourcePermissionsRead  = common.RelationFolderResourcePermissionsRead
-	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
+	RelationFolderResourceRead   = common.RelationFolderResourceGet
+	RelationFolderResourceWrite  = common.RelationFolderResourceUpdate
+	RelationFolderResourceCreate = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete = common.RelationFolderResourceDelete
 )
 
 var (
-	FolderRelations   = common.FolderRelations
-	ResourceRelations = common.ResourceRelations
+	RelationsFolder         = common.RelationsFolder
+	RelationsFolderResource = common.RelationsFolder
+	RelationsResouce        = common.RelationsResource
 )
 
 const (
@@ -97,7 +96,7 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
-		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource), true
 	}
 
 	if translation.typ == TypeResource {
