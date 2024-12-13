@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { SaveDashboardAsOptions, SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
@@ -20,8 +20,26 @@ export function useSaveDashboard(isCopy = false) {
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
 
   const [state, onSaveDashboard] = useAsyncFn(
-    async (scene: DashboardScene, saveModel: Dashboard, options: SaveDashboardOptions) => {
+    async (
+      scene: DashboardScene,
+      options: SaveDashboardOptions &
+        SaveDashboardAsOptions & {
+          // When provided, will take precedence over the scene's save model
+          rawDashboardJSON?: Dashboard;
+        }
+    ) => {
       {
+        let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
+
+        if (options.saveAsCopy) {
+          saveModel = scene.getSaveAsModel({
+            isNew: options.isNew,
+            title: options.title,
+            description: options.description,
+            copyTags: options.copyTags,
+          });
+        }
+
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,

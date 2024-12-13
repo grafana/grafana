@@ -1,7 +1,7 @@
 import { AdHocVariableModel } from '@grafana/data';
 import { Dashboard, Panel } from '@grafana/schema';
 
-import { adHocVariableFiltersEqual, getDashboardChanges, getPanelChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges, getPanelChanges } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -134,7 +134,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -165,7 +165,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(newDashInitial, changed, false, false, false);
+    const result = getRawDashboardChanges(newDashInitial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -195,7 +195,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -236,7 +236,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, true, false, false);
+    const result = getRawDashboardChanges(initial, changed, true, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -263,7 +263,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -301,7 +301,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, true);
+    const result = getRawDashboardChanges(initial, changed, false, false, true);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -341,7 +341,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -392,7 +392,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, true, false);
+    const result = getRawDashboardChanges(initial, changed, false, true, false);
 
     expect(result).toEqual(expectedChanges);
   });
