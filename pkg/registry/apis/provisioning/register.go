@@ -227,8 +227,8 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
-		client:     b.client,
 		logger:     b.logger.With("connector", "export"),
+		queue:      b.jobs,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil

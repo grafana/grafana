@@ -139,6 +139,7 @@ type FileReplicator interface {
 	ReplicateTree(ctx context.Context, ref string) error
 	DeleteFile(ctx context.Context, fileInfo *FileInfo) error
 	Sync(ctx context.Context) error
+	Export(ctx context.Context) error
 }
 
 // FileReplicatorFactory is an interface for creating FileReplicators

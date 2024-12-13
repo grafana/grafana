@@ -1,4 +1,4 @@
-package provisioning
+package resources
 
 import (
 	"testing"
