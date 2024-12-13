@@ -219,11 +219,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		logger:     b.logger.With("connector", "history"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
 		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "import"),
-		ignore:     provisioning.IncludeYamlOrJSON,
+		jobs:       b.jobs,
+		logger:     b.logger.With("connector", "sync"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
