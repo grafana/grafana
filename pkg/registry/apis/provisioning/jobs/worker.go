@@ -39,6 +39,7 @@ func NewJobWorker(getter RepoGetter, resourceClient *resources.ClientFactory, id
 }
 
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
+	logger := g.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
 		return nil, err
@@ -49,6 +50,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	if !ok {
 		return nil, fmt.Errorf("missing repository name in label")
 	}
+	logger = logger.With("repository", repoName)
 
 	repo, err := g.getter.GetRepository(ctx, repoName)
 	if err != nil {
@@ -58,7 +60,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo, g.ignore)
+	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo, g.ignore, logger)
 	replicator, err := factory.New()
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
@@ -79,6 +81,11 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("job not supported by this worker")
 		}
 		err := processor.Process(ctx, g.logger, job, replicator)
+		if err != nil {
+			return nil, err
+		}
+	case provisioning.JobActionExport:
+		err := replicator.Export(ctx)
 		if err != nil {
 			return nil, err
 		}
