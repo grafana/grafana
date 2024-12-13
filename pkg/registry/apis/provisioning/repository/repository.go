@@ -118,9 +118,17 @@ type Repository interface {
 	AfterDelete(ctx context.Context, logger *slog.Logger) error
 }
 
+// VersionedRepository is a repository that supports versioning
+// this inferface may be extended to make the the original Repository interface
+// more agnostic to the underlying storage system
+type VersionedRepository interface {
+	LatestRef(ctx context.Context, logger *slog.Logger) (string, error)
+	CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error)
+}
+
 type JobProcessor interface {
 	// Temporary... likely want this as its own thing... eg GithubWorker or similar
-	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, replicator FileReplicator) (*provisioning.RepositoryStatus, error)
+	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, replicator FileReplicator) error
 }
 
 // FileReplicator is an interface for replicating files
@@ -130,6 +138,7 @@ type FileReplicator interface {
 	ReplicateFile(ctx context.Context, fileInfo *FileInfo) error
 	ReplicateTree(ctx context.Context, ref string) error
 	DeleteFile(ctx context.Context, fileInfo *FileInfo) error
+	Sync(ctx context.Context) error
 }
 
 // FileReplicatorFactory is an interface for creating FileReplicators

@@ -565,7 +565,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-func (r *githubRepository) latestRef(ctx context.Context) (string, error) {
+func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
@@ -574,10 +574,10 @@ func (r *githubRepository) latestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) FilesChanged(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
-		ref, err = r.latestRef(ctx)
+		ref, err = r.LatestRef(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("get latest ref: %w", err)
 		}
@@ -639,45 +639,10 @@ func (r *githubRepository) FilesChanged(ctx context.Context, logger *slog.Logger
 }
 
 // Process is a backend job
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) (*provisioning.RepositoryStatus, error) {
+// TODO: move out the pull request processing to a separate worker / processor
+func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) error {
 	job := wrap.Spec
 
-	if job.PR > 0 {
-		err := r.processPR(ctx, logger, job, replicator)
-		return nil, err // don't update status for PR
-	}
-
-	latest, err := r.latestRef(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get latest ref: %w", err)
-	}
-
-	lastSyncCommit := r.config.Status.CurrentGitCommit
-
-	if lastSyncCommit == "" {
-		logger.Info("initial sync")
-		if err := replicator.ReplicateTree(ctx, latest); err != nil {
-			return nil, fmt.Errorf("replicate tree: %w", err)
-		}
-	} else {
-		changes, err := r.FilesChanged(ctx, logger, latest)
-		if err != nil {
-			return nil, fmt.Errorf("files changed: %w", err)
-		}
-
-		if err := replicator.ReplicateChanges(ctx, changes); err != nil {
-			return nil, fmt.Errorf("replicate changes: %w", err)
-		}
-	}
-
-	logger.InfoContext(ctx, "repository status updated", "commit", latest)
-	return &provisioning.RepositoryStatus{
-		CurrentGitCommit: latest,
-	}, nil
-}
-
-// Process a pull request
-func (r *githubRepository) processPR(ctx context.Context, logger *slog.Logger, job provisioning.JobSpec, replicator FileReplicator) error {
 	// Get the files changed in the pull request
 	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, job.PR)
 	if err != nil {

@@ -2,12 +2,9 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -58,40 +55,27 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("error creating replicator")
 	}
 
-	processor, ok := repo.(repository.JobProcessor)
-	if !ok {
-		// TODO... handle sync job for everything
-		// EG, move over the "import" logic here
-		return nil, fmt.Errorf("job not supported by this worker")
-	}
-
-	status, err := processor.Process(ctx, g.logger, job, replicator)
-	if err != nil {
-		return nil, err
-	}
-	if status != nil {
-		dynamicClient, _, err := g.client.New(job.Namespace)
+	switch job.Spec.Action {
+	case provisioning.JobActionSync:
+		err := replicator.Sync(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+			return nil, err
 		}
-
-		// TODO: Can we use typed client for this?
-		client := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
-		unstructuredResource := &unstructured.Unstructured{}
-		jj, _ := json.Marshal(repo.Config())
-		err = json.Unmarshal(jj, &unstructuredResource.Object)
+	case provisioning.JobActionPullRequest:
+		// TODO: this interface is only for JobProcessor
+		processor, ok := repo.(repository.JobProcessor)
+		if !ok {
+			// TODO... handle sync job for everything
+			// EG, move over the "import" logic here
+			return nil, fmt.Errorf("job not supported by this worker")
+		}
+		err := processor.Process(ctx, g.logger, job, replicator)
 		if err != nil {
-			return nil, fmt.Errorf("error loading config json: %w", err)
+			return nil, err
 		}
-
-		if err := unstructured.SetNestedField(unstructuredResource.Object, status.CurrentGitCommit, "status", "currentGitCommit"); err != nil {
-			return nil, fmt.Errorf("set currentGitCommit: %w", err)
-		}
-
-		if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
-			return nil, fmt.Errorf("update repository status: %w", err)
-		}
+	default:
 	}
+
 	return &provisioning.JobStatus{
 		State: "finished", // success
 	}, nil

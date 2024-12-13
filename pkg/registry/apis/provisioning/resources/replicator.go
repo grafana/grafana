@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -65,6 +66,59 @@ type replicator struct {
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 	ignore     provisioning.IgnoreFile
+}
+
+// Sync replicates all files in the repository.
+func (r *replicator) Sync(ctx context.Context) error {
+	lastCommit := r.repository.Config().Status.CurrentGitCommit
+	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
+
+	var latest string
+	if !isVersioned || lastCommit == "" {
+		if err := r.ReplicateTree(ctx, ""); err != nil {
+			return fmt.Errorf("replicate tree: %w", err)
+		}
+	} else {
+		var err error
+		latest, err = versionedRepo.LatestRef(ctx, r.logger)
+		if err != nil {
+			return fmt.Errorf("latest ref: %w", err)
+		}
+
+		changes, err := versionedRepo.CompareFiles(ctx, r.logger, latest)
+		if err != nil {
+			return fmt.Errorf("compare files: %w", err)
+		}
+
+		if err := r.ReplicateChanges(ctx, changes); err != nil {
+			return fmt.Errorf("replicate changes: %w", err)
+		}
+	}
+
+	status := &provisioning.RepositoryStatus{
+		// TODO: rename to ref
+		CurrentGitCommit: latest,
+		// TODO: add timestamp
+	}
+
+	// TODO: Can we use typed client for this?
+	client := r.client.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+	unstructuredResource := &unstructured.Unstructured{}
+	jj, _ := json.Marshal(r.repository.Config())
+	err := json.Unmarshal(jj, &unstructuredResource.Object)
+	if err != nil {
+		return fmt.Errorf("error loading config json: %w", err)
+	}
+
+	if err := unstructured.SetNestedField(unstructuredResource.Object, status.CurrentGitCommit, "status", "currentGitCommit"); err != nil {
+		return fmt.Errorf("set currentGitCommit: %w", err)
+	}
+
+	if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update repository status: %w", err)
+	}
+
+	return nil
 }
 
 // ReplicateTree replicates all files in the repository.
