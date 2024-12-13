@@ -3,13 +3,16 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
-	"k8s.io/client-go/rest"
 )
 
 var (
@@ -26,6 +29,7 @@ func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	playlistAppProvider *playlist.PlaylistAppProvider,
+	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
@@ -40,7 +44,13 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+	providers := []app.Provider{
+		playlistAppProvider,
+	}
+	if alertingNotificationsAppProvider != nil {
+		providers = append(providers, alertingNotificationsAppProvider)
+	}
+	runner, err := runner.NewAPIGroupRunner(cfg, providers...)
 	if err != nil {
 		return nil, err
 	}
