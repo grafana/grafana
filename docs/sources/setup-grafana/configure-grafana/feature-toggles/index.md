@@ -79,6 +79,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                   | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                               | Yes                |
 | `singleTopNav`                         | Unifies the top search bar and breadcrumb bar into one                                                                                                             | Yes                |
+| `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                                                       | Yes                |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                                   |                    |
 | `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                                                | Yes                |
 | `zipkinBackendMigration`               | Enables querying Zipkin data source without the proxy                                                                                                              | Yes                |
@@ -119,7 +120,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsSAML`                 | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `azureMonitorPrometheusExemplars` | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
-| `useSessionStorageForRedirection` | Use session storage for handling the redirection after login                                                                                                                                 |
 | `reportingUseRawTimeRange`        | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 

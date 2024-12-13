@@ -1515,8 +1515,9 @@ var (
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
