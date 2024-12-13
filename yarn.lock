@@ -6522,16 +6522,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.25.0":
-  version: 3.25.0
-  resolution: "@react-types/shared@npm:3.25.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/fa31eb6153c223210c2eee46934a63b922917bcde0ee583f2cfe59675db122c10e1cbae6549b1fea4284391fdbeca6888b36e9dc797231ad4a76def01490aea5
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.26.0":
+"@react-types/shared@npm:3.26.0, @react-types/shared@npm:^3.26.0":
   version: 3.26.0
   resolution: "@react-types/shared@npm:3.26.0"
   peerDependencies:
@@ -17612,7 +17603,7 @@ __metadata:
     "@react-types/button": "npm:3.10.1"
     "@react-types/menu": "npm:3.9.13"
     "@react-types/overlays": "npm:3.8.11"
-    "@react-types/shared": "npm:3.25.0"
+    "@react-types/shared": "npm:3.26.0"
     "@reduxjs/toolkit": "npm:2.3.0"
     "@rsdoctor/webpack-plugin": "npm:^0.4.6"
     "@rtk-query/codegen-openapi": "npm:^1.2.0"
