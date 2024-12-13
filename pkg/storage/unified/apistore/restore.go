@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -58,7 +59,7 @@ func (r *restoreREST) ProducesObject(verb string) interface{} {
 }
 
 func (r *restoreREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &v0alpha1.RestoreOptions{}, true, ""
+	return nil, false, ""
 }
 
 func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -75,14 +76,13 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		body := []byte{}
-		_, err = req.Body.Read(body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			responder.Error(fmt.Errorf("unable to read request body: %s", err.Error()))
 			return
 		}
 		reqBody := &v0alpha1.RestoreOptions{}
-		fmt.Println(fmt.Sprintf("%+v", req.Body))
+		//fmt.Println(fmt.Sprintf("%+v", req.Body))
 		err = json.Unmarshal(body, &reqBody)
 		if err != nil {
 			responder.Error(fmt.Errorf("unable to unmarshal request body: %s", err.Error()))
