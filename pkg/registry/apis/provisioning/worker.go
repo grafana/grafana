@@ -20,7 +20,6 @@ var _ jobs.Worker = (*JobWorker)(nil)
 // FIXME: this is in the root package and should not be -- when we pull the processing steps out
 // of the github repo directly, we should move it to a more appropriate place
 type JobWorker struct {
-	client         *resources.ClientFactory
 	getter         RepoGetter
 	resourceClient *resources.ClientFactory
 	identities     auth.BackgroundIdentityService
