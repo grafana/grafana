@@ -1682,6 +1682,13 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
+		{
+			Name:         "unifiedHistory",
+			Description:  "Displays the navigation history so the user can navigate back to previous pages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
