@@ -425,7 +425,7 @@ export const LogsPanel = ({
             range={data.timeRange}
             timeZone={timeZone}
             rows={logRows}
-            scrollElement={scrollElement ?? undefined}
+            scrollElement={scrollElement}
             sortOrder={sortOrder}
           >
             <LogRows

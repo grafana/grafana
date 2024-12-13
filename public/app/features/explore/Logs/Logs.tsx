@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import memoizeOne from 'memoize-one';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
 import { usePrevious, useUnmount } from 'react-use';
@@ -211,8 +210,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
-  const [scrollIntoView, setScrollIntoView] = useState<((element: HTMLElement) => void) | undefined>(undefined);
-  const logsContainerRef = useRef<HTMLDivElement | undefined>(undefined);
+  const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
 
@@ -434,37 +432,26 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.eventBus]
   );
 
-  const onLogsContainerRef = useCallback(
-    (node: HTMLDivElement) => {
-      logsContainerRef.current = node;
-
-      // In theory this should be just a function passed down to LogRows but:
-      // - LogRow.componentDidMount which calls scrollIntoView is called BEFORE the logsContainerRef is set
-      // - the if check below if (logsContainerRef.current) was falsy and scrolling doesn't happen
-      // - and LogRow.scrollToLogRow marks the line as scrolled anyway (and won't perform scrolling when the ref is set)
-      // - see more details in https://github.com/facebook/react/issues/29897
-      // We can change it once LogRow is converted into a functional component
-      setScrollIntoView(() => (element: HTMLElement) => {
-        if (config.featureToggles.logsInfiniteScrolling) {
-          if (logsContainerRef.current) {
-            topLogsRef.current?.scrollIntoView();
-            logsContainerRef.current.scroll({
-              behavior: 'smooth',
-              top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-            });
-          }
-
-          return;
-        }
-        const scrollElement = props.scrollElement;
-
-        if (scrollElement) {
-          scrollElement.scroll({
+  const scrollIntoView = useCallback(
+    (element: HTMLElement) => {
+      if (config.featureToggles.logsInfiniteScrolling) {
+        if (logsContainerRef.current) {
+          topLogsRef.current?.scrollIntoView();
+          logsContainerRef.current.scroll({
             behavior: 'smooth',
-            top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
           });
         }
-      });
+
+        return;
+      }
+
+      if (props.scrollElement) {
+        props.scrollElement.scroll({
+          behavior: 'smooth',
+          top: props.scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+        });
+      }
     },
     [props.scrollElement]
   );
@@ -939,60 +926,62 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && hasData && (
+          {visualisationType === 'logs' && (
             <div
               className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
               data-testid="logRows"
-              ref={onLogsContainerRef}
+              ref={logsContainerRef}
             >
-              <InfiniteScroll
-                loading={loading}
-                loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
-                range={props.range}
-                timeZone={timeZone}
-                rows={logRows}
-                scrollElement={logsContainerRef.current}
-                sortOrder={logsSortOrder}
-                app={CoreApp.Explore}
-              >
-                <LogRows
-                  pinnedLogs={pinnedLogs}
-                  logRows={logRows}
-                  deduplicatedRows={dedupedRows}
-                  dedupStrategy={dedupStrategy}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  showContextToggle={showContextToggle}
-                  getRowContextQuery={getRowContextQuery}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  enableLogDetails={true}
-                  forceEscape={forceEscape}
-                  wrapLogMessage={wrapLogMessage}
-                  prettifyLogMessage={prettifyLogMessage}
+              {hasData && (
+                <InfiniteScroll
+                  loading={loading}
+                  loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                  range={props.range}
                   timeZone={timeZone}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  displayedFields={displayedFields}
-                  onClickShowField={showField}
-                  onClickHideField={hideField}
-                  app={CoreApp.Explore}
-                  onLogRowHover={onLogRowHover}
-                  onOpenContext={onOpenContext}
-                  onPermalinkClick={onPermalinkClick}
-                  permalinkedRowId={panelState?.logs?.id}
-                  scrollIntoView={scrollIntoView}
-                  isFilterLabelActive={props.isFilterLabelActive}
-                  containerRendered={!!logsContainerRef}
+                  rows={logRows}
                   scrollElement={logsContainerRef.current}
-                  onClickFilterString={props.onClickFilterString}
-                  onClickFilterOutString={props.onClickFilterOutString}
-                  onUnpinLine={onPinToContentOutlineClick}
-                  onPinLine={onPinToContentOutlineClick}
-                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                  renderPreview
-                />
-              </InfiniteScroll>
+                  sortOrder={logsSortOrder}
+                  app={CoreApp.Explore}
+                >
+                  <LogRows
+                    pinnedLogs={pinnedLogs}
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    getRowContextQuery={getRowContextQuery}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    forceEscape={forceEscape}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={showField}
+                    onClickHideField={hideField}
+                    app={CoreApp.Explore}
+                    onLogRowHover={onLogRowHover}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    permalinkedRowId={panelState?.logs?.id}
+                    scrollIntoView={scrollIntoView}
+                    isFilterLabelActive={props.isFilterLabelActive}
+                    containerRendered={!!logsContainerRef}
+                    scrollElement={logsContainerRef.current}
+                    onClickFilterString={props.onClickFilterString}
+                    onClickFilterOutString={props.onClickFilterOutString}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    renderPreview
+                  />
+                </InfiniteScroll>
+              )}
             </div>
           )}
           {!loading && !hasData && !scanning && (
