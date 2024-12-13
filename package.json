@@ -139,7 +139,7 @@
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.20",
     "@types/react-test-renderer": "18.3.0",
-    "@types/react-transition-group": "4.4.11",
+    "@types/react-transition-group": "4.4.12",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/react-window": "1.8.8",
     "@types/react-window-infinite-loader": "^1",
