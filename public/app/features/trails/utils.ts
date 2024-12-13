@@ -298,7 +298,7 @@ export async function callSuggestionsApi(
  * 2. When a filter is selected, we need to identify the following
  *   a. an otel resource (on target_info)
  *   b. It is not promoted as a label on metric
- *     - How to identify otel resource? Add function to make a collection
+ *     - [x] How to identify otel resource? Add function to make a collection
  *     - Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
  *     - call for list of target_info labels and list of labels minut target info
  *     - find the otel resources that do not exist in the labels
