@@ -22,18 +22,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=provisioning.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithKind("EditingOptions"):
 		return &provisioningv0alpha1.EditingOptionsApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("FileAction"):
-		return &provisioningv0alpha1.FileActionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
 		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("Job"):
-		return &provisioningv0alpha1.JobApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("JobSpec"):
-		return &provisioningv0alpha1.JobSpecApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("JobStatus"):
-		return &provisioningv0alpha1.JobStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("LocalRepositoryConfig"):
 		return &provisioningv0alpha1.LocalRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):

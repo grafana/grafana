@@ -7,7 +7,6 @@ import (
 )
 
 // The repository name and type are stored as labels
-// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Job struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -29,11 +28,11 @@ type JobList struct {
 type JobAction string
 
 const (
-	// Sync the remote branch with the grafana instance
-	JobActionSync JobAction = "sync"
-
 	// Update a pull request -- send preview images, links etc
 	JobActionPullRequest JobAction = "pr"
+
+	// Sync the remote branch with the grafana instance
+	JobActionSync JobAction = "sync"
 
 	// Export from grafana into the remote repository
 	JobActionExport JobAction = "export"
@@ -77,28 +76,6 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
-
-	// What did we do
-	Actions []FileAction `json:"actions,omitempty"`
-}
-
-type FileAction struct {
-	// add/modify/remove
-	Action string `json:"action"`
-	Path   string `json:"path,omitempty"`
-	Ref    string `json:"ref,omitempty"`
-
-	// An error/warning state
-	Error string `json:"error,omitempty"`
-
-	// Reference to the linked resource
-	Group    string `json:"group,omitempty"`
-	Version  string `json:"version,omitempty"`
-	Resource string `json:"resource,omitempty"`
-	Name     string `json:"name,omitempty"`
-
-	// When there are too many actions, a summary will be included
-	Count int `json:"count,omitempty"`
 }
 
 // Filter ignorable files

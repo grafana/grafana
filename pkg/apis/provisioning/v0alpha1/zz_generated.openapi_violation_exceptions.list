@@ -1,6 +1,5 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,HealthStatus,Message
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,HistoryItem,Authors
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,JobStatus,Actions
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,JobStatus,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,Lint

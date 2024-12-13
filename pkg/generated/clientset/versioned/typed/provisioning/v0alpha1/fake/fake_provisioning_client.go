@@ -14,10 +14,6 @@ type FakeProvisioningV0alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeProvisioningV0alpha1) Jobs(namespace string) v0alpha1.JobInterface {
-	return &FakeJobs{c, namespace}
-}
-
 func (c *FakeProvisioningV0alpha1) Repositories(namespace string) v0alpha1.RepositoryInterface {
 	return &FakeRepositories{c, namespace}
 }
