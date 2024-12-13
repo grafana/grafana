@@ -18,6 +18,10 @@ We no longer wait for the yearly major release to give you access to the next bi
 
 Having a dependable release process provides users like you with the best Grafana experience possible, and it provides the flexibility to upgrade in a manner that works best for you and your organization.
 
+{{< admonition type="note" >}}
+Grafana Cloud follows a different release cadence than Grafana OSS and Enterprise. To learn more about Cloud release channels, refer to [Rolling release channels for Grafana Cloud](https://grafana.com/docs/rolling-release/).
+{{< /admonition >}}
+
 ## What to expect from each release type
 
 We split Grafana OSS and Grafana Enterprise releases into three main categories:
@@ -30,7 +34,7 @@ You can choose your cadence: For frequent self-managed updates, you should follo
 
 ## How to find the specifics for a release
 
-We love sharing all our great features with you so you can leverage Grafana to its fullest. We also understand that great release documentation allows you to upgrade with confidence.
+We love sharing all our great features with you so you can leverage Grafana to its fullest. We also understand that complete release documentation allows you to upgrade with confidence.
 Whether it’s knowing that a bug has been fixed, seeing that a security vulnerability is patched, or understanding how to mitigate the impact of breaking changes, proper documentation allows you to make informed decisions about when to upgrade your local Grafana instances.
 
 We provide release documentation in multiple places to address different needs:
@@ -146,4 +150,10 @@ Based on your needs, you can choose your ideal upgrade strategy. Here’s what t
 | **Major / yearly (10.0 to 11.0)**         | Yearly upgrade path that still gives access to up-to-date features presented at GrafanaCON.<ul><li>Big changelog to review</li><li>High compatibility with plugins</li><li>Relatively easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul>                                                  | <ul><li>**April 2024**: 11.0 is released, you start a big changelog review</li><li>**May 2024**: You deploy 11.0 to testing</li><li>**June 2024**: You deploy 11.0 to production</li><li>**April 2025**: 12.0 is released</li></ul>                                         |
 | **Previous major / yearly (9.5 to 10.4)** | Release with extended support timeline<ul><li>Limited compatibility with actively developed plugins</li><li>Big changelog to review</li><li>Migrations to Grafana Cloud might require professional support</li></ul>                                                                                                   | <ul><li>**April 2024**: 11.0 is released, marking the previous minor (10.4.x) with extended support, you start a big changelog review (9.5.x to 10.4.x)</li><li>**May 2024**: You deploy 10.4.x to testing</li><li>**June 2024**: You deploy 10.4.x to production</li></ul> |
 
-For each strategy, you should stay informed about patch releases that fix security vulnerabilities (released monthly, plus ad-hoc releases). Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
+Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
+
+For each strategy, you should:
+- Stay informed about patch releases that fix security vulnerabilities (released monthly, plus ad-hoc releases).
+- Most [plugins](https://grafana.com/grafana/plugins/) are released separately from Grafana. Keep plugins up to date, and always [update them](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before or while updating Grafana. Before updating to a new major version of a plugin, review its breaking changes at [https://grafana.com/grafana/plugins/](https://grafana.com/grafana/plugins/).
+- Test upgrades in realistic dev and test instances. Roll back and report issues if you experience problems in dev or test.
+
