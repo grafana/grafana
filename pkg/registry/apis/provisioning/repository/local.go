@@ -105,14 +105,6 @@ func (r *localRepository) Config() *provisioning.Repository {
 
 // Validate implements provisioning.Repository.
 func (r *localRepository) Validate() (fields field.ErrorList) {
-	if r.config.Spec.Type != provisioning.LocalRepositoryType {
-		fields = append(fields, &field.Error{
-			Type:   field.ErrorTypeInvalid,
-			Field:  "spec.type",
-			Detail: "Local repository requires spec.type=local",
-		})
-	}
-
 	cfg := r.config.Spec.Local
 	if cfg == nil {
 		fields = append(fields, &field.Error{
@@ -161,7 +153,7 @@ func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provi
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("folder not found: %s", r.config.Spec.Local.Path),
+				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
 			},
 		}, nil
 	}
@@ -178,6 +170,10 @@ func (r *localRepository) validateRequest(ref string) error {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
+		_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
+		if err != nil {
+			return err
+		}
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
