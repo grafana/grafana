@@ -1271,6 +1271,21 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchCrossClusterSearch",
+        "resourceVersion": "1733848475752",
+        "creationTimestamp": "2024-12-09T13:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-10 16:34:35.752111 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables cross cluster search in the Elasticsearch datasource",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -2078,6 +2093,19 @@
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiLabelNamesQueryApi",
+        "resourceVersion": "1734096677730",
+        "creationTimestamp": "2024-12-13T13:31:17Z"
+      },
+      "spec": {
+        "description": "Defaults to using the Loki `/labels` API instead of `/series`",
+        "stage": "GA",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "true"
       }
     },
     {
@@ -3458,6 +3486,19 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedHistory",
+        "resourceVersion": "1734085219453",
+        "creationTimestamp": "2024-12-13T10:20:19Z"
+      },
+      "spec": {
+        "description": "Displays the navigation history so the user can navigate back to previous pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     },
     {
