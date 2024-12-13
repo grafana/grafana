@@ -199,7 +199,7 @@ appSidecar,experimental,@grafana/grafana-frontend-platform,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
-useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
+useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
