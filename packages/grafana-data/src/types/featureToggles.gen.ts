@@ -243,4 +243,5 @@ export interface FeatureToggles {
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
+  unifiedHistory?: boolean;
 }

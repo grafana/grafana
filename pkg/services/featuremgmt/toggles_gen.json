@@ -3465,6 +3465,19 @@
     },
     {
       "metadata": {
+        "name": "unifiedHistory",
+        "resourceVersion": "1734085219453",
+        "creationTimestamp": "2024-12-13T10:20:19Z"
+      },
+      "spec": {
+        "description": "Displays the navigation history so the user can navigate back to previous pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1731688509416",
         "creationTimestamp": "2023-03-31T13:38:09Z",
