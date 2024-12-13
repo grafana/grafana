@@ -592,5 +592,7 @@ func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
 	if req.Query == "" || req.Query == "*" {
 		return bleve.NewMatchAllQuery()
 	}
-	return bleve.NewMatchQuery(req.Query)
+	// TODO: wildcard query?
+	// return bleve.NewWildcardQuery(req.Query)
+	return bleve.NewFuzzyQuery(req.Query)
 }
