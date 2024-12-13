@@ -93,21 +93,17 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 func (s *KeeperRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
-
 	// TODO: How to define this function? perhaps would be useful to keep all validation here.
 	createValidation rest.ValidateObjectFunc,
-
 	// TODO: How can we use these options? Looks useful. `dryRun` for dev as well.
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	fmt.Println("KeeperRest.Create")
-	fmt.Println(obj)
-
 	kp, ok := obj.(*secretv0alpha1.Keeper)
 	if !ok {
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
 
+	// Make sure only one type of keeper is configured
 	err := checkKeeperType(kp, true)
 	if err != nil {
 		return nil, err
