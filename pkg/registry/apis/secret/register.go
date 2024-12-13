@@ -22,16 +22,18 @@ var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
 
 type SecretAPIBuilder struct {
 	secureValueStorage secretstorage.SecureValueStorage
+	keeperStorage      secretstorage.KeeperStorage
 }
 
-func NewSecretAPIBuilder(secureValueStorage secretstorage.SecureValueStorage) *SecretAPIBuilder {
-	return &SecretAPIBuilder{secureValueStorage}
+func NewSecretAPIBuilder(secureValueStorage secretstorage.SecureValueStorage, keeperStorage secretstorage.KeeperStorage) *SecretAPIBuilder {
+	return &SecretAPIBuilder{secureValueStorage, keeperStorage}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	secureValueStorage secretstorage.SecureValueStorage,
+	keeperStorage secretstorage.KeeperStorage,
 ) *SecretAPIBuilder {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -39,7 +41,7 @@ func RegisterAPIService(
 		return nil
 	}
 
-	builder := NewSecretAPIBuilder(secureValueStorage)
+	builder := NewSecretAPIBuilder(secureValueStorage, keeperStorage)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -86,7 +88,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueStorage, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperStorage, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = secureRestStorage

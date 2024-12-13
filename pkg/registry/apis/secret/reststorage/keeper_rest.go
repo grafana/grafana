@@ -2,13 +2,19 @@ package reststorage
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -24,13 +30,14 @@ var (
 
 // KeeperRest is an implementation of CRUDL operations on a `keeper` backed by TODO.
 type KeeperRest struct {
+	storage        secretstorage.KeeperStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(resource utils.ResourceInfo) *KeeperRest {
-	return &KeeperRest{resource, resource.TableConverter()}
+func NewKeeperRest(storage secretstorage.KeeperStorage, resource utils.ResourceInfo) *KeeperRest {
+	return &KeeperRest{storage, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*Keeper` that is used by the `Create` method.
@@ -67,10 +74,19 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 	return nil, nil
 }
 
-// Get calls the inner `store` (persistence) and returns a `Keeper` by `name`. It will NOT return the decrypted `value`.
+// Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.
 func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// TODO: implement me
-	return nil, nil
+	namespace := request.NamespaceValue(ctx)
+
+	kp, err := s.storage.Read(ctx, namespace, name)
+	if err == nil {
+		if errors.Is(err, secretstorage.ErrKeeperNotFound) {
+			return nil, s.resource.NewNotFound(name)
+		}
+		return nil, fmt.Errorf("failed to read keeper: %w", err)
+	}
+
+	return kp, nil
 }
 
 // Create a new `Keeper`. Does some validation and allows empty `name` (generated).
@@ -84,8 +100,40 @@ func (s *KeeperRest) Create(
 	// TODO: How can we use these options? Looks useful. `dryRun` for dev as well.
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	// TODO: implement creation in storage
-	return nil, nil
+	fmt.Println("KeeperRest.Create")
+	fmt.Println(obj)
+
+	kp, ok := obj.(*secretv0alpha1.Keeper)
+	if !ok {
+		return nil, fmt.Errorf("expected Keeper for create")
+	}
+
+	err := checkKeeperType(kp, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// A `keeper` may be created without a `name`, which means it gets generated on-the-fly.
+	if kp.Name == "" {
+		// TODO: how can we make sure there are no conflicts with existing resources?
+		generatedName, err := util.GetRandomString(8)
+		if err != nil {
+			return nil, err
+		}
+
+		optionalPrefix := kp.GenerateName
+		if optionalPrefix == "" {
+			optionalPrefix = "kp-"
+		}
+		kp.Name = optionalPrefix + generatedName
+	}
+
+	createdKeeper, err := s.storage.Create(ctx, kp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create keeper: %w", err)
+	}
+
+	return createdKeeper, nil
 }
 
 // Update a `Keeper`'s `value`. The second return parameter indicates whether the resource was newly created.
@@ -114,4 +162,25 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 
 	// TODO: implement delete in storage
 	return nil, false, nil
+}
+
+func checkKeeperType(s *secretv0alpha1.Keeper, mustExist bool) error {
+	sqlK := s.Spec.SQL
+	awsK := s.Spec.AWS
+	azureK := s.Spec.Azure
+	gcpK := s.Spec.GCP
+	hashiCorpK := s.Spec.HashiCorp
+
+	if sqlK == nil && awsK == nil && azureK == nil && gcpK == nil && hashiCorpK == nil {
+		if mustExist {
+			return fmt.Errorf("expecting keeper type to exist")
+		}
+		return nil
+	}
+	// TODO: compare with all other types
+	if sqlK != nil && awsK != nil {
+		return fmt.Errorf("only sql *or* aws may be configured at the same time")
+	}
+
+	return nil
 }
