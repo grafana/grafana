@@ -7,13 +7,17 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	receiverv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
-	routingtreev0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
-	templategroupv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
-	timeintervalv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 )
 
 func New(cfg app.Config) (app.App, error) {
+	managedKinds := make([]simple.AppManagedKind, 0)
+	for _, kinds := range apis.GetKinds() {
+		for _, kind := range kinds {
+			managedKinds = append(managedKinds, simple.AppManagedKind{Kind: kind})
+		}
+	}
+
 	c := simple.AppConfig{
 		Name:       "alerting.notification",
 		KubeConfig: cfg.KubeConfig,
@@ -22,20 +26,7 @@ func New(cfg app.Config) (app.App, error) {
 				logging.DefaultLogger.With("error", err).Error("Informer processing error")
 			},
 		},
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: receiverv0alpha1.Kind(),
-			},
-			{
-				Kind: routingtreev0alpha1.Kind(),
-			},
-			{
-				Kind: timeintervalv0alpha1.Kind(),
-			},
-			{
-				Kind: templategroupv0alpha1.Kind(),
-			},
-		},
+		ManagedKinds: managedKinds,
 	}
 
 	a, err := simple.NewApp(c)
