@@ -186,6 +186,12 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		b.logger.With("worker", "github"),
 		provisioning.IncludeYamlOrJSON,
 	))
+	b.jobs.Register(&exportWorker{
+		getter:         b,
+		logger:         b.logger.With("worker", "export"),
+		resourceClient: b.client,
+		identities:     b.identities,
+	})
 
 	repositoryStorage.AfterCreate = b.afterCreate
 	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
@@ -227,8 +233,8 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
-		client:     b.client,
 		logger:     b.logger.With("connector", "export"),
+		queue:      b.jobs,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil

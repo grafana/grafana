@@ -117,6 +117,7 @@ func (s *jobStore) drainPending() {
 		if job == nil {
 			return // done
 		}
+		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 
 		var status *provisioning.JobStatus
 		if s.worker == nil {
@@ -129,7 +130,7 @@ func (s *jobStore) drainPending() {
 		} else {
 			status, err = s.worker.Process(ctx, *job)
 			if err != nil {
-				s.logger.Error("error processing job", "job", job.Name, "error", err)
+				logger.ErrorContext(ctx, "error processing job", "error", err)
 				status = &provisioning.JobStatus{
 					State:  provisioning.JobStateError,
 					Errors: []string{err.Error()},
@@ -137,12 +138,14 @@ func (s *jobStore) drainPending() {
 			} else if status.State == "" {
 				status.State = provisioning.JobStateFinished
 			}
+			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
-			s.logger.Error("error running job", "job", job.Name, "error", err)
+			logger.ErrorContext(ctx, "error running job", "error", err)
 		}
+		logger.DebugContext(ctx, "job has been fully completed")
 	}
 }
 
