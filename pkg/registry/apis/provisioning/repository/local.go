@@ -153,7 +153,7 @@ func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provi
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []string{
-				fmt.Sprintf("folder not found: %s", r.config.Spec.Local.Path),
+				fmt.Sprintf("directory not found: %s", r.config.Spec.Local.Path),
 			},
 		}, nil
 	}
