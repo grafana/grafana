@@ -953,24 +953,20 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
           }
         },
         "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ResourceWrapper"
-        }
+        "x-kubernetes-group-version-kind": { "group": "provisioning.grafana.app", "version": "v0alpha1", "kind": "Job" }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceWrapper",
+          "description": "name of the Job",
           "required": true,
           "schema": { "type": "string", "uniqueItems": true }
         },
@@ -1379,60 +1375,6 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/import": {
-      "post": {
-        "tags": ["Repository"],
-        "description": "connect POST requests to import of Repository",
-        "operationId": "connectPostNamespacedRepositoryImport",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": { "type": "string" },
-            "examples": {
-              "": { "summary": "The default" },
-              "branch": { "summary": "Select branch", "value": "my-branch" },
-              "commit": { "summary": "Commit hash (or prefix)", "value": "7f7cc2153" }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ResourceWrapper"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the ResourceWrapper",
-          "required": true,
-          "schema": { "type": "string", "uniqueItems": true }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": { "type": "string", "uniqueItems": true }
-        }
-      ]
-    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": ["Repository"],
@@ -1669,6 +1611,43 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/sync": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to sync of Repository",
+        "operationId": "connectPostNamespacedRepositorySync",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": { "group": "provisioning.grafana.app", "version": "v0alpha1", "kind": "Job" }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Job",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/test": {
       "post": {
         "tags": ["Repository"],
@@ -1678,6 +1657,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
                 "type": "object",
                 "properties": {
                   "apiVersion": {
@@ -2565,39 +2545,6 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.CommitInfo": {
-        "type": "object",
-        "properties": {
-          "added": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileRef" }
-              ]
-            }
-          },
-          "modified": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileRef" }
-              ]
-            }
-          },
-          "removed": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileRef" }
-              ]
-            }
-          },
-          "sha1": { "type": "string" }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.EditingOptions": {
         "type": "object",
         "required": ["create", "update", "delete"],
@@ -2618,11 +2565,6 @@
             "default": false
           }
         }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileRef": {
-        "type": "object",
-        "required": ["ref", "path"],
-        "properties": { "path": { "type": "string", "default": "" }, "ref": { "type": "string", "default": "" } }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
@@ -2659,6 +2601,23 @@
           "webhookURL": {
             "description": "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus": {
+        "type": "object",
+        "required": ["healthy"],
+        "properties": {
+          "checked": { "description": "When the sync job started", "type": "integer", "format": "int64" },
+          "healthy": {
+            "description": "When not healthy, requests will not be executed",
+            "type": "boolean",
+            "default": false
+          },
+          "message": {
+            "description": "Summary messages (will be shown to users)",
+            "type": "array",
+            "items": { "type": "string", "default": "" }
           }
         }
       },
@@ -2731,20 +2690,10 @@
         "required": ["action"],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"merge\"` Merge the remote branch with the grafana instance\n - `\"pr\"` Update a pull request -- send preview images, links etc",
+            "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
             "type": "string",
             "default": "",
-            "enum": ["export", "merge", "pr"]
-          },
-          "commits": {
-            "description": "When we know the commits, these will be passed along",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.CommitInfo" }
-              ]
-            }
+            "enum": ["export", "pr", "sync"]
           },
           "hash": { "type": "string" },
           "pr": { "description": "Pull request number (when appropriate)", "type": "integer", "format": "int32" },
@@ -2786,6 +2735,7 @@
         "properties": { "path": { "type": "string" } }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository": {
+        "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -2911,10 +2861,21 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryStatus": {
         "description": "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
         "type": "object",
+        "required": ["health", "sync"],
         "properties": {
-          "currentGitCommit": {
-            "description": "The Git commit we're currently synced to. A non-empty value only matters if we use a git storage backend. Useful for no-clone Git clients and if cloning Git clients ever lose their clones.",
-            "type": "string"
+          "health": {
+            "description": "This will get updated with the current health status (and updated periodically)",
+            "default": {},
+            "allOf": [
+              { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus" }
+            ]
+          },
+          "sync": {
+            "description": "Sync information",
+            "default": {},
+            "allOf": [
+              { "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus" }
+            ]
           }
         }
       },
@@ -3027,6 +2988,28 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig": {
         "type": "object",
         "properties": { "bucket": { "type": "string" }, "region": { "type": "string" } }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus": {
+        "type": "object",
+        "required": ["state"],
+        "properties": {
+          "finished": { "description": "When the sync job finished", "type": "integer", "format": "int64" },
+          "hash": { "description": "The repository hash when the last sync ran", "type": "string" },
+          "job": { "description": "The ID for the job that ran this sync", "type": "string" },
+          "message": {
+            "description": "Summary messages (will be shown to users)",
+            "type": "array",
+            "items": { "type": "string", "default": "" }
+          },
+          "scheduled": { "description": "When the next sync check is scheduled", "type": "integer", "format": "int64" },
+          "started": { "description": "When the sync job started", "type": "integer", "format": "int64" },
+          "state": {
+            "description": "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+            "type": "string",
+            "default": "",
+            "enum": ["error", "pending", "success", "working"]
+          }
+        }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.TestResults": {
         "description": "HistoryList is a list of versions of a resource",
@@ -3273,6 +3256,7 @@
           { "group": "policy", "kind": "DeleteOptions", "version": "v1beta1" },
           { "group": "postgresql.datasource.grafana.app", "kind": "DeleteOptions", "version": "v0alpha1" },
           { "group": "prometheus.datasource.grafana.app", "kind": "DeleteOptions", "version": "v0alpha1" },
+          { "group": "provisioning.grafana.app", "kind": "DeleteOptions", "version": "v0alpha1" },
           { "group": "pyroscope.datasource.grafana.app", "kind": "DeleteOptions", "version": "v0alpha1" },
           { "group": "query.grafana.app", "kind": "DeleteOptions", "version": "v0alpha1" },
           { "group": "rbac.authorization.k8s.io", "kind": "DeleteOptions", "version": "v1" },
@@ -3702,6 +3686,7 @@
           { "group": "policy", "kind": "WatchEvent", "version": "v1beta1" },
           { "group": "postgresql.datasource.grafana.app", "kind": "WatchEvent", "version": "v0alpha1" },
           { "group": "prometheus.datasource.grafana.app", "kind": "WatchEvent", "version": "v0alpha1" },
+          { "group": "provisioning.grafana.app", "kind": "WatchEvent", "version": "v0alpha1" },
           { "group": "pyroscope.datasource.grafana.app", "kind": "WatchEvent", "version": "v0alpha1" },
           { "group": "query.grafana.app", "kind": "WatchEvent", "version": "v0alpha1" },
           { "group": "rbac.authorization.k8s.io", "kind": "WatchEvent", "version": "v1" },

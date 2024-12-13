@@ -180,16 +180,6 @@ const injectedRtkApi = api.injectEndpoints({
         params: { ref: queryArg.ref },
       }),
     }),
-    connectPostNamespacedRepositoryImport: build.mutation<
-      ConnectPostNamespacedRepositoryImportResponse,
-      ConnectPostNamespacedRepositoryImportArg
-    >({
-      query: (queryArg) => ({
-        url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/import`,
-        method: 'POST',
-        params: { ref: queryArg.ref },
-      }),
-    }),
     readNamespacedRepositoryStatus: build.query<
       ReadNamespacedRepositoryStatusResponse,
       ReadNamespacedRepositoryStatusArg
@@ -230,6 +220,15 @@ const injectedRtkApi = api.injectEndpoints({
           fieldValidation: queryArg.fieldValidation,
           force: queryArg.force,
         },
+      }),
+    }),
+    connectPostNamespacedRepositorySync: build.mutation<
+      ConnectPostNamespacedRepositorySyncResponse,
+      ConnectPostNamespacedRepositorySyncArg
+    >({
+      query: (queryArg) => ({
+        url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/sync`,
+        method: 'POST',
       }),
     }),
     connectPostNamespacedRepositoryTest: build.mutation<
@@ -453,9 +452,9 @@ export type PatchNamespacedRepositoryArg = {
   ioK8SApimachineryPkgApisMetaV1Patch: IoK8SApimachineryPkgApisMetaV1Patch;
 };
 export type ConnectPostNamespacedRepositoryExportResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
+  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
 export type ConnectPostNamespacedRepositoryExportArg = {
-  /** name of the ResourceWrapper */
+  /** name of the Job */
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -557,16 +556,6 @@ export type ConnectGetNamespacedRepositoryHistoryWithPathArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ConnectPostNamespacedRepositoryImportResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
-export type ConnectPostNamespacedRepositoryImportArg = {
-  /** name of the ResourceWrapper */
-  name: string;
-  /** object name and auth scope, such as for teams and projects */
-  namespace: string;
-  /** branch or commit hash */
-  ref?: string;
-};
 export type ReadNamespacedRepositoryStatusResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
 export type ReadNamespacedRepositoryStatusArg = {
@@ -614,6 +603,14 @@ export type PatchNamespacedRepositoryStatusArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   ioK8SApimachineryPkgApisMetaV1Patch: IoK8SApimachineryPkgApisMetaV1Patch;
+};
+export type ConnectPostNamespacedRepositorySyncResponse =
+  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
+export type ConnectPostNamespacedRepositorySyncArg = {
+  /** name of the Job */
+  name: string;
+  /** object name and auth scope, such as for teams and projects */
+  namespace: string;
 };
 export type ConnectPostNamespacedRepositoryTestResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1TestResults;
@@ -730,24 +727,12 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1FileRef = {
-  path: string;
-  ref: string;
-};
-export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1CommitInfo = {
-  added?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1FileRef[];
-  modified?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1FileRef[];
-  removed?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1FileRef[];
-  sha1?: string;
-};
 export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1JobSpec = {
   /** Possible enum values:
      - `"export"` Export from grafana into the remote repository
-     - `"merge"` Merge the remote branch with the grafana instance
-     - `"pr"` Update a pull request -- send preview images, links etc */
-  action: 'export' | 'merge' | 'pr';
-  /** When we know the commits, these will be passed along */
-  commits?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1CommitInfo[];
+     - `"pr"` Update a pull request -- send preview images, links etc
+     - `"sync"` Sync the remote branch with the grafana instance */
+  action: 'export' | 'pr' | 'sync';
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -857,9 +842,41 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1RepositorySpec = {
      - `"s3"` */
   type: 'github' | 'local' | 's3';
 };
+export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1HealthStatus = {
+  /** When the sync job started */
+  checked?: number;
+  /** When not healthy, requests will not be executed */
+  healthy: boolean;
+  /** Summary messages (will be shown to users) */
+  message?: string[];
+};
+export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncStatus = {
+  /** When the sync job finished */
+  finished?: number;
+  /** The repository hash when the last sync ran */
+  hash?: string;
+  /** The ID for the job that ran this sync */
+  job?: string;
+  /** Summary messages (will be shown to users) */
+  message?: string[];
+  /** When the next sync check is scheduled */
+  scheduled?: number;
+  /** When the sync job started */
+  started?: number;
+  /** pending, running, success, error
+    
+    Possible enum values:
+     - `"error"` Finished with errors
+     - `"pending"` Job has been submitted, but not processed yet
+     - `"success"` Finished with success
+     - `"working"` The job is running */
+  state: 'error' | 'pending' | 'success' | 'working';
+};
 export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1RepositoryStatus = {
-  /** The Git commit we're currently synced to. A non-empty value only matters if we use a git storage backend. Useful for no-clone Git clients and if cloning Git clients ever lose their clones. */
-  currentGitCommit?: string;
+  /** This will get updated with the current health status (and updated periodically) */
+  health: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1HealthStatus;
+  /** Sync information */
+  sync: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncStatus;
 };
 export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1053,10 +1070,10 @@ export const {
   useConnectDeleteNamespacedRepositoryFilesWithPathMutation,
   useConnectGetNamespacedRepositoryHistoryQuery,
   useConnectGetNamespacedRepositoryHistoryWithPathQuery,
-  useConnectPostNamespacedRepositoryImportMutation,
   useReadNamespacedRepositoryStatusQuery,
   useReplaceNamespacedRepositoryStatusMutation,
   usePatchNamespacedRepositoryStatusMutation,
+  useConnectPostNamespacedRepositorySyncMutation,
   useConnectPostNamespacedRepositoryTestMutation,
   useConnectGetNamespacedRepositoryWebhookQuery,
   useConnectPostNamespacedRepositoryWebhookMutation,
