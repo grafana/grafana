@@ -339,6 +339,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
       displayedFields = Object.values(panelState?.logs?.displayedFields);
     }
+    setDisplayedFields(displayedFields);
   }, [panelState?.logs?.displayedFields]);
 
   useEffect(() => {
