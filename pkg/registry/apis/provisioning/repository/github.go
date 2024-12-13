@@ -632,7 +632,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 		default:
 			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
-
 	}
 
 	return changes, nil
