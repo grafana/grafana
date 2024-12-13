@@ -93,12 +93,12 @@ func (s *keeperStorage) Read(ctx context.Context, namespace string, name string)
 // 	return nil, nil
 // }
 
-// func (s *keeperStorage) Delete(ctx context.Context, namespace string, name string) (*Keeper, bool, error) {
+// func (s *keeperStorage) Delete(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, bool, error) {
 // 	// TODO: implement
 // 	return nil, false, nil
 // }
 
-// func (s *keeperStorage) List(ctx context.Context, ns string, options *internalversion.ListOptions) (*Keeper, error) {
+// func (s *keeperStorage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.Keeper, error) {
 // 	// TODO: implement
 // 	return nil, nil
 // }

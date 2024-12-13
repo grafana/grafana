@@ -167,46 +167,9 @@ func toRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		UpdatedBy:   meta.GetUpdatedBy(),
 
 		Title: sv.Spec.Title,
-		// TODO: SQL/GCP etc
+
+		// TODO: Add these fields
+		Type:    "todo-type",
+		Payload: "todo-payload",
 	}, nil
 }
-
-// // Convert everything from row structure to k8s representation.
-// func (keeper *Keeper) toK8s() (*secret.Keeper, error) {
-// 	val := &secret.Keeper{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:              keeper.Name,
-// 			Namespace:         keeper.Namespace,
-// 			UID:               types.UID(keeper.GUID),
-// 			CreationTimestamp: metav1.NewTime(time.UnixMilli(keeper.Created).UTC()),
-// 			Labels:            make(map[string]string),
-// 		},
-// 		Spec: secret.KeeperSpec{
-// 			Title: keeper.Title,
-// 		},
-// 	}
-
-// 	// TODO: Do we need to clean the annotations here just in case?
-// 	if keeper.Annotations != "" {
-// 		err := json.Unmarshal([]byte(keeper.Annotations), &val.Annotations)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-// 	if keeper.Labels != "" {
-// 		err := json.Unmarshal([]byte(keeper.Labels), &val.Labels)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// 	meta, err := utils.MetaAccessor(val)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	meta.SetCreatedBy(keeper.CreatedBy)
-// 	meta.SetUpdatedBy(keeper.UpdatedBy)
-// 	meta.SetUpdatedTimestampMillis(keeper.Updated)
-// 	meta.SetResourceVersionInt64(keeper.Updated) // yes millis RV
-// 	return val, nil
-// }
