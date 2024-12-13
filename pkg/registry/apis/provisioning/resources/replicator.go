@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
+	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,13 +26,15 @@ type ReplicatorFactory struct {
 	repo    repository.Repository
 	parsers *ParserFactory
 	ignore  provisioning.IgnoreFile
+	logger  *slog.Logger
 }
 
-func NewReplicatorFactory(repo repository.Repository, parsers *ParserFactory, ignore provisioning.IgnoreFile) *ReplicatorFactory {
+func NewReplicatorFactory(repo repository.Repository, parsers *ParserFactory, ignore provisioning.IgnoreFile, logger *slog.Logger) *ReplicatorFactory {
 	return &ReplicatorFactory{
 		parsers: parsers,
 		repo:    repo,
 		ignore:  ignore,
+		logger:  logger,
 	}
 }
 
@@ -48,7 +52,7 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 	})
 
 	return &replicator{
-		logger:     slog.Default().With("logger", "replicator", "namespace", f.repo.Config().Namespace),
+		logger:     f.logger,
 		parser:     parser,
 		client:     dynamicClient,
 		folders:    folders,
@@ -321,4 +325,174 @@ func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 	}
 
 	return file, nil
+}
+
+func (r *replicator) Export(ctx context.Context) error {
+	logger := r.logger
+	dashboardIface := r.client.Resource(schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v2alpha1",
+		Resource: "dashboards",
+	})
+
+	// TODO: handle pagination
+	folders, err := r.fetchRepoFolderTree(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list folders: %w", err)
+	}
+
+	// TODO: handle pagination
+	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to list dashboards: %w", err)
+	}
+
+	for _, item := range dashboardList.Items {
+		if ctx.Err() != nil {
+			logger.DebugContext(ctx, "cancelling replication process due to ctx error", "error", err)
+			return ctx.Err()
+		}
+
+		name := item.GetName()
+		logger := logger.With("item", name)
+		ns := r.repository.Config().GetNamespace()
+		if item.GetNamespace() != ns {
+			logger.DebugContext(ctx, "skipping dashboard item due to mismatching namespace", "got", ns)
+			continue
+		}
+
+		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
+		logger = logger.With("folder", folder)
+		if !folders.In(folder) {
+			logger.DebugContext(ctx, "folder of item was not in tree of repository")
+			continue
+		}
+
+		delete(item.Object, "metadata")
+		marshalledBody, baseFileName, err := r.marshalPreferredFormat(item.Object, name, r.repository)
+		if err != nil {
+			return fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
+		}
+		fileName := filepath.Join(folders.DirPath(folder), baseFileName)
+		logger = logger.With("file_name", fileName)
+		if logger.Enabled(ctx, slog.LevelDebug) {
+			bodyStr := string(marshalledBody)
+			logger.DebugContext(ctx, "got marshalled body for item", "body", bodyStr)
+		}
+
+		var ref string
+		if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
+			ref = r.repository.Config().Spec.GitHub.Branch
+		}
+		logger = logger.With("ref", ref)
+
+		_, err = r.repository.Read(ctx, r.logger, fileName, ref)
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			logger.ErrorContext(ctx, "failed to check if file exists before writing", "error", err)
+			return fmt.Errorf("failed to check if file exists before writing: %w", err)
+		} else if err != nil { // ErrFileNotFound
+			err = r.repository.Create(ctx, r.logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+		} else {
+			err = r.repository.Update(ctx, r.logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+		}
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to write a file in repository", "error", err)
+			return fmt.Errorf("failed to write file in repo: %w", err)
+		}
+		logger.DebugContext(ctx, "successfully exported item")
+	}
+
+	return nil
+}
+
+type folderTree struct {
+	tree       map[string]string
+	repoFolder string
+}
+
+func (t *folderTree) In(folder string) bool {
+	_, ok := t.tree[folder]
+	return ok
+}
+
+// DirPath creates the path to the directory with slashes.
+// The repository folder is not included in the path.
+// If In(folder) is false, this will panic, because it would be undefined behaviour.
+func (t *folderTree) DirPath(folder string) string {
+	if folder == t.repoFolder {
+		return ""
+	}
+	if !t.In(folder) {
+		panic("undefined behaviour")
+	}
+
+	dirPath := folder
+	parent := t.tree[folder]
+	for parent != "" && parent != t.repoFolder {
+		dirPath = path.Join(parent, dirPath)
+		parent = t.tree[parent]
+	}
+	// Not using Clean here is intentional. We don't want `.` or similar.
+	return dirPath
+}
+
+func (r *replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {
+	iface := r.client.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
+	})
+
+	// TODO: handle pagination
+	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	folders := make(map[string]string, len(rawFolders.Items))
+	for _, rf := range rawFolders.Items {
+		name := rf.GetName()
+		// TODO: Can I use MetaAccessor here?
+		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
+		folders[name] = parent
+	}
+
+	// folders now includes a map[folder name]parent name
+	// The top-most folder has a parent of "". Any folders below have parent refs.
+	// We want to find only folders which are or start in repoFolder.
+	repoFolder := r.repository.Config().Spec.Folder
+	for folder, parent := range folders {
+		if folder == repoFolder {
+			continue
+		}
+
+		hasRepoRoot := false
+		for parent != "" {
+			if parent == repoFolder {
+				hasRepoRoot = true
+				break
+			}
+			parent = folders[parent]
+		}
+		if !hasRepoRoot {
+			delete(folders, folder)
+		}
+	}
+
+	// folders now only includes the tree of the repoFolder.
+
+	return &folderTree{
+		tree:       folders,
+		repoFolder: repoFolder,
+	}, nil
+}
+
+func (*replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
+	if repo.Config().Spec.PreferYAML {
+		body, err = yaml.Marshal(obj)
+		return body, name + ".yaml", err
+	} else {
+		body, err := json.MarshalIndent(obj, "", "    ")
+		return body, name + ".json", err
+	}
 }
