@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -93,6 +94,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
+		&v0alpha1.RestoreOptions{},
 	)
 	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
 	return nil

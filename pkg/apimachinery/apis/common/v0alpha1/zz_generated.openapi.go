@@ -16,6 +16,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference": schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.RestoreOptions":  schema_apimachinery_apis_common_v0alpha1_RestoreOptions(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":    Unstructured{}.OpenAPIDefinition(),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                    schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                schema_pkg_apis_meta_v1_APIGroupList(ref),
@@ -113,6 +114,41 @@ func schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref common.Referen
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_apimachinery_apis_common_v0alpha1_RestoreOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Note: this is currently defined in dashboards, as we only register the subresource to dashboards. But restore is implemented generically in unistore, so if we start to use this on new resources, this should be instead defined in a common package.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resourceVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"resourceVersion"},
 			},
 		},
 	}

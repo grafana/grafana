@@ -2,6 +2,7 @@ package apistore
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -56,7 +58,7 @@ func (r *restoreREST) ProducesObject(verb string) interface{} {
 }
 
 func (r *restoreREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+	return &v0alpha1.RestoreOptions{}, true, ""
 }
 
 func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -73,23 +75,34 @@ func (r *restoreREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		query := req.URL.Query()
-		res := query.Get("resourceVersion")
-		rv, err := strconv.ParseInt(res, 10, 64)
-		if err != nil || rv == 0 {
-			responder.Error(fmt.Errorf("invalid resourceVersion: %s", res))
+		body := []byte{}
+		_, err = req.Body.Read(body)
+		if err != nil {
+			responder.Error(fmt.Errorf("unable to read request body: %s", err.Error()))
+			return
+		}
+		reqBody := &v0alpha1.RestoreOptions{}
+		fmt.Println(fmt.Sprintf("%+v", req.Body))
+		err = json.Unmarshal(body, &reqBody)
+		if err != nil {
+			responder.Error(fmt.Errorf("unable to unmarshal request body: %s", err.Error()))
+			return
+		}
+
+		if reqBody.ResourceVersion == 0 {
+			responder.Error(fmt.Errorf("resource verison required"))
 			return
 		}
 
 		rsp, err := r.unified.Restore(ctx, &resource.RestoreRequest{
-			ResourceVersion: rv,
+			ResourceVersion: reqBody.ResourceVersion,
 			Key:             key,
 		})
 		if err != nil {
 			responder.Error(err)
 			return
 		} else if rsp == nil || (rsp.Error != nil && rsp.Error.Code == http.StatusNotFound) {
-			responder.Error(storage.NewKeyNotFoundError(uid, rv))
+			responder.Error(storage.NewKeyNotFoundError(uid, reqBody.ResourceVersion))
 			return
 		} else if rsp.Error != nil {
 			responder.Error(fmt.Errorf("could not re-create object: %s", rsp.Error.Message))
