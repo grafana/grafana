@@ -866,6 +866,7 @@ steps:
   depends_on:
   - grafana-server
   - build-test-plugins
+  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -2288,6 +2289,7 @@ steps:
   depends_on:
   - grafana-server
   - build-test-plugins
+  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -5577,8 +5579,3 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
----
-kind: signature
-hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
-
-...
