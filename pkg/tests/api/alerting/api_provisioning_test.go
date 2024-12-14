@@ -815,8 +815,6 @@ func createTestRequest(method string, url string, user string, body string) *htt
 }
 
 func TestIntegrationExportFileProvision(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
-
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
