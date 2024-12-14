@@ -79,7 +79,8 @@ export const getContentItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field) => true
+  fieldFilter = (field: Field) => true,
+  valueFilter = (value: string) => true
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -139,16 +140,20 @@ export const getContentItems = (
       colorPlacement = ColorPlacement.trailing;
     }
 
-    rows.push({
-      label: field.state?.displayName ?? field.name,
-      value: formattedValueToString(display),
-      color: display.color ?? FALLBACK_COLOR,
-      colorIndicator,
-      colorPlacement,
-      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
-      numeric,
-      lineStyle: field.config.custom?.lineStyle,
-    });
+    const value = formattedValueToString(display);
+
+    if (valueFilter(value)) {
+      rows.push({
+        label: field.state?.displayName ?? field.name,
+        value: formattedValueToString(display),
+        color: display.color ?? FALLBACK_COLOR,
+        colorIndicator,
+        colorPlacement,
+        isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+        numeric,
+        lineStyle: field.config.custom?.lineStyle,
+      });
+    }
   }
 
   if (sortOrder !== SortOrder.None && rows.length > 1) {

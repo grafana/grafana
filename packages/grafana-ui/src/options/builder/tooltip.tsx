@@ -44,6 +44,13 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         options: sortOptions,
       },
+    })
+    .addBooleanSwitch({
+      path: 'tooltip.hideZeros',
+      name: 'Hide zeroes',
+      category,
+      defaultValue: false,
+      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 
   if (setProximity) {

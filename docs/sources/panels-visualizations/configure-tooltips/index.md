@@ -128,6 +128,10 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
 
+### Hide zeros
+
+When you set the **Tooltip mode** to **All**, you can set if you would like to hide 0 values from the list of series.
+
 ### Hover proximity
 
 Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
