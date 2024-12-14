@@ -629,18 +629,6 @@ func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettings
 	for j := range ns.GroupBy {
 		ns.GroupBy[j] = addEscapeCharactersToString(ns.GroupBy[j])
 	}
-	if ns.GroupWait != nil {
-		escapedGroupWait := addEscapeCharactersToString(*ns.GroupWait)
-		ns.GroupWait = &escapedGroupWait
-	}
-	if ns.GroupInterval != nil {
-		escapedGroupInterval := addEscapeCharactersToString(*ns.GroupInterval)
-		ns.GroupInterval = &escapedGroupInterval
-	}
-	if ns.RepeatInterval != nil {
-		escapedRepeatInterval := addEscapeCharactersToString(*ns.RepeatInterval)
-		ns.RepeatInterval = &escapedRepeatInterval
-	}
 	for k := range ns.MuteTimeIntervals {
 		ns.MuteTimeIntervals[k] = addEscapeCharactersToString(ns.MuteTimeIntervals[k])
 	}
