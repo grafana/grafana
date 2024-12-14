@@ -51,6 +51,14 @@ func TestFilterAndAppendItem(t *testing.T) {
 			ParentParam:     "ParentNumberOne",
 			ExpectedMatches: 0,
 		},
+		{
+			Description:     "matching parent and param with dash",
+			ParentName:      "m",
+			Title:           "mimir-dev-11",
+			QueryParam:      `mimir\-`,
+			ParentParam:     "m",
+			ExpectedMatches: 1,
+		},
 	}
 
 	for _, tc := range tcs {

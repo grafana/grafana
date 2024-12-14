@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -104,9 +105,16 @@ func filterAndAppendItem(item scope.ScopeNode, parent string, query string, resu
 		return // Someday this will have an index in raw storage on parentName
 	}
 
+	// Unescape the query and remove any backslashes
+	unescaped, err := url.QueryUnescape(query)
+	if err != nil {
+		unescaped = query
+	}
+	unescaped = strings.ReplaceAll(unescaped, `\`, ``)
+
 	// skip if query is passed and title doesn't match.
 	// HasPrefix is not the end goal but something that that gets us started.
-	if query != "" && !strings.HasPrefix(item.Spec.Title, query) {
+	if unescaped != "" && !strings.HasPrefix(item.Spec.Title, unescaped) {
 		return
 	}
 
