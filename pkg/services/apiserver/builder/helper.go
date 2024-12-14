@@ -2,9 +2,14 @@ package builder
 
 import (
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -125,6 +130,81 @@ func SetupConfig(
 				tags = append(tags, gvk.Kind)
 			}
 		}
+
+		isNew := false
+		if _, err := os.Stat("test.csv"); errors.Is(err, os.ErrNotExist) {
+			isNew = true
+		}
+
+		f, err := os.OpenFile("test.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			meta := r.Metadata()
+			kind := ""
+			action := ""
+			sub := ""
+			metastr, _ := json.Marshal(meta)
+
+			v, ok := meta["x-kubernetes-action"]
+			if ok {
+				action = fmt.Sprintf("%v", v)
+			}
+
+			v, ok = meta["x-kubernetes-group-version-kind"]
+			if ok {
+				gvk, ok := v.(metav1.GroupVersionKind)
+				if ok {
+					kind = gvk.Kind
+				}
+			}
+
+			if action == "connect" {
+				idx := strings.LastIndex(r.Path(), "/{name}/")
+				if idx > 0 {
+					sub = r.Path()[(idx + len("/{name}/")):]
+				}
+			}
+
+			operationAlt := ""
+			if action != "" {
+				if action == "connect" {
+					idx := strings.Index(r.OperationName(), "Namespaced")
+					if idx > 0 {
+						operationAlt = strings.ToLower(r.Method()) +
+							r.OperationName()[idx:]
+					}
+				}
+			}
+
+			w := csv.NewWriter(f)
+			if isNew {
+				w.Write([]string{
+					"#Path",
+					"Method",
+					"action",
+					"kind",
+					"sub",
+					"OperationName",
+					"OperationNameAlt",
+					"Description",
+					"metadata",
+				})
+			}
+			w.Write([]string{
+				r.Path(),
+				r.Method(),
+				action,
+				kind,
+				sub,
+				r.OperationName(),
+				operationAlt,
+				r.Description(),
+				string(metastr),
+			})
+			w.Flush()
+		}
+
 		return r.OperationName(), tags, nil
 	}
 
