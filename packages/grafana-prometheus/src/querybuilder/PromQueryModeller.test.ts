@@ -369,7 +369,7 @@ describe('PromQueryModeller with utf8 support', () => {
   it('can render utf8 metric name in curly braces', () => {
     expect(
       modeller.renderQuery({
-        metric: '"a.utf8.metric"',
+        metric: 'a.utf8.metric',
         labels: [],
         operations: [],
       })
@@ -379,7 +379,7 @@ describe('PromQueryModeller with utf8 support', () => {
   it('can render utf8 metric name in curly braces with legacy labels', () => {
     expect(
       modeller.renderQuery({
-        metric: '"a.utf8.metric"',
+        metric: 'a.utf8.metric',
         labels: [
           {
             label: 'label',
@@ -395,7 +395,7 @@ describe('PromQueryModeller with utf8 support', () => {
   it('can render utf8 metric name in curly braces with legacy and utf8 labels', () => {
     expect(
       modeller.renderQuery({
-        metric: '"a.utf8.metric"',
+        metric: 'a.utf8.metric',
         labels: [
           {
             label: 'label',
@@ -403,7 +403,7 @@ describe('PromQueryModeller with utf8 support', () => {
             op: '=',
           },
           {
-            label: '"utf8.label"',
+            label: 'utf8.label',
             value: 'value',
             op: '=',
           },

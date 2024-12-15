@@ -14,9 +14,6 @@ export const escapeForUtf8Support = (value: string) => {
 
   let escaped = 'U__';
 
-  // Removes the quotes around the value
-  value = value.substring(1, value.length - 1);
-
   for (let i = 0; i < value.length; i++) {
     const char = value[i];
     const codePoint = value.codePointAt(i);
