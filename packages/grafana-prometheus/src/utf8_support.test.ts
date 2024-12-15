@@ -13,12 +13,12 @@ describe('applyValueEncodingEscaping', () => {
   it('should return utf8 labels wrapped in quotes', () => {
     const labels = [
       'no:escaping_required',
-      '"mysystem.prod.west.cpu.load"',
-      '"mysystem.prod.west.cpu.load_total"',
-      '"http.status:sum"',
-      '"my lovely_http.status:sum"',
-      '"花火"',
-      '"label with 😱"',
+      'mysystem.prod.west.cpu.load',
+      'mysystem.prod.west.cpu.load_total',
+      'http.status:sum',
+      'my lovely_http.status:sum',
+      '花火',
+      'label with 😱',
     ];
     const expected = [
       'no:escaping_required',
