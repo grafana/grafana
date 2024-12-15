@@ -1,5 +1,6 @@
 // Core grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/completions.ts
 import UFuzzy from '@leeoniya/ufuzzy';
+import { languages } from 'monaco-editor';
 
 import { config } from '@grafana/runtime';
 
@@ -9,6 +10,8 @@ import { FUNCTIONS } from '../../../promql';
 import { DataProvider } from './data_provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
+
+import CompletionItemInsertTextRule = languages.CompletionItemInsertTextRule;
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
@@ -17,6 +20,7 @@ type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
+  insertTextRules?: CompletionItemInsertTextRule;
   detail?: string;
   documentation?: string;
   triggerOnInsert?: boolean;
@@ -27,6 +31,11 @@ const metricNamesSearch = {
   multiInsert: new UFuzzy({ intraMode: 0 }),
   singleError: new UFuzzy({ intraMode: 1 }),
 };
+
+// Snippet Marker is  telling monaco where to show the cursor and maybe a help text
+// With help text example: ${1:labelName}
+// labelName will be shown as selected. So user would know what to type next
+const snippetMarker = '${1:}';
 
 interface MetricFilterOptions {
   metricNames: string[];
@@ -73,9 +82,16 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
   return dataProvider.metricNamesToMetrics(metricNames).map((metric) => ({
     type: 'METRIC_NAME',
     label: metric.name,
-    insertText: metric.name,
     detail: `${metric.name} : ${metric.type}`,
     documentation: metric.help,
+    ...(metric.isUtf8
+      ? {
+          insertText: `{"${metric.name}"${snippetMarker}}`,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        }
+      : {
+          insertText: metric.name,
+        }),
   }));
 }
 

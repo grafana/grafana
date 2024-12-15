@@ -95,6 +95,7 @@ export function getCompletionProvider(
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
         insertText: item.insertText,
+        insertTextRules: item.insertTextRules,
         detail: item.detail,
         documentation: item.documentation,
         sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
