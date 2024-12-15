@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
+import { isValidLegacyName } from '../../../utf8_support'; // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
 import { DataProvider } from './data_provider';
 import type { Label, Situation } from './situation';
@@ -174,12 +175,22 @@ async function getLabelNamesForCompletions(
   dataProvider: DataProvider
 ): Promise<Completion[]> {
   const labelNames = await getLabelNames(metric, otherLabels, dataProvider);
-  return labelNames.map((text) => ({
-    type: 'LABEL_NAME',
-    label: text,
-    insertText: `${text}${suffix}`,
-    triggerOnInsert,
-  }));
+  return labelNames.map((text) => {
+    const isUtf8 = !isValidLegacyName(text);
+    return {
+      type: 'LABEL_NAME',
+      label: text,
+      ...(isUtf8
+        ? {
+            insertText: `"${text}"${suffix}`,
+            insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          }
+        : {
+            insertText: `${text}${suffix}`,
+          }),
+      triggerOnInsert,
+    };
+  });
 }
 
 async function getLabelNamesForSelectorCompletions(
