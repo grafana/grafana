@@ -154,13 +154,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
       if (visQuery.metric === '') {
         const strLiteral = node.getChild(StringLiteral);
-        visQuery.metric = getString(expr, strLiteral);
+        const quotedMetric = getString(expr, strLiteral);
+        visQuery.metric = quotedMetric.substring(1, quotedMetric.length - 1);
       }
       break;
     }
 
     case QuotedLabelMatcher: {
-      visQuery.labels.push(getLabel(expr, node, QuotedLabelName));
+      const quotedLabel = getLabel(expr, node, QuotedLabelName);
+      quotedLabel.label = quotedLabel.label.substring(1, quotedLabel.label.length - 1);
+      visQuery.labels.push(quotedLabel);
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));

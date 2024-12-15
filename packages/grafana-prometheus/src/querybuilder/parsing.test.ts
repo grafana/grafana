@@ -9,7 +9,7 @@ describe('buildVisualQueryFromString', () => {
         query: {
           labels: [
             {
-              label: '"glück:🍀.dot"',
+              label: 'glück:🍀.dot',
               op: '=',
               value: 'luck',
             },
@@ -30,7 +30,7 @@ describe('buildVisualQueryFromString', () => {
       expect(buildVisualQueryFromString('{"I am a metric"}')).toEqual({
         query: {
           labels: [],
-          metric: '"I am a metric"',
+          metric: 'I am a metric',
           operations: [],
         },
         errors: [],
@@ -47,7 +47,7 @@ describe('buildVisualQueryFromString', () => {
               value: 'label value',
             },
           ],
-          metric: '"metric.name"',
+          metric: 'metric.name',
           operations: [],
         },
         errors: [],
@@ -59,12 +59,12 @@ describe('buildVisualQueryFromString', () => {
         query: {
           labels: [
             {
-              label: '"glück:🍀.dot"',
+              label: 'glück:🍀.dot',
               op: '=',
               value: 'luck',
             },
           ],
-          metric: '"metric.name"',
+          metric: 'metric.name',
           operations: [
             {
               id: PromOperationId.EqualTo,
