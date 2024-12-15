@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
-import { isValidLegacyName } from '../../../utf8_support'; // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
+import { isValidLegacyName } from '../../../utf8_support';
 
 import { DataProvider } from './data_provider';
 import type { Label, Situation } from './situation';
