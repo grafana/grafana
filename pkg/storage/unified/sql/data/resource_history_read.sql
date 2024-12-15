@@ -14,8 +14,12 @@ SELECT
         AND {{ .Ident "group" }}     = {{ .Arg .Request.Key.Group }}
         AND {{ .Ident "resource" }}  = {{ .Arg .Request.Key.Resource }}
         AND {{ .Ident "name" }}      = {{ .Arg .Request.Key.Name }}
+      {{ if .Request.IncludeDeleted }}
+        AND {{ .Ident "action" }} != 3
+        AND {{ .Ident "value" }} NOT LIKE '%deletionTimestamp%'
+      {{ end }}
       {{ if gt .Request.ResourceVersion 0 }}
-        AND {{ .Ident "resource_version" }} <= {{ .Arg .Request.ResourceVersion }}
+        AND {{ .Ident "resource_version" }} {{ if .Request.IncludeDeleted }}={{ else }}<={{ end }} {{ .Arg .Request.ResourceVersion }}
       {{ end }}
     ORDER BY {{ .Ident "resource_version" }} DESC
     LIMIT 1
