@@ -42,7 +42,7 @@ func (f FakeEncryptionStore) GetAllDataKeys(_ context.Context) ([]*encryption.Da
 }
 
 func (f FakeEncryptionStore) CreateDataKey(_ context.Context, dataKey *encryption.DataKey) error {
-	f.store[dataKey.Id] = dataKey
+	f.store[dataKey.UID] = dataKey
 	return nil
 }
 

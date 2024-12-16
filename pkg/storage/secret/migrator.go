@@ -79,6 +79,21 @@ func initSecretStore(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "encryption_data_key",
+		Columns: []*migrator.Column{
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // in this table, it isn't used by k8s, but we will track it for added security
+			{Name: "active", Type: migrator.DB_Bool},
+			{Name: "scope", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
+			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))

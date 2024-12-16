@@ -234,7 +234,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, label string) (s
 	// 3. Store the decrypted data key into the in-memory cache.
 	s.cacheDataKey(dataKey, decrypted)
 
-	return dataKey.Id, decrypted, nil
+	return dataKey.UID, decrypted, nil
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
@@ -262,7 +262,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, label string, scope 
 
 	dbDataKey := encryption.DataKey{
 		Active:        true,
-		Id:            id,
+		UID:           id,
 		Provider:      encryption.ProviderID(s.currentProviderID),
 		EncryptedData: encrypted,
 		Label:         label,
@@ -498,7 +498,7 @@ func (s *EncryptionManager) cacheDataKey(dataKey *encryption.DataKey, decrypted 
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{
-		id:      dataKey.Id,
+		id:      dataKey.UID,
 		label:   dataKey.Label,
 		dataKey: decrypted,
 		active:  dataKey.Active,
