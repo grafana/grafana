@@ -49,7 +49,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
 				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
@@ -65,6 +64,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
 				folderUidRoute.Get("/counts", handler.countFolderContent)
+				folderUidRoute.Get("/move", handler.moveFolder)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -74,6 +74,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 				folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
 				folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+				folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			})
 		}
 	})
@@ -840,6 +841,14 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 	}
 
 	c.JSON(http.StatusOK, folderDTO)
+}
+
+func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
+	_, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	c.JSON(http.StatusOK, "")
 }
 
 //-----------------------------------------------------------------------------------------
