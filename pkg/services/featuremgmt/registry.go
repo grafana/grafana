@@ -714,6 +714,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesCliDashboards",
+			Description: "Use the k8s client to retrieve dashboards internally",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
@@ -1507,8 +1513,9 @@ var (
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1680,6 +1687,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "lokiLabelNamesQueryApi",
+			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true",
 		},
 	}
 )
