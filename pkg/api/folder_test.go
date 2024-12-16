@@ -787,7 +787,7 @@ func TestToFolderCounts(t *testing.T) {
 			},
 		},
 		{
-			name: "with only counts from both storages",
+			name: "with counts from both storages",
 			input: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "folder.grafana.app/v0alpha1",
