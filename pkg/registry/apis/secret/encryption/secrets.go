@@ -16,13 +16,6 @@ type Service interface {
 	Encrypt(ctx context.Context, payload []byte, opt EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 
-	// EncryptJsonData MUST NOT be used within database transactions.
-	// Look at Encrypt method comment for further details.
-	EncryptJsonData(ctx context.Context, kv map[string]string, opt EncryptionOptions) (map[string][]byte, error)
-	DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error)
-
-	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
-
 	RotateDataKeys(ctx context.Context) error
 	ReEncryptDataKeys(ctx context.Context) error
 }

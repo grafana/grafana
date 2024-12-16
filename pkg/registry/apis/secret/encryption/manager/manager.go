@@ -64,7 +64,6 @@ func NewEncryptionManager(
 ) (*EncryptionManager, error) {
 	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
-	// TODO get rid of the dependency on the legacy secrets package altogether
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
 		cfg.SectionWithEnvOverrides("security").Key("encryption_provider").MustString(kmsproviders.Default),
 	))
@@ -130,10 +129,6 @@ func (s *EncryptionManager) registerUsageMetrics() {
 
 		return usageMetrics, nil
 	})
-}
-
-func (s *EncryptionManager) providersInitialized() bool {
-	return len(s.providers) > 0
 }
 
 var b64 = base64.RawStdEncoding
