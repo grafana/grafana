@@ -62,7 +62,7 @@ func (r *Replicator) Sync(ctx context.Context) error {
 
 	var latest string
 	if !isVersioned || lastCommit == "" {
-		if err := r.ReplicateTree(ctx, ""); err != nil {
+		if err := r.replicateTree(ctx, ""); err != nil {
 			return fmt.Errorf("replicate tree: %w", err)
 		}
 	} else {
@@ -77,7 +77,7 @@ func (r *Replicator) Sync(ctx context.Context) error {
 			return fmt.Errorf("compare files: %w", err)
 		}
 
-		if err := r.ReplicateChanges(ctx, changes); err != nil {
+		if err := r.replicateChanges(ctx, changes); err != nil {
 			return fmt.Errorf("replicate changes: %w", err)
 		}
 	}
@@ -106,8 +106,8 @@ func (r *Replicator) Sync(ctx context.Context) error {
 	return nil
 }
 
-// ReplicateTree replicates all files in the repository.
-func (r *Replicator) ReplicateTree(ctx context.Context, ref string) error {
+// replicateTree replicates all files in the repository.
+func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 	logger := r.logger
 	tree, err := r.repository.ReadTree(ctx, logger, ref)
 	if err != nil {
@@ -135,7 +135,7 @@ func (r *Replicator) ReplicateTree(ctx context.Context, ref string) error {
 		info.Hash = entry.Hash
 		info.Modified = nil // modified?
 
-		if err := r.ReplicateFile(ctx, info); err != nil {
+		if err := r.replicateFile(ctx, info); err != nil {
 			if errors.Is(err, ErrUnableToReadResourceBytes) {
 				logger.InfoContext(ctx, "file does not contain a resource")
 				continue
@@ -147,9 +147,9 @@ func (r *Replicator) ReplicateTree(ctx context.Context, ref string) error {
 	return nil
 }
 
-// ReplicateFile creates a new resource in the cluster.
+// replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Replicator) ReplicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -234,7 +234,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *Replicator) ReplicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
 		fileInfo, err := r.repository.Read(ctx, r.logger, change.Path, change.Ref)
 		if err != nil {
@@ -243,11 +243,11 @@ func (r *Replicator) ReplicateChanges(ctx context.Context, changes []repository.
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			if err := r.ReplicateFile(ctx, fileInfo); err != nil {
+			if err := r.replicateFile(ctx, fileInfo); err != nil {
 				return fmt.Errorf("replicate file: %w", err)
 			}
 		case repository.FileActionDeleted:
-			if err := r.DeleteFile(ctx, fileInfo); err != nil {
+			if err := r.deleteFile(ctx, fileInfo); err != nil {
 				return fmt.Errorf("delete file: %w", err)
 			}
 		}
@@ -256,7 +256,7 @@ func (r *Replicator) ReplicateChanges(ctx context.Context, changes []repository.
 	return nil
 }
 
-func (r *Replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Replicator) deleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err

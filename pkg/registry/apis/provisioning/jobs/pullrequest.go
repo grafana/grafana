@@ -49,7 +49,7 @@ const (
 	{{- if .PreviewScreenshotURL}}
 ### Preview of {{.Filename}}
 	![Preview]({{.PreviewScreenshotURL}})
-	{{- end}}`
+	{{- end}}{{- end}}`
 )
 
 type GithubRepository interface {

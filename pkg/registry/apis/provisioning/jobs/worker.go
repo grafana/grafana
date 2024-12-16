@@ -100,7 +100,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("error parsing base url: %w", err)
 		}
 
-		// TODO: init parser
 		commenter, err := NewPullRequestCommenter(ghRepo, parser, logger, g.renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
