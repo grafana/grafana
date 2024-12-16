@@ -14,9 +14,15 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	secretV0Alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
+	"github.com/grafana/grafana/pkg/setting"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 )
 
@@ -32,18 +38,30 @@ func NewSecretAPIBuilder(secureValueStorage secretstorage.SecureValueStorage) *S
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	secureValueStorage secretstorage.SecureValueStorage,
-) *SecretAPIBuilder {
+	dataKeyStorage secretstorage.DataKeyStorage,
+	tracer tracing.Tracer,
+	kmsProvidersService kmsproviders.Service,
+	enc legacyEncryption.Internal,
+	usageStats usagestats.Service,
+) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil
+		return nil, nil
+	}
+
+	// TODO need to actually do something with the encryption manager, for now just make one
+	_, err := manager.NewEncryptionManager(tracer, dataKeyStorage, kmsProvidersService, enc, cfg, usageStats)
+	if err != nil {
+		return nil, fmt.Errorf("initializing encryption manager: %w", err)
 	}
 
 	builder := NewSecretAPIBuilder(secureValueStorage)
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 // GetGroupVersion returns the tuple of `group` and `version` for the API which uniquely identifies it.

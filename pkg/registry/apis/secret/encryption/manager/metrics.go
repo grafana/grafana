@@ -10,12 +10,14 @@ import (
 const (
 	OpEncrypt = "encrypt"
 	OpDecrypt = "decrypt"
+	subsystem = "encryption_manager"
 )
 
 var (
 	opsCounter = metricutil.NewCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Namespace: metrics.ExporterName,
+			Subsystem: subsystem,
 			Name:      "encryption_ops_total",
 			Help:      "A counter for encryption operations",
 		},
@@ -28,6 +30,7 @@ var (
 	cacheReadsCounter = metricutil.NewCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Namespace: metrics.ExporterName,
+			Subsystem: subsystem,
 			Name:      "encryption_cache_reads_total",
 			Help:      "A counter for encryption cache reads",
 		},
