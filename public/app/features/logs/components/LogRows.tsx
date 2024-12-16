@@ -98,7 +98,11 @@ export const LogRows = ({
   ...props
 }: Props) => {
   const [previewSize, setPreviewSize] = useState(
-    renderPreview ? Math.max(Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
+    /**
+     * If renderPreview is enabled, either half of the log rows or twice the screen size of log rows will be rendered.
+     * The biggest of those values will be used. Else, all rows are rendered.
+     */
+    renderPreview ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
   );
   const [popoverState, setPopoverState] = useState<PopoverStateType>({
     selection: '',
