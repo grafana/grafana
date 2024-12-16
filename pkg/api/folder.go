@@ -50,8 +50,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
-			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
-
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
 				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
@@ -66,6 +64,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Put("/", handler.updateFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
+				folderUidRoute.Get("/counts", handler.countFolderContent)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -74,6 +73,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 				folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
 			})
 		}
 	})
@@ -747,6 +747,29 @@ func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, hits)
 }
 
+func (fk8s *folderK8sHandler) countFolderContent(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	uid := web.Params(c.Req)[":uid"]
+
+	counts, err := client.Get(c.Req.Context(), uid, v1.GetOptions{}, "counts")
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	out, err := toFolderLegacyCounts(counts)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, out)
+}
+
 func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 	client, ok := fk8s.getClient(c)
 	if !ok {
@@ -988,7 +1011,7 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	folderIDs, err := fk8s.getParents(f)
+	folderIDs, err := getParents(f)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,7 +1027,7 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 	return metadata, nil
 }
 
-func (fk8s *folderK8sHandler) getParents(f *folder.Folder) (map[string]bool, error) {
+func getParents(f *folder.Folder) (map[string]bool, error) {
 	folderIDs := map[string]bool{f.UID: true}
 	if (f.UID == accesscontrol.GeneralFolderUID) || (f.UID == folder.SharedWithMeFolderUID) {
 		return folderIDs, nil
@@ -1021,4 +1044,25 @@ func (fk8s *folderK8sHandler) getParents(f *folder.Folder) (map[string]bool, err
 	}
 
 	return folderIDs, nil
+}
+
+func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
+	ds, err := folderalpha1.UnstructuredToDescendantCounts(u)
+	if err != nil {
+		return nil, err
+	}
+
+	var out = make(folder.DescendantCounts)
+	for _, v := range ds.Counts {
+		// if stats come from unified storage, we will use them
+		if v.Group != "sql-fallback" {
+			out[v.Resource] = v.Count
+			continue
+		}
+		// if stats are from single tenant DB and they are not in unified storage, we will use them
+		if _, ok := out[v.Resource]; !ok {
+			out[v.Resource] = v.Count
+		}
+	}
+	return &out, nil
 }
