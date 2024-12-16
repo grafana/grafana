@@ -101,7 +101,6 @@ func TestParseWebhooks(t *testing.T) {
 			},
 		},
 		logger: slog.Default().With("logger", "github-repository"),
-		ignore: provisioning.IncludeYamlOrJSON,
 	}
 
 	for _, tt := range tests {

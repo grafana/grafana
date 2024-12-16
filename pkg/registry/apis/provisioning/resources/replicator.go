@@ -28,13 +28,11 @@ type Replicator struct {
 	parser     *Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
-	ignore     provisioning.IgnoreFile
 }
 
 func NewReplicator(
 	repo repository.Repository,
 	parser *Parser,
-	ignore provisioning.IgnoreFile,
 	logger *slog.Logger,
 ) (*Replicator, error) {
 	dynamicClient := parser.Client()
@@ -50,7 +48,6 @@ func NewReplicator(
 		client:     dynamicClient,
 		folders:    folders,
 		repository: repo,
-		ignore:     ignore,
 	}, nil
 }
 
@@ -121,7 +118,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 			continue
 		}
 
-		if r.ignore(entry.Path) {
+		if r.parser.ShouldIgnore(ctx, logger, entry.Path) {
 			logger.DebugContext(ctx, "ignoring file")
 			continue
 		}
@@ -236,6 +233,10 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 
 func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
+		if r.parser.ShouldIgnore(ctx, r.logger, change.Path) {
+			continue
+		}
+
 		fileInfo, err := r.repository.Read(ctx, r.logger, change.Path, change.Ref)
 		if err != nil {
 			return fmt.Errorf("read file: %w", err)

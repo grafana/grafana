@@ -141,9 +141,11 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		// TODO: ignore files?
-		logger := logger.With("file", f.Path)
+		if c.parser.ShouldIgnore(ctx, logger, f.Path) {
+			continue
+		}
 
+		logger := logger.With("file", f.Path)
 		fileInfo, err := c.repo.Read(ctx, logger, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)
@@ -175,7 +177,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		preview := resourcePreview{
 			Filename: path.Base(f.Path),
 			Path:     f.Path,
-			Kind:     "dashboard", // TODO: add more types
+			Kind:     "dashboard", // TODO: add more kinds
 			Action:   string(f.Action),
 		}
 

@@ -1,8 +1,6 @@
 package v0alpha1
 
 import (
-	"path/filepath"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -76,17 +74,6 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
-}
-
-// Filter ignorable files
-type IgnoreFile = func(path string) bool
-
-func IncludeYamlOrJSON(p string) bool { // put this somewhere better
-	ext := filepath.Ext(p)
-	if ext == ".yaml" || ext == ".json" {
-		return false
-	}
-	return true
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
