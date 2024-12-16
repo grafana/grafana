@@ -143,7 +143,7 @@ func TestService_checkPermission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper()}
-			got, err := s.checkPermission(context.Background(), tc.permissions, &tc.check)
+			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})

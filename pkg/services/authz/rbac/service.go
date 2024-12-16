@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -20,6 +22,13 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+)
+
+const (
+	shortCacheTTL        = 1 * time.Minute
+	shortCleanupInterval = 5 * time.Minute
+	longCacheTTL         = 5 * time.Minute
+	longCleanupInterval  = 10 * time.Minute
 )
 
 type Service struct {
@@ -32,15 +41,23 @@ type Service struct {
 
 	logger log.Logger
 	tracer tracing.Tracer
+
+	// Cache for user permissions, user team memberships and user basic roles
+	permCache      *localcache.CacheService
+	teamCache      *localcache.CacheService
+	basicRoleCache *localcache.CacheService
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
 	return &Service{
-		store:         store.NewStore(sql),
-		identityStore: identityStore,
-		actionMapper:  mappers.NewK8sRbacMapper(),
-		logger:        logger,
-		tracer:        tracer,
+		store:          store.NewStore(sql),
+		identityStore:  identityStore,
+		actionMapper:   mappers.NewK8sRbacMapper(),
+		logger:         logger,
+		tracer:         tracer,
+		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
 	}
 }
 
@@ -127,7 +144,7 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 	return checkReq, nil
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (map[string]bool, error) {
 	var userIDQuery store.UserIdentifierQuery
 	// Assume that numeric UID is user ID
 	if userID, err := strconv.Atoi(req.UserUID); err == nil {
@@ -140,29 +157,47 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
-	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
-	if err != nil {
-		return nil, fmt.Errorf("could not get basic roles: %w", err)
+	userPermKey := userPermissionKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
+	if cached, ok := s.permCache.Get(userPermKey); ok {
+		return cached.(map[string]bool), nil
+	}
+
+	var basicRoles *store.BasicRole
+	basicRoleKey := basicRoleKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
+		basicRoles = cached.(*store.BasicRole)
+	} else {
+		basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+		if err != nil {
+			return nil, fmt.Errorf("could not get basic roles: %w", err)
+		}
+		s.basicRoleCache.Set(basicRoleKey, basicRoles, 0)
 	}
 
 	teamIDs := make([]int64, 0, 50)
-	teamQuery := legacy.ListUserTeamsQuery{
-		UserUID:    userIdentifiers.UID,
-		Pagination: common.Pagination{Limit: 50},
-	}
+	teamsCacheKey := teamKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
+		teamIDs = cached.([]int64)
+	} else {
+		teamQuery := legacy.ListUserTeamsQuery{
+			UserUID:    userIdentifiers.UID,
+			Pagination: common.Pagination{Limit: 50},
+		}
 
-	for {
-		teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
-		if err != nil {
-			return nil, fmt.Errorf("could not get user teams: %w", err)
+		for {
+			teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
+			if err != nil {
+				return nil, fmt.Errorf("could not get user teams: %w", err)
+			}
+			for _, team := range teams.Items {
+				teamIDs = append(teamIDs, team.ID)
+			}
+			teamQuery.Pagination.Continue = teams.Continue
+			if teams.Continue == 0 {
+				break
+			}
 		}
-		for _, team := range teams.Items {
-			teamIDs = append(teamIDs, team.ID)
-		}
-		teamQuery.Pagination.Continue = teams.Continue
-		if teams.Continue == 0 {
-			break
-		}
+		s.teamCache.Set(teamsCacheKey, teamIDs, 0)
 	}
 
 	userPermQuery := store.PermissionsQuery{
@@ -173,18 +208,22 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 		IsServerAdmin: basicRoles.IsAdmin,
 	}
 
-	return s.store.GetUserPermissions(ctx, req.Namespace, userPermQuery)
+	permissions, err := s.store.GetUserPermissions(ctx, req.Namespace, userPermQuery)
+	if err != nil {
+		return nil, err
+	}
+	scopeMap := getScopeMap(permissions)
+	s.permCache.Set(userPermKey, scopeMap, 0)
+	return scopeMap, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, permissions []accesscontrol.Permission, req *CheckRequest) (bool, error) {
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	// Only check action if the request doesn't specify scope
 	if req.Name == "" {
-		return len(permissions) > 0, nil
+		return len(scopeMap) > 0, nil
 	}
-
-	scopeMap := getScopeMap(permissions)
 
 	// Wildcard grant, no further checks needed
 	if scopeMap["*"] {
