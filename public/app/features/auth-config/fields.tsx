@@ -473,7 +473,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Organization attribute path',
       description: 'JMESPath expression to use for organization lookup.',
       type: 'text',
-      hidden: !['generic_oauth', 'okta'].includes(provider),
+      hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
     defineAllowedGroups: {
       label: 'Define allowed groups',
