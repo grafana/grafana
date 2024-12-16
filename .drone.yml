@@ -864,7 +864,7 @@ steps:
   - make devenv sources=prometheus
   depends_on:
   - clone
-  image: node:22.11.0-alpine
+  image: golang:1.23.1-alpine
   name: setup-prometheus-devenv
   volumes:
   - name: prometheus-data
@@ -2297,7 +2297,7 @@ steps:
   - make devenv sources=prometheus
   depends_on:
   - clone
-  image: node:22.11.0-alpine
+  image: golang:1.23.1-alpine
   name: setup-prometheus-devenv
   volumes:
   - name: prometheus-data
@@ -5601,6 +5601,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bdadbdf82dfb13868a6e89f78e64250172f84f427a7931a7552015c75caead09
+hmac: 22e74956d8116bd497b82deb09ea7718600e90ab708b477808abd492c67f5ad3
 
 ...

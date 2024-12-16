@@ -15,7 +15,7 @@ def prometheus_devenv_step():
     """
     return {
         "name": "setup-prometheus-devenv",
-        "image": images["node"],
+        "image": images["go"],
         "commands": [
             "apk add --update make bash",
             "make devenv sources=prometheus",
