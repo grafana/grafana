@@ -29,7 +29,7 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
-import { escapeForUtf8Support } from './utf8_support';
+import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -234,10 +234,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
-        searchParams.append('match[]', visualQuery.query.metric);
+        const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+        searchParams.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
         if (visualQuery.query.binaryQueries) {
           visualQuery.query.binaryQueries.forEach((bq) => {
-            searchParams.append('match[]', bq.query.metric);
+            searchParams.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
           });
         }
       }
