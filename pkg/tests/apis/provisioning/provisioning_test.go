@@ -365,8 +365,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("import all-panels from local-repository", func(t *testing.T) {
-		// This test will prooobably break if we change import to be an async job.
-
 		// Just make sure the folder doesn't exist in advance.
 		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
@@ -431,8 +429,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 			}
 		}
 
-		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
-		require.NoError(t, err, "all-panels dashboard should now exist")
+		found, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "can list values")
+
+		names := []string{}
+		for _, v := range found.Items {
+			names = append(names, v.GetName())
+		}
+		require.Equal(t, []string{"all-panels-5Y4ReX6LwL7d"}, names, "all-panels dashboard should now exist")
 	})
 }
 
