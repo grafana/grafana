@@ -8,6 +8,14 @@ comments: |
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
+| Option                                  | Description   |
+| --------------------------------------- | --------------------------- |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                   |
+| Hide zeros | When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip.                                                        |
+| Max width                               | Set the maximum width of the tooltip box.    |
+| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.   |
+
 ### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
@@ -25,15 +33,3 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 - **None** - Grafana automatically sorts the values displayed in a tooltip.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
-
-### Hide zeros
-
-When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip.
-
-### Max width
-
-Set the maximum width of the tooltip box.
-
-### Max height
-
-Set the maximum height of the tooltip box. The default is 600 pixels.
