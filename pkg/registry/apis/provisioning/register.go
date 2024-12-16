@@ -186,7 +186,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		b.parsers,
 		b.identities,
 		b.logger.With("worker", "github"),
-		provisioning.IncludeYamlOrJSON,
 		b.render,
 		b.blobstore,
 		b.urlProvider,

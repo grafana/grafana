@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -122,9 +123,22 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
+func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string) bool {
+	ext := filepath.Ext(p)
+	if ext == ".yaml" || ext == ".json" {
+		return false
+	}
+
+	return true
+}
+
 func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
 	parsed = &ParsedResource{
 		Info: info,
+	}
+
+	if r.ShouldIgnore(ctx, logger, info.Path) {
+		return parsed, ErrUnableToReadResourceBytes
 	}
 
 	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))

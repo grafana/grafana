@@ -23,7 +23,6 @@ type githubRepository struct {
 	logger *slog.Logger
 	config *provisioning.Repository
 	gh     pgh.Client
-	ignore provisioning.IgnoreFile
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -37,7 +36,6 @@ func NewGitHub(
 		config: config,
 		logger: slog.Default().With("logger", "github-repository"),
 		gh:     factory.New(ctx, config.Spec.GitHub.Token),
-		ignore: provisioning.IncludeYamlOrJSON,
 	}
 }
 
@@ -460,37 +458,6 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	var count int
-	for _, commit := range event.Commits {
-		for _, file := range commit.Added {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-
-		for _, file := range commit.Modified {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-
-		for _, file := range commit.Removed {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-	}
-
-	if count == 0 {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no files require updates",
-		}, nil
-	}
-
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
@@ -579,10 +546,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 
 	changes := make([]FileChange, 0)
 	for _, f := range files {
-		// TODO: where should I ignore files?
-		if r.ignore(f.GetFilename()) {
-			continue
-		}
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":

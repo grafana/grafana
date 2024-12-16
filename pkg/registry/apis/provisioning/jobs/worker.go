@@ -28,7 +28,6 @@ type JobWorker struct {
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
 	logger      *slog.Logger
-	ignore      provisioning.IgnoreFile
 	render      rendering.Service
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
@@ -39,7 +38,6 @@ func NewJobWorker(
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
 	logger *slog.Logger,
-	ignore provisioning.IgnoreFile,
 	render rendering.Service,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
@@ -49,7 +47,6 @@ func NewJobWorker(
 		parsers:     parsers,
 		identities:  identities,
 		logger:      logger,
-		ignore:      ignore,
 		render:      render,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
@@ -83,7 +80,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	replicator, err := resources.NewReplicator(repo, parser, g.ignore, logger)
+	replicator, err := resources.NewReplicator(repo, parser, logger)
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
 	}
