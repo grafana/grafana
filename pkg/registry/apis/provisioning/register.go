@@ -286,24 +286,25 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
 	cfg, ok := obj.(*provisioning.Repository)
 	if !ok {
-		b.logger.Error("object is not *provisioning.Repository")
+		b.logger.Error("object is not *provisioning.Repository", "kind", obj.GetObjectKind().GroupVersionKind())
 		return
 	}
+	logger := b.logger.With("repository", cfg.GetName(), "namespace", cfg.GetNamespace())
 
 	ctx := context.Background()
 	repo, err := b.asRepository(ctx, cfg)
 	if err != nil {
-		b.logger.Error("failed to get repository", "error", err)
+		logger.Error("failed to get repository", "error", err)
 		return
 	}
 
 	if err := b.ensureRepositoryFolderExists(ctx, cfg); err != nil {
-		b.logger.Error("failed to ensure repository folder exists", "error", err)
+		logger.Error("failed to ensure repository folder exists", "error", err)
 		return
 	}
 
 	if err := repo.AfterCreate(ctx, b.logger); err != nil {
-		b.logger.Error("failed to run after create", "error", err)
+		logger.Error("failed to run after create", "error", err)
 		return
 	}
 }
@@ -329,7 +330,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 	}
 
 	if err := b.ensureRepositoryFolderExists(ctx, objCfg); err != nil {
-		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
+		return nil, fmt.Errorf("failed to ensure the configured folder '%s' in '%s' exists: %w", objCfg.GetName(), objCfg.GetNamespace(), err)
 	}
 
 	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
