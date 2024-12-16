@@ -12,7 +12,7 @@
     "@types/eslint": "9.6.1",
     "@types/webpack-bundle-analyzer": "^4.7.0",
     "copy-webpack-plugin": "12.0.2",
-    "eslint": "9.16.0",
+    "eslint": "9.17.0",
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "11.0.0",
