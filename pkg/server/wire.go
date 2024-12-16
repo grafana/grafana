@@ -230,7 +230,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
-	unifiedsearch.ProvideDocumentBuilders,
 	search.ProvideService,
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
@@ -478,6 +477,6 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 }
 
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
-	wire.Build(wireDocumentBuildersSet)
+	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
 }

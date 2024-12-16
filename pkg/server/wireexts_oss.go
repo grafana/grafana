@@ -108,6 +108,8 @@ var wireExtsBasicSet = wire.NewSet(
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	search2.ProvideDashboardStats,
+	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	search2.ProvideDocumentBuilders,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -148,3 +150,8 @@ var wireExtsModuleServerSet = wire.NewSet(
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
 )
+
+//var wireDocumentBuildersSet = wire.NewSet(
+//	wireSet,
+//	wireExtsBasicSet,
+//)
