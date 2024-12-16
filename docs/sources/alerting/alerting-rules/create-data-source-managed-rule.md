@@ -129,7 +129,7 @@ Use [alert rule evaluation](ref:alert-rule-evaluation) to determine how frequent
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated sequentially over the same time interval.
+   All rules within the same group are evaluated sequentially over the same time interval. You can reorder them from the **Alert rules** page.
 
 1. Enter a pending period.
 
