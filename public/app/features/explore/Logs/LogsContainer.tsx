@@ -293,7 +293,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       onPinLineCallback,
     } = this.props;
 
-    if (!logRows || Object.keys(this.state.dsInstances).length === 0) {
+    if (!logRows) {
       return null;
     }
 
