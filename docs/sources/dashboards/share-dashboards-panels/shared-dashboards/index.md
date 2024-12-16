@@ -80,9 +80,9 @@ Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/d
 <!-- {{< docs/private-preview product="Sharing externally with specific people" >}}-->
 
 {{< admonition type="note" >}}
-Sharing externally with specific people is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview).
+Sharing externally with specific people is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). Please contact support to have this feature enabled.
 
-This feature will have a cost by active users after being promoted into general availability.
+This feature will incur a cost once it is promoted to general availability.
 
 Please contact support to have this feature enabled.
 {{< /admonition >}}
