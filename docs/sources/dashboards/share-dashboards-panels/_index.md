@@ -239,10 +239,15 @@ To share a personalized, direct link to your panel within your organization, fol
    - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
    - **Shorten link** - Shorten the panel link. This option is disabled by default.
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
-1. Do one or both of the following:
-   - Click **Copy link**.
-   - Click **Render image**, which [renders the panel as a PNG image](ref:image-rendering).
-1. Send the copied link or image URL to a Grafana user with authorization to view it.
+1. Click **Copy link**.
+1. Send the copied link to a Grafana user with authorization to view it.
+1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
+   - **Width** - In pixels. The default is 1000.
+   - **Height** - In pixels. The default is 500.
+   - **Scale factor** - The default is 1.
+1. (Optional) Click **Generate image** to see a preview of the panel image.
+1. (Optional) Click **Download image**.
+1. Send the copied image to a Grafana user with authorization to view it.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 #### Query string parameters for server-side rendered images
