@@ -30,6 +30,7 @@ type RepositoryController struct {
 	// Converts config to instance
 	repoGetter RepoGetter
 	identities auth.BackgroundIdentityService
+	tester     *RepositoryTester
 
 	// To allow injection for testing.
 	syncFn            func(key string) error
@@ -131,19 +132,12 @@ func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
 }
 
 func (rc *RepositoryController) deleteRepository(obj interface{}) {
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		rc.logger.Error("expected a Repository but got %T", obj)
-		return
-	}
-	// TODO: Add job that will remove everything owned by that repository
-	rc.logger.Info("TODO, remove everything from repository", "name", repo.Name)
-	// rc.enqueueRepository(repo)
+	rc.enqueueRepository(obj)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
+func (rc *RepositoryController) processNextWorkItem(_ context.Context) bool {
 	key, quit := rc.queue.Get()
 	if quit {
 		return false
@@ -179,28 +173,53 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
+	// The repository is deleted
+	if cachedRepo.DeletionTimestamp != nil {
+		return rc.processDeletedItem(context.Background(), cachedRepo)
+	}
+
+	// Did the spec change
 	now := time.Now().UnixMilli()
-	elapsed := now - cachedRepo.Status.Health.Checked
-	if time.Duration(elapsed)*time.Millisecond < time.Second*30 {
-		// We checked status recently!
-		// avoids inf loop!!!
-		// This logic is not totally right -- we want to force this if anything in spec changed :thinkign:
+	generationChanged := cachedRepo.Generation != cachedRepo.Status.Health.Generation
+	elapsed := time.Duration(now-cachedRepo.Status.Health.Checked) * time.Millisecond
+	if elapsed < time.Millisecond*200 {
+		// avoids possible inf loop!!!
+		return nil
+	}
+	if elapsed < time.Second*30 && !generationChanged {
+		// We checked status recently! and the generation has not changed
 		return nil
 	}
 
-	// This is used for the health check client
-	id, err := rc.identities.WorkerIdentity(context.Background(), namespace)
+	err = rc.processHealthCheck(context.Background(), cachedRepo)
+	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
+		// deleted or changed in the meantime, we'll get called again
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-	ctx := identity.WithRequester(context.Background(), id)
+	return nil
+}
+
+func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
+	rc.logger.Info("TODO, whatever cleanup is required for", "repository", cachedRepo.Name)
+	return nil
+}
+
+func (rc *RepositoryController) processHealthCheck(ctx context.Context, cachedRepo *provisioning.Repository) error {
+	// This is used for the health check client
+	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, id)
 
 	// Make a copy we can mutate
 	cfg := cachedRepo.DeepCopy()
 	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
 	if err != nil {
 		cfg.Status.Health = provisioning.HealthStatus{
-			Checked: now,
 			Healthy: false,
 			Message: []string{
 				"Unable to create repository from configuration",
@@ -208,7 +227,7 @@ func (rc *RepositoryController) sync(key string) error {
 			},
 		}
 	} else {
-		res, err := TestRepository(ctx, repo, rc.logger)
+		res, err := rc.tester.TestRepository(ctx, repo)
 		if err != nil {
 			res = &provisioning.TestResults{
 				Success: false,
@@ -219,21 +238,14 @@ func (rc *RepositoryController) sync(key string) error {
 			}
 		}
 		cfg.Status.Health = provisioning.HealthStatus{
-			Checked: now,
 			Healthy: res.Success,
 			Message: res.Errors,
 		}
 	}
+	cfg.Status.Health.Checked = time.Now().UnixMilli()
+	cfg.Status.Health.Generation = cachedRepo.Generation
 
 	_, err = rc.client.Repositories(cfg.GetNamespace()).
 		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
-
-	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
-		// deleted or changed in the meantime, we'll get called again
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

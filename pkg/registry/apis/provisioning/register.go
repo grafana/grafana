@@ -71,6 +71,7 @@ type ProvisioningAPIBuilder struct {
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
+	tester            *RepositoryTester
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -105,6 +106,10 @@ func NewProvisioningAPIBuilder(
 			render:     render,
 			blobstore:  blobstore,
 			identities: identities,
+		},
+		tester: &RepositoryTester{
+			client: clientFactory,
+			logger: slog.Default().With("logger", "provisioning-repository-tester"),
 		},
 		jobs: jobs.NewJobQueue(50), // in memory for now
 	}

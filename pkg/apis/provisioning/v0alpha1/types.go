@@ -145,6 +145,9 @@ type HealthStatus struct {
 	// When the sync job started
 	Checked int64 `json:"checked,omitempty"`
 
+	// The generation (spec changed) that triggered this health check
+	Generation int64 `json:"generation,omitempty"`
+
 	// Summary messages (will be shown to users)
 	Message []string `json:"message,omitempty"`
 }
