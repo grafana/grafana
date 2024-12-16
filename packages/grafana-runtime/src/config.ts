@@ -312,4 +312,11 @@ options.bootData = bootData;
  *
  * @public
  */
-export const config = new GrafanaBootConfig(options);
+export let config = new GrafanaBootConfig(options);
+
+export const setConfig = (options: GrafanaBootConfig) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('Config can be only overridden in test environment');
+  }
+  config = new GrafanaBootConfig(options);
+};

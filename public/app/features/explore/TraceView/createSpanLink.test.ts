@@ -8,10 +8,18 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { TraceToLogsOptionsV2, TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import {
+  AccessControlAction,
+  DataSourceSrv,
+  GrafanaBootConfig,
+  setConfig,
+  setDataSourceSrv,
+  setLinkSrv,
+  setTemplateSrv,
+} from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
+import { LinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
 import { Trace, TraceSpan } from './components';
@@ -57,13 +65,20 @@ const dummyDataFrameForProfiles = createDataFrame({
   ],
 });
 
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    hasAccessToExplore: () => true,
-  },
-}));
-
 describe('createSpanLinkFactory', () => {
+  beforeAll(() => {
+    setConfig({
+      exploreEnabled: true,
+      bootData: {
+        user: {
+          permissions: {
+            [AccessControlAction.DataSourcesExplore]: true,
+          },
+        },
+      },
+    } as unknown as GrafanaBootConfig);
+  });
+
   it('returns no links if there is no data source uid', () => {
     const splitOpenFn = jest.fn();
     const createLink = createSpanLinkFactory({

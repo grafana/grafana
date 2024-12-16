@@ -3,23 +3,15 @@ import { ComponentProps } from 'react';
 
 import { DataFrame, FieldType, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
-import { config } from '@grafana/runtime';
+import { config, setLinkSrv, setTemplateSrv } from '@grafana/runtime';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
 import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
-
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    getTemplateSrv: () => ({
-      replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
-    }),
-  };
-});
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: DataFrame) => {
   const testDataFrame = {
@@ -103,6 +95,12 @@ describe('LogsTable', () => {
         };
       });
     });
+
+    setTemplateSrv({
+      replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
+    } as TemplateSrv);
+
+    setLinkSrv(new LinkSrv());
   });
 
   let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;

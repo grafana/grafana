@@ -21,9 +21,11 @@ import {
 } from '@grafana/data';
 
 import { AccessControlAction } from '../access-controll/types';
-import { config, getLinkSrv, reportInteraction } from '../index';
+import { reportInteraction } from '../analytics/utils';
+import { config } from '../config';
 import { parseDataplaneLogsFrame } from '../logs/logsFrame';
 import { getTemplateSrv, VariableInterpolation } from '../services';
+import { getLinkSrv } from '../services/LinkSrv';
 
 import { getTransformationVars } from './transformations';
 import { ExploreFieldLinkModel } from './types';
@@ -37,7 +39,6 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
     !link.internal ||
     (userHasPermission(AccessControlAction.DataSourcesExplore, config.bootData.user) && config.exploreEnabled)
   );
-  // return !link.internal || contextSrv.hasAccessToExplore();
 };
 
 /**
