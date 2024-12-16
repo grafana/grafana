@@ -108,19 +108,21 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	if job.Spec.Action != provisioning.JobActionPullRequest {
 		return errors.New("job is not a pull request")
 	}
+	cfg := c.repo.Config().Spec
 
 	// TODO: clean specification to have better options
-	if (c.repo.Config().Spec.Linting && c.repo.Config().Spec.GitHub.PullRequestLinter) ||
-		c.repo.Config().Spec.GitHub.GenerateDashboardPreviews {
+	if (cfg.Linting && cfg.GitHub.PullRequestLinter) ||
+		cfg.GitHub.GenerateDashboardPreviews {
 		return nil
 	}
 
 	logger := c.logger
 	spec := job.Spec
-	base := c.repo.Config().Spec.GitHub.Branch
+	base := cfg.GitHub.Branch
+	ref := spec.Hash
 
 	// list pull requests changes files
-	files, err := c.repo.CompareFiles(ctx, logger, base, spec.Hash)
+	files, err := c.repo.CompareFiles(ctx, logger, base, ref)
 	if err != nil {
 		return fmt.Errorf("failed to list pull request files: %w", err)
 	}
@@ -134,8 +136,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 
 	for _, f := range files {
 		// TODO: ignore files?
-
-		fileInfo, err := c.repo.Read(ctx, logger, f.Path, f.Ref)
+		fileInfo, err := c.repo.Read(ctx, logger, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)
 		}
@@ -150,14 +151,13 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			continue
 		}
 
-		if true && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
+		if cfg.Linting && cfg.GitHub.PullRequestLinter && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return fmt.Errorf("execute lint comment template: %w", err)
 			}
 
-			// TODO: use job.Hash?
-			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, f.Ref, buf.String()); err != nil {
+			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, ref, buf.String()); err != nil {
 				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 		}
@@ -170,21 +170,21 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 
 		switch f.Action {
 		case repository.FileActionCreated:
-			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
 		case repository.FileActionUpdated:
 			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
-			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
 		case repository.FileActionRenamed:
 			preview.OriginalURL = c.previewURL(base, f.PreviousPath, spec.URL)
-			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
 		case repository.FileActionDeleted:
 			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
 		default:
 			return fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
-		if c.repo.Config().Spec.GitHub.GenerateDashboardPreviews || f.Action != repository.FileActionDeleted {
-			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, f.Ref)
+		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
+			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, ref)
 			if err != nil {
 				return fmt.Errorf("render dashboard preview: %w", err)
 			}
@@ -194,7 +194,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		previews = append(previews, preview)
 	}
 
-	if len(previews) > 0 && c.repo.Config().Spec.GitHub.GenerateDashboardPreviews {
+	if len(previews) > 0 && cfg.GitHub.GenerateDashboardPreviews {
 		var buf bytes.Buffer
 		if err := c.prevTemplate.Execute(&buf, previews); err != nil {
 			return fmt.Errorf("execute previews comment template: %w", err)
