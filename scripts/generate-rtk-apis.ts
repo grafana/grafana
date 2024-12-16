@@ -38,7 +38,7 @@ const config: ConfigFile = {
     },
     '../public/app/features/provisioning/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
-      schemaFile: '../public/app/features/provisioning/api/spec.json',
+      schemaFile: '../pkg/tests/apis/provisioning/testdata/openapi.json',
       apiImport: 'baseAPI',
       filterEndpoints,
       argSuffix: 'Arg',

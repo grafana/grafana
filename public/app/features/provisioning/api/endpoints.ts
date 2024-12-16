@@ -262,7 +262,6 @@ export type ListRepositoryArg = {};
 export type CreateRepositoryResponse = Repository;
 export type CreateRepositoryArg = {
   pretty?: string;
-
   dryRun?: string;
   fieldManager?: string;
   fieldValidation?: string;
@@ -388,6 +387,7 @@ export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
 };
+
 export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
   name: string;
