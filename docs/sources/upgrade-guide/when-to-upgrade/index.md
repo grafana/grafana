@@ -142,7 +142,7 @@ A critical feature degradation usually meets one of the following criteria:
 
 ## Self-managing upgrade strategies
 
-Based on your needs, you can choose your ideal upgrade strategy. Here’s what that might look like in practice:
+Based on your needs, choose your ideal upgrade strategy. Here’s what that might look like in practice:
 
 | **Strategy/cadence**                      | **Advantages/disadvantages**                                                                                                                                                                                                                                                                                           | **Example upgrade procedure**                                                                                                                                                                                                                                               |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -152,8 +152,36 @@ Based on your needs, you can choose your ideal upgrade strategy. Here’s what t
 
 Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
 
-For each strategy, you should:
+## How the Grafana team catches bugs and breaks during the release process
 
-- Stay informed about patch releases that fix security vulnerabilities (released monthly, plus ad-hoc releases).
-- Most [plugins](https://grafana.com/grafana/plugins/) are released separately from Grafana. Keep plugins up to date, and always [update them](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before or while updating Grafana. Before updating to a new major version of a plugin, review its breaking changes at [https://grafana.com/grafana/plugins/](https://grafana.com/grafana/plugins/).
-- Test upgrades in realistic dev and test instances. Roll back and report issues if you experience problems in dev or test.
+1. Each team writes automated tests for their code and we run [automated tests](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md#test-grafana) which include unit tests, integration tests, end-to-end tests, and load tests.
+    1. For plugins specifically, we test the constituent frontend and backend parts of a data source (unit), integrating a data source with a matrix of Grafana versions (E2E), and the contract between the data source and the API it consumes (integration). [Learn more](https://www.google.com/url?q=https://docs.google.com/document/d/1RZO3dg9JTfdrDk-CJ_dJaNZb1sbof7WRu1nZEpxBxR8/edit&sa=D&source=docs&ust=1734085674570010&usg=AOvVaw1cQvnkaglsHWdVRwjMR2r-) (internal only).
+2. We perform manual acceptance and smoke testing internally for new features by deploying to our internal observability stack. After that, we progressively roll out in Grafana Cloud, and then cut an OSS and Enterprise release. Each stage catches bugs.
+3. We ship new features in Experimental or Private Preview [release stages](https://grafana.com/docs/release-life-cycle/), behind feature toggles. This helps us improve the feature during development. If you are interested in gaining early access to features (including in your development or test environments), please let us know.
+4. We scan Grafana, all plugins and their dependencies continuously for security vulnerabilities.
+
+## Minimize the likelihood of bugs and problems during upgrade
+
+Despite thorough testing, you can experience problems when upgrading:
+
+### Bugs
+
+Bugs are unexpected side effects of code changes in the release, which cause problems. Some bugs occur for all users, and we usually catch these in the early stages of testing. Others occur in a small number of Grafana instances with specific configuration or unusual use cases; for example a specific authentication setup or a combination of feature toggles. Grafana plugins also interact with external services via API to query data, and sometimes these APIs change without notice, causing issues for your dashboards that depend on these datasources. Grafana Labs has monitoring in place to regularly test these APIs, but at times they break in unexpected ways.
+
+Reduce the risk of bugs by staying current and rolling out upgrades across dev or test environments before production. A Grafana Enterprise license entitles you to an additional dev and test instance for this purpose, available through your account team, and in Grafana Cloud you can create dev and test stacks that upgrade before production by using [rolling release channels](https://grafana.com/docs/rolling-release/).
+
+* Roll back and report issues if you experience problems in dev or test.
+* In Cloud, run a dev or test stack on the `fast` channel, and run your production stack on `steady` or `slow`. 
+* To change your release channel, open a support ticket.
+
+### Known breaking changes
+
+As a rule we always seek backward compatibility and migration, and reserve breaking changes for Grafana’s once-yearly major release. However occasionally small breaking changes (like updates to API payloads) will ship in minor releases. These are announced in [upgrade guides](https://grafana.com/docs/grafana/latest/upgrade-guide/), [What’s New](https://grafana.com/docs/grafana-cloud/whats-new/), and our [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+
+Always read the [upgrade guide](https://grafana.com/docs/grafana/latest/upgrade-guide/) and [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) prior to upgrading to learn about and account for breaking changes.
+
+### Plugin incompatibility
+
+**Grafana core **ships as a single binary and consists of Dashboards, Alerts, Explore, Authentication and Authorization, Reporting, some core data sources, and other components. However, almost everyone who uses Grafana also uses **plugins**: panels, data sources, and applications that are released independently of Grafana. Every plugin version lists its Grafana version dependencies (you can see them at [https://grafana.com/grafana/plugins/](https://grafana.com/grafana/plugins/)) but different versions of different plugins can also interact with each other - for example you might visualize data from a data source in a panel in Grafana, all three of which are versioned independently of each other. That can create issues that are hard to catch in testing.
+
+To minimize the likelihood of plugin incompatibility issues, run the latest available version of plugins and update them regularly. Always [update plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before updating Grafana. Plugins also follow Semver patterns, so review the plugin’s changelog for breaking changes before upgrading to a new major version of that plugin.
