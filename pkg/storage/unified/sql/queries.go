@@ -27,18 +27,19 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete          = mustTemplate("resource_delete.sql")
-	sqlResourceInsert          = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate          = mustTemplate("resource_update.sql")
-	sqlResourceRead            = mustTemplate("resource_read.sql")
-	sqlResourceStats           = mustTemplate("resource_stats.sql")
-	sqlResourceList            = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList     = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead     = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert   = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll     = mustTemplate("resource_history_poll.sql")
+	sqlResourceDelete            = mustTemplate("resource_delete.sql")
+	sqlResourceInsert            = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate            = mustTemplate("resource_update.sql")
+	sqlResourceRead              = mustTemplate("resource_read.sql")
+	sqlResourceStats             = mustTemplate("resource_stats.sql")
+	sqlResourceList              = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
+	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
+	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
+	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -189,6 +190,19 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
+}
+
+// update resource history
+
+type sqlResourceHistoryUpdateRequest struct {
+	sqltemplate.SQLTemplate
+	WriteEvent resource.WriteEvent
+	OldUID     string
+	NewUID     string
+}
+
+func (r sqlResourceHistoryUpdateRequest) Validate() error {
+	return nil // TODO
 }
 
 // update RV

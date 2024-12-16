@@ -44,7 +44,6 @@ const defaultProps: Props = {
       email: 'team.one@test.com',
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',
       memberCount: 2000,
-      permission: TeamPermissionLevel.Admin,
     }),
   ],
   orgs: [

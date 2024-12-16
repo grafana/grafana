@@ -1,5 +1,10 @@
 import { OrgRole } from '@grafana/data';
 
+export enum TeamPermissionLevel {
+  Admin = 4,
+  Member = 0,
+}
+
 export { OrgRole as OrgRole };
 
 export enum PermissionLevelString {
