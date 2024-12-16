@@ -35,7 +35,7 @@ type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	store         *store.Store
+	store         store.Store
 	identityStore legacy.LegacyIdentityStore
 	actionMapper  *mappers.K8sRbacMapper
 

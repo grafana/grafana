@@ -223,6 +223,104 @@ func TestService_getUserTeams(t *testing.T) {
 	}
 }
 
+func TestService_getUserBasicRole(t *testing.T) {
+	type testCase struct {
+		name          string
+		basicRole     *store.BasicRole
+		cacheHit      bool
+		expectedRole  *store.BasicRole
+		expectedError bool
+		storeError    bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return basic role from cache if available",
+			basicRole: &store.BasicRole{
+				Role:    "viewer",
+				IsAdmin: false,
+			},
+			cacheHit: true,
+			expectedRole: &store.BasicRole{
+				Role:    "viewer",
+				IsAdmin: false,
+			},
+			expectedError: false,
+		},
+		{
+			name: "should return basic role from store if not in cache",
+			basicRole: &store.BasicRole{
+				Role:    "editor",
+				IsAdmin: false,
+			},
+			cacheHit: false,
+			expectedRole: &store.BasicRole{
+				Role:    "editor",
+				IsAdmin: false,
+			},
+			expectedError: false,
+		},
+		{
+			name:          "should return error if store fails",
+			basicRole:     nil,
+			cacheHit:      false,
+			expectedRole:  nil,
+			expectedError: true,
+			storeError:    true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			req := &CheckRequest{Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}}
+
+			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			store := &fakeStore{basicRole: tc.basicRole, err: tc.storeError}
+
+			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
+			if tc.cacheHit {
+				cacheService.Set(userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID), tc.expectedRole, 0)
+			}
+
+			s := &Service{
+				basicRoleCache: cacheService,
+				store:          store,
+				logger:         log.New("test"),
+			}
+
+			role, err := s.getUserBasicRole(ctx, req, userIdentifiers)
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedRole, role)
+			if tc.cacheHit {
+				require.Zero(t, store.calls)
+			} else {
+				require.Equal(t, 1, store.calls)
+			}
+		})
+	}
+}
+
+type fakeStore struct {
+	store.StoreImpl
+	basicRole *store.BasicRole
+	err       bool
+	calls     int
+}
+
+func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace claims.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("store error")
+	}
+	return f.basicRole, nil
+}
+
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
 	teams []int64
