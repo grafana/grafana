@@ -317,7 +317,7 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
-# Set the maximum file size in megabytes for the CSV attachments
+# Set the maximum file size in megabytes for the report email attachments
 max_attachment_size_mb = 10
 # Path to the directory containing font files
 fonts_path =

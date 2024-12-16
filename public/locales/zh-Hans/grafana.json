@@ -475,6 +475,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1252,6 +1256,8 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "浏览 工具栏",
       "copy-link": "复制网址",
       "copy-link-abs-time": "",
@@ -1275,6 +1281,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1742,6 +1749,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2190,9 +2203,6 @@
     },
     "new-folder": {
       "title": "新建文件夹"
-    },
-    "observability": {
-      "title": "可观测性"
     },
     "oncall": {
       "title": "OnCall"
@@ -3322,6 +3332,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

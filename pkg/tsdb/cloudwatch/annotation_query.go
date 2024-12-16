@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
@@ -36,7 +35,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 	if model.Period != nil && *model.Period != "" {
 		p, err := strconv.ParseInt(*model.Period, 10, 64)
 		if err != nil {
-			return nil, errorsource.DownstreamError(fmt.Errorf("query period must be an int"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("query period must be an int"))
 		}
 		period = p
 	}
@@ -59,7 +58,8 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 
 	cli, err := e.getCWClient(ctx, pluginCtx, region)
 	if err != nil {
-		return nil, err
+		result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(fmt.Errorf("%v: %w", "failed to get client", err))
+		return result, nil
 	}
 
 	var alarmNames []*string
@@ -81,13 +81,13 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		}
 		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
-			result = errorsource.AddDownstreamErrorToResponse(query.RefID, result, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err))
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)))
 			return result, nil
 		}
 		alarmNames = filterAlarms(resp, utils.Depointerizer(model.Namespace), metricName, dimensions, statistic, period)
 	} else {
 		if model.Region == nil || model.Namespace == nil || metricName == "" || statistic == "" {
-			return result, errorsource.DownstreamError(errors.New("invalid annotations query"), false)
+			return result, backend.DownstreamError(errors.New("invalid annotations query"))
 		}
 
 		var qd []*cloudwatch.Dimension
@@ -112,7 +112,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		}
 		resp, err := cli.DescribeAlarmsForMetric(params)
 		if err != nil {
-			result = errorsource.AddDownstreamErrorToResponse(query.RefID, result, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmsForMetric", err))
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmsForMetric", err)))
 			return result, nil
 		}
 		for _, alarm := range resp.MetricAlarms {
@@ -130,7 +130,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		}
 		resp, err := cli.DescribeAlarmHistory(params)
 		if err != nil {
-			result = errorsource.AddDownstreamErrorToResponse(query.RefID, result, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmHistory", err))
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmHistory", err)))
 			return result, nil
 		}
 		for _, history := range resp.AlarmHistoryItems {

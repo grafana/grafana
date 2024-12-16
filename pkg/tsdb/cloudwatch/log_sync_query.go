@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -24,7 +23,8 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		resp.Responses[req.Queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return resp, nil
 	}
 
 	for _, q := range req.Queries {
@@ -55,9 +55,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 		}
 
 		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, instance.Settings.LogsTimeout.Duration)
-		var sourceError errorsource.Error
+		var sourceError backend.ErrorWithSource
 		if errors.As(err, &sourceError) {
-			errorsource.AddErrorToResponse(refId, resp, sourceError)
+			resp.Responses[refId] = backend.ErrorResponseWithErrorSource(sourceError)
 			continue
 		}
 		if err != nil {

@@ -959,7 +959,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{ // New in 9.3.
 					Label:        "Message",
-					Description:  "Custom message. You can use template variables.",
+					Description:  "Templated message to be used in the payload's \"message\" field.",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
