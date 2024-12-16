@@ -20,6 +20,7 @@ type AsyncStatePersister struct {
 	log log.Logger
 	// doNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods.
 	doNotSaveNormalState bool
+	batchSize            int
 	store                InstanceStore
 	ticker               *clock.Ticker
 	metrics              *metrics.State
@@ -31,6 +32,7 @@ func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg
 		store:                cfg.InstanceStore,
 		ticker:               ticker,
 		doNotSaveNormalState: cfg.DoNotSaveNormalState,
+		batchSize:            cfg.StatePeriodicSaveBatchSize,
 		metrics:              cfg.Metrics,
 	}
 }
@@ -58,11 +60,11 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, instancesProvider Al
 	startTime := time.Now()
 	a.log.Debug("Full state sync start")
 	instances := instancesProvider.GetAlertInstances(a.doNotSaveNormalState)
-	if err := a.store.FullSync(ctx, instances); err != nil {
+	if err := a.store.FullSync(ctx, instances, a.batchSize); err != nil {
 		a.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
 	}
-	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances), "batchSize", a.batchSize)
 	if a.metrics != nil {
 		a.metrics.StateFullSyncDuration.Observe(time.Since(startTime).Seconds())
 	}
