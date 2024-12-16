@@ -17,13 +17,17 @@ def prometheus_devenv_step():
         "name": "setup-prometheus-devenv",
         "image": images["go"],
         "commands": [
-            "apk add --update make bash",
+            "apk add --update make bash docker docker-compose",
             "make devenv sources=prometheus",
         ],
         "volumes": [
             {
                 "name": "prometheus-data",
                 "path": "/var/lib/prometheus",
+            },
+            {
+                "name": "docker-sock",
+                "path": "/var/run/docker.sock",
             },
         ],
         "depends_on": [

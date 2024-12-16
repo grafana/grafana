@@ -860,7 +860,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash
+  - apk add --update make bash docker docker-compose
   - make devenv sources=prometheus
   depends_on:
   - clone
@@ -869,6 +869,8 @@ steps:
   volumes:
   - name: prometheus-data
     path: /var/lib/prometheus
+  - name: docker-sock
+    path: /var/run/docker.sock
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
@@ -2293,7 +2295,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash
+  - apk add --update make bash docker docker-compose
   - make devenv sources=prometheus
   depends_on:
   - clone
@@ -2302,6 +2304,8 @@ steps:
   volumes:
   - name: prometheus-data
     path: /var/lib/prometheus
+  - name: docker-sock
+    path: /var/run/docker.sock
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
@@ -5601,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 22e74956d8116bd497b82deb09ea7718600e90ab708b477808abd492c67f5ad3
+hmac: 57348420b7dec9a424100478088b50b17acab0500f8f9a6ab49ebbd340ef7aa5
 
 ...

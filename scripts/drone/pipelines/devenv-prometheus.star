@@ -40,5 +40,11 @@ def prometheus_devenv_pipeline():
                     "path": "/var/lib/drone/cache/prometheus-devenv",
                 },
             },
+            {
+                "name": "docker-sock",
+                "host": {
+                    "path": "/var/run/docker.sock",
+                },
+            },
         ],
     )
