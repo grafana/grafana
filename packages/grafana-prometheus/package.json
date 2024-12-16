@@ -130,7 +130,7 @@
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.1.1",
     "rollup-plugin-node-externals": "^7.1.3",
-    "sass": "1.80.7",
+    "sass": "1.83.0",
     "sass-loader": "16.0.4",
     "style-loader": "4.0.0",
     "testing-library-selector": "0.3.1",
