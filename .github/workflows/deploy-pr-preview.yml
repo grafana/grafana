@@ -11,6 +11,7 @@ on:
 
 jobs:
   deploy-pr-preview:
+    if: github.repository == 'grafana/grafana'
     uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main
     with:
       sha: ${{ github.event.pull_request.head.sha }}
