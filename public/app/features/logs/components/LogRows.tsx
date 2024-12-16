@@ -95,6 +95,7 @@ export const LogRows = memo(
     scrollElement,
     renderPreview = false,
     enableLogDetails,
+    permalinkedRowId,
     ...props
   }: Props) => {
     const [previewSize, setPreviewSize] = useState(
@@ -102,7 +103,9 @@ export const LogRows = memo(
        * If renderPreview is enabled, either half of the log rows or twice the screen size of log rows will be rendered.
        * The biggest of those values will be used. Else, all rows are rendered.
        */
-      renderPreview ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
+      renderPreview && !permalinkedRowId
+        ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2))
+        : Infinity
     );
     const [popoverState, setPopoverState] = useState<PopoverStateType>({
       selection: '',
@@ -259,7 +262,7 @@ export const LogRows = memo(
                   styles={styles}
                   onPermalinkClick={props.onPermalinkClick}
                   scrollIntoView={props.scrollIntoView}
-                  permalinkedRowId={props.permalinkedRowId}
+                  permalinkedRowId={permalinkedRowId}
                   onPinLine={props.onPinLine}
                   onUnpinLine={props.onUnpinLine}
                   pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}

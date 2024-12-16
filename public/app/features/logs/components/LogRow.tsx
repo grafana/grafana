@@ -60,7 +60,6 @@ export interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
-  containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
@@ -91,7 +90,6 @@ export const LogRow = ({
   logRowMenuIconsAfter,
   timeZone,
   permalinkedRowId,
-  containerRendered,
   scrollIntoView,
   handleTextSelection,
   onLogRowHover,
@@ -126,12 +124,16 @@ export const LogRow = ({
   const isSampled = sampleMessage !== undefined;
 
   useEffect(() => {
-    if (permalinkedRowId !== row.uid && permalinked) {
+    if (permalinkedRowId !== row.uid) {
       setPermalinked(false);
       return;
     }
+    if (!permalinked) {
+      setPermalinked(true);
+      return;
+    }
 
-    if (permalinkedRowId === row.uid && !permalinked && containerRendered && logLineRef.current && scrollIntoView) {
+    if (logLineRef.current && scrollIntoView) {
       // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
       scrollIntoView(logLineRef.current);
       reportInteraction('grafana_explore_logs_permalink_opened', {
@@ -140,7 +142,7 @@ export const LogRow = ({
       });
       setPermalinked(true);
     }
-  }, [containerRendered, permalinked, permalinkedRowId, row.datasourceType, row.uid, scrollIntoView]);
+  }, [permalinked, permalinkedRowId, row.datasourceType, row.uid, scrollIntoView]);
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
