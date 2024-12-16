@@ -117,16 +117,16 @@ func checkRefOrValue(s *secret.SecureValue, mustExist bool) error {
 func (s *SecureValueRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
-
-	// TODO: How to define this function? perhaps would be useful to keep all validation here and not use `checkRefOrValue` for example..
 	createValidation rest.ValidateObjectFunc,
-
-	// TODO: How can we use these options? Looks useful. `dryRun` for dev as well.
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
 	sv, ok := obj.(*secret.SecureValue)
 	if !ok {
 		return nil, fmt.Errorf("expected SecureValue for create")
+	}
+
+	if err := createValidation(ctx, obj); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	err := checkRefOrValue(sv, true)
