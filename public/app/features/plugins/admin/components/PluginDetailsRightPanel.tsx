@@ -12,13 +12,14 @@ import { CatalogPlugin } from '../types';
 type Props = {
   info: PageInfoItem[];
   plugin: CatalogPlugin;
+  narrowScreen?: boolean;
 };
 
 export function PluginDetailsPanel(props: Props): React.ReactElement | null {
-  const { info, plugin } = props;
+  const { info, plugin, narrowScreen } = props;
   const styles = useStyles2(getStyles);
   return (
-    <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
+    <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={narrowScreen ? undefined : '250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">
         <Stack direction="column" gap={2}>
           {plugin.isInstalled && plugin.installedVersion && (

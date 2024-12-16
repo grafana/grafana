@@ -84,7 +84,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
     return (
       <div>
-        <PluginDetailsPanel info={info} plugin={plugin} />
+        <PluginDetailsPanel info={info} plugin={plugin} narrowScreen />
       </div>
     );
   }
