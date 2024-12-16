@@ -1,3 +1,6 @@
+"""
+This module contains Drone steps that are used to set up and manage Prometheus resources used in e2e tests.
+"""
 load(
     "scripts/drone/utils/images.star",
     "images",
