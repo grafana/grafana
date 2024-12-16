@@ -42,7 +42,7 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 		repo:   config,
 		client: client,
 		kinds:  kinds,
-		mapper: NamesFromFileName,
+		mapper: NamesFromHashedRepoPath,
 	}
 	if repo.Config().Spec.Linting {
 		ctx := context.Background()

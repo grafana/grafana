@@ -18,12 +18,12 @@ type FileNameMapper func(obj metav1.Object) string
 // Get the object/folder names from a path+object
 type NameMapper func(repo string, path string, obj metav1.Object) (objectName string, folderName string)
 
-// This picks the names from the saved the metadata
+// Uses the k8s uid name directly
 func FileNameFromK8sName(obj metav1.Object) string {
 	return obj.GetName() // sanitize?
 }
 
-// This picks the names from the saved the metadata
+// Calculates a human readable file name from a title field
 func FileNameFromSlug(obj metav1.Object) string {
 	meta, err := utils.MetaAccessor(obj)
 	if err == nil {
@@ -41,16 +41,6 @@ func NamesFromMetadata(_ string, _ string, obj metav1.Object) (objectName string
 	anno := obj.GetAnnotations()
 	if anno != nil {
 		folderName = anno[utils.AnnoKeyFolder]
-	}
-	return
-}
-
-// This picks names based entirely on the path
-func NamesFromFileName(_ string, fpath string, _ metav1.Object) (objectName string, folderName string) {
-	objectName = path.Base(fpath)
-	idx := strings.LastIndex(fpath, "/")
-	if idx > 0 {
-		folderName = strings.ReplaceAll(fpath[0:idx], "/", "-")
 	}
 	return
 }
