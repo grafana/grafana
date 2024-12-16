@@ -175,6 +175,8 @@ func SetupConfig(
 
 		// Audit our options here
 		if false {
+			// Safe to ignore G304 -- this will be removed before merging to main, and just helps audit the conversion
+			// nolint:gosec
 			f, err := os.OpenFile("test.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err)
