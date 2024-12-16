@@ -93,7 +93,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				]
 			  },
 			  {
-				"name": "folders/count",
+				"name": "folders/counts",
 				"singularName": "",
 				"namespaced": true,
 				"kind": "DescendantCounts",

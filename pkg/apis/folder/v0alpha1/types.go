@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -75,4 +77,10 @@ type ResourceStats struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
 	Count    int64  `json:"count"`
+}
+
+func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*DescendantCounts, error) {
+	var res DescendantCounts
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &res)
+	return &res, err
 }
