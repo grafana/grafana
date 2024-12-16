@@ -80,6 +80,7 @@ export interface DashboardViewItem {
   // For enterprise sort options
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
+  repository?: string;
 }
 
 export interface SearchAction extends Action {

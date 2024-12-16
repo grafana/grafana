@@ -6,7 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
@@ -213,6 +213,12 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
+          {item.repository && (
+            <Text color={'secondary'}>
+              {' '}
+              | <Icon name={'github'} /> {item.repository}
+            </Text>
+          )}
         </label>
       </div>
     </div>
