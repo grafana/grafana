@@ -1,5 +1,6 @@
+import { WithAccessControlMetadata } from '@grafana/data';
+
 import { Role } from './accessControl';
-import { TeamPermissionLevel } from './acl';
 
 export interface TeamDTO {
   /**
@@ -13,14 +14,16 @@ export interface TeamDTO {
 }
 
 // This is the team resource with permissions and metadata expanded
-export interface Team {
-  id: number; // TODO switch to UUID
-  uid: string; // Prefer UUID
-
+export interface Team extends WithAccessControlMetadata {
   /**
-   * AccessControl metadata associated with a given resource.
+   * Internal id of team
+   * @deprecated use uid instead
    */
-  accessControl?: Record<string, boolean>;
+  id: number;
+  /**
+   * A unique identifier for the team.
+   */
+  uid: string; // Prefer UUID
   /**
    * AvatarUrl is the team's avatar URL.
    */
@@ -41,10 +44,9 @@ export interface Team {
    * OrgId is the ID of an organisation the team belongs to.
    */
   orgId: number;
-  /**
-   * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
-   */
-  permission: TeamPermissionLevel;
+}
+
+export interface TeamWithRoles extends Team {
   /**
    * RBAC roles assigned to the team.
    */
