@@ -11,7 +11,7 @@ title: Create LBAC for data sources rules for a supported data source
 weight: 250
 ---
 
-# Create LBAC for Data Source Rule
+# Create LBAC for data source rule
 
 LBAC for data sources is available for LBAC-supported data sources created with basic authentication. As of today, managed/provisioned data source can **NOT** be configured with LBAC rules.
 
@@ -23,7 +23,7 @@ To be able to use LBAC for data sources rules, you need to enable the feature to
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.
 
-### Create a LBAC for data sources Rule for a team
+### Create a LBAC for data sources rule for a team
 
 1. Navigate to your data source
 1. Navigate to the permissions tab
@@ -33,7 +33,7 @@ To be able to use LBAC for data sources rules, you need to enable the feature to
 1. Define a label selector for the rule
    - Add a label selector to the rule. Refer to documentation for guidance on the types of log selections you can specify.
 
-### LBAC Rule
+### LBAC rule
 
 An LBAC rule is a `logql` query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
 
@@ -55,7 +55,7 @@ To validate the rules, we recommend testing the rules in the Explore view. This 
 
 #### Tasks
 
-### Task 1: One Rule Setup for Each Team
+### Task 1: One rule setup for each team
 
 One common use case for creating an LBAC policy is to grant access to logs or metrics with a specific label. For example, you can create a label policy that includes all log lines or metrics with the label `namespace`.
 
