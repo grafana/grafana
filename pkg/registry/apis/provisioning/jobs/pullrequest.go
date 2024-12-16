@@ -52,7 +52,7 @@ const (
 	{{- end}}{{- end}}`
 )
 
-type GithubRepository interface {
+type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*repository.FileInfo, error)
 	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]repository.FileChange, error)
@@ -64,11 +64,12 @@ type GithubRepository interface {
 // PreviewRenderer is an interface for rendering a preview of a file
 type PreviewRenderer interface {
 	IsAvailable(ctx context.Context) bool
+	// TODO: renderer should not receive a repository, it should be already namespaced
 	RenderDashboardPreview(ctx context.Context, repo repository.Repository, path string, ref string) (string, error)
 }
 
 type PullRequestCommenter struct {
-	repo         GithubRepository
+	repo         PullRequestRepo
 	parser       *resources.Parser
 	logger       *slog.Logger
 	lintTemplate *template.Template
@@ -78,7 +79,7 @@ type PullRequestCommenter struct {
 }
 
 func NewPullRequestCommenter(
-	repo GithubRepository,
+	repo PullRequestRepo,
 	parser *resources.Parser,
 	logger *slog.Logger,
 	renderer PreviewRenderer,
@@ -175,7 +176,6 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	}
 
 	previews := make([]changedResource, 0, len(changed))
-	// TODO: move here the preview / snapshot logic
 	for _, file := range changed {
 		logger.DebugContext(ctx, "processing file", "path", file.Info.Path)
 

@@ -63,13 +63,16 @@ type FileAction string
 const (
 	FileActionCreated FileAction = "created"
 	FileActionUpdated FileAction = "updated"
+	FileActionRenamed FileAction = "renamed"
 	FileActionDeleted FileAction = "deleted"
 )
 
 type FileChange struct {
-	Path   string
-	Ref    string
-	Action FileAction
+	Path         string
+	PreviousPath string
+	Ref          string
+	PreviousRef  string
+	Action       FileAction
 }
 
 type Repository interface {

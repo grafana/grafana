@@ -90,7 +90,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, err
 		}
 	case provisioning.JobActionPullRequest:
-		ghRepo, ok := repo.(GithubRepository)
+		prRepo, ok := repo.(PullRequestRepo)
 		if !ok {
 			return nil, fmt.Errorf("repository is not a github repository")
 		}
@@ -100,7 +100,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("error parsing base url: %w", err)
 		}
 
-		commenter, err := NewPullRequestCommenter(ghRepo, parser, logger, g.renderer, baseURL)
+		commenter, err := NewPullRequestCommenter(prRepo, parser, logger, g.renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}

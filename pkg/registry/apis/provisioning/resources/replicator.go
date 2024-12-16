@@ -246,6 +246,19 @@ func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.
 			if err := r.replicateFile(ctx, fileInfo); err != nil {
 				return fmt.Errorf("replicate file: %w", err)
 			}
+		case repository.FileActionRenamed:
+			// delete in old path
+			oldPath, err := r.repository.Read(ctx, r.logger, change.PreviousPath, change.Ref)
+			if err != nil {
+				return fmt.Errorf("read previous path: %w", err)
+			}
+			if err := r.deleteFile(ctx, oldPath); err != nil {
+				return fmt.Errorf("delete file: %w", err)
+			}
+
+			if err := r.replicateFile(ctx, fileInfo); err != nil {
+				return fmt.Errorf("replicate file in new path: %w", err)
+			}
 		case repository.FileActionDeleted:
 			if err := r.deleteFile(ctx, fileInfo); err != nil {
 				return fmt.Errorf("delete file: %w", err)

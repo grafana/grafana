@@ -578,7 +578,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 	}
 
 	changes := make([]FileChange, 0)
-	// TODO: handle all statuses
 	for _, f := range files {
 		// TODO: where should I ignore files?
 		if r.ignore(f.GetFilename()) {
@@ -586,7 +585,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 		}
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
-		case "added":
+		case "added", "copied":
 			changes = append(changes, FileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
@@ -599,17 +598,12 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 				Action: FileActionUpdated,
 			})
 		case "renamed":
-			// delete the old file
 			changes = append(changes, FileChange{
-				Path:   f.GetPreviousFilename(),
-				Ref:    base,
-				Action: FileActionDeleted,
-			})
-			// replicate the new file
-			changes = append(changes, FileChange{
-				Path:   f.GetFilename(),
-				Ref:    ref,
-				Action: FileActionCreated,
+				Path:         f.GetFilename(),
+				PreviousPath: f.GetPreviousFilename(),
+				Ref:          ref,
+				PreviousRef:  base,
+				Action:       FileActionRenamed,
 			})
 		case "removed":
 			changes = append(changes, FileChange{
@@ -617,6 +611,8 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 				Path:   f.GetFilename(),
 				Action: FileActionDeleted,
 			})
+		case "unchanged":
+			// do nothing
 		default:
 			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
