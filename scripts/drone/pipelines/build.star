@@ -35,6 +35,10 @@ load(
     "yarn_install_step",
 )
 load(
+    "scripts/drone/steps/prometheus.star",
+    "prometheus_devenv_step",
+)
+load(
     "scripts/drone/steps/rgm.star",
     "rgm_artifacts_step",
 )
@@ -45,10 +49,6 @@ load(
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
-)
-load(
-    "scripts/drone/steps/prometheus.star",
-    "prometheus_devenv_step",
 )
 
 # This function isn't actually unused but I don't know why the linter thinks it is...

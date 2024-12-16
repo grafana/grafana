@@ -1,6 +1,7 @@
 """
 This module contains Drone steps that are used to set up and manage Prometheus resources used in e2e tests.
 """
+
 load(
     "scripts/drone/utils/images.star",
     "images",
@@ -19,9 +20,6 @@ def prometheus_devenv_step():
             "apk add --update make bash",
             "make devenv sources=prometheus",
         ],
-        "environment": {
-            "DRONE_BUILD_EVENT": "pull_request",
-        },
         "volumes": [
             {
                 "name": "prometheus-data",
@@ -46,8 +44,8 @@ def cache_cleanup_step():
             'while [ "$(du -sm /var/lib/drone/cache/prometheus-devenv | cut -f1)" -gt 1024 ]; do',
             '    echo "Cache size exceeds 1GB, removing oldest files..."',
             '    find /var/lib/drone/cache/prometheus-devenv -type f -printf "%T+ %p\n" | sort | head -n 10 | cut -d" " -f2- | xargs rm -f',
-            '    find /var/lib/drone/cache/prometheus-devenv -type d -empty -delete',
-            'done',
+            "    find /var/lib/drone/cache/prometheus-devenv -type d -empty -delete",
+            "done",
         ],
         "volumes": [
             {
