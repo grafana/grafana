@@ -43,6 +43,7 @@ const config: ConfigFile = {
       filterEndpoints,
       argSuffix: 'Arg',
       responseSuffix: 'Response',
+      tag: true,
       endpointOverrides: [
         {
           pattern: /^list/,

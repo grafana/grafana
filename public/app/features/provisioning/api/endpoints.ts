@@ -1,226 +1,254 @@
 import { baseAPI as api } from './baseAPI';
-const injectedRtkApi = api.injectEndpoints({
-  endpoints: (build) => ({
-    listJob: build.query<ListJobResponse, ListJobArg | void>({
-      query: (queryArg) => ({
-        url: `/jobs`,
+export const addTagTypes = ['Job', 'Repository'] as const;
+const injectedRtkApi = api
+  .enhanceEndpoints({
+    addTagTypes,
+  })
+  .injectEndpoints({
+    endpoints: (build) => ({
+      listJob: build.query<ListJobResponse, ListJobArg | void>({
+        query: (queryArg) => ({
+          url: `/jobs`,
+        }),
+        providesTags: ['Job'],
+      }),
+      getJob: build.query<GetJobResponse, GetJobArg>({
+        query: (queryArg) => ({
+          url: `/jobs/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Job'],
+      }),
+      listRepository: build.query<ListRepositoryResponse, ListRepositoryArg | void>({
+        query: (queryArg) => ({
+          url: `/repositories`,
+        }),
+        providesTags: ['Repository'],
+      }),
+      createRepository: build.mutation<CreateRepositoryResponse, CreateRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepository: build.query<GetRepositoryResponse, GetRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      replaceRepository: build.mutation<ReplaceRepositoryResponse, ReplaceRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      deleteRepository: build.mutation<DeleteRepositoryResponse, DeleteRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}`,
+          method: 'DELETE',
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}`,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/merge-patch+json' },
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/export`,
+          method: 'POST',
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      putRepositoryFilesWithPath: build.mutation<PutRepositoryFilesWithPathResponse, PutRepositoryFilesWithPathArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'PUT',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositoryFilesWithPath: build.mutation<
+        CreateRepositoryFilesWithPathResponse,
+        CreateRepositoryFilesWithPathArg
+      >({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      deleteRepositoryFilesWithPath: build.mutation<
+        DeleteRepositoryFilesWithPathResponse,
+        DeleteRepositoryFilesWithPathArg
+      >({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
+          method: 'DELETE',
+          params: {
+            ref: queryArg.ref,
+            message: queryArg.message,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/history`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/history/${queryArg.path}`,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusResponse, ReplaceRepositoryStatusArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      updateRepositoryStatus: build.mutation<UpdateRepositoryStatusResponse, UpdateRepositoryStatusArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/status`,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/merge-patch+json' },
+          body: queryArg.body,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/sync`,
+          method: 'POST',
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/test`,
+          method: 'POST',
+          body: queryArg.body,
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/webhook`,
+        }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/webhook`,
+          method: 'POST',
+        }),
+        invalidatesTags: ['Repository'],
       }),
     }),
-    getJob: build.query<GetJobResponse, GetJobArg>({
-      query: (queryArg) => ({
-        url: `/jobs/${queryArg.name}`,
-        params: {
-          pretty: queryArg.pretty,
-        },
-      }),
-    }),
-    listRepository: build.query<ListRepositoryResponse, ListRepositoryArg | void>({
-      query: (queryArg) => ({
-        url: `/repositories`,
-      }),
-    }),
-    createRepository: build.mutation<CreateRepositoryResponse, CreateRepositoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories`,
-        method: 'POST',
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          fieldManager: queryArg.fieldManager,
-          fieldValidation: queryArg.fieldValidation,
-        },
-      }),
-    }),
-    getRepository: build.query<GetRepositoryResponse, GetRepositoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}`,
-        params: {
-          pretty: queryArg.pretty,
-        },
-      }),
-    }),
-    replaceRepository: build.mutation<ReplaceRepositoryResponse, ReplaceRepositoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}`,
-        method: 'PUT',
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          fieldManager: queryArg.fieldManager,
-          fieldValidation: queryArg.fieldValidation,
-        },
-      }),
-    }),
-    deleteRepository: build.mutation<DeleteRepositoryResponse, DeleteRepositoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}`,
-        method: 'DELETE',
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          gracePeriodSeconds: queryArg.gracePeriodSeconds,
-          orphanDependents: queryArg.orphanDependents,
-          propagationPolicy: queryArg.propagationPolicy,
-        },
-      }),
-    }),
-    updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}`,
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/merge-patch+json' },
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          fieldManager: queryArg.fieldManager,
-          fieldValidation: queryArg.fieldValidation,
-          force: queryArg.force,
-        },
-      }),
-    }),
-    createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/export`,
-        method: 'POST',
-      }),
-    }),
-    getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/files/`,
-        params: {
-          ref: queryArg.ref,
-        },
-      }),
-    }),
-    getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
-        params: {
-          ref: queryArg.ref,
-        },
-      }),
-    }),
-    putRepositoryFilesWithPath: build.mutation<PutRepositoryFilesWithPathResponse, PutRepositoryFilesWithPathArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
-        method: 'PUT',
-        body: queryArg.body,
-        params: {
-          ref: queryArg.ref,
-          message: queryArg.message,
-        },
-      }),
-    }),
-    createRepositoryFilesWithPath: build.mutation<
-      CreateRepositoryFilesWithPathResponse,
-      CreateRepositoryFilesWithPathArg
-    >({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
-        method: 'POST',
-        body: queryArg.body,
-        params: {
-          ref: queryArg.ref,
-          message: queryArg.message,
-        },
-      }),
-    }),
-    deleteRepositoryFilesWithPath: build.mutation<
-      DeleteRepositoryFilesWithPathResponse,
-      DeleteRepositoryFilesWithPathArg
-    >({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
-        method: 'DELETE',
-        params: {
-          ref: queryArg.ref,
-          message: queryArg.message,
-        },
-      }),
-    }),
-    getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/history`,
-        params: {
-          ref: queryArg.ref,
-        },
-      }),
-    }),
-    getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/history/${queryArg.path}`,
-        params: {
-          ref: queryArg.ref,
-        },
-      }),
-    }),
-    getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/status`,
-        params: {
-          pretty: queryArg.pretty,
-        },
-      }),
-    }),
-    replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusResponse, ReplaceRepositoryStatusArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/status`,
-        method: 'PUT',
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          fieldManager: queryArg.fieldManager,
-          fieldValidation: queryArg.fieldValidation,
-        },
-      }),
-    }),
-    updateRepositoryStatus: build.mutation<UpdateRepositoryStatusResponse, UpdateRepositoryStatusArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/status`,
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/merge-patch+json' },
-        body: queryArg.body,
-        params: {
-          pretty: queryArg.pretty,
-          dryRun: queryArg.dryRun,
-          fieldManager: queryArg.fieldManager,
-          fieldValidation: queryArg.fieldValidation,
-          force: queryArg.force,
-        },
-      }),
-    }),
-    createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/sync`,
-        method: 'POST',
-      }),
-    }),
-    createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/test`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
-    }),
-    getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/webhook`,
-      }),
-    }),
-    createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
-      query: (queryArg) => ({
-        url: `/repositories/${queryArg.name}/webhook`,
-        method: 'POST',
-      }),
-    }),
-  }),
-  overrideExisting: false,
-});
+    overrideExisting: false,
+  });
 export { injectedRtkApi as generatedAPI };
 export type ListJobResponse = JobList;
 export type ListJobArg = {};
@@ -234,6 +262,7 @@ export type ListRepositoryArg = {};
 export type CreateRepositoryResponse = Repository;
 export type CreateRepositoryArg = {
   pretty?: string;
+
   dryRun?: string;
   fieldManager?: string;
   fieldValidation?: string;
