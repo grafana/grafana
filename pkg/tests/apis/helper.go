@@ -257,6 +257,9 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
 
+	// remove generation
+	delete(meta, "generation")
+
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
 		old, ok := meta[key]
