@@ -41,9 +41,6 @@ const transformedContent = content
   // Remove specified prefixes
   .replace(createPrefixRegex(prefixes), '')
 
-  // Replace "namespace" from non-type contexts as well
-  .replace(/namespace([A-Z])/g, (_: unknown, firstChar: string) => firstChar.toUpperCase())
-
   // Remove the specific URL segment
   .replace(/\/apis\/provisioning\.grafana\.app\/v0alpha1\/namespaces\/\$\{queryArg\['namespace']}/g, '')
 
@@ -57,24 +54,6 @@ const transformedContent = content
   .replace(/(export type [A-Za-z0-9]+ = [^;]+);/g, (match: string, typeDef: string) => {
     return `${removeDuplicateTypes(typeDef)};`;
   })
-
-  // Remove "connect" prefix and maintain camelCase
-  .replace(
-    /\b(connect)([A-Z][a-zA-Z]*)/g,
-    (_: unknown, __: unknown, suffix: string) => suffix.charAt(0).toLowerCase() + suffix.slice(1)
-  )
-
-  // Replace "read" with "get", matching case for function names and hooks
-  .replace(
-    /(Read|read)([A-Z][a-zA-Z]*)/g,
-    (match: string, p1: string, suffix: string) => `${p1 === 'Read' ? 'Get' : 'get'}${suffix}`
-  )
-
-  // Replace "post" with "create", matching case for function names and hooks
-  .replace(
-    /(Post|post)([A-Z][a-zA-Z]*)/g,
-    (match: string, p1: string, suffix: string) => `${p1 === 'Post' ? 'Create' : 'create'}${suffix}`
-  )
 
   // Modify any 'List...Arg>' to 'List...Arg | void>'
   .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>')

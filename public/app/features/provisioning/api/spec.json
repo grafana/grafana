@@ -138,7 +138,7 @@
       "get": {
         "tags": ["Job"],
         "description": "list or watch objects of kind Job",
-        "operationId": "listNamespacedJob",
+        "operationId": "listJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -254,7 +254,7 @@
       "get": {
         "tags": ["Job"],
         "description": "read the specified Job",
-        "operationId": "readNamespacedJob",
+        "operationId": "getJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -307,7 +307,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "list or watch objects of kind Repository",
-        "operationId": "listNamespacedRepository",
+        "operationId": "listRepository",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -412,7 +412,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "create a Repository",
-        "operationId": "createNamespacedRepository",
+        "operationId": "createRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -515,7 +515,7 @@
       "delete": {
         "tags": ["Repository"],
         "description": "delete collection of Repository",
-        "operationId": "deletecollectionNamespacedRepository",
+        "operationId": "deletecollectionRepository",
         "parameters": [
           {
             "name": "continue",
@@ -638,7 +638,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "read the specified Repository",
-        "operationId": "readNamespacedRepository",
+        "operationId": "getRepository",
         "responses": {
           "200": {
             "description": "OK",
@@ -671,7 +671,7 @@
       "put": {
         "tags": ["Repository"],
         "description": "replace the specified Repository",
-        "operationId": "replaceNamespacedRepository",
+        "operationId": "replaceRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -754,7 +754,7 @@
       "delete": {
         "tags": ["Repository"],
         "description": "delete a Repository",
-        "operationId": "deleteNamespacedRepository",
+        "operationId": "deleteRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -826,7 +826,7 @@
       "patch": {
         "tags": ["Repository"],
         "description": "partially update the specified Repository",
-        "operationId": "patchNamespacedRepository",
+        "operationId": "updateRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -946,7 +946,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "connect POST requests to export of Repository",
-        "operationId": "connectPostNamespacedRepositoryExport",
+        "operationId": "createRepositoryExport",
         "responses": {
           "200": {
             "description": "OK",
@@ -984,7 +984,7 @@
         "tags": ["Repository"],
         "summary": "File listing",
         "description": "Get the files and content hash",
-        "operationId": "connectGetNamespacedRepositoryFiles",
+        "operationId": "getRepositoryFiles",
         "parameters": [
           {
             "name": "ref",
@@ -1055,7 +1055,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "Read value from upstream repository",
-        "operationId": "connectGetNamespacedRepositoryFilesWithPath",
+        "operationId": "getRepositoryFilesWithPath",
         "parameters": [
           {
             "name": "ref",
@@ -1091,7 +1091,7 @@
       "put": {
         "tags": ["Repository"],
         "description": "connect PUT requests to files of Repository",
-        "operationId": "connectPutNamespacedRepositoryFilesWithPath",
+        "operationId": "putRepositoryFilesWithPath",
         "parameters": [
           {
             "name": "ref",
@@ -1155,7 +1155,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "connect POST requests to files of Repository",
-        "operationId": "connectPostNamespacedRepositoryFilesWithPath",
+        "operationId": "createRepositoryFilesWithPath",
         "parameters": [
           {
             "name": "ref",
@@ -1219,7 +1219,7 @@
       "delete": {
         "tags": ["Repository"],
         "description": "connect DELETE requests to files of Repository",
-        "operationId": "connectDeleteNamespacedRepositoryFilesWithPath",
+        "operationId": "deleteRepositoryFilesWithPath",
         "parameters": [
           {
             "name": "ref",
@@ -1286,7 +1286,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "Get the history of the repository",
-        "operationId": "connectGetNamespacedRepositoryHistory",
+        "operationId": "getRepositoryHistory",
         "parameters": [
           {
             "name": "ref",
@@ -1329,7 +1329,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "Get the history of a path",
-        "operationId": "connectGetNamespacedRepositoryHistoryWithPath",
+        "operationId": "getRepositoryHistoryWithPath",
         "parameters": [
           {
             "name": "ref",
@@ -1379,7 +1379,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "read status of the specified Repository",
-        "operationId": "readNamespacedRepositoryStatus",
+        "operationId": "getRepositoryStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -1412,7 +1412,7 @@
       "put": {
         "tags": ["Repository"],
         "description": "replace status of the specified Repository",
-        "operationId": "replaceNamespacedRepositoryStatus",
+        "operationId": "replaceRepositoryStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -1495,7 +1495,7 @@
       "patch": {
         "tags": ["Repository"],
         "description": "partially update status of the specified Repository",
-        "operationId": "patchNamespacedRepositoryStatus",
+        "operationId": "updateRepositoryStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -1615,7 +1615,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "connect POST requests to sync of Repository",
-        "operationId": "connectPostNamespacedRepositorySync",
+        "operationId": "createRepositorySync",
         "responses": {
           "200": {
             "description": "OK",
@@ -1652,7 +1652,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "Check if the configuration is valid",
-        "operationId": "connectPostNamespacedRepositoryTest",
+        "operationId": "createRepositoryTest",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1716,7 +1716,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "connect GET requests to webhook of Repository",
-        "operationId": "connectGetNamespacedRepositoryWebhook",
+        "operationId": "getRepositoryWebhook",
         "responses": {
           "200": {
             "description": "OK",
@@ -1739,7 +1739,7 @@
       "post": {
         "tags": ["Repository"],
         "description": "Currently only supports github webhooks",
-        "operationId": "connectPostNamespacedRepositoryWebhook",
+        "operationId": "createRepositoryWebhook",
         "responses": {
           "200": {
             "description": "OK",
@@ -1992,7 +1992,7 @@
       "get": {
         "tags": ["Job"],
         "description": "watch individual changes to a list of Job. deprecated: use the 'watch' parameter with a list operation instead.",
-        "operationId": "watchNamespacedJobList",
+        "operationId": "watchJobList",
         "responses": {
           "200": {
             "description": "OK",
@@ -2098,7 +2098,7 @@
       "get": {
         "tags": ["Job"],
         "description": "watch changes to an object of kind Job. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
-        "operationId": "watchNamespacedJob",
+        "operationId": "watchJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -2211,7 +2211,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "watch individual changes to a list of Repository. deprecated: use the 'watch' parameter with a list operation instead.",
-        "operationId": "watchNamespacedRepositoryList",
+        "operationId": "watchRepositoryList",
         "responses": {
           "200": {
             "description": "OK",
@@ -2321,7 +2321,7 @@
       "get": {
         "tags": ["Repository"],
         "description": "watch changes to an object of kind Repository. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
-        "operationId": "watchNamespacedRepository",
+        "operationId": "watchRepository",
         "responses": {
           "200": {
             "description": "OK",

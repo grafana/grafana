@@ -1,12 +1,12 @@
 import { baseAPI as api } from './baseAPI';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    listNamespacedJob: build.query<ListNamespacedJobResponse, ListNamespacedJobArg>({
+    listJob: build.query<ListJobResponse, ListJobArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/jobs`,
       }),
     }),
-    readNamespacedJob: build.query<ReadNamespacedJobResponse, ReadNamespacedJobArg>({
+    getJob: build.query<GetJobResponse, GetJobArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/jobs/${queryArg.name}`,
         params: {
@@ -14,12 +14,12 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    listNamespacedRepository: build.query<ListNamespacedRepositoryResponse, ListNamespacedRepositoryArg>({
+    listRepository: build.query<ListRepositoryResponse, ListRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories`,
       }),
     }),
-    createNamespacedRepository: build.mutation<CreateNamespacedRepositoryResponse, CreateNamespacedRepositoryArg>({
+    createRepository: build.mutation<CreateRepositoryResponse, CreateRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories`,
         method: 'POST',
@@ -32,7 +32,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    readNamespacedRepository: build.query<ReadNamespacedRepositoryResponse, ReadNamespacedRepositoryArg>({
+    getRepository: build.query<GetRepositoryResponse, GetRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}`,
         params: {
@@ -40,7 +40,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    replaceNamespacedRepository: build.mutation<ReplaceNamespacedRepositoryResponse, ReplaceNamespacedRepositoryArg>({
+    replaceRepository: build.mutation<ReplaceRepositoryResponse, ReplaceRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}`,
         method: 'PUT',
@@ -53,7 +53,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    deleteNamespacedRepository: build.mutation<DeleteNamespacedRepositoryResponse, DeleteNamespacedRepositoryArg>({
+    deleteRepository: build.mutation<DeleteRepositoryResponse, DeleteRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}`,
         method: 'DELETE',
@@ -67,7 +67,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    patchNamespacedRepository: build.mutation<PatchNamespacedRepositoryResponse, PatchNamespacedRepositoryArg>({
+    updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}`,
         method: 'PATCH',
@@ -81,19 +81,13 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectPostNamespacedRepositoryExport: build.mutation<
-      ConnectPostNamespacedRepositoryExportResponse,
-      ConnectPostNamespacedRepositoryExportArg
-    >({
+    createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/export`,
         method: 'POST',
       }),
     }),
-    connectGetNamespacedRepositoryFiles: build.query<
-      ConnectGetNamespacedRepositoryFilesResponse,
-      ConnectGetNamespacedRepositoryFilesArg
-    >({
+    getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/files/`,
         params: {
@@ -101,10 +95,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectGetNamespacedRepositoryFilesWithPath: build.query<
-      ConnectGetNamespacedRepositoryFilesWithPathResponse,
-      ConnectGetNamespacedRepositoryFilesWithPathArg
-    >({
+    getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/files/${queryArg.path}`,
         params: {
@@ -112,10 +103,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectPutNamespacedRepositoryFilesWithPath: build.mutation<
-      ConnectPutNamespacedRepositoryFilesWithPathResponse,
-      ConnectPutNamespacedRepositoryFilesWithPathArg
-    >({
+    putRepositoryFilesWithPath: build.mutation<PutRepositoryFilesWithPathResponse, PutRepositoryFilesWithPathArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/files/${queryArg.path}`,
         method: 'PUT',
@@ -126,9 +114,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectPostNamespacedRepositoryFilesWithPath: build.mutation<
-      ConnectPostNamespacedRepositoryFilesWithPathResponse,
-      ConnectPostNamespacedRepositoryFilesWithPathArg
+    createRepositoryFilesWithPath: build.mutation<
+      CreateRepositoryFilesWithPathResponse,
+      CreateRepositoryFilesWithPathArg
     >({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/files/${queryArg.path}`,
@@ -140,9 +128,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectDeleteNamespacedRepositoryFilesWithPath: build.mutation<
-      ConnectDeleteNamespacedRepositoryFilesWithPathResponse,
-      ConnectDeleteNamespacedRepositoryFilesWithPathArg
+    deleteRepositoryFilesWithPath: build.mutation<
+      DeleteRepositoryFilesWithPathResponse,
+      DeleteRepositoryFilesWithPathArg
     >({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/files/${queryArg.path}`,
@@ -153,10 +141,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectGetNamespacedRepositoryHistory: build.query<
-      ConnectGetNamespacedRepositoryHistoryResponse,
-      ConnectGetNamespacedRepositoryHistoryArg
-    >({
+    getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/history`,
         params: {
@@ -164,10 +149,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectGetNamespacedRepositoryHistoryWithPath: build.query<
-      ConnectGetNamespacedRepositoryHistoryWithPathResponse,
-      ConnectGetNamespacedRepositoryHistoryWithPathArg
-    >({
+    getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/history/${queryArg.path}`,
         params: {
@@ -175,10 +157,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    readNamespacedRepositoryStatus: build.query<
-      ReadNamespacedRepositoryStatusResponse,
-      ReadNamespacedRepositoryStatusArg
-    >({
+    getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/status`,
         params: {
@@ -186,10 +165,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    replaceNamespacedRepositoryStatus: build.mutation<
-      ReplaceNamespacedRepositoryStatusResponse,
-      ReplaceNamespacedRepositoryStatusArg
-    >({
+    replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusResponse, ReplaceRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/status`,
         method: 'PUT',
@@ -202,10 +178,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    patchNamespacedRepositoryStatus: build.mutation<
-      PatchNamespacedRepositoryStatusResponse,
-      PatchNamespacedRepositoryStatusArg
-    >({
+    updateRepositoryStatus: build.mutation<UpdateRepositoryStatusResponse, UpdateRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/status`,
         method: 'PATCH',
@@ -219,37 +192,25 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    connectPostNamespacedRepositorySync: build.mutation<
-      ConnectPostNamespacedRepositorySyncResponse,
-      ConnectPostNamespacedRepositorySyncArg
-    >({
+    createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/sync`,
         method: 'POST',
       }),
     }),
-    connectPostNamespacedRepositoryTest: build.mutation<
-      ConnectPostNamespacedRepositoryTestResponse,
-      ConnectPostNamespacedRepositoryTestArg
-    >({
+    createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/test`,
         method: 'POST',
         body: queryArg.body,
       }),
     }),
-    connectGetNamespacedRepositoryWebhook: build.query<
-      ConnectGetNamespacedRepositoryWebhookResponse,
-      ConnectGetNamespacedRepositoryWebhookArg
-    >({
+    getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/webhook`,
       }),
     }),
-    connectPostNamespacedRepositoryWebhook: build.mutation<
-      ConnectPostNamespacedRepositoryWebhookResponse,
-      ConnectPostNamespacedRepositoryWebhookArg
-    >({
+    createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
       query: (queryArg) => ({
         url: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/repositories/${queryArg.name}/webhook`,
         method: 'POST',
@@ -259,13 +220,13 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type ListNamespacedJobResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1JobList;
-export type ListNamespacedJobArg = {
+export type ListJobResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1JobList;
+export type ListJobArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
 };
-export type ReadNamespacedJobResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
-export type ReadNamespacedJobArg = {
+export type GetJobResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
+export type GetJobArg = {
   /** name of the Job */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -273,17 +234,17 @@ export type ReadNamespacedJobArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ListNamespacedRepositoryResponse =
+export type ListRepositoryResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1RepositoryList;
-export type ListNamespacedRepositoryArg = {
+export type ListRepositoryArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
 };
-export type CreateNamespacedRepositoryResponse = /** status 200 OK */
+export type CreateRepositoryResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type CreateNamespacedRepositoryArg = {
+export type CreateRepositoryArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -296,9 +257,8 @@ export type CreateNamespacedRepositoryArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
 };
-export type ReadNamespacedRepositoryResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type ReadNamespacedRepositoryArg = {
+export type GetRepositoryResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
+export type GetRepositoryArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -306,10 +266,10 @@ export type ReadNamespacedRepositoryArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceNamespacedRepositoryResponse = /** status 200 OK */
+export type ReplaceRepositoryResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type ReplaceNamespacedRepositoryArg = {
+export type ReplaceRepositoryArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -324,10 +284,10 @@ export type ReplaceNamespacedRepositoryArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
 };
-export type DeleteNamespacedRepositoryResponse = /** status 200 OK */
+export type DeleteRepositoryResponse = /** status 200 OK */
   | IoK8SApimachineryPkgApisMetaV1Status
   | /** status 202 Accepted */ IoK8SApimachineryPkgApisMetaV1Status;
-export type DeleteNamespacedRepositoryArg = {
+export type DeleteRepositoryArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -344,10 +304,10 @@ export type DeleteNamespacedRepositoryArg = {
   propagationPolicy?: string;
   ioK8SApimachineryPkgApisMetaV1DeleteOptions: IoK8SApimachineryPkgApisMetaV1DeleteOptions;
 };
-export type PatchNamespacedRepositoryResponse = /** status 200 OK */
+export type UpdateRepositoryResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type PatchNamespacedRepositoryArg = {
+export type UpdateRepositoryArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -364,15 +324,14 @@ export type PatchNamespacedRepositoryArg = {
   force?: boolean;
   ioK8SApimachineryPkgApisMetaV1Patch: IoK8SApimachineryPkgApisMetaV1Patch;
 };
-export type ConnectPostNamespacedRepositoryExportResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
-export type ConnectPostNamespacedRepositoryExportArg = {
+export type CreateRepositoryExportResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
+export type CreateRepositoryExportArg = {
   /** name of the Job */
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
 };
-export type ConnectGetNamespacedRepositoryFilesResponse = /** status 200 OK */ {
+export type GetRepositoryFilesResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** should be named "items", but avoid subresource error for now: kubernetes/kubernetes#126809 */
@@ -381,7 +340,7 @@ export type ConnectGetNamespacedRepositoryFilesResponse = /** status 200 OK */ {
   kind?: string;
   metadata?: any;
 };
-export type ConnectGetNamespacedRepositoryFilesArg = {
+export type GetRepositoryFilesArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -389,9 +348,9 @@ export type ConnectGetNamespacedRepositoryFilesArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ConnectGetNamespacedRepositoryFilesWithPathResponse =
+export type GetRepositoryFilesWithPathResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
-export type ConnectGetNamespacedRepositoryFilesWithPathArg = {
+export type GetRepositoryFilesWithPathArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -401,9 +360,9 @@ export type ConnectGetNamespacedRepositoryFilesWithPathArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ConnectPutNamespacedRepositoryFilesWithPathResponse =
+export type PutRepositoryFilesWithPathResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
-export type ConnectPutNamespacedRepositoryFilesWithPathArg = {
+export type PutRepositoryFilesWithPathArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -418,9 +377,9 @@ export type ConnectPutNamespacedRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type ConnectPostNamespacedRepositoryFilesWithPathResponse =
+export type CreateRepositoryFilesWithPathResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
-export type ConnectPostNamespacedRepositoryFilesWithPathArg = {
+export type CreateRepositoryFilesWithPathArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -435,9 +394,9 @@ export type ConnectPostNamespacedRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type ConnectDeleteNamespacedRepositoryFilesWithPathResponse =
+export type DeleteRepositoryFilesWithPathResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ResourceWrapper;
-export type ConnectDeleteNamespacedRepositoryFilesWithPathArg = {
+export type DeleteRepositoryFilesWithPathArg = {
   /** name of the ResourceWrapper */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -449,8 +408,8 @@ export type ConnectDeleteNamespacedRepositoryFilesWithPathArg = {
   /** optional message sent with any changes */
   message?: string;
 };
-export type ConnectGetNamespacedRepositoryHistoryResponse = /** status 200 OK */ string;
-export type ConnectGetNamespacedRepositoryHistoryArg = {
+export type GetRepositoryHistoryResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryArg = {
   /** name of the HistoryList */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -458,8 +417,8 @@ export type ConnectGetNamespacedRepositoryHistoryArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ConnectGetNamespacedRepositoryHistoryWithPathResponse = /** status 200 OK */ string;
-export type ConnectGetNamespacedRepositoryHistoryWithPathArg = {
+export type GetRepositoryHistoryWithPathResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryWithPathArg = {
   /** name of the HistoryList */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -469,9 +428,9 @@ export type ConnectGetNamespacedRepositoryHistoryWithPathArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type ReadNamespacedRepositoryStatusResponse =
+export type GetRepositoryStatusResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type ReadNamespacedRepositoryStatusArg = {
+export type GetRepositoryStatusArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -479,10 +438,10 @@ export type ReadNamespacedRepositoryStatusArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceNamespacedRepositoryStatusResponse = /** status 200 OK */
+export type ReplaceRepositoryStatusResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type ReplaceNamespacedRepositoryStatusArg = {
+export type ReplaceRepositoryStatusArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -497,10 +456,10 @@ export type ReplaceNamespacedRepositoryStatusArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
 };
-export type PatchNamespacedRepositoryStatusResponse = /** status 200 OK */
+export type UpdateRepositoryStatusResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Repository;
-export type PatchNamespacedRepositoryStatusArg = {
+export type UpdateRepositoryStatusArg = {
   /** name of the Repository */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -517,17 +476,16 @@ export type PatchNamespacedRepositoryStatusArg = {
   force?: boolean;
   ioK8SApimachineryPkgApisMetaV1Patch: IoK8SApimachineryPkgApisMetaV1Patch;
 };
-export type ConnectPostNamespacedRepositorySyncResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
-export type ConnectPostNamespacedRepositorySyncArg = {
+export type CreateRepositorySyncResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1Job;
+export type CreateRepositorySyncArg = {
   /** name of the Job */
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
 };
-export type ConnectPostNamespacedRepositoryTestResponse =
+export type CreateRepositoryTestResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1TestResults;
-export type ConnectPostNamespacedRepositoryTestArg = {
+export type CreateRepositoryTestArg = {
   /** name of the TestResults */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -542,17 +500,17 @@ export type ConnectPostNamespacedRepositoryTestArg = {
     status?: any;
   };
 };
-export type ConnectGetNamespacedRepositoryWebhookResponse =
+export type GetRepositoryWebhookResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1WebhookResponse;
-export type ConnectGetNamespacedRepositoryWebhookArg = {
+export type GetRepositoryWebhookArg = {
   /** name of the WebhookResponse */
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
 };
-export type ConnectPostNamespacedRepositoryWebhookResponse =
+export type CreateRepositoryWebhookResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1WebhookResponse;
-export type ConnectPostNamespacedRepositoryWebhookArg = {
+export type CreateRepositoryWebhookArg = {
   /** name of the WebhookResponse */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -967,27 +925,27 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1WebhookResponse = 
   kind?: string;
 };
 export const {
-  useListNamespacedJobQuery,
-  useReadNamespacedJobQuery,
-  useListNamespacedRepositoryQuery,
-  useCreateNamespacedRepositoryMutation,
-  useReadNamespacedRepositoryQuery,
-  useReplaceNamespacedRepositoryMutation,
-  useDeleteNamespacedRepositoryMutation,
-  usePatchNamespacedRepositoryMutation,
-  useConnectPostNamespacedRepositoryExportMutation,
-  useConnectGetNamespacedRepositoryFilesQuery,
-  useConnectGetNamespacedRepositoryFilesWithPathQuery,
-  useConnectPutNamespacedRepositoryFilesWithPathMutation,
-  useConnectPostNamespacedRepositoryFilesWithPathMutation,
-  useConnectDeleteNamespacedRepositoryFilesWithPathMutation,
-  useConnectGetNamespacedRepositoryHistoryQuery,
-  useConnectGetNamespacedRepositoryHistoryWithPathQuery,
-  useReadNamespacedRepositoryStatusQuery,
-  useReplaceNamespacedRepositoryStatusMutation,
-  usePatchNamespacedRepositoryStatusMutation,
-  useConnectPostNamespacedRepositorySyncMutation,
-  useConnectPostNamespacedRepositoryTestMutation,
-  useConnectGetNamespacedRepositoryWebhookQuery,
-  useConnectPostNamespacedRepositoryWebhookMutation,
+  useListJobQuery,
+  useGetJobQuery,
+  useListRepositoryQuery,
+  useCreateRepositoryMutation,
+  useGetRepositoryQuery,
+  useReplaceRepositoryMutation,
+  useDeleteRepositoryMutation,
+  useUpdateRepositoryMutation,
+  useCreateRepositoryExportMutation,
+  useGetRepositoryFilesQuery,
+  useGetRepositoryFilesWithPathQuery,
+  usePutRepositoryFilesWithPathMutation,
+  useCreateRepositoryFilesWithPathMutation,
+  useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryHistoryQuery,
+  useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryStatusQuery,
+  useReplaceRepositoryStatusMutation,
+  useUpdateRepositoryStatusMutation,
+  useCreateRepositorySyncMutation,
+  useCreateRepositoryTestMutation,
+  useGetRepositoryWebhookQuery,
+  useCreateRepositoryWebhookMutation,
 } = injectedRtkApi;

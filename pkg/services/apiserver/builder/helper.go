@@ -153,7 +153,7 @@ func SetupConfig(
 			}
 		}
 
-		operationAlt := ""
+		operationAlt := r.OperationName()
 		if action != "" {
 			if action == "connect" {
 				idx := strings.Index(r.OperationName(), "Namespaced")
@@ -162,6 +162,15 @@ func SetupConfig(
 						r.OperationName()[idx:]
 				}
 			}
+		}
+
+		operationAlt = strings.ReplaceAll(operationAlt, "Namespaced", "")
+		if strings.HasPrefix(operationAlt, "post") {
+			operationAlt = "create" + operationAlt[len("post"):]
+		} else if strings.HasPrefix(operationAlt, "read") {
+			operationAlt = "get" + operationAlt[len("read"):]
+		} else if strings.HasPrefix(operationAlt, "patch") {
+			operationAlt = "update" + operationAlt[len("patch"):]
 		}
 
 		// Audit our options here
@@ -208,12 +217,7 @@ func SetupConfig(
 				w.Flush()
 			}
 		}
-
-		if operationAlt != "" {
-			return operationAlt, tags, nil
-		}
-
-		return r.OperationName(), tags, nil
+		return operationAlt, tags, nil
 	}
 
 	// Set the swagger build versions
