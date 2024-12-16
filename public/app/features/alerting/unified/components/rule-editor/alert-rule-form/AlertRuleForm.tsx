@@ -1,8 +1,6 @@
 import { css } from '@emotion/css';
-
 import { useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
-
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -27,8 +25,8 @@ import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-    logInfo,
     LogMessages,
+    logInfo,
     trackAlertRuleFormCancelled,
     trackAlertRuleFormError,
     trackAlertRuleFormSaved,
@@ -42,22 +40,16 @@ import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
     defaultFormValuesForRuleType,
-
-
-
-
-
     formValuesFromExistingRule,
     formValuesFromPrefill,
     translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
-    formValuesToRulerGrafanaRuleDTO,
-    formValuesToRulerRuleDTO,
-
     MANUAL_ROUTING_KEY,
     SIMPLIFIED_QUERY_EDITOR_KEY,
+    formValuesToRulerGrafanaRuleDTO,
+    formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
@@ -71,16 +63,7 @@ import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
-<<<<<<< HEAD
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
-=======
-import {
-  QueryAndExpressionsStep,
-  areQueriesTransformableToSimpleCondition,
-  isExpressionQueryInAlert,
-} from '../query-and-alert-condition/QueryAndExpressionsStep';
-import { translateRouteParamToRuleType } from '../util';
->>>>>>> main
 
 type Props = {
   existing?: RuleWithLocation;

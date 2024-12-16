@@ -4,6 +4,7 @@ import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from '
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   RulerAlertingRuleDTO,
