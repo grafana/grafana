@@ -6783,22 +6783,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsdoctor/client@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/client@npm:0.4.11"
-  checksum: 10/fc59005c40dfb11582b16e74de768ef5fe73a0e06db472908b9568db870380554db3b87867e3bf33ce0251e2f351c1249d0181c7e575eeef3c64c64592f9b179
+"@rsdoctor/client@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/client@npm:0.4.12"
+  checksum: 10/04ae4f8de34fdf5cec5b9db2072e646f3327a7ba7ca4a96942961fa26129e715db92c28ca68bf0f6c5149ccbfb9b73aa2d2984242bf8d35bc54f827e2ccae84e
   languageName: node
   linkType: hard
 
-"@rsdoctor/core@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/core@npm:0.4.11"
+"@rsdoctor/core@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/core@npm:0.4.12"
   dependencies:
-    "@rsdoctor/graph": "npm:0.4.11"
-    "@rsdoctor/sdk": "npm:0.4.11"
-    "@rsdoctor/types": "npm:0.4.11"
-    "@rsdoctor/utils": "npm:0.4.11"
-    axios: "npm:^1.7.8"
+    "@rsdoctor/graph": "npm:0.4.12"
+    "@rsdoctor/sdk": "npm:0.4.12"
+    "@rsdoctor/types": "npm:0.4.12"
+    "@rsdoctor/utils": "npm:0.4.12"
+    axios: "npm:^1.7.9"
     enhanced-resolve: "npm:5.12.0"
     filesize: "npm:^10.1.6"
     fs-extra: "npm:^11.1.1"
@@ -6807,31 +6807,31 @@ __metadata:
     semver: "npm:^7.6.3"
     source-map: "npm:^0.7.4"
     webpack-bundle-analyzer: "npm:^4.10.2"
-  checksum: 10/b32242191ab4a202a997ffe290b3b62361942e052fe39803f2f458eb17b127516084c0b80705e4645edcf36a839f4e60f76a79c19f0068824bd32e9013b10788
+  checksum: 10/d77252288cec3ad9cd6389fb772125fcbdca669c0186a540a9270f2c3ac01b0620d188595e952a3683b0af4e4eef2c8816b0af71a2d87667eef7f2e47484a4b3
   languageName: node
   linkType: hard
 
-"@rsdoctor/graph@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/graph@npm:0.4.11"
+"@rsdoctor/graph@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/graph@npm:0.4.12"
   dependencies:
-    "@rsdoctor/types": "npm:0.4.11"
-    "@rsdoctor/utils": "npm:0.4.11"
+    "@rsdoctor/types": "npm:0.4.12"
+    "@rsdoctor/utils": "npm:0.4.12"
     lodash: "npm:^4.17.21"
-    socket.io: "npm:4.7.2"
+    socket.io: "npm:4.8.1"
     source-map: "npm:^0.7.4"
-  checksum: 10/ba828662d7b4889aeb806c14f88a9321e9d10a7a6e568675a65afcf3d6013958526ee023a430946315d4899dce853e2e014876c2a63fe1f9e3dd24de6564f7b4
+  checksum: 10/53cb9dd4c8507cf22ee6088e4fc1b5d26fb2090dee1570fd1964659d854bab33ed7ca73862a84a256280a85aa076c5e18953830af2127fb583d5eaa5274a934d
   languageName: node
   linkType: hard
 
-"@rsdoctor/sdk@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/sdk@npm:0.4.11"
+"@rsdoctor/sdk@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/sdk@npm:0.4.12"
   dependencies:
-    "@rsdoctor/client": "npm:0.4.11"
-    "@rsdoctor/graph": "npm:0.4.11"
-    "@rsdoctor/types": "npm:0.4.11"
-    "@rsdoctor/utils": "npm:0.4.11"
+    "@rsdoctor/client": "npm:0.4.12"
+    "@rsdoctor/graph": "npm:0.4.12"
+    "@rsdoctor/types": "npm:0.4.12"
+    "@rsdoctor/utils": "npm:0.4.12"
     "@types/fs-extra": "npm:^11.0.4"
     body-parser: "npm:1.20.3"
     cors: "npm:2.8.5"
@@ -6841,16 +6841,16 @@ __metadata:
     lodash: "npm:^4.17.21"
     open: "npm:^8.4.2"
     serve-static: "npm:1.16.2"
-    socket.io: "npm:4.7.2"
+    socket.io: "npm:4.8.1"
     source-map: "npm:^0.7.4"
     tapable: "npm:2.2.1"
-  checksum: 10/b66424c5fc61cbfd52d95c8dc5393715f73653a2d9b7acc04c825ed100b3185c9afe02dfc9450587454430e40a2cc21aa20225ae1b7927e43445d3440d599b47
+  checksum: 10/a0f20c0410e44fd9f7428fee39c45abf493144e73aa910d9c8f34760461d36d1144856c9ea3078afee2282817acb8bffb82bad9ec8443279dde5bf14875df495
   languageName: node
   linkType: hard
 
-"@rsdoctor/types@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/types@npm:0.4.11"
+"@rsdoctor/types@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/types@npm:0.4.12"
   dependencies:
     "@types/connect": "npm:3.4.38"
     "@types/estree": "npm:1.0.5"
@@ -6862,16 +6862,16 @@ __metadata:
   peerDependenciesMeta:
     "@rspack/core":
       optional: true
-  checksum: 10/d9b27f4aeb51c2b39eaeef9e1fdf3080aa13b1a98a54767f464f3d8ef08a91309263372909ce62980c49886868a33bf712d8dc8f9e13b511a3b84eb840b498d3
+  checksum: 10/41cbfd7eb36999e79eed49ebc49e5665c5c8c68070f2981558cdf110fdcc60d97b2e653ead5c12cf9ebcef8b7de98b42bc20cf15258a42a3f2ae5a7b75aa8379
   languageName: node
   linkType: hard
 
-"@rsdoctor/utils@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@rsdoctor/utils@npm:0.4.11"
+"@rsdoctor/utils@npm:0.4.12":
+  version: 0.4.12
+  resolution: "@rsdoctor/utils@npm:0.4.12"
   dependencies:
     "@babel/code-frame": "npm:7.25.7"
-    "@rsdoctor/types": "npm:0.4.11"
+    "@rsdoctor/types": "npm:0.4.12"
     "@types/estree": "npm:1.0.5"
     acorn: "npm:^8.10.0"
     acorn-import-assertions: "npm:1.9.0"
@@ -6888,24 +6888,24 @@ __metadata:
     lodash: "npm:^4.17.21"
     rslog: "npm:^1.2.3"
     strip-ansi: "npm:^6.0.1"
-  checksum: 10/dbeb86402f162a136ea6f95a8ef53f6f46ce39262d6a796cb0d642fbede15a81a7ed73fc9a48aa88bf39ca01bd277e42990b7cd2480159fd2a472205b1e5d05d
+  checksum: 10/f0640c4cabacbf0c65cb2c2bc36791c9f07c9e4ea7917636f5480c193043a7f16cf276734a91bcd9309ec3389987e586e3a557e99266d758affdb76a2efb6a5a
   languageName: node
   linkType: hard
 
 "@rsdoctor/webpack-plugin@npm:^0.4.6":
-  version: 0.4.11
-  resolution: "@rsdoctor/webpack-plugin@npm:0.4.11"
+  version: 0.4.12
+  resolution: "@rsdoctor/webpack-plugin@npm:0.4.12"
   dependencies:
-    "@rsdoctor/core": "npm:0.4.11"
-    "@rsdoctor/graph": "npm:0.4.11"
-    "@rsdoctor/sdk": "npm:0.4.11"
-    "@rsdoctor/types": "npm:0.4.11"
-    "@rsdoctor/utils": "npm:0.4.11"
+    "@rsdoctor/core": "npm:0.4.12"
+    "@rsdoctor/graph": "npm:0.4.12"
+    "@rsdoctor/sdk": "npm:0.4.12"
+    "@rsdoctor/types": "npm:0.4.12"
+    "@rsdoctor/utils": "npm:0.4.12"
     fs-extra: "npm:^11.1.1"
     lodash: "npm:^4.17.21"
   peerDependencies:
     webpack: 5.x
-  checksum: 10/c5c64d6731142fc0a5b0395434c7ac0dc13f743671a83d2a33bb88914f95438750cef5a47c923fc2dfb66f1258b8bd26c101f90c84895fd5f1cc9b2c789a888b
+  checksum: 10/e2bfc961f39bfa27e60ada29cccf2734db59062d78007cedaec3c794f8c39864c6f0e487879f565fcad100ec970d3e320c5927315fc2ed00d55a00924891b6f3
   languageName: node
   linkType: hard
 
@@ -11459,7 +11459,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.8":
+"axios@npm:^1.4.0, axios@npm:^1.7.4, axios@npm:^1.7.9":
   version: 1.7.9
   resolution: "axios@npm:1.7.9"
   dependencies:
@@ -13162,17 +13162,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:^0.7.2":
+"cookie@npm:^0.7.2, cookie@npm:~0.7.2":
   version: 0.7.2
   resolution: "cookie@npm:0.7.2"
   checksum: 10/24b286c556420d4ba4e9bc09120c9d3db7d28ace2bd0f8ccee82422ce42322f73c8312441271e5eefafbead725980e5996cc02766dbb89a90ac7f5636ede608f
-  languageName: node
-  linkType: hard
-
-"cookie@npm:~0.4.1":
-  version: 0.4.2
-  resolution: "cookie@npm:0.4.2"
-  checksum: 10/2e1de9fdedca54881eab3c0477aeb067f281f3155d9cfee9d28dfb252210d09e85e9d175c0a60689661feb9e35e588515352f2456bc1f8e8db4267e05fd70137
   languageName: node
   linkType: hard
 
@@ -15049,21 +15042,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"engine.io@npm:~6.5.2":
-  version: 6.5.5
-  resolution: "engine.io@npm:6.5.5"
+"engine.io@npm:~6.6.0":
+  version: 6.6.2
+  resolution: "engine.io@npm:6.6.2"
   dependencies:
     "@types/cookie": "npm:^0.4.1"
     "@types/cors": "npm:^2.8.12"
     "@types/node": "npm:>=10.0.0"
     accepts: "npm:~1.3.4"
     base64id: "npm:2.0.0"
-    cookie: "npm:~0.4.1"
+    cookie: "npm:~0.7.2"
     cors: "npm:~2.8.5"
     debug: "npm:~4.3.1"
     engine.io-parser: "npm:~5.2.1"
     ws: "npm:~8.17.1"
-  checksum: 10/df8562e5249cf122efad77b909fe804b36ac5769676f963c997d4d18c91e014c68bb40661ff92f641b978baa0297be4000c2f3c3d1ce237cd1771952ccc5f38a
+  checksum: 10/381c0a715362bebf32c95f0e4247899b53ff9f8c0074b03f88748cf17635a02948ea3eca27905df37130bc963747c0d286acc78c757e6fc085fe8b8e17d76e01
   languageName: node
   linkType: hard
 
@@ -27741,18 +27734,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"socket.io@npm:4.7.2":
-  version: 4.7.2
-  resolution: "socket.io@npm:4.7.2"
+"socket.io@npm:4.8.1":
+  version: 4.8.1
+  resolution: "socket.io@npm:4.8.1"
   dependencies:
     accepts: "npm:~1.3.4"
     base64id: "npm:~2.0.0"
     cors: "npm:~2.8.5"
     debug: "npm:~4.3.2"
-    engine.io: "npm:~6.5.2"
+    engine.io: "npm:~6.6.0"
     socket.io-adapter: "npm:~2.5.2"
     socket.io-parser: "npm:~4.2.4"
-  checksum: 10/03f2d196975f531fb068e31fb001ff4662e8acd1a6a4ddd8bb0359411aea3309d9764c0d2759dabd8fc96cf9840b2c4cdc70a473fa0e8f2b762ab619550de8e1
+  checksum: 10/b9b362b7f63fc7ebb58482b8a3ade6c971da7783b7611dfeebaa8b02be23cb948137ec218491ccda8be57e434e97d65b64edf1e9811e5245b23a888d41636f4a
   languageName: node
   linkType: hard
 
