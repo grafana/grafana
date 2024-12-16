@@ -860,11 +860,11 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash docker docker-compose
+  - apk add --update make bash go
   - make devenv sources=prometheus
   depends_on:
   - clone
-  image: golang:1.23.1-alpine
+  image: docker:27-cli
   name: setup-prometheus-devenv
   volumes:
   - name: prometheus-data
@@ -2295,11 +2295,11 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash docker docker-compose
+  - apk add --update make bash go
   - make devenv sources=prometheus
   depends_on:
   - clone
-  image: golang:1.23.1-alpine
+  image: docker:27-cli
   name: setup-prometheus-devenv
   volumes:
   - name: prometheus-data
@@ -5605,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 57348420b7dec9a424100478088b50b17acab0500f8f9a6ab49ebbd340ef7aa5
+hmac: ea83a8bf8ecba27a2ce90906db9d39949aae4e2bf27e146cc86504d3c0925298
 
 ...

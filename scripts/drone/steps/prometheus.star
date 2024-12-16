@@ -15,9 +15,9 @@ def prometheus_devenv_step():
     """
     return {
         "name": "setup-prometheus-devenv",
-        "image": images["go"],
+        "image": images["docker"],
         "commands": [
-            "apk add --update make bash docker docker-compose",
+            "apk add --update make bash go",
             "make devenv sources=prometheus",
         ],
         "volumes": [
