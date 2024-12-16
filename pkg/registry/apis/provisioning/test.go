@@ -150,7 +150,7 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 			Resource: "folders",
 		})
 		_, err = folderClient.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
-		if !apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return &provisioning.TestResults{
 				Code:    http.StatusFailedDependency,
 				Success: false,

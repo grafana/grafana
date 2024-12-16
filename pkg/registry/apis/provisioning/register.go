@@ -28,6 +28,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -261,6 +262,12 @@ func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name 
 	status := repo.Config().Status.Health
 	if !status.Healthy {
 		if timeSince(status.Checked) > time.Second*25 {
+			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
+			if err != nil {
+				return nil, err // The status
+			}
+			ctx := identity.WithRequester(ctx, id)
+
 			// Check health again
 			s, err := b.tester.TestRepository(ctx, repo)
 			if err != nil {
