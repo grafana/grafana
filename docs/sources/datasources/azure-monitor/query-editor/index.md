@@ -126,6 +126,8 @@ Azure Monitor Logs collects and organises log and performance data from [support
 While Azure Monitor Metrics stores only simplified numerical data, Logs can store different data types, each with their own structure.
 You can also perform complex analysis of Logs data by using KQL.
 
+The Azure Monitor data source also supports querying of [Basic Logs](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1) tables (if they exist in your Log Analytics workspace). This feature must be enabled in the data source configuration.
+
 {{< figure src="/static/img/docs/azure-monitor/query-editor-logs.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Logs sample query comparing successful requests to failed requests" >}}
 
 ### Create a Logs query
@@ -145,6 +147,21 @@ You can also perform complex analysis of Logs data by using KQL.
 1. Enter your KQL query.
 
 You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+
+**To create a Basic Logs query:**
+
+1. Ensure that the data source has the `Enable Basic Logs` toggle enabled.
+1. In a Grafana panel, select the **Azure Monitor** data source.
+1. Select the **Logs** service.
+1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
+1. Switch the `Logs` toggle from `Analytics` to `Basic`. A modal will display to notify users of potential additional costs.
+   {{% admonition type="note" %}}
+   Basic Logs queries do not support time-ranges specified in the query. The time-range will be hardcoded to the dashboard time-range. There are also other query limitations. See the
+   [documentation for details.](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations)
+   {{% /admonition %}}
+1. Enter your KQL query.
+
+You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
 
 ### Logs query examples
 
