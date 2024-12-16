@@ -150,8 +150,3 @@ var wireExtsModuleServerSet = wire.NewSet(
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
 )
-
-//var wireDocumentBuildersSet = wire.NewSet(
-//	wireSet,
-//	wireExtsBasicSet,
-//)
