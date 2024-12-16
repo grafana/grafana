@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { Resource } from '../apiserver/types';
-
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { RepositorySpec } from './api/types';
+import { Repository } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -23,7 +21,7 @@ export default function RepositoryListPage() {
   );
 }
 
-function RepositoryListPageContent({ items }: { items?: Array<Resource<RepositorySpec>> }) {
+function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   const [query, setQuery] = useState('');
   if (!items?.length) {
     return (
@@ -39,7 +37,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
     );
   }
 
-  const filteredItems = items.filter((item) => item.metadata.name.includes(query));
+  const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
 
   return (
     <Stack direction={'column'} gap={3}>
@@ -52,20 +50,21 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
       <Stack direction={'column'}>
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
+            const name = item.metadata?.name ?? '';
             return (
-              <Card key={item.metadata.name} className={css({ alignItems: 'center' })}>
+              <Card key={item.metadata?.name} className={css({ alignItems: 'center' })}>
                 <Stack direction={'column'}>
                   <Card.Heading>
-                    <TextLink href={`${PROVISIONING_URL}/${item.metadata.name}`}>{item.spec.title}</TextLink>
+                    <TextLink href={`${PROVISIONING_URL}/${name}`}>{item.spec?.title}</TextLink>
                   </Card.Heading>
-                  <Card.Meta>{item.spec.type}</Card.Meta>
+                  <Card.Meta>{item.spec?.type}</Card.Meta>
                 </Stack>
                 <Stack>
-                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${item.metadata.name}/edit`}>
+                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
                     Edit
                   </LinkButton>
                   <SyncRepository repository={item} />
-                  <DeleteRepositoryButton name={item.metadata.name} />
+                  <DeleteRepositoryButton name={name} />
                 </Stack>
               </Card>
             );
