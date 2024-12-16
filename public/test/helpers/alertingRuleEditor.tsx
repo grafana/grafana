@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -26,6 +26,8 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
+    switchModeBasic: (stepNo: number) => byTestId(`advanced-switch-${stepNo}-basic`),
+    switchModeAdvanced: (stepNo: number) => byTestId(`advanced-switch-${stepNo}-advanced`),
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),
