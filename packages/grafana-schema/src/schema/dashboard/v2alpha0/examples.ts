@@ -168,7 +168,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           { title: 'Test Link 2', url: 'http://test2.com' },
         ],
         title: 'Test Panel',
-        uid: 'test-panel-uid',
+        id: 1,
         vizConfig: {
           kind: 'timeseries',
           spec: {

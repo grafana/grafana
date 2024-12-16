@@ -213,7 +213,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
     expect(layout.state.grid.state.children.length).toBe(1);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${Object.keys(dash.elements)[0]}`);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['test-panel-uid'].spec.id}`);
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);

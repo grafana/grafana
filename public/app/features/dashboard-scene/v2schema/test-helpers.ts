@@ -15,7 +15,7 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>
@@ -66,7 +66,7 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
   expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
   expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
-  expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
+  expect(getPanelIdForVizPanel(vizPanel)).toBe(dash.elements['test-panel-uid'].spec.id);
   expect(vizPanel.state.displayMode).toBe(dash.elements['test-panel-uid'].spec.transparent ? 'transparent' : 'default');
 
   expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
