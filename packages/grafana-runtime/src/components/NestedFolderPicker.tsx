@@ -29,8 +29,6 @@ export interface NestedFolderPickerProps {
   clearable?: boolean;
 }
 
-// let NestedFolderPicker: NestedFolderPickerType | null = null;
-
 export type NestedFolderPickerType = React.ComponentType<NestedFolderPickerProps>;
 
 /**
@@ -47,5 +45,5 @@ export let NestedFolderPicker: NestedFolderPickerType = (props) => {
   if (NestedFolderPicker) {
     return <NestedFolderPicker {...props} />;
   }
-  return <div>Loading...</div>;
+  return null;
 };
