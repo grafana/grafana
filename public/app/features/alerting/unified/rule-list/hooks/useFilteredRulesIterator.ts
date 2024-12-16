@@ -14,7 +14,7 @@ import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/dataso
 import { parseMatcher } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
-import { useRuleGroupsGenerator } from './prometheusGroupsGenerator';
+import { usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export interface RuleWithOrigin {
   rule: PromRuleDTO;
@@ -24,7 +24,7 @@ export interface RuleWithOrigin {
 export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();
 
-  const { prometheusGroupsGenerator } = useRuleGroupsGenerator();
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
 
   const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
@@ -35,7 +35,6 @@ export function useFilteredRulesIteratorProvider() {
         }))
       : allExternalRulesSources;
 
-    // This split into the first one and the rest is only for compatibility with the merge function from ix
     const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
       return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
     });

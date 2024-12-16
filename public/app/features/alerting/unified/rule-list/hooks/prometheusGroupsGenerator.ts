@@ -14,18 +14,10 @@ interface FetchGroupsOptions {
   groupNextToken?: string;
 }
 
-// export function useGroupsGenerator(
-//   rulesSourceIdentifier: ExternalRulesSourceIdentifier
-// ): AsyncGenerator<readonly [ExternalRulesSourceIdentifier, PromRuleGroupDTO<PromRuleDTO>], void, unknown>;
-// export function useGroupsGenerator(rulesSourceIdentifier: GrafanaRulesSourceIdentifier);
-// export function useGroupsGenerator(rulesSourceIdentifier: RulesSourceIdentifier) {}
-
-// TODO Split into two hooks
-export function useRuleGroupsGenerator() {
+export function usePrometheusGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
-  const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
 
-  const prometheusGroupsGenerator = useCallback(
+  return useCallback(
     async function* (ruleSource: ExternalRulesSourceIdentifier, groupLimit: number) {
       const getRuleSourceGroups = (options: FetchGroupsOptions) =>
         getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
@@ -34,15 +26,17 @@ export function useRuleGroupsGenerator() {
     },
     [getGroups]
   );
+}
 
-  const grafanaGroupsGenerator = useCallback(
+export function useGrafanaGroupsGenerator() {
+  const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+
+  return useCallback(
     async function* (groupLimit: number) {
       yield* genericGroupsGenerator(getGrafanaGroups, groupLimit);
     },
     [getGrafanaGroups]
   );
-
-  return { prometheusGroupsGenerator, grafanaGroupsGenerator };
 }
 
 // Generator lazily provides groups one by one only when needed
