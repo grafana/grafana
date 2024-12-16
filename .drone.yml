@@ -1022,18 +1022,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -1162,27 +1150,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -1272,9 +1239,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -1500,18 +1464,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -1635,17 +1587,6 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-benchmark-integration-tests
-- commands:
-  - apk add --update build-base
-  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
   image: golang:1.23.1-alpine
   name: mysql-8.0-benchmark-integration-tests
@@ -1660,9 +1601,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -2618,18 +2556,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -2719,27 +2645,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -2825,9 +2730,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -3202,18 +3104,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -3303,27 +3193,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -3407,9 +3276,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -4955,18 +4821,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -5049,27 +4903,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -5148,9 +4981,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -5454,7 +5284,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
@@ -5493,7 +5322,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
@@ -5751,6 +5579,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 08edb24b8ec53e0ce09f525cf6fdf4ea5dc67710fe64c3ea93ceaf3af42b8305
+hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
 
 ...
