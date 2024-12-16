@@ -51,12 +51,13 @@ func (s *Server) batchCheckItem(
 ) (*authzv1.CheckResponse, error) {
 	var (
 		relation      = common.VerbMapping[item.GetVerb()]
+		resource      = common.NewResourceFromBatchItem(item)
 		groupResource = common.FormatGroupResource(item.GetGroup(), item.GetResource())
 	)
 
 	allowed, ok := groupResourceAccess[groupResource]
 	if !ok {
-		res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), store)
+		res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 		if err != nil {
 			return nil, err
 		}
@@ -72,5 +73,5 @@ func (s *Server) batchCheckItem(
 	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
 		return s.checkTyped(ctx, r.GetSubject(), relation, item.GetName(), info, store)
 	}
-	return s.checkGeneric(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), item.GetName(), item.GetFolder(), store)
+	return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
 }

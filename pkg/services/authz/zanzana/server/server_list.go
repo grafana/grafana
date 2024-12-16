@@ -21,8 +21,9 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
+	resource := common.NewResourceFromList(r)
 
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,9 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+
+	resource := common.NewResourceFromCheck(r)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
 		return nil, err
 	}
@@ -33,12 +35,12 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
 		return s.checkTyped(ctx, r.GetSubject(), relation, r.GetName(), info, store)
 	}
-	return s.checkGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), store)
+	return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
 }
 
 // checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
 // within it.
-func (s *Server) checkGroupResource(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
+func (s *Server) checkGroupResource(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
 	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
@@ -49,7 +51,7 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation, grou
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   common.NewGroupResourceIdent(group, resource),
+			Object:   resource.GroupResourceIdent(),
 		},
 	}
 
@@ -95,23 +97,23 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 // checkGeneric check our generic "resource" type. It checks:
 // 1. If subject has access as a sub resource for a folder.
 // 2. If subject has direct access to resource.
-func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
+func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
 	var (
-		resourceCtx    = common.NewResourceContext(group, resource)
+		folderIdent    = resource.FolderIdent()
 		folderRelation = common.FolderResourceRelation(relation)
 	)
 
-	if folder != "" && common.IsFolderResourceRelation(folderRelation) {
+	if folderIdent != "" && common.IsFolderResourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
 		res, err := s.check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: common.FolderResourceRelation(relation),
-				Object:   common.NewFolderIdent(folder),
+				Relation: folderRelation,
+				Object:   folderIdent,
 			},
-			Context: resourceCtx,
+			Context: resource.Context(),
 		})
 
 		if err != nil {
@@ -123,7 +125,9 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 		}
 	}
 
-	if !common.IsResourceRelation(relation) {
+	resourceIdent := resource.ResourceIdent()
+
+	if !common.IsResourceRelation(relation) || resourceIdent == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -134,9 +138,9 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   common.NewResourceIdent(group, resource, name),
+			Object:   resourceIdent,
 		},
-		Context: resourceCtx,
+		Context: resource.Context(),
 	})
 
 	if err != nil {
