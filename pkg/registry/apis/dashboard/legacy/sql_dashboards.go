@@ -14,7 +14,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -132,7 +131,7 @@ type rowsWrapper struct {
 	err error
 }
 
-func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, minCount int) ([]resource.ResourceStats, error) {
+func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

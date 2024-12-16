@@ -1,13 +1,13 @@
-import { isPromAlertingRuleState, PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType, isPromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import { getRuleHealth, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
 import {
-  applyFiltersToQuery,
   FilterExpr,
   FilterSupportedTerm,
-  parseQueryToFilter,
   QueryFilterMapper,
+  applyFiltersToQuery,
+  parseQueryToFilter,
 } from './searchParser';
 
 export interface RulesFilter {

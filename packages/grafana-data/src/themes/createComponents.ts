@@ -97,7 +97,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       width: 57,
     },
     menuTabs: {
-      height: 42,
+      height: 5,
     },
     textHighlight: {
       text: colors.warning.contrastText,
