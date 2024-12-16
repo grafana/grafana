@@ -2831,7 +2831,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-select: "npm:5.9.0"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
@@ -2901,7 +2901,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     style-loader: "npm:4.0.0"
     ts-node: "npm:10.9.2"
@@ -2941,7 +2941,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-select: "npm:5.9.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
@@ -3078,7 +3078,7 @@ __metadata:
     monaco-editor: "npm:0.34.1"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
@@ -3126,7 +3126,7 @@ __metadata:
     react-select: "npm:5.9.0"
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
@@ -3182,7 +3182,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-select: "npm:5.9.0"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     semver: "npm:7.6.3"
     stream-browserify: "npm:3.0.0"
@@ -3221,7 +3221,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-select: "npm:5.9.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
@@ -3295,7 +3295,7 @@ __metadata:
     papaparse: "npm:5.4.1"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
@@ -3492,7 +3492,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.24"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
@@ -3571,7 +3571,7 @@ __metadata:
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
     react-select: "npm:5.9.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
@@ -3704,7 +3704,7 @@ __metadata:
     react-select: "npm:5.9.0"
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     react-window: "npm:1.8.10"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
@@ -3756,7 +3756,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
@@ -3898,7 +3898,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-select: "npm:5.9.0"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.24"
     rxjs: "npm:7.8.1"
     sql-formatter-plus: "npm:^1.3.6"
@@ -4037,7 +4037,7 @@ __metadata:
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     react-window: "npm:1.8.10"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
@@ -17830,7 +17830,7 @@ __metadata:
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.5.1"
+    react-use: "npm:17.6.0"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.24"
     react-window: "npm:1.8.10"
@@ -25931,9 +25931,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.5.1, react-use@npm:^17.4.0, react-use@npm:^17.4.2, react-use@npm:^17.5.0":
-  version: 17.5.1
-  resolution: "react-use@npm:17.5.1"
+"react-use@npm:17.6.0, react-use@npm:^17.4.0, react-use@npm:^17.4.2, react-use@npm:^17.5.0":
+  version: 17.6.0
+  resolution: "react-use@npm:17.6.0"
   dependencies:
     "@types/js-cookie": "npm:^2.2.6"
     "@xobotyi/scrollbar-width": "npm:^1.9.5"
@@ -25952,7 +25952,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/2da403a9949dbd964b9b8e20dcd354db66b7f7d5ca1f42572fbcdb06bd49ee828c295be4912cb87abc163d1b54820bb8c5fa85314a16c4579d9e30bf9cbd5759
+  checksum: 10/a817b74e82b481a39d3539bfe8d3b535c08d59d44a75ea91f65e56a7ccaedb0de185159e50b44ea4a635dda0c1c7159f07530e81a1d64b57130e0a715a107795
   languageName: node
   linkType: hard
 
