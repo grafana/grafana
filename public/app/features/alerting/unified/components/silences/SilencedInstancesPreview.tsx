@@ -108,7 +108,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
               pagination={{ itemsPerPage: 10 }}
             />
           ) : (
-            <span>No firing alert instances Afound</span>
+            <span>No firing alert instances found</span>
           )}
         </div>
       )}
