@@ -70,25 +70,28 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 				Description: folder.Spec.Description,
 				Parent:      parent,
 			})
-			folder = nil
-			if parent != "" {
-				obj, err = r.getter.Get(ctx, parent, &v1.GetOptions{})
-				if err != nil {
-					info.Items = append(info.Items, v0alpha1.FolderInfo{
-						Name:        parent,
-						Detached:    true,
-						Description: err.Error(),
-					})
-				} else {
-					folder, ok = obj.(*v0alpha1.Folder)
-					if !ok {
-						info.Items = append(info.Items, v0alpha1.FolderInfo{
-							Name:        parent,
-							Detached:    true,
-							Description: fmt.Sprintf("expected folder, found: %T", obj),
-						})
-					}
-				}
+			if parent == "" {
+				break
+			}
+			
+			obj, err = r.getter.Get(ctx, parent, &v1.GetOptions{})
+			if err != nil {
+				info.Items = append(info.Items, v0alpha1.FolderInfo{
+					Name:        parent,
+					Detached:    true,
+					Description: err.Error(),
+				})
+				break
+			}
+			
+			folder, ok = obj.(*v0alpha1.Folder)
+			if !ok {
+				info.Items = append(info.Items, v0alpha1.FolderInfo{
+					Name:        parent,
+					Detached:    true,
+					Description: fmt.Sprintf("expected folder, found: %T", obj),
+				})
+				break
 			}
 		}
 
