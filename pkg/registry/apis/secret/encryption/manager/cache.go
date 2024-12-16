@@ -158,4 +158,5 @@ func (c *dataKeyCache) flush(namespace string) {
 	}
 	cache.byId = make(map[string]*dataKeyCacheEntry)
 	cache.byLabel = make(map[string]*dataKeyCacheEntry)
+	c.namespacedCaches[namespace] = cache
 }
