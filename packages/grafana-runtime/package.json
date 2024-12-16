@@ -44,7 +44,7 @@
     "@grafana/ui": "11.5.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "react-use": "17.5.1",
+    "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "tslib": "2.7.0"
   },
