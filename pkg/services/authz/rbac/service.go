@@ -157,7 +157,7 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
-	userPermKey := userPermissionKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
+	userPermKey := userPermCacheKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
 	if cached, ok := s.permCache.Get(userPermKey); ok {
 		return cached.(map[string]bool), nil
 	}
@@ -191,7 +191,7 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 
 func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
 	teamIDs := make([]int64, 0, 50)
-	teamsCacheKey := teamKey(req.Namespace.Value, userIdentifiers.UID)
+	teamsCacheKey := userTeamCacheKey(req.Namespace.Value, userIdentifiers.UID)
 	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
 		return cached.([]int64), nil
 	}
@@ -221,7 +221,7 @@ func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdent
 
 func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (*store.BasicRole, error) {
 	var basicRoles *store.BasicRole
-	basicRoleKey := basicRoleKey(req.Namespace.Value, userIdentifiers.UID)
+	basicRoleKey := userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID)
 	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
 		return cached.(*store.BasicRole), nil
 	}

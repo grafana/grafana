@@ -2,14 +2,19 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
 func TestService_checkPermission(t *testing.T) {
@@ -148,4 +153,94 @@ func TestService_checkPermission(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+}
+func TestService_getUserTeams(t *testing.T) {
+	type testCase struct {
+		name          string
+		teams         []int64
+		cacheHit      bool
+		expectedTeams []int64
+		expectedError bool
+	}
+
+	testCases := []testCase{
+		{
+			name:          "should return teams from cache if available",
+			teams:         []int64{1, 2},
+			cacheHit:      true,
+			expectedTeams: []int64{1, 2},
+			expectedError: false,
+		},
+		{
+			name:          "should return teams from identity store if not in cache",
+			teams:         []int64{3, 4},
+			cacheHit:      false,
+			expectedTeams: []int64{3, 4},
+			expectedError: false,
+		},
+		{
+			name:          "should return error if identity store fails",
+			teams:         []int64{},
+			cacheHit:      false,
+			expectedTeams: nil,
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			req := &CheckRequest{Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}}
+
+			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
+			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
+
+			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
+			if tc.cacheHit {
+				cacheService.Set(userTeamCacheKey(req.Namespace.Value, userIdentifiers.UID), tc.expectedTeams, 0)
+			}
+
+			s := &Service{
+				teamCache:     cacheService,
+				identityStore: identityStore,
+				logger:        log.New("test"),
+			}
+
+			teams, err := s.getUserTeams(ctx, req, userIdentifiers)
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedTeams, teams)
+			if tc.cacheHit {
+				require.Zero(t, identityStore.calls)
+			} else {
+				require.Equal(t, 1, identityStore.calls)
+			}
+		})
+	}
+}
+
+type fakeIdentityStore struct {
+	legacy.LegacyIdentityStore
+	teams []int64
+	err   bool
+	calls int
+}
+
+func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace claims.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("identity store error")
+	}
+	items := make([]legacy.UserTeam, 0, len(f.teams))
+	for _, teamID := range f.teams {
+		items = append(items, legacy.UserTeam{ID: teamID})
+	}
+	return &legacy.ListUserTeamsResult{
+		Items:    items,
+		Continue: 0,
+	}, nil
 }
