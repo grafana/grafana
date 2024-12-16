@@ -86,6 +86,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   secureJsonData?: KeyValue;
   secureJsonFields?: KeyValue<boolean>;
   enabled?: boolean;
+  autoEnabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
   enterprise?: boolean;

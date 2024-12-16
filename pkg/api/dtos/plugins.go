@@ -12,6 +12,7 @@ type PluginSetting struct {
 	Id               string               `json:"id"`
 	Enabled          bool                 `json:"enabled"`
 	Pinned           bool                 `json:"pinned"`
+	AutoEnabled      bool                 `json:"autoEnabled"`
 	Module           string               `json:"module"`
 	BaseUrl          string               `json:"baseUrl"`
 	Info             plugins.Info         `json:"info"`
