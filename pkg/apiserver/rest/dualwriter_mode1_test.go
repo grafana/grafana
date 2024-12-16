@@ -74,7 +74,7 @@ func TestMode1_Create(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
@@ -142,7 +142,7 @@ func TestMode1_CreateOnUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
 			assert.NoError(t, err)
 		})
@@ -195,7 +195,7 @@ func TestMode1_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -263,7 +263,7 @@ func TestMode1_GetFromUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 			err := dw.(*DualWriterMode1).getFromUnifiedStorage(ctx, exampleObj, tt.input, &metav1.GetOptions{})
 			assert.NoError(t, err)
 		})
@@ -304,7 +304,7 @@ func TestMode1_List(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
@@ -364,7 +364,7 @@ func TestMode1_ListFromUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode1).listFromUnifiedStorage(ctx, &metainternalversion.ListOptions{}, anotherList)
 			assert.NoError(t, err)
@@ -415,7 +415,7 @@ func TestMode1_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -480,7 +480,7 @@ func TestMode1_DeleteFromUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode1).deleteFromUnifiedStorage(ctx, exampleObj, tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 			assert.NoError(t, err)
@@ -531,7 +531,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
@@ -598,7 +598,7 @@ func TestMode1_DeleteCollectionFromUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode1).deleteCollectionFromUnifiedStorage(ctx, exampleObj, func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 			assert.NoError(t, err)
@@ -655,7 +655,7 @@ func TestMode1_Update(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
@@ -732,7 +732,7 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			dw := NewDualWriter(Mode1, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode1).updateOnUnifiedStorageMode1(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 			assert.NoError(t, err)

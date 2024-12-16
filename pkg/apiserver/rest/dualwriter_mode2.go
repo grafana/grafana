@@ -28,6 +28,7 @@ type DualWriterMode2 struct {
 	*dualWriterMetrics
 	resource string
 	Log      klog.Logger
+	compare  ComparisonFunc
 }
 
 const mode2Str = "2"
@@ -36,13 +37,14 @@ const mode2Str = "2"
 // Mode 2 represents writing to LegacyStorage first, then to Storage
 // When reading, values from storage will be returned if they exist
 // otherwise the value from legacy will be used
-func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
+func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string, compare ComparisonFunc) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
 		Storage:           storage,
 		Log:               klog.NewKlogr().WithName("DualWriterMode2").WithValues("mode", mode2Str, "resource", resource),
 		dualWriterMetrics: dwm,
 		resource:          resource,
+		compare:           compare,
 	}
 }
 
@@ -93,7 +95,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	areEqual := Compare(createdFromStorage, createdFromLegacy)
+	areEqual := d.compare(createdFromStorage, createdFromLegacy)
 	d.recordOutcome(mode2Str, getName(createdFromStorage), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -129,7 +131,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	areEqual := Compare(objStorage, objLegacy)
+	areEqual := d.compare(objStorage, objLegacy)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -190,7 +192,7 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		name := getName(obj)
 		if i, ok := legacyNames[name]; ok {
 			legacyList[i] = obj
-			areEqual := Compare(obj, legacyList[i])
+			areEqual := d.compare(obj, legacyList[i])
 			d.recordOutcome(mode2Str, name, areEqual, method)
 			if !areEqual {
 				log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -242,7 +244,7 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	areEqual := Compare(deletedStorage, deletedLegacy)
+	areEqual := d.compare(deletedStorage, deletedLegacy)
 	d.recordOutcome(mode2Str, getName(deletedStorage), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -279,7 +281,7 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	areEqual := Compare(deletedS, deletedLS)
+	areEqual := d.compare(deletedS, deletedLS)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -315,7 +317,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return objFromStorage, created, err
 	}
 
-	areEqual := Compare(objFromStorage, objFromLegacy)
+	areEqual := d.compare(objFromStorage, objFromLegacy)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")

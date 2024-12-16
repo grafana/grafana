@@ -42,7 +42,8 @@ type SyncerConfig struct {
 	DataSyncerInterval     time.Duration
 	DataSyncerRecordsLimit int
 
-	Reg prometheus.Registerer
+	Reg     prometheus.Registerer
+	Compare ComparisonFunc
 }
 
 func (s *SyncerConfig) Validate() error {
@@ -72,6 +73,9 @@ func (s *SyncerConfig) Validate() error {
 	}
 	if s.Reg == nil {
 		s.Reg = prometheus.DefaultRegisterer
+	}
+	if s.Compare == nil {
+		s.Compare = DefaultComparisonFunc
 	}
 	return nil
 }
@@ -227,7 +231,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 			// - existing in both legacy and storage, but objects are different, or
 			// - if it's missing from storage
 			if item.objLegacy != nil &&
-				(item.objStorage == nil || !Compare(item.objLegacy, item.objStorage)) {
+				(item.objStorage == nil || !cfg.Compare(item.objLegacy, item.objStorage)) {
 				outOfSync++
 
 				if item.objStorage != nil {
