@@ -63,7 +63,7 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
@@ -117,7 +117,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Update(newRow); err != nil {
 			return fmt.Errorf("update row: %w", err)
 		}
@@ -147,7 +147,7 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: name, Namespace: namespace}
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("delete row: %w", err)
