@@ -70,8 +70,14 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: implement me
-	return nil, nil
+	namespace := request.NamespaceValue(ctx)
+
+	secureValueList, err := s.storage.List(ctx, namespace, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list secure values: %w", err)
+	}
+
+	return secureValueList, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.

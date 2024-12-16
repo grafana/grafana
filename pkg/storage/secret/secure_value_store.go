@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 var (
@@ -24,6 +26,7 @@ type SecureValueStorage interface {
 	Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Delete(ctx context.Context, namespace, name string) error
+	List(ctx context.Context, ns string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 }
 
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
@@ -157,6 +160,48 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	}
 
 	return nil
+}
+
+func (s *storage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+	_, ok := claims.From(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	secureValueRows := make([]*secureValueDB, 0)
+
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if err := sess.Where("namespace = ?", namespace).Find(&secureValueRows); err != nil {
+			return fmt.Errorf("find rows: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
+
+	for _, row := range secureValueRows {
+		secureValue, err := row.toKubernetes()
+		if err != nil {
+			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+		}
+
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			secureValues = append(secureValues, *secureValue)
+		}
+	}
+
+	return &secretv0alpha1.SecureValueList{
+		Items: secureValues,
+	}, nil
 }
 
 func (s *storage) readInternal(ctx context.Context, namespace, name string) (*secureValueDB, error) {

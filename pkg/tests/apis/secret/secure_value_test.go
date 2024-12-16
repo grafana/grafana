@@ -45,7 +45,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
-	t.Run("Check discovery client", func(t *testing.T) {
+	t.Run("check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
 
 		resources, err := disco.ServerResourcesForGroupVersion("secret.grafana.app/v0alpha1")
@@ -82,6 +82,10 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, raw)
 
+		t.Cleanup(func() {
+			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+		})
+
 		secureValue := new(secretv0alpha1.SecureValue)
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
 		require.NoError(t, err)
@@ -110,6 +114,14 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotNil(t, anotherSecureValue)
 
 			require.EqualValues(t, secureValue, anotherSecureValue)
+		})
+
+		t.Run("and listing securevalues returns the created secure value", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.GreaterOrEqual(t, len(rawList.Items), 1)
+			require.Equal(t, secureValue.Name, rawList.Items[0].GetName())
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
@@ -200,6 +212,13 @@ func TestIntegrationSecureValue(t *testing.T) {
 			var statusErr *apierrors.StatusError
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
+		})
+
+		t.Run("and listing secure values returns an empty list", func(t *testing.T) {
+			rawList, err := client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, rawList)
+			require.Empty(t, rawList.Items)
 		})
 	})
 }
