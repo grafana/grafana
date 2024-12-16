@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -135,6 +136,10 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 	// Check if the folder exists
 	cfg := repo.Config()
 	if cfg.Spec.Folder != "" {
+		if t.clientFactory == nil {
+			return nil, fmt.Errorf("client factory is not initialized properly")
+		}
+
 		dynamicClient, _, err := t.clientFactory.New(cfg.Namespace)
 		if err != nil {
 			return nil, err

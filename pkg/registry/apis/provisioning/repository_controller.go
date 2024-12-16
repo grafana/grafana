@@ -47,6 +47,7 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
 	identities auth.BackgroundIdentityService,
+	tester *RepositoryTester,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -60,6 +61,7 @@ func NewRepositoryController(
 		),
 		repoGetter: repoGetter,
 		identities: identities,
+		tester:     tester,
 		logger:     slog.Default().With("logger", "provisioning-repository-controller"),
 	}
 

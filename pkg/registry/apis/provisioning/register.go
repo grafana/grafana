@@ -551,21 +551,22 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
-			repoController, err := NewRepositoryController(
-				c.ProvisioningV0alpha1(),
-				repoInformer,
-				b, // repoGetter
-				b.identities,
-			)
-			if err != nil {
-				return err
-			}
-
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
 			b.tester = &RepositoryTester{
 				clientFactory: b.client,
 				client:        c.ProvisioningV0alpha1(),
 				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
+			}
+
+			repoController, err := NewRepositoryController(
+				c.ProvisioningV0alpha1(),
+				repoInformer,
+				b, // repoGetter
+				b.identities,
+				b.tester,
+			)
+			if err != nil {
+				return err
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
