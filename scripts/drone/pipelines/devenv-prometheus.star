@@ -19,10 +19,6 @@ load(
 )
 
 def prometheus_devenv_pipeline():
-    environment = {
-        "EDITION": "oss",
-    }
-
     init_steps = [
         download_grabpl_step(),
         setup_step(),
