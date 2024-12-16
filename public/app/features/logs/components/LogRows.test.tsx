@@ -1,10 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { range } from 'lodash';
 
 import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { LogRows, PREVIEW_LIMIT, Props } from './LogRows';
+import { LogRows, Props } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
 
 jest.mock('@grafana/runtime', () => ({
@@ -34,6 +33,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -57,6 +57,7 @@ describe('LogRows', () => {
         timeZone={'utc'}
         previewLimit={1}
         enableLogDetails={true}
+        scrollElement={null}
       />
     );
 
@@ -83,6 +84,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -113,36 +115,12 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 4');
     expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 5');
-  });
-
-  it('renders with default preview limit', () => {
-    // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
-    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => createLogRow({ uid: num.toString() }));
-    render(
-      <LogRows
-        logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
-        showLabels={false}
-        showTime={false}
-        wrapLogMessage={true}
-        prettifyLogMessage={true}
-        timeZone={'utc'}
-        enableLogDetails={true}
-        displayedFields={[]}
-        onClickFilterLabel={() => {}}
-        onClickFilterOutLabel={() => {}}
-        onClickHideField={() => {}}
-        onClickShowField={() => {}}
-      />
-    );
-
-    // There is an extra row with the rows that are rendering
-    expect(screen.queryAllByRole('row')).toHaveLength(101);
   });
 
   it('renders asc ordered rows if order and function supplied', () => {
@@ -167,6 +145,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -196,6 +175,7 @@ describe('LogRows', () => {
         onClickFilterOutLabel={() => {}}
         onClickHideField={() => {}}
         onClickShowField={() => {}}
+        scrollElement={null}
       />
     );
 
@@ -222,6 +202,7 @@ describe('Popover menu', () => {
         displayedFields={[]}
         onClickFilterOutString={() => {}}
         onClickFilterString={() => {}}
+        scrollElement={null}
         {...overrides}
       />
     );

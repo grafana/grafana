@@ -241,7 +241,10 @@ describe('checkLogsError()', () => {
     } as Labels,
   } as LogRowModel;
   test('should return correct error if error is present', () => {
-    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
+    expect(checkLogsError(log)).toStrictEqual('Error Message');
+  });
+  test('should return correct error if error is present', () => {
+    expect(checkLogsError({ ...log, labels: {} })).toStrictEqual(undefined);
   });
 });
 

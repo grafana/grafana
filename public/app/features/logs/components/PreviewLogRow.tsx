@@ -1,7 +1,7 @@
 import { Props } from './LogRow';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 
-const onOpenContext = () => {};
+const emptyFn = () => {};
 export const PreviewLogRow = ({ row, showDuplicates, showLabels, showTime, displayedFields, ...rest }: Props) => {
   return (
     <tr>
@@ -10,8 +10,20 @@ export const PreviewLogRow = ({ row, showDuplicates, showLabels, showTime, displ
       <td></td>
       {showTime && <td>{row.timeEpochMs}</td>}
       {showLabels && row.uniqueLabels && <td></td>}
-      {displayedFields ? <LogRowMessageDisplayedFields  {...rest} row={row} detectedFields={displayedFields} mouseIsOver={false} onOpenContext={onOpenContext} preview /> : <td>row.entry</td>}
+      {displayedFields ? (
+        <LogRowMessageDisplayedFields
+          {...rest}
+          row={row}
+          detectedFields={displayedFields}
+          mouseIsOver={false}
+          onBlur={emptyFn}
+          onOpenContext={emptyFn}
+          preview
+        />
+      ) : (
+        <td>row.entry</td>
+      )}
       <td></td>
     </tr>
   );
-}
+};

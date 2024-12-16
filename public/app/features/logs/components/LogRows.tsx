@@ -72,7 +72,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
-  scrollElement?: HTMLDivElement;
+  scrollElement: HTMLDivElement | null;
   renderPreview?: boolean;
 }
 
@@ -272,8 +272,6 @@ export const LogRows = ({
                 getRows={getRows}
                 onOpenContext={openContext}
                 styles={styles}
-                showDetails={false}
-                showMenu={false}
                 showDuplicates={showDuplicates}
                 {...props}
                 row={row}

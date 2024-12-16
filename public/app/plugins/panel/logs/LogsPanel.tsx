@@ -430,7 +430,7 @@ export const LogsPanel = ({
           >
             <LogRows
               containerRendered={logsContainerRef.current !== null}
-              scrollElement={scrollElement ?? undefined}
+              scrollElement={scrollElement}
               scrollIntoView={scrollIntoView}
               permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
