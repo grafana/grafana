@@ -223,7 +223,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'stretch',
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
-      justifyContent: 'center',
       minHeight: theme.spacing(4),
       borderRadius: theme.shape.radius.default,
       margin: 0,
