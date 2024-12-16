@@ -64,7 +64,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
 				folderUidRoute.Get("/counts", handler.countFolderContent)
-				folderUidRoute.Get("/move", handler.moveFolder)
+				folderUidRoute.Put("/move", handler.updateFolder)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -843,13 +843,19 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, folderDTO)
 }
 
-func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
-	_, ok := fk8s.getClient(c)
-	if !ok {
-		return // error is already sent
-	}
-	c.JSON(http.StatusOK, "")
-}
+// func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
+// 	client, ok := fk8s.getClient(c)
+// 	if !ok {
+// 		return
+// 	}
+// 	client.Update(c.Req.Context(), nil, v1.UpdateOptions{}, "move")
+
+// 	c.JSON(http.StatusOK, "")
+// }
+
+// func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
+// 	fk8s.moveFolder(c)
+// }
 
 //-----------------------------------------------------------------------------------------
 // Utility functions
