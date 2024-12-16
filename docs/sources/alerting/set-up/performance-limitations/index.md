@@ -65,6 +65,10 @@ This can be prevented by writing to the database periodically. For this the feat
 to be enabled. By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
 can also be configured using the `state_periodic_save_interval` configuration flag.
 
+When periodic saving is enabled, each `state_periodic_save_interval` Grafana deletes all existing alert instances from the
+database and then writes the entire current set of instances back in batches in a single transacton.
+The size of each batch can be configured using the `state_periodic_save_batch_size` configuration option.
+
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
 
