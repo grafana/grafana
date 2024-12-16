@@ -25,7 +25,6 @@ import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier }
 import { WithNotificationOptions, alertingApi } from './alertingApi';
 import {
   FetchPromRulesFilter,
-  decodeFileName,
   getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
@@ -222,13 +221,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         };
       },
       transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
-        // fix the file name encoding returned by the Grafana-managed prometheus endpoint when the namespace contains "/"
-        const normalizedGroups = response.data.groups.map((group) => ({
-          ...group,
-          file: decodeFileName(group.file),
-        }));
-
-        return groupRulesByFileName(normalizedGroups, args.ruleSourceName);
+        return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
       providesTags: ['CombinedAlertRule'],
     }),
