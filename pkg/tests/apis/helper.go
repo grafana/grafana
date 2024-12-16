@@ -193,8 +193,7 @@ func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath st
 	body, err := os.ReadFile(fpath)
 	if err == nil {
 		if diff := cmp.Diff(pretty, string(body)); diff != "" {
-			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
-			err = fmt.Errorf(str)
+			err = fmt.Errorf("body mismatch (-want +got):\n%s", diff)
 		}
 	}
 

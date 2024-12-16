@@ -193,7 +193,7 @@ func SetupConfig(
 
 				w := csv.NewWriter(f)
 				if isNew {
-					w.Write([]string{
+					_ = w.Write([]string{
 						"#Path",
 						"Method",
 						"action",
@@ -205,7 +205,7 @@ func SetupConfig(
 						"metadata",
 					})
 				}
-				w.Write([]string{
+				_ = w.Write([]string{
 					r.Path(),
 					r.Method(),
 					action,
