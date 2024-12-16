@@ -46,6 +46,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/steps/prometheus.star",
+    "prometheus_devenv_step",
+)
 
 # This function isn't actually unused but I don't know why the linter thinks it is...
 # @unused
@@ -135,6 +139,7 @@ def build_e2e(trigger, ver_mode):
                 cloud = "azure",
                 trigger = trigger_oss,
             ),
+            prometheus_devenv_step(),
             playwright_e2e_tests_step(),
             playwright_e2e_report_upload(),
             playwright_e2e_report_post_link(),

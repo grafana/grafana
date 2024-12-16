@@ -860,6 +860,18 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - apk add --update make
+  - make devenv sources=prometheus
+  depends_on:
+  - clone
+  environment:
+    DRONE_BUILD_EVENT: pull_request
+  image: node:22.11.0-alpine
+  name: setup-prometheus-devenv
+  volumes:
+  - name: prometheus-data
+    path: /var/lib/prometheus
+- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
@@ -2282,6 +2294,18 @@ steps:
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
+- commands:
+  - apk add --update make
+  - make devenv sources=prometheus
+  depends_on:
+  - clone
+  environment:
+    DRONE_BUILD_EVENT: pull_request
+  image: node:22.11.0-alpine
+  name: setup-prometheus-devenv
+  volumes:
+  - name: prometheus-data
+    path: /var/lib/prometheus
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
@@ -5579,3 +5603,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: d02ed0be5effcb36f6548d6509daade83d42923ef0ff2cf3b67e583313c857e1
+
+...
