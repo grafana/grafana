@@ -53,6 +53,7 @@ import {
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardNotFound,
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -142,6 +143,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
+    dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
   };
 
   // Ref: DashboardModel.initMeta

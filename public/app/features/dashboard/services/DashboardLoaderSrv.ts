@@ -3,11 +3,15 @@ import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-sco
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import {
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
+import { AnnoKeyDashboardIsSnapshot, AnnoKeyDashboardNotFound } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
@@ -21,14 +25,12 @@ import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
 interface DashboardLoaderSrvLike<T> {
-  useV2?: boolean;
   _dashboardLoadFailed(title: string, snapshot?: boolean): T;
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap,
-    useV2?: boolean
+    params?: UrlQueryMap
   ): Promise<T>;
 }
 
@@ -215,22 +217,33 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
   _dashboardLoadFailed(title: string, snapshot?: boolean) {
-    throw new Error('Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardWithAccessInfo<DashboardV2Spec>;
-    // snapshot = snapshot || false;
-    // return {
-    //   meta: {
-    //     canStar: false,
-    //     isSnapshot: snapshot,
-    //     canDelete: false,
-    //     canSave: false,
-    //     canEdit: false,
-    //     canShare: false,
-    //     dashboardNotFound: true,
-    //   },
-    //   dashboard: { title, uid: title, schemaVersion: 0 },
-    // };
+    const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+      kind: 'DashboardWithAccessInfo',
+      spec: {
+        ...defaultDashboardV2Spec(),
+        title,
+      },
+      access: {
+        canSave: false,
+        canEdit: false,
+        canAdmin: false,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+      },
+      apiVersion: 'v2alpha1',
+      metadata: {
+        creationTimestamp: '',
+        name: title,
+        namespace: '',
+        resourceVersion: '',
+        annotations: {
+          [AnnoKeyDashboardNotFound]: true,
+          [AnnoKeyDashboardIsSnapshot]: Boolean(snapshot),
+        },
+      },
+    };
+    return dashboard;
   }
 
   loadDashboard(
@@ -290,16 +303,13 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
-        .then((result) => {
-          // if (result.meta.isFolder) {
-          //   appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-          //   throw new Error('Dashboard not found');
-          // }
-          return result;
-        })
-        .catch(() => {
+        .catch((e) => {
+          if (isFetchError(e)) {
+            e.isHandled = true;
+          }
+          appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
           const dash = this._dashboardLoadFailed('Not found', true);
-          // dash.dashboard.uid = '';
+
           return dash;
         });
     } else {
@@ -307,9 +317,9 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     }
 
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      // if (result.meta.dashboardNotFound !== true) {
-      //   impressionSrv.addDashboardImpression(result.dashboard.uid);
-      // }
+      if (result.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true) {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      }
 
       return result;
     });
