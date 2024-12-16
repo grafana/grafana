@@ -8,12 +8,10 @@ const content = fs.readFileSync(filePath, 'utf-8');
 
 // Define the prefixes to remove
 const prefixes = [
-  'Namespaced',
   'ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1',
   'ComGithubGrafanaGrafanaPkgApimachineryApisCommonV0Alpha1',
   'IoK8SApimachineryPkgApisMetaV1',
   'IoK8SApimachineryPkgRuntimeRaw',
-  'Connect',
 ];
 
 // Function to create a regex for each prefix

@@ -67,11 +67,11 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    patchRepository: build.mutation<PatchRepositoryResponse, PatchRepositoryArg>({
+    updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}`,
         method: 'PATCH',
-				headers: { 'Content-Type': 'application/merge-patch+json' },
+        headers: { 'Content-Type': 'application/merge-patch+json' },
         body: queryArg.body,
         params: {
           pretty: queryArg.pretty,
@@ -82,19 +82,13 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    createRepositoryExport: build.mutation<
-      CreateRepositoryExportResponse,
-      CreateRepositoryExportArg
-    >({
+    createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/export`,
         method: 'POST',
       }),
     }),
-    getRepositoryFiles: build.query<
-      GetRepositoryFilesResponse,
-      GetRepositoryFilesArg
-    >({
+    getRepositoryFiles: build.query<GetRepositoryFilesResponse, GetRepositoryFilesArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/files/`,
         params: {
@@ -102,10 +96,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getRepositoryFilesWithPath: build.query<
-      GetRepositoryFilesWithPathResponse,
-      GetRepositoryFilesWithPathArg
-    >({
+    getRepositoryFilesWithPath: build.query<GetRepositoryFilesWithPathResponse, GetRepositoryFilesWithPathArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
         params: {
@@ -113,10 +104,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    putRepositoryFilesWithPath: build.mutation<
-      PutRepositoryFilesWithPathResponse,
-      PutRepositoryFilesWithPathArg
-    >({
+    putRepositoryFilesWithPath: build.mutation<PutRepositoryFilesWithPathResponse, PutRepositoryFilesWithPathArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
         method: 'PUT',
@@ -154,10 +142,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getRepositoryHistory: build.query<
-      GetRepositoryHistoryResponse,
-      GetRepositoryHistoryArg
-    >({
+    getRepositoryHistory: build.query<GetRepositoryHistoryResponse, GetRepositoryHistoryArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/history`,
         params: {
@@ -165,10 +150,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getRepositoryHistoryWithPath: build.query<
-      GetRepositoryHistoryWithPathResponse,
-      GetRepositoryHistoryWithPathArg
-    >({
+    getRepositoryHistoryWithPath: build.query<GetRepositoryHistoryWithPathResponse, GetRepositoryHistoryWithPathArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/history/${queryArg.path}`,
         params: {
@@ -176,10 +158,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getRepositoryStatus: build.query<
-      GetRepositoryStatusResponse,
-      GetRepositoryStatusArg
-    >({
+    getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/status`,
         params: {
@@ -187,10 +166,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    replaceRepositoryStatus: build.mutation<
-      ReplaceRepositoryStatusResponse,
-      ReplaceRepositoryStatusArg
-    >({
+    replaceRepositoryStatus: build.mutation<ReplaceRepositoryStatusResponse, ReplaceRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/status`,
         method: 'PUT',
@@ -203,14 +179,11 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    patchRepositoryStatus: build.mutation<
-      PatchRepositoryStatusResponse,
-      PatchRepositoryStatusArg
-    >({
+    updateRepositoryStatus: build.mutation<UpdateRepositoryStatusResponse, UpdateRepositoryStatusArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/status`,
         method: 'PATCH',
-				headers: { 'Content-Type': 'application/merge-patch+json' },
+        headers: { 'Content-Type': 'application/merge-patch+json' },
         body: queryArg.body,
         params: {
           pretty: queryArg.pretty,
@@ -221,37 +194,25 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    createRepositorySync: build.mutation<
-      CreateRepositorySyncResponse,
-      CreateRepositorySyncArg
-    >({
+    createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/sync`,
         method: 'POST',
       }),
     }),
-    createRepositoryTest: build.mutation<
-      CreateRepositoryTestResponse,
-      CreateRepositoryTestArg
-    >({
+    createRepositoryTest: build.mutation<CreateRepositoryTestResponse, CreateRepositoryTestArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/test`,
         method: 'POST',
         body: queryArg.body,
       }),
     }),
-    getRepositoryWebhook: build.query<
-      GetRepositoryWebhookResponse,
-      GetRepositoryWebhookArg
-    >({
+    getRepositoryWebhook: build.query<GetRepositoryWebhookResponse, GetRepositoryWebhookArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/webhook`,
       }),
     }),
-    createRepositoryWebhook: build.mutation<
-      CreateRepositoryWebhookResponse,
-      CreateRepositoryWebhookArg
-    >({
+    createRepositoryWebhook: build.mutation<CreateRepositoryWebhookResponse, CreateRepositoryWebhookArg>({
       query: (queryArg) => ({
         url: `/repositories/${queryArg.name}/webhook`,
         method: 'POST',
@@ -261,19 +222,16 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type ListJobResponse =  JobList;
-export type ListJobArg = {
-};
-export type GetJobResponse =  Job;
+export type ListJobResponse = JobList;
+export type ListJobArg = {};
+export type GetJobResponse = Job;
 export type GetJobArg = {
   name: string;
   pretty?: string;
 };
-export type ListRepositoryResponse =
-   RepositoryList;
-export type ListRepositoryArg = {
-};
-export type CreateRepositoryResponse = | Repository;
+export type ListRepositoryResponse = RepositoryList;
+export type ListRepositoryArg = {};
+export type CreateRepositoryResponse = Repository;
 export type CreateRepositoryArg = {
   pretty?: string;
   dryRun?: string;
@@ -281,13 +239,12 @@ export type CreateRepositoryArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type GetRepositoryResponse =
-   Repository;
+export type GetRepositoryResponse = Repository;
 export type GetRepositoryArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryResponse = | Repository;
+export type ReplaceRepositoryResponse = Repository;
 export type ReplaceRepositoryArg = {
   name: string;
   pretty?: string;
@@ -296,7 +253,7 @@ export type ReplaceRepositoryArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type DeleteRepositoryResponse = | Status;
+export type DeleteRepositoryResponse = Status;
 export type DeleteRepositoryArg = {
   name: string;
   pretty?: string;
@@ -306,8 +263,8 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type PatchRepositoryResponse = | Repository;
-export type PatchRepositoryArg = {
+export type UpdateRepositoryResponse = Repository;
+export type UpdateRepositoryArg = {
   name: string;
   pretty?: string;
   dryRun?: string;
@@ -316,12 +273,11 @@ export type PatchRepositoryArg = {
   force?: boolean;
   body: Patch;
 };
-export type CreateRepositoryExportResponse =
-   Job;
+export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
 };
-export type GetRepositoryFilesResponse =  {
+export type GetRepositoryFilesResponse = {
   apiVersion?: string;
   files?: any[];
   kind?: string;
@@ -331,15 +287,13 @@ export type GetRepositoryFilesArg = {
   name: string;
   ref?: string;
 };
-export type GetRepositoryFilesWithPathResponse =
-   ResourceWrapper;
+export type GetRepositoryFilesWithPathResponse = ResourceWrapper;
 export type GetRepositoryFilesWithPathArg = {
   name: string;
   path: string;
   ref?: string;
 };
-export type PutRepositoryFilesWithPathResponse =
-   ResourceWrapper;
+export type PutRepositoryFilesWithPathResponse = ResourceWrapper;
 export type PutRepositoryFilesWithPathArg = {
   name: string;
   path: string;
@@ -349,8 +303,7 @@ export type PutRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type CreateRepositoryFilesWithPathResponse =
-   ResourceWrapper;
+export type CreateRepositoryFilesWithPathResponse = ResourceWrapper;
 export type CreateRepositoryFilesWithPathArg = {
   name: string;
   path: string;
@@ -360,32 +313,30 @@ export type CreateRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type DeleteRepositoryFilesWithPathResponse =
-   ResourceWrapper;
+export type DeleteRepositoryFilesWithPathResponse = ResourceWrapper;
 export type DeleteRepositoryFilesWithPathArg = {
   name: string;
   path: string;
   ref?: string;
   message?: string;
 };
-export type GetRepositoryHistoryResponse =  string;
+export type GetRepositoryHistoryResponse = string;
 export type GetRepositoryHistoryArg = {
   name: string;
   ref?: string;
 };
-export type GetRepositoryHistoryWithPathResponse =  string;
+export type GetRepositoryHistoryWithPathResponse = string;
 export type GetRepositoryHistoryWithPathArg = {
   name: string;
   path: string;
   ref?: string;
 };
-export type GetRepositoryStatusResponse =
-   Repository;
+export type GetRepositoryStatusResponse = Repository;
 export type GetRepositoryStatusArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryStatusResponse = | Repository;
+export type ReplaceRepositoryStatusResponse = Repository;
 export type ReplaceRepositoryStatusArg = {
   name: string;
   pretty?: string;
@@ -394,8 +345,8 @@ export type ReplaceRepositoryStatusArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type PatchRepositoryStatusResponse = | Repository;
-export type PatchRepositoryStatusArg = {
+export type UpdateRepositoryStatusResponse = Repository;
+export type UpdateRepositoryStatusArg = {
   name: string;
   pretty?: string;
   dryRun?: string;
@@ -404,13 +355,11 @@ export type PatchRepositoryStatusArg = {
   force?: boolean;
   body: Patch;
 };
-export type CreateRepositorySyncResponse =
-   Job;
+export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
 };
-export type CreateRepositoryTestResponse =
-   TestResults;
+export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
   name: string;
   body: {
@@ -421,13 +370,11 @@ export type CreateRepositoryTestArg = {
     status?: any;
   };
 };
-export type GetRepositoryWebhookResponse =
-   WebhookResponse;
+export type GetRepositoryWebhookResponse = WebhookResponse;
 export type GetRepositoryWebhookArg = {
   name: string;
 };
-export type CreateRepositoryWebhookResponse =
-   WebhookResponse;
+export type CreateRepositoryWebhookResponse = WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
@@ -663,7 +610,7 @@ export const {
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
-  usePatchRepositoryMutation,
+  useUpdateRepositoryMutation,
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
@@ -674,7 +621,7 @@ export const {
   useGetRepositoryHistoryWithPathQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
-  usePatchRepositoryStatusMutation,
+  useUpdateRepositoryStatusMutation,
   useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
