@@ -187,17 +187,36 @@ func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.Fil
 	}
 
 	if err != nil { // IsNotFound
-		_, err = file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
+		_, err := file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create object: %w", err)
+		}
 	} else { // already exists
 		toWrite := file.Obj.DeepCopy()
-		if uid, ok, _ := unstructured.NestedString(existing.Object, "spec", "uid"); ok {
-			unstructured.SetNestedField(toWrite.Object, uid, "spec", "uid")
+		writeMeta, err := apiutils.MetaAccessor(toWrite)
+		if err != nil {
+			return fmt.Errorf("failed to create meta accessor for the object to write: %w", err)
 		}
-		_, err = file.Client.Update(ctx, toWrite, metav1.UpdateOptions{})
-	}
 
-	if err != nil {
-		return fmt.Errorf("failed to upsert object: %w", err)
+		existingMeta, err := apiutils.MetaAccessor(existing)
+		if err != nil {
+			return fmt.Errorf("failed to create meta accessor for the existing object: %w", err)
+		}
+
+		if uid := existingMeta.GetUID(); uid != "" {
+			writeMeta.SetUID(uid)
+		}
+		if rev := existingMeta.GetResourceVersion(); rev != "" {
+			writeMeta.SetResourceVersion(rev)
+		}
+		if gen := existingMeta.GetGeneration(); gen != 0 {
+			writeMeta.SetGeneration(gen + 1)
+		}
+
+		_, err = file.Client.Update(ctx, toWrite, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update object: %w", err)
+		}
 	}
 
 	r.logger.InfoContext(ctx, "Replicated file", "name", file.Obj.GetName(), "path", fileInfo.Path, "parent", parent)
