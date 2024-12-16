@@ -176,7 +176,7 @@ func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.Fil
 		return fmt.Errorf("failed to create folder path: %w", err)
 	}
 
-	_, err = file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
+	existing, err := file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if object already exists: %w", err)
@@ -189,7 +189,11 @@ func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.Fil
 	if err != nil { // IsNotFound
 		_, err = file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
 	} else { // already exists
-		_, err = file.Client.Update(ctx, file.Obj, metav1.UpdateOptions{})
+		toWrite := file.Obj.DeepCopy()
+		if uid, ok, _ := unstructured.NestedString(existing.Object, "spec", "uid"); ok {
+			unstructured.SetNestedField(toWrite.Object, uid, "spec", "uid")
+		}
+		_, err = file.Client.Update(ctx, toWrite, metav1.UpdateOptions{})
 	}
 
 	if err != nil {
