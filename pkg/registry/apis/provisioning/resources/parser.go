@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -43,6 +42,7 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 		repo:   config,
 		client: client,
 		kinds:  kinds,
+		mapper: NamesFromFileName,
 	}
 	if repo.Config().Spec.Linting {
 		ctx := context.Background()
@@ -73,20 +73,13 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 
 type Parser struct {
 	// The target repository
-	repo *provisioning.Repository
+	repo   *provisioning.Repository
+	mapper IDMapper
 
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
 	linter lint.Linter
-}
-
-func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
-	return &Parser{
-		repo:   repo,
-		client: client,
-		kinds:  kinds,
-	}
 }
 
 type ParsedResource struct {
@@ -164,15 +157,9 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
-	// When name is missing use the file path as the k8s name
-	if obj.GetName() == "" {
-		name := path.Base(info.Path)
-		suffix := path.Ext(name)
-		if suffix != "" {
-			name = strings.TrimSuffix(name, suffix)
-		}
-		obj.SetName(name)
-	}
+	objName, folderName := r.mapper(cfg.Name, info.Path, obj)
+	obj.SetName(objName)
+	parsed.Meta.SetFolder(folderName)
 
 	// We can not do anything more if no kind is defined
 	if parsed.GVK == nil {

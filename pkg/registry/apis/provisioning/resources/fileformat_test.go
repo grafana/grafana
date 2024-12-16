@@ -99,11 +99,16 @@ spec:
 		info.Data, err = os.ReadFile(path.Join("../../../../..", info.Path))
 		require.NoError(t, err)
 
-		parser := NewParser(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
+		parser := &Parser{
+			mapper: NamesFromFileName,
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
 			},
-		}, &DynamicClient{}, &StaticKindsLookup{})
+			client: &DynamicClient{},
+			kinds:  &StaticKindsLookup{},
+		}
 
 		// try to validate (and lint)
 		validate := true
