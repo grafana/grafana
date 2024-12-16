@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 
 import {
   TimeZone,
@@ -62,7 +62,6 @@ export interface Props {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
   pinnedLogs?: string[];
-  containerRendered?: boolean;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
@@ -82,208 +81,210 @@ type PopoverStateType = {
   popoverMenuCoordinates: { x: number; y: number };
 };
 
-export const LogRows = ({
-  deduplicatedRows,
-  logRows = [],
-  dedupStrategy,
-  logsSortOrder,
-  previewLimit,
-  pinnedLogs,
-  onOpenContext,
-  onClickFilterOutString,
-  onClickFilterString,
-  scrollElement,
-  renderPreview = false,
-  enableLogDetails,
-  ...props
-}: Props) => {
-  const [previewSize, setPreviewSize] = useState(
-    /**
-     * If renderPreview is enabled, either half of the log rows or twice the screen size of log rows will be rendered.
-     * The biggest of those values will be used. Else, all rows are rendered.
-     */
-    renderPreview ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
-  );
-  const [popoverState, setPopoverState] = useState<PopoverStateType>({
-    selection: '',
-    selectedRow: null,
-    popoverMenuCoordinates: { x: 0, y: 0 },
-  });
-  const logRowsRef = useRef<HTMLDivElement>(null);
-  const theme = useTheme2();
-  const styles = getLogRowStyles(theme);
-  const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
-  const dedupCount = useMemo(
-    () => dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0),
-    [dedupedRows]
-  );
-  const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-  // Staged rendering
-  const orderedRows = useMemo(
-    () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
-    [dedupedRows, logsSortOrder]
-  );
-  // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-  const getRows = useMemo(() => () => orderedRows, [orderedRows]);
-  const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
-  const keyMaker = new UniqueKeyMaker();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+export const LogRows = memo(
+  ({
+    deduplicatedRows,
+    logRows = [],
+    dedupStrategy,
+    logsSortOrder,
+    previewLimit,
+    pinnedLogs,
+    onOpenContext,
+    onClickFilterOutString,
+    onClickFilterString,
+    scrollElement,
+    renderPreview = false,
+    enableLogDetails,
+    ...props
+  }: Props) => {
+    const [previewSize, setPreviewSize] = useState(
+      /**
+       * If renderPreview is enabled, either half of the log rows or twice the screen size of log rows will be rendered.
+       * The biggest of those values will be used. Else, all rows are rendered.
+       */
+      renderPreview ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2)) : Infinity
+    );
+    const [popoverState, setPopoverState] = useState<PopoverStateType>({
+      selection: '',
+      selectedRow: null,
+      popoverMenuCoordinates: { x: 0, y: 0 },
+    });
+    const logRowsRef = useRef<HTMLDivElement>(null);
+    const theme = useTheme2();
+    const styles = getLogRowStyles(theme);
+    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    const dedupCount = useMemo(
+      () => dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0),
+      [dedupedRows]
+    );
+    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    // Staged rendering
+    const orderedRows = useMemo(
+      () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
+      [dedupedRows, logsSortOrder]
+    );
+    // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
+    const getRows = useMemo(() => () => orderedRows, [orderedRows]);
+    const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
+    const keyMaker = new UniqueKeyMaker();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    return () => {
+    useEffect(() => {
+      return () => {
+        if (handleDeselectionRef.current) {
+          document.removeEventListener('click', handleDeselectionRef.current);
+          document.removeEventListener('contextmenu', handleDeselectionRef.current);
+        }
+      };
+    }, []);
+
+    useEffect(() => {
+      if (!scrollElement) {
+        return;
+      }
+
+      function renderAll() {
+        setPreviewSize(Infinity);
+        scrollElement?.removeEventListener('scroll', renderAll);
+        scrollElement?.removeEventListener('wheel', renderAll);
+      }
+
+      scrollElement.addEventListener('scroll', renderAll);
+      scrollElement.addEventListener('wheel', renderAll);
+    }, [logRows.length, scrollElement]);
+
+    /**
+     * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
+     */
+    const openContext = useCallback(
+      (row: LogRowModel, onClose: () => void): void => {
+        if (onOpenContext) {
+          onOpenContext(row, onClose);
+        }
+      },
+      [onOpenContext]
+    );
+
+    const popoverMenuSupported = useCallback(() => {
+      if (!config.featureToggles.logRowsPopoverMenu) {
+        return false;
+      }
+      return Boolean(onClickFilterOutString || onClickFilterString);
+    }, [onClickFilterOutString, onClickFilterString]);
+
+    const closePopoverMenu = useCallback(() => {
       if (handleDeselectionRef.current) {
         document.removeEventListener('click', handleDeselectionRef.current);
         document.removeEventListener('contextmenu', handleDeselectionRef.current);
+        handleDeselectionRef.current = null;
       }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!scrollElement) {
-      return;
-    }
-
-    function renderAll() {
-      setPreviewSize(Infinity);
-      scrollElement?.removeEventListener('scroll', renderAll);
-      scrollElement?.removeEventListener('wheel', renderAll);
-    }
-
-    scrollElement.addEventListener('scroll', renderAll);
-    scrollElement.addEventListener('wheel', renderAll);
-  }, [logRows.length, scrollElement]);
-
-  /**
-   * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
-   */
-  const openContext = useCallback(
-    (row: LogRowModel, onClose: () => void): void => {
-      if (onOpenContext) {
-        onOpenContext(row, onClose);
-      }
-    },
-    [onOpenContext]
-  );
-
-  const popoverMenuSupported = useCallback(() => {
-    if (!config.featureToggles.logRowsPopoverMenu) {
-      return false;
-    }
-    return Boolean(onClickFilterOutString || onClickFilterString);
-  }, [onClickFilterOutString, onClickFilterString]);
-
-  const closePopoverMenu = useCallback(() => {
-    if (handleDeselectionRef.current) {
-      document.removeEventListener('click', handleDeselectionRef.current);
-      document.removeEventListener('contextmenu', handleDeselectionRef.current);
-      handleDeselectionRef.current = null;
-    }
-    setPopoverState({
-      selection: '',
-      popoverMenuCoordinates: { x: 0, y: 0 },
-      selectedRow: null,
-    });
-  }, []);
-
-  const handleDeselection = useCallback(
-    (e: Event) => {
-      if (targetIsElement(e.target) && !logRowsRef.current?.contains(e.target)) {
-        // The mouseup event comes from outside the log rows, close the menu.
-        closePopoverMenu();
-        return;
-      }
-      if (document.getSelection()?.toString()) {
-        return;
-      }
-      closePopoverMenu();
-    },
-    [closePopoverMenu]
-  );
-
-  const handleSelection = useCallback(
-    (e: MouseEvent<HTMLElement>, row: LogRowModel): boolean => {
-      const selection = document.getSelection()?.toString();
-      if (!selection) {
-        return false;
-      }
-      if (popoverMenuSupported() === false) {
-        // This signals onRowClick inside LogRow to skip the event because the user is selecting text
-        return selection ? true : false;
-      }
-
-      if (!logRowsRef.current) {
-        return false;
-      }
-
-      const MENU_WIDTH = 270;
-      const MENU_HEIGHT = 105;
-      const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
-      const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
-
       setPopoverState({
-        selection,
-        popoverMenuCoordinates: { x, y },
-        selectedRow: row,
+        selection: '',
+        popoverMenuCoordinates: { x: 0, y: 0 },
+        selectedRow: null,
       });
-      handleDeselectionRef.current = handleDeselection;
-      document.addEventListener('click', handleDeselection);
-      document.addEventListener('contextmenu', handleDeselection);
-      return true;
-    },
-    [handleDeselection, popoverMenuSupported]
-  );
+    }, []);
 
-  return (
-    <div className={styles.logRows} ref={logRowsRef}>
-      {popoverState.selection && popoverState.selectedRow && (
-        <PopoverMenu
-          close={closePopoverMenu}
-          row={popoverState.selectedRow}
-          selection={popoverState.selection}
-          {...popoverState.popoverMenuCoordinates}
-          onClickFilterString={onClickFilterString}
-          onClickFilterOutString={onClickFilterOutString}
-        />
-      )}
-      <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
-        <tbody>
-          {orderedRows.map((row, index) =>
-            index < previewSize ? (
-              <LogRow
-                key={keyMaker.getKey(row.uid)}
-                getRows={getRows}
-                row={row}
-                showDuplicates={showDuplicates}
-                logsSortOrder={logsSortOrder}
-                onOpenContext={openContext}
-                styles={styles}
-                onPermalinkClick={props.onPermalinkClick}
-                scrollIntoView={props.scrollIntoView}
-                permalinkedRowId={props.permalinkedRowId}
-                onPinLine={props.onPinLine}
-                onUnpinLine={props.onUnpinLine}
-                pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
-                pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                isFilterLabelActive={props.isFilterLabelActive}
-                handleTextSelection={handleSelection}
-                enableLogDetails={enableLogDetails}
-                {...props}
-              />
-            ) : (
-              <PreviewLogRow
-                key={`preview_${keyMaker.getKey(row.uid)}`}
-                enableLogDetails={false}
-                getRows={getRows}
-                onOpenContext={openContext}
-                styles={styles}
-                showDuplicates={showDuplicates}
-                {...props}
-                row={row}
-              />
-            )
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
+    const handleDeselection = useCallback(
+      (e: Event) => {
+        if (targetIsElement(e.target) && !logRowsRef.current?.contains(e.target)) {
+          // The mouseup event comes from outside the log rows, close the menu.
+          closePopoverMenu();
+          return;
+        }
+        if (document.getSelection()?.toString()) {
+          return;
+        }
+        closePopoverMenu();
+      },
+      [closePopoverMenu]
+    );
+
+    const handleSelection = useCallback(
+      (e: MouseEvent<HTMLElement>, row: LogRowModel): boolean => {
+        const selection = document.getSelection()?.toString();
+        if (!selection) {
+          return false;
+        }
+        if (popoverMenuSupported() === false) {
+          // This signals onRowClick inside LogRow to skip the event because the user is selecting text
+          return selection ? true : false;
+        }
+
+        if (!logRowsRef.current) {
+          return false;
+        }
+
+        const MENU_WIDTH = 270;
+        const MENU_HEIGHT = 105;
+        const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
+        const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+
+        setPopoverState({
+          selection,
+          popoverMenuCoordinates: { x, y },
+          selectedRow: row,
+        });
+        handleDeselectionRef.current = handleDeselection;
+        document.addEventListener('click', handleDeselection);
+        document.addEventListener('contextmenu', handleDeselection);
+        return true;
+      },
+      [handleDeselection, popoverMenuSupported]
+    );
+
+    return (
+      <div className={styles.logRows} ref={logRowsRef}>
+        {popoverState.selection && popoverState.selectedRow && (
+          <PopoverMenu
+            close={closePopoverMenu}
+            row={popoverState.selectedRow}
+            selection={popoverState.selection}
+            {...popoverState.popoverMenuCoordinates}
+            onClickFilterString={onClickFilterString}
+            onClickFilterOutString={onClickFilterOutString}
+          />
+        )}
+        <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
+          <tbody>
+            {orderedRows.map((row, index) =>
+              index < previewSize ? (
+                <LogRow
+                  key={keyMaker.getKey(row.uid)}
+                  getRows={getRows}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  logsSortOrder={logsSortOrder}
+                  onOpenContext={openContext}
+                  styles={styles}
+                  onPermalinkClick={props.onPermalinkClick}
+                  scrollIntoView={props.scrollIntoView}
+                  permalinkedRowId={props.permalinkedRowId}
+                  onPinLine={props.onPinLine}
+                  onUnpinLine={props.onUnpinLine}
+                  pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+                  pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
+                  isFilterLabelActive={props.isFilterLabelActive}
+                  handleTextSelection={handleSelection}
+                  enableLogDetails={enableLogDetails}
+                  {...props}
+                />
+              ) : (
+                <PreviewLogRow
+                  key={`preview_${keyMaker.getKey(row.uid)}`}
+                  enableLogDetails={false}
+                  getRows={getRows}
+                  onOpenContext={openContext}
+                  styles={styles}
+                  showDuplicates={showDuplicates}
+                  {...props}
+                  row={row}
+                />
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+);

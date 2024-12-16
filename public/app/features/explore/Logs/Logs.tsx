@@ -229,9 +229,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   // Get pinned log lines
   const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
-  const pinnedLogs = useMemo(() => logsParent?.children
-    ?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE)
-    .map((pinnedLogs) => pinnedLogs.id), [logsParent?.children]);
+  const pinnedLogs = useMemo(
+    () =>
+      logsParent?.children
+        ?.filter((outlines) => outlines.title === PINNED_LOGS_TITLE)
+        .map((pinnedLogs) => pinnedLogs.id),
+    [logsParent?.children]
+  );
 
   const getPinnedLogsCount = useCallback(() => {
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
@@ -643,35 +647,38 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef.current = onClose;
   }, []);
 
-  const onPermalinkClick = useCallback(async (row: LogRowModel) => {
-    // this is an extra check, to be sure that we are not
-    // creating permalinks for logs without an id-field.
-    // normally it should never happen, because we do not
-    // display the permalink button in such cases.
-    if (row.rowId === undefined) {
-      return;
-    }
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      // this is an extra check, to be sure that we are not
+      // creating permalinks for logs without an id-field.
+      // normally it should never happen, because we do not
+      // display the permalink button in such cases.
+      if (row.rowId === undefined) {
+        return;
+      }
 
-    // get explore state, add log-row-id and make timerange absolute
-    const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
-    urlState.panelsState = {
-      ...panelState,
-      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
-    };
-    urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
+      // get explore state, add log-row-id and make timerange absolute
+      const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
+      urlState.panelsState = {
+        ...panelState,
+        logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
+      };
+      urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
-    // append changed urlState to baseUrl
-    const serializedState = serializeStateToUrlParam(urlState);
-    const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
-    const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
-    await createAndCopyShortLink(url);
+      // append changed urlState to baseUrl
+      const serializedState = serializeStateToUrlParam(urlState);
+      const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+      const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+      await createAndCopyShortLink(url);
 
-    reportInteraction('grafana_explore_logs_permalink_clicked', {
-      datasourceType: row.datasourceType ?? 'unknown',
-      logRowUid: row.uid,
-      logRowLevel: row.logLevel,
-    });
-  }, [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]);
+      reportInteraction('grafana_explore_logs_permalink_clicked', {
+        datasourceType: row.datasourceType ?? 'unknown',
+        logRowUid: row.uid,
+        logRowLevel: row.logLevel,
+      });
+    },
+    [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
+  );
 
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
@@ -685,56 +692,63 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     topLogsRef.current?.scrollIntoView();
   }, [logsContainerRef, topLogsRef]);
 
-  const onPinToContentOutlineClick = useCallback((row: LogRowModel, allowUnPin = true) => {
-    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
-      contentOutlineTrackPinLimitReached();
-      return;
-    }
+  const onPinToContentOutlineClick = useCallback(
+    (row: LogRowModel, allowUnPin = true) => {
+      if (getPinnedLogsCount() === PINNED_LOGS_LIMIT && !allowUnPin) {
+        contentOutlineTrackPinLimitReached();
+        return;
+      }
 
-    // find the Logs parent item
-    const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
+      // find the Logs parent item
+      const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
 
-    //update the parent's expanded state
-    if (logsParent && updateItem) {
-      updateItem(logsParent.id, { expanded: true });
-    }
+      //update the parent's expanded state
+      if (logsParent && updateItem) {
+        updateItem(logsParent.id, { expanded: true });
+      }
 
-    const alreadyPinned = pinnedLogs?.find((pin) => pin === row.rowId);
-    if (alreadyPinned && row.rowId && allowUnPin) {
-      unregister?.(row.rowId);
-      contentOutlineTrackPinRemoved();
-    } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT && !alreadyPinned) {
-      register?.({
-        id: row.rowId,
-        icon: 'gf-logs',
-        title: PINNED_LOGS_TITLE,
-        panelId: PINNED_LOGS_PANELID,
-        level: 'child',
-        ref: null,
-        color: LogLevelColor[row.logLevel],
-        childOnTop: true,
-        onClick: () => {
-          onOpenContext(row, () => {});
-          contentOutlineTrackPinClicked();
-        },
-        onRemove: (id: string) => {
-          unregister?.(id);
-          contentOutlineTrackUnpinClicked();
-        },
-      });
-      contentOutlineTrackPinAdded();
-    }
+      const alreadyPinned = pinnedLogs?.find((pin) => pin === row.rowId);
+      if (alreadyPinned && row.rowId && allowUnPin) {
+        unregister?.(row.rowId);
+        contentOutlineTrackPinRemoved();
+      } else if (getPinnedLogsCount() !== PINNED_LOGS_LIMIT && !alreadyPinned) {
+        register?.({
+          id: row.rowId,
+          icon: 'gf-logs',
+          title: PINNED_LOGS_TITLE,
+          panelId: PINNED_LOGS_PANELID,
+          level: 'child',
+          ref: null,
+          color: LogLevelColor[row.logLevel],
+          childOnTop: true,
+          onClick: () => {
+            onOpenContext(row, () => {});
+            contentOutlineTrackPinClicked();
+          },
+          onRemove: (id: string) => {
+            unregister?.(id);
+            contentOutlineTrackUnpinClicked();
+          },
+        });
+        contentOutlineTrackPinAdded();
+      }
 
-    onPinLineCallback?.();
-  }, [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]);
+      onPinLineCallback?.();
+    },
+    [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
+  );
 
   const hasUnescapedContent = useMemo(() => checkUnescapedContent(logRows), [logRows]);
   const filteredLogs = useMemo(() => filterRows(logRows, hiddenLogLevels), [hiddenLogLevels, logRows]);
-  const { dedupedRows, dedupCount } = useMemo(() => dedupRows(filteredLogs, dedupStrategy), [dedupStrategy, filteredLogs]);
+  const { dedupedRows, dedupCount } = useMemo(
+    () => dedupRows(filteredLogs, dedupStrategy),
+    [dedupStrategy, filteredLogs]
+  );
   const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
-  const infiniteScrollAvailable = useMemo(() => !logsQueries?.some(
-    (query) => 'direction' in query && query.direction === LokiQueryDirection.Scan
-  ), [logsQueries]);
+  const infiniteScrollAvailable = useMemo(
+    () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
+    [logsQueries]
+  );
 
   return (
     <>
@@ -971,7 +985,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     permalinkedRowId={panelState?.logs?.id}
                     scrollIntoView={scrollIntoView}
                     isFilterLabelActive={props.isFilterLabelActive}
-                    containerRendered={!!logsContainerRef}
                     scrollElement={logsContainerRef.current}
                     onClickFilterString={props.onClickFilterString}
                     onClickFilterOutString={props.onClickFilterOutString}

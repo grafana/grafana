@@ -429,7 +429,6 @@ export const LogsPanel = ({
             sortOrder={sortOrder}
           >
             <LogRows
-              containerRendered={logsContainerRef.current !== null}
               scrollElement={scrollElement}
               scrollIntoView={scrollIntoView}
               permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
