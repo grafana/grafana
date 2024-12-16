@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, SyntheticEvent } from 'react';
+import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import {
   TimeZone,
@@ -105,8 +105,6 @@ export const LogRows = ({
     selectedRow: null,
     popoverMenuCoordinates: { x: 0, y: 0 },
   });
-  const [showLogDetails, setShowLogDetails] = useState<string[]>([]);
-  const [showMenu, setShowMenu] = useState<string | null>(null);
   const logRowsRef = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const styles = getLogRowStyles(theme);
@@ -231,56 +229,6 @@ export const LogRows = ({
     [handleDeselection, popoverMenuSupported]
   );
 
-  const onRowClick = useCallback(
-    (e: MouseEvent<HTMLTableElement>) => {
-      if (e.target instanceof HTMLElement === false) {
-        return;
-      }
-      const row = getLogRowFromEvent(e.target, orderedRows);
-      if (!row || handleSelection?.(e, row) || !enableLogDetails) {
-        return;
-      }
-
-      if (!showLogDetails.includes(row.uid)) {
-        setShowLogDetails([...showLogDetails, row.uid]);
-      } else {
-        setShowLogDetails(showLogDetails.filter((uid) => uid !== row.uid));
-      }
-    },
-    [enableLogDetails, handleSelection, orderedRows, showLogDetails]
-  );
-
-  const onMouseMove = useCallback(
-    (e: MouseEvent) => {
-      // The user is selecting text, so hide the log row menu so it doesn't interfere.
-      if (document.getSelection()?.toString() && e.buttons > 0) {
-        setShowMenu(null);
-        return;
-      }
-      if (e.target instanceof HTMLElement === false) {
-        return;
-      }
-      const row = getLogRowFromEvent(e.target, orderedRows);
-      setShowMenu(row ? row.uid : null);
-    },
-    [orderedRows]
-  );
-
-  const onFocus = useCallback(
-    (e: SyntheticEvent<HTMLElement>) => {
-      if (e.target instanceof HTMLElement === false) {
-        return;
-      }
-      const row = getLogRowFromEvent(e.target, orderedRows);
-      setShowMenu(row ? row.uid : null);
-    },
-    [orderedRows]
-  );
-
-  const onBlur = useCallback(() => {
-    setShowMenu(null);
-  }, []);
-
   return (
     <div className={styles.logRows} ref={logRowsRef}>
       {popoverState.selection && popoverState.selectedRow && (
@@ -293,12 +241,7 @@ export const LogRows = ({
           onClickFilterOutString={onClickFilterOutString}
         />
       )}
-      <table
-        className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}
-        onClick={onRowClick}
-        onMouseMove={onMouseMove}
-        onFocus={onFocus}
-      >
+      <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
         <tbody>
           {orderedRows.map((row, index) =>
             index < previewSize ? (
@@ -319,10 +262,7 @@ export const LogRows = ({
                 pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                 isFilterLabelActive={props.isFilterLabelActive}
                 handleTextSelection={handleSelection}
-                showDetails={showLogDetails.includes(row.uid)}
-                showMenu={showMenu === row.uid}
                 enableLogDetails={enableLogDetails}
-                onBlur={onBlur}
                 {...props}
               />
             ) : (
@@ -334,7 +274,6 @@ export const LogRows = ({
                 styles={styles}
                 showDetails={false}
                 showMenu={false}
-                onBlur={onBlur}
                 showDuplicates={showDuplicates}
                 {...props}
                 row={row}
@@ -346,15 +285,3 @@ export const LogRows = ({
     </div>
   );
 };
-
-function getLogRowFromEvent(target: HTMLElement, rows: LogRowModel[]) {
-  const tableRow = target.closest('tr');
-  if (!tableRow) {
-    return null;
-  }
-  const rowIndex = tableRow.dataset.index !== undefined ? parseInt(tableRow.dataset.index, 10) : undefined;
-  if (rowIndex === undefined) {
-    return null;
-  }
-  return rows[rowIndex];
-}
