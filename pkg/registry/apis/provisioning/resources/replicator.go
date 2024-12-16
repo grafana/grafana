@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -203,6 +204,10 @@ func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.Fil
 			return fmt.Errorf("failed to create meta accessor for the existing object: %w", err)
 		}
 
+		// Just in case no uid is present on the metadata for some reason.
+		if uid, ok, _ := unstructured.NestedString(existing.Object, "spec", "uid"); ok {
+			writeMeta.SetUID(types.UID(uid))
+		}
 		if uid := existingMeta.GetUID(); uid != "" {
 			writeMeta.SetUID(uid)
 		}
