@@ -106,7 +106,7 @@
     "copy-webpack-plugin": "12.0.2",
     "css-loader": "7.1.2",
     "esbuild": "0.24.0",
-    "eslint": "9.16.0",
+    "eslint": "9.17.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "28.9.0",
