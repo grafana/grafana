@@ -135,7 +135,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"name": "repositories/export",
 					"singularName": "",
 					"namespaced": true,
-					"kind": "ResourceWrapper",
+					"kind": "Job",
 					"verbs": [
 						"create"
 					]
