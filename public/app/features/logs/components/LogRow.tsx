@@ -23,7 +23,7 @@ import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 
-interface Props {
+export interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
@@ -64,7 +64,6 @@ interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
-  index: number;
   showDetails: boolean;
   showMenu: boolean;
   onBlur: () => void;
@@ -100,7 +99,6 @@ export const LogRow = memo(
     scrollIntoView,
     handleTextSelection,
     onLogRowHover,
-    index,
     showDetails,
     showMenu,
     ...props
@@ -126,8 +124,10 @@ export const LogRow = memo(
           : row,
       [forceEscape, row]
     );
-    const { errorMessage, hasError } = useMemo(() => checkLogsError(row), [row]);
-    const { sampleMessage, isSampled } = useMemo(() => checkLogsSampled(row), [row]);
+    const errorMessage = checkLogsError(row);
+    const hasError = errorMessage !== undefined;
+    const sampleMessage = checkLogsSampled(row);
+    const isSampled = sampleMessage !== undefined;
 
     useEffect(() => {
       if (permalinkedRowId !== row.uid && permalinked) {
@@ -167,7 +167,6 @@ export const LogRow = memo(
       <>
         <tr
           ref={logLineRef}
-          data-index={index}
           className={`${styles.logsRow} ${hasError ? styles.errorLogRow : ''} ${showingContext || permalinked || pinned ? styles.highlightBackground : ''}`}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and

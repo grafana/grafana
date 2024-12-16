@@ -21,8 +21,8 @@ import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
-import { GhostLogRow } from './GhostLogRow';
 import { LogRow } from './LogRow';
+import { PreviewLogRow } from './PreviewLogRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export interface Props {
@@ -319,7 +319,6 @@ export const LogRows = ({
                 pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                 isFilterLabelActive={props.isFilterLabelActive}
                 handleTextSelection={handleSelection}
-                index={index}
                 showDetails={showLogDetails.includes(row.uid)}
                 showMenu={showMenu === row.uid}
                 enableLogDetails={enableLogDetails}
@@ -327,8 +326,15 @@ export const LogRows = ({
                 {...props}
               />
             ) : (
-              <GhostLogRow
-                key={`ghost_${keyMaker.getKey(row.uid)}`}
+              <PreviewLogRow
+                key={`preview_${keyMaker.getKey(row.uid)}`}
+                enableLogDetails={false}
+                getRows={getRows}
+                onOpenContext={openContext}
+                styles={styles}
+                showDetails={false}
+                showMenu={false}
+                onBlur={onBlur}
                 showDuplicates={showDuplicates}
                 {...props}
                 row={row}
