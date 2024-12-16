@@ -75,12 +75,11 @@ func TestIntegrationSecureValue(t *testing.T) {
 			GVR:  gvr,
 		})
 
-		raw, err := client.Resource.Create(
-			ctx,
-			helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml"),
-			metav1.CreateOptions{},
-		)
+		testDataSecureValueXyz := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
+
+		raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
 		require.NoError(t, err)
+		require.NotNil(t, raw)
 
 		secureValue := new(secretv0alpha1.SecureValue)
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
@@ -92,6 +91,25 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NotEmpty(t, secureValue.Spec.Title)
 		require.NotEmpty(t, secureValue.Spec.Keeper)
 		require.NotEmpty(t, secureValue.Spec.Audiences)
+
+		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
+			raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Nil(t, raw)
+		})
+
+		t.Run("and reading the secure value returns it same as if when it was created", func(t *testing.T) {
+			raw, err := client.Resource.Get(ctx, secureValue.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, raw)
+
+			anotherSecureValue := new(secretv0alpha1.SecureValue)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, anotherSecureValue)
+			require.NoError(t, err)
+			require.NotNil(t, anotherSecureValue)
+
+			require.EqualValues(t, secureValue, anotherSecureValue)
+		})
 	})
 
 	t.Run("reading a secure value that does not exist returns a 404", func(t *testing.T) {
