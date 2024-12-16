@@ -47,25 +47,26 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
 
 interface NamespaceIconProps {
   application?: RulesSourceApplication;
+  size?: number;
 }
 
-export const DataSourceIcon = ({ application }: NamespaceIconProps) => {
+export const DataSourceIcon = ({ application, size = 16 }: NamespaceIconProps) => {
   switch (application) {
     case PromApplication.Prometheus:
       return (
         <img
-          width={16}
-          height={16}
+          width={size}
+          height={size}
           src="public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
           alt="Prometheus"
         />
       );
     case PromApplication.Mimir:
       return (
-        <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
+        <img width={size} height={size} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
     case 'Loki':
-      return <img width={16} height={16} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
+      return <img width={size} height={size} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
     case 'grafana':
     default:
       return <Icon name="grafana" />;
