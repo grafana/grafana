@@ -5284,7 +5284,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
@@ -5323,7 +5322,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
@@ -5581,6 +5579,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 08edb24b8ec53e0ce09f525cf6fdf4ea5dc67710fe64c3ea93ceaf3af42b8305
+hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
 
 ...
