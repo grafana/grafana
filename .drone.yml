@@ -864,8 +864,6 @@ steps:
   - make devenv sources=prometheus
   depends_on:
   - clone
-  environment:
-    DRONE_BUILD_EVENT: pull_request
   image: node:22.11.0-alpine
   name: setup-prometheus-devenv
   volumes:
@@ -2299,8 +2297,6 @@ steps:
   - make devenv sources=prometheus
   depends_on:
   - clone
-  environment:
-    DRONE_BUILD_EVENT: pull_request
   image: node:22.11.0-alpine
   name: setup-prometheus-devenv
   volumes:
@@ -5605,6 +5601,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0dfe259ecd1da4d56a907e1a21d841df89d3031e26af7b91c3b3608699540a45
+hmac: bdadbdf82dfb13868a6e89f78e64250172f84f427a7931a7552015c75caead09
 
 ...
