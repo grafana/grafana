@@ -145,6 +145,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		return nil, err
 	}
 
+	// metadata name is the dashboard uid
+	summary.UID = obj.GetName()
+
 	doc := resource.NewIndexableDocument(key, rv, obj)
 	doc.Title = summary.Title
 	doc.Description = summary.Description
