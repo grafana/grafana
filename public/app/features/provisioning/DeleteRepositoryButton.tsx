@@ -21,7 +21,7 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
   }, [request.isSuccess]);
 
   const onConfirm = useCallback(() => {
-    deleteRepository({ name });
+    deleteRepository({ name, body: {} });
   }, [deleteRepository, name]);
 
   return (

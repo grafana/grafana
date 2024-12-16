@@ -19,8 +19,7 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { useGetRepositoryFilesQuery, useGetRepositoryStatusQuery } from './api';
-import { ResourceWrapper } from './api/types';
+import { useGetRepositoryFilesWithPathQuery, useGetRepositoryStatusQuery, ResourceWrapper } from './api';
 import { PROVISIONING_URL } from './constants';
 
 export default function FileStatusPage() {
@@ -31,7 +30,7 @@ export default function FileStatusPage() {
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const query = useGetRepositoryStatusQuery({ name });
-  const file = useGetRepositoryFilesQuery({ name, path, ref });
+  const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
 
   //@ts-expect-error TODO add error types
   const notFound = query.isError && query.error?.status === 404;
@@ -40,7 +39,7 @@ export default function FileStatusPage() {
       navId="provisioning"
       pageNav={{
         text: `File: ${path} ${ref ? `(@${ref})` : ''}`,
-        subTitle: query.data?.spec.title ?? 'Repository',
+        subTitle: query.data?.spec?.title ?? 'Repository',
       }}
     >
       <Page.Contents isLoading={false}>
@@ -141,11 +140,14 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
         {tab === TabSelection.Lint && (
           <div>
             {wrap.lint ? (
-              wrap.lint.map((r, idx) => (
-                <Alert title={r.rule} severity={r.severity} key={`${r.rule}/${idx}`}>
-                  {r.message}
-                </Alert>
-              ))
+              wrap.lint.map((r, idx) => {
+                return (
+                  //@ts-expect-error TODO fix lint response types
+                  <Alert title={r.rule} severity={r.severity} key={`${r.rule}/${idx}`}>
+                    {r.message}
+                  </Alert>
+                );
+              })
             ) : (
               <div>
                 <h3>No lint issues</h3>

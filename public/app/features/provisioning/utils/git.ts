@@ -1,4 +1,4 @@
-import { RepositorySpec } from '../api/types';
+import { RepositorySpec } from '../api';
 
 export function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
   if (!spec || spec.type !== 'github' || !ref) {
