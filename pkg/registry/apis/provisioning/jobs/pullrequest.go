@@ -20,7 +20,7 @@ type resourcePreview struct {
 	Filename             string
 	Path                 string
 	Action               string
-	Type                 string
+	Kind                 string
 	OriginalURL          string
 	PreviewURL           string
 	PreviewScreenshotURL string
@@ -35,10 +35,10 @@ Grafana found some linting issues in this dashboard you may want to check:
 	previewsCommentTemplate = `Hey there! 🎉
 Grafana spotted some changes for your resources in this pull request:
 ## Summary
-| File Name | Type | Path | Action | Links |
+| File Name | Kind | Path | Action | Links |
 |-----------|------|------|--------|-------|
 {{- range .}}
-| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
+| {{.Filename}} | {{.Kind}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
 {{- end}}
 
 Click the preview links above to view how your changes will look and compare them with the original and current versions.
@@ -175,7 +175,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		preview := resourcePreview{
 			Filename: path.Base(f.Path),
 			Path:     f.Path,
-			Type:     "dashboard", // TODO: add more types
+			Kind:     "dashboard", // TODO: add more types
 			Action:   string(f.Action),
 		}
 
