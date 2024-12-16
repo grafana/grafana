@@ -175,7 +175,7 @@
     "esbuild": "0.24.0",
     "esbuild-loader": "4.2.2",
     "esbuild-plugin-browserslist": "^0.15.0",
-    "eslint": "9.16.0",
+    "eslint": "9.17.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "28.9.0",
@@ -211,7 +211,7 @@
     "knip": "^5.10.0",
     "lerna": "8.1.8",
     "mini-css-extract-plugin": "2.9.2",
-    "msw": "2.6.8",
+    "msw": "2.6.9",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
@@ -220,7 +220,7 @@
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
-    "prettier": "3.3.3",
+    "prettier": "3.4.2",
     "pseudoizer": "^0.1.0",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
@@ -452,7 +452,7 @@
   },
   "packageManager": "yarn@4.5.3",
   "dependenciesMeta": {
-    "prettier@3.3.3": {
+    "prettier@3.4.2": {
       "unplugged": true
     }
   },
