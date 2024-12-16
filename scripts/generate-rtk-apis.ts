@@ -38,10 +38,29 @@ const config: ConfigFile = {
     },
     '../public/app/features/provisioning/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
-      schemaFile: '../public/app/features/provisioning/api/spec.json',
+      schemaFile: '../pkg/tests/apis/provisioning/testdata/openapi.json',
       apiImport: 'baseAPI',
+      filterEndpoints,
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      endpointOverrides: [
+        {
+          pattern: /^list/,
+          parameterFilter: () => false,
+        },
+      ],
     },
   },
 };
+
+function filterEndpoints(name: string) {
+  return (
+    !name.toLowerCase().includes('forallnamespaces') &&
+    !name.toLowerCase().includes('getapiresources') &&
+    !name.toLowerCase().includes('watch') &&
+    !name.toLowerCase().includes('collection')
+  );
+}
 
 export default config;

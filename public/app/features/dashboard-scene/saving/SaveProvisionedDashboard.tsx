@@ -20,8 +20,7 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { RepositorySelect } from '../../provisioning/RepositorySelect';
-import { useGetRepositoryQuery } from '../../provisioning/api';
-import { RepositorySpec } from '../../provisioning/api/types';
+import { useGetRepositoryQuery, RepositorySpec } from '../../provisioning/api';
 import { PROVISIONING_URL } from '../../provisioning/constants';
 import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
