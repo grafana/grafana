@@ -52,7 +52,7 @@
     "moment-timezone": "0.5.46",
     "ol": "7.4.0",
     "papaparse": "5.4.1",
-    "react-use": "17.5.1",
+    "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "string-hash": "^1.1.3",
     "tinycolor2": "1.6.0",
