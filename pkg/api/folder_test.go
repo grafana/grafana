@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -746,4 +747,119 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestToFolderCounts(t *testing.T) {
+	var tests = []struct {
+		name        string
+		input       *unstructured.Unstructured
+		expected    *folder.DescendantCounts
+		expectError bool
+	}{
+		{
+			name: "with only counts from unified storage",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"count":    int64(1),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "alertRules",
+							"count":    int64(0),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    1,
+				"dashboards": 3,
+				"alertRules": 0,
+			},
+		},
+		{
+			name: "with counts from both storages",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"count":    int64(1),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
+							"resource": "folders",
+							"count":    int64(0),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    1,
+				"dashboards": 3,
+			},
+		},
+		{
+			name: "it uses the values from sql-fallaback if not found in unified storage",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
+							"resource": "folders",
+							"count":    int64(2),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    2,
+				"dashboards": 3,
+			},
+		},
+		{
+			name: "malformed input",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts":     map[string]interface{}{},
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := toFolderLegacyCounts(tc.input)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
 }

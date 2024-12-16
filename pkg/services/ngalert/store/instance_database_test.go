@@ -297,6 +297,8 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 }
 
 func TestIntegrationFullSync(t *testing.T) {
+	batchSize := 1
+
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
@@ -310,7 +312,7 @@ func TestIntegrationFullSync(t *testing.T) {
 	}
 
 	t.Run("Should do a proper full sync", func(t *testing.T) {
-		err := dbstore.FullSync(ctx, instances)
+		err := dbstore.FullSync(ctx, instances, batchSize)
 		require.NoError(t, err)
 
 		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -331,8 +333,9 @@ func TestIntegrationFullSync(t *testing.T) {
 			}
 		}
 	})
+
 	t.Run("Should remove non existing entries on sync", func(t *testing.T) {
-		err := dbstore.FullSync(ctx, instances[1:])
+		err := dbstore.FullSync(ctx, instances[1:], batchSize)
 		require.NoError(t, err)
 
 		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -346,9 +349,10 @@ func TestIntegrationFullSync(t *testing.T) {
 			}
 		}
 	})
+
 	t.Run("Should add new entries on sync", func(t *testing.T) {
 		newRuleUID := "y"
-		err := dbstore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)))
+		err := dbstore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize)
 		require.NoError(t, err)
 
 		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -368,6 +372,134 @@ func TestIntegrationFullSync(t *testing.T) {
 				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
 			}
 		}
+	})
+
+	t.Run("Should save all instances when batch size is bigger than 1", func(t *testing.T) {
+		batchSize = 2
+		newRuleUID := "y"
+		err := dbstore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize)
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(instances)+1)
+		for _, ruleUID := range append(ruleUIDs, newRuleUID) {
+			found := false
+			for _, instance := range res {
+				if instance.RuleUID == ruleUID {
+					found = true
+					continue
+				}
+			}
+			if !found {
+				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
+			}
+		}
+	})
+
+	t.Run("Should not fail when the instances are empty", func(t *testing.T) {
+		// First, insert some data into the table.
+		initialInstances := []models.AlertInstance{
+			generateTestAlertInstance(orgID, "preexisting-1"),
+			generateTestAlertInstance(orgID, "preexisting-2"),
+		}
+		err := dbstore.FullSync(ctx, initialInstances, 5)
+		require.NoError(t, err)
+
+		// Now call FullSync with no instances. According to the code, this should return nil
+		// and should not delete anything in the table.
+		err = dbstore.FullSync(ctx, []models.AlertInstance{}, 5)
+		require.NoError(t, err)
+
+		// Check that the previously inserted instances are still present.
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 2, "Expected the preexisting instances to remain since empty sync does nothing")
+
+		found1, found2 := false, false
+		for _, r := range res {
+			if r.RuleUID == "preexisting-1" {
+				found1 = true
+			}
+			if r.RuleUID == "preexisting-2" {
+				found2 = true
+			}
+		}
+		require.True(t, found1, "Expected preexisting-1 to remain")
+		require.True(t, found2, "Expected preexisting-2 to remain")
+	})
+
+	t.Run("Should handle invalid instances by skipping them", func(t *testing.T) {
+		// Create a batch with one valid and one invalid instance
+		validInstance := generateTestAlertInstance(orgID, "valid")
+
+		invalidInstance := generateTestAlertInstance(orgID, "")
+		// Make the invalid instance actually invalid
+		invalidInstance.AlertInstanceKey.RuleUID = ""
+
+		err := dbstore.FullSync(ctx, []models.AlertInstance{validInstance, invalidInstance}, 2)
+		require.NoError(t, err)
+
+		// Only the valid instance should be saved.
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, "valid", res[0].RuleUID)
+	})
+
+	t.Run("Should handle batchSize larger than the number of instances", func(t *testing.T) {
+		// Insert a small number of instances but use a large batchSize
+		smallSet := []models.AlertInstance{
+			generateTestAlertInstance(orgID, "batch-test1"),
+			generateTestAlertInstance(orgID, "batch-test2"),
+		}
+
+		err := dbstore.FullSync(ctx, smallSet, 100)
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, len(smallSet))
+		found1, found2 := false, false
+		for _, r := range res {
+			if r.RuleUID == "batch-test1" {
+				found1 = true
+			}
+			if r.RuleUID == "batch-test2" {
+				found2 = true
+			}
+		}
+		require.True(t, found1)
+		require.True(t, found2)
+	})
+
+	t.Run("Should handle a large set of instances with a moderate batchSize", func(t *testing.T) {
+		// Clear everything first.
+		err := dbstore.FullSync(ctx, []models.AlertInstance{}, 1)
+		require.NoError(t, err)
+
+		largeCount := 300
+		largeSet := make([]models.AlertInstance, largeCount)
+		for i := 0; i < largeCount; i++ {
+			largeSet[i] = generateTestAlertInstance(orgID, fmt.Sprintf("large-%d", i))
+		}
+
+		err = dbstore.FullSync(ctx, largeSet, 50)
+		require.NoError(t, err)
+
+		res, err := dbstore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, largeCount)
 	})
 }
 
