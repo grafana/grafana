@@ -21,8 +21,8 @@ import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegen
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { prepareSVG } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { getStyleConfigState } from '../../style/utils';
+import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getDisplacement, getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
 // Configuration options for Circle overlays
@@ -83,6 +83,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         symbolType: 'image',
         size: ['get', 'size', 'number'],
         color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
+        offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
         rotation: ['get', 'rotation', 'number'],
         opacity: ['get', 'opacity', 'number'],
         src,
@@ -141,12 +142,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
             const colorValues = getRGBValues(colorString);
 
+            const radius = values.size ?? DEFAULT_SIZE;
+            const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
+
             feature.setProperties({ red: colorValues?.r ?? 255 });
             feature.setProperties({ green: colorValues?.g ?? 0 });
             feature.setProperties({ blue: colorValues?.b ?? 0 });
             feature.setProperties({ size: (values.size ?? 1) * 3 }); // TODO figure out size conversion
             feature.setProperties({ rotation: values.rotation });
             feature.setProperties({ opacity: values.opacity });
+            feature.setProperties({ offsetX: displacement[0] });
+            feature.setProperties({ offsetY: displacement[1] });
           });
           break; // Only the first frame for now!
         }
