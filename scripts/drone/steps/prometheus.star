@@ -31,11 +31,15 @@ def prometheus_devenv_step():
     }
 
 def cache_cleanup_step():
+    """Rotate cache files when total size exceeds 1GB
+
+    Returns:
+      Drone step.
+    """
     return {
         "name": "cleanup-prometheus-cache",
         "image": images["node"],
         "commands": [
-            # Rotate cache files when total size exceeds 1GB
             'while [ "$(du -sm /var/lib/drone/cache/prometheus-devenv | cut -f1)" -gt 1024 ]; do',
             '    echo "Cache size exceeds 1GB, removing oldest files..."',
             '    find /var/lib/drone/cache/prometheus-devenv -type f -printf "%T+ %p\n" | sort | head -n 10 | cut -d" " -f2- | xargs rm -f',
