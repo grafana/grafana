@@ -130,7 +130,7 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 
 ### Hide zeros
 
-When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option will show or hide series with 0 values from the list in the tooltip.
+When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip.
 
 ### Hover proximity
 
