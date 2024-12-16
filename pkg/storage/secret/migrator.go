@@ -84,6 +84,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Columns: []*migrator.Column{
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // in this table, it isn't used by k8s, but we will track it for added security
+			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
 			{Name: "active", Type: migrator.DB_Bool},
 			{Name: "scope", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
 			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
