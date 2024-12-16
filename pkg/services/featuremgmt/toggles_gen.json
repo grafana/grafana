@@ -1876,6 +1876,18 @@
     },
     {
       "metadata": {
+        "name": "kubernetesCliDashboards",
+        "resourceVersion": "1733520389522",
+        "creationTimestamp": "2024-12-06T21:26:29Z"
+      },
+      "spec": {
+        "description": "Use the k8s client to retrieve dashboards internally",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-06-05T14:34:23Z"
@@ -2093,6 +2105,19 @@
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiLabelNamesQueryApi",
+        "resourceVersion": "1734096677730",
+        "creationTimestamp": "2024-12-13T13:31:17Z"
+      },
+      "spec": {
+        "description": "Defaults to using the Loki `/labels` API instead of `/series`",
+        "stage": "GA",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "true"
       }
     },
     {
@@ -3465,6 +3490,19 @@
     },
     {
       "metadata": {
+        "name": "unifiedHistory",
+        "resourceVersion": "1734085219453",
+        "creationTimestamp": "2024-12-13T10:20:19Z"
+      },
+      "spec": {
+        "description": "Displays the navigation history so the user can navigate back to previous pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1731688509416",
         "creationTimestamp": "2023-03-31T13:38:09Z",
@@ -3567,13 +3605,17 @@
     {
       "metadata": {
         "name": "useSessionStorageForRedirection",
-        "resourceVersion": "1727082618788",
-        "creationTimestamp": "2024-09-23T09:31:23Z"
+        "resourceVersion": "1734109542033",
+        "creationTimestamp": "2024-09-23T09:31:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-13 17:05:42.033262 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use session storage for handling the redirection after login",
-        "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
       }
     },
     {

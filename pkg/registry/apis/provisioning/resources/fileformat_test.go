@@ -107,7 +107,7 @@ spec:
 
 		// try to validate (and lint)
 		validate := true
-		parser.SetLinter(lint.NewDashboardLinter())
+		parser.linter = lint.NewDashboardLinter()
 
 		// Support dashboard conversion
 		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)

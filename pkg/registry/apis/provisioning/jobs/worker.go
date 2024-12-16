@@ -21,20 +21,20 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
-	getter         RepoGetter
-	resourceClient *resources.ClientFactory
-	identities     auth.BackgroundIdentityService
-	logger         *slog.Logger
-	ignore         provisioning.IgnoreFile
+	getter     RepoGetter
+	parsers    *resources.ParserFactory
+	identities auth.BackgroundIdentityService
+	logger     *slog.Logger
+	ignore     provisioning.IgnoreFile
 }
 
-func NewJobWorker(getter RepoGetter, resourceClient *resources.ClientFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
+func NewJobWorker(getter RepoGetter, parsers *resources.ParserFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
 	return &JobWorker{
-		getter:         getter,
-		resourceClient: resourceClient,
-		identities:     identities,
-		logger:         logger,
-		ignore:         ignore,
+		getter:     getter,
+		parsers:    parsers,
+		identities: identities,
+		logger:     logger,
+		ignore:     ignore,
 	}
 }
 
@@ -60,7 +60,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	factory := resources.NewReplicatorFactory(g.resourceClient, job.Namespace, repo, g.ignore, logger)
+	factory := resources.NewReplicatorFactory(repo, g.parsers, g.ignore, logger)
 	replicator, err := factory.New()
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
