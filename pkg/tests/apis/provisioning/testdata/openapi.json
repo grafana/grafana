@@ -3509,6 +3509,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "generation": {
+            "description": "The generation (spec changed) that triggered this health check",
+            "type": "integer",
+            "format": "int64"
+          },
           "healthy": {
             "description": "When not healthy, requests will not be executed",
             "type": "boolean",

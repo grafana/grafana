@@ -275,15 +275,15 @@ func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name 
 			}
 
 			// Write and return the repo with current status
-			cfg, err := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
-			if err != nil {
-				return nil, err
-			}
-			if cfg.Status.Health.Healthy {
+			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg != nil {
 				status = cfg.Status.Health
-				repo, err = b.AsRepository(ctx, cfg)
-				if err != nil {
-					return nil, err
+				if cfg.Status.Health.Healthy {
+					status = cfg.Status.Health
+					repo, err = b.AsRepository(ctx, cfg)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
