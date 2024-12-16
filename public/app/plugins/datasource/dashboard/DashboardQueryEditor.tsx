@@ -14,9 +14,9 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
+import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
 import { DashboardQuery, ResultInfo } from './types';
-import { SHARED_DASHBOARD_QUERY } from './constants';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
