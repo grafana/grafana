@@ -155,14 +155,14 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       if (visQuery.metric === '') {
         const strLiteral = node.getChild(StringLiteral);
         const quotedMetric = getString(expr, strLiteral);
-        visQuery.metric = quotedMetric.substring(1, quotedMetric.length - 1);
+        visQuery.metric = quotedMetric.slice(1, -1);
       }
       break;
     }
 
     case QuotedLabelMatcher: {
       const quotedLabel = getLabel(expr, node, QuotedLabelName);
-      quotedLabel.label = quotedLabel.label.substring(1, quotedLabel.label.length - 1);
+      quotedLabel.label = quotedLabel.label.slice(1, -1);
       visQuery.labels.push(quotedLabel);
       const err = node.getChild(ErrorId);
       if (err) {

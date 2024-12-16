@@ -121,7 +121,7 @@ function unwrapQuotes(value: string): string {
   if (value === '' || !isWrappedInQuotes(value)) {
     return value;
   }
-  return value.substring(1, value.length - 1);
+  return value.slice(1, -1);
 }
 
 function isWrappedInQuotes(value: string): boolean {
