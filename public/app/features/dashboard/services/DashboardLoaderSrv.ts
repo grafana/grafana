@@ -216,6 +216,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
   _dashboardLoadFailed(title: string, snapshot?: boolean) {
     throw new Error('Method not implemented.');
+    // eslint-disable-next-line
     return {} as DashboardWithAccessInfo<DashboardV2Spec>;
     // snapshot = snapshot || false;
     // return {

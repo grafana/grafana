@@ -47,3 +47,9 @@ export function isDashboardV2Spec(obj: DashboardDataDTO | DashboardV2Spec): obj 
 export function isDashboardV0Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardDataDTO {
   return !isDashboardV2Spec(obj); // not v2 spec means it's v0 spec
 }
+
+export function isDashboardV2Resource(
+  obj: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
+): obj is DashboardWithAccessInfo<DashboardV2Spec> {
+  return isDashboardResource(obj) && isDashboardV2Spec(obj.spec);
+}

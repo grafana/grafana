@@ -3,6 +3,7 @@ import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schem
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
+  DataLink,
   DatasourceVariableKind,
   defaultDashboardV2Spec,
   defaultFieldConfigSource,
@@ -29,19 +30,21 @@ import {
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Spec } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
-  if (isDashboardResource(dto) && isDashboardV2Spec(dto.spec)) {
-    return dto as DashboardWithAccessInfo<DashboardV2Spec>;
+  if (isDashboardV2Resource(dto)) {
+    return dto;
   }
+  let dashboard: DashboardDataDTO;
 
-  // after discarding the dto is not a v2 spec, we can safely assume it's a v0 spec or a dashboardDTO
-  dto = dto as unknown as DashboardWithAccessInfo<DashboardDataDTO> | DashboardDTO;
-
-  const dashboard = isDashboardResource(dto) ? dto.spec : dto.dashboard;
+  if (isDashboardResource(dto)) {
+    dashboard = dto.spec;
+  } else {
+    dashboard = dto.dashboard;
+  }
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
@@ -53,11 +56,11 @@ export function ensureV2Response(
     ? {
         ...dto.access,
         created: dto.metadata.creationTimestamp,
-        createdBy: dto.metadata.annotations?.['grafana.app/createdBy'],
-        updatedBy: dto.metadata.annotations?.['grafana.app/updatedBy'],
-        updated: dto.metadata.annotations?.['grafana.app/updatedTimestamp'],
-        folderUid: dto.metadata.annotations?.['grafana.app/folder'],
-        slug: dto.metadata.annotations?.['grafana.app/slug'],
+        createdBy: dto.metadata.annotations?.[AnnoKeyCreatedBy],
+        updatedBy: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
+        updated: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+        folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
+        slug: dto.metadata.annotations?.[AnnoKeySlug],
       }
     : dto.meta;
 
@@ -97,11 +100,11 @@ export function ensureV2Response(
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
       annotations: {
-        'grafana.app/createdBy': accessAndMeta.createdBy,
-        'grafana.app/updatedBy': accessAndMeta.updatedBy,
-        'grafana.app/updatedTimestamp': accessAndMeta.updated,
-        'grafana.app/folder': accessAndMeta.folderUid,
-        'grafana.app/slug': accessAndMeta.slug,
+        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
+        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
+        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
+        [AnnoKeyFolder]: accessAndMeta.folderUid,
+        [AnnoKeySlug]: accessAndMeta.slug,
       },
     },
     spec,
@@ -270,7 +273,12 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
             pluginVersion: p.pluginVersion!,
           },
         },
-        links: p.links || [],
+        links:
+          p.links?.map<DataLink>((l) => ({
+            title: l.title,
+            url: l.url || '',
+            targetBlank: l.targetBlank,
+          })) || [],
         uid: p.id!.toString(), // TODO[schema v2]: handle undefined id?!!?!?
         data: {
           kind: 'QueryGroup',
