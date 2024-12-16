@@ -14,7 +14,7 @@ import {
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { DashboardDatasource } from './datasource';
-import { SHARED_DASHBOARD_QUERY } from './types';
+import { SHARED_DASHBOARD_QUERY } from './constants';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),

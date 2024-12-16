@@ -14,7 +14,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
-import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
+import { DashboardQuery } from './types';
+import { SHARED_DASHBOARD_QUERY } from './constants';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {

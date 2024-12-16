@@ -15,7 +15,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
 import { DashboardDatasource } from './datasource';
-import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
+import { DashboardQuery, ResultInfo } from './types';
+import { SHARED_DASHBOARD_QUERY } from './constants';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
