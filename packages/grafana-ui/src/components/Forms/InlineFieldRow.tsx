@@ -27,6 +27,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       alignContent: 'flex-start',
       rowGap: theme.spacing(0.5),
+      maxWidth: '100%',
     }),
   };
 };
