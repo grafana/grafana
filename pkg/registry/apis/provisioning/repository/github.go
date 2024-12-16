@@ -523,10 +523,10 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
+	if pr.GetBase().GetRef() != r.config.Spec.GitHub.Branch {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
-			Message: "ignoring pull request event as it is not for the configured branch",
+			Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", pr.GetBase().GetRef()),
 		}, nil
 	}
 
@@ -623,6 +623,11 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 
 func (r *githubRepository) shouldLintPullRequest() bool {
 	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
+}
+
+// ClearAllPullRequestFileComments clears all comments on a pull request
+func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, logger *slog.Logger, prNumber int) error {
+	return r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber)
 }
 
 // CommentPullRequest adds a comment to a pull request.

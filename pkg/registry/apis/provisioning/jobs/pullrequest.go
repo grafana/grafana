@@ -28,37 +28,35 @@ type resourcePreview struct {
 
 const (
 	lintDashboardIssuesTemplate = `Hey there! 👋
-	Grafana found some linting issues in this dashboard you may want to check:
-	{{ range .}}
-	{{ if eq .Severity "error" }}❌{{ else if eq .Severity "warning" }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
-	{{- end }}
-	`
+Grafana found some linting issues in this dashboard you may want to check:
+{{ range .}}
+{{ if eq .Severity "error" }}❌{{ else if eq .Severity "warning" }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
+{{- end }}`
 	previewsCommentTemplate = `Hey there! 🎉
-	Grafana spotted some changes for your resources in this pull request:
-
+Grafana spotted some changes for your resources in this pull request:
 ## Summary
-	| File Name | Type | Path | Action | Links |
-	|-----------|------|------|--------|-------|
-	{{- range .}}
-	| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
-	{{- end}}
+| File Name | Type | Path | Action | Links |
+|-----------|------|------|--------|-------|
+{{- range .}}
+| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
+{{- end}}
 
-	Click the preview links above to view how your changes will look and compare them with the original and current versions.
+Click the preview links above to view how your changes will look and compare them with the original and current versions.
 
-	{{- range .}}
-	{{- if .PreviewScreenshotURL}}
+{{- range .}}
+{{- if .PreviewScreenshotURL}}
 ### Preview of {{.Filename}}
-	![Preview]({{.PreviewScreenshotURL}})
-	{{- end}}{{- end}}`
+![Preview]({{.PreviewScreenshotURL}})
+{{- end}}{{- end}}`
 )
 
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*repository.FileInfo, error)
 	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]repository.FileChange, error)
-	ClearAllPullRequestComments(ctx context.Context, pr int) error
-	CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error
-	CommentPullRequest(ctx context.Context, pr int, comment string) error
+	ClearAllPullRequestFileComments(ctx context.Context, logger *slog.Logger, pr int) error
+	CommentPullRequestFile(ctx context.Context, logger *slog.Logger, pr int, path string, ref string, comment string) error
+	CommentPullRequest(ctx context.Context, logger *slog.Logger, pr int, comment string) error
 }
 
 // PreviewRenderer is an interface for rendering a preview of a file
@@ -111,12 +109,15 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	cfg := c.repo.Config().Spec
 
 	// TODO: clean specification to have better options
-	if (cfg.Linting && cfg.GitHub.PullRequestLinter) ||
-		cfg.GitHub.GenerateDashboardPreviews {
+	if !(cfg.Linting && cfg.GitHub.PullRequestLinter) &&
+		!cfg.GitHub.GenerateDashboardPreviews {
 		return nil
 	}
 
-	logger := c.logger
+	logger := c.logger.With("pr", job.Spec.PR)
+	logger.InfoContext(ctx, "process pull request")
+	defer logger.InfoContext(ctx, "pull request processed")
+
 	spec := job.Spec
 	base := cfg.GitHub.Branch
 	ref := spec.Hash
@@ -128,14 +129,21 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	}
 
 	// clear all previous comments
-	if err := c.repo.ClearAllPullRequestComments(ctx, spec.PR); err != nil {
+	if err := c.repo.ClearAllPullRequestFileComments(ctx, logger, spec.PR); err != nil {
 		return fmt.Errorf("failed to clear pull request comments: %w", err)
+	}
+
+	if len(files) == 0 {
+		logger.InfoContext(ctx, "no files to process")
+		return nil
 	}
 
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
 		// TODO: ignore files?
+		logger := logger.With("file", f.Path)
+
 		fileInfo, err := c.repo.Read(ctx, logger, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)
@@ -157,10 +165,13 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 				return fmt.Errorf("execute lint comment template: %w", err)
 			}
 
-			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, ref, buf.String()); err != nil {
+			if err := c.repo.CommentPullRequestFile(ctx, logger, spec.PR, f.Path, ref, buf.String()); err != nil {
 				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
+
+			logger.InfoContext(ctx, "lint comment added")
 		}
+
 		preview := resourcePreview{
 			Filename: path.Base(f.Path),
 			Path:     f.Path,
@@ -189,6 +200,8 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 				return fmt.Errorf("render dashboard preview: %w", err)
 			}
 			preview.PreviewScreenshotURL = screenshotURL
+
+			logger.InfoContext(ctx, "dashboard preview added", "screenshotURL", screenshotURL)
 		}
 
 		previews = append(previews, preview)
@@ -200,9 +213,11 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			return fmt.Errorf("execute previews comment template: %w", err)
 		}
 
-		if err := c.repo.CommentPullRequest(ctx, spec.PR, buf.String()); err != nil {
+		if err := c.repo.CommentPullRequest(ctx, logger, spec.PR, buf.String()); err != nil {
 			return fmt.Errorf("comment pull request: %w", err)
 		}
+
+		logger.InfoContext(ctx, "previews comment added", "number", len(previews))
 	}
 
 	return nil
