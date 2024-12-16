@@ -78,7 +78,6 @@ func (s *FeedbackWatcher) Add(ctx context.Context, rObj resource.Object) error {
 	// Upload image to Github and create issue if needed
 	section := s.cfg.SectionWithEnvOverrides("feedback_button")
 	if section.Key("upload_to_github").MustBool(false) {
-
 		screenshot := object.Spec.Screenshot
 
 		// Update the screenshot part if it is present.

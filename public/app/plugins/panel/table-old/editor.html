@@ -1,9 +1,13 @@
 <div class="gf-form-group">
   <div class="grafana-info-box">
     <h5>Table migration</h5>
-    <p>This panel is deprecated. Please migrate to the new Table panel.</p>
     <p>
-      <button class="btn btn-primary" ng-click="ctrl.migrateToPanel('table')">Migrate to Table panel</button>
+      This panel is deprecated. Please migrate to the new Table panel.
+    </p>
+    <p>
+      <button class="btn btn-primary" ng-click="ctrl.migrateToPanel('table')">
+        Migrate to Table panel
+      </button>
     </p>
     <p><b>NOTE:</b> Sorting is not persisted after migration.</p>
     <p ng-if="ctrl.panelHasRowColorMode">

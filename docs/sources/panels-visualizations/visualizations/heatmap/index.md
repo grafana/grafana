@@ -107,11 +107,6 @@ The following options define the display of the y-axis.
 
 <!-- prettier-ignore-start -->
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> parent of bed6def0803 (reverse commit)
 | Options | Description |
 | ------- | ----------- |
 | Placement | Set where the y-axis is displayed. Choose from: **Left**, **Right**, or **Hidden**. |
@@ -122,47 +117,6 @@ The following options define the display of the y-axis.
 | Axis label | This setting configures the axis value. |
 | Tick alignment | Sets the alignment of the tick marks on the visualization. Choose from: **Auto**, **Top (LE)**, **Middle**, and **Bottom (GE)**. This option is only displayed when your **Calculate from data** setting is **No**. |
 | Reverse| When selected, the axis appears in reverse order. |
-<<<<<<< HEAD
-=======
-Select one of the following Y-axis value scales:
-
-> > > > > > > # fae281280eb (reverse commit)
-> > > > > > >
-> > > > > > > Select one of the following Y-axis value scales:
-> > > > > > > fae281280ebd4eed021effb2fa0c5ba2799471b1
-
-- **linear -** Linear scale.
-- **log (base 2) -** Logarithmic scale with base 2.
-- **log (base 10) -** Logarithmic scale with base 10.
-- **symlog -** Symlog scale.
-
-## Y Axes
-
-Defines how the Y axis is displayed
-
-### Placement
-
-- **Left** On the left
-- **Right** On the right
-- **Hidden** Hidden
-
-### Unit
-
-Unit configuration
-
-### Decimals
-
-This setting determines decimal configuration.
-
-### Min/Max value
-
-This setting configures the axis range.
-
-### Axis width
-
-This setting configures the width for the axis.
-=======
->>>>>>> parent of bed6def0803 (reverse commit)
 
 <!-- prettier-ignore-end -->
 
@@ -174,23 +128,8 @@ The color spectrum controls the mapping between value count (in each bucket) and
 
 You can also change the color mode to Opacity. In this case, the color will not change but the amount of opacity will change with the bucket count
 
-<<<<<<< HEAD
-- **Mode**
-  - **Scheme -** Bucket value represented by cell color.
-    - **Scheme -** If the mode is **scheme**, then select a color scheme.
-  - **opacity -** Bucket value represented by cell opacity. Opaque cell means maximum value.
-    - **Color -** Cell base color.
-    - **Scale -** Scale for mapping bucket values to the opacity.
-      - **linear -** Linear scale. Bucket value maps linearly to the opacity.
-      - **sqrt -** Power scale. Cell opacity calculated as `value ^ k`, where `k` is a configured **Exponent** value. If exponent is less than `1`, you will get a logarithmic scale. If exponent is greater than `1`, you will get an exponential scale. In case of `1`, scale will be the same as linear.
-    - **Exponent -** value of the exponent, greater than `0`.
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 #### Mode
 
->>>>>>> parent of bed6def0803 (reverse commit)
 Use the following options to define the heatmap colors.
 
 - **Scheme** - Bucket value represented by cell color.
@@ -211,19 +150,6 @@ Set a value between `1` and `128`.
 Toggle the switch to reverse the color scheme. This option only applies the **Scheme** color mode.
 
 #### Start/end color scale from value
-<<<<<<< HEAD
-
-=======
-
-### Start/end color from value
-
-> > > > > > > # fae281280eb (reverse commit)
-
-### Start/end color from value
-
-> > > > > > > fae281280ebd4eed021effb2fa0c5ba2799471b1
-=======
->>>>>>> parent of bed6def0803 (reverse commit)
 
 By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
 
