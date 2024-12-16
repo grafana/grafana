@@ -162,42 +162,14 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 		return cached.(map[string]bool), nil
 	}
 
-	var basicRoles *store.BasicRole
-	basicRoleKey := basicRoleKey(req.Namespace.Value, userIdentifiers.UID)
-	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
-		basicRoles = cached.(*store.BasicRole)
-	} else {
-		basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
-		if err != nil {
-			return nil, fmt.Errorf("could not get basic roles: %w", err)
-		}
-		s.basicRoleCache.Set(basicRoleKey, basicRoles, 0)
+	basicRoles, err := s.getUserBasicRole(ctx, req, userIdentifiers)
+	if err != nil {
+		return nil, err
 	}
 
-	teamIDs := make([]int64, 0, 50)
-	teamsCacheKey := teamKey(req.Namespace.Value, userIdentifiers.UID)
-	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
-		teamIDs = cached.([]int64)
-	} else {
-		teamQuery := legacy.ListUserTeamsQuery{
-			UserUID:    userIdentifiers.UID,
-			Pagination: common.Pagination{Limit: 50},
-		}
-
-		for {
-			teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
-			if err != nil {
-				return nil, fmt.Errorf("could not get user teams: %w", err)
-			}
-			for _, team := range teams.Items {
-				teamIDs = append(teamIDs, team.ID)
-			}
-			teamQuery.Pagination.Continue = teams.Continue
-			if teams.Continue == 0 {
-				break
-			}
-		}
-		s.teamCache.Set(teamsCacheKey, teamIDs, 0)
+	teamIDs, err := s.getUserTeams(ctx, req, userIdentifiers)
+	if err != nil {
+		return nil, err
 	}
 
 	userPermQuery := store.PermissionsQuery{
@@ -215,6 +187,52 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 	scopeMap := getScopeMap(permissions)
 	s.permCache.Set(userPermKey, scopeMap, 0)
 	return scopeMap, nil
+}
+
+func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+	teamIDs := make([]int64, 0, 50)
+	teamsCacheKey := teamKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
+		return cached.([]int64), nil
+	}
+
+	teamQuery := legacy.ListUserTeamsQuery{
+		UserUID:    userIdentifiers.UID,
+		Pagination: common.Pagination{Limit: 50},
+	}
+
+	for {
+		teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
+		if err != nil {
+			return nil, fmt.Errorf("could not get user teams: %w", err)
+		}
+		for _, team := range teams.Items {
+			teamIDs = append(teamIDs, team.ID)
+		}
+		teamQuery.Pagination.Continue = teams.Continue
+		if teams.Continue == 0 {
+			break
+		}
+	}
+	s.teamCache.Set(teamsCacheKey, teamIDs, 0)
+
+	return teamIDs, nil
+}
+
+func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (*store.BasicRole, error) {
+	var basicRoles *store.BasicRole
+	basicRoleKey := basicRoleKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
+		return cached.(*store.BasicRole), nil
+	}
+
+	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	if err != nil {
+		return nil, fmt.Errorf("could not get basic roles: %w", err)
+	}
+	s.basicRoleCache.Set(basicRoleKey, basicRoles, 0)
+
+	return basicRoles, nil
 }
 
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
