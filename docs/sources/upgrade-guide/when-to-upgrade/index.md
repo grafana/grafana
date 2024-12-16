@@ -46,14 +46,14 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 
 | **Anticipated release date** | **Grafana versions**     | **Release type**   |
 | ---------------------------- | ------------------------ | ------------------ |
-| May 14, 2024                 | 11, Supported Versions   | Major and patching |
-| June 25, 2024                | 11.1, Supported Versions | Minor and patching |
-| July 23, 2024                | Supported Versions       | Patching           |
-| Aug. 27, 2024                | 11.2, Supported Versions | Minor and patching |
-| Sept. 24, 2024               | Supported Versions       | Patching           |
-| Oct. 22, 2024                | 11.3, Supported Versions | Minor and patching |
-| Nov. 19, 2024                | Supported Versions       | Patching           |
-| Dec. 5, 2024                 | 11.4, Supported Versions | Minor and Patching |
+| May 14, 2024                 | 11, Supported versions   | Major and patching |
+| June 25, 2024                | 11.1, Supported versions | Minor and patching |
+| July 23, 2024                | Supported versions       | Patching           |
+| Aug. 27, 2024                | 11.2, Supported versions | Minor and patching |
+| Sept. 24, 2024               | Supported versions       | Patching           |
+| Oct. 22, 2024                | 11.3, Supported versions | Minor and patching |
+| Nov. 19, 2024                | Supported versions       | Patching           |
+| Dec. 5, 2024                 | 11.4, Supported versions | Minor and patching |
 
 ### A few important notes
 
@@ -61,7 +61,7 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 - High severity security and feature degradation incidents will result in ad-hoc releases that are not scheduled ahead of time.
 - Patching releases are for the current (last released) minor version of Grafana. Additional older versions of Grafana may be included if there is a critical bug or security vulnerability that needs to be patched.
 - A Grafana release freeze occurs for a week in November and again during the end of December. This does not apply to changes that may be required during the course of an operational or security incident.
-  - 2024 Release Pause Dates: Nov 25 to Dec 3, Dec 19 to Jan 3
+  - 2024 Release pause dates: Nov. 25 - Dec. 3, Dec. 19 - Jan. 3
 
 ## What to know about version support
 
