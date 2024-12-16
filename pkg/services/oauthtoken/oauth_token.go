@@ -35,6 +35,7 @@ var (
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
 	ErrCouldntRefreshToken = errors.New("could not refresh token")
+	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
 type Service struct {
@@ -270,7 +271,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 		if attempts < 5 {
 			return nil
 		}
-		return ErrCouldntRefreshToken
+		return ErrRetriesExhausted
 	}
 
 	var newToken *oauth2.Token
