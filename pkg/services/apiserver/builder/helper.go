@@ -122,13 +122,23 @@ func SetupConfig(
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
+		meta := r.Metadata()
+		kind := ""
+		action := ""
+		sub := ""
+
 		tags := []string{}
-		prop, ok := r.Metadata()["x-kubernetes-group-version-kind"]
+		prop, ok := meta["x-kubernetes-group-version-kind"]
 		if ok {
 			gvk, ok := prop.(metav1.GroupVersionKind)
 			if ok && gvk.Kind != "" {
+				kind = gvk.Kind
 				tags = append(tags, gvk.Kind)
 			}
+		}
+		prop, ok = meta["x-kubernetes-action"]
+		if ok {
+			action = fmt.Sprintf("%v", prop)
 		}
 
 		isNew := false
@@ -136,73 +146,71 @@ func SetupConfig(
 			isNew = true
 		}
 
-		f, err := os.OpenFile("test.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			fmt.Printf("ERROR: %s\n", err)
-		} else {
-			meta := r.Metadata()
-			kind := ""
-			action := ""
-			sub := ""
-			metastr, _ := json.Marshal(meta)
-
-			v, ok := meta["x-kubernetes-action"]
-			if ok {
-				action = fmt.Sprintf("%v", v)
+		if action == "connect" {
+			idx := strings.LastIndex(r.Path(), "/{name}/")
+			if idx > 0 {
+				sub = r.Path()[(idx + len("/{name}/")):]
 			}
+		}
 
-			v, ok = meta["x-kubernetes-group-version-kind"]
-			if ok {
-				gvk, ok := v.(metav1.GroupVersionKind)
-				if ok {
-					kind = gvk.Kind
-				}
-			}
-
+		operationAlt := ""
+		if action != "" {
 			if action == "connect" {
-				idx := strings.LastIndex(r.Path(), "/{name}/")
+				idx := strings.Index(r.OperationName(), "Namespaced")
 				if idx > 0 {
-					sub = r.Path()[(idx + len("/{name}/")):]
+					operationAlt = strings.ToLower(r.Method()) +
+						r.OperationName()[idx:]
 				}
 			}
+		}
 
-			operationAlt := ""
-			if action != "" {
-				if action == "connect" {
-					idx := strings.Index(r.OperationName(), "Namespaced")
-					if idx > 0 {
-						operationAlt = strings.ToLower(r.Method()) +
-							r.OperationName()[idx:]
+		// Audit our options here
+		if false {
+			f, err := os.OpenFile("test.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err)
+			} else {
+				metastr, _ := json.Marshal(meta)
+
+				prop, ok = meta["x-kubernetes-group-version-kind"]
+				if ok {
+					gvk, ok := prop.(metav1.GroupVersionKind)
+					if ok {
+						kind = gvk.Kind
 					}
 				}
-			}
 
-			w := csv.NewWriter(f)
-			if isNew {
+				w := csv.NewWriter(f)
+				if isNew {
+					w.Write([]string{
+						"#Path",
+						"Method",
+						"action",
+						"kind",
+						"sub",
+						"OperationName",
+						"OperationNameAlt",
+						"Description",
+						"metadata",
+					})
+				}
 				w.Write([]string{
-					"#Path",
-					"Method",
-					"action",
-					"kind",
-					"sub",
-					"OperationName",
-					"OperationNameAlt",
-					"Description",
-					"metadata",
+					r.Path(),
+					r.Method(),
+					action,
+					kind,
+					sub,
+					r.OperationName(),
+					operationAlt,
+					r.Description(),
+					string(metastr),
 				})
+				w.Flush()
 			}
-			w.Write([]string{
-				r.Path(),
-				r.Method(),
-				action,
-				kind,
-				sub,
-				r.OperationName(),
-				operationAlt,
-				r.Description(),
-				string(metastr),
-			})
-			w.Flush()
+		}
+
+		if operationAlt != "" {
+			return operationAlt, tags, nil
 		}
 
 		return r.OperationName(), tags, nil
