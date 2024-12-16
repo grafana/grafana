@@ -58,10 +58,6 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !dashboard.FeatureEnabled(features) {
-		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
-	}
-
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -151,6 +147,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+		b.unified,
+		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+	)
+
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+		b.unified,
+		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+		scheme,
+	)
+
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
 		storage[dash.StoragePath()],
@@ -196,8 +205,4 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
 	return oas, nil
-}
-
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
 }

@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1261,6 +1265,8 @@
       "title-with-name": "Tabela — {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorar barra de ferramentas",
       "copy-link": "Copiar URL",
       "copy-link-abs-time": "",
@@ -1284,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1752,6 +1759,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2200,9 +2213,6 @@
     },
     "new-folder": {
       "title": "Nova pasta"
-    },
-    "observability": {
-      "title": "Observação"
     },
     "oncall": {
       "title": "OnCall"
@@ -3336,6 +3346,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

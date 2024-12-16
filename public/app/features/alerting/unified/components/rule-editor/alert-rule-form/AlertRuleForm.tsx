@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+
 import { useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,45 +13,51 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
-  getRuleGroupLocationFromFormValues,
-  getRuleGroupLocationFromRuleWithLocation,
-  isCloudAlertingRuleByType,
-  isCloudRecordingRuleByType,
-  isCloudRulerRule,
-  isGrafanaManagedRuleByType,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
-  isRecordingRuleByType,
+    getRuleGroupLocationFromFormValues,
+    getRuleGroupLocationFromRuleWithLocation,
+    isCloudAlertingRuleByType,
+    isCloudRecordingRuleByType,
+    isCloudRulerRule,
+    isGrafanaManagedRuleByType,
+    isGrafanaRulerRule,
+    isGrafanaRulerRulePaused,
+    isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  logInfo,
-  LogMessages,
-  trackAlertRuleFormCancelled,
-  trackAlertRuleFormError,
-  trackAlertRuleFormSaved,
-  trackNewGrafanaAlertRuleFormCancelled,
-  trackNewGrafanaAlertRuleFormError,
-  trackNewGrafanaAlertRuleFormSavedSuccess,
+    logInfo,
+    LogMessages,
+    trackAlertRuleFormCancelled,
+    trackAlertRuleFormError,
+    trackAlertRuleFormSaved,
+    trackNewGrafanaAlertRuleFormCancelled,
+    trackNewGrafanaAlertRuleFormError,
+    trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
-  defaultFormValuesForRuleType,
-  formValuesFromExistingRule,
-  formValuesFromPrefill,
-  translateRouteParamToRuleType,
+    defaultFormValuesForRuleType,
+
+
+
+
+
+    formValuesFromExistingRule,
+    formValuesFromPrefill,
+    translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
-  formValuesToRulerGrafanaRuleDTO,
-  formValuesToRulerRuleDTO,
-  MANUAL_ROUTING_KEY,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
+    formValuesToRulerGrafanaRuleDTO,
+    formValuesToRulerRuleDTO,
+
+    MANUAL_ROUTING_KEY,
+    SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
@@ -63,7 +71,16 @@ import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
+<<<<<<< HEAD
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
+=======
+import {
+  QueryAndExpressionsStep,
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+} from '../query-and-alert-condition/QueryAndExpressionsStep';
+import { translateRouteParamToRuleType } from '../util';
+>>>>>>> main
 
 type Props = {
   existing?: RuleWithLocation;

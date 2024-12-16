@@ -12,14 +12,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -42,6 +43,45 @@ func (e *AWSError) Error() string {
 	return fmt.Sprintf("CloudWatch error: %s: %s", e.Code, e.Message)
 }
 
+// StartQueryInputWithLanguage copies the StartQueryInput struct from aws-sdk-go@v1.55.5
+// (https://github.com/aws/aws-sdk-go/blob/7112c0a0c2d01713a9db2d57f0e5722225baf5b5/service/cloudwatchlogs/api.go#L19541)
+// to add support for the new QueryLanguage parameter, which is unlikely to be backported
+// since v1 of the aws-sdk-go is in maintenance mode. We've removed the comments for
+// clarity.
+type StartQueryInputWithLanguage struct {
+	_ struct{} `type:"structure"`
+
+	EndTime             *int64    `locationName:"endTime" type:"long" required:"true"`
+	Limit               *int64    `locationName:"limit" min:"1" type:"integer"`
+	LogGroupIdentifiers []*string `locationName:"logGroupIdentifiers" type:"list"`
+	LogGroupName        *string   `locationName:"logGroupName" min:"1" type:"string"`
+	LogGroupNames       []*string `locationName:"logGroupNames" type:"list"`
+	QueryString         *string   `locationName:"queryString" type:"string" required:"true"`
+	// QueryLanguage is the only change here from the original code.
+	QueryLanguage *string `locationName:"queryLanguage" type:"string"`
+	StartTime     *int64  `locationName:"startTime" type:"long" required:"true"`
+}
+type WithQueryLanguageFunc func(language *dataquery.LogsQueryLanguage) func(*request.Request)
+
+// WithQueryLanguage assigns the function to a variable in order to mock it in log_actions_test.go
+var WithQueryLanguage WithQueryLanguageFunc = withQueryLanguage
+
+func withQueryLanguage(language *dataquery.LogsQueryLanguage) func(request *request.Request) {
+	return func(request *request.Request) {
+		sqi := request.Params.(*cloudwatchlogs.StartQueryInput)
+		request.Params = &StartQueryInputWithLanguage{
+			EndTime:             sqi.EndTime,
+			Limit:               sqi.Limit,
+			LogGroupIdentifiers: sqi.LogGroupIdentifiers,
+			LogGroupName:        sqi.LogGroupName,
+			LogGroupNames:       sqi.LogGroupNames,
+			QueryString:         sqi.QueryString,
+			QueryLanguage:       (*string)(language),
+			StartTime:           sqi.StartTime,
+		}
+	}
+}
+
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -60,7 +100,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
 				resultChan <- backend.Responses{
-					query.RefID: errorsource.Response(err),
+					query.RefID: backend.ErrorResponseWithErrorSource(err),
 				}
 				return nil
 			}
@@ -141,12 +181,12 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	if logsQuery.LogGroupName == "" {
-		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"))
 	}
 	queryRequest.SetLogGroupName(logsQuery.LogGroupName)
 
 	if logsQuery.LogStreamName == "" {
-		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"))
 	}
 	queryRequest.SetLogStreamName(logsQuery.LogStreamName)
 
@@ -160,7 +200,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, errorsource.DownstreamError(err, false)
+		return nil, backend.DownstreamError(err)
 	}
 
 	messages := make([]*string, 0)
@@ -189,15 +229,23 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
-		return nil, errorsource.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
+	}
+	if logsQuery.QueryLanguage == nil {
+		cwli := dataquery.LogsQueryLanguageCWLI
+		logsQuery.QueryLanguage = &cwli
 	}
 
+	finalQueryString := logsQuery.QueryString
+	// Only for CWLI queries
 	// The fields @log and @logStream are always included in the results of a user's query
 	// so that a row's context can be retrieved later if necessary.
 	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
 	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
-	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
-		logStreamIdentifierInternal + "|" + logsQuery.QueryString
+	if *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageCWLI {
+		finalQueryString = "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
+			logStreamIdentifierInternal + "|" + logsQuery.QueryString
+	}
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime: aws.Int64(startTime.Unix()),
@@ -207,20 +255,23 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
 		// that.
 		EndTime:     aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
-		QueryString: aws.String(modifiedQueryString),
+		QueryString: aws.String(finalQueryString),
 	}
 
-	if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
-		var logGroupIdentifiers []string
-		for _, lg := range logsQuery.LogGroups {
-			arn := lg.Arn
-			// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-			logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
+	// log group identifiers can be left out if the query is an SQL query
+	if *logsQuery.QueryLanguage != dataquery.LogsQueryLanguageSQL {
+		if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
+			var logGroupIdentifiers []string
+			for _, lg := range logsQuery.LogGroups {
+				arn := lg.Arn
+				// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
+				logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
+			}
+			startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+		} else {
+			// even though log group names are being phased out, we still need to support them for backwards compatibility and alert queries
+			startQueryInput.LogGroupNames = aws.StringSlice(logsQuery.LogGroupNames)
 		}
-		startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
-	} else {
-		// even though log group names are being phased out, we still need to support them for backwards compatibility and alert queries
-		startQueryInput.LogGroupNames = aws.StringSlice(logsQuery.LogGroupNames)
 	}
 
 	if logsQuery.Limit != nil {
@@ -228,7 +279,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	e.logger.FromContext(ctx).Debug("Calling startquery with context with input", "input", startQueryInput)
-	resp, err := logsClient.StartQueryWithContext(ctx, startQueryInput)
+	resp, err := logsClient.StartQueryWithContext(ctx, startQueryInput, WithQueryLanguage(logsQuery.QueryLanguage))
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
@@ -238,7 +289,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 			e.logger.FromContext(ctx).Debug("ExecuteStartQuery rate exceeded", "err", awsErr)
 			err = &AWSError{Code: throttlingException, Message: err.Error()}
 		}
-		err = errorsource.DownstreamError(err, false)
+		err = backend.DownstreamError(err)
 	}
 	return resp, err
 }
@@ -283,7 +334,7 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
 		} else {
-			err = errorsource.DownstreamError(err, false)
+			err = backend.DownstreamError(err)
 		}
 	}
 
@@ -313,7 +364,7 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 		if errors.As(err, &awsErr) {
 			err = &AWSError{Code: awsErr.Code(), Message: err.Error()}
 		}
-		err = errorsource.DownstreamError(err, false)
+		err = backend.DownstreamError(err)
 	}
 	return getQueryResultsResponse, err
 }

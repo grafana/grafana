@@ -5,7 +5,7 @@ import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
-import { getDefaultQueries, MANUAL_ROUTING_KEY } from '../utils/rule-form';
+import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
 
 import { formValuesFromQueryParams, getDefaultFormValues, getDefautManualRouting } from './formDefaults';
 import { isAlertQueryOfAlertData } from './formProcessing';

@@ -21,7 +21,9 @@ jest.mock('./api', () => ({
   totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
   getDeploymentEnvironments: jest.fn(() => ['production', 'staging']),
   isOtelStandardization: jest.fn(() => true),
-  getFilteredResourceAttributes: jest.fn().mockResolvedValue(['resourceAttribute']),
+  getFilteredResourceAttributes: jest
+    .fn()
+    .mockResolvedValue({ attributes: ['resourceAttribute'], missingOtelTargets: false }),
 }));
 
 describe('sortResources', () => {

@@ -2,11 +2,11 @@ import { xor } from 'lodash';
 
 import {
   DataFrame,
-  isTimeSeriesFrames,
   LoadingState,
   PanelData,
   ThresholdsConfig,
   ThresholdsMode,
+  isTimeSeriesFrames,
 } from '@grafana/data';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';

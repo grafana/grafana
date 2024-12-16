@@ -10,10 +10,10 @@ import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import {
-  getDefaultQueries,
   MANUAL_ROUTING_KEY,
-  rulerRuleToFormValues,
   SIMPLIFIED_QUERY_EDITOR_KEY,
+  getDefaultQueries,
+  rulerRuleToFormValues,
 } from '../utils/rule-form';
 import { isGrafanaRecordingRuleByType } from '../utils/rules';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
