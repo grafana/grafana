@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,8 +193,10 @@ func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath st
 	// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
 	body, err := os.ReadFile(fpath)
 	if err == nil {
-		if diff := cmp.Diff(pretty, string(body)); diff != "" {
-			err = fmt.Errorf("body mismatch (-want +got):\n%s", diff)
+		if !assert.JSONEq(c.t, pretty, string(body)) {
+			if diff := cmp.Diff(pretty, string(body)); diff != "" {
+				err = fmt.Errorf("body mismatch (-want +got):\n%s", diff)
+			}
 		}
 	}
 
