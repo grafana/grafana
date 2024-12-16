@@ -5,6 +5,7 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { HistoryChangedEvent } from 'app/types/events';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
@@ -48,10 +49,19 @@ export function HistoryContainer() {
 
   return (
     <>
-      <ToolbarButton onClick={onToggleShowHistoryDrawer} iconOnly icon="history" aria-label="History" />
+      <ToolbarButton
+        onClick={onToggleShowHistoryDrawer}
+        iconOnly
+        icon="history"
+        aria-label={t('nav.history-container.drawer-tittle', 'History')}
+      />
       <NavToolbarSeparator className={styles.separator} />
       {showHistoryDrawer && (
-        <Drawer title="History" onClose={onToggleShowHistoryDrawer} size="md">
+        <Drawer
+          title={t('nav.history-container.drawer-tittle', 'History')}
+          onClose={onToggleShowHistoryDrawer}
+          size="md"
+        >
           <HistoryWrapper onClose={() => onToggleShowHistoryDrawer(false)} />
         </Drawer>
       )}
