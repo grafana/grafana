@@ -110,6 +110,26 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			require.EqualValues(t, secureValue, anotherSecureValue)
 		})
+
+		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
+			newRaw := testDataSecureValueXyz.DeepCopy()
+			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = "New keeper"
+			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
+			newRaw.Object["spec"].(map[string]any)["audiences"] = []string{"audience1/name1", "audience2/*"}
+			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, updatedRaw)
+
+			updatedSecureValue := new(secretv0alpha1.SecureValue)
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(updatedRaw.Object, updatedSecureValue)
+			require.NoError(t, err)
+			require.NotNil(t, updatedSecureValue)
+
+			require.NotEqualValues(t, updatedSecureValue.Spec, secureValue.Spec)
+		})
 	})
 
 	t.Run("reading a secure value that does not exist returns a 404", func(t *testing.T) {

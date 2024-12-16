@@ -22,6 +22,7 @@ var (
 type SecureValueStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error)
+	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 }
 
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
@@ -55,12 +56,12 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
+		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Insert(row); err != nil {
-			return fmt.Errorf("failed to insert row: %w", err)
+			return fmt.Errorf("insert row: %w", err)
 		}
 
 		return nil
@@ -71,13 +72,67 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 
 	createdSecureValue, err := row.toKubernetes()
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
+		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
 	return createdSecureValue, nil
 }
 
 func (s *storage) Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error) {
+	row, err := s.readInternal(ctx, namespace, name)
+	if err != nil {
+		return nil, fmt.Errorf("read internal: %w", err)
+	}
+
+	secureValue, err := row.toKubernetes()
+	if err != nil {
+		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+	}
+
+	return secureValue, nil
+}
+
+func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	authInfo, ok := claims.From(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	currentRow, err := s.readInternal(ctx, newSecureValue.Namespace, newSecureValue.Name)
+	if err != nil {
+		return nil, fmt.Errorf("read securevalue: %w", err)
+	}
+
+	// This should come from the keeper.
+	externalID := "TODO2"
+	newSecureValue.Spec.Value = ""
+	newSecureValue.Spec.Ref = ""
+
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
+	if err != nil {
+		return nil, fmt.Errorf("to update row: %w", err)
+	}
+
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Update(newRow); err != nil {
+			return fmt.Errorf("update row: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	secureValue, err := newRow.toKubernetes()
+	if err != nil {
+		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+	}
+
+	return secureValue, nil
+}
+
+func (s *storage) readInternal(ctx context.Context, namespace, name string) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -101,12 +156,7 @@ func (s *storage) Read(ctx context.Context, namespace, name string) (*secretv0al
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	secureValue, err := row.toKubernetes()
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
-	}
-
-	return secureValue, nil
+	return &row, nil
 }
 
 // TODO: move this somewhere else!

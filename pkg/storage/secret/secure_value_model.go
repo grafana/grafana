@@ -106,6 +106,24 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID, externalID string) (*
 	return row, nil
 }
 
+// toUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
+func toUpdateRow(currentRow *secureValueDB, newSecureValue *secretv0alpha1.SecureValue, actorUID, externalID string) (*secureValueDB, error) {
+	row, err := toRow(newSecureValue, externalID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create: %w", err)
+	}
+
+	now := time.Now().UTC().UnixMilli()
+
+	row.GUID = currentRow.GUID
+	row.Created = currentRow.Created
+	row.CreatedBy = currentRow.CreatedBy
+	row.Updated = now
+	row.UpdatedBy = actorUID
+
+	return row, nil
+}
+
 // toRow maps a Kubernetes resource into a DB row.
 func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
@@ -146,6 +164,10 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 	meta, err := utils.MetaAccessor(sv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get meta accessor: %w", err)
+	}
+
+	if meta.GetFolder() != "" {
+		return nil, fmt.Errorf("folders are not supported")
 	}
 
 	updatedTimestamp, err := meta.GetResourceVersionInt64()

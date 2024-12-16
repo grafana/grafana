@@ -1,9 +1,7 @@
 package reststorage
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -155,65 +153,47 @@ func (s *SecureValueRest) Create(
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
+// Currently does not support "create on update" functionality. If the securevalue does not yet exist, it returns an error.
 func (s *SecureValueRest) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
 	createValidation rest.ValidateObjectFunc,
 	updateValidation rest.ValidateObjectUpdateFunc,
-
-	// This lets a `securevalue` be created when an `Update` is called.
-	// TODO: Can we control this toggle or is this set by the client? We could always ignore it.
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	// TODO: better error handling, don't ignore non-404.
-	old, _ := s.Get(ctx, name, nil)
-	if old == nil {
-		old = &secret.SecureValue{}
-	}
-
-	// makes sure the UID and ResourceVersion are OK
-	tmp, err := objInfo.UpdatedObject(ctx, old)
+	current, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return old, false, err
+		return nil, false, fmt.Errorf("get securevalue: %w", err)
 	}
 
-	obj, ok := tmp.(*secret.SecureValue)
+	// Makes sure the UID and ResourceVersion are OK.
+	// TODO: this also makes it so the labels and annotations are additive, unless we check and remove manually.
+	tmp, err := objInfo.UpdatedObject(ctx, current)
+	if err != nil {
+		return nil, false, fmt.Errorf("k8s updated object: %w", err)
+	}
+
+	newSecureValue, ok := tmp.(*secret.SecureValue)
 	if !ok {
 		return nil, false, fmt.Errorf("expected SecureValue for update")
 	}
 
-	err = checkRefOrValue(obj, false)
-	if err != nil {
+	// TODO: do we need to do this here again? Probably not, but double-check!
+	newSecureValue.Annotations = cleanAnnotations(newSecureValue.Annotations)
+
+	if err := checkRefOrValue(newSecureValue, false); err != nil {
 		return nil, false, err
 	}
 
-	// Don't compare automatically set fields
-	// TODO: perhaps this should be cleaned in the store always?
-	obj.Annotations = cleanAnnotations(obj.Annotations)
-
-	// Is this really a create request.
-	// TODO: do we want to support "create on update"?
-	if obj.UID == "" {
-		n, err := s.Create(ctx, obj, nil, &metav1.CreateOptions{})
-		return n, true, err
+	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
+	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
 	}
 
-	// If the update does not change the `value` stored,
-	// we can just compare the other properties to avoid unnecessarily going to the `store` if there's no update needed.
-	if obj.Spec.Value == "" {
-		// TODO: handle errors
-		oldjson, _ := json.Marshal(old)
-		newjson, _ := json.Marshal(obj)
-
-		if bytes.Equal(oldjson, newjson) && len(newjson) > 0 {
-			return old, false, nil
-		}
-	}
-
-	// TODO: implement update in storage
-	return nil, false, nil
+	return updatedSecureValue, false, nil
 }
 
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
