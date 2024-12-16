@@ -13,7 +13,7 @@ def prometheus_devenv_step():
         "name": "setup-prometheus-devenv",
         "image": images["node"],
         "commands": [
-            "apk add --update make",
+            "apk add --update make bash",
             "make devenv sources=prometheus",
         ],
         "environment": {

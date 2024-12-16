@@ -860,7 +860,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make
+  - apk add --update make bash
   - make devenv sources=prometheus
   depends_on:
   - clone
@@ -2295,7 +2295,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make
+  - apk add --update make bash
   - make devenv sources=prometheus
   depends_on:
   - clone
@@ -5605,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d02ed0be5effcb36f6548d6509daade83d42923ef0ff2cf3b67e583313c857e1
+hmac: 0dfe259ecd1da4d56a907e1a21d841df89d3031e26af7b91c3b3608699540a45
 
 ...
