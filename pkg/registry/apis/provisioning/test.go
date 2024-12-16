@@ -108,8 +108,9 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 }
 
 type RepositoryTester struct {
-	// Across Grafana
+	// Across Grafana (currently used to get a folder client)
 	clientFactory *resources.ClientFactory
+
 	// Repository+Jobs
 	client client.ProvisioningV0alpha1Interface
 
