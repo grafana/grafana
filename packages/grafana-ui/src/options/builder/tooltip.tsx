@@ -47,7 +47,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     })
     .addBooleanSwitch({
       path: 'tooltip.hideZeros',
-      name: 'Hide zeroes',
+      name: 'Hide zeros',
       category,
       defaultValue: false,
       showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
