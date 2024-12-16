@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &stackIDAuthorizer{}
@@ -45,9 +46,9 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	if info.Value == "" {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
-
 	if info.StackID != auth.stackID {
-		return authorizer.DecisionDeny, "wrong stack id is selected", nil
+		msg := fmt.Sprintf("wrong stack id is selected (expected: %d, found %d)", auth.stackID, info.StackID)
+		return authorizer.DecisionDeny, msg, nil
 	}
 	if info.OrgID != 1 {
 		return authorizer.DecisionDeny, "cloud instance requires org 1", nil
