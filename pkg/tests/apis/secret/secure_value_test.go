@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -142,16 +143,63 @@ func TestIntegrationSecureValue(t *testing.T) {
 			GVR:  gvr,
 		})
 
-		raw, err := client.Resource.Get(
-			ctx,
-			"some-secure-value-that-does-not-exist",
-			metav1.GetOptions{},
-		)
+		raw, err := client.Resource.Get(ctx, "some-secure-value-that-does-not-exist", metav1.GetOptions{})
 		require.Error(t, err)
 		require.Nil(t, raw)
 
 		var statusErr *apierrors.StatusError
 		require.True(t, errors.As(err, &statusErr))
 		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
+	})
+
+	t.Run("deleting a secure value that does not exist does not return an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		err := client.Resource.Delete(ctx, "some-secure-value-that-does-not-exist", metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		generatePrefix := "generated-"
+
+		testDataSecureValueXyz := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
+		testDataSecureValueXyz.SetName("")
+		testDataSecureValueXyz.SetGenerateName("generated-")
+
+		raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, raw)
+
+		name := raw.GetName()
+		require.True(t, strings.HasPrefix(name, generatePrefix))
+
+		err = client.Resource.Delete(ctx, name, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		t.Run("and then trying to read it returns a 404 error", func(t *testing.T) {
+			raw, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.Error(t, err)
+			require.Nil(t, raw)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr))
+			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
+		})
 	})
 }

@@ -23,6 +23,7 @@ type SecureValueStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
 	Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
+	Delete(ctx context.Context, namespace, name string) error
 }
 
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
@@ -132,16 +133,42 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
+func (s *storage) Delete(ctx context.Context, namespace string, name string) error {
+	_, ok := claims.From(ctx)
+	if !ok {
+		return fmt.Errorf("missing auth info in context")
+	}
+
+	// TODO: delete from the keeper!
+
+	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
+	row := &secureValueDB{Name: name, Namespace: namespace}
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
+		if _, err := sess.Delete(row); err != nil {
+			return fmt.Errorf("delete row: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("db failure: %w", err)
+	}
+
+	return nil
+}
+
 func (s *storage) readInternal(ctx context.Context, namespace, name string) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := secureValueDB{Name: name, Namespace: namespace}
+	row := &secureValueDB{Name: name, Namespace: namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(&row)
+		found, err := sess.Get(row)
 		if err != nil {
 			return fmt.Errorf("could not get row: %w", err)
 		}
@@ -156,7 +183,7 @@ func (s *storage) readInternal(ctx context.Context, namespace, name string) (*se
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	return &row, nil
+	return row, nil
 }
 
 // TODO: move this somewhere else!
