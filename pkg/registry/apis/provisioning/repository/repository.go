@@ -63,13 +63,16 @@ type FileAction string
 const (
 	FileActionCreated FileAction = "created"
 	FileActionUpdated FileAction = "updated"
+	FileActionRenamed FileAction = "renamed"
 	FileActionDeleted FileAction = "deleted"
 )
 
 type FileChange struct {
-	Path   string
-	Ref    string
-	Action FileAction
+	Path         string
+	PreviousPath string
+	Ref          string
+	PreviousRef  string
+	Action       FileAction
 }
 
 type Repository interface {
@@ -123,32 +126,5 @@ type Repository interface {
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
 	LatestRef(ctx context.Context, logger *slog.Logger) (string, error)
-	CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error)
-}
-
-type JobProcessor interface {
-	// Temporary... likely want this as its own thing... eg GithubWorker or similar
-	Process(ctx context.Context, logger *slog.Logger, job provisioning.Job, replicator FileReplicator) error
-}
-
-// FileReplicator is an interface for replicating files
-type FileReplicator interface {
-	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
-	ReplicateChanges(ctx context.Context, changes []FileChange) error
-	ReplicateFile(ctx context.Context, fileInfo *FileInfo) error
-	ReplicateTree(ctx context.Context, ref string) error
-	DeleteFile(ctx context.Context, fileInfo *FileInfo) error
-	Sync(ctx context.Context) error
-	Export(ctx context.Context) error
-}
-
-// FileReplicatorFactory is an interface for creating FileReplicators
-type FileReplicatorFactory interface {
-	New() (FileReplicator, error)
-}
-
-// PreviewRenderer is an interface for rendering a preview of a file
-type PreviewRenderer interface {
-	IsAvailable(ctx context.Context) bool
-	RenderDashboardPreview(ctx context.Context, repo Repository, path string, ref string) (string, error)
+	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error)
 }
