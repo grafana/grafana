@@ -255,13 +255,9 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
+	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
-	}
-
-	p, found := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
-	if !found {
-		return response.Error(http.StatusNotFound, "Plugin not found", nil)
 	}
 	if p.AutoEnabled && !cmd.Enabled {
 		return response.Error(http.StatusBadRequest, "Cannot disable auto-enabled plugin", nil)
