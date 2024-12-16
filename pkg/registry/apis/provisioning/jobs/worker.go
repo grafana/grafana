@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -21,20 +22,32 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
-	getter     RepoGetter
-	parsers    *resources.ParserFactory
-	identities auth.BackgroundIdentityService
-	logger     *slog.Logger
-	ignore     provisioning.IgnoreFile
+	getter      RepoGetter
+	parsers     *resources.ParserFactory
+	identities  auth.BackgroundIdentityService
+	logger      *slog.Logger
+	ignore      provisioning.IgnoreFile
+	renderer    PreviewRenderer
+	urlProvider func(namespace string) string
 }
 
-func NewJobWorker(getter RepoGetter, parsers *resources.ParserFactory, identities auth.BackgroundIdentityService, logger *slog.Logger, ignore provisioning.IgnoreFile) *JobWorker {
+func NewJobWorker(
+	getter RepoGetter,
+	parsers *resources.ParserFactory,
+	identities auth.BackgroundIdentityService,
+	logger *slog.Logger,
+	ignore provisioning.IgnoreFile,
+	renderer PreviewRenderer,
+	urlProvider func(namespace string) string,
+) *JobWorker {
 	return &JobWorker{
-		getter:     getter,
-		parsers:    parsers,
-		identities: identities,
-		logger:     logger,
-		ignore:     ignore,
+		getter:      getter,
+		parsers:     parsers,
+		identities:  identities,
+		logger:      logger,
+		ignore:      ignore,
+		renderer:    renderer,
+		urlProvider: urlProvider,
 	}
 }
 
@@ -73,16 +86,24 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, err
 		}
 	case provisioning.JobActionPullRequest:
-		// TODO: this interface is only for JobProcessor
-		processor, ok := repo.(repository.JobProcessor)
+		ghRepo, ok := repo.(GithubRepository)
 		if !ok {
-			// TODO... handle sync job for everything
-			// EG, move over the "import" logic here
-			return nil, fmt.Errorf("job not supported by this worker")
+			return nil, fmt.Errorf("repository is not a github repository")
 		}
-		err := processor.Process(ctx, g.logger, job, replicator)
+
+		baseURL, err := url.Parse(g.urlProvider(job.Namespace))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing base url: %w", err)
+		}
+
+		// TODO: init parser
+		commenter, err := NewPullRequestCommenter(ghRepo, nil, logger, g.renderer, baseURL)
+		if err != nil {
+			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
+		}
+
+		if err := commenter.Process(ctx, job); err != nil {
+			return nil, fmt.Errorf("error processing pull request: %w", err)
 		}
 	case provisioning.JobActionExport:
 		err := replicator.Export(ctx)

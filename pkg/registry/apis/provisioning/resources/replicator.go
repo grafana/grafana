@@ -88,7 +88,7 @@ func (r *replicator) Sync(ctx context.Context) error {
 			return fmt.Errorf("latest ref: %w", err)
 		}
 
-		changes, err := versionedRepo.CompareFiles(ctx, r.logger, latest)
+		changes, err := versionedRepo.CompareFiles(ctx, r.logger, lastCommit, latest)
 		if err != nil {
 			return fmt.Errorf("compare files: %w", err)
 		}
@@ -297,17 +297,6 @@ func (r *replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileIn
 	r.logger.InfoContext(ctx, "Deleted file", "name", file.Obj.GetName(), "path", fileInfo.Path)
 
 	return nil
-}
-
-func (r *replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo) (bool, error) {
-	if _, err := r.parseResource(ctx, fileInfo); err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
 }
 
 func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
