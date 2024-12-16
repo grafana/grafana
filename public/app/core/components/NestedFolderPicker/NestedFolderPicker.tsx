@@ -6,10 +6,11 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { useRepositoryList } from 'app/features/provisioning/hooks';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
@@ -81,7 +82,7 @@ export function NestedFolderPicker({
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
-
+  const [repositoryConfigs] = useRepositoryList();
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     items: browseFlatTree,
@@ -250,9 +251,21 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = selectedFolder.data?.title;
+  let label: React.ReactNode = selectedFolder.data?.title;
   if (value === '') {
     label = 'Dashboards';
+  }
+  const repo = repositoryConfigs?.find((repo) => repo.spec?.folder === selectedFolder.data?.uid);
+  if (repo && label && !overlayOpen) {
+    label = (
+      <Stack alignItems={'center'}>
+        <Text truncate>{label}</Text>
+        <Text color={'secondary'}>
+          {' '}
+          | <Icon name={'github'} /> {repo?.spec?.github?.repository}
+        </Text>
+      </Stack>
+    );
   }
 
   if (!overlayOpen) {
@@ -282,7 +295,11 @@ export function NestedFolderPicker({
         ref={refs.setReference}
         autoFocus
         prefix={label ? <Icon name="folder" /> : null}
-        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
+        placeholder={
+          typeof label === 'string' && label
+            ? label
+            : t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')
+        }
         value={search}
         invalid={invalid}
         className={styles.search}
