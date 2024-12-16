@@ -11,7 +11,7 @@ exports[`reorder rules for rule group should correctly reorder rules 1`] = `
       ],
     ],
     "method": "GET",
-    "url": "https://mimir.local:9000/api/v1/status/buildinfo",
+    "url": "http://localhost/api/datasources/proxy/uid/mimir/api/v1/status/buildinfo",
   },
   {
     "body": "",
@@ -89,7 +89,7 @@ exports[`useUpdateRuleGroupConfiguration should be able to move a Data Source ma
       ],
     ],
     "method": "GET",
-    "url": "https://mimir.local:9000/api/v1/status/buildinfo",
+    "url": "http://localhost/api/datasources/proxy/uid/mimir/api/v1/status/buildinfo",
   },
   {
     "body": "",

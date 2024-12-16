@@ -380,6 +380,8 @@ Entra ID does not emit the groups claim in the token and emits a group overage c
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
 
+To ensure this functionality works correctly, you must enable [`force_use_graph_api`]({{< relref "./#force-fetching-groups-from-microsoft-graph-api" >}}) in your configuration.
+
 {{% admonition type="note" %}}
 The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
 

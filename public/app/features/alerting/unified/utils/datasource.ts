@@ -9,7 +9,12 @@ import {
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { RulesSource } from 'app/types/unified-alerting';
+import {
+  ExternalRulesSourceIdentifier,
+  GrafanaRulesSourceSymbol,
+  RulesSource,
+  RulesSourceUid,
+} from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -22,8 +27,6 @@ import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
-
-export type RulesSourceIdentifier = { rulesSourceName: string } | { uid: string };
 
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
@@ -211,6 +214,13 @@ export function getAllRulesSourceNames(): string[] {
   return availableRulesSources;
 }
 
+export function getExternalRulesSources(): ExternalRulesSourceIdentifier[] {
+  return getRulesDataSources().map((ds) => ({
+    name: ds.name,
+    uid: ds.uid,
+  }));
+}
+
 export function getAllRulesSources(): RulesSource[] {
   const availableRulesSources: RulesSource[] = getRulesDataSources();
 
@@ -293,13 +303,13 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
-export function getDataSourceUID(rulesSourceIdentifier: RulesSourceIdentifier) {
+export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
   if ('uid' in rulesSourceIdentifier) {
     return rulesSourceIdentifier.uid;
   }
 
   if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
+    return GrafanaRulesSourceSymbol;
   }
 
   const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
