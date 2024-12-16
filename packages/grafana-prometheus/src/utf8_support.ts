@@ -1,4 +1,7 @@
 export const utf8Support = (value: string) => {
+  if (value === '') {
+    return value;
+  }
   const isLegacyLabel = isValidLegacyName(value);
   if (isLegacyLabel) {
     return value;

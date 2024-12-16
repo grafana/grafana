@@ -2,8 +2,8 @@ import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 describe('utf8 support', () => {
   it('should return utf8 labels wrapped in quotes', () => {
-    const labels = ['valid:label', 'metric_label', 'utf8 label with space 🤘'];
-    const expected = ['valid:label', 'metric_label', `"utf8 label with space 🤘"`];
+    const labels = ['valid:label', 'metric_label', 'utf8 label with space 🤘', ''];
+    const expected = ['valid:label', 'metric_label', `"utf8 label with space 🤘"`, ''];
     const supportedLabels = labels.map(utf8Support);
     expect(supportedLabels).toEqual(expected);
   });
