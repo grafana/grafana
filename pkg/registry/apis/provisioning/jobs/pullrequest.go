@@ -177,6 +177,8 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	previews := make([]changedResource, 0, len(changed))
 	// TODO: move here the preview / snapshot logic
 	for _, file := range changed {
+		logger.DebugContext(ctx, "processing file", "path", file.Info.Path)
+
 		// TODO: if not deleted, generate previews
 		preview := changedResource{
 			// TODO: fill up

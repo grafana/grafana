@@ -22,46 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-type ReplicatorFactory struct {
-	repo    repository.Repository
-	parsers *ParserFactory
-	ignore  provisioning.IgnoreFile
-	logger  *slog.Logger
-}
-
-func NewReplicatorFactory(repo repository.Repository, parsers *ParserFactory, ignore provisioning.IgnoreFile, logger *slog.Logger) *ReplicatorFactory {
-	return &ReplicatorFactory{
-		parsers: parsers,
-		repo:    repo,
-		ignore:  ignore,
-		logger:  logger,
-	}
-}
-
-func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
-	// The replicator does not need a linter
-	parser, err := f.parsers.GetParser(f.repo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parser for %s: %w", f.repo.Config().Name, err)
-	}
-	dynamicClient := parser.Client()
-	folders := dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	return &replicator{
-		logger:     f.logger,
-		parser:     parser,
-		client:     dynamicClient,
-		folders:    folders,
-		repository: f.repo,
-		ignore:     f.ignore,
-	}, nil
-}
-
-type replicator struct {
+type Replicator struct {
 	logger     *slog.Logger
 	client     *DynamicClient
 	parser     *Parser
@@ -70,8 +31,31 @@ type replicator struct {
 	ignore     provisioning.IgnoreFile
 }
 
+func NewReplicator(
+	repo repository.Repository,
+	parser *Parser,
+	ignore provisioning.IgnoreFile,
+	logger *slog.Logger,
+) (*Replicator, error) {
+	dynamicClient := parser.Client()
+	folders := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
+	})
+
+	return &Replicator{
+		logger:     logger,
+		parser:     parser,
+		client:     dynamicClient,
+		folders:    folders,
+		repository: repo,
+		ignore:     ignore,
+	}, nil
+}
+
 // Sync replicates all files in the repository.
-func (r *replicator) Sync(ctx context.Context) error {
+func (r *Replicator) Sync(ctx context.Context) error {
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
@@ -123,7 +107,7 @@ func (r *replicator) Sync(ctx context.Context) error {
 }
 
 // ReplicateTree replicates all files in the repository.
-func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
+func (r *Replicator) ReplicateTree(ctx context.Context, ref string) error {
 	logger := r.logger
 	tree, err := r.repository.ReadTree(ctx, logger, ref)
 	if err != nil {
@@ -165,7 +149,7 @@ func (r *replicator) ReplicateTree(ctx context.Context, ref string) error {
 
 // ReplicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Replicator) ReplicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -201,7 +185,7 @@ func (r *replicator) ReplicateFile(ctx context.Context, fileInfo *repository.Fil
 	return nil
 }
 
-func (r *replicator) createFolderPath(ctx context.Context, filePath string) (string, error) {
+func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (string, error) {
 	dir := path.Dir(filePath)
 	parent := r.repository.Config().Spec.Folder
 	if dir == "." || dir == "/" {
@@ -250,7 +234,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *replicator) ReplicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *Replicator) ReplicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
 		fileInfo, err := r.repository.Read(ctx, r.logger, change.Path, change.Ref)
 		if err != nil {
@@ -272,7 +256,7 @@ func (r *replicator) ReplicateChanges(ctx context.Context, changes []repository.
 	return nil
 }
 
-func (r *replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -299,7 +283,7 @@ func (r *replicator) DeleteFile(ctx context.Context, fileInfo *repository.FileIn
 	return nil
 }
 
-func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
+func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
@@ -316,7 +300,7 @@ func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 	return file, nil
 }
 
-func (r *replicator) Export(ctx context.Context) error {
+func (r *Replicator) Export(ctx context.Context) error {
 	logger := r.logger
 	dashboardIface := r.client.Resource(schema.GroupVersionResource{
 		Group:    "dashboard.grafana.app",
@@ -425,7 +409,7 @@ func (t *folderTree) DirPath(folder string) string {
 	return dirPath
 }
 
-func (r *replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {
+func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {
 	iface := r.client.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Version:  "v0alpha1",
@@ -476,7 +460,7 @@ func (r *replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, erro
 	}, nil
 }
 
-func (*replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
+func (*Replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
 	if repo.Config().Spec.PreferYAML {
 		body, err = yaml.Marshal(obj)
 		return body, name + ".yaml", err

@@ -125,19 +125,3 @@ type VersionedRepository interface {
 	LatestRef(ctx context.Context, logger *slog.Logger) (string, error)
 	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error)
 }
-
-// TODO: This interface should live somewhere else
-// FileReplicator is an interface for replicating files
-type FileReplicator interface {
-	ReplicateChanges(ctx context.Context, changes []FileChange) error
-	ReplicateFile(ctx context.Context, fileInfo *FileInfo) error
-	ReplicateTree(ctx context.Context, ref string) error
-	DeleteFile(ctx context.Context, fileInfo *FileInfo) error
-	Sync(ctx context.Context) error
-	Export(ctx context.Context) error
-}
-
-// FileReplicatorFactory is an interface for creating FileReplicators
-type FileReplicatorFactory interface {
-	New() (FileReplicator, error)
-}

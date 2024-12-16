@@ -73,8 +73,12 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("unknown repository")
 	}
 
-	factory := resources.NewReplicatorFactory(repo, g.parsers, g.ignore, logger)
-	replicator, err := factory.New()
+	parser, err := g.parsers.GetParser(repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+	}
+
+	replicator, err := resources.NewReplicator(repo, parser, g.ignore, logger)
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
 	}
@@ -97,7 +101,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		}
 
 		// TODO: init parser
-		commenter, err := NewPullRequestCommenter(ghRepo, nil, logger, g.renderer, baseURL)
+		commenter, err := NewPullRequestCommenter(ghRepo, parser, logger, g.renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}
