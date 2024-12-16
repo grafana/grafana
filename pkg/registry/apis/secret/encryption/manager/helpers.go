@@ -8,23 +8,23 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret"
 )
 
-func SetupTestService(tb testing.TB, store encryption.Store) *EncryptionManager {
+func SetupTestService(tb testing.TB, store secret.DataKeyStorage) *EncryptionManager {
 	return setupTestService(tb, store, featuremgmt.WithFeatures())
 }
 
-func SetupDisabledTestService(tb testing.TB, store encryption.Store) *EncryptionManager {
+func SetupDisabledTestService(tb testing.TB, store secret.DataKeyStorage) *EncryptionManager {
 	return setupTestService(tb, store, featuremgmt.WithFeatures(featuremgmt.FlagDisableEnvelopeEncryption))
 }
 
-func setupTestService(tb testing.TB, store encryption.Store, features featuremgmt.FeatureToggles) *EncryptionManager {
+func setupTestService(tb testing.TB, store secret.DataKeyStorage, features featuremgmt.FeatureToggles) *EncryptionManager {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
 	raw, err := ini.Load([]byte(`
