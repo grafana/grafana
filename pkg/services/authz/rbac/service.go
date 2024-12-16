@@ -219,20 +219,22 @@ func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdent
 	return teamIDs, nil
 }
 
-func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (*store.BasicRole, error) {
-	var basicRoles *store.BasicRole
+func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
 	basicRoleKey := userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID)
 	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
-		return cached.(*store.BasicRole), nil
+		return cached.(store.BasicRole), nil
 	}
 
-	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	basicRole, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
 	if err != nil {
-		return nil, fmt.Errorf("could not get basic roles: %w", err)
+		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
 	}
-	s.basicRoleCache.Set(basicRoleKey, basicRoles, 0)
+	if basicRole == nil {
+		basicRole = &store.BasicRole{}
+	}
+	s.basicRoleCache.Set(basicRoleKey, *basicRole, 0)
 
-	return basicRoles, nil
+	return *basicRole, nil
 }
 
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {

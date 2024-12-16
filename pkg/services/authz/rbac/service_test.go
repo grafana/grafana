@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
@@ -213,7 +214,7 @@ func TestService_getUserTeams(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedTeams, teams)
+			require.ElementsMatch(t, tc.expectedTeams, teams)
 			if tc.cacheHit {
 				require.Zero(t, identityStore.calls)
 			} else {
@@ -226,22 +227,21 @@ func TestService_getUserTeams(t *testing.T) {
 func TestService_getUserBasicRole(t *testing.T) {
 	type testCase struct {
 		name          string
-		basicRole     *store.BasicRole
+		basicRole     store.BasicRole
 		cacheHit      bool
-		expectedRole  *store.BasicRole
+		expectedRole  store.BasicRole
 		expectedError bool
-		storeError    bool
 	}
 
 	testCases := []testCase{
 		{
 			name: "should return basic role from cache if available",
-			basicRole: &store.BasicRole{
+			basicRole: store.BasicRole{
 				Role:    "viewer",
 				IsAdmin: false,
 			},
 			cacheHit: true,
-			expectedRole: &store.BasicRole{
+			expectedRole: store.BasicRole{
 				Role:    "viewer",
 				IsAdmin: false,
 			},
@@ -249,12 +249,12 @@ func TestService_getUserBasicRole(t *testing.T) {
 		},
 		{
 			name: "should return basic role from store if not in cache",
-			basicRole: &store.BasicRole{
+			basicRole: store.BasicRole{
 				Role:    "editor",
 				IsAdmin: false,
 			},
 			cacheHit: false,
-			expectedRole: &store.BasicRole{
+			expectedRole: store.BasicRole{
 				Role:    "editor",
 				IsAdmin: false,
 			},
@@ -262,11 +262,10 @@ func TestService_getUserBasicRole(t *testing.T) {
 		},
 		{
 			name:          "should return error if store fails",
-			basicRole:     nil,
+			basicRole:     store.BasicRole{},
 			cacheHit:      false,
-			expectedRole:  nil,
+			expectedRole:  store.BasicRole{},
 			expectedError: true,
-			storeError:    true,
 		},
 	}
 
@@ -276,7 +275,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			req := &CheckRequest{Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-			store := &fakeStore{basicRole: tc.basicRole, err: tc.storeError}
+			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
 
 			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
@@ -306,11 +305,94 @@ func TestService_getUserBasicRole(t *testing.T) {
 	}
 }
 
+func TestService_getUserPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		permissions   []accesscontrol.Permission
+		cacheHit      bool
+		expectedPerms map[string]bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return permissions from cache if available",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			cacheHit:      true,
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+		},
+		{
+			name: "should return permissions from store if not in cache",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:some_dashboard"},
+			},
+			cacheHit:      false,
+			expectedPerms: map[string]bool{"dashboards:uid:some_dashboard": true},
+		},
+		{
+			name:          "should return error if store fails",
+			permissions:   nil,
+			cacheHit:      false,
+			expectedPerms: map[string]bool{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
+			req := &CheckRequest{
+				Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12},
+				UserUID:   userID.UID,
+				Action:    "dashboards:read",
+			}
+
+			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
+			if tc.cacheHit {
+				cacheService.Set(userPermCacheKey(req.Namespace.Value, userID.UID, req.Action), tc.expectedPerms, 0)
+			}
+
+			store := &fakeStore{
+				userID:          userID,
+				basicRole:       &store.BasicRole{Role: "viewer", IsAdmin: false},
+				userPermissions: tc.permissions,
+			}
+
+			s := &Service{
+				store:          store,
+				identityStore:  &fakeIdentityStore{teams: []int64{1, 2}},
+				actionMapper:   mappers.NewK8sRbacMapper(),
+				logger:         log.New("test"),
+				tracer:         tracing.NewNoopTracerService(),
+				permCache:      cacheService,
+				basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
+				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+			}
+
+			perms, err := s.getUserPermissions(ctx, req)
+			require.NoError(t, err)
+			require.Len(t, perms, len(tc.expectedPerms))
+			for _, perm := range tc.permissions {
+				_, ok := tc.expectedPerms[perm.Scope]
+				require.True(t, ok)
+			}
+			if tc.cacheHit {
+				require.Equal(t, 1, store.calls) // only get user id
+			} else {
+				require.Equal(t, 3, store.calls) // get user id, basic role, and permissions
+			}
+		})
+	}
+}
+
 type fakeStore struct {
-	store.StoreImpl
-	basicRole *store.BasicRole
-	err       bool
-	calls     int
+	store.Store
+	basicRole       *store.BasicRole
+	userID          *store.UserIdentifiers
+	userPermissions []accesscontrol.Permission
+	err             bool
+	calls           int
 }
 
 func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace claims.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
@@ -319,6 +401,22 @@ func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace claims.Namespac
 		return nil, fmt.Errorf("store error")
 	}
 	return f.basicRole, nil
+}
+
+func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("store error")
+	}
+	return f.userID, nil
+}
+
+func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("store error")
+	}
+	return f.userPermissions, nil
 }
 
 type fakeIdentityStore struct {
