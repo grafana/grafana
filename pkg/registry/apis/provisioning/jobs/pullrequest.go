@@ -8,20 +8,20 @@ import (
 	"html/template"
 	"log/slog"
 	"net/url"
+	"path"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// changedResource represents a resource that has changed in a pull request.
-type changedResource struct {
+// resourcePreview represents a resource that has changed in a pull request.
+type resourcePreview struct {
 	Filename             string
 	Path                 string
 	Action               string
 	Type                 string
 	OriginalURL          string
-	CurrentURL           string
 	PreviewURL           string
 	PreviewScreenshotURL string
 }
@@ -40,7 +40,7 @@ const (
 	| File Name | Type | Path | Action | Links |
 	|-----------|------|------|--------|-------|
 	{{- range .}}
-	| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .CurrentURL}}, [Current]({{.CurrentURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
+	| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
 	{{- end}}
 
 	Click the preview links above to view how your changes will look and compare them with the original and current versions.
@@ -64,8 +64,7 @@ type PullRequestRepo interface {
 // PreviewRenderer is an interface for rendering a preview of a file
 type PreviewRenderer interface {
 	IsAvailable(ctx context.Context) bool
-	// TODO: renderer should not receive a repository, it should be already namespaced
-	RenderDashboardPreview(ctx context.Context, repo repository.Repository, path string, ref string) (string, error)
+	RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error)
 }
 
 type PullRequestCommenter struct {
@@ -111,8 +110,8 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	}
 
 	// TODO: clean specification to have better options
-	if !(c.repo.Config().Spec.Linting && c.repo.Config().Spec.GitHub.PullRequestLinter) &&
-		!c.repo.Config().Spec.GitHub.GenerateDashboardPreviews {
+	if (c.repo.Config().Spec.Linting && c.repo.Config().Spec.GitHub.PullRequestLinter) ||
+		c.repo.Config().Spec.GitHub.GenerateDashboardPreviews {
 		return nil
 	}
 
@@ -126,11 +125,15 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		return fmt.Errorf("failed to list pull request files: %w", err)
 	}
 
-	// identify which ones are the changed resources
-	changed := make([]*resources.ParsedResource, 0, len(files))
+	// clear all previous comments
+	if err := c.repo.ClearAllPullRequestComments(ctx, spec.PR); err != nil {
+		return fmt.Errorf("failed to clear pull request comments: %w", err)
+	}
+
+	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		// TODO: ignore files
+		// TODO: ignore files?
 
 		fileInfo, err := c.repo.Read(ctx, logger, f.Path, f.Ref)
 		if err != nil {
@@ -146,55 +149,47 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			}
 			continue
 		}
-		changed = append(changed, parsed)
-	}
 
-	// clear all previous comments
-	if err := c.repo.ClearAllPullRequestComments(ctx, spec.PR); err != nil {
-		return fmt.Errorf("failed to clear pull request comments: %w", err)
-	}
-
-	// TODO: skip if linting is disabled
-	if true {
-		for _, file := range changed {
-			// TODO: if deleted
-			// TODO: skip if file is removed
-			if len(file.Lint) == 0 {
-				continue
-			}
-
+		if true && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
-			if err := c.lintTemplate.Execute(&buf, file.Lint); err != nil {
+			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return fmt.Errorf("execute lint comment template: %w", err)
 			}
 
 			// TODO: use job.Hash?
-			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, file.Info.Path, file.Info.Ref, buf.String()); err != nil {
-				return fmt.Errorf("comment pull request file %s: %w", file.Info.Path, err)
+			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, f.Ref, buf.String()); err != nil {
+				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 		}
-	}
-
-	previews := make([]changedResource, 0, len(changed))
-	for _, file := range changed {
-		logger.DebugContext(ctx, "processing file", "path", file.Info.Path)
-
-		// TODO: if not deleted, generate previews
-		preview := changedResource{
-			// TODO: fill up
+		preview := resourcePreview{
+			Filename: path.Base(f.Path),
+			Path:     f.Path,
+			Type:     "dashboard", // TODO: add more types
+			Action:   string(f.Action),
 		}
 
-		if true {
-			// Generate dashboard preview
-			// screenshotURL, err := r.renderer.RenderDashboardPreview(ctx, r, resource.Path, resource.Ref)
-			// if err != nil {
-			// 	return fmt.Errorf("render dashboard preview: %w", err)
-			// }
-			//
-			// resources[i].PreviewScreenshotURL = screenshotURL
+		switch f.Action {
+		case repository.FileActionCreated:
+			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+		case repository.FileActionUpdated:
+			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
+			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+		case repository.FileActionRenamed:
+			preview.OriginalURL = c.previewURL(base, f.PreviousPath, spec.URL)
+			preview.PreviewURL = c.previewURL(spec.Hash, f.Path, spec.URL)
+		case repository.FileActionDeleted:
+			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
+		default:
+			return fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
-		// TODO: case fill up preview links based on action
+		if c.repo.Config().Spec.GitHub.GenerateDashboardPreviews || f.Action != repository.FileActionDeleted {
+			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, f.Ref)
+			if err != nil {
+				return fmt.Errorf("render dashboard preview: %w", err)
+			}
+			preview.PreviewScreenshotURL = screenshotURL
+		}
 
 		previews = append(previews, preview)
 	}

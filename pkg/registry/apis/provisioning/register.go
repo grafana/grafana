@@ -63,7 +63,8 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
-	renderer          *renderer
+	render            rendering.Service
+	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
@@ -99,12 +100,9 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 			Logger: slog.Default().With("logger", "provisioning-parser-factory"),
 		},
-		renderer: &renderer{
-			render:     render,
-			blobstore:  blobstore,
-			identities: identities,
-		},
-		jobs: jobs.NewJobQueue(50), // in memory for now
+		render:    render,
+		blobstore: blobstore,
+		jobs:      jobs.NewJobQueue(50), // in memory for now
 	}
 
 	return builder

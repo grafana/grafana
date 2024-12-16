@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
 type RepoGetter interface {
@@ -27,7 +29,8 @@ type JobWorker struct {
 	identities  auth.BackgroundIdentityService
 	logger      *slog.Logger
 	ignore      provisioning.IgnoreFile
-	renderer    PreviewRenderer
+	render      rendering.Service
+	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
 }
 
@@ -37,7 +40,8 @@ func NewJobWorker(
 	identities auth.BackgroundIdentityService,
 	logger *slog.Logger,
 	ignore provisioning.IgnoreFile,
-	renderer PreviewRenderer,
+	render rendering.Service,
+	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
 	return &JobWorker{
@@ -46,7 +50,8 @@ func NewJobWorker(
 		identities:  identities,
 		logger:      logger,
 		ignore:      ignore,
-		renderer:    renderer,
+		render:      render,
+		blobstore:   blobstore,
 		urlProvider: urlProvider,
 	}
 }
@@ -100,7 +105,15 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("error parsing base url: %w", err)
 		}
 
-		commenter, err := NewPullRequestCommenter(prRepo, parser, logger, g.renderer, baseURL)
+		// FIXME: renderer should be in its own package
+		renderer := &renderer{
+			cfg:       repo.Config(),
+			render:    g.render,
+			blobstore: g.blobstore,
+			id:        id,
+		}
+
+		commenter, err := NewPullRequestCommenter(prRepo, parser, logger, renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}
