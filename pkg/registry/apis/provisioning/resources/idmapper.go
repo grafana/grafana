@@ -9,9 +9,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 )
 
-type IDMapper func(repo string, path string, obj metav1.Object) (objectName string, folderName string)
+// Get a filename for a given object
+type FileNameMapper func(obj metav1.Object) string
+
+// Get the object/folder names from a path+object
+type NameMapper func(repo string, path string, obj metav1.Object) (objectName string, folderName string)
+
+// This picks the names from the saved the metadata
+func FileNameFromK8sName(obj metav1.Object) string {
+	return obj.GetName() // sanitize?
+}
+
+// This picks the names from the saved the metadata
+func FileNameFromSlug(obj metav1.Object) string {
+	meta, err := utils.MetaAccessor(obj)
+	if err == nil {
+		title := meta.FindTitle("")
+		if title != "" {
+			return slugify.Slugify(title)
+		}
+	}
+	return FileNameFromK8sName(obj)
+}
 
 // This picks the names from the saved the metadata
 func NamesFromMetadata(_ string, _ string, obj metav1.Object) (objectName string, folderName string) {

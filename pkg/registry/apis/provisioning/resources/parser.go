@@ -74,7 +74,7 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 type Parser struct {
 	// The target repository
 	repo   *provisioning.Repository
-	mapper IDMapper
+	mapper NameMapper
 
 	// client helper (for this namespace?)
 	client *DynamicClient
