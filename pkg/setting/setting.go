@@ -154,18 +154,19 @@ type Cfg struct {
 	RendererDefaultImageScale      float64
 
 	// Security
-	DisableInitAdminCreation          bool
-	DisableBruteForceLoginProtection  bool
-	CookieSecure                      bool
-	CookieSameSiteDisabled            bool
-	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
-	XSSProtectionHeader               bool
-	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
-	StrictTransportSecurityPreload    bool
-	StrictTransportSecuritySubDomains bool
+	DisableInitAdminCreation             bool
+	DisableBruteForceLoginProtection     bool
+	BruteForceLoginProtectionMaxAttempts int64
+	CookieSecure                         bool
+	CookieSameSiteDisabled               bool
+	CookieSameSiteMode                   http.SameSite
+	AllowEmbedding                       bool
+	XSSProtectionHeader                  bool
+	ContentTypeProtectionHeader          bool
+	StrictTransportSecurity              bool
+	StrictTransportSecurityMaxAge        int
+	StrictTransportSecurityPreload       bool
+	StrictTransportSecuritySubDomains    bool
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
@@ -195,7 +196,6 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
-	PluginInstallToken               string
 	ForwardHostEnvVars               []string
 	PreinstallPlugins                []InstallPlugin
 	PreinstallPluginsAsync           bool
@@ -302,11 +302,7 @@ type Cfg struct {
 	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
-	AnonymousDeviceLimit int64
+	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
 
@@ -527,21 +523,27 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage    map[string]UnifiedStorageConfig
-	IndexPath         string
-	IndexWorkers      int
-	IndexMaxBatchSize int
-	IndexListLimit    int
+	UnifiedStorage     map[string]UnifiedStorageConfig
+	IndexPath          string
+	IndexWorkers       int
+	IndexMaxBatchSize  int
+	IndexFileThreshold int
+	IndexMinCount      int
 }
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
+	DataSyncerInterval time.Duration
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
+	URL     string `json:"url,omitempty"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -597,7 +599,14 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
-		"GF_ENTITY_API_DB_PASS",
+		"API_DB_PASS",
+		"ID_FORWARDING_TOKEN$",
+		"AUTHENTICATION_TOKEN$",
+		"AUTH_TOKEN$",
+		"RENDERER_TOKEN$",
+		"API_TOKEN$",
+		"WEBHOOK_TOKEN$",
+		"INSTALL_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1498,7 +1507,14 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+
+	// Ensure at least one login attempt can be performed.
+	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
+		cfg.BruteForceLoginProtectionMaxAttempts = 1
+	}
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
@@ -1634,12 +1650,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// anonymous access
-	anonSection := iniFile.Section("auth.anonymous")
-	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
-	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
-	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
+	cfg.readAnonymousSettings()
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")

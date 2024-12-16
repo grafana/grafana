@@ -245,6 +245,7 @@
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
+      "loading": "Loading...",
       "view": "View"
     },
     "contact-points": {
@@ -307,7 +308,7 @@
           "title": "Data source-managed"
         },
         "grafanaManaged": {
-          "export-new-rule": "Export new alert rule",
+          "export-new-rule": "Export rule definition",
           "export-rules": "Export rules",
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
@@ -329,12 +330,27 @@
       "save": "Save mute timing",
       "saving": "Saving mute timing"
     },
+    "notification-preview": {
+      "alertmanager": "Alertmanager:",
+      "error": "Could not load routing preview for {{alertmanager}}",
+      "initialized": "Based on the labels added, alert instances are routed to the following notification policies. Expand each notification policy below to view more details.",
+      "preview-routing": "Preview routing",
+      "title": "Alert instance routing preview",
+      "uninitialized": "When you have your folder selected and your query and labels are configured, click \"Preview routing\" to see the results here."
+    },
     "policies": {
       "default-policy": {
         "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
-        "title": "Default policy"
+        "title": "Default policy",
+        "update": "Update default policy"
+      },
+      "delete": {
+        "confirm": "Yes, delete policy",
+        "warning-1": "Deleting this notification policy will permanently remove it.",
+        "warning-2": "Are you sure you want to delete this policy?"
       },
       "generated-policies": "Auto-generated policies",
+      "matchers": "Matchers",
       "metadata": {
         "active-time": "Active when",
         "delivered-to": "Delivered to",
@@ -366,7 +382,21 @@
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
-      "no-matchers": "No matchers"
+      "no-matchers": "No matchers",
+      "reload-policies": "Reload policies",
+      "save-policy": "Save policy",
+      "update": {
+        "please-wait": "Please wait while we update your notification policies.",
+        "update-policy": "Update policy",
+        "updating": "Updating..."
+      },
+      "update-errors": {
+        "conflict": "The notification policy tree has been updated by another user.",
+        "error-code": "Error message: \"{{error}}\"",
+        "fallback": "Something went wrong when updating your notification policies.",
+        "suffix": "Please refresh the page and try again.",
+        "title": "Error saving notification policy"
+      }
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
@@ -449,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "filter-view": {
+        "no-more-results": "No more results – showing {{numberOfRules}} rules",
+        "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
@@ -1231,6 +1265,8 @@
       "title-with-name": "Table - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Add",
+      "add-to-queryless-extensions": "Go queryless",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
@@ -1254,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
+      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
@@ -1721,6 +1758,16 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Older logs"
+    },
+    "log-details": {
+      "fields": "Fields",
+      "links": "Links",
+      "log-line": "Log line",
+      "no-details": "No details available"
+    },
+    "log-row-message": {
+      "ellipsis": "… ",
+      "more": "more"
     }
   },
   "migrate-to-cloud": {
@@ -2166,9 +2213,6 @@
     },
     "new-folder": {
       "title": "New folder"
-    },
-    "observability": {
-      "title": "Observability"
     },
     "oncall": {
       "title": "OnCall"
@@ -2912,8 +2956,7 @@
       "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON",
-      "view-button-schemav2": "View JSON SchemaV2"
+      "view-button": "View JSON"
     },
     "library": {
       "info": "Create library panel."
@@ -3092,6 +3135,7 @@
       "copy-link-button": "Copy link",
       "delete-button": "Delete snapshot",
       "delete-description": "Are you sure you want to delete this snapshot?",
+      "delete-permission-tooltip": "You don't have permission to delete snapshots",
       "delete-title": "Delete snapshot",
       "deleted-alert": "Snapshot deleted. It could take an hour to be cleared from CDN caches.",
       "expiration-label": "Expires in",
@@ -3195,9 +3239,7 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
-      "data-source": "Data source: ",
-      "date-created": "Date created: ",
-      "metric": "Metric:"
+      "date-created": "Date created: "
     },
     "home": {
       "learn-more": "Learn more",
@@ -3304,6 +3346,12 @@
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
+    },
+    "unknown-table": {
+      "loading": "Loading...",
+      "no-unknowns": "No renamed or missing variables found.",
+      "renamed-or-missing-variables": "Renamed or missing variables",
+      "variable": "Variable"
     }
   }
 }

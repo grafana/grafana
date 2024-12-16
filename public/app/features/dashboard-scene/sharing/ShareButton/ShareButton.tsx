@@ -46,7 +46,12 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-        <Button data-testid={newShareButtonSelector.arrowMenu} size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} />
+        <Button
+          aria-label="share-dropdown-menu"
+          data-testid={newShareButtonSelector.arrowMenu}
+          size="sm"
+          icon={isOpen ? 'angle-up' : 'angle-down'}
+        />
       </Dropdown>
     </ButtonGroup>
   );

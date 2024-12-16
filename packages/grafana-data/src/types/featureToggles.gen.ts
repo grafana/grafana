@@ -43,7 +43,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -59,7 +58,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
@@ -114,7 +112,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesDashboardsAPI?: boolean;
+  kubernetesCliDashboards?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -161,6 +159,7 @@ export interface FeatureToggles {
   onPremToCloudMigrationsAlerts?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
   sqlExpressions?: boolean;
@@ -241,5 +240,10 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
+  unifiedHistory?: boolean;
+  lokiLabelNamesQueryApi?: boolean;
 }

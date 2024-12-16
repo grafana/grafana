@@ -11,11 +11,11 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -44,6 +44,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
+	search        *dashboard.SearchHandler
 	unified       resource.ResourceClient
 
 	log log.Logger
@@ -61,10 +62,6 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
-		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
-	}
-
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -74,6 +71,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -93,11 +91,6 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return dashboard.GetAuthorizer(b.dashboardService, b.log)
-}
-
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -163,6 +156,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+	)
+
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+		scheme,
+	)
+
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
 		storage[dash.StoragePath()],
@@ -173,14 +179,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		scheme,
 		func() runtime.Object { return &dashboardv0alpha1.DashboardWithAccessInfo{} },
 	)
-	if err != nil {
-		return err
-	}
-
-	// Requires hack in to resolve with no name:
-	// pkg/services/apiserver/builder/helper.go#L58
-	storage["search"], err = dashboard.NewSearchConnector(b.unified,
-		func() runtime.Object { return &dashboardv0alpha1.DashboardWithAccessInfo{} }) // TODO... replace with a real model
 	if err != nil {
 		return err
 	}
@@ -224,5 +222,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.search.GetAPIRoutes(defs)
 }

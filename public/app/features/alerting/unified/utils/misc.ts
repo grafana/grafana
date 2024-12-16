@@ -16,6 +16,7 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   Alert,
   CombinedRule,
+  DataSourceRuleGroupIdentifier,
   FilterState,
   RuleIdentifier,
   RulesSource,
@@ -24,11 +25,13 @@ import {
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
+  PromRuleDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import { SupportedErrors, getErrorMessageFromCode, isApiMachineryError } from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
@@ -38,6 +41,19 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+export function createViewLinkV2(
+  groupIdentifier: DataSourceRuleGroupIdentifier,
+  rule: PromRuleDTO,
+  returnTo?: string
+): string {
+  const ruleSourceName = groupIdentifier.rulesSource.name;
+  const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(ruleSourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
@@ -243,9 +259,29 @@ export function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
+export function getErrorCode(error: Error): unknown {
+  return isApiMachineryError(error) ? error.data.details.uid : error.cause;
+}
+
+/* this function will check if the error passed as the first argument contains an error code */
+export function isErrorMatchingCode(error: Error | undefined, code: SupportedErrors): boolean {
+  if (!error) {
+    return false;
+  }
+
+  return getErrorCode(error) === code;
+}
+
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
+    if (isApiMachineryError(error)) {
+      const message = getErrorMessageFromCode(error.data.details.uid);
+      if (message) {
+        return message;
+      }
+    }
+
     if (error.message) {
       return error.message;
     }
@@ -261,6 +297,15 @@ export function stringifyErrorLike(error: unknown): string {
 
   if (!isErrorLike(error)) {
     return String(error);
+  }
+
+  // if the error is one we know how to translate via an error code:
+  const code = getErrorCode(error);
+  if (typeof code === 'string') {
+    const message = getErrorMessageFromCode(code);
+    if (message) {
+      return message;
+    }
   }
 
   if (error.cause) {

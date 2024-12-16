@@ -11,7 +11,6 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -24,7 +23,7 @@ const tracingPrexfixBleve = "unified_search.bleve."
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
-type bleveOptions struct {
+type BleveOptions struct {
 	// The root folder where file objects are saved
 	Root string
 
@@ -39,23 +38,19 @@ type bleveOptions struct {
 type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
-	opts   bleveOptions
+	opts   BleveOptions
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts bleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) *bleveBackend {
 	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
-	}
-
-	if reg != nil {
-		b.log.Info("TODO, register metrics collectors!")
 	}
 
 	return b
@@ -90,9 +85,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
-	b.cacheMu.Lock()
-	defer b.cacheMu.Unlock()
-
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -104,11 +96,13 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapper)
-		if err == nil {
-			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
-		}
+
+		// TODO, check last RV so we can see if the numbers have changed
+
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err
@@ -140,8 +134,23 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
+	b.cacheMu.Lock()
 	b.cache[key] = idx
+	b.cacheMu.Unlock()
 	return idx, nil
+}
+
+// TotalDocs returns the total number of documents across all indices
+func (b *bleveBackend) TotalDocs() int64 {
+	var totalDocs int64
+	for _, v := range b.cache {
+		c, err := v.index.DocCount()
+		if err != nil {
+			continue
+		}
+		totalDocs += int64(c)
+	}
+	return totalDocs
 }
 
 type bleveIndex struct {
@@ -242,13 +251,13 @@ func (b *bleveIndex) Search(
 		searchrequest.Fields = f
 	}
 
-	res, err := index.Search(searchrequest)
+	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
 		return nil, err
 	}
 
-	response.TotalHits = res.Total
-	response.QueryCost = res.Cost
+	response.TotalHits = int64(res.Total)
+	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
 	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
@@ -283,6 +292,27 @@ func (b *bleveIndex) Search(
 		response.Facet[k] = f
 	}
 	return response, nil
+}
+
+func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	if folder == "" {
+		count, err := b.index.DocCount()
+		return int64(count), err
+	}
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query: &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		},
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // make sure the request key matches the index
@@ -368,7 +398,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
 		// NOTE, we likely want to pass in the already called checker because the resource server
 		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization")
+		fmt.Printf("TODO... check authorization\n")
 	}
 
 	switch len(queries) {

@@ -5,13 +5,16 @@ import { getComboboxStyles } from './getComboboxStyles';
 
 interface Props {
   option: ComboboxOption<string | number>;
+  id: string;
 }
 
-export const OptionListItem = ({ option }: Props) => {
+export const OptionListItem = ({ option, id }: Props) => {
   const styles = useStyles2(getComboboxStyles);
   return (
     <div className={styles.optionBody}>
-      <span className={styles.optionLabel}>{option.label ?? option.value}</span>
+      <span className={styles.optionLabel} id={id}>
+        {option.label ?? option.value}
+      </span>
       {option.description && <span className={styles.optionDescription}>{option.description}</span>}
     </div>
   );

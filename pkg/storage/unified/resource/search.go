@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -44,6 +46,9 @@ type ResourceIndex interface {
 	// Execute an origin query -- access control is not not checked for each item
 	// NOTE: this will likely be used for provisioning, or it will be removed
 	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
+
+	// Get the number of documents in the index
+	DocCount(ctx context.Context, folder string) (int64, error)
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -68,6 +73,9 @@ type SearchBackend interface {
 		// The builder will write all documents before returning
 		builder func(index ResourceIndex) (int64, error),
 	) (ResourceIndex, error)
+
+	// Gets the total number of documents across all indexes
+	TotalDocs() int64
 }
 
 const tracingPrexfixSearch = "unified_search."
@@ -78,11 +86,17 @@ type searchSupport struct {
 	log         *slog.Logger
 	storage     StorageBackend
 	search      SearchBackend
+	access      authz.AccessClient
 	builders    *builderCache
 	initWorkers int
+	initMinSize int
 }
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+var (
+	_ ResourceIndexServer = (*searchSupport)(nil)
+)
+
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -93,11 +107,13 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	}
 
 	support = &searchSupport{
+		access:      access,
 		tracer:      tracer,
 		storage:     storage,
 		search:      opts.Backend,
 		log:         slog.Default().With("logger", "resource-search"),
 		initWorkers: opts.WorkerThreads,
+		initMinSize: opts.InitMinCount,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -113,45 +129,149 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	return support, err
 }
 
+// History implements ResourceIndexServer.
+func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+}
+
+// Origin implements ResourceIndexServer.
+func (s *searchSupport) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+	return nil, fmt.Errorf("TBD.. rename to repository")
+}
+
+// Search implements ResourceIndexServer.
+func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	nsr := NamespacedResource{
+		Group:     req.Options.Key.Group,
+		Namespace: req.Options.Key.Namespace,
+		Resource:  req.Options.Key.Resource,
+	}
+	idx, err := s.getOrCreateIndex(ctx, nsr)
+	if err != nil {
+		return &ResourceSearchResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+
+	// Get the federated indexes
+	federate := make([]ResourceIndex, len(req.Federated))
+	for i, f := range req.Federated {
+		nsr.Group = f.Group
+		nsr.Resource = f.Resource
+		federate[i], err = s.getOrCreateIndex(ctx, nsr)
+		if err != nil {
+			return &ResourceSearchResponse{
+				Error: AsErrorResult(err),
+			}, nil
+		}
+	}
+
+	return idx.Search(ctx, s.access, req, federate)
+}
+
+// GetStats implements ResourceServer.
+func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+	if req.Namespace == "" {
+		return &ResourceStatsResponse{
+			Error: NewBadRequestError("missing namespace"),
+		}, nil
+	}
+	rsp := &ResourceStatsResponse{}
+
+	// Explicit list of kinds
+	if len(req.Kinds) > 0 {
+		rsp.Stats = make([]*ResourceStatsResponse_Stats, len(req.Kinds))
+		for i, k := range req.Kinds {
+			parts := strings.SplitN(k, "/", 2)
+			index, err := s.getOrCreateIndex(ctx, NamespacedResource{
+				Namespace: req.Namespace,
+				Group:     parts[0],
+				Resource:  parts[1],
+			})
+			if err != nil {
+				rsp.Error = AsErrorResult(err)
+				return rsp, nil
+			}
+			count, err := index.DocCount(ctx, req.Folder)
+			if err != nil {
+				rsp.Error = AsErrorResult(err)
+				return rsp, nil
+			}
+			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+				Group:    parts[0],
+				Resource: parts[1],
+				Count:    count,
+			}
+		}
+		return rsp, nil
+	}
+
+	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	if err != nil {
+		return &ResourceStatsResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+	rsp.Stats = make([]*ResourceStatsResponse_Stats, len(stats))
+
+	// When not filtered by folder or repository, we can use the results directly
+	if req.Folder == "" {
+		for i, stat := range stats {
+			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+				Group:    stat.Group,
+				Resource: stat.Resource,
+				Count:    stat.Count,
+			}
+		}
+		return rsp, nil
+	}
+
+	for i, stat := range stats {
+		index, err := s.getOrCreateIndex(ctx, NamespacedResource{
+			Namespace: req.Namespace,
+			Group:     stat.Group,
+			Resource:  stat.Resource,
+		})
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+		count, err := index.DocCount(ctx, req.Folder)
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+		rsp.Stats[i] = &ResourceStatsResponse_Stats{
+			Group:    stat.Group,
+			Resource: stat.Resource,
+			Count:    count,
+		}
+	}
+	return rsp, nil
+}
+
 // init is called during startup.  any failure will block startup and continued execution
 func (s *searchSupport) init(ctx context.Context) error {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
 	defer span.End()
-
-	// TODO, replace namespaces with a query that gets top values
-	namespaces, err := s.storage.Namespaces(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Hardcoded for now... should come from the query
-	kinds := []schema.GroupResource{
-		{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Group: "playlist.grafana.app", Resource: "playlists"},
-	}
+	start := time.Now().Unix()
 
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	// Prepare all the (large) indexes
-	// TODO, threading and query real information:
-	// SELECT namespace,"group",resource,COUNT(*),resource_version FROM resource
-	//   GROUP BY "group", "resource", "namespace"
-	//   ORDER BY resource_version desc;
-	for _, ns := range namespaces {
-		for _, gr := range kinds {
-			group.Go(func() error {
-				s.log.Debug("initializing search index", "namespace", ns, "gr", gr)
-				totalBatchesIndexed++
-				_, _, err = s.build(ctx, NamespacedResource{
-					Group:     gr.Group,
-					Resource:  gr.Resource,
-					Namespace: ns,
-				}, 10, 0) // TODO, approximate size
-				return err
-			})
-		}
+	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
+	if err != nil {
+		return err
+	}
+
+	for _, info := range stats {
+		group.Go(func() error {
+			s.log.Debug("initializing search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
+			totalBatchesIndexed++
+			_, _, err = s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
+			return err
+		})
 	}
 
 	err = group.Wait()
@@ -160,13 +280,116 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
-	s.log.Debug("TODO, listen to all events")
+	// Now start listening for new events
+	watchctx := context.Background() // new context?
+	events, err := s.storage.WatchWriteEvents(watchctx)
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			v := <-events
+
+			s.handleEvent(watchctx, v)
+		}
+	}()
+
+	end := time.Now().Unix()
+	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
+	if IndexMetrics != nil {
+		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
 
 	return nil
 }
 
+// Async event
+func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
+	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
+		s.log.Info("ignoring watch event", "type", evt.Type)
+		return
+	}
+
+	nsr := NamespacedResource{
+		Namespace: evt.Key.Namespace,
+		Group:     evt.Key.Group,
+		Resource:  evt.Key.Resource,
+	}
+
+	index, err := s.getOrCreateIndex(ctx, nsr)
+	if err != nil {
+		s.log.Warn("error getting index for watch event", "error", err)
+		return
+	}
+
+	builder, err := s.builders.get(ctx, nsr)
+	if err != nil {
+		s.log.Warn("error getting builder for watch event", "error", err)
+		return
+	}
+
+	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
+	if err != nil {
+		s.log.Warn("error building document watch event", "error", err)
+		return
+	}
+
+	switch evt.Type {
+	case WatchEvent_ADDED, WatchEvent_MODIFIED:
+		err = index.Write(doc)
+		if err != nil {
+			s.log.Warn("error writing document watch event", "error", err)
+			return
+		}
+		if evt.Type == WatchEvent_ADDED {
+			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+		}
+	case WatchEvent_DELETED:
+		err = index.Delete(evt.Key)
+		if err != nil {
+			s.log.Warn("error deleting document watch event", "error", err)
+			return
+		}
+		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+	default:
+		// do nothing
+		s.log.Warn("unknown watch event", "type", evt.Type)
+	}
+
+	// record latency from when event was created to when it was indexed
+	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
+	if latencySeconds > 5 {
+		s.log.Warn("high index latency", "latency", latencySeconds)
+	}
+	if IndexMetrics != nil {
+		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+	}
+}
+
+func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	// TODO???
+	// We want to block while building the index and return the same index for the key
+	// simple mutex not great... we don't want to block while anything in building, just the same key
+
+	idx, err := s.search.GetIndex(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if idx == nil {
+		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
+		if err != nil {
+			return nil, err
+		}
+		if idx == nil {
+			return nil, fmt.Errorf("nil index after build")
+		}
+	}
+	return idx, nil
+}
+
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
-	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
 	builder, err := s.builders.get(ctx, nsr)
@@ -216,6 +439,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 	if err != nil {
 		return nil, 0, err
+	}
+
+	// Record the number of objects indexed for the kind/resource
+	docCount, err := index.DocCount(ctx, "")
+	if err != nil {
+		s.log.Warn("error getting doc count", "error", err)
+	}
+	if IndexMetrics != nil {
+		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
 	}
 
 	if err == nil {

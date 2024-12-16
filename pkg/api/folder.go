@@ -49,8 +49,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
 
@@ -65,21 +63,17 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			folderRoute.Post("/", handler.createFolder)
 			folderRoute.Get("/", handler.getFolders)
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Put("/", handler.updateFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
+				folderUidRoute.Get("/", handler.getFolder)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 			folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
-			})
-		}
-		// Only adding support for some routes with the k8s handler for now. Include the rest here.
-		if false {
-			handler := newFolderK8sHandler(hs)
-			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", handler.getFolder)
-				folderUidRoute.Put("/:uid", handler.updateFolder)
+				folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
 			})
 		}
 	})
@@ -969,7 +963,7 @@ func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Fol
 		UpdatedBy: updater,
 		Updated:   fold.Updated,
 		// #TODO version doesn't seem to be used--confirm or set it properly
-		Version:       1,
+		Version:       fold.Version,
 		AccessControl: acMetadata,
 		ParentUID:     fold.ParentUID,
 	}, nil
@@ -994,19 +988,9 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	if len(f.FullpathUIDs) == 0 {
-		return map[string]bool{}, nil
-	}
-
-	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
-	// The first part of the path is the newly created folder which we don't need to check here
-	if len(parentsFullPathUIDs) < 2 {
-		return map[string]bool{}, nil
-	}
-
-	folderIDs := map[string]bool{f.UID: true}
-	for _, uid := range parentsFullPathUIDs[1:] {
-		folderIDs[uid] = true
+	folderIDs, err := fk8s.getParents(f)
+	if err != nil {
+		return nil, err
 	}
 
 	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
@@ -1018,4 +1002,23 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		}
 	}
 	return metadata, nil
+}
+
+func (fk8s *folderK8sHandler) getParents(f *folder.Folder) (map[string]bool, error) {
+	folderIDs := map[string]bool{f.UID: true}
+	if (f.UID == accesscontrol.GeneralFolderUID) || (f.UID == folder.SharedWithMeFolderUID) {
+		return folderIDs, nil
+	}
+
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
+	// The first part of the path is the newly created folder which we don't need to check here
+	if len(parentsFullPathUIDs) < 2 {
+		return folderIDs, nil
+	}
+
+	for _, uid := range parentsFullPathUIDs[1:] {
+		folderIDs[uid] = true
+	}
+
+	return folderIDs, nil
 }
