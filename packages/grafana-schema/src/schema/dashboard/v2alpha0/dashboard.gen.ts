@@ -700,7 +700,7 @@ export interface PanelSpec {
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
-	displayMode?: "default" | "transparent";
+	transparent?: boolean;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
