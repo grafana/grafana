@@ -215,6 +215,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
   });
 
+  dashboardScene.setInitialSaveModel(dto.spec);
+
   return dashboardScene;
 }
 

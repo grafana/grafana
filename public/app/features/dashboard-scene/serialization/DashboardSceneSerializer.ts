@@ -150,7 +150,7 @@ export function getDashboardSceneSerializer(
     return new V1DashboardSerializer();
   }
 
-  if (config.featureToggles.dashboardSchemaV2) {
+  if (config.featureToggles.useV2DashboardsAPI) {
     return new V2DashboardSerializer();
   }
 
