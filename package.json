@@ -220,7 +220,7 @@
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
-    "prettier": "3.3.3",
+    "prettier": "3.4.2",
     "pseudoizer": "^0.1.0",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
@@ -452,7 +452,7 @@
   },
   "packageManager": "yarn@4.5.3",
   "dependenciesMeta": {
-    "prettier@3.3.3": {
+    "prettier@3.4.2": {
       "unplugged": true
     }
   },
