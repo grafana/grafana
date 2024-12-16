@@ -5,6 +5,7 @@ import {
   standardFieldConfigEditorRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
 import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { PanelMigrationModel } from '../types/panel';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
@@ -305,6 +306,180 @@ describe('PanelPlugin', () => {
             overrides: [],
           });
         });
+      });
+    });
+  });
+
+  describe('setMigrationHandler', () => {
+    it('should handle synchronous migrations', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      const mockMigration = () => ({
+        newOption: 'migrated',
+      });
+
+      panel.setMigrationHandler(mockMigration);
+
+      const migrationModel: PanelMigrationModel = {
+        id: 1,
+        type: 'test-panel',
+        options: { oldOption: 'value' },
+        fieldConfig: { defaults: {}, overrides: [] },
+        pluginVersion: '1.0.0',
+      };
+
+      expect(panel.onPanelMigration).toBeDefined();
+      expect(panel.onPanelMigration!(migrationModel)).toEqual({
+        newOption: 'migrated',
+      });
+    });
+
+    it('should handle async migrations', async () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      const mockAsyncMigration = async () => {
+        return Promise.resolve({
+          newOption: 'async-migrated',
+        });
+      };
+
+      panel.setMigrationHandler(mockAsyncMigration);
+
+      const migrationModel: PanelMigrationModel = {
+        id: 1,
+        type: 'test-panel',
+        options: { oldOption: 'value' },
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      const result = await panel.onPanelMigration!(migrationModel);
+      expect(result).toEqual({
+        newOption: 'async-migrated',
+      });
+    });
+
+    it('should handle complex panel migrations with advanced transformations', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+
+      const mockMigration = (model: PanelMigrationModel) => {
+        const { options, fieldConfig, title, id, type, pluginVersion } = model;
+
+        //notice many of these migrations don't make sense in real code but are here
+        //to make sure the attributes of the PanelMigrationModel are used and tested
+        const baseMigration = {
+          ...options,
+          display: {
+            ...options.display,
+            mode: options.display?.type === 'legacy' ? 'modern' : options.display?.mode,
+            title: title?.toLowerCase() ?? 'untitled',
+            panelId: `${type}-${id}`,
+          },
+          thresholds: options.thresholds?.map((t: { value: string | number; color: string }) => ({
+            ...t,
+            value: typeof t.value === 'string' ? parseInt(t.value, 10) : t.value,
+            // Use fieldConfig defaults for threshold colors if available
+            color: fieldConfig.defaults?.color ?? t.color,
+          })),
+          metadata: {
+            migrationVersion: pluginVersion ? `${pluginVersion} -> 2.0.0` : '2.0.0',
+            migratedFields: Object.keys(fieldConfig.defaults ?? {}),
+            overrideCount: fieldConfig.overrides?.length ?? 0,
+          },
+          // Merge custom field defaults into options
+          customDefaults: fieldConfig.defaults?.custom ?? {},
+          // Transform overrides into a map
+          overrideMap: fieldConfig.overrides?.reduce(
+            (acc, override) => ({
+              ...acc,
+              [override.matcher.id]: override.properties,
+            }),
+            {}
+          ),
+        };
+
+        // Apply panel type specific migrations
+        if (type.includes('visualization')) {
+          return {
+            ...baseMigration,
+            visualizationSpecific: {
+              enhanced: true,
+              legacyFormat: false,
+            },
+          };
+        }
+
+        return baseMigration;
+      };
+
+      panel.setMigrationHandler(mockMigration);
+
+      const complexModel: PanelMigrationModel = {
+        id: 123,
+        type: 'visualization-panel',
+        title: 'Complex METRICS',
+        pluginVersion: '1.0.0',
+        options: {
+          display: {
+            type: 'legacy',
+            showHeader: true,
+          },
+          thresholds: [
+            { value: '90', color: 'red' },
+            { value: '50', color: 'yellow' },
+          ],
+          queries: ['A', 'B'],
+        },
+        fieldConfig: {
+          defaults: {
+            color: { mode: 'thresholds' },
+            custom: {
+              lineWidth: 1,
+              fillOpacity: 0.5,
+            },
+            mappings: [],
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'cpu' },
+              properties: [{ id: 'color', value: 'red' }],
+            },
+            {
+              matcher: { id: 'byValue', options: 'memory' },
+              properties: [{ id: 'unit', value: 'bytes' }],
+            },
+          ],
+        },
+      };
+
+      const result = panel.onPanelMigration!(complexModel);
+
+      expect(result).toMatchObject({
+        display: {
+          mode: 'modern',
+          showHeader: true,
+          title: 'complex metrics',
+          panelId: 'visualization-panel-123',
+        },
+        thresholds: [
+          { value: 90, color: { mode: 'thresholds' } },
+          { value: 50, color: { mode: 'thresholds' } },
+        ],
+        queries: ['A', 'B'],
+        metadata: {
+          migrationVersion: '1.0.0 -> 2.0.0',
+          migratedFields: ['color', 'custom', 'mappings'],
+          overrideCount: 2,
+        },
+        customDefaults: {
+          lineWidth: 1,
+          fillOpacity: 0.5,
+        },
+        overrideMap: {
+          byName: [{ id: 'color', value: 'red' }],
+          byValue: [{ id: 'unit', value: 'bytes' }],
+        },
+        visualizationSpecific: {
+          enhanced: true,
+          legacyFormat: false,
+        },
       });
     });
   });
