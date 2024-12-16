@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -106,7 +108,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 }
 
 type RepositoryTester struct {
-	client *resources.ClientFactory
+	// Across Grafana
+	clientFactory *resources.ClientFactory
+	// Repository+Jobs
+	client client.ProvisioningV0alpha1Interface
+
 	logger *slog.Logger
 }
 
@@ -128,7 +134,7 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 	// Check if the folder exists
 	cfg := repo.Config()
 	if cfg.Spec.Folder != "" {
-		dynamicClient, _, err := t.client.New(cfg.Namespace)
+		dynamicClient, _, err := t.clientFactory.New(cfg.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -147,6 +153,30 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 		}
 	}
 	return repo.Test(ctx, t.logger)
+}
+
+// This function will check if the repository is configured and functioning as expected
+func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisioning.Repository, res *provisioning.TestResults) (*provisioning.Repository, error) {
+	if res == nil {
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"missing health status",
+			},
+		}
+	}
+
+	repo := cfg.DeepCopy()
+	repo.Status.Health = provisioning.HealthStatus{
+		Healthy:    res.Success,
+		Checked:    time.Now().UnixMilli(),
+		Generation: cfg.Generation,
+		Message:    res.Errors,
+	}
+
+	_, err := t.client.Repositories(repo.GetNamespace()).
+		UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+	return repo, err
 }
 
 // Validate a repository

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -106,10 +107,6 @@ func NewProvisioningAPIBuilder(
 			render:     render,
 			blobstore:  blobstore,
 			identities: identities,
-		},
-		tester: &RepositoryTester{
-			client: clientFactory,
-			logger: slog.Default().With("logger", "provisioning-repository-tester"),
 		},
 		jobs: jobs.NewJobQueue(50), // in memory for now
 	}
@@ -250,6 +247,44 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 		return nil, err
 	}
 	return b.asRepository(ctx, obj)
+}
+
+func timeSince(when int64) time.Duration {
+	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
+}
+
+func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+	repo, err := b.GetRepository(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	status := repo.Config().Status.Health
+	if !status.Healthy {
+		if timeSince(status.Checked) > time.Second*25 {
+			// Check health again
+			s, err := b.tester.TestRepository(ctx, repo)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Write and return the repo with current status
+			cfg, err := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg.Status.Health.Healthy {
+				status = cfg.Status.Health
+				repo, err = b.AsRepository(ctx, cfg)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		if !status.Healthy {
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusFailedDependency,
+				Message: "The repository configuration is not healthy",
+			}}
+		}
+	}
+	return repo, err
 }
 
 func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
@@ -521,6 +556,13 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			)
 			if err != nil {
 				return err
+			}
+
+			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
+			b.tester = &RepositoryTester{
+				clientFactory: b.client,
+				client:        c.ProvisioningV0alpha1(),
+				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)

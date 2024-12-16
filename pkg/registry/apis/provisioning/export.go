@@ -58,7 +58,7 @@ func (c *exportConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetRepository(ctx, name)
+	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
