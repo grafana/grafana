@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { HistoryChangedEvent } from 'app/types/events';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { SerializedTrailHistory } from './TrailStore/TrailStore';
@@ -161,7 +161,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
           if (config.featureToggles.unifiedHistory) {
             appEvents.publish(
-              new HistoryChangedEvent({
+              new RecordHistoryEntryEvent({
                 name: 'Time range changed',
                 description: tooltip,
                 url: window.location.href,

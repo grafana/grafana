@@ -6,7 +6,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
-import { HistoryChangedEvent } from 'app/types/events';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -19,7 +19,7 @@ export function HistoryContainer() {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const sub = appEvents.subscribe(HistoryChangedEvent, (ev) => {
+    const sub = appEvents.subscribe(RecordHistoryEntryEvent, (ev) => {
       const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
       if (clickedHistory) {
         store.setObject('CLICKING_HISTORY', false);
