@@ -1,6 +1,7 @@
 import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertingApi } from './alertingApi';
+import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {
   status: string;
@@ -41,6 +42,9 @@ export const prometheusApi = alertingApi.injectEndpoints({
           group_next_token: groupNextToken,
         },
       }),
+      transformResponse: (response: PromRulesResponse<PromRuleGroupDTO<PromRuleDTO>>) => {
+        return { ...response, data: { ...response.data, groups: response.data.groups.map(normalizeRuleGroup) } };
+      },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
       query: ({ namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({

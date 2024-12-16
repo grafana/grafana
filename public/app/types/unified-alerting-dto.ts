@@ -170,7 +170,9 @@ export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
 }
 export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 
-export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {}
+export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
+  folderUid: string;
+}
 
 export interface PromResponse<T> {
   status: 'success' | 'error' | ''; // mocks return empty string

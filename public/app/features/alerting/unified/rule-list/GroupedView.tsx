@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { groupBy } from 'lodash';
 import { PropsWithChildren, ReactNode, useMemo, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -6,31 +7,29 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, IconButton, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import {
-  DataSourceNamespaceIdentifier,
   DataSourceRuleGroupIdentifier,
   ExternalRulesSourceIdentifier,
-  GrafanaNamespaceIdentifier,
-  GrafanaRuleGroupIdentifier,
-  GrafanaRulesSourceIdentifier,
   GrafanaRulesSourceSymbol,
   RuleGroup,
   RulesSourceIdentifier,
 } from 'app/types/unified-alerting';
-import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleType, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { groupRulesByFileName } from '../api/prometheus';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
-import { getExternalRulesSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getExternalRulesSources, GrafanaRulesSource } from '../utils/datasource';
 import { hashRule } from '../utils/rule-id';
 
 import { AlertRuleLoader } from './AlertRuleLoader';
+import { AlertRuleListItem, RecordingRuleListItem } from './components/AlertRuleListItem';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { DataSourceIcon } from './components/Namespace';
 import { LoadingIndicator } from './components/RuleGroup';
 import { useRuleGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusRuleNamespaces } from './hooks/usePaginatedPrometheusRuleNamespaces';
+import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusRuleNamespaces';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const GROUP_PAGE_SIZE = 40;
@@ -53,16 +52,7 @@ interface DataSourceLoaderProps {
 }
 
 export function GrafanaDataSourceLoader() {
-  return (
-    <PaginatedDataSourceLoader
-      rulesSourceIdentifier={{
-        uid: GrafanaRulesSourceSymbol,
-        name: GRAFANA_RULES_SOURCE_NAME,
-        ruleSourceType: 'grafana',
-      }}
-      application="grafana"
-    />
-  );
+  return <PaginatedGrafanaLoader />;
 }
 
 export function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
@@ -88,29 +78,78 @@ export function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProp
   return null;
 }
 
-// TODO Try to use a better rules source identifier
-interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
-  rulesSourceIdentifier: RulesSourceIdentifier;
-}
+function PaginatedGrafanaLoader() {
+  const { grafanaGroupsGenerator } = useRuleGroupsGenerator();
 
-function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
-  const { uid, name } = rulesSourceIdentifier;
-  const { prometheusGroupsGenerator, grafanaGroupsGenerator } = useRuleGroupsGenerator();
-
-  const groupsGenerator = useRef(
-    rulesSourceIdentifier.ruleSourceType === 'external'
-      ? prometheusGroupsGenerator(rulesSourceIdentifier, GROUP_PAGE_SIZE)
-      : grafanaGroupsGenerator(GROUP_PAGE_SIZE)
-  );
+  const groupsGenerator = useRef(grafanaGroupsGenerator(GROUP_PAGE_SIZE));
 
   const {
-    page: ruleNamespaces,
+    page: groupsPage,
     nextPage,
     previousPage,
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusRuleNamespaces(groupsGenerator.current, rulesSourceIdentifier, GROUP_PAGE_SIZE);
+  } = usePaginatedPrometheusGroups(groupsGenerator.current, GROUP_PAGE_SIZE);
+
+  const groupsByFolder = groupBy(groupsPage, 'folderUid');
+
+  return (
+    <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
+      <Stack direction="column" gap={1}>
+        {Object.entries(groupsByFolder).map(([folderUid, groups]) => (
+          <ListSection
+            key={folderUid}
+            title={
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder" />{' '}
+                <Text variant="body" element="h3">
+                  {groups[0].file}
+                </Text>
+              </Stack>
+            }
+          >
+            {groups.map((group) => (
+              <GrafanaRuleGroupListItem
+                key={`grafana-ns-${folderUid}-${group.name}`}
+                group={group}
+                namespaceName={groups[0].file}
+              />
+            ))}
+          </ListSection>
+        ))}
+        <LazyPagination
+          nextPage={nextPage}
+          previousPage={previousPage}
+          canMoveForward={canMoveForward}
+          canMoveBackward={canMoveBackward}
+        />
+      </Stack>
+    </DataSourceSection>
+  );
+}
+
+// TODO Try to use a better rules source identifier
+interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+}
+
+function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
+  const { uid, name } = rulesSourceIdentifier;
+  const { prometheusGroupsGenerator } = useRuleGroupsGenerator();
+
+  const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, GROUP_PAGE_SIZE));
+
+  const {
+    page: groupsPage,
+    nextPage,
+    previousPage,
+    canMoveForward,
+    canMoveBackward,
+    isLoading,
+  } = usePaginatedPrometheusGroups(groupsGenerator.current, GROUP_PAGE_SIZE);
+
+  const ruleNamespaces = useMemo(() => groupRulesByFileName(groupsPage, name), [groupsPage, name]);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -132,7 +171,7 @@ function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: Pagin
                 key={`${String(rulesSourceIdentifier.uid)}-${namespace.name}-${group.name}`}
                 group={group}
                 rulesSourceIdentifier={rulesSourceIdentifier}
-                namespaceId={namespace}
+                namespaceName={namespace.name}
               />
             ))}
           </ListSection>
@@ -148,47 +187,100 @@ function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: Pagin
   );
 }
 
-interface RuleGroupListItemProps<T extends ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier> {
-  rulesSourceIdentifier: T;
-  group: RuleGroup;
-  namespaceId: T extends ExternalRulesSourceIdentifier
-    ? DataSourceNamespaceIdentifier
-    : T extends GrafanaRulesSourceIdentifier
-      ? GrafanaNamespaceIdentifier
-      : never;
+interface GrafanaRuleGroupListItemProps {
+  group: GrafanaPromRuleGroupDTO;
+  namespaceName: string;
 }
 
-function RuleGroupListItem<T extends RulesSourceIdentifier>({
-  rulesSourceIdentifier,
-  group,
-  namespaceId,
-}: RuleGroupListItemProps<T>) {
+function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
+  return (
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
+                <Menu.Item label="Re-order rules" icon="flip" />
+                <Menu.Divider />
+                <Menu.Item label="Export" icon="download-alt" />
+                <Menu.Item label="Delete" icon="trash-alt" destructive />
+              </Menu>
+            }
+          >
+            <IconButton name="ellipsis-h" aria-label="rule group actions" />
+          </Dropdown>
+        </>
+      }
+    >
+      {group.rules.map((rule) => {
+        switch (rule.type) {
+          case PromRuleType.Alerting:
+            return (
+              <AlertRuleListItem
+                name={rule.name}
+                rulesSource={GrafanaRulesSource}
+                application="grafana"
+                group={group.name}
+                namespace={namespaceName}
+                href={''}
+                summary={rule.annotations?.summary}
+                state={rule.state}
+                health={rule.health}
+                error={rule.lastError}
+                labels={rule.labels}
+                isProvisioned={undefined}
+                instancesCount={rule.alerts?.length}
+                // actions={<></>}
+                // origin={originMeta}
+              />
+            );
+          case PromRuleType.Recording:
+            return (
+              <RecordingRuleListItem
+                name={rule.name}
+                rulesSource={GrafanaRulesSource}
+                application="grafana"
+                group={group.name}
+                namespace={namespaceName}
+                href={''}
+                health={rule.health}
+                error={rule.lastError}
+                labels={rule.labels}
+                isProvisioned={undefined}
+                // actions={actions}
+                // origin={originMeta}
+              />
+            );
+          default:
+            return <div>Unknown rule type</div>;
+        }
+      })}
+    </ListGroup>
+  );
+}
+
+interface RuleGroupListItemProps {
+  group: RuleGroup;
+  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+  namespaceName: string;
+}
+
+function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: RuleGroupListItemProps) {
   const rulesWithGroupId = useMemo(() => {
-    switch (rulesSourceIdentifier.ruleSourceType) {
-      case 'external':
-        return group.rules.map((rule) => {
-          const groupIdentifier: DataSourceRuleGroupIdentifier = {
-            rulesSource: rulesSourceIdentifier,
-            namespace: namespaceId,
-            groupName: group.name,
-            groupOrigin: 'datasource',
-          };
-          return { rule, groupIdentifier };
-        });
-      case 'grafana':
-        return group.rules.map((rule) => {
-          const groupIdentifier: GrafanaRuleGroupIdentifier = {
-            rulesSource: rulesSourceIdentifier,
-            namespace: namespaceId,
-            groupName: group.name,
-            groupOrigin: 'grafana',
-          };
-          return { rule, groupIdentifier };
-        });
-      default:
-        return [];
-    }
-  }, [group, namespaceId, rulesSourceIdentifier]);
+    return group.rules.map((rule) => {
+      const groupIdentifier: DataSourceRuleGroupIdentifier = {
+        rulesSource: rulesSourceIdentifier,
+        namespace: { name: namespaceName },
+        groupName: group.name,
+        groupOrigin: 'datasource',
+      };
+      return { rule, groupIdentifier };
+    });
+  }, [group, namespaceName, rulesSourceIdentifier]);
 
   return (
     <ListGroup

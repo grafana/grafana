@@ -2,12 +2,7 @@ import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import {
-  ExternalRulesSourceIdentifier,
-  GrafanaRulesSourceIdentifier,
-  RulesSourceIdentifier,
-} from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { BaseQueryFnArgs } from '../../api/alertingApi';
 import { prometheusApi, PromRulesResponse } from '../../api/prometheusApi';
