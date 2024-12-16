@@ -1,5 +1,3 @@
-import { TeamPermissionLevel } from '@grafana/data';
-
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { OrgRole } from '../../../types';
 import { getMockTeam } from '../../teams/__mocks__/teamMocks';

@@ -1,11 +1,15 @@
-export interface Team {
-  id: number; // TODO switch to UUID
-  uid: string; // Prefer UUID
+import { WithAccessControlMetadata } from './accesscontrol';
 
+export interface Team extends WithAccessControlMetadata {
   /**
-   * AccessControl metadata associated with a given resource.
+   * Internal id of team
+   * @deprecated use uid instead
    */
-  accessControl?: Record<string, boolean>;
+  id: number;
+  /**
+   * A unique identifier for the team.
+   */
+  uid: string; // Prefer UUID
   /**
    * AvatarUrl is the team's avatar URL.
    */
@@ -26,33 +30,4 @@ export interface Team {
    * OrgId is the ID of an organisation the team belongs to.
    */
   orgId: number;
-  /**
-   * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
-   */
-  permission: TeamPermissionLevel;
-  /**
-   * RBAC roles assigned to the team.
-   */
-  roles?: Role[];
-}
-
-export enum TeamPermissionLevel {
-  Admin = 4,
-  Editor = 2,
-  Member = 0,
-  Viewer = 1,
-}
-
-export interface Role {
-  uid: string;
-  name: string;
-  displayName: string;
-  description: string;
-  group: string;
-  global: boolean;
-  delegatable?: boolean;
-  mapped?: boolean;
-  version: number;
-  created: string;
-  updated: string;
 }

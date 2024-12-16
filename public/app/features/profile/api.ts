@@ -1,6 +1,7 @@
+import { Team } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { Team, UserDTO, UserOrg, UserSession } from '../../types';
+import { UserDTO, UserOrg, UserSession } from '../../types';
 
 import { ChangePasswordFields, ProfileUpdateFields } from './types';
 
