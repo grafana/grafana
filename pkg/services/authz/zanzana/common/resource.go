@@ -9,82 +9,95 @@ import (
 )
 
 func NewResourceFromCheck(r *authzv1.CheckRequest) Resource {
-	typ := TypeResource
-	if info, ok := GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		typ = info.Type
+	if info, ok := getTypeInfo(r.GetGroup(), r.GetResource()); ok {
+		return newResource(info.Type, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), info.Relations)
 	}
-
-	return newResource(typ, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder())
+	return newResource(TypeResource, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), RelationsResource)
 }
 
 func NewResourceFromBatchItem(i *authzextv1.BatchCheckItem) Resource {
-	typ := TypeResource
-	if info, ok := GetTypeInfo(i.GetGroup(), i.GetResource()); ok {
-		typ = info.Type
+	if info, ok := getTypeInfo(i.GetGroup(), i.GetResource()); ok {
+		return newResource(info.Type, i.GetGroup(), i.GetResource(), i.GetName(), i.GetFolder(), info.Relations)
 	}
-
-	return newResource(typ, i.GetGroup(), i.GetResource(), i.GetName(), i.GetFolder())
+	return newResource(TypeResource, i.GetGroup(), i.GetResource(), i.GetName(), i.GetFolder(), RelationsResource)
 }
 
-func NewResourceFromList(r *authzextv1.ListRequest) Resource {
-	typ := TypeResource
-	if info, ok := GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		typ = info.Type
-	}
+func NewResourceFromList(r *authzv1.ListRequest) Resource {
+	if info, ok := getTypeInfo(r.GetGroup(), r.GetResource()); ok {
+		return newResource(info.Type, r.GetGroup(), r.GetResource(), "", "", info.Relations)
 
-	return newResource(typ, r.GetGroup(), r.GetResource(), "", "")
+	}
+	return newResource(TypeResource, r.GetGroup(), r.GetResource(), "", "", RelationsResource)
 }
 
-func newResource(typ string, group, resource, name, folder string) Resource {
+func newResource(typ string, group, resource, name, folder string, relations []string) Resource {
 	return Resource{
-		Typ:      typ,
-		Group:    group,
-		Resource: resource,
-		Name:     name,
-		Folder:   folder,
+		typ:       typ,
+		group:     group,
+		resource:  resource,
+		name:      name,
+		folder:    folder,
+		relations: relations,
 	}
 }
 
 type Resource struct {
-	Typ      string
-	Group    string
-	Resource string
-	Name     string
-	Folder   string
+	typ       string
+	group     string
+	resource  string
+	name      string
+	folder    string
+	relations []string
 }
 
 func (r Resource) GroupResource() string {
-	return FormatGroupResource(r.Group, r.Resource)
+	return FormatGroupResource(r.group, r.resource)
 }
 
 func (r Resource) GroupResourceIdent() string {
-	return NewGroupResourceIdent(r.Group, r.Resource)
+	return NewGroupResourceIdent(r.group, r.resource)
 }
 
 func (r Resource) ResourceIdent() string {
-	if r.Name == "" {
+	if r.name == "" {
 		return ""
 	}
 
-	if r.Typ == TypeResource {
-		return fmt.Sprintf("%s:%s/%s", r.Typ, r.GroupResource(), r.Name)
+	if r.IsGeneric() {
+		return fmt.Sprintf("%s:%s/%s", r.typ, r.GroupResource(), r.name)
 	}
 
-	return fmt.Sprintf("%s:%s", r.Typ, r.Name)
+	return fmt.Sprintf("%s:%s", r.typ, r.name)
 }
 
 func (r Resource) FolderIdent() string {
-	if r.Folder == "" {
+	if r.folder == "" {
 		return ""
 	}
 
-	return NewFolderIdent(r.Folder)
+	return NewFolderIdent(r.folder)
+}
+
+func (r Resource) IsGeneric() bool {
+	return r.typ == TypeResource
+}
+
+func (r Resource) Type() string {
+	return r.typ
 }
 
 func (r Resource) Context() *structpb.Struct {
+	if !r.IsGeneric() {
+		return nil
+	}
+
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"requested_group": structpb.NewStringValue(r.GroupResource()),
 		},
 	}
+}
+
+func (r Resource) IsValidRelation(relation string) bool {
+	return isValidRelation(relation, r.relations)
 }

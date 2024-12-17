@@ -32,10 +32,11 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 		return res, nil
 	}
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.checkTyped(ctx, r.GetSubject(), relation, r.GetName(), info, store)
+	if resource.IsGeneric() {
+		return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
 	}
-	return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
+
+	return s.checkTyped(ctx, r.GetSubject(), relation, resource, store)
 }
 
 // checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
@@ -68,8 +69,8 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation strin
 }
 
 // checkTyped checks on our typed resources e.g. folder.
-func (s *Server) checkTyped(ctx context.Context, subject, relation, name string, info common.TypeInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
-	if !info.IsValidRelation(relation) {
+func (s *Server) checkTyped(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
+	if !resource.IsValidRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -80,7 +81,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     subject,
 			Relation: relation,
-			Object:   common.NewTypedIdent(info.Type, name),
+			Object:   resource.ResourceIdent(),
 		},
 	})
 	if err != nil {
@@ -100,6 +101,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
 	var (
 		folderIdent    = resource.FolderIdent()
+		resourceCtx    = resource.Context()
 		folderRelation = common.FolderResourceRelation(relation)
 	)
 
@@ -113,7 +115,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 				Relation: folderRelation,
 				Object:   folderIdent,
 			},
-			Context: resource.Context(),
+			Context: resourceCtx,
 		})
 
 		if err != nil {
@@ -127,7 +129,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 
 	resourceIdent := resource.ResourceIdent()
 
-	if !common.IsResourceRelation(relation) || resourceIdent == "" {
+	if !resource.IsValidRelation(relation) || resourceIdent == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -140,7 +142,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 			Relation: relation,
 			Object:   resourceIdent,
 		},
-		Context: resource.Context(),
+		Context: resourceCtx,
 	})
 
 	if err != nil {

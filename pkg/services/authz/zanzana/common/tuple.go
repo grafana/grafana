@@ -92,10 +92,6 @@ func IsFolderResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsFolderResource)
 }
 
-func IsResourceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsResource)
-}
-
 func isValidRelation(relation string, valid []string) bool {
 	for _, r := range valid {
 		if r == relation {
@@ -308,12 +304,4 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
 		),
 	})
-}
-
-func NewResourceContext(group, resource string) *structpb.Struct {
-	return &structpb.Struct{
-		Fields: map[string]*structpb.Value{
-			"requested_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
-		},
-	}
 }

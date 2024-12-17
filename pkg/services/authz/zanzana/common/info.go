@@ -6,23 +6,19 @@ import (
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 )
 
-type TypeInfo struct {
+type typeInfo struct {
 	Type      string
 	Relations []string
 }
 
-func (t TypeInfo) IsValidRelation(relation string) bool {
-	return isValidRelation(relation, t.Relations)
-}
-
-var typedResources = map[string]TypeInfo{
+var typedResources = map[string]typeInfo{
 	FormatGroupResource(
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 	): {Type: "folder", Relations: RelationsFolder},
 }
 
-func GetTypeInfo(group, resource string) (TypeInfo, bool) {
+func getTypeInfo(group, resource string) (typeInfo, bool) {
 	info, ok := typedResources[FormatGroupResource(group, resource)]
 	return info, ok
 }
