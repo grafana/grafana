@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 2
+title: Get started with Grafana Alerting - Part 2 of 3
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 2
+  title: Get started with Grafana Alerting - Part 2 of 3
   description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
   backend:
     imageid: ubuntu
