@@ -16,6 +16,7 @@ import { getByText, render } from '@testing-library/react';
 
 import { MutableDataFrame } from '@grafana/data';
 
+import { VisualizationType } from '../../types';
 import { defaultFilters } from '../../useSearch';
 
 import { TracePageHeader } from './TracePageHeader';
@@ -37,6 +38,8 @@ const setup = () => {
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
+    visualization: 'spanList' as VisualizationType,
+    visualizationOnChange: (v: VisualizationType) => {},
   };
 
   return render(<TracePageHeader {...defaultProps} />);

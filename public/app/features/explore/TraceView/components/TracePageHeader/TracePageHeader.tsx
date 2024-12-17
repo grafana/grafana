@@ -17,20 +17,27 @@ import cx from 'classnames';
 import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, BadgeColor, Icon, RadioButtonGroup, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { VisualizationType } from '../../types';
 import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
+import { getColorByKey } from '../utils/color-generator';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
 import { SpanFilters } from './SpanFilters/SpanFilters';
+
+const VISUALIZATION_OPTIONS: Array<SelectableValue<VisualizationType>> = [
+  { label: 'Span List', value: VisualizationType.SpanList, icon: 'list-ui-alt' },
+  { label: 'Flame Chart', value: VisualizationType.FlameChart, icon: 'fire' },
+];
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -49,6 +56,8 @@ export type TracePageHeaderProps = {
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   setHeaderHeight: (height: number) => void;
+  visualization: VisualizationType;
+  visualizationOnChange: (v: VisualizationType) => void;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -69,8 +78,12 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     spanFilterMatches,
     datasourceType,
     setHeaderHeight,
+    visualization,
+    visualizationOnChange,
   } = props;
   const styles = useStyles2(getNewStyles);
+
+  const theme = useTheme2();
 
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
@@ -167,20 +180,38 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         </span>
       </div>
 
-      <SpanFilters
-        trace={trace}
-        showSpanFilters={showSpanFilters}
-        setShowSpanFilters={setShowSpanFilters}
-        showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-        setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-        showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-        setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
+      <Stack direction="row" justifyContent="space-between">
+        <Stack direction={'row'} gap={1}>
+          {trace.services.map((service) => (
+            <div className={styles.serviceItem}>
+              <Icon name="circle-mono" className={styles.serviceItemIcon} color={getColorByKey(service.name, theme)} />
+              {service.name}
+            </div>
+          ))}
+        </Stack>
+        <RadioButtonGroup<VisualizationType>
+          options={VISUALIZATION_OPTIONS}
+          value={visualization}
+          onChange={visualizationOnChange}
+        />
+      </Stack>
+
+      {visualization !== VisualizationType.FlameChart && (
+        <SpanFilters
+          trace={trace}
+          showSpanFilters={showSpanFilters}
+          setShowSpanFilters={setShowSpanFilters}
+          showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+          setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+          showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+          setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
+          search={search}
+          setSearch={setSearch}
+          spanFilterMatches={spanFilterMatches}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          datasourceType={datasourceType}
+        />
+      )}
     </header>
   );
 });
@@ -275,6 +306,13 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       maxWidth: '30%',
       display: 'inline-block',
+    }),
+    serviceItemIcon: css({
+      marginRight: theme.spacing(1),
+    }),
+    serviceItem: css({
+      marginLeft: theme.spacing(1),
+      lineHeight: theme.spacing(2),
     }),
   };
 };
