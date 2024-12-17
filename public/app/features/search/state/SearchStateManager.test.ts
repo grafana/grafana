@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
@@ -31,6 +33,14 @@ describe('SearchStateManager', () => {
     loadMoreItems: jest.fn(),
     totalRows: 0,
     view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+  });
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('Can get search state manager with initial state', async () => {
@@ -115,9 +125,9 @@ describe('SearchStateManager', () => {
 
       stm.onQueryChange('debugging');
 
-      await wait(150);
+      jest.advanceTimersByTime(150);
 
-      expect(stm.state.result?.totalRows).toEqual(10);
+      await waitFor(() => expect(stm.state.result?.totalRows).toEqual(10));
     });
   });
 });
