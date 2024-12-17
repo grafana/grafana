@@ -135,6 +135,9 @@ export function TableNG(props: TableNGProps) {
   }, [isContextMenuOpen]);
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
+  // TODO: this ref using to persist sortColumns between renders;
+  // setSortColumns is still used to trigger re-render
+  const sortColumnsRef = useRef(sortColumns);
 
   function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
@@ -202,7 +205,7 @@ export function TableNG(props: TableNGProps) {
   const handleSort = (columnKey: string, direction: SortDirection) => {
     let currentSortColumn: SortColumn | undefined;
 
-    const updatedSortColumns = sortColumns.filter((column) => {
+    const updatedSortColumns = sortColumnsRef.current.filter((column) => {
       const isCurrentColumn = column.columnKey === columnKey;
       if (isCurrentColumn) {
         currentSortColumn = column;
@@ -213,9 +216,11 @@ export function TableNG(props: TableNGProps) {
     // sorted column exists and is descending -> remove it to reset sorting
     if (currentSortColumn && currentSortColumn.direction === 'DESC') {
       setSortColumns(updatedSortColumns);
+      sortColumnsRef.current = updatedSortColumns;
     } else {
       // new sort column or changed direction
       setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
     }
   };
 
