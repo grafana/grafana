@@ -856,7 +856,7 @@ const (
 	FlagDashboardSchemaV2 = "dashboardSchemaV2"
 
 	// FlagPlaylistsReconciler
-	// Enables experimental watcher for playlists
+	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"
 
 	// FlagPasswordlessMagicLinkAuthentication
