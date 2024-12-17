@@ -713,14 +713,14 @@ func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logge
 	return nil
 }
 
-func (r *githubRepository) AfterCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+func (r *githubRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
 	return nil, r.createWebhook(ctx, logger)
 }
 
-func (r *githubRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
+func (r *githubRepository) OnUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
 	return nil, r.updateWebhook(ctx, logger)
 }
 
-func (r *githubRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {
 	return r.deleteWebhook(ctx, logger)
 }

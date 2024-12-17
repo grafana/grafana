@@ -341,7 +341,7 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		return
 	}
 
-	status, err := repo.AfterCreate(ctx, b.logger)
+	status, err := repo.OnCreate(ctx, b.logger)
 	if err != nil {
 		b.logger.Error("failed to run after create", "error", err)
 		return
@@ -397,7 +397,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
 	}
 
-	status, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
+	status, err := repo.OnUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
 		b.logger.Warn("error in begin update", "err", err)
 	}
@@ -486,7 +486,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 
-	if err := repo.AfterDelete(ctx, b.logger); err != nil {
+	if err := repo.OnDelete(ctx, b.logger); err != nil {
 		b.logger.Error("failed to run after delete", "error", err)
 		return
 	}

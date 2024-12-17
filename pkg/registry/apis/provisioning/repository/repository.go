@@ -104,9 +104,9 @@ type Repository interface {
 
 	// TODO: rename this one
 	// Hooks called after the repository has been created, updated or deleted
-	AfterCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
-	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error)
-	AfterDelete(ctx context.Context, logger *slog.Logger) error
+	OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
+	OnUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error)
+	OnDelete(ctx context.Context, logger *slog.Logger) error
 }
 
 // VersionedRepository is a repository that supports versioning
