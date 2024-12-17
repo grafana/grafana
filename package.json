@@ -240,7 +240,7 @@
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0",
+    "webpack": "5.97.1",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.1.0",
