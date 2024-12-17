@@ -19,8 +19,13 @@ import {
 } from '@grafana/data';
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import {
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
@@ -854,6 +859,39 @@ export function mockDashboardDto(
       ...dashboard,
     },
     meta: { ...meta },
+  };
+}
+
+type PartialDashboardV2Resource = Partial<Omit<DashboardWithAccessInfo<DashboardV2Spec>, 'spec' | 'metadata'>> & {
+  spec: Partial<DashboardWithAccessInfo<DashboardV2Spec>['spec']>;
+  metadata: Partial<DashboardWithAccessInfo<DashboardV2Spec>['metadata']>;
+};
+
+export function mockDashboardV2Resource(
+  resource: PartialDashboardV2Resource
+): DashboardWithAccessInfo<DashboardV2Spec> {
+  return {
+    ...resource,
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'v1',
+    spec: {
+      ...defaultDashboardV2Spec(),
+      title: 'Dashboard test',
+      schemaVersion: defaultDashboard.schemaVersion,
+      ...resource.spec,
+    },
+    metadata: {
+      name: 'dashboard-test',
+      resourceVersion: resource.metadata?.resourceVersion ?? '',
+      creationTimestamp: resource.metadata?.creationTimestamp ?? '',
+      ...resource.metadata,
+    },
+    access: {
+      canEdit: true,
+      canSave: true,
+      canStar: true,
+      canShare: true,
+    },
   };
 }
 
