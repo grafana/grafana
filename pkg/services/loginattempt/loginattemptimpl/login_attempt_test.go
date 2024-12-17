@@ -165,7 +165,7 @@ func TestService_ValidateIPAddress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.BruteForceLoginProtectionMaxAttempts = maxInvalidLoginAttempts
-			cfg.DisableBruteForceLoginProtection = tt.disabled
+			cfg.DisableIPAddressLoginProtection = tt.disabled
 			service := &Service{
 				store: fakeStore{
 					ExpectedCount: tt.loginAttempts,
@@ -184,7 +184,7 @@ func TestService_ValidateIPAddress(t *testing.T) {
 func TestIPLoginAttempts(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
-	cfg.DisableBruteForceLoginProtection = false
+	cfg.DisableIPAddressLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 3
 	db := db.InitTestDB(t)
 	service := ProvideService(db, cfg, nil)
