@@ -41,7 +41,7 @@ State view shows alert rules grouped by state. Use this view to get an overview 
 
 To view alert rule details, complete the following steps.
 
-1. Click **Alerts & IRM** -> **Alert rules**.
+1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Click to expand an alert rule.
 1. In **Actions**, click **View** (the eye icon).
 

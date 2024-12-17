@@ -36,20 +36,20 @@ To access the History view, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **History**.
 
-   An Alert Events chart shows your alert activity within a specific time frame. Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.
-
    {{< figure src="/media/docs/alerting/alerting-history-page.png" max-width="750px" alt="History page in Grafana Alerting" >}}
 
-1. Filter by labels either by entering a label or clicking a label of an instance in the list of events.
-1. Filter by current state and previous state by selecting a state from the drop-down or by clicking the states from the list of events.
+   An Alert Events chart shows your alert activity within a specific time frame. Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.
+
+2. Filter by labels either by entering a label or clicking a label of an instance in the list of events.
+3. Filter by current state and previous state by selecting a state from the drop-down or by clicking the states from the list of events.
    Zoom in by dragging on the chart or use the time picker.
 
    {{% admonition type="note" %}}
    If you exceed the 5000 alerts limit, you may see data missing from the chart. To see complete results, narrow the time frame.
    {{% /admonition %}}
 
-1. Under the chart, there is a list of events. Each event represents a state change on an alert instance. Expand a row to see the number of transitions for the alert instance, a state graph, and the value in the transition.
-1. Click the alert rule name to jump to the History tab in the Alert Rule view.
+4. Under the chart, there is a list of events. Each event represents a state change on an alert instance. Expand a row to see the number of transitions for the alert instance, a state graph, and the value in the transition.
+5. Click the alert rule name to jump to the History tab in the Alert Rule view.
 
    {{< figure src="/media/docs/alerting/alerting-alert-history-tab.png" max-width="750px" alt="Alert History tab in Grafana Alerting" >}}
 
@@ -69,15 +69,13 @@ To access the State history view, complete the following steps.
 1. Click an alert rule.
 1. Select **Show state history**.
 
-   The State history view opens.
+   {{< figure src="/media/docs/alerting/alerting-state-history-view.png" max-width="750px" alt="State history view in Grafana Alerting" >}}
 
    The timeline view at the top displays a timeline of changes for the past hour, so you can track how your alert instances are behaving over time.
 
    The bottom part shows the alert instances, their previous and current state, the value of each part of the expression and a unique set of labels.
 
    Common labels are displayed at the top to make it easier to identify different alert instances.
-
-   {{< figure src="/media/docs/alerting/alerting-state-history-view.png" max-width="750px" alt="State history view in Grafana Alerting" >}}
 
 1. From the timeline view, hover over a time to get an automatic display of all the changes that happened at that particular moment.
 

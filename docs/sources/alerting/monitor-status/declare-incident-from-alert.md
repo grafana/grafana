@@ -28,7 +28,7 @@ Declare an incident from a firing alert to streamline your alert to incident wor
 
 To declare an incident from a firing alert, complete the following steps.
 
-1. Navigate to **Alerts & Incidents** -> **Alerting** -> **Alert rules**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. From the Alert rules page, find the firing alert that you want to declare an incident for.
 1. Click **More** -> **Declare Incident**.
 

@@ -55,13 +55,13 @@ To view alert groups, complete the following steps.
 1. Click **Alerts & IRM** -> **Alerting**.
 1. Click **Active notifications** to view the list of groups firing notifications.
 
+   {{< figure src="/media/docs/alerting/active-notifications-view2.png" max-width="750px" alt="Active notifications view in Grafana Alerting" >}}
+
    By default, alert groups are grouped by the notification policies grouping.
 
    Each group displays its label set, contact point, and the number of alert instances (or alerts).
 
    Then, click on a group to access its alert instances. You can find alert instances by their label set and view their notification state.
-
-{{< figure src="/media/docs/alerting/active-notifications-view2.png" max-width="750px" alt="Active notifications view in Grafana Alerting" >}}
 
 ### Notification states
 
