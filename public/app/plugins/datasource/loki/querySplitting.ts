@@ -53,6 +53,10 @@ interface QuerySplittingOptions {
    * Tells the query splitting code to not emit partial updates. Only emit on error or when it finishes querying.
    */
   skipPartialUpdates?: boolean;
+  /**
+   * Do not retry failed queries.
+   */
+  disableRetry?: boolean;
 }
 
 /**
@@ -127,6 +131,9 @@ export function runSplitGroupedQueries(
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
+      if (options.disableRetry) {
+        return false;
+      }
       try {
         if (errorResponse && !isRetriableError(errorResponse)) {
           return false;

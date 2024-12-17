@@ -160,7 +160,7 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    subquerySubscription = runSplitQuery(datasource, subRequest, { skipPartialUpdates: true }).subscribe({
+    subquerySubscription = runSplitQuery(datasource, subRequest, { skipPartialUpdates: true, disableRetry: true }).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
