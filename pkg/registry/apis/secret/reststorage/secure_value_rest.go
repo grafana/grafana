@@ -82,7 +82,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	nn := secretstorage.NamespacedName{
+	nn := secretstorage.NameNamespace{
 		Name:      name,
 		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
 	}
@@ -208,7 +208,7 @@ func (s *SecureValueRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	nn := secretstorage.NamespacedName{
+	nn := secretstorage.NameNamespace{
 		Name:      name,
 		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
 	}

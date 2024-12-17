@@ -23,9 +23,9 @@ var (
 // SecureValueStorage is the interface for wiring and dependency injection.
 type SecureValueStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, nn NamespacedName) (*secretv0alpha1.SecureValue, error)
+	Read(ctx context.Context, nn NameNamespace) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, nn NamespacedName) error
+	Delete(ctx context.Context, nn NameNamespace) error
 	List(ctx context.Context, namespace Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 }
 
@@ -82,7 +82,7 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 	return createdSecureValue, nil
 }
 
-func (s *storage) Read(ctx context.Context, nn NamespacedName) (*secretv0alpha1.SecureValue, error) {
+func (s *storage) Read(ctx context.Context, nn NameNamespace) (*secretv0alpha1.SecureValue, error) {
 	row, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read internal: %w", err)
@@ -102,7 +102,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	nn := NamespacedName{
+	nn := NameNamespace{
 		Name:      newSecureValue.Name,
 		Namespace: Namespace(newSecureValue.Namespace),
 	}
@@ -141,7 +141,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
-func (s *storage) Delete(ctx context.Context, nn NamespacedName) error {
+func (s *storage) Delete(ctx context.Context, nn NameNamespace) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -211,7 +211,7 @@ func (s *storage) List(ctx context.Context, namespace Namespace, options *intern
 	}, nil
 }
 
-func (s *storage) readInternal(ctx context.Context, nn NamespacedName) (*secureValueDB, error) {
+func (s *storage) readInternal(ctx context.Context, nn NameNamespace) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")

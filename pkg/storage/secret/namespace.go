@@ -7,8 +7,8 @@ func (n Namespace) String() string {
 	return string(n)
 }
 
-// NamespacedName is a tuple of name and namespace, often used by K8s resources for uniqueness.
-type NamespacedName struct {
+// NameNamespace is a tuple of name and namespace, often used by K8s resources for uniqueness.
+type NameNamespace struct {
 	Name      string
 	Namespace Namespace
 }
