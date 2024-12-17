@@ -164,6 +164,7 @@
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/dataviz-squad
+/pkg/tests/apis/secret/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
@@ -620,7 +621,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/trigger_windows_build.sh @grafana/grafana-developer-enablement-squad
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
-/scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend

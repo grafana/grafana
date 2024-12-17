@@ -47,9 +47,11 @@ func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) a
 			}
 
 			// expensive path to lookup permissions for a single dashboard
+			// must include deleted to allow for restores
 			dto, err := dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-				UID:   attr.GetName(),
-				OrgID: info.OrgID,
+				UID:            attr.GetName(),
+				OrgID:          info.OrgID,
+				IncludeDeleted: true,
 			})
 			if err != nil {
 				return authorizer.DecisionDeny, "error loading dashboard", err

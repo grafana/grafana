@@ -34,9 +34,9 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Name: TableNameSecureValue,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
-			{Name: "name", Type: migrator.DB_Text, Nullable: false},
-			{Name: "namespace", Type: migrator.DB_Text, Nullable: false},
+			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
@@ -59,9 +59,9 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Name: TableNameKeeper,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
-			{Name: "name", Type: migrator.DB_Text, Nullable: false},
-			{Name: "namespace", Type: migrator.DB_Text, Nullable: false},
+			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},

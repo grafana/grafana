@@ -156,6 +156,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+	)
+
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+		scheme,
+	)
+
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
 		storage[dash.StoragePath()],

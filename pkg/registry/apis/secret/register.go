@@ -1,11 +1,13 @@
 package secret
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -102,12 +104,17 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 // GetAuthorizer: [TODO] who can create secrets? must be multi-tenant first
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// This is TBD being defined with IAM.
+	// This is TBD being defined with IAM. Test
 
 	return nil // start with the default authorizer
 }
 
 // Register additional routes with the server.
 func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil
+}
+
+// Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
+func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	return nil
 }
