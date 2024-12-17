@@ -391,7 +391,7 @@
     "react-transition-group": "4.4.5",
     "react-use": "17.6.0",
     "react-virtual": "2.10.4",
-    "react-virtualized-auto-sizer": "1.0.24",
+    "react-virtualized-auto-sizer": "1.0.25",
     "react-window": "1.8.10",
     "react-window-infinite-loader": "1.0.9",
     "react-zoom-pan-pinch": "^3.3.0",
