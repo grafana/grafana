@@ -112,6 +112,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesCliDashboards?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -244,4 +245,5 @@ export interface FeatureToggles {
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
+  lokiLabelNamesQueryApi?: boolean;
 }

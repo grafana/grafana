@@ -64,7 +64,7 @@ func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key 
 	return nil
 }
 
-func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = []any{}

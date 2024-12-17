@@ -66,7 +66,9 @@ Select your data source and enter a query. The queries used in data source-manag
 
 1. From the **Group** dropdown, select an existing group within the selected namespace or add a new one.
 
-   Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
+   Rules within a group are run sequentially at a regular interval, with the same evaluation time.
+
+   Newly created rules are appended to the end of the group, and you can reorder them from the **Alert rules** page.
 
 ## Add labels
 

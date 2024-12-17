@@ -126,8 +126,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
-
-	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
@@ -141,8 +139,8 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("count")] = &subCountREST{searcher: b.searcher}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
