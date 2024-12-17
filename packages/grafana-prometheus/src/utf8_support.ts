@@ -95,7 +95,7 @@ export const wrapUtf8Filters = (filterStr: string): string => {
     } else if (char === ',' && !inQuotes) {
       // When outside quotes and encountering ',', finalize the current pair
       [currentKey, currentValue] = temp.split('=');
-      resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1).replace(/\\"/g, '\\"')}"`);
+      resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
       temp = ''; // Reset for the next pair
     } else {
       // Collect characters
@@ -106,7 +106,7 @@ export const wrapUtf8Filters = (filterStr: string): string => {
   // Handle the last key-value pair
   if (temp) {
     [currentKey, currentValue] = temp.split('=');
-    resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1).replace(/\\"/g, '\\"')}"`);
+    resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
   }
 
   return resultArray.join(',');

@@ -118,4 +118,10 @@ describe('wrapUtf8Filters', () => {
     const expected = 'key1="nested \\"escaped\\" quotes",key2="value2"';
     expect(result).toEqual(expected);
   });
+
+  it('should handle escaped quotes correctly', () => {
+    const result = wrapUtf8Filters('key1="nested \\"escaped\\" quotes",key2="value with \\"escaped\\" quotes"');
+    const expected = 'key1="nested \\"escaped\\" quotes",key2="value with \\"escaped\\" quotes"';
+    expect(result).toEqual(expected);
+  });
 });
