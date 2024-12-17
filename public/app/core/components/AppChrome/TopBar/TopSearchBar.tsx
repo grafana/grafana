@@ -54,8 +54,8 @@ export const TopSearchBar = memo(function TopSearchBar() {
       </TopSearchBarSection>
 
       <TopSearchBarSection align="right">
-        <QuickAdd />
         {unifiedHistoryEnabled && <HistoryContainer />}
+        <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
