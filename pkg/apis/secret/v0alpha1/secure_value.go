@@ -23,7 +23,7 @@ type SecureValueSpec struct {
 
 	// The raw value is only valid for write. Read/List will always be empty
 	// Writing with an empty value will always fail
-	Value string `json:"value,omitempty"`
+	Value ExposedSecureValue `json:"value,omitempty"`
 
 	// When using a remote Key manager, the ref is used to
 	// reference a value inside the remote storage
