@@ -136,6 +136,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const meta = first.meta?.custom || {} as SearchResultMeta;
+    const locationInfo = await this.locationInfo;
+    const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
+    if (hasMissing) {
+      // sync the location info ( folders )
+      this.locationInfo = loadLocationInfo();
+    }
     meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
