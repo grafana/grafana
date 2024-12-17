@@ -11,7 +11,7 @@ exports[`RuleEditor recording rules can create a new cloud recording rule 1`] = 
       ],
     ],
     "method": "GET",
-    "url": "https://mimir.local:9000/api/v1/status/buildinfo",
+    "url": "http://localhost/api/datasources/proxy/uid/mimir/api/v1/status/buildinfo",
   },
   {
     "body": "",

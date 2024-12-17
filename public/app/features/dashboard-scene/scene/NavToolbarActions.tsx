@@ -34,7 +34,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene, isV2Dashboard } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 
 interface Props {
@@ -70,7 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters && !isEditing;
+  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   if (!isEditingPanel) {
@@ -140,12 +140,17 @@ export function ToolbarActions({ dashboard }: Props) {
   toolbarActions.push({
     group: 'icon-actions',
     condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton
-        key="go-to-snapshot-origin"
-        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
-      />
-    ),
+    render: () => {
+      const saveModel = dashboard.getInitialSaveModel();
+
+      if (saveModel && isV2Dashboard(saveModel)) {
+        throw new Error('v2 schema not implemented');
+      }
+
+      return (
+        <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={saveModel?.snapshot?.originalUrl ?? ''} />
+      );
+    },
   });
 
   if (!isEditingPanel && !isEditing) {

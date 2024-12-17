@@ -714,6 +714,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesCliDashboards",
+			Description: "Use the k8s client to retrieve dashboards internally",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
@@ -1037,12 +1043,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "onPremToCloudMigrationsAlerts",
-			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
@@ -1441,14 +1441,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "exploreLogsShardSplitting",
 			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
@@ -1515,8 +1507,9 @@ var (
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1675,6 +1668,26 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
+		},
+		{
+			Name:        "elasticsearchCrossClusterSearch",
+			Description: "Enables cross cluster search in the Elasticsearch datasource",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:         "unifiedHistory",
+			Description:  "Displays the navigation history so the user can navigate back to previous pages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "lokiLabelNamesQueryApi",
+			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true",
 		},
 	}
 )

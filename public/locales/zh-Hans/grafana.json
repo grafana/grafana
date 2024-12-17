@@ -1281,6 +1281,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1747,6 +1748,12 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": ""
+    },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
     },
     "log-row-message": {
       "ellipsis": "",
@@ -2325,12 +2332,6 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    },
-    "toolbar": {
-      "close-menu": "关闭菜单",
-      "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "打开菜单",
-      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -3020,7 +3021,6 @@
     "mode": "模式",
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
-    "mode-tv": "电视",
     "title": "共享播放列表"
   },
   "shared": {

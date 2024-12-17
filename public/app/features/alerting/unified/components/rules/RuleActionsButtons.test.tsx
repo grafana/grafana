@@ -5,7 +5,7 @@ import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getCloudRule,
   getGrafanaRule,
@@ -14,18 +14,16 @@ import {
   mockGrafanaRulerRule,
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
-import { buildInfoResponse } from '../../testSetup/featureDiscovery';
 import { fromCombinedRule, stringifyIdentifier } from '../../utils/rule-id';
 
-const server = setupMswServer();
+setupMswServer();
 jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
-
-// const locationPushSpy = jest.spyOn(locationService, 'push');
 
 const ui = {
   detailsButton: byRole('link', { name: /View/ }),
@@ -66,7 +64,7 @@ setPluginLinksHook(() => ({
   isLoading: false,
 }));
 
-const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+const mimirDs = mockDataSource({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' });
 const prometheusDs = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
 setupDataSources(mimirDs, prometheusDs);
 
@@ -106,7 +104,6 @@ describe('RuleActionsButtons', () => {
     const user = userEvent.setup();
     grantAllPermissions();
     const mockRule = getCloudRule(undefined, { rulesSource: mimirDs });
-    mockFeatureDiscoveryApi(server).discoverDsFeatures(mimirDs, buildInfoResponse.mimir);
 
     render(<RuleActionsButtons rule={mockRule} rulesSource={mimirDs} />);
 
