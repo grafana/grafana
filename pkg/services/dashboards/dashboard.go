@@ -15,7 +15,7 @@ import (
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
-	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
+	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	// GetDashboard fetches a dashboard.
 	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
