@@ -36,7 +36,7 @@
   "devDependencies": {
     "@babel/core": "7.26.0",
     "@grafana/tsconfig": "^2.0.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.0",
     "@svgr/babel-plugin-remove-jsx-attribute": "^8.0.0",
     "@svgr/cli": "^8.1.0",
