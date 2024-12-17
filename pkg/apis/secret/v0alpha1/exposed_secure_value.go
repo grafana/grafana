@@ -27,11 +27,16 @@ func NewExposedSecureValue(v string) ExposedSecureValue {
 }
 
 // DangerouslyExposeAndConsumeValue will move the decrypted secure value out of the wrapper and return it.
-// Further attemps to call this method will simply return an empty string.
+// Further attempts to call this method will panic.
 // The function name is intentionally kept long and weird because this is a dangerous operation and should be used carefully!
 func (s *ExposedSecureValue) DangerouslyExposeAndConsumeValue() string {
+	if *s == "" {
+		panic("underlying value is empty or was consumed")
+	}
+
 	tmp := *s
 	*s = ""
+
 	return string(tmp)
 }
 

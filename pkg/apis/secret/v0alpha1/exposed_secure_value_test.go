@@ -43,6 +43,6 @@ func TestExposedSecureValue(t *testing.T) {
 	// DangerouslyExposeAndConsumeValue returns the raw value.
 	require.Equal(t, rawValue, esv.DangerouslyExposeAndConsumeValue())
 
-	// Further calls to DangerouslyExposeAndConsumeValue simply return an empty string.
-	require.Empty(t, esv.DangerouslyExposeAndConsumeValue())
+	// Further calls to DangerouslyExposeAndConsumeValue will panic.
+	require.Panics(t, func() { esv.DangerouslyExposeAndConsumeValue() })
 }
