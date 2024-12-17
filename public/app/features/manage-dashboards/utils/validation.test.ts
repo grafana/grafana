@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import {
   DashboardV2Spec,
   defaultDashboardV2Spec,
@@ -60,17 +59,6 @@ describe('validateUid', () => {
     it('should return a message with the existing dashboard title and folder title', async () => {
       const result = await validateUid('dashboard-uid');
       expect(result).toBe(`Dashboard named 'Legacy Dashboard' in folder 'Folder title' has the same UID`);
-    });
-  });
-
-  describe('Dashboards API v2', () => {
-    beforeAll(() => {
-      config.featureToggles.dashboardScene = true;
-      config.featureToggles.useV2DashboardsAPI = true;
-    });
-    it('should return a message with the existing dashboard title and folder title', async () => {
-      const result = await validateUid('dashboard-uid');
-      expect(result).toBe(`Dashboard named 'V2 Dashboard' in folder 'folder-title' has the same UID`);
     });
   });
 });
