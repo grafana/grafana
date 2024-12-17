@@ -35,7 +35,7 @@ You can use gauges if you need to track:
 - How full a piece of equipment is
 - How fast a vehicle is moving within a set of limits
 - Network latency
-- Equipment state with setpoint and alarm thresholds
+- Equipment state with set point and alarm thresholds
 - CPU consumption (0-100%)
 - RAM availability
 
@@ -50,8 +50,6 @@ The following video provides beginner steps for creating gauge panels. You'll le
 ## Supported data formats
 
 To create a gauge visualization you need a dataset containing at least one numeric field. These values are identified by the field name. Additional text fields aren’t required but can be used for identification and labeling.
-
-<!-- figure out if all of these examples are actually useful -->
 
 ### Example - One value
 
@@ -131,7 +129,7 @@ Use the following options to refine how your visualization displays the value:
 
 | Option | Description |
 | ------ | ----------- |
-| Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
+| Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
 | Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
 | Fields | Select the fields display in the panel. |
@@ -151,14 +149,14 @@ Adjust how the gauge is displayed.
 | [Show threshold markers](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul> |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when gauge size is set to manual. |
+| Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Neutral | Set the starting value from which every gauge will be filled. |
 
 <!-- prettier-ignore-end -->
 
 #### Show threshold markers
 
-Controls if a threshold band is shown as an outer bar marker around the inner gauge value band.
+Controls if a threshold band is shown around the inner gauge value band.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
 
