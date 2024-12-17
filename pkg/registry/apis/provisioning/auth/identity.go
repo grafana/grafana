@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -79,8 +80,34 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 
 	id, ok := o.accounts[info.OrgID]
 	if !ok {
-		// HACK, use the global admin!!!
-		id = "user:1"
+		// HACK -- find an admin user
+		res, err := o.users.Search(context.Background(), &user.SearchUsersQuery{
+			SignedInUser: &identity.StaticRequester{
+				IsGrafanaAdmin: true,
+				OrgID:          info.OrgID,
+				Permissions: map[int64]map[string][]string{
+					info.OrgID: {
+						accesscontrol.ActionUsersRead: {"*"},
+					},
+				},
+			},
+			OrgID: info.OrgID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		found := false
+		for _, v := range res.Users {
+			if v.IsAdmin {
+				id = fmt.Sprintf("user:%d", v.ID)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("unable to find admin user")
+		}
 
 		// HACK -- (if false) and still allow lint
 		switch o.serviceAccountNamePrefix {
