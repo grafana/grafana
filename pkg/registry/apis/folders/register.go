@@ -359,10 +359,6 @@ func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtim
 }
 
 func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object, newParent string) error {
-	if newParent == "" {
-		return fmt.Errorf("moving folder to non existing parent")
-	}
-
 	// folder cannot be moved to a k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return fmt.Errorf("k6 project may not be moved")
@@ -378,13 +374,6 @@ func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object,
 	// if by moving a folder we exceed the max depth, return an error
 	if len(parents)+1 >= folderValidationRules.maxDepth {
 		return folder.ErrMaximumDepthReached
-	}
-
-	// prevent circular references
-	for _, p := range parents {
-		if p == newParent {
-			return folder.ErrCircularReference
-		}
 	}
 	return nil
 }
