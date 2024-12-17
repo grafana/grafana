@@ -70,8 +70,14 @@ func (s *KeeperRest) ConvertToTable(ctx context.Context, object runtime.Object, 
 
 // List calls the inner `store` (persistence) and returns a list of `Keepers` within a `namespace` filtered by the `options`.
 func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: implement me
-	return nil, nil
+	namespace := request.NamespaceValue(ctx)
+
+	keepersList, err := s.storage.List(ctx, namespace, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list keepers: %w", err)
+	}
+
+	return keepersList, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.
@@ -148,10 +154,11 @@ func (s *KeeperRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `Keeper`.
 // The second return parameter `bool` indicates whether the delete was intant or not. It always is for `Keepers`.
 func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// TODO: Make sure the second parameter is always `true` when `err == nil`.
-	// Even when there is nothing to delete, because this is a `Keeper` and
-	// we don't want to first do a `Get` to check whether the secret exists or not.
+	namespace := request.NamespaceValue(ctx)
 
-	// TODO: implement delete in storage
-	return nil, false, nil
+	if err := s.storage.Delete(ctx, namespace, name); err != nil {
+		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
+	}
+
+	return nil, true, nil
 }

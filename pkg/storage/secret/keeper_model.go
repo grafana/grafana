@@ -17,51 +17,30 @@ var (
 	ErrKeeperNotFound = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
 )
 
-var (
-	// Exclude these annotations
-	skipAnnotations = map[string]bool{
-		"kubectl.kubernetes.io/last-applied-configuration": true, // force server side apply
-		utils.AnnoKeyCreatedBy:                             true,
-		utils.AnnoKeyUpdatedBy:                             true,
-		utils.AnnoKeyUpdatedTimestamp:                      true,
-	}
-)
-
-func CleanAnnotations(anno map[string]string) map[string]string {
-	copy := make(map[string]string)
-	for k, v := range anno {
-		if skipAnnotations[k] {
-			continue
-		}
-		copy[k] = v
-	}
-	return copy
-}
-
 type Keeper struct {
-	// K8 Metadata
+	// Kubernetes Metadata
 	GUID        string `xorm:"pk 'guid'"`
-	Name        string `xorm:"'name'"`
-	Namespace   string `xorm:"'namespace'"`
-	Annotations string `xorm:"'annotations'"` // map[string]string
-	Labels      string `xorm:"'labels'"`      // map[string]string
-	Created     int64  `xorm:"'created'"`
-	CreatedBy   string `xorm:"'created_by'"`
-	Updated     int64  `xorm:"'updated'"`
-	UpdatedBy   string `xorm:"'updated_by'"`
+	Name        string `xorm:"name"`
+	Namespace   string `xorm:"namespace"`
+	Annotations string `xorm:"annotations"` // map[string]string
+	Labels      string `xorm:"labels"`      // map[string]string
+	Created     int64  `xorm:"created"`
+	CreatedBy   string `xorm:"created_by"`
+	Updated     int64  `xorm:"updated"`
+	UpdatedBy   string `xorm:"updated_by"`
 
 	// Spec
-	Title   string `xorm:"'title'"`
-	Type    string `xorm:"'type'"`
-	Payload string `xorm:"'payload'"` // map[string]interface{}
+	Title   string `xorm:"title"`
+	Type    string `xorm:"type"`
+	Payload string `xorm:"payload"`
 }
 
 func (*Keeper) TableName() string {
 	return TableNameKeeper
 }
 
-// Convert everything from row structure to k8s representation.
-func (kp *Keeper) toK8s() (*secretv0alpha1.Keeper, error) {
+// toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
+func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	annotations := make(map[string]string, 0)
 	if kp.Annotations != "" {
 		if err := json.Unmarshal([]byte(kp.Annotations), &annotations); err != nil {
@@ -82,7 +61,7 @@ func (kp *Keeper) toK8s() (*secretv0alpha1.Keeper, error) {
 		},
 	}
 
-	// Set all meta fields here for consistency
+	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get meta accessor: %w", err)
@@ -104,11 +83,11 @@ func (kp *Keeper) toK8s() (*secretv0alpha1.Keeper, error) {
 	return resource, nil
 }
 
-// toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted
-func toCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
-	row, err := toRow(kp)
+// toKeeperCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
+func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+	row, err := toKeeperRow(kp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create row: %w", err)
+		return nil, fmt.Errorf("failed to create: %w", err)
 	}
 
 	now := time.Now().UTC().UnixMilli()
@@ -122,13 +101,31 @@ func toCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
 	return row, nil
 }
 
-// toRow maps a Kubernetes resource into a DB row
-func toRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
+// toKeeperUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
+func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+	row, err := toKeeperRow(newKeeper)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create: %w", err)
+	}
+
+	now := time.Now().UTC().UnixMilli()
+
+	row.GUID = currentRow.GUID
+	row.Created = currentRow.Created
+	row.CreatedBy = currentRow.CreatedBy
+	row.Updated = now
+	row.UpdatedBy = actorUID
+
+	return row, nil
+}
+
+// toKeeperRow maps a Kubernetes Keeper resource into a Keeper DB row.
+func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
 		cleanedAnnotations := CleanAnnotations(sv.Annotations)
 		if len(cleanedAnnotations) > 0 {
-			sv.Annotations = make(map[string]string)
+			sv.Annotations = make(map[string]string) // Safety: reset to prohibit use of sv.Annotations further.
 
 			encodedAnnotations, err := json.Marshal(cleanedAnnotations)
 			if err != nil {
@@ -154,12 +151,17 @@ func toRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		return nil, fmt.Errorf("failed to get meta accessor: %w", err)
 	}
 
+	if meta.GetFolder() != "" {
+		return nil, fmt.Errorf("folders are not supported")
+	}
+
 	updatedTimestamp, err := meta.GetResourceVersionInt64()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
 	return &Keeper{
+		// Kubernetes Metadata
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
 		Namespace:   sv.Namespace,
@@ -170,10 +172,9 @@ func toRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
 
-		Title: sv.Spec.Title,
-
-		// TODO: Add these fields
-		Type:    "todo-type",
-		Payload: "todo-payload",
+		// Spec
+		Title:   sv.Spec.Title,
+		Type:    "todo-type",    // TODO: fill with real data
+		Payload: "todo-payload", // TODO: fill with real data
 	}, nil
 }
