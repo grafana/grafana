@@ -18,9 +18,7 @@ func NewService(encryptionKey string) *Service {
 }
 
 func (s *Service) Encrypt(ctx context.Context, data string) (string, error) {
-	secretKey := []byte(s.encryptionKey)
-	h := hmac.New(sha256.New, secretKey)
-
+	h := hmac.New(sha256.New, s.encryptionKey)
 	h.Write([]byte(data))
 	hashed := h.Sum(nil)
 

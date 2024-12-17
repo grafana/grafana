@@ -7,7 +7,6 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -277,7 +276,7 @@ func (rc *RepositoryController) sync(key string) error {
 	cfg := cachedRepo.DeepCopy()
 	cfg.Status = *status
 	if _, err := rc.client.Repositories(cachedRepo.GetNamespace()).
-		UpdateStatus(ctx, cfg, metav1.UpdateOptions{}); err != nil {
+		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("update status: %w", err)
 	}
 
