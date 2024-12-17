@@ -869,7 +869,7 @@ steps:
   volumes:
   - name: prometheus-data
     path: /var/lib/prometheus
-  - name: docker-sock
+  - name: docker
     path: /var/run/docker.sock
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
@@ -2304,7 +2304,7 @@ steps:
   volumes:
   - name: prometheus-data
     path: /var/lib/prometheus
-  - name: docker-sock
+  - name: docker
     path: /var/run/docker.sock
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
@@ -5605,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ea83a8bf8ecba27a2ce90906db9d39949aae4e2bf27e146cc86504d3c0925298
+hmac: 71f8579c4d999fedf9d1d87ca90e43ce73762d541bdafde3bc052ea988fa00ee
 
 ...

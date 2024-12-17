@@ -26,7 +26,7 @@ def prometheus_devenv_step():
                 "path": "/var/lib/prometheus",
             },
             {
-                "name": "docker-sock",
+                "name": "docker",
                 "path": "/var/run/docker.sock",
             },
         ],

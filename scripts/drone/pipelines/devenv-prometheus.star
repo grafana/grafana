@@ -41,7 +41,7 @@ def prometheus_devenv_pipeline():
                 },
             },
             {
-                "name": "docker-sock",
+                "name": "docker",
                 "host": {
                     "path": "/var/run/docker.sock",
                 },
