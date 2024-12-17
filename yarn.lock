@@ -3829,7 +3829,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^5.32.0":
+"@grafana/scenes-react@npm:^5.34.0":
   version: 5.34.0
   resolution: "@grafana/scenes-react@npm:5.34.0"
   dependencies:
@@ -3848,7 +3848,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.34.0, @grafana/scenes@npm:^5.32.0":
+"@grafana/scenes@npm:5.34.0, @grafana/scenes@npm:^5.34.0":
   version: 5.34.0
   resolution: "@grafana/scenes@npm:5.34.0"
   dependencies:
@@ -17552,8 +17552,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.32.0"
-    "@grafana/scenes-react": "npm:^5.32.0"
+    "@grafana/scenes": "npm:^5.34.0"
+    "@grafana/scenes-react": "npm:^5.34.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -20699,8 +20699,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.41.0
-  resolution: "knip@npm:5.41.0"
+  version: 5.40.0
+  resolution: "knip@npm:5.40.0"
   dependencies:
     "@nodelib/fs.walk": "npm:1.2.8"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -20724,7 +20724,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/a30b986ca4331b735f188c9217cb551b2698ddbed54bc98f1bf3c1fe1e85b3aff589244dafe60d6b5c7a8ee5133726d69366965cc3ae6299b43c33787155a7a2
+  checksum: 10/238d76428a1f0cd3a184ebd9aaea2e07b3b8434cdee6c6e9230d6ae31f18b93188e2b60fbd64769d2448ce5b0114e662ee536843207514b1e95060b8740218d8
   languageName: node
   linkType: hard
 
@@ -25155,7 +25155,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.0.1, rc-util@npm:^5.0.6, rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.26.0, rc-util@npm:^5.27.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1, rc-util@npm:^5.43.0":
+"rc-util@npm:^5.0.1, rc-util@npm:^5.0.6, rc-util@npm:^5.26.0":
   version: 5.44.2
   resolution: "rc-util@npm:5.44.2"
   dependencies:
@@ -25165,6 +25165,19 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 10/5be4e632e453c4e4134a136045225af264c8e1f36354c12c40ff86d7ea7ad34ea15a57f74706d91f9c3fc1ec9e080f6c64b2914f742714e37130b06dd91a9702
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1, rc-util@npm:^5.43.0":
+  version: 5.43.0
+  resolution: "rc-util@npm:5.43.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.3"
+    react-is: "npm:^18.2.0"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10/6d5be9d79182c6b4c5a033ad6517b2940d3d2ac42a8e77ef5735591d182f8236f61bc7628d61e82a122d2046ec849462f3fe57c08d3a2a20279646785c34ec4a
   languageName: node
   linkType: hard
 
@@ -29687,9 +29700,9 @@ __metadata:
   linkType: hard
 
 "type-fest@npm:^4.18.2, type-fest@npm:^4.26.1":
-  version: 4.30.2
-  resolution: "type-fest@npm:4.30.2"
-  checksum: 10/c5168b159c366e4fd5b74c7f7b786bed9248c03f67e6e07d52dd5d51354447468fa7c92b9f2142c7fe9279814031f783959370242c3520de848931b65ddb48bb
+  version: 4.26.1
+  resolution: "type-fest@npm:4.26.1"
+  checksum: 10/b82676194f80af228cb852e320d2ea8381c89d667d2e4d9f2bdfc8f254bccc039c7741a90c53617a4de0c9fdca8265ed18eb0888cd628f391c5c381c33a9f94b
   languageName: node
   linkType: hard
 
