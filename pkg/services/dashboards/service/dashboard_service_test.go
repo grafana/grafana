@@ -611,6 +611,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		}
 
 		obj, err := utils.MetaAccessor(item)
+		require.NoError(t, err)
 		obj.SetCreationTimestamp(now)
 		obj.SetName(uid)
 		obj.SetCreatedBy("user:useruid")
