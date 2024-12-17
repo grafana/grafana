@@ -10,6 +10,7 @@ export const ui = {
   loadingIndicator: byText('Loading rule...'),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
+    metric: byRole('textbox', { name: 'metric' }),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),
@@ -36,8 +37,7 @@ export const ui = {
     addLabel: byRole('button', { name: /Add label/ }),
   },
 };
-
-export function renderRuleEditor(identifier?: string, recording = false) {
+export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
   return render(
     <>
       <AppNotificationList />
@@ -48,9 +48,7 @@ export function renderRuleEditor(identifier?: string, recording = false) {
     </>,
     {
       historyOptions: {
-        initialEntries: [
-          identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ? 'recording' : 'alerting'}`,
-        ],
+        initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ?? 'alerting'}`],
       },
     }
   );
