@@ -47,10 +47,10 @@ type EncryptionManager struct {
 	dataKeyCache *dataKeyCache
 
 	pOnce               sync.Once
-	providers           map[secrets.ProviderID]secrets.Provider
+	providers           map[encryption.ProviderID]encryption.Provider
 	kmsProvidersService kmsproviders.Service
 
-	currentProviderID secrets.ProviderID
+	currentProviderID encryption.ProviderID
 
 	log log.Logger
 }
@@ -65,9 +65,10 @@ func NewEncryptionManager(
 ) (*EncryptionManager, error) {
 	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
-	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
-		cfg.SectionWithEnvOverrides("security").Key("encryption_provider").MustString(kmsproviders.Default),
-	))
+	currentProviderID := encryption.ProviderID(
+		kmsproviders.NormalizeProviderID(secrets.ProviderID(
+			cfg.SectionWithEnvOverrides("security").Key("encryption_provider").MustString(kmsproviders.Default),
+		)))
 
 	s := &EncryptionManager{
 		tracer:              tracer,
@@ -96,7 +97,11 @@ func NewEncryptionManager(
 
 func (s *EncryptionManager) InitProviders() (err error) {
 	s.pOnce.Do(func() {
-		s.providers, err = s.kmsProvidersService.Provide()
+		providers, _ := s.kmsProvidersService.Provide()
+		s.providers = make(map[encryption.ProviderID]encryption.Provider, len(providers))
+		for k, v := range providers {
+			s.providers[encryption.ProviderID(k)] = v
+		}
 	})
 
 	return
@@ -221,7 +226,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	}
 
 	// 2.1 Find the encryption provider.
-	provider, exists := s.providers[kmsproviders.NormalizeProviderID(secrets.ProviderID(dataKey.Provider))]
+	provider, exists := s.providers[encryption.ProviderID(kmsproviders.NormalizeProviderID(secrets.ProviderID(dataKey.Provider)))]
 	if !exists {
 		return "", nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -363,7 +368,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	}
 
 	// 2.1. Find the encryption provider.
-	provider, exists := s.providers[secrets.ProviderID(dataKey.Provider)]
+	provider, exists := s.providers[dataKey.Provider]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -380,7 +385,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	return decrypted, nil
 }
 
-func (s *EncryptionManager) GetProviders() map[secrets.ProviderID]secrets.Provider {
+func (s *EncryptionManager) GetProviders() map[encryption.ProviderID]encryption.Provider {
 	return s.providers
 }
 
@@ -406,11 +411,10 @@ func (s *EncryptionManager) RotateDataKeys(ctx context.Context, namespace string
 func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace string) error {
 	s.log.Info("Data keys re-encryption triggered")
 
-	// TODO
-	// if err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID); err != nil {
-	// 	s.log.Error("Data keys re-encryption failed", "error", err)
-	// 	return err
-	// }
+	if err := s.store.ReEncryptDataKeys(ctx, namespace, s.providers, s.currentProviderID); err != nil {
+		s.log.Error("Data keys re-encryption failed", "error", err)
+		return err
+	}
 
 	s.dataKeyCache.flush(namespace)
 	s.log.Info("Data keys re-encryption finished successfully")

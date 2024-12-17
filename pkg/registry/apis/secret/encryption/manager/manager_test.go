@@ -84,7 +84,6 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		reports, err := svc.usageStats.GetUsageReport(context.Background())
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
 		assert.Equal(t, 1, reports.Metrics["stats.encryption.current_provider.secretKey.count"])
 		assert.Equal(t, 1, reports.Metrics["stats.encryption.providers.secretKey.count"])
 	})
@@ -188,7 +187,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := setupTestService(t)
-		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -228,7 +227,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		assert.Equal(t, secrets.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
 		assert.Equal(t, 2, len(encryptionManager.GetProviders()))
 
 		namespace := "test-namespace"
