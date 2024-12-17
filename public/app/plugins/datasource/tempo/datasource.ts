@@ -349,7 +349,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
             });
-            subQueries.push(this.handleTraceQlMetricsQuery(options));
+            subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
           } else {
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
@@ -588,8 +588,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   };
 
-  handleTraceQlMetricsQuery = (options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> => {
-    const validTargets = options.targets
+  handleTraceQlMetricsQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[]
+  ): Observable<DataQueryResponse> {
+    const validTargets = targets
       .filter((t) => t.query)
       .map(
         (t): TempoQuery => ({ ...t, query: this.applyVariables(t, options.scopedVars).query, queryType: 'traceql' })
@@ -607,7 +610,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
       })
     );
-  };
+  }
 
   handleMetricsSummaryQuery = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
     reportInteraction('grafana_traces_metrics_summary_queried', {
