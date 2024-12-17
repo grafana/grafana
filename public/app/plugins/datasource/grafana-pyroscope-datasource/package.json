@@ -15,19 +15,19 @@
     "prismjs": "1.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-use": "17.5.1",
+    "react-use": "17.6.0",
     "rxjs": "7.8.1",
-    "tslib": "2.7.0"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "11.5.0-pre",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.0.1",
+    "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.13",
-    "@types/node": "20.16.15",
+    "@types/node": "22.10.2",
     "@types/prismjs": "1.26.5",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
@@ -36,7 +36,7 @@
     "style-loader": "4.0.0",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "webpack": "5.97.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

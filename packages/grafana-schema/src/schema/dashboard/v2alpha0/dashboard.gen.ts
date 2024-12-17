@@ -694,16 +694,17 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface PanelSpec {
-	uid: string;
+	id: number;
 	title: string;
 	description: string;
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
+	transparent?: boolean;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
-	uid: "",
+	id: 0,
 	title: "",
 	description: "",
 	links: [],

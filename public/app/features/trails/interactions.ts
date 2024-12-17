@@ -123,6 +123,9 @@ type Interactions = {
       sortBy: string
   };
   wasm_not_supported: {},
+  missing_otel_labels_by_truncating_job_and_instance: {
+    metric?: string;
+  },
 };
 
 const PREFIX = 'grafana_explore_metrics_';

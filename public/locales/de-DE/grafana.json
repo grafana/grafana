@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1261,6 +1265,8 @@
       "title-with-name": "Tabelle - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
       "copy-link-abs-time": "Absolute URL kopieren",
@@ -1284,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1752,6 +1759,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2201,9 +2214,6 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
-    "observability": {
-      "title": "Beobachtbarkeit"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2332,12 +2342,6 @@
       "list-label": "Navigation",
       "open": "",
       "undock": "Menü abdocken"
-    },
-    "toolbar": {
-      "close-menu": "Menü schließen",
-      "enable-kiosk": "Kiosk-Modus aktivieren",
-      "open-menu": "Menü öffnen",
-      "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
   "news": {
@@ -3031,7 +3035,6 @@
     "mode": "Modus",
     "mode-kiosk": "Kiosk",
     "mode-normal": "Normal",
-    "mode-tv": "TM",
     "title": "Wiedergabeliste teilen"
   },
   "shared": {

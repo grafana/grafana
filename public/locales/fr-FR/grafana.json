@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1261,6 +1265,8 @@
       "title-with-name": "Tableau – {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "Copier l'URL",
       "copy-link-abs-time": "",
@@ -1284,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1752,6 +1759,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2201,9 +2214,6 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
-    "observability": {
-      "title": "Observabilité"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2332,12 +2342,6 @@
       "list-label": "Navigation",
       "open": "",
       "undock": "Ancrer le menu"
-    },
-    "toolbar": {
-      "close-menu": "Fermer le menu",
-      "enable-kiosk": "Activer le mode kiosque",
-      "open-menu": "Ouvrir le menu",
-      "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
   "news": {
@@ -3031,7 +3035,6 @@
     "mode": "Mode",
     "mode-kiosk": "Kiosque",
     "mode-normal": "Normal",
-    "mode-tv": "Téléviseur",
     "title": "Partager la playlist"
   },
   "shared": {

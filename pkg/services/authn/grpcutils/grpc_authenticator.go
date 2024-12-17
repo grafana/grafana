@@ -23,7 +23,7 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 	return authnlib.NewUnsafeGrpcAuthenticator(
 		&authnlib.GrpcAuthenticatorConfig{},
 		authnlib.WithDisableAccessTokenAuthOption(),
-		authnlib.WithIDTokenAuthOption(true),
+		authnlib.WithIDTokenAuthOption(false),
 	)
 }
 
@@ -47,21 +47,14 @@ func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*au
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 		authnlib.WithTracerAuthOption(tracer),
+		authnlib.WithIDTokenAuthOption(false),
 	}
-	switch authCfg.Mode {
-	case ModeOnPrem:
+	if authCfg.Mode == ModeOnPrem {
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
-			authnlib.WithIDTokenAuthOption(true),
-		)
-	case ModeCloud:
-		grpcOpts = append(grpcOpts,
-			// ID tokens are enabled but not required in cloud
-			authnlib.WithIDTokenAuthOption(false),
 		)
 	}
-
 	return authnlib.NewGrpcAuthenticator(
 		&grpcAuthCfg,
 		grpcOpts...,

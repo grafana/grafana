@@ -475,6 +475,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1252,6 +1256,8 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "浏览 工具栏",
       "copy-link": "复制网址",
       "copy-link-abs-time": "",
@@ -1275,6 +1281,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1742,6 +1749,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2191,9 +2204,6 @@
     "new-folder": {
       "title": "新建文件夹"
     },
-    "observability": {
-      "title": "可观测性"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2322,12 +2332,6 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    },
-    "toolbar": {
-      "close-menu": "关闭菜单",
-      "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "打开菜单",
-      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -3017,7 +3021,6 @@
     "mode": "模式",
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
-    "mode-tv": "电视",
     "title": "共享播放列表"
   },
   "shared": {

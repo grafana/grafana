@@ -167,7 +167,7 @@ composableKinds: DataQuery: {
 					// @deprecated use logGroups
 					logGroupNames?: [...string]
 					// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
-  					queryLanguage?: #LogsQueryLanguage
+					queryLanguage?: #LogsQueryLanguage
 				} @cuetsy(kind="interface")
 				#LogGroup: {
 					// ARN of the log group

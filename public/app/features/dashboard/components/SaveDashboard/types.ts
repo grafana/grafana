@@ -1,4 +1,5 @@
 import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -18,8 +19,16 @@ export interface SaveDashboardOptions extends CloneOptions {
   makeEditable?: boolean;
 }
 
+export interface SaveDashboardAsOptions {
+  saveAsCopy?: boolean;
+  isNew?: boolean;
+  copyTags?: boolean;
+  title?: string;
+  description?: string;
+}
+
 export interface SaveDashboardCommand {
-  dashboard: Dashboard;
+  dashboard: Dashboard | DashboardV2Spec;
   message?: string;
   folderUid?: string;
   overwrite?: boolean;
