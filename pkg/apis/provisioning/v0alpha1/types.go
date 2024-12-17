@@ -122,6 +122,10 @@ type EditingOptions struct {
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 // As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatus struct {
+	// FIXME: this is temporary field until we use different methods in the controller for create and update
+	// Initialized is true when the repository has been initialized
+	Initialized bool `json:"initialized"`
+
 	// This will get updated with the current health status (and updated periodically)
 	Health HealthStatus `json:"health"`
 

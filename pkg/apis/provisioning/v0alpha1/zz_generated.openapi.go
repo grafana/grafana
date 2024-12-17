@@ -884,6 +884,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 				Description: "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"initialized": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FIXME: this is temporary field until we use different methods in the controller for create and update Initialized is true when the repository has been initialized",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
@@ -905,7 +913,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"health", "sync", "webhook"},
+				Required: []string{"initialized", "health", "sync", "webhook"},
 			},
 		},
 		Dependencies: []string{

@@ -225,14 +225,11 @@ func (rc *RepositoryController) sync(key string) error {
 
 	var status *provisioning.RepositoryStatus
 	if res.Success {
-		// HACK: use status check to determine if we are updating or creating
-		isUpdate := cachedRepo.Status.Health.Checked > 0
-		if isUpdate {
+		if cachedRepo.Status.Initialized {
 			status, err = repo.OnUpdate(ctx, logger)
 			if err != nil {
 				return fmt.Errorf("on create repository: %w", err)
 			}
-
 		} else {
 			status, err = repo.OnCreate(ctx, logger)
 			if err != nil {
@@ -261,6 +258,8 @@ func (rc *RepositoryController) sync(key string) error {
 
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
+	} else {
+		status.Initialized = true
 	}
 
 	status.Health = provisioning.HealthStatus{
