@@ -289,6 +289,10 @@ export async function callSuggestionsApi(
 
 /**
  * Consolidate OTel resources into label filters
+ *  - hide the adhoc filter and hide the otel resource filter
+ *  - create an new overlaping adhoc filter, super filter that includes all attributes, resource and metric
+ *  - identify the difference when selecting an attribute
+ *  - place the attribute in the appropriate filter so that the query is interpolated with the correct filter in the correct place
  *
  * 1. The adhoc filters will contain all the otel resources (happens by default because list contains target_info)
  *   [x] the filter list will sort otel resources to the top

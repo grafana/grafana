@@ -66,6 +66,7 @@ import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
   VAR_MISSING_OTEL_TARGETS,
+  VAR_OTEL_AND_METRIC_FILTERS,
   VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
@@ -169,7 +170,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE, VAR_OTEL_RESOURCES, VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_JOIN_QUERY],
+    variableNames: [VAR_DATASOURCE, VAR_OTEL_RESOURCES, VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_JOIN_QUERY, VAR_OTEL_AND_METRIC_FILTERS],
     onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
 
@@ -516,7 +517,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         });
         return { replace: true, values };
       },
-      hide: VariableHide.hideLabel,
+      // HIDE THE OTEL RESOURCE VARIABLE
+      // hide: VariableHide.hideLabel,
     });
 
     // 2. Get the otel join query for state and variable
@@ -719,7 +721,7 @@ function getVariableSet(
         name: VAR_FILTERS,
         addFilterButtonText: 'Add label',
         datasource: trailDS,
-        hide: VariableHide.hideLabel,
+        hide: otelJoinQuery ? VariableHide.hideVariable : VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
@@ -737,6 +739,18 @@ function getVariableSet(
         name: VAR_MISSING_OTEL_TARGETS,
         hide: VariableHide.hideVariable,
         value: false,
+      }),
+      new AdHocFiltersVariable({
+        name: VAR_OTEL_AND_METRIC_FILTERS,
+        addFilterButtonText: 'Add attribute',
+        datasource: trailDS,
+        hide: VariableHide.hideLabel,
+        layout: 'vertical',
+        filters: initialFilters ?? [],
+        baseFilters: getBaseFiltersForMetric(metric),
+        applyMode: 'manual',
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });
