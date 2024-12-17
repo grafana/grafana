@@ -19,7 +19,6 @@ import { DataQuery } from '@grafana/schema';
 import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
-import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
@@ -85,7 +84,6 @@ interface State {
   popoverMenuCoordinates: { x: number; y: number };
   orderedRows: LogRowModel[];
   showDuplicates: boolean;
-  keyMaker: UniqueKeyMaker;
   showLogDetails: number[];
   virtualizedListKey: string;
 }
@@ -105,7 +103,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     popoverMenuCoordinates: { x: 0, y: 0 },
     orderedRows: [],
     showDuplicates: false,
-    keyMaker: new UniqueKeyMaker(),
     virtualizedListKey: '',
     showLogDetails: [],
   };
@@ -181,10 +178,19 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       selectedRow: null,
     });
   };
-  
+
   componentDidUpdate(prevProps: Readonly<Props>): void {
     // How much nicer this would be with useEffect()
-    const dependencyArray = ['deduplicatedRows', 'logRows', 'dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
+    const dependencyArray = [
+      'deduplicatedRows',
+      'logRows',
+      'dedupStrategy',
+      'logsSortOrder',
+      'showLabels',
+      'showTime',
+      'wrapLogMessage',
+      'prettifyLogMessage',
+    ];
     const updated = dependencyArray.reduce((updated: boolean, attr: string) => {
       // @ts-expect-error
       return updated || prevProps[attr] !== this.props[attr];
@@ -208,10 +214,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
-    
+
     this.setState({
       orderedRows: [...orderedRows],
-      showDuplicates
+      showDuplicates,
     });
   }
 
@@ -236,38 +242,64 @@ class UnThemedLogRows extends PureComponent<Props, State> {
    * When settings change, we need the virtualized list to re-render. Passing a new array to the list is not enough to trigger it.
    */
   setVirtualizedListKey = () => {
-    const reRenderTriggers = ['dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
-    const virtualizedListKey = reRenderTriggers.reduce((key: string, attr: string) => {
-      // @ts-expect-error
-      return `${key}${this.props[attr]?.toString()}`
-    }, '') + (`details-${this.state.showLogDetails.length}`);
+    const reRenderTriggers = [
+      'dedupStrategy',
+      'logsSortOrder',
+      'showLabels',
+      'showTime',
+      'wrapLogMessage',
+      'prettifyLogMessage',
+    ];
+    const virtualizedListKey =
+      reRenderTriggers.reduce((key: string, attr: string) => {
+        // @ts-expect-error
+        return `${key}${this.props[attr]?.toString()}`;
+      }, '') + `details-${this.state.showLogDetails.length}`;
 
     this.setState({ virtualizedListKey });
-  }
+  };
 
-  Row = ({ getRows, rows, showDuplicates, styles }: { getRows(): LogRowModel[], rows: LogRowModel[], showDuplicates: boolean, styles: ReturnType<typeof getLogRowStyles> }, { index, style }: { index: number, style: CSSProperties }) => {
-    return <LogRow
-      style={style}
-      getRows={getRows}
-      row={rows[index]}
-      showDuplicates={showDuplicates}
-      logsSortOrder={this.props.logsSortOrder}
-      onOpenContext={this.openContext}
-      styles={styles}
-      onPermalinkClick={this.props.onPermalinkClick}
-      scrollIntoView={this.props.scrollIntoView}
-      permalinkedRowId={this.props.permalinkedRowId}
-      onPinLine={this.props.onPinLine}
-      onUnpinLine={this.props.onUnpinLine}
-      pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-      pinned={this.props.pinnedRowId === rows[index].uid || this.props.pinnedLogs?.some((logId) => logId === rows[index].rowId)}
-      isFilterLabelActive={this.props.isFilterLabelActive}
-      handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-      showDetails={this.isRowExpanded(rows[index])}
-      onRowClick={this.onRowClick}
-      {...this.props}
-    />
-  }
+  Row = (
+    {
+      getRows,
+      rows,
+      showDuplicates,
+      styles,
+    }: {
+      getRows(): LogRowModel[];
+      rows: LogRowModel[];
+      showDuplicates: boolean;
+      styles: ReturnType<typeof getLogRowStyles>;
+    },
+    { index, style }: { index: number; style: CSSProperties }
+  ) => {
+    return (
+      <LogRow
+        style={style}
+        getRows={getRows}
+        row={rows[index]}
+        showDuplicates={showDuplicates}
+        logsSortOrder={this.props.logsSortOrder}
+        onOpenContext={this.openContext}
+        styles={styles}
+        onPermalinkClick={this.props.onPermalinkClick}
+        scrollIntoView={this.props.scrollIntoView}
+        permalinkedRowId={this.props.permalinkedRowId}
+        onPinLine={this.props.onPinLine}
+        onUnpinLine={this.props.onUnpinLine}
+        pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
+        pinned={
+          this.props.pinnedRowId === rows[index].uid ||
+          this.props.pinnedLogs?.some((logId) => logId === rows[index].rowId)
+        }
+        isFilterLabelActive={this.props.isFilterLabelActive}
+        handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+        showDetails={this.isRowExpanded(rows[index])}
+        onRowClick={this.onRowClick}
+        {...this.props}
+      />
+    );
+  };
 
   /**
    * Heuristic function to estimate row size. Needs to be updated when log row styles changes.
@@ -278,7 +310,12 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const rowHeight = 20.14;
     const lineHeight = 18.5;
     const detailsHeight = this.isRowExpanded(rows[index]) ? window.innerHeight * 0.35 + 41 : 0;
-    const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage, this.props.wrapLogMessage, this.isRowExpanded(rows[index]));
+    const line = restructureLog(
+      rows[index].raw,
+      this.props.prettifyLogMessage,
+      this.props.wrapLogMessage,
+      this.isRowExpanded(rows[index])
+    );
 
     if (this.props.prettifyLogMessage) {
       try {
@@ -295,8 +332,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!this.props.wrapLogMessage) {
       return rowHeight + detailsHeight;
     }
-    return (this.estimateMessageLines(line) * rowHeight) + detailsHeight;
-  }
+    return this.estimateMessageLines(line) * rowHeight + detailsHeight;
+  };
 
   estimateMessageLines = (line: string) => {
     if (!this.props.wrapLogMessage) {
@@ -311,7 +348,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
     const letter = 8.4;
     return Math.ceil((line.length * letter) / (window.innerWidth - margins));
-  }
+  };
 
   onRowClick = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => {
     if (this.handleSelection(e, row)) {
@@ -342,7 +379,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   isRowExpanded = (row: LogRowModel) => {
     const rowIndex = this.props.logRows?.indexOf(row) ?? -1;
     return this.state.showLogDetails.indexOf(rowIndex) >= 0;
-  }
+  };
 
   render() {
     const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
@@ -372,11 +409,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             height={height}
             itemCount={orderedRows?.length || 0}
             itemSize={this.estimateRowHeight.bind(this, orderedRows)}
-            itemKey={(index: number) => this.state.keyMaker.getKey(orderedRows[index].uid)}
+            itemKey={(index: number) => index}
             width={'100%'}
             layout="vertical"
           >
-            {this.Row.bind(this, { getRows, showDuplicates, rows: orderedRows, styles })}  
+            {this.Row.bind(this, { getRows, showDuplicates, rows: orderedRows, styles })}
           </VariableSizeList>
         </table>
       </div>
