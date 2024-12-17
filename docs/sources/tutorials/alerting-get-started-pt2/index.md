@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 2
+# Get started with Grafana Alerting - Part 2 of 3
 
 The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://www.grafana.com/tutorials/alerting-get-started/).
 
@@ -237,7 +237,6 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 1. Select **TestData** data source from the drop-down menu.
 1. From **Scenario** select **CSV Content**.
-1. In the Query editor, switch to **Code** mode by clicking the button on the right.
 1. Copy in the following CSV data:
 
    ```
@@ -252,7 +251,7 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
    - Keep `Last` as the value for the reducer function (`WHEN`), and `1000` as the threshold value. This is the value above which the alert rule should trigger.
 
-1. Click **Preview** to run the queries.
+1. Click **Preview alert rule condition** to run the queries.
 
 It should return two series.`desktop` in Firing state, and `mobile` in Normal state. The values `1`, and `0` mean that the condition is either `true` or `false`.
 
@@ -267,8 +266,8 @@ In the [life cycle](http://grafana.com/docs/grafana/next/alerting/fundamentals/a
 
 To set up evaluation behavior:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: `web-traffic-alerts`. This folder will contain our alerts.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it `1m` (referring to “1 minute”).
+1. In **Folder**, click **+ New folder** and enter a name. For example: `web-traffic-alerts`. This folder contains our alert rules.
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
 1. Choose an Evaluation interval (how often the alert will be evaluated). Choose `1m`.
 1. Set the pending period to `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
