@@ -2505,6 +2505,14 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						PanelURL:     "",
 						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} value=1 ]",
+						EvalValues: []alertingTemplates.EvalValue{
+							{
+								Var:    "A",
+								Metric: "",
+								Labels: "{}",
+								Value:  "1",
+							},
+						},
 					},
 				},
 				"GroupLabels":       template.KV{"alertname": "EmailAlert"},
@@ -2665,6 +2673,14 @@ var expNonEmailNotifications = map[string][]string{
 			  "startsAt": "%s",
               "values": {"A": 1},
               "valueString": "[ var='A' labels={} value=1 ]",
+			  "evalValues": [
+					{
+						"Var": "A",
+						"Metric": "",
+						"Labels": "{}",
+						"Value": "1"
+					}
+			  ],
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "http://localhost:3000/alerting/grafana/UID_WebhookAlert/view",
 			  "fingerprint": "15c59b0a380bd9f1",
