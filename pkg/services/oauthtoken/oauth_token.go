@@ -440,18 +440,18 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
-		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
-				Token: token,
-			}); err != nil {
-				ctxLogger.Error("Failed to update external session during token refresh", "error", err)
-				return token, err
-			}
-		} else {
+		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 				ctxLogger.Error("Failed to update auth info during token refresh", "authID", usr.GetAuthID(), "error", err)
 				return token, err
 			}
+		}
+
+		if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
+			Token: token,
+		}); err != nil {
+			ctxLogger.Error("Failed to update external session during token refresh", "error", err)
+			return token, err
 		}
 
 		ctxLogger.Debug("Updated oauth info for user")
