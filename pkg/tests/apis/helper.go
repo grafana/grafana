@@ -193,7 +193,7 @@ func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath st
 	body, err := os.ReadFile(fpath)
 	if err == nil {
 		specSaved := spec3.OpenAPI{}
-		err := specSaved.UnmarshalJSON(body)
+		err = specSaved.UnmarshalJSON(body)
 		assert.NoError(c.t, err, "error reading")
 
 		if !assert.Equal(c.t, specSaved, spec) {
@@ -202,13 +202,13 @@ func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath st
 	}
 
 	if err != nil {
-		pretty, err := json.MarshalIndent(spec, "", "  ")
-		e2 := os.WriteFile(fpath, []byte(pretty), 0644)
-		if e2 != nil {
-			c.t.Errorf("error writing file: %s", e2.Error())
+		pretty, _ := json.MarshalIndent(spec, "", "  ")
+		err = os.WriteFile(fpath, pretty, 0644)
+		if err != nil {
+			require.NoError(c.t, err)
 		}
 		abs, _ := filepath.Abs(fpath)
-		c.t.Errorf("openapi spec has changed: %s (%s)", err.Error(), abs)
+		c.t.Errorf("openapi spec has changed: %s", abs)
 		c.t.Fail()
 	}
 }
