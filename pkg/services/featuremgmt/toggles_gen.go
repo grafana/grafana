@@ -767,10 +767,6 @@ const (
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
-	// FlagSingleTopNav
-	// Unifies the top search bar and breadcrumb bar into one
-	FlagSingleTopNav = "singleTopNav"
-
 	// FlagExploreLogsShardSplitting
 	// Used in Explore Logs to split queries into multiple queries based on the number of shards
 	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
