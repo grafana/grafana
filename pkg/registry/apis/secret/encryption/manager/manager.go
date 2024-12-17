@@ -153,7 +153,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
-	label := encryption.KeyLabel(scope, encryption.ProviderID(s.currentProviderID))
+	label := encryption.KeyLabel(scope, s.currentProviderID)
 
 	var id string
 	var dataKey []byte
@@ -270,7 +270,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 		Active:        true,
 		UID:           id,
 		Namespace:     namespace,
-		Provider:      encryption.ProviderID(s.currentProviderID),
+		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Label:         label,
 		Scope:         scope,
