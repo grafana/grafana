@@ -1054,7 +1054,7 @@ describe('PrometheusDatasource2', () => {
       async function runAnnotationQuery(data: number[][], overrideStep?: string) {
         let response = createAnnotationResponse();
         response.data.results['X'].frames[0].data.values = data;
-        if ( overrideStep ) {
+        if (overrideStep) {
           const meta = response.data.results['X'].frames[0].schema.meta;
           meta.executedQueryString = meta.executedQueryString.replace('1m0s', overrideStep);
         }
@@ -1098,16 +1098,29 @@ describe('PrometheusDatasource2', () => {
         expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
       });
 
-      it('should handle non-default step in executedQuery', async () => {
-        const results = await runAnnotationQuery([
+      describe('should group annotations over wider range when the step grows larger', () => {
+        const data: number[][] = [
           [1 * 120000, 2 * 120000, 3 * 120000, 4 * 120000, 5 * 120000, 6 * 120000],
           [1, 1, 0, 0, 1, 1],
-        ], '2m0s');
+        ];
 
-        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
-          [120000, 240000],
-          [600000, 720000],
-        ]);
+        it('should not group annotations with the default step', async () => {
+          const results = await runAnnotationQuery(data);
+          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
+            [120000, 120000],
+            [240000, 240000],
+            [600000, 600000],
+            [720000, 720000],
+          ]);
+        });
+
+        it('should group annotations with larger step', async () => {
+          const results = await runAnnotationQuery(data, '2m0s');
+          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
+            [120000, 240000],
+            [600000, 720000],
+          ]);
+        });
       });
     });
 
