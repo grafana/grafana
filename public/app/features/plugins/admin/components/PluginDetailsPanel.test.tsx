@@ -37,6 +37,7 @@ const mockPlugin: CatalogPlugin = {
   type: PluginType.app,
   updatedAt: '2023-12-01',
   installedVersion: '1.0.0',
+  latestVersion: '1.1.0',
   details: {
     readme: 'Test readme',
     versions: [
