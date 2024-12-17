@@ -36,33 +36,3 @@ Grouped view shows Grafana alert rules grouped by folder and Loki or Prometheus 
 ### State view
 
 State view shows alert rules grouped by state. Use this view to get an overview of which rules are in which state. You can expand each group to view more details.
-
-## View alert rule details
-
-To view alert rule details, complete the following steps.
-
-1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
-1. Click to expand an alert rule.
-1. In **Actions**, click **View** (the eye icon).
-
-   The namespace and group are shown in the breadcrumb navigation. They are interactive and can be used to filter rules by namespace or group.
-
-   The rest of the alert detail content is split up into tabs:
-
-   **Query and conditions**
-
-   View the details of the query that is used for the alert rule, including the expressions and intermediate values for each step of the expression pipeline. A graph view is included for range queries and data sources that return time series-like data frames.
-
-   **Instances**
-
-   Explore each alert instance, its status, labels and various other metadata for multi-dimensional alert rules.
-
-   Use **Search by label** to enter search criteria using label selectors. For example, `environment=production,region=~US|EU,severity!=warning`.
-
-   **History**
-
-   Explore the recorded history for an alert rule. You can also filter by alert state.
-
-   **Details**
-
-   Debug or audit using the alert rule metadata and view the alert rule annotations.

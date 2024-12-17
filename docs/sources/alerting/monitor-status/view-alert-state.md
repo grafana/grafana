@@ -74,9 +74,37 @@ To view the state and health of your alert rules and the status of alert instanc
 
    {{< figure src="/media/docs/alerting/view-alert-instance-state.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
-1. For more alert rule details, click **View** to open the Alert rule view page, which includes tabs such as **Query and Conditions**, **Instances**, **History**, and **Details**.
+## View alert rule details
 
-   {{< figure src="/media/docs/alerting/alert-rule-view-page.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
+To view more alert rule details, complete the following steps.
+
+1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Click to expand an alert rule.
+1. In **Actions**, click **View** (the eye icon).
+
+   {{< figure src="/media/docs/alerting/alert-rule-view-page-with-breadcrumb.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
+
+   The namespace and group are shown in the breadcrumb navigation. They are interactive and can be used to filter rules by namespace or group.
+
+   The rest of the alert detail content is split up into tabs:
+
+   **Query and conditions**
+
+   View the details of the query that is used for the alert rule, including the expressions and intermediate values for each step of the expression pipeline. A graph view is included for range queries and data sources that return time series-like data frames.
+
+   **Instances**
+
+   Explore each alert instance, its status, labels and various other metadata for multi-dimensional alert rules.
+
+   Use **Search by label** to enter search criteria using label selectors. For example, `environment=production,region=~US|EU,severity!=warning`.
+
+   **History**
+
+   Explore the recorded history for an alert rule. You can also filter by alert state.
+
+   **Details**
+
+   Debug or audit using the alert rule metadata and view the alert rule annotations.
 
 ## View alert state on panels
 
