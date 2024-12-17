@@ -42,7 +42,7 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider, investigationAppProvider)
 	if err != nil {
 		return nil, err
 	}

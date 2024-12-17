@@ -9,6 +9,8 @@ investigation: {
 
 	apiResource: {
 		groupOverride: "investigation.grafana.app"
+		mutation: operations: ["create", "update"]
+		validation: operations: ["create", "update"]
 	}
 
 	codegen: {
@@ -36,20 +38,20 @@ investigation: {
 
 // InvestigationItem is an item in an investigation.
 #InvestigationItem: {
-	id:        string
-	title:     string
+	id:    string
+	title: string
 	// type is the type of the item "timeseries", "heatmap", "log-table" (not an enum to allow for future extensions).
-	type:      string
+	type: string
 	// url is the URL to the item.
-	url:       string
+	url: string
 	// origin is where the item was created from.
-	origin:    string // "explore-metrics", "explore-logs", "explore-traces" (not an enum to allow for future extensions)
+	origin: string // "explore-metrics", "explore-logs", "explore-traces" (not an enum to allow for future extensions)
 	// iconPath (optional) is the path to the icon for the item.
-	iconPath?:  string
+	iconPath?: string
 	// timeRange (optional) is the time range of the item.
 	timeRange: #AbsoluteTimeRange
 	// note (optional) is a comment on the item.
-	note?:     [...#Comment]
+	note?: [...#Comment]
 	// queryType is the type of the query used to generate this item.
 	queryType: "logs" | "metrics"
 	// dataQuery contains the query used to generate this item.
@@ -70,9 +72,9 @@ investigation: {
 
 // DataQueryMetrics is a data query for metrics.
 #DataQueryMetrics: {
-	refId: string
+	refId:      string
 	datasource: #DatasourceRef
-	expr: string
+	expr:       string
 }
 
 // Comment is a comment on an investigation item.
