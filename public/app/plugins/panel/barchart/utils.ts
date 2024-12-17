@@ -58,7 +58,7 @@ export function prepSeries(
   colorFieldName?: string
 ): BarSeries {
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return { series: [], _rest: [], warn: 'No data in response' };
+    return { series: [], _rest: [], warn: '' };
   }
 
   cacheFieldDisplayNames(frames);
