@@ -210,7 +210,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
-  const hasDescription = items[0].description;
+  const hasDescription = items[0]?.description != null;
 
   const virtualizerOptions = {
     count: items.length,

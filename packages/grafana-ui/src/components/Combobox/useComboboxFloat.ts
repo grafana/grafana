@@ -11,6 +11,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
+import { useTheme2 } from '../../themes';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
@@ -23,12 +24,15 @@ export const useComboboxFloat = (
   range: { startIndex: number; endIndex: number } | null,
   isOpen: boolean
 ) => {
+  const theme = useTheme2();
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
+  const descriptionToLabelRatio =
+    parseFloat(theme.typography.bodySmall.fontSize) / parseFloat(theme.typography.pxToRem(MENU_ITEM_FONT_SIZE));
 
   // the order of middleware is important!
   const middleware = [
@@ -62,18 +66,23 @@ export const useComboboxFloat = (
   const longestItemWidth = useMemo(() => {
     let longestItem = '';
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
+    let fontSize = MENU_ITEM_FONT_SIZE;
+    let fontWeight = MENU_ITEM_FONT_WEIGHT;
 
     for (let i = 0; i < itemsToLookAt; i++) {
       const itemLabel = items[i].label ?? items[i].value.toString();
       const description = items[i].description;
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
-      if (description) {
-        // Estimate that desctiption is 1.2 smaller than the label
-        longestItem = description?.length / 1.2 > longestItem.length ? description : longestItem;
+      if (description != null) {
+        longestItem = description?.length / descriptionToLabelRatio > longestItem.length ? description : longestItem;
+        if (longestItem == description) {
+          fontSize = theme.typography.remToPx(parseFloat(theme.typography.bodySmall.fontSize, 10));
+          fontWeight = theme.typography.fontWeightRegular;
+        }
       }
     }
 
-    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
+    const size = measureText(longestItem, fontSize, fontWeight).width;
 
     return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);

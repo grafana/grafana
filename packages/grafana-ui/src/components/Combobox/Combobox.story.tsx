@@ -33,10 +33,14 @@ const meta: Meta<PropsAndCustomArgs> = {
       {
         label: 'Apple',
         value: 'apple',
-        description:
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        description: '',
       },
-      { label: 'Banana', value: 'banana' },
+      {
+        label: 'Banana',
+        value: 'banana',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+      },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
       {
