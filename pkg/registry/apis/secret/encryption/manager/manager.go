@@ -214,7 +214,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
-		if errors.Is(err, encryption.ErrDataKeyNotFound) {
+		if errors.Is(err, secret.ErrDataKeyNotFound) {
 			return "", nil, nil
 		}
 		return "", nil, err

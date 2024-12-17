@@ -1,11 +1,8 @@
 package encryption
 
 import (
-	"errors"
 	"time"
 )
-
-var ErrDataKeyNotFound = errors.New("data key not found")
 
 type DataKey struct {
 	Active        bool
