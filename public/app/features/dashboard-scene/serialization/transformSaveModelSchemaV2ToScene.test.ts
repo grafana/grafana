@@ -26,7 +26,7 @@ import {
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
