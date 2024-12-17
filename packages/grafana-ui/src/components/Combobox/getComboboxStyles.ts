@@ -90,7 +90,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',
-        height: MENU_OPTION_HEIGHT,
+        height: '100%',
         position: 'absolute',
         width: theme.spacing(0.5),
         left: 0,
