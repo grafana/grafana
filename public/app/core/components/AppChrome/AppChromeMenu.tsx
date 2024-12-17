@@ -79,8 +79,6 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const topPosition = 0;
-
   return {
     backdrop: css({
       backdropFilter: 'blur(1px)',
@@ -91,10 +89,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       top: 0,
       zIndex: theme.zIndex.modalBackdrop,
-
-      [theme.breakpoints.up('md')]: {
-        top: topPosition,
-      },
     }),
     menu: css({
       display: 'flex',
@@ -111,7 +105,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
-        top: topPosition,
       },
     }),
     wrapper: css({
