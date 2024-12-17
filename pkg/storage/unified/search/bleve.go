@@ -85,9 +85,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
-	b.cacheMu.Lock()
-	defer b.cacheMu.Unlock()
-
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -99,9 +96,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapper)
-		if err == nil {
-			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
-		}
+
+		// TODO, check last RV so we can see if the numbers have changed
+
 		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -137,7 +134,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
+	b.cacheMu.Lock()
 	b.cache[key] = idx
+	b.cacheMu.Unlock()
 	return idx, nil
 }
 
@@ -252,7 +251,7 @@ func (b *bleveIndex) Search(
 		searchrequest.Fields = f
 	}
 
-	res, err := index.Search(searchrequest)
+	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -295,9 +294,25 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
-func (b *bleveIndex) DocCount() (int, error) {
-	count, err := b.index.DocCount()
-	return int(count), err
+func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	if folder == "" {
+		count, err := b.index.DocCount()
+		return int64(count), err
+	}
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query: &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		},
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // make sure the request key matches the index

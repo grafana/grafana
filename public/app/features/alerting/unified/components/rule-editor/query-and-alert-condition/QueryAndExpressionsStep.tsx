@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useEffectOnce } from 'react-use';
 
-import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -20,21 +21,21 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
   ExpressionQuery,
   ExpressionQueryType,
-  expressionTypes,
   ReducerMode,
+  expressionTypes,
 } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
+import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
@@ -51,7 +52,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import { getSimpleConditionFromExpressions, SimpleConditionEditor, SimpleConditionIdentifier } from './SimpleCondition';
+import { SimpleConditionEditor, SimpleConditionIdentifier, getSimpleConditionFromExpressions } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
@@ -152,14 +153,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return queries.filter((query) => isExpressionQueryInAlert(query));
   }, [queries]);
 
-  useEffect(() => {
+  useEffectOnce(() => {
     // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
     // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
 
     if (!editingExistingRule && isOptimizeReducerEnabled) {
       dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
     }
-  }, [dataQueries, expressionQueries, editingExistingRule, isOptimizeReducerEnabled]);
+  });
 
   const [type, condition, dataSourceName, editorSettings] = watch([
     'type',
@@ -269,10 +270,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       // update condition too if refId was updated
       if (condition === oldRefId) {
-        handleSetCondition(newRefId);
+        setValue('condition', newRefId);
       }
     },
-    [condition, queries, handleSetCondition]
+    [condition, queries, setValue]
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
@@ -289,6 +290,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -298,7 +305,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(

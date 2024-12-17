@@ -1,7 +1,7 @@
 import { DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
+import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
 
 const fakeDsMock: DataSourceApi = {
   name: 'fake-std',
@@ -45,6 +45,7 @@ jest.mock('@grafana/runtime', () => ({
       newDashboardWithFiltersAndGroupBy: false,
     },
     bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
       user: {
         timezone: 'Africa/Abidjan',
       },
@@ -57,7 +58,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe('buildNewDashboardSaveModel', () => {
+describe('buildNewDashboardSaveModelV1', () => {
   it('should not have template variables defined by default', async () => {
     const result = await buildNewDashboardSaveModel();
     expect(result.dashboard.templating).toBeUndefined();
@@ -81,6 +82,34 @@ describe('buildNewDashboardSaveModel', () => {
     it("should set the new dashboard's timezone to the user's timezone", async () => {
       const result = await buildNewDashboardSaveModel();
       expect(result.dashboard.timezone).toEqual('Africa/Abidjan');
+    });
+  });
+});
+
+describe('buildNewDashboardSaveModelV2', () => {
+  it('should not have template variables defined by default', async () => {
+    const result = await buildNewDashboardSaveModelV2();
+    expect(result.spec.variables).toEqual([]);
+  });
+
+  describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
+    beforeAll(() => {
+      config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
+    });
+    afterAll(() => {
+      config.featureToggles.newDashboardWithFiltersAndGroupBy = false;
+    });
+
+    it('should add filter and group by variables if the datasource supports it and is set as default', async () => {
+      const result = await buildNewDashboardSaveModelV2();
+      expect(result.spec.variables).toHaveLength(2);
+      expect(result.spec.variables[0].kind).toBe('AdhocVariable');
+      expect(result.spec.variables[1].kind).toBe('GroupByVariable');
+    });
+
+    it("should set the new dashboard's timezone to the user's timezone", async () => {
+      const result = await buildNewDashboardSaveModelV2();
+      expect(result.spec.timeSettings.timezone).toEqual('Africa/Abidjan');
     });
   });
 });

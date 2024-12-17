@@ -3,6 +3,7 @@ import { memo, ReactNode, useMemo } from 'react';
 
 import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
+import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
@@ -45,21 +46,26 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     let line = '';
     for (let i = 0; i < detectedFields.length; i++) {
       const parsedKey = detectedFields[i];
+
+      if (parsedKey === LOG_LINE_BODY_FIELD_NAME) {
+        line += ` ${row.entry}`;
+      }
+
       const field = fields.find((field) => {
         const { keys } = field;
         return keys[0] === parsedKey;
       });
 
-      if (field) {
+      if (field != null) {
         line += ` ${parsedKey}=${field.values}`;
       }
 
-      if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {
+      if (row.labels[parsedKey] != null && row.labels[parsedKey] != null) {
         line += ` ${parsedKey}=${row.labels[parsedKey]}`;
       }
     }
     return line.trimStart();
-  }, [detectedFields, fields, row.labels]);
+  }, [detectedFields, fields, row.entry, row.labels]);
 
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
 

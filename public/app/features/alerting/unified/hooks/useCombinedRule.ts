@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
-import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier, RuleWithLocation, RulesSource } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';

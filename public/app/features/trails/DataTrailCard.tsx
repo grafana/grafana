@@ -59,7 +59,7 @@ export function DataTrailCard(props: Props) {
   const { filters, metric, createdAt } = values;
 
   return (
-    <div>
+    <article>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
           <div className={styles.metricValue}>{truncateValue('', getMetricName(metric), 39)}</div>
@@ -93,33 +93,17 @@ export function DataTrailCard(props: Props) {
         </div>
         <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
       </div>
-    </div>
+    </article>
   );
 }
 
 export function getStyles(theme: GrafanaTheme2) {
   return {
-    metricLabel: css({
-      display: 'inline',
-      color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
-      fontWeight: 400,
-    }),
     metricValue: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
       fontWeight: 500,
       wordBreak: 'break-all',
-    }),
-    tag: css({
-      maxWidth: '260px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
     }),
     card: css({
       position: 'relative',
@@ -159,19 +143,14 @@ export function getStyles(theme: GrafanaTheme2) {
     primaryFont: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
       fontSize: '12px',
-      fontStyle: 'normal',
       fontWeight: '500',
-      lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
     }),
     secondaryFont: css({
       display: 'inline',
       color: theme.colors.text.secondary,
-      fontFamily: 'Inter',
       fontSize: '12px',
-      fontStyle: 'normal',
       fontWeight: '400',
       lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
@@ -180,10 +159,6 @@ export function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       bottom: theme.spacing(1),
       right: theme.spacing(1),
-    }),
-    wordwrap: css({
-      overflow: 'hidden',
-      overflowWrap: 'anywhere',
     }),
   };
 }

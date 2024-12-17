@@ -34,7 +34,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function setupDashboardScene(state: DashboardSceneState): DashboardScene {
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
 }
 
@@ -140,7 +140,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           children: [
             new DashboardGridItem({
               body: new VizPanel({
-                key: 'test-panel-uid',
+                key: 'panel-1',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
                 titleItems: [

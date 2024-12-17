@@ -479,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "filter-view": {
+        "no-more-results": "No more results – showing {{numberOfRules}} rules",
+        "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
@@ -1261,6 +1265,8 @@
       "title-with-name": "Table - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Add",
+      "add-to-queryless-extensions": "Go queryless",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
@@ -1284,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
+      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
@@ -1752,6 +1759,12 @@
     "infinite-scroll": {
       "older-logs": "Older logs"
     },
+    "log-details": {
+      "fields": "Fields",
+      "links": "Links",
+      "log-line": "Log line",
+      "no-details": "No details available"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
@@ -2201,9 +2214,6 @@
     "new-folder": {
       "title": "New folder"
     },
-    "observability": {
-      "title": "Observability"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2332,12 +2342,6 @@
       "list-label": "Navigation",
       "open": "Open menu",
       "undock": "Undock menu"
-    },
-    "toolbar": {
-      "close-menu": "Close menu",
-      "enable-kiosk": "Enable kiosk mode",
-      "open-menu": "Open menu",
-      "toggle-search-bar": "Toggle top search bar"
     }
   },
   "news": {
@@ -2915,6 +2919,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
+      "invite-user-title": "Invite new member",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
@@ -3031,7 +3036,6 @@
     "mode": "Mode",
     "mode-kiosk": "Kiosk",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Share playlist"
   },
   "shared": {

@@ -153,8 +153,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
       return t('nav.k6.title', 'Performance');
-    case 'monitoring':
-      return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
     case 'plugin-page-grafana-dbo11y-app':
