@@ -1,7 +1,7 @@
+import { UrlQueryMap } from '@grafana/data';
 import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
-import { UrlQueryMap } from '@grafana/data';
 
 const mockDashboardDto: DashboardDTO = {
   meta: {
