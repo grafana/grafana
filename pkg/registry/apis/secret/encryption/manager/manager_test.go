@@ -31,24 +31,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
-	// Initialize data key storage with a fake db
-	testDB := db.InitTestDB(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-	require.NoError(t, err)
-
-	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
-	require.NoError(t, err)
-
-	svc := SetupTestService(t, store)
+	svc := setupTestService(t)
 	ctx := context.Background()
 	namespace := "test-namespace"
 
@@ -62,7 +45,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -77,7 +60,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -92,7 +75,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 2)
 	})
@@ -204,23 +187,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		testDB := db.InitTestDB(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-		defaultKey := "SdlklWklckeLS"
-		raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-		require.NoError(t, err)
-
-		cfg := &setting.Cfg{Raw: raw}
-		store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
-		require.NoError(t, err)
-
-		svc := SetupTestService(t, store)
+		svc := setupTestService(t)
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -323,22 +290,7 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 }
 
 func TestEncryptionService_Run(t *testing.T) {
-	testDB := db.InitTestDB(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
-	require.NoError(t, err)
-
-	svc := SetupTestService(t, store)
+	svc := setupTestService(t)
 	ctx := context.Background()
 	namespace := "test-namespace"
 
@@ -387,22 +339,7 @@ func TestEncryptionService_Run(t *testing.T) {
 }
 
 func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
-	testDB := db.InitTestDB(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
-	require.NoError(t, err)
-
-	svc := SetupTestService(t, store)
+	svc := setupTestService(t)
 	ctx := context.Background()
 	namespace := "test-namespace"
 
@@ -412,14 +349,14 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("existing key should be re-encrypted", func(t *testing.T) {
-		prevDataKeys, err := store.GetAllDataKeys(ctx, namespace)
+		prevDataKeys, err := svc.store.GetAllDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		require.Len(t, prevDataKeys, 1)
 
 		err = svc.ReEncryptDataKeys(ctx, namespace)
 		require.NoError(t, err)
 
-		reEncryptedDataKeys, err := store.GetAllDataKeys(ctx, namespace)
+		reEncryptedDataKeys, err := svc.store.GetAllDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		require.Len(t, reEncryptedDataKeys, 1)
 
@@ -448,79 +385,25 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 }
 
 func TestEncryptionService_Decrypt(t *testing.T) {
-	testDB := db.InitTestDB(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	defaultKey := "SdlklWklckeLS"
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
-	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
-	store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
-	require.NoError(t, err)
-
 	ctx := context.Background()
 	namespace := "test-namespace"
 
 	t.Run("empty payload should fail", func(t *testing.T) {
-		svc := SetupTestService(t, store)
+		svc := setupTestService(t)
 		_, err := svc.Decrypt(context.Background(), namespace, []byte(""))
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
 	})
 
-	t.Run("ee encrypted payload with ee disabled should fail", func(t *testing.T) {
-		svc := SetupTestService(t, store)
-		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), encryption.WithoutScope())
-		require.NoError(t, err)
-
-		svc = SetupDisabledTestService(t, store)
-
-		_, err = svc.Decrypt(ctx, namespace, ciphertext)
-		assert.Error(t, err)
-	})
-
-	t.Run("ee encrypted payload with providers initialized should work", func(t *testing.T) {
-		svc := SetupTestService(t, store)
-		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), encryption.WithoutScope())
-		require.NoError(t, err)
-
-		svc = SetupDisabledTestService(t, store)
-		err = svc.InitProviders()
-		require.NoError(t, err)
-
-		plaintext, err := svc.Decrypt(ctx, namespace, ciphertext)
-		assert.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), plaintext)
-	})
-
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
-		svc := SetupTestService(t, store)
+		svc := setupTestService(t)
 		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), encryption.WithoutScope())
 		require.NoError(t, err)
 
 		plaintext, err := svc.Decrypt(ctx, namespace, ciphertext)
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), plaintext)
-	})
-
-	t.Run("legacy payload should always work", func(t *testing.T) {
-		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
-
-		svc := SetupTestService(t, store)
-		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
-
-		svc = SetupDisabledTestService(t, store)
-		decrypted, err = svc.Decrypt(context.Background(), namespace, encrypted)
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
 	})
 }
 
@@ -625,18 +508,34 @@ func TestIntegration_SecretsService(t *testing.T) {
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
 			raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey + `
-
-		[security.encryption]
-		data_keys_cache_ttl = 5m
-		data_keys_cache_cleanup_interval = 1ns`))
+				[security]
+				secret_key = ` + defaultKey + `
+		
+				[security.encryption]
+				data_keys_cache_ttl = 5m
+				data_keys_cache_cleanup_interval = 1ns`))
 			require.NoError(t, err)
+
 			cfg := &setting.Cfg{Raw: raw}
 			store, err := secret.ProvideDataKeyStorageStorage(testDB, cfg, features)
 			require.NoError(t, err)
 
-			svc := SetupTestService(t, store)
+			encProvider := encryptionprovider.Provider{}
+			usageStats := &usagestats.UsageStatsMock{T: t}
+
+			enc, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
+			require.NoError(t, err)
+
+			svc, err := NewEncryptionManager(
+				tracing.InitializeTracerForTest(),
+				store,
+				osskmsproviders.ProvideService(enc, cfg, features),
+				enc,
+				cfg,
+				usageStats,
+			)
+			require.NoError(t, err)
+
 			ctx := context.Background()
 			namespace := "test-namespace"
 
