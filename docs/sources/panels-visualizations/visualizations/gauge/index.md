@@ -27,9 +27,7 @@ refs:
 
 Gauges are single-value visualizations that allow you to quickly visualize where a value falls within a defined or calculated min and max range. With repeat options, you can display multiple gauges, each corresponding to a different series, column, or row.
 
-{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
-
-<!-- Replace image above -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-visualization-v11.4.png" alt="A gauge visualization">}}
 
 You can use gauges if you need to track:
 
