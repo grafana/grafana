@@ -74,7 +74,9 @@ describe('runShardSplitQuery()', () => {
         to: dateTime('2023-02-10T06:00:00.000Z'),
       },
     };
-    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], { range: querySplittingRange });
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
+      range: querySplittingRange,
+    });
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests = 12 requests
       expect(datasource.runQuery).toHaveBeenCalledTimes(12);
@@ -229,7 +231,7 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Adjusts the group size based on errors and execution time', async () => {
-   jest
+    jest
       .mocked(datasource.languageProvider.fetchLabelValues)
       .mockResolvedValue(['1', '10', '2', '20', '3', '4', '5', '6', '7', '8', '9']);
 
