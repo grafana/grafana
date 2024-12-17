@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { Stack, Icon, Text } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
@@ -27,7 +27,7 @@ export function PaginatedGrafanaLoader() {
     isLoading,
   } = usePaginatedPrometheusGroups(groupsGenerator.current, GROUP_PAGE_SIZE);
 
-  const groupsByFolder = groupBy(groupsPage, 'folderUid');
+  const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
 
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>

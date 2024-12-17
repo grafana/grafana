@@ -1,17 +1,19 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Stack } from '@grafana/ui';
-import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { Alert, ErrorBoundary, ErrorWithStack, Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import { ExternalRulesSourceIdentifier, RulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getExternalRulesSources } from '../utils/datasource';
+import { getExternalRulesSources, GrafanaRulesSource } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export const GROUP_PAGE_SIZE = 40;
 
 export function GroupedView() {
@@ -19,7 +21,9 @@ export function GroupedView() {
 
   return (
     <Stack direction="column" gap={1} role="list">
-      <PaginatedGrafanaLoader />
+      <DataSourceErrorBoundary rulesSourceIdentifier={GrafanaRulesSource}>
+        <PaginatedGrafanaLoader />
+      </DataSourceErrorBoundary>
       {externalRuleSources.map((ruleSource) => {
         return <DataSourceLoader key={ruleSource.uid} rulesSourceIdentifier={ruleSource} />;
       })}
@@ -43,13 +47,52 @@ function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
   // 2. grab prometheus rule groups with max_groups if supported
   if (dataSourceInfo) {
     return (
-      <PaginatedDataSourceLoader
-        key={rulesSourceIdentifier.uid}
-        rulesSourceIdentifier={rulesSourceIdentifier}
-        application={dataSourceInfo.application}
-      />
+      <DataSourceErrorBoundary rulesSourceIdentifier={rulesSourceIdentifier}>
+        <PaginatedDataSourceLoader
+          key={rulesSourceIdentifier.uid}
+          rulesSourceIdentifier={rulesSourceIdentifier}
+          application={dataSourceInfo.application}
+        />
+      </DataSourceErrorBoundary>
     );
   }
 
   return null;
+}
+
+/**
+ * Some more exotic Prometheus data sources might not be 100% compatible with Prometheus API
+ * We don't want them to break the whole page, so we wrap them in an error boundary
+ */
+function DataSourceErrorBoundary({
+  children,
+  rulesSourceIdentifier,
+}: {
+  children: React.ReactNode;
+  rulesSourceIdentifier: RulesSourceIdentifier;
+}) {
+  return (
+    <ErrorBoundary>
+      {({ error, errorInfo }) => {
+        if (error || errorInfo) {
+          const { uid, name } = rulesSourceIdentifier;
+          return (
+            <DataSourceSection uid={uid} name={name}>
+              <Alert
+                title={t('alerting.rule-list.ds-error-boundary.title', 'Unable to load rules from this data source')}
+              >
+                <Text>Check the data source configuration. Does the data source support Prometheus API?</Text>
+                <ErrorWithStack
+                  error={error}
+                  errorInfo={errorInfo}
+                  title={t('alerting.rule-list.ds-error-boundary.title', 'Unable to load rules from this data source')}
+                />
+              </Alert>
+            </DataSourceSection>
+          );
+        }
+        return children;
+      }}
+    </ErrorBoundary>
+  );
 }
