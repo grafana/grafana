@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -70,6 +72,7 @@ type ProvisioningAPIBuilder struct {
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
+	tester            *RepositoryTester
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -243,6 +246,53 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 		return nil, err
 	}
 	return b.asRepository(ctx, obj)
+}
+
+func timeSince(when int64) time.Duration {
+	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
+}
+
+func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+	repo, err := b.GetRepository(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	status := repo.Config().Status.Health
+	if !status.Healthy {
+		if timeSince(status.Checked) > time.Second*25 {
+			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
+			if err != nil {
+				return nil, err // The status
+			}
+			ctx := identity.WithRequester(ctx, id)
+
+			// Check health again
+			s, err := b.tester.TestRepository(ctx, repo)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Write and return the repo with current status
+			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg != nil {
+				status = cfg.Status.Health
+				if cfg.Status.Health.Healthy {
+					status = cfg.Status.Health
+					repo, err = b.AsRepository(ctx, cfg)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+		if !status.Healthy {
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusFailedDependency,
+				Message: "The repository configuration is not healthy",
+			}}
+		}
+	}
+	return repo, err
 }
 
 func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
@@ -500,11 +550,19 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
+			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
+			b.tester = &RepositoryTester{
+				clientFactory: b.client,
+				client:        c.ProvisioningV0alpha1(),
+				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
+			}
+
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
 				b.identities,
+				b.tester,
 			)
 			if err != nil {
 				return err

@@ -3,22 +3,29 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type testConnector struct {
 	getter RepoGetter
+	tester *RepositoryTester
 	logger *slog.Logger
 }
 
@@ -45,8 +52,6 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := s.logger.With("repository_name", name)
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -94,7 +99,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		// Only call test if field validation passes
-		rsp, err := TestRepository(ctx, repo, logger)
+		rsp, err := s.tester.TestRepository(ctx, repo)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -103,9 +108,18 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-// This function will validate and test a configuration
-// TODO?: this should periodically be run and the update the status if anything changes
-func TestRepository(ctx context.Context, repo repository.Repository, logger *slog.Logger) (*provisioning.TestResults, error) {
+type RepositoryTester struct {
+	// Across Grafana (currently used to get a folder client)
+	clientFactory *resources.ClientFactory
+
+	// Repository+Jobs
+	client client.ProvisioningV0alpha1Interface
+
+	logger *slog.Logger
+}
+
+// This function will check if the repository is configured and functioning as expected
+func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error) {
 	errors := ValidateRepository(repo)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
@@ -119,7 +133,56 @@ func TestRepository(ctx context.Context, repo repository.Repository, logger *slo
 		return rsp, nil
 	}
 
-	return repo.Test(ctx, logger)
+	// Check if the folder exists
+	cfg := repo.Config()
+	if cfg.Spec.Folder != "" {
+		if t.clientFactory == nil {
+			return nil, fmt.Errorf("client factory is not initialized properly")
+		}
+
+		dynamicClient, _, err := t.clientFactory.New(cfg.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		folderClient := dynamicClient.Resource(schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "folders",
+		})
+		_, err = folderClient.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			return &provisioning.TestResults{
+				Code:    http.StatusFailedDependency,
+				Success: false,
+				Errors:  []string{"Configured folder not found"},
+			}, nil
+		}
+	}
+	return repo.Test(ctx, t.logger)
+}
+
+// This function will check if the repository is configured and functioning as expected
+func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisioning.Repository, res *provisioning.TestResults) (*provisioning.Repository, error) {
+	if res == nil {
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"missing health status",
+			},
+		}
+	}
+
+	repo := cfg.DeepCopy()
+	repo.Status.Health = provisioning.HealthStatus{
+		Healthy:    res.Success,
+		Checked:    time.Now().UnixMilli(),
+		Generation: cfg.Generation,
+		Message:    res.Errors,
+	}
+
+	_, err := t.client.Repositories(repo.GetNamespace()).
+		UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+	return repo, err
 }
 
 // Validate a repository

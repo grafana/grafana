@@ -302,6 +302,13 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							Format:      "int64",
 						},
 					},
+					"generation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The generation (spec changed) that triggered this health check",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary messages (will be shown to users)",
