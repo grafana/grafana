@@ -1598,13 +1598,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "investigationsWatcher",
-			Description:     "Enables experimental watcher for investigations",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "passwordlessMagicLinkAuthentication",
 			Description:       "Enable passwordless login via magic link authentication",
 			Stage:             FeatureStageExperimental,

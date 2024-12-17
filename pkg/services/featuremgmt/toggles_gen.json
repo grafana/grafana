@@ -1836,7 +1836,8 @@
       "metadata": {
         "name": "investigationsWatcher",
         "resourceVersion": "1734443690044",
-        "creationTimestamp": "2024-12-17T13:54:50Z"
+        "creationTimestamp": "2024-12-17T13:54:50Z",
+        "deletionTimestamp": "2024-12-17T14:54:34Z"
       },
       "spec": {
         "description": "Enables experimental watcher for investigations",

@@ -859,10 +859,6 @@ const (
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
 
-	// FlagInvestigationsWatcher
-	// Enables experimental watcher for investigations
-	FlagInvestigationsWatcher = "investigationsWatcher"
-
 	// FlagPasswordlessMagicLinkAuthentication
 	// Enable passwordless login via magic link authentication
 	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
