@@ -65,7 +65,12 @@ export const useComboboxFloat = (
 
     for (let i = 0; i < itemsToLookAt; i++) {
       const itemLabel = items[i].label ?? items[i].value.toString();
+      const description = items[i].description;
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
+      if (description) {
+        // Estimate that desctiption is 1.2 smaller than the label
+        longestItem = description?.length / 1.2 > longestItem.length ? description : longestItem;
+      }
     }
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
@@ -78,7 +83,6 @@ export const useComboboxFloat = (
     width: longestItemWidth,
     maxWidth: popoverMaxSize?.width,
     minWidth: inputRef.current?.offsetWidth,
-
     maxHeight: popoverMaxSize?.height,
   };
 

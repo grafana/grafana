@@ -30,7 +30,12 @@ const meta: Meta<PropsAndCustomArgs> = {
     isClearable: false,
     placeholder: 'Select an option...',
     options: [
-      { label: 'Apple', value: 'apple' },
+      {
+        label: 'Apple',
+        value: 'apple',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      },
       { label: 'Banana', value: 'banana' },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
