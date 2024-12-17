@@ -231,6 +231,7 @@ export interface FeatureToggles {
   preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
+  investigationsWatcher?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;

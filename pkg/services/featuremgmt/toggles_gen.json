@@ -1834,6 +1834,19 @@
     },
     {
       "metadata": {
+        "name": "investigationsWatcher",
+        "resourceVersion": "1734443690044",
+        "creationTimestamp": "2024-12-17T13:54:50Z"
+      },
+      "spec": {
+        "description": "Enables experimental watcher for investigations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
         "creationTimestamp": "2024-11-14T15:53:53Z"
