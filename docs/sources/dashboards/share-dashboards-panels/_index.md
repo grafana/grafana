@@ -257,15 +257,17 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
 1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
+
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
+
+   There are maximums for [width](ref:max-width), [height](ref:max-height), and [scale factor](ref:max-scale) in the image renderer configuration that you can customize if needed.
+
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.
 1. Send the copied image to a Grafana user with authorization to view it.
 1. Click the **X** at the top-right corner to close the share drawer.
-
-There are maximums for [width](ref:max-width), [height](ref:max-height), and [scale factor](ref:max-scale) in the image renderer configuration that you can customize if needed.
 
 #### Query string parameters for server-side rendered images
 
