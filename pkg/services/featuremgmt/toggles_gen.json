@@ -2474,7 +2474,8 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAlerts",
         "resourceVersion": "1728048163201",
-        "creationTimestamp": "2024-10-04T13:22:43Z"
+        "creationTimestamp": "2024-10-04T13:22:43Z",
+        "deletionTimestamp": "2024-12-02T13:37:41Z"
       },
       "spec": {
         "description": "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
