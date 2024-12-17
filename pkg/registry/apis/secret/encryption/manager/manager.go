@@ -152,7 +152,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 
 	var id string
 	var dataKey []byte
-	id, dataKey, err = s.currentDataKey(ctx, label, scope, namespace)
+	id, dataKey, err = s.currentDataKey(ctx, namespace, label, scope)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
 		return nil, err
@@ -180,14 +180,14 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *EncryptionManager) currentDataKey(ctx context.Context, label string, scope string, namespace string) (string, []byte, error) {
+func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	// We try to fetch the data key, either from cache or database
-	id, dataKey, err := s.dataKeyByLabel(ctx, label, namespace)
+	id, dataKey, err := s.dataKeyByLabel(ctx, namespace, label)
 	if err != nil {
 		return "", nil, err
 	}
@@ -205,7 +205,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, label string, sc
 
 // dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
-func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, label, namespace string) (string, []byte, error) {
+func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string) (string, []byte, error) {
 	// 0. Get data key from in-memory cache.
 	if entry, exists := s.dataKeyCache.getByLabel(namespace, label); exists && entry.active {
 		return entry.id, entry.dataKey, nil
