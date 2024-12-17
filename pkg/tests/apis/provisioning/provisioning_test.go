@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -87,7 +88,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
 		GVR: schema.GroupVersionResource{
-			Group: "dashboard.grafana.app", Version: "v2alpha1", Resource: "dashboards",
+			Group: dashboard.GROUP, Version: dashboard.VERSION, Resource: "dashboards",
 		},
 	})
 

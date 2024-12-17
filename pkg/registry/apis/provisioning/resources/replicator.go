@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -148,37 +149,63 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
 func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+	logger := r.logger.With("file", fileInfo.Path, "ref", fileInfo.Ref)
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
 	}
+	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
 
 	parent, err := r.createFolderPath(ctx, fileInfo.Path)
 	if err != nil {
 		return fmt.Errorf("failed to create folder path: %w", err)
 	}
-
-	_, err = file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
-	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
-	if false && err != nil && !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if object already exists: %w", err)
-	}
+	logger = logger.With("folder", parent)
 
 	if parent != "" {
 		file.Meta.SetFolder(parent)
 	}
 
-	if err != nil { // IsNotFound
-		_, err = file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
-	} else { // already exists
+	if file.Action == provisioning.ResourceActionCreate {
+		_, err := file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create object: %w", err)
+		}
+	} else if file.Action == provisioning.ResourceActionUpdate {
+		existingMeta, err := apiutils.MetaAccessor(file.Existing)
+		if err != nil {
+			return fmt.Errorf("failed to create meta accessor for the existing object: %w", err)
+		}
+
+		// Just in case no uid is present on the metadata for some reason.
+		logger := logger.With("previous_uid", file.Meta.GetUID(), "previous_resource_version", existingMeta.GetResourceVersion())
+		if uid, ok, _ := unstructured.NestedString(file.Existing.Object, "spec", "uid"); ok {
+			logger.DebugContext(ctx, "updating file's UID with spec.uid", "uid", uid)
+			file.Meta.SetUID(types.UID(uid))
+		}
+		if uid := existingMeta.GetUID(); uid != "" {
+			logger.DebugContext(ctx, "updating file's UID with existing meta uid", "uid", uid)
+			file.Meta.SetUID(uid)
+		}
+		if rev := existingMeta.GetResourceVersion(); rev != "" {
+			logger.DebugContext(ctx, "updating file's UID with existing resource version", "version", rev)
+			file.Meta.SetResourceVersion(rev)
+		}
+		if gen := existingMeta.GetGeneration(); gen != 0 {
+			logger.DebugContext(ctx, "updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1)
+			file.Meta.SetGeneration(gen + 1)
+		}
+
 		_, err = file.Client.Update(ctx, file.Obj, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update object: %w", err)
+		}
+	} else {
+		logger.ErrorContext(ctx, "bug in Grafana: the file's action is unhandled")
+		return fmt.Errorf("bug in Grafana: got a file.Action of '%s', which is not defined to be handled", file.Action)
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to upsert object: %w", err)
-	}
-
-	r.logger.InfoContext(ctx, "Replicated file", "name", file.Obj.GetName(), "path", fileInfo.Path, "parent", parent)
+	logger.InfoContext(ctx, "Replicated file")
 
 	return nil
 }
