@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -60,7 +59,7 @@ func (r *Replicator) Sync(ctx context.Context) error {
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
-	started := time.Now()
+	// started := time.Now()
 
 	if err := r.ensureRepositoryFolderExists(ctx); err != nil {
 		return fmt.Errorf("ensure repository folder exists: %w", err)
@@ -100,9 +99,10 @@ func (r *Replicator) Sync(ctx context.Context) error {
 
 	// TODO: move the sync status to the job worker
 	status := &provisioning.SyncStatus{
-		Started:  started.Unix(),
-		Finished: time.Now().Unix(),
-		Hash:     latest,
+		// FIXME: these create infinite loop
+		// Started:  started.Unix(),
+		// Finished: time.Now().Unix(),
+		Hash: latest,
 	}
 
 	cfg.Status.Sync = *status
