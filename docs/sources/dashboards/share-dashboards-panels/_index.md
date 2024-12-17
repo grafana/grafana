@@ -252,12 +252,12 @@ To share a personalized, direct link to your panel within your organization, fol
 
 #### Query string parameters for server-side rendered images
 
-When you click **Render image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
+When you click **Generate image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
 
 | Parameter | Description                                                                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| width     | Width in pixels. Default is 800.                                                                                               |
-| height    | Height in pixels. Default is 400.                                                                                              |
+| width     | Width in pixels. Default is 1000.                                                                                              |
+| height    | Height in pixels. Default is 500.                                                                                              |
 | tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                              |
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
