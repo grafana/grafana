@@ -70,7 +70,7 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
+	namespace := secretstorage.Namespace(request.NamespaceValue(ctx))
 
 	secureValueList, err := s.storage.List(ctx, namespace, options)
 	if err != nil {
@@ -82,9 +82,12 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
+	nn := secretstorage.NameNamespace{
+		Name:      name,
+		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
+	}
 
-	sv, err := s.storage.Read(ctx, namespace, name)
+	sv, err := s.storage.Read(ctx, nn)
 	if err != nil {
 		if errors.Is(err, secretstorage.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -205,9 +208,12 @@ func (s *SecureValueRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	namespace := request.NamespaceValue(ctx)
+	nn := secretstorage.NameNamespace{
+		Name:      name,
+		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
+	}
 
-	if err := s.storage.Delete(ctx, namespace, name); err != nil {
+	if err := s.storage.Delete(ctx, nn); err != nil {
 		return nil, false, fmt.Errorf("delete secure value: %w", err)
 	}
 
