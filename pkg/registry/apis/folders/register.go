@@ -328,7 +328,7 @@ func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.
 			break
 		}
 		parents = append(parents, parent)
-		if i == folderValidationRules.maxDepth {
+		if i+1 == folderValidationRules.maxDepth {
 			return parents, folder.ErrMaximumDepthReached
 		}
 
@@ -342,15 +342,16 @@ func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.
 }
 
 func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
 	var newParent = getParent(obj)
 	if newParent != getParent(old) {
 		// it's a move operation
 		return b.validateMove(ctx, obj, newParent)
 	}
-	f, ok := obj.(*v0alpha1.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not v0alpha1.Folder")
-	}
+	// it's a spec update
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
