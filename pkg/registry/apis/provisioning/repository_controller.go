@@ -177,7 +177,9 @@ func (rc *RepositoryController) sync(key string) error {
 
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
-		return nil //rc.processDeletedItem(context.Background(), cachedRepo)
+		if err := rc.processDeletedItem(context.Background(), cachedRepo); err != nil {
+			return err
+		}
 	}
 
 	// Did the spec change
@@ -198,9 +200,8 @@ func (rc *RepositoryController) sync(key string) error {
 		// deleted or changed in the meantime, we'll get called again
 		return nil
 	}
-	return err
 	rc.logger.Info("TODO, whatever cleanup is required for", "repository", cachedRepo.Name)
-	return nil
+	return err
 }
 
 func (rc *RepositoryController) processHealthCheck(ctx context.Context, cachedRepo *provisioning.Repository) error {
