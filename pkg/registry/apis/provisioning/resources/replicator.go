@@ -68,6 +68,7 @@ func (r *Replicator) Sync(ctx context.Context) error {
 	var latest string
 	switch {
 	case !isVersioned:
+		r.logger.InfoContext(ctx, "replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return fmt.Errorf("replicate tree: %w", err)
 		}
@@ -77,9 +78,10 @@ func (r *Replicator) Sync(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("latest ref: %w", err)
 		}
-		if err := r.replicateTree(ctx, ""); err != nil {
+		if err := r.replicateTree(ctx, latest); err != nil {
 			return fmt.Errorf("replicate tree: %w", err)
 		}
+		r.logger.InfoContext(ctx, "initial replication for versioned repository", "latest", latest)
 	default:
 		var err error
 		latest, err = versionedRepo.LatestRef(ctx, r.logger)
@@ -87,6 +89,7 @@ func (r *Replicator) Sync(ctx context.Context) error {
 			return fmt.Errorf("latest ref: %w", err)
 		}
 
+		r.logger.InfoContext(ctx, "replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
 		changes, err := versionedRepo.CompareFiles(ctx, r.logger, lastCommit, latest)
 		if err != nil {
 			return fmt.Errorf("compare files: %w", err)

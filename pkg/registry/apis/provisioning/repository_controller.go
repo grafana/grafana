@@ -196,6 +196,7 @@ func (rc *RepositoryController) sync(key string) error {
 
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
+		logger.InfoContext(ctx, "deleting repository")
 		return repo.OnDelete(ctx, logger)
 	}
 

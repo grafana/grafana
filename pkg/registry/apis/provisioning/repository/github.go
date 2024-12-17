@@ -524,7 +524,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+func (r *githubRepository) LatestRef(ctx context.Context, logger *slog.Logger) (string, error) {
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
@@ -536,7 +536,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
-		ref, err = r.LatestRef(ctx)
+		ref, err = r.LatestRef(ctx, logger)
 		if err != nil {
 			return nil, fmt.Errorf("get latest ref: %w", err)
 		}
