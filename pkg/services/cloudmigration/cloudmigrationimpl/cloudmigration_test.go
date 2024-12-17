@@ -826,7 +826,9 @@ func ctxWithSignedInUser() context.Context {
 	return ctx
 }
 
-func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Service {
+type configOverrides func(c *setting.Cfg)
+
+func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...configOverrides) cloudmigration.Service {
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
@@ -866,7 +868,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
-		featuremgmt.FlagOnPremToCloudMigrationsAlerts,
 		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 	)
 
@@ -928,6 +929,10 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	)
 	if err != nil {
 		require.NoError(t, err)
+	}
+
+	for _, cfgOverride := range cfgOverrides {
+		cfgOverride(cfg)
 	}
 
 	s, err := ProvideService(
