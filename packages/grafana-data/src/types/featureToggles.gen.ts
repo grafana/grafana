@@ -112,6 +112,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesCliDashboards?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -155,7 +156,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAlerts?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   scopeApi?: boolean;
@@ -208,7 +208,6 @@ export interface FeatureToggles {
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   alertingPrometheusRulesPrimary?: boolean;
-  singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
@@ -242,4 +241,7 @@ export interface FeatureToggles {
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
   feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
+  unifiedHistory?: boolean;
+  lokiLabelNamesQueryApi?: boolean;
 }

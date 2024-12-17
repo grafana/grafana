@@ -1290,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -2341,12 +2342,6 @@
       "list-label": "Navigation",
       "open": "",
       "undock": "Menü abdocken"
-    },
-    "toolbar": {
-      "close-menu": "Menü schließen",
-      "enable-kiosk": "Kiosk-Modus aktivieren",
-      "open-menu": "Menü öffnen",
-      "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
   "news": {
@@ -3040,7 +3035,6 @@
     "mode": "Modus",
     "mode-kiosk": "Kiosk",
     "mode-normal": "Normal",
-    "mode-tv": "TM",
     "title": "Wiedergabeliste teilen"
   },
   "shared": {

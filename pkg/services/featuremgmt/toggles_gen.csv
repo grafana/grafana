@@ -93,6 +93,7 @@ transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -136,7 +137,6 @@ alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
-onPremToCloudMigrationsAlerts,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 onPremToCloudMigrationsAuthApiMig,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -189,7 +189,6 @@ dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,
 newFiltersUI,GA,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
-singleTopNav,GA,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
@@ -199,7 +198,7 @@ appSidecar,experimental,@grafana/grafana-frontend-platform,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
-useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
+useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -223,3 +222,6 @@ alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
+unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
+lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
