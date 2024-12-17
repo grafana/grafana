@@ -199,9 +199,6 @@ func (rc *RepositoryController) sync(key string) error {
 		return nil
 	}
 	return err
-}
-
-func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
 	rc.logger.Info("TODO, whatever cleanup is required for", "repository", cachedRepo.Name)
 	return nil
 }
