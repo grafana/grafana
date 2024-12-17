@@ -1,4 +1,4 @@
-package secret_test
+package v0alpha1_test
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -15,7 +15,7 @@ func TestExposedSecureValue(t *testing.T) {
 	expected := "[REDACTED]"
 
 	rawValue := "a-password"
-	esv := secret.NewExposedSecureValue(rawValue)
+	esv := v0alpha1.NewExposedSecureValue(rawValue)
 
 	// String must not return the exposed secure value.
 	require.Equal(t, expected, esv.String())
@@ -40,6 +40,9 @@ func TestExposedSecureValue(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "'"+expected+"'\n", string(bytes))
 
-	// DangerouslyExposeDecryptedValue returns the raw value.
-	require.Equal(t, rawValue, esv.DangerouslyExposeDecryptedValue())
+	// DangerouslyExposeAndConsumeValue returns the raw value.
+	require.Equal(t, rawValue, esv.DangerouslyExposeAndConsumeValue())
+
+	// Further calls to DangerouslyExposeAndConsumeValue will panic.
+	require.Panics(t, func() { esv.DangerouslyExposeAndConsumeValue() })
 }
