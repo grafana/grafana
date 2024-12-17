@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -35,7 +35,6 @@ func ProvideProvisioningIdentityService(
 	// service accounts need permissions granted (as far as i can tell)
 	users user.Service,
 	orgs org.Service,
-	db db.DB,
 ) BackgroundIdentityService {
 	prefix := "provisioning-background-worker"
 
@@ -50,7 +49,6 @@ func ProvideProvisioningIdentityService(
 		authn:           authn,
 		users:           users,
 		orgs:            orgs,
-		db:              db,
 	}
 }
 
@@ -65,7 +63,6 @@ type backgroundIdentities struct {
 	accounts map[int64]string
 	mutex    sync.Mutex
 
-	db              db.DB
 	users           user.Service
 	serviceAccounts serviceaccounts.Service
 	authn           authn.Service
@@ -83,34 +80,46 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 
 	id, ok := o.accounts[info.OrgID]
 	if !ok {
-		// HACK, find a global admin user
-		internal := int64(0)
-		sess := o.db.GetSqlxSession()
-		rows, err := sess.Query(ctx, "SELECT id FROM "+o.db.Quote("user")+
-			" WHERE org_id=? AND is_admin=1", info.OrgID)
+		// Find an admin user
+		res, err := o.users.Search(context.Background(), &user.SearchUsersQuery{
+			SignedInUser: &identity.StaticRequester{
+				IsGrafanaAdmin: true,
+				OrgID:          info.OrgID,
+				Permissions: map[int64]map[string][]string{
+					info.OrgID: {
+						accesscontrol.ActionUsersRead: {"*"},
+					},
+				},
+			},
+			OrgID: info.OrgID,
+		})
 		if err != nil {
-			return nil, fmt.Errorf("error looking for admin account %w", err)
+			return nil, err
 		}
-		if !rows.Next() {
-			return nil, fmt.Errorf("no admin accounts found")
+
+		found := false
+		for _, v := range res.Users {
+			if v.IsAdmin {
+				id = fmt.Sprintf("user:%d", v.ID)
+				found = true
+				break
+			}
 		}
-		err = rows.Scan(&internal)
+		if !found {
+			return nil, fmt.Errorf("unable to find admin user")
+		}
+
+		// HACK HACK HACK
+		switch o.serviceAccountNamePrefix {
+		case "NOPE":
+			id, err = o.makeAdminUser(ctx, info.OrgID)
+		case "xxxx":
+			id, err = o.verifyServiceAccount(ctx, info.OrgID)
+		}
+
 		if err != nil {
-			return nil, fmt.Errorf("unable to find admin internal id %w", err)
+			return nil, err
 		}
-		id = fmt.Sprintf("user:%d", internal)
-
-		// // HACK -- (if false) and still allow lint
-		// switch o.serviceAccountNamePrefix {
-		// case "NOPE":
-		// 	id, err = o.makeAdminUser(ctx, info.OrgID)
-		// case "xxxx":
-		// 	id, err = o.verifyServiceAccount(ctx, info.OrgID)
-		// }
-
-		// if err != nil {
-		// 	return nil, err
-		// }
 
 		o.accounts[info.OrgID] = id
 	}
