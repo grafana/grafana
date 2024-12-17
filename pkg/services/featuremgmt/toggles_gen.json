@@ -1834,6 +1834,19 @@
     },
     {
       "metadata": {
+        "name": "investigationsBackend",
+        "resourceVersion": "1734447689720",
+        "creationTimestamp": "2024-12-17T15:01:29Z"
+      },
+      "spec": {
+        "description": "Enable the investigations backend API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "investigationsWatcher",
         "resourceVersion": "1734443690044",
         "creationTimestamp": "2024-12-17T13:54:50Z",

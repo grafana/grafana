@@ -230,6 +230,7 @@ Experimental features might be changed or removed without prior notice.
 | `jaegerBackendMigration`                      | Enables querying the Jaeger data source without the proxy                                                                                                                                                                                                                         |
 | `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section                                                                                                                                                                                                                         |
 | `unifiedHistory`                              | Displays the navigation history so the user can navigate back to previous pages                                                                                                                                                                                                   |
+| `investigationsBackend`                       | Enable the investigations backend API                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

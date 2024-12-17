@@ -1703,6 +1703,13 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
 		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+		},
 	}
 )
 

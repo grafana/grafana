@@ -7,7 +7,6 @@ import (
 	investigationv1alpha1 "github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1"
 	investigationapp "github.com/grafana/grafana/apps/investigation/pkg/app"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +17,6 @@ type InvestigationAppProvider struct {
 
 func RegisterApp(
 	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
 ) *InvestigationAppProvider {
 	provider := &InvestigationAppProvider{
 		cfg: cfg,

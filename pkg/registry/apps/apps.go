@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/client-go/rest"
 )
 
@@ -26,6 +27,7 @@ type Service struct {
 func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
+	features featuremgmt.FeatureToggles,
 	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigation.InvestigationAppProvider,
 ) (*Service, error) {
@@ -42,11 +44,19 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider, investigationAppProvider)
+
+	var apiGroupRunner *runner.APIGroupRunner
+	var err error
+	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
+		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider, investigationAppProvider)
+	} else {
+		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	return &Service{runner: runner, log: log.New("app-registry")}, nil
+	return &Service{runner: apiGroupRunner, log: log.New("app-registry")}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
