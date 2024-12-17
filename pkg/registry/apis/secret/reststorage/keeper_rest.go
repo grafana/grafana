@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,7 +110,11 @@ func (s *KeeperRest) Create(
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
 
-	// TODO: Make sure only one type of keeper is configured
+	// Make sure only one type of keeper is configured
+	err := checkKeeperType(kp)
+	if err != nil {
+		return nil, err
+	}
 
 	// A `keeper` may be created without a `name`, which means it gets generated on-the-fly.
 	if kp.Name == "" {
@@ -147,8 +152,41 @@ func (s *KeeperRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	// TODO: implement update in storage
-	return nil, false, nil
+
+	current, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, fmt.Errorf("get securevalue: %w", err)
+	}
+
+	// Makes sure the UID and ResourceVersion are OK.
+	// TODO: this also makes it so the labels and annotations are additive, unless we check and remove manually.
+	tmp, err := objInfo.UpdatedObject(ctx, current)
+	if err != nil {
+		return nil, false, fmt.Errorf("k8s updated object: %w", err)
+	}
+
+	newKeeper, ok := tmp.(*secretv0alpha1.Keeper)
+	if !ok {
+		return nil, false, fmt.Errorf("expected Keeper for update")
+	}
+
+	// TODO: do we need to do this here again? Probably not, but double-check!
+	newKeeper.Annotations = cleanAnnotations(newKeeper.Annotations)
+
+	// Make sure only one type of keeper is configured
+	err = checkKeeperType(newKeeper)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
+	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to update keeper: %w", err)
+	}
+
+	return updatedKeeper, false, nil
+
 }
 
 // Delete calls the inner `store` (persistence) in order to delete the `Keeper`.
@@ -161,4 +199,46 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	return nil, true, nil
+}
+
+func checkKeeperType(s *secretv0alpha1.Keeper) error {
+	sql := s.Spec.SQL
+	aws := s.Spec.AWS
+	azure := s.Spec.Azure
+	gcp := s.Spec.GCP
+	hashicorp := s.Spec.HashiCorp
+
+	nonNilCount := 0
+	for _, keeperType := range []interface{}{sql, aws, azure, gcp, hashicorp} {
+		if keeperType != nil && !reflect.ValueOf(keeperType).IsNil() {
+			nonNilCount++
+		}
+	}
+	if nonNilCount == 0 {
+		return fmt.Errorf("expecting one of the keeper types to be configured")
+	} else if nonNilCount > 1 {
+		return fmt.Errorf("only one type of keeper may be configured")
+	}
+
+	return nil
+}
+
+func checkCredentialValue(cv secretv0alpha1.CredentialValue) error {
+	secureValueName := cv.SecureValueName
+	valueFromEnv := cv.ValueFromEnv
+	valueFromConfig := cv.ValueFromConfig
+
+	notEmptyCount := 0
+	for _, valueType := range []interface{}{secureValueName, valueFromEnv, valueFromConfig} {
+		if strValue, ok := valueType.(string); ok && strValue != "" {
+			notEmptyCount++
+		}
+	}
+	if notEmptyCount == 0 {
+		return fmt.Errorf("expecting one of the value types to be configured")
+	} else if notEmptyCount > 1 {
+		return fmt.Errorf("only one value type may be configured")
+	}
+
+	return nil
 }

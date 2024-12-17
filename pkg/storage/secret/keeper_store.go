@@ -18,6 +18,7 @@ import (
 type KeeperStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
 	Read(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, error)
+	Update(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
 	Delete(ctx context.Context, namespace string, name string) error
 	List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
 }

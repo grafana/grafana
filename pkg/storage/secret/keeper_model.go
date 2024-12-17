@@ -17,6 +17,16 @@ var (
 	ErrKeeperNotFound = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
 )
 
+type KeeperType string
+
+const (
+	SqlKeeperType       KeeperType = "sql"
+	AWSKeeperType       KeeperType = "aws"
+	AzureKeeperType     KeeperType = "azure"
+	GCPKeeperType       KeeperType = "gcp"
+	HashiCorpKeeperType KeeperType = "hashicorp"
+)
+
 type Keeper struct {
 	// Kubernetes Metadata
 	GUID        string `xorm:"pk 'guid'"`
@@ -30,9 +40,9 @@ type Keeper struct {
 	UpdatedBy   string `xorm:"updated_by"`
 
 	// Spec
-	Title   string `xorm:"title"`
-	Type    string `xorm:"type"`
-	Payload string `xorm:"payload"`
+	Title   string     `xorm:"title"`
+	Type    KeeperType `xorm:"type"`
+	Payload string     `xorm:"payload"`
 }
 
 func (*Keeper) TableName() string {
@@ -61,6 +71,21 @@ func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
 		},
 	}
 
+	// Obtain provider configs
+	provider := toProvider(kp.Type, kp.Payload)
+	switch v := provider.(type) {
+	case *secretv0alpha1.SQLKeeper:
+		resource.Spec.SQL = v
+	case *secretv0alpha1.AWSKeeper:
+		resource.Spec.AWS = v
+	case *secretv0alpha1.AzureKeeper:
+		resource.Spec.Azure = v
+	case *secretv0alpha1.GCPKeeper:
+		resource.Spec.GCP = v
+	case *secretv0alpha1.HashiCorpKeeper:
+		resource.Spec.HashiCorp = v
+	}
+
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
 	if err != nil {
@@ -87,7 +112,7 @@ func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
 func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
 	row, err := toKeeperRow(kp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
+		return nil, fmt.Errorf("failed to map to row: %w", err)
 	}
 
 	now := time.Now().UTC().UnixMilli()
@@ -105,7 +130,7 @@ func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, err
 func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
 	row, err := toKeeperRow(newKeeper)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
+		return nil, fmt.Errorf("failed to map to row: %w", err)
 	}
 
 	now := time.Now().UTC().UnixMilli()
@@ -120,12 +145,12 @@ func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, act
 }
 
 // toKeeperRow maps a Kubernetes Keeper resource into a Keeper DB row.
-func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
+func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
 	var annotations string
-	if len(sv.Annotations) > 0 {
-		cleanedAnnotations := CleanAnnotations(sv.Annotations)
+	if len(kp.Annotations) > 0 {
+		cleanedAnnotations := CleanAnnotations(kp.Annotations)
 		if len(cleanedAnnotations) > 0 {
-			sv.Annotations = make(map[string]string) // Safety: reset to prohibit use of sv.Annotations further.
+			kp.Annotations = make(map[string]string) // Safety: reset to prohibit use of kp.Annotations further.
 
 			encodedAnnotations, err := json.Marshal(cleanedAnnotations)
 			if err != nil {
@@ -137,8 +162,8 @@ func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 	}
 
 	var labels string
-	if len(sv.Labels) > 0 {
-		encodedLabels, err := json.Marshal(sv.Labels)
+	if len(kp.Labels) > 0 {
+		encodedLabels, err := json.Marshal(kp.Labels)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode labels: %w", err)
 		}
@@ -146,7 +171,7 @@ func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		labels = string(encodedLabels)
 	}
 
-	meta, err := utils.MetaAccessor(sv)
+	meta, err := utils.MetaAccessor(kp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get meta accessor: %w", err)
 	}
@@ -160,11 +185,16 @@ func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
+	keeperType, keeperPayload, err := toTypeAndPayload(kp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain type and payload: %w", err)
+	}
+
 	return &Keeper{
 		// Kubernetes Metadata
-		GUID:        string(sv.UID),
-		Name:        sv.Name,
-		Namespace:   sv.Namespace,
+		GUID:        string(kp.UID),
+		Name:        kp.Name,
+		Namespace:   kp.Namespace,
 		Annotations: annotations,
 		Labels:      labels,
 		Created:     meta.GetCreationTimestamp().UnixMilli(),
@@ -173,8 +203,91 @@ func toKeeperRow(sv *secretv0alpha1.Keeper) (*Keeper, error) {
 		UpdatedBy:   meta.GetUpdatedBy(),
 
 		// Spec
-		Title:   sv.Spec.Title,
-		Type:    "todo-type",    // TODO: fill with real data
-		Payload: "todo-payload", // TODO: fill with real data
+		Title:   kp.Spec.Title,
+		Type:    keeperType,
+		Payload: keeperPayload,
 	}, nil
+}
+
+// toTypeAndPayload obtain keeper type and payload from a Kubernetes Keeper resource.
+func toTypeAndPayload(kp *secretv0alpha1.Keeper) (KeeperType, string, error) {
+	var keeperType KeeperType
+	var keeperPayload string
+
+	if kp.Spec.SQL != nil {
+		keeperType = SqlKeeperType
+		jsonData, err := json.Marshal(kp.Spec.SQL)
+		if err != nil {
+			return "", "", fmt.Errorf("error encoding to json: %w", err)
+		}
+		keeperPayload = string(jsonData)
+	} else if kp.Spec.AWS != nil {
+		keeperType = AWSKeeperType
+		jsonData, err := json.Marshal(kp.Spec.AWS.AWSCredentials)
+		if err != nil {
+			return "", "", fmt.Errorf("error encoding to json: %w", err)
+		}
+		keeperPayload = string(jsonData)
+	} else if kp.Spec.Azure != nil {
+		keeperType = AzureKeeperType
+		jsonData, err := json.Marshal(kp.Spec.Azure)
+		if err != nil {
+			return "", "", fmt.Errorf("error encoding to json: %w", err)
+		}
+		keeperPayload = string(jsonData)
+	} else if kp.Spec.GCP != nil {
+		keeperType = GCPKeeperType
+		jsonData, err := json.Marshal(kp.Spec.GCP)
+		if err != nil {
+			return "", "", fmt.Errorf("error encoding to json: %w", err)
+		}
+		keeperPayload = string(jsonData)
+	} else if kp.Spec.HashiCorp != nil {
+		keeperType = HashiCorpKeeperType
+		jsonData, err := json.Marshal(kp.Spec.HashiCorp)
+		if err != nil {
+			return "", "", fmt.Errorf("error encoding to json: %w", err)
+		}
+		keeperPayload = string(jsonData)
+	}
+
+	return keeperType, keeperPayload, nil
+}
+
+// toProvider maps a KeeperType and payload into a provider config struct.
+func toProvider(keeperType KeeperType, payload string) interface{} {
+	switch keeperType {
+	case SqlKeeperType:
+		sql := &secretv0alpha1.SQLKeeper{}
+		if err := json.Unmarshal([]byte(payload), sql); err != nil {
+			return nil
+		}
+		return sql
+	case AWSKeeperType:
+		aws := &secretv0alpha1.AWSKeeper{}
+		if err := json.Unmarshal([]byte(payload), aws); err != nil {
+			return nil
+		}
+		return aws
+	case AzureKeeperType:
+		azure := &secretv0alpha1.AzureKeeper{}
+		if err := json.Unmarshal([]byte(payload), azure); err != nil {
+			return nil
+		}
+		return azure
+	case GCPKeeperType:
+		gcp := &secretv0alpha1.GCPKeeper{}
+		if err := json.Unmarshal([]byte(payload), gcp); err != nil {
+			return nil
+		}
+		return gcp
+	case HashiCorpKeeperType:
+		hashicorp := &secretv0alpha1.HashiCorpKeeper{}
+		if err := json.Unmarshal([]byte(payload), hashicorp); err != nil {
+			return nil
+		}
+		return hashicorp
+	default:
+		return nil
+	}
 }
