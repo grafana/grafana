@@ -306,13 +306,16 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		// TODO: is this the best spot to create the webhook URL?
-		name := r.GetName()
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		webhookURL := fmt.Sprintf("%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-			b.urlProvider(r.GetNamespace()), // gets the full name
-			gvr.Group, gvr.Version,
-			r.GetNamespace(), gvr.Resource, name)
+		webhookURL := fmt.Sprintf(
+			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+			b.urlProvider(r.GetNamespace()),
+			gvr.Group,
+			gvr.Version,
+			r.GetNamespace(),
+			gvr.Resource,
+			r.GetName(),
+		)
 		secretsSvc := secrets.NewService(b.webhookSecretKey)
 		return repository.NewGitHub(ctx, r, b.ghFactory, secretsSvc, webhookURL), nil
 	case provisioning.S3RepositoryType:
