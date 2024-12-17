@@ -2,11 +2,11 @@ package secret
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrKeeperNotFound = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
+	ErrKeeperNotFound = errors.New("keeper not found")
 )
 
 type KeeperType string
