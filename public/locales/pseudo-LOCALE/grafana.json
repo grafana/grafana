@@ -3037,14 +3037,17 @@
     "settings": {
       "height-label": "Ħęįģĥŧ",
       "height-min": "Ħęįģĥŧ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "height-placeholder": "500",
       "height-required": "Ħęįģĥŧ įş řęqūįřęđ",
       "max-warning": "Ŝęŧŧįŉģ mäχįmūmş äřę ľįmįŧęđ þy ŧĥę įmäģę řęŉđęřęř şęřvįčę",
       "scale-factor-label": "Ŝčäľę ƒäčŧőř",
       "scale-factor-min": "Ŝčäľę ƒäčŧőř mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "scale-factor-placeholder": "1",
       "scale-factor-required": "Ŝčäľę ƒäčŧőř įş řęqūįřęđ",
       "title": "Ĩmäģę şęŧŧįŉģş",
       "width-label": "Ŵįđŧĥ",
       "width-min": "Ŵįđŧĥ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "width-placeholder": "1000",
       "width-required": "Ŵįđŧĥ įş řęqūįřęđ"
     }
   },

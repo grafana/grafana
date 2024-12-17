@@ -3037,14 +3037,17 @@
     "settings": {
       "height-label": "Height",
       "height-min": "Height must be equal or greater than 1",
+      "height-placeholder": "500",
       "height-required": "Height is required",
       "max-warning": "Setting maximums are limited by the image renderer service",
       "scale-factor-label": "Scale factor",
       "scale-factor-min": "Scale factor must be equal or greater than 1",
+      "scale-factor-placeholder": "1",
       "scale-factor-required": "Scale factor is required",
       "title": "Image settings",
       "width-label": "Width",
       "width-min": "Width must be equal or greater than 1",
+      "width-placeholder": "1000",
       "width-required": "Width is required"
     }
   },
