@@ -66,9 +66,9 @@ Grafana enables you to share dashboards and panels with other users within your 
 - Reports
 - Library panels
 
-You must have an authorized viewer permission to see an image rendered by a direct link.
+You can also invite new members to your organization from the **Share** menu. For more information, refer to [Invite new members](#invite-new-members).
 
-The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
+You must have an authorized viewer permission to see an image rendered by a direct link. The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
 Anonymous access permission is not available in Grafana Cloud. This feature is only supported for Grafana Enterprise and Grafana Open Source.
@@ -341,3 +341,23 @@ To delete existing snapshots, follow these steps:
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
+
+## Invite new members
+
+{{< admonition type="note" >}}
+This feature is only available on Grafana Cloud.
+{{< /admonition >}}
+
+You can invite new members to your organization using the **Share** drop-down menu. You must have the `OrgUsersAdd` permission to use this feature.
+
+To invite a new member to your organization, follow these steps:
+
+1. Click **Dashboards** in the main menu and open any dashboard.
+1. Click the **Share** drop-down list in the top-right corner and select **Invite new member**.
+
+   The **Members** page of your Grafana Cloud Portal opens.
+
+1. Enter the email address of the new member in the provided field.
+1. Make a selection in the **Role** drop-down list.
+1. (Optional) Select the **Receive billing emails** checkbox, if applicable.
+1. Click **Invite**.
