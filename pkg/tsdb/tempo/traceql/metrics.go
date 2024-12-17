@@ -50,7 +50,7 @@ func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRan
 		}
 
 		if len(series.Exemplars) > 0 {
-			exFrame := transformExemplarToFrame(name, series, isHistogram)
+			exFrame := transformExemplarToFrame(name, series)
 			exemplarFrames = append(exemplarFrames, exFrame)
 		}
 

@@ -8,9 +8,7 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 )
 
-const bucketFieldName = "__bucket"
-
-func transformExemplarToFrame(name string, series *tempopb.TimeSeries, isHistogram bool) *data.Frame {
+func transformExemplarToFrame(name string, series *tempopb.TimeSeries) *data.Frame {
 	exemplars := series.Exemplars
 
 	// Setup fields for basic data
@@ -27,11 +25,6 @@ func transformExemplarToFrame(name string, series *tempopb.TimeSeries, isHistogr
 	// Add fields for each label to be able to link exemplars to the series
 	for _, label := range series.Labels {
 		fields = append(fields, data.NewField(label.GetKey(), nil, []string{}))
-	}
-
-	// Special case for histograms, requires a bucket field
-	if isHistogram {
-		fields = append(fields, data.NewField(bucketFieldName, nil, []float64{}))
 	}
 
 	frame := &data.Frame{
@@ -52,14 +45,6 @@ func transformExemplarToFrame(name string, series *tempopb.TimeSeries, isHistogr
 
 		// Add basic data
 		frame.AppendRow(time.UnixMilli(exemplar.GetTimestampMs()), exemplar.GetValue(), traceId)
-
-		// Add bucket for histograms
-		if isHistogram {
-			bucketField, _ := frame.FieldByName(bucketFieldName)
-			if bucketField != nil {
-				bucketField.Append(exemplar.GetValue())
-			}
-		}
 
 		// Add labels
 		for _, label := range series.Labels {

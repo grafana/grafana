@@ -15,7 +15,7 @@ func TestTransformExemplarToFrame_EmptyExemplars(t *testing.T) {
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  make([]tempopb.Exemplar, 0),
-	}, false)
+	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -40,7 +40,7 @@ func TestTransformExemplarToFrame_SingleExemplar(t *testing.T) {
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  exemplars,
-	}, false)
+	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -65,7 +65,7 @@ func TestTransformExemplarToFrame_SingleExemplarHistogram(t *testing.T) {
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  exemplars,
-	}, true)
+	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -99,7 +99,7 @@ func TestTransformExemplarToFrame_MultipleExemplars(t *testing.T) {
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  exemplars,
-	}, false)
+	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
@@ -125,7 +125,7 @@ func TestTransformExemplarToFrame_ExemplarWithoutTraceId(t *testing.T) {
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  exemplars,
-	}, false)
+	})
 	assert.NotNil(t, frame)
 	assert.Equal(t, "test", frame.RefID)
 	assert.Equal(t, "exemplar", frame.Name)
