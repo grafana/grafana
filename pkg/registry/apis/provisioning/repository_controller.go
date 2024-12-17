@@ -177,7 +177,7 @@ func (rc *RepositoryController) sync(key string) error {
 
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
-		return rc.processDeletedItem(context.Background(), cachedRepo)
+		return nil //rc.processDeletedItem(context.Background(), cachedRepo)
 	}
 
 	// Did the spec change
