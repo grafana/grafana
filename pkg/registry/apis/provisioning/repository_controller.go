@@ -245,3 +245,7 @@ func (rc *RepositoryController) processHealthCheck(ctx context.Context, cachedRe
 		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
 	return err
 }
+
+func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
+	return nil
+}
