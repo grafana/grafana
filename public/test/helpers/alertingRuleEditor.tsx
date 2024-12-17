@@ -5,6 +5,10 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
+export enum GrafanaRuleFormStep {
+  Query = 2,
+  Notification = 5,
+}
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
@@ -27,8 +31,8 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
-    switchModeBasic: (stepNo: number) => byTestId(`advanced-switch-${stepNo}-basic`),
-    switchModeAdvanced: (stepNo: number) => byTestId(`advanced-switch-${stepNo}-advanced`),
+    switchModeBasic: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-basic`),
+    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-advanced`),
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),

@@ -1,6 +1,6 @@
 import { UserEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
@@ -171,8 +171,8 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       const { user } = renderRuleEditor();
 
-      await user.click(ui.inputs.switchModeBasic(2).get()); // switch to query step advanced mode
-      await user.click(ui.inputs.switchModeBasic(5).get()); // switch to notifications step advanced mode
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch to query step advanced mode
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch to notifications step advanced mode
       await user.type(await ui.inputs.name.find(), 'my great new rule');
 
       await selectFolderAndGroup(user);
@@ -193,7 +193,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await selectFolderAndGroup(user);
 
       // // from the previous test, we are in advanced mode for both query and notifications steps
-      await user.click(ui.inputs.switchModeAdvanced(2).get()); // switch query step to basic mode
+      await user.click(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()); // switch query step to basic mode
 
       // save and check what was sent to backend
       await user.click(ui.buttons.saveAndExit.get());
