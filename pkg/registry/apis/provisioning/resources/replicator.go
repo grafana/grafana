@@ -53,6 +53,7 @@ func NewReplicator(
 
 // Sync replicates all files in the repository.
 func (r *Replicator) Sync(ctx context.Context) error {
+	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
