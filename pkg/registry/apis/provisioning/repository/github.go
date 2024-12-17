@@ -617,10 +617,10 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, logger *s
 	return r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, fileComment)
 }
 
-func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, error) {
 	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
 	if err != nil {
-		return fmt.Errorf("encrypt webhook secret: %w", err)
+		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
 	}
 
 	cfg := pgh.WebhookConfig{
@@ -631,21 +631,24 @@ func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logge
 		Active:      true,
 	}
 
-	if err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg); err != nil {
-		return err
+	hook, err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg)
+	if err != nil {
+		return pgh.WebhookConfig{}, err
 	}
 
-	// TODO: store the webhook ID in the status
-
-	logger.InfoContext(ctx, "webhook created", "url", cfg.URL)
-	return nil
+	logger.InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
+	return hook, nil
 }
 
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
-func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, bool, error) {
 	if r.config.Status.Webhook == nil {
-		return r.createWebhook(ctx, logger)
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
+		}
+		return hook, true, nil
 	}
 
 	owner := r.config.Spec.GitHub.Owner
@@ -654,17 +657,20 @@ func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logge
 	hook, err := r.gh.GetWebhook(ctx, owner, repoName, r.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, pgh.ErrResourceNotFound):
-		return r.createWebhook(ctx, logger)
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
+		}
+		return hook, true, nil
 	case err != nil:
-		return fmt.Errorf("get webhook: %w", err)
+		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
 	var mustUpdate bool
-	// 3. If the webhook is found, check for: secret, URL and subscribed events.
 
 	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
 	if err != nil {
-		return fmt.Errorf("encrypt webhook secret: %w", err)
+		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
 	}
 
 	// Compare with status secret as we cannot get the screen from the webhook
@@ -684,16 +690,17 @@ func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logge
 	}
 
 	if !mustUpdate {
-		return nil
+		return hook, false, nil
 	}
 
 	if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
-		return fmt.Errorf("edit webhook: %w", err)
+		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
-	// TODO: status
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = secret
 
-	return nil
+	return hook, true, nil
 }
 
 func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logger) error {
@@ -714,11 +721,41 @@ func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logge
 }
 
 func (r *githubRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
-	return nil, r.createWebhook(ctx, logger)
+	hook, err := r.createWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
 }
 
-func (r *githubRepository) OnUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
-	return nil, r.updateWebhook(ctx, logger)
+func (r *githubRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	hook, updated, err := r.updateWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	if !updated {
+		return nil, nil
+	}
+
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {

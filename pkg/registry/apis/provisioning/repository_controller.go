@@ -175,9 +175,22 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
+	ctx := context.Background()
+	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, id)
+	logger := rc.logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+
+	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
+	if err != nil {
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
-		return rc.processDeletedItem(context.Background(), cachedRepo)
+		return repo.OnDelete(ctx, logger)
 	}
 
 	// Did the spec change
@@ -193,59 +206,52 @@ func (rc *RepositoryController) sync(key string) error {
 		return nil
 	}
 
-	err = rc.processHealthCheck(context.Background(), cachedRepo)
-	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
-		// deleted or changed in the meantime, we'll get called again
-		return nil
+	// HACK: Use health status to check if it's update or create
+	// probably this will prevent some updates to be processed.
+	// QUESTION: should we add these errors to the health status?
+	var status *provisioning.RepositoryStatus
+	isUpdate := cachedRepo.Status.Health.Checked > 0
+	if isUpdate {
+		status, err = repo.OnUpdate(ctx, logger)
+		if err != nil {
+			return fmt.Errorf("on create repository: %w", err)
+		}
+	} else {
+		status, err = repo.OnCreate(ctx, logger)
+		if err != nil {
+			return fmt.Errorf("on create repository: %w", err)
+		}
 	}
-	return err
-	rc.logger.Info("TODO, whatever cleanup is required for", "repository", cachedRepo.Name)
-	return nil
-}
 
-func (rc *RepositoryController) processHealthCheck(ctx context.Context, cachedRepo *provisioning.Repository) error {
-	// This is used for the health check client
-	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
-	if err != nil {
-		return err
+	if status == nil {
+		status = cachedRepo.Status.DeepCopy()
 	}
-	ctx = identity.WithRequester(ctx, id)
 
-	// Make a copy we can mutate
-	cfg := cachedRepo.DeepCopy()
-	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
+	status.Health.Checked = time.Now().UnixMilli()
+	status.Health.Generation = cachedRepo.Generation
+
+	res, err := rc.tester.TestRepository(ctx, repo)
 	if err != nil {
-		cfg.Status.Health = provisioning.HealthStatus{
-			Healthy: false,
-			Message: []string{
-				"Unable to create repository from configuration",
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"error running test repository",
 				err.Error(),
 			},
 		}
-	} else {
-		res, err := rc.tester.TestRepository(ctx, repo)
-		if err != nil {
-			res = &provisioning.TestResults{
-				Success: false,
-				Errors: []string{
-					"error running test repository",
-					err.Error(),
-				},
-			}
-		}
-		cfg.Status.Health = provisioning.HealthStatus{
-			Healthy: res.Success,
-			Message: res.Errors,
-		}
 	}
-	cfg.Status.Health.Checked = time.Now().UnixMilli()
-	cfg.Status.Health.Generation = cachedRepo.Generation
 
-	_, err = rc.client.Repositories(cfg.GetNamespace()).
-		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
-	return err
-}
+	status.Health = provisioning.HealthStatus{
+		Healthy: res.Success,
+		Message: res.Errors,
+	}
 
-func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
+	cfg := cachedRepo.DeepCopy()
+	cfg.Status = *status
+	if _, err := rc.client.Repositories(cachedRepo.GetNamespace()).
+		UpdateStatus(ctx, cfg, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update status: %w", err)
+	}
+
 	return nil
 }

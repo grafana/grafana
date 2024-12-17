@@ -357,7 +357,7 @@ func (r *localRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*p
 	return nil, nil
 }
 
-func (r *localRepository) OnUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
+func (r *localRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 

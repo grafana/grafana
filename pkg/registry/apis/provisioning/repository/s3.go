@@ -121,7 +121,7 @@ func (r *s3Repository) OnCreate(ctx context.Context, logger *slog.Logger) (*prov
 	return nil, nil
 }
 
-func (r *s3Repository) OnUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
+func (r *s3Repository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 
