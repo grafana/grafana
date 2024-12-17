@@ -45,7 +45,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -214,7 +214,7 @@ function getElements(state: DashboardSceneState) {
     const elementSpec: PanelKind = {
       kind: 'Panel',
       spec: {
-        uid: vizPanel.state.key ?? '', // FIXME: why is key optional?
+        id: getPanelIdForVizPanel(vizPanel),
         title: vizPanel.state.title,
         description: vizPanel.state.description ?? '',
         links: getPanelLinks(vizPanel),
@@ -354,7 +354,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 function createElements(panels: PanelKind[]): Record<string, PanelKind> {
   return panels.reduce(
     (acc, panel) => {
-      const key = panel.spec.uid;
+      const key = getVizPanelKeyForPanelId(panel.spec.id);
       acc[key] = panel;
       return acc;
     },
