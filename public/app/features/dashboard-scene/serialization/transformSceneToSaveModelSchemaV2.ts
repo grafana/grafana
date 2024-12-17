@@ -36,7 +36,6 @@ import {
   AdhocVariableKind,
   AnnotationQueryKind,
   defaultAnnotationPanelFilter,
-  defaultAnnotationQuerySpec,
   DataLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -263,13 +262,13 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
     vizPanelQueries.forEach((query) => {
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
-        spec: query,
+        spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
         datasource: datasource ?? getDefaultDataSourceRef(),
         query: dataQuery,
         refId: query.refId,
-        hidden: query.hidden,
+        hidden: Boolean(query.hide),
       };
       queries.push({
         kind: 'PanelQuery',
@@ -310,9 +309,12 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
           id: transformation.filter?.id ?? '',
           options: transformation.filter?.options ?? {},
         },
-        topic: transformation.topic,
         options: transformation.options,
       };
+
+      if (transformation.topic !== undefined) {
+        transformationSpec.topic = transformation.topic;
+      }
 
       transformations.push({
         kind: transformation.id,
@@ -347,6 +349,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   if (panelTime instanceof PanelTimeRange) {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
+    queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
   }
   return queryOptions;
 }
