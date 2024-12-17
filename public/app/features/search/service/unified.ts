@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash';
+
 import {
   DataFrame,
   DataFrameView,
@@ -10,7 +12,6 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SearchResultMeta } from './types';
 import { replaceCurrentFolderQuery } from './utils';
-import { isEmpty } from 'lodash';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -31,10 +32,10 @@ type SearchAPIResponse = {
   hits: SearchHit[];
   facets?: {
     tags?: {
-      terms?: {
+      terms?: Array<{
         term: string;
         count: number;
-      }[]
+      }>
     }
   }
 };
