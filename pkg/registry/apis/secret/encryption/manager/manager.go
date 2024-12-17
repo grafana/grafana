@@ -194,7 +194,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, label, scope)
+		id, dataKey, err = s.newDataKey(ctx, namespace, label, scope)
 		if err != nil {
 			return "", nil, err
 		}
@@ -239,7 +239,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *EncryptionManager) newDataKey(ctx context.Context, label string, scope string) (string, []byte, error) {
+func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -264,6 +264,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, label string, scope 
 	dbDataKey := secret.EncryptionDataKey{
 		Active:        true,
 		UID:           id,
+		Namespace:     namespace,
 		Provider:      encryption.ProviderID(s.currentProviderID),
 		EncryptedData: encrypted,
 		Label:         label,

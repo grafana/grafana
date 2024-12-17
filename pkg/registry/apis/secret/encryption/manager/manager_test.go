@@ -221,7 +221,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		svc := SetupTestService(t, store)
-		assert.Equal(t, encryption.ProviderID("secretKey.v1"), svc.currentProviderID)
+		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -261,7 +261,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		assert.Equal(t, encryption.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
+		assert.Equal(t, secrets.ProviderID("fakeProvider.v1"), encryptionManager.currentProviderID)
 		assert.Equal(t, 2, len(encryptionManager.GetProviders()))
 
 		namespace := "test-namespace"
