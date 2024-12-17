@@ -11,6 +11,7 @@ import (
 
 func (s simpleSecret) Rollback(
 	ctx context.Context,
+	namespace string,
 	secretsSrv *manager.EncryptionManager,
 	encryptionSrv legacyEncryption.Internal,
 	sqlStore db.DB,
@@ -34,7 +35,7 @@ func (s simpleSecret) Rollback(
 		}
 
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
+			decrypted, err := secretsSrv.Decrypt(ctx, namespace, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
 				return err

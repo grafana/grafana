@@ -21,25 +21,37 @@ func (e dataKeyCacheEntry) expired() bool {
 }
 
 type dataKeyCache struct {
-	mtx      sync.RWMutex
-	byId     map[string]*dataKeyCacheEntry
-	byLabel  map[string]*dataKeyCacheEntry
-	cacheTTL time.Duration
+	mtx sync.RWMutex
+
+	namespacedCaches map[string]namespacedCache
+	cacheTTL         time.Duration
 }
 
-func newDataKeyCache(ttl time.Duration) *dataKeyCache {
+type namespacedCache struct {
+	byId    map[string]*dataKeyCacheEntry
+	byLabel map[string]*dataKeyCacheEntry
+}
+
+func newMTDataKeyCache(ttl time.Duration) *dataKeyCache {
 	return &dataKeyCache{
-		byId:     make(map[string]*dataKeyCacheEntry),
-		byLabel:  make(map[string]*dataKeyCacheEntry),
-		cacheTTL: ttl,
+		namespacedCaches: map[string]namespacedCache{},
+		cacheTTL:         ttl,
 	}
 }
 
-func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getById(namespace, id string) (*dataKeyCacheEntry, bool) {
+	var (
+		exists bool
+		entry  *dataKeyCacheEntry
+	)
+
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byId[id]
+	cache, ok := c.namespacedCaches[namespace]
+	if ok {
+		entry, exists = cache.byId[id]
+	}
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -53,11 +65,19 @@ func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
 	return entry, true
 }
 
-func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getByLabel(namespace, label string) (*dataKeyCacheEntry, bool) {
+	var (
+		exists bool
+		entry  *dataKeyCacheEntry
+	)
+
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byLabel[label]
+	cache, ok := c.namespacedCaches[namespace]
+	if ok {
+		entry, exists = cache.byLabel[label]
+	}
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -71,44 +91,72 @@ func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
 	return entry, true
 }
 
-func (c *dataKeyCache) addById(entry *dataKeyCacheEntry) {
+func (c *dataKeyCache) addById(namespace string, entry *dataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byId[entry.id] = entry
+	cache, ok := c.namespacedCaches[namespace]
+	if ok {
+		cache.byId[entry.id] = entry
+	} else {
+		c.namespacedCaches[namespace] = namespacedCache{
+			byId: map[string]*dataKeyCacheEntry{
+				entry.id: entry,
+			},
+			byLabel: make(map[string]*dataKeyCacheEntry),
+		}
+	}
 }
 
-func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
+func (c *dataKeyCache) addByLabel(namespace string, entry *dataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byLabel[entry.label] = entry
+	cache, ok := c.namespacedCaches[namespace]
+	if ok {
+		cache.byLabel[entry.label] = entry
+	} else {
+		c.namespacedCaches[namespace] = namespacedCache{
+			byId: make(map[string]*dataKeyCacheEntry),
+			byLabel: map[string]*dataKeyCacheEntry{
+				entry.label: entry,
+			},
+		}
+	}
 }
 
 func (c *dataKeyCache) removeExpired() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	for id, entry := range c.byId {
-		if entry.expired() {
-			delete(c.byId, id)
+	for _, cache := range c.namespacedCaches {
+		for id, entry := range cache.byId {
+			if entry.expired() {
+				delete(cache.byId, id)
+			}
 		}
-	}
 
-	for label, entry := range c.byLabel {
-		if entry.expired() {
-			delete(c.byLabel, label)
+		for label, entry := range cache.byLabel {
+			if entry.expired() {
+				delete(cache.byLabel, label)
+			}
 		}
 	}
 }
 
-func (c *dataKeyCache) flush() {
+func (c *dataKeyCache) flush(namespace string) {
 	c.mtx.Lock()
-	c.byId = make(map[string]*dataKeyCacheEntry)
-	c.byLabel = make(map[string]*dataKeyCacheEntry)
-	c.mtx.Unlock()
+	defer c.mtx.Unlock()
+
+	cache, ok := c.namespacedCaches[namespace]
+	if !ok {
+		return
+	}
+	cache.byId = make(map[string]*dataKeyCacheEntry)
+	cache.byLabel = make(map[string]*dataKeyCacheEntry)
+	c.namespacedCaches[namespace] = cache
 }
