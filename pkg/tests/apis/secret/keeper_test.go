@@ -15,7 +15,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+var gvrKeepers = schema.GroupVersionResource{
+	Group:    "secret.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "keepers",
+}
 
 func TestIntegrationKeeper(t *testing.T) {
 	if testing.Short() {
@@ -38,7 +45,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
-			GVR:  gvr,
+			GVR:  gvrKeepers,
 		})
 
 		raw, err := client.Resource.Get(ctx, "some-keeper-that-does-not-exist", metav1.GetOptions{})
@@ -57,7 +64,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
-			GVR:  gvr,
+			GVR:  gvrKeepers,
 		})
 
 		err := client.Resource.Delete(ctx, "some-keeper-that-does-not-exist", metav1.DeleteOptions{})
@@ -71,7 +78,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
-			GVR:  gvr,
+			GVR:  gvrKeepers,
 		})
 
 		testDataKeeperAwsXyz := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
@@ -146,7 +153,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
-			GVR:  gvr,
+			GVR:  gvrKeepers,
 		})
 
 		generatePrefix := "generated-"
