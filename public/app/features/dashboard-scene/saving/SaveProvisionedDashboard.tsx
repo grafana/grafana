@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import debounce from 'debounce-promise';
+import { ChangeEvent, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -16,9 +17,11 @@ import {
   TextArea,
   TextLink,
 } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
+import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 import { RepositorySelect } from '../../provisioning/RepositorySelect';
 import { useGetRepositoryQuery, RepositorySpec } from '../../provisioning/api';
 import { PROVISIONING_URL } from '../../provisioning/constants';
@@ -37,23 +40,32 @@ type FormData = {
   comment?: string;
   repo: string;
   workflow?: WorkflowOption;
+  title: string;
+  description: string;
+  folder: { uid?: string; title?: string; repository?: string };
 };
 
 function getDefaultValues(meta: DashboardMeta) {
   const anno = meta.k8s?.annotations;
-  let ref = '';
-  let path = anno?.[AnnoKeyRepoPath] ?? `${meta.slug}.json` ?? '';
+  const timestamp = Date.now();
+  let ref = `dashboard/${timestamp}`;
+  const pathName = meta.slug || `new-dashboard-${timestamp}`;
+  let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
   const repo = anno?.[AnnoKeyRepoName] ?? '';
   const idx = path.indexOf('#');
   if (idx > 0) {
     ref = path.substring(idx + 1);
     path = path.substring(0, idx);
   }
+
   return {
-    ref: ref || `dashboard/${Date.now()}`,
+    ref,
     path,
     repo,
     comment: '',
+    title: 'New dashboard',
+    description: '',
+    folder: { uid: meta.folderUid, title: '', repository: '' },
   };
 }
 
@@ -147,13 +159,40 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        <div>
-          <Alert severity="warning" title="Development feature">
-            More warnings here... mostly exploratory interfaces.
-          </Alert>
-        </div>
+        <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
+          <Input
+            {...register('title', { required: 'Required', validate: validateDashboardName })}
+            onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
+              setValue('title', e.target.value, { shouldValidate: true });
+            }, 400)}
+          />
+        </Field>
+        <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
+          <TextArea {...register('description')} />
+        </Field>
 
-        <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+        <Field label={'Target folder'}>
+          <Controller
+            control={control}
+            name={'folder'}
+            render={({ field: { ref, value, onChange, ...field } }) => {
+              return (
+                <FolderPicker
+                  onChange={(uid?: string, title?: string, repository?: string) => {
+                    onChange({ uid, title, repository });
+                    dashboard.setState({
+                      meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+                    });
+                  }}
+                  value={value.uid}
+                  {...field}
+                />
+              );
+            }}
+          />
+        </Field>
+
+        {!changeInfo.isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field label="Repository">
           {saveProvisioned ? (
@@ -170,7 +209,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly={!saveProvisioned} />
+          <Input {...register('path')} readOnly={!saveProvisioned && !changeInfo.isNew} />
         </Field>
 
         {isGitHub && (
@@ -258,3 +297,16 @@ const BranchValidationError = () => {
     </>
   );
 };
+
+async function validateDashboardName(title: string, formValues: FormData) {
+  if (title === formValues.folder.title?.trim()) {
+    return 'Dashboard name cannot be the same as folder name';
+  }
+
+  try {
+    await validationSrv.validateNewDashboardName(formValues.folder.uid ?? 'general', title);
+    return true;
+  } catch (e) {
+    return e instanceof Error ? e.message : 'Dashboard name is invalid';
+  }
+}

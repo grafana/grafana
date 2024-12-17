@@ -23,7 +23,12 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   public onClose = () => {
-    this.state.dashboardRef.resolve().setState({ overlay: undefined });
+    this.state.dashboardRef
+      .resolve()
+      .setState({
+        overlay: undefined,
+        meta: { k8s: { annotations: { [AnnoKeyRepoName]: undefined } }, folderUid: undefined },
+      });
   };
 
   public onToggleSaveTimeRange = () => {
