@@ -2670,7 +2670,7 @@
     },
     {
       "metadata": {
-        "name": "playlistsWatcher",
+        "name": "playlistsReconciler",
         "resourceVersion": "1730462910506",
         "creationTimestamp": "2024-11-01T12:08:30Z"
       },
