@@ -13,7 +13,7 @@ import { AngularDeprecationPluginNotice } from '../../angularDeprecation/Angular
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
-import { PluginDetailsPanel } from '../components/PluginDetailsRightPanel';
+import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
@@ -109,7 +109,7 @@ export function PluginDetailsPage({
           </TabContent>
         </Page.Contents>
         {!isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel && (
-          <PluginDetailsPanel info={info} plugin={plugin} />
+          <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} />
         )}
       </Stack>
     </Page>

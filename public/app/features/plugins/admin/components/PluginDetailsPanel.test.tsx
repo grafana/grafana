@@ -4,7 +4,7 @@ import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana
 
 import { CatalogPlugin } from '../types';
 
-import { PluginDetailsPanel } from './PluginDetailsRightPanel';
+import { PluginDetailsPanel } from './PluginDetailsPanel';
 
 const mockPlugin: CatalogPlugin = {
   description: 'Test plugin description',
@@ -69,7 +69,7 @@ const mockInfo = [
 
 describe('PluginDetailsPanel', () => {
   it('should render installed version when plugin is installed', () => {
-    render(<PluginDetailsPanel plugin={mockPlugin} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     const installedVersionLabel = screen.getByText('Installed version:');
     // Get the version text that's next to the label
     const installedVersion = installedVersionLabel.nextElementSibling;
@@ -78,13 +78,13 @@ describe('PluginDetailsPanel', () => {
   });
 
   it('should render latest version information', () => {
-    render(<PluginDetailsPanel plugin={mockPlugin} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Latest version:')).toBeInTheDocument();
     expect(screen.getByText('1.1.0')).toBeInTheDocument();
   });
 
   it('should render links section when plugin has links', () => {
-    render(<PluginDetailsPanel plugin={mockPlugin} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     const link = screen.getByText('Website');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', 'https://test-plugin.com');
@@ -95,25 +95,25 @@ describe('PluginDetailsPanel', () => {
       ...mockPlugin,
       details: { ...mockPlugin.details, links: [] },
     };
-    render(<PluginDetailsPanel plugin={pluginWithoutLinks} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={pluginWithoutLinks} pluginExtentionsInfo={mockInfo} />);
     expect(screen.queryByText('Links')).not.toBeInTheDocument();
     expect(screen.queryByText('Website')).not.toBeInTheDocument();
   });
 
   it('should render report abuse section for non-core plugins', () => {
-    render(<PluginDetailsPanel plugin={mockPlugin} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Report a concern')).toBeInTheDocument();
     expect(screen.getByText('Contact Grafana Labs')).toBeInTheDocument();
   });
 
   it('should not render report abuse section for core plugins', () => {
     const corePlugin = { ...mockPlugin, isCore: true };
-    render(<PluginDetailsPanel plugin={corePlugin} info={mockInfo} />);
+    render(<PluginDetailsPanel plugin={corePlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.queryByText('Report a concern')).not.toBeInTheDocument();
   });
 
   it('should respect custom width prop', () => {
-    render(<PluginDetailsPanel plugin={mockPlugin} info={mockInfo} width="300px" />);
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} width="300px" />);
     const panel = screen.getByTestId('plugin-details-panel');
     expect(panel).toHaveStyle({ maxWidth: '300px' });
   });

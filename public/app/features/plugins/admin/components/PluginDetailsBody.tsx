@@ -7,7 +7,7 @@ import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
-import { PluginDetailsPanel } from '../components/PluginDetailsRightPanel';
+import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
@@ -84,7 +84,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
     return (
       <div>
-        <PluginDetailsPanel info={info} plugin={plugin} width={'auto'} />
+        <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
       </div>
     );
   }
