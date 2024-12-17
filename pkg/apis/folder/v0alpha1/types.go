@@ -45,14 +45,20 @@ type FolderInfoList struct {
 // FolderInfo briefly describes a folder -- unlike a folder resource,
 // this is a partial record of the folder metadata used for navigating parents and children
 type FolderInfo struct {
-	// UID is the unique identifier for a folder (and the k8s name)
-	UID string `json:"uid"`
+	// Name is the k8s name (eg, the unique identifier) for a folder
+	Name string `json:"name"`
 
 	// Title is the display value
 	Title string `json:"title"`
 
+	// The folder description
+	Description string `json:"description,omitempty"`
+
 	// The parent folder UID
 	Parent string `json:"parent,omitempty"`
+
+	// This folder does not resolve
+	Detached bool `json:"detached,omitempty"`
 }
 
 // Access control information for the current user
