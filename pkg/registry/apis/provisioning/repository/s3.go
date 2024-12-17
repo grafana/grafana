@@ -121,8 +121,8 @@ func (r *s3Repository) AfterCreate(ctx context.Context, logger *slog.Logger) err
 	return nil
 }
 
-func (r *s3Repository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
-	return func(ctx context.Context) error { return nil }, nil
+func (r *s3Repository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) error {
+	return nil
 }
 
 func (r *s3Repository) AfterDelete(ctx context.Context, logger *slog.Logger) error {

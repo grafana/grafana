@@ -415,6 +415,34 @@ func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, 
 	return err
 }
 
+func (r *realImpl) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
+	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return WebhookConfig{}, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return WebhookConfig{}, ErrResourceNotFound
+		}
+		return WebhookConfig{}, err
+	}
+
+	contentType := hook.GetConfig().GetContentType()
+	if contentType == "" {
+		contentType = "json"
+	}
+
+	return WebhookConfig{
+		ID:          hook.GetID(),
+		Events:      hook.Events,
+		Active:      hook.GetActive(),
+		URL:         hook.GetConfig().GetURL(),
+		ContentType: contentType,
+		// Intentionally not setting Secret.
+	}, nil
+}
+
 func (r *realImpl) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
 	_, err := r.gh.Repositories.DeleteHook(ctx, owner, repository, webhookID)
 	var ghErr *github.ErrorResponse

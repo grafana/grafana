@@ -7,8 +7,9 @@ package v0alpha1
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
 type RepositoryStatusApplyConfiguration struct {
-	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
-	Sync   *SyncStatusApplyConfiguration   `json:"sync,omitempty"`
+	Health  *HealthStatusApplyConfiguration  `json:"health,omitempty"`
+	Sync    *SyncStatusApplyConfiguration    `json:"sync,omitempty"`
+	Webhook *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -30,5 +31,13 @@ func (b *RepositoryStatusApplyConfiguration) WithHealth(value *HealthStatusApply
 // If called multiple times, the Sync field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithSync(value *SyncStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Sync = value
+	return b
+}
+
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Webhook = value
 	return b
 }

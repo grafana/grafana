@@ -357,8 +357,8 @@ func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) 
 	return nil
 }
 
-func (r *localRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
-	return nil, nil
+func (r *localRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) error {
+	return nil
 }
 
 func (r *localRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {

@@ -367,6 +367,34 @@ func (_m *MockClient) GetTree(ctx context.Context, owner string, repository stri
 	return r0, r1, r2
 }
 
+// GetWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
+func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository string, webhookID int64) (WebhookConfig, error) {
+	ret := _m.Called(ctx, owner, repository, webhookID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetWebhook")
+	}
+
+	var r0 WebhookConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) (WebhookConfig, error)); ok {
+		return rf(ctx, owner, repository, webhookID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) WebhookConfig); ok {
+		r0 = rf(ctx, owner, repository, webhookID)
+	} else {
+		r0 = ret.Get(0).(WebhookConfig)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int64) error); ok {
+		r1 = rf(ctx, owner, repository, webhookID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IsAuthenticated provides a mock function with given fields: ctx
 func (_m *MockClient) IsAuthenticated(ctx context.Context) error {
 	ret := _m.Called(ctx)
