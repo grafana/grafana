@@ -91,9 +91,12 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
         expr += ', ';
       }
 
-      const labelValue = config.featureToggles.prometheusSpecialCharsInLabelValues
-        ? prometheusRegularEscape(filter.value)
-        : filter.value;
+      let labelValue = filter.value;
+      const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+
+      if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
+        labelValue = prometheusRegularEscape(labelValue);
+      }
       expr += `${filter.label}${filter.op}"${labelValue}"`;
     }
 
