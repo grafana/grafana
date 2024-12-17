@@ -172,7 +172,10 @@ export const StateTimelinePanel = ({
                   queryZoom={onChangeTimeRange}
                   syncMode={cursorSync}
                   syncScope={eventsScope}
-                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                  getDataLinks={(seriesIdx: number, dataIdx: number) =>
+                    alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                  }
+                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
                       setNewAnnotationRange(timeRange2);
                       dismiss();
@@ -199,6 +202,7 @@ export const StateTimelinePanel = ({
                         withDuration={true}
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
+                        dataLinks={dataLinks}
                       />
                     );
                   }}

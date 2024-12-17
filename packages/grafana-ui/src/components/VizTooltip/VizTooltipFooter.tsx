@@ -40,7 +40,7 @@ export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFoo
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
+      {dataLinks?.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
       {actions && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
       {annotate != null && (
         <div className={styles.addAnnotations}>
