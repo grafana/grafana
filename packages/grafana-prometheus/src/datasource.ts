@@ -641,7 +641,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: config.featureToggles.prometheusSpecialCharsInLabelValues ? prometheusRegularEscape(f.value) : f.value,
+      value: f.value,
       op: f.operator,
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
@@ -673,7 +673,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: config.featureToggles.prometheusSpecialCharsInLabelValues ? prometheusRegularEscape(f.value) : f.value,
+      value: f.value,
       op: f.operator,
     }));
 
