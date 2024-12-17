@@ -96,8 +96,8 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
         window.open(config.externalUserMngLinkUrl, '_blank');
       },
       renderDividerAbove: true,
-      component: () => <Icon name="external-link-alt" className={styles.icon} />,
-      className: styles.item,
+      component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
+      className: styles.inviteUserItem,
     });
 
     return menuItems.filter((item) => item.renderCondition);
@@ -134,13 +134,13 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    item: css({
+    inviteUserItem: css({
       display: 'flex',
       justifyContent: 'start',
       flexDirection: 'row',
       alignItems: 'center',
     }),
-    icon: css({
+    inviteUserItemIcon: css({
       color: theme.colors.text.link,
     }),
   };
