@@ -269,7 +269,12 @@ export class LogsSQLCompletionItemProvider extends CompletionItemProvider {
           break;
 
         case SuggestionKind.Field:
-          const fields = await fetchLogGroupFields(this.queryContext.logGroups || [], this.queryContext.region, this.templateSrv, this.resources);
+          const fields = await fetchLogGroupFields(
+            this.queryContext.logGroups || [],
+            this.queryContext.region,
+            this.templateSrv,
+            this.resources
+          );
           fields.forEach((field) => {
             if (field !== '') {
               addSuggestion(field, {

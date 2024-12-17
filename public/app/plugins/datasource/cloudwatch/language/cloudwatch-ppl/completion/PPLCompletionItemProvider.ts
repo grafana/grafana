@@ -253,7 +253,12 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
   ): Promise<void> {
     if (this.queryContext.logGroups && this.queryContext.logGroups.length > 0) {
       try {
-        let fields = await fetchLogGroupFields(this.queryContext.logGroups, this.queryContext.region, this.templateSrv, this.resources);
+        let fields = await fetchLogGroupFields(
+          this.queryContext.logGroups,
+          this.queryContext.region,
+          this.templateSrv,
+          this.resources
+        );
         fields.forEach((field) => {
           if (field !== '') {
             addSuggestion(field, {

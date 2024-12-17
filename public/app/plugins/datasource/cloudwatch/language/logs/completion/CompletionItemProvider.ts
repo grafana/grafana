@@ -87,7 +87,12 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
           });
 
           if (this.queryContext.logGroups && this.queryContext.logGroups.length > 0) {
-            let fields = await fetchLogGroupFields(this.queryContext.logGroups, this.queryContext.region, this.templateSrv, this.resources);
+            let fields = await fetchLogGroupFields(
+              this.queryContext.logGroups,
+              this.queryContext.region,
+              this.templateSrv,
+              this.resources
+            );
             fields.push('@log');
             fields.forEach((field) => {
               if (field !== '') {

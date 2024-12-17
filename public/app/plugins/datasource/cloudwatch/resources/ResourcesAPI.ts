@@ -78,10 +78,7 @@ export class ResourcesAPI extends CloudWatchRequest {
     });
   }
 
-  getLogGroupFields(
-    region: string,
-    logGroupName: string
-  ): Promise<Array<ResourceResponse<LogGroupField>>> {
+  getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {
     return this.memoizedGetRequest<Array<ResourceResponse<LogGroupField>>>('log-group-fields', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       logGroupName: logGroupName,
