@@ -23,10 +23,10 @@ var (
 // SecureValueStorage is the interface for wiring and dependency injection.
 type SecureValueStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error)
+	Read(ctx context.Context, nn NamespacedName) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, namespace, name string) error
-	List(ctx context.Context, ns string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
+	Delete(ctx context.Context, nn NamespacedName) error
+	List(ctx context.Context, namespace Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 }
 
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
@@ -82,8 +82,8 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 	return createdSecureValue, nil
 }
 
-func (s *storage) Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	row, err := s.readInternal(ctx, namespace, name)
+func (s *storage) Read(ctx context.Context, nn NamespacedName) (*secretv0alpha1.SecureValue, error) {
+	row, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read internal: %w", err)
 	}
@@ -102,7 +102,12 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	currentRow, err := s.readInternal(ctx, newSecureValue.Namespace, newSecureValue.Name)
+	nn := NamespacedName{
+		Name:      newSecureValue.Name,
+		Namespace: Namespace(newSecureValue.Namespace),
+	}
+
+	currentRow, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read securevalue: %w", err)
 	}
@@ -136,7 +141,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
-func (s *storage) Delete(ctx context.Context, namespace string, name string) error {
+func (s *storage) Delete(ctx context.Context, nn NamespacedName) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -145,7 +150,7 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	// TODO: delete from the keeper!
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: name, Namespace: namespace}
+	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
@@ -162,7 +167,7 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	return nil
 }
 
-func (s *storage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *storage) List(ctx context.Context, namespace Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -176,7 +181,9 @@ func (s *storage) List(ctx context.Context, namespace string, options *internalv
 	secureValueRows := make([]*secureValueDB, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if err := sess.Where("namespace = ?", namespace).Find(&secureValueRows); err != nil {
+		cond := &secureValueDB{Namespace: namespace.String()}
+
+		if err := sess.Find(&secureValueRows, cond); err != nil {
 			return fmt.Errorf("find rows: %w", err)
 		}
 
@@ -204,13 +211,13 @@ func (s *storage) List(ctx context.Context, namespace string, options *internalv
 	}, nil
 }
 
-func (s *storage) readInternal(ctx context.Context, namespace, name string) (*secureValueDB, error) {
+func (s *storage) readInternal(ctx context.Context, nn NamespacedName) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &secureValueDB{Name: name, Namespace: namespace}
+	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
