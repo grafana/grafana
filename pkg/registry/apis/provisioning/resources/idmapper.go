@@ -55,8 +55,8 @@ func NamesFromHashedRepoPath(repo string, fpath string, _ metav1.Object) (object
 
 	hasher := func(fpath string) string {
 		name := path.Base(fpath)
-		if len(name) > 12 {
-			name = name[0:12]
+		if len(name) > 16 {
+			name = name[0:16]
 		}
 		hash := sha256.New()
 		_, _ = hash.Write([]byte(repo))

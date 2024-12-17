@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack, TextLink } from '@grafana/ui';
+import { Alert, Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
@@ -51,6 +51,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
             const name = item.metadata?.name ?? '';
+            const healthy = Boolean(item.status?.health.healthy)
             return (
               <Card key={item.metadata?.name} className={css({ alignItems: 'center' })}>
                 <Stack direction={'column'}>
@@ -60,11 +61,25 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   <Card.Meta>{item.spec?.type}</Card.Meta>
                 </Stack>
                 <Stack>
-                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
-                    Edit
-                  </LinkButton>
-                  <SyncRepository repository={item} />
-                  <DeleteRepositoryButton name={name} />
+                  {healthy ? <>
+                    <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
+                      Edit
+                    </LinkButton>
+                    <SyncRepository repository={item} />
+                    <DeleteRepositoryButton name={name} />
+                  </> : <>
+                    <Alert title='Repository is unhealthy'>
+                      <>
+                        {item.status?.health.message && item.status.health.message.map(v => <div>{v}<br/><br/></div>)}
+                        <div>
+                          <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
+                            Edit
+                          </LinkButton>
+                          <DeleteRepositoryButton name={name} />
+                        </div>
+                      </>
+                    </Alert>
+                  </>}
                 </Stack>
               </Card>
             );

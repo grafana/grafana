@@ -255,7 +255,7 @@ function FolderView({ repo }: RepoProps) {
     <div>
       <h2>TODO, show folder: {repo.metadata?.name}</h2>
       <br />
-      <a href={`/dashboards/f/${repo.spec?.folder} /`}>{repo.spec?.folder} </a>
+      <a href={`/dashboards/f/${repo.spec?.folder}/`}>{repo.spec?.folder} </a>
     </div>
   );
 }
