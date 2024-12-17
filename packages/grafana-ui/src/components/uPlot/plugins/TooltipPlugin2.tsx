@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
@@ -27,6 +27,8 @@ export const enum TooltipHoverMode {
   xyOne,
 }
 
+type GeDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
@@ -40,6 +42,7 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelectRange?: OnSelectRangeCallback;
+  getDataLinks?: GeDataLinksCallback;
 
   render: (
     u: uPlot,
@@ -49,7 +52,8 @@ interface TooltipPlugin2Props {
     dismiss: () => void,
     // selected time range (for annotation triggering)
     timeRange: TimeRange2 | null,
-    viaSync: boolean
+    viaSync: boolean,
+    dataLinks: LinkModel[]
   ) => React.ReactNode;
 
   maxWidth?: number;
@@ -102,6 +106,8 @@ const MIN_ZOOM_DIST = 5;
 
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
+const getDataLinksFallback: GeDataLinksCallback = () => [];
+
 /**
  * @alpha
  */
@@ -115,6 +121,7 @@ export const TooltipPlugin2 = ({
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
+  getDataLinks = getDataLinksFallback,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -130,6 +137,9 @@ export const TooltipPlugin2 = ({
 
   const renderRef = useRef(render);
   renderRef.current = render;
+
+  const getLinksRef = useRef(getDataLinks);
+  getLinksRef.current = getDataLinks;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -187,6 +197,7 @@ export const TooltipPlugin2 = ({
     let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
+    let dataLinks: LinkModel[] = [];
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -242,7 +253,16 @@ export const TooltipPlugin2 = ({
         isHovering: _isHovering,
         contents:
           _isHovering || selectedRange != null
-            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
+            ? renderRef.current(
+                _plot!,
+                seriesIdxs,
+                closestSeriesIdx,
+                _isPinned,
+                dismiss,
+                selectedRange,
+                viaSync,
+                dataLinks
+              )
             : null,
         dismiss,
       };
@@ -257,6 +277,8 @@ export const TooltipPlugin2 = ({
       _isPinned = false;
       _isHovering = false;
       _plot!.setCursor({ left: -10, top: -10 });
+      dataLinks = [];
+
       scheduleRender(prevIsPinned);
     };
 
@@ -313,6 +335,8 @@ export const TooltipPlugin2 = ({
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
+            dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
+
             setTimeout(() => {
               _isPinned = true;
               scheduleRender(true);
