@@ -3,13 +3,16 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
 import {
-  mockDashboardDto,
-  mockDashboardSearchItem,
-  mockDashboardV2Resource,
-} from 'app/features/alerting/unified/mocks';
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItemType } from 'app/features/search/types';
+import { DashboardDTO } from 'app/types';
 
 import { DashboardPicker } from './DashboardPicker';
 
@@ -39,25 +42,65 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-jest
-  .mocked(backendSrv.search)
-  .mockResolvedValue([
-    mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
-    mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),
-    mockDashboardSearchItem({ uid: 'dash-3', type: DashboardSearchItemType.DashDB, title: 'Dashboard 3' }),
-  ]);
+jest.mocked(backendSrv.search).mockResolvedValue([
+  {
+    uid: 'dash-1',
+    type: DashboardSearchItemType.DashDB,
+    title: 'Dashboard 1',
+    uri: '',
+    url: '',
+    tags: [],
+    isStarred: false,
+  },
+  {
+    uid: 'dash-2',
+    type: DashboardSearchItemType.DashDB,
+    title: 'Dashboard 2',
+    uri: '',
+    url: '',
+    tags: [],
+    isStarred: false,
+  },
+  {
+    uid: 'dash-3',
+    type: DashboardSearchItemType.DashDB,
+    title: 'Dashboard 3',
+    uri: '',
+    url: '',
+    tags: [],
+    isStarred: false,
+  },
+]);
 
-const mockDashboard = mockDashboardDto({
-  uid: 'dash-2',
-  title: 'Dashboard 2',
-  panels: [],
-});
-const mockDashboardV2 = mockDashboardV2Resource({
-  spec: {
+const mockDashboard: DashboardDTO = {
+  dashboard: {
+    ...defaultDashboardData,
+    uid: 'dash-2',
     title: 'Dashboard 2',
   },
-  metadata: { name: 'dash-2' },
-});
+  meta: {},
+};
+
+const mockDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
+  apiVersion: 'v2alpha0',
+  kind: 'DashboardWithAccessInfo',
+  spec: {
+    ...defaultDashboardV2Spec(),
+    title: 'Dashboard 2',
+  },
+  metadata: {
+    name: 'dash-2',
+    resourceVersion: '0',
+    creationTimestamp: '0',
+    annotations: {},
+  },
+  access: {
+    canEdit: true,
+    canSave: true,
+    canStar: true,
+    canShare: true,
+  },
+};
 
 describe('DashboardPicker', () => {
   describe.each([
