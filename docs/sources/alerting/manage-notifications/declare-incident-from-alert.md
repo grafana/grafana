@@ -10,8 +10,6 @@ keywords:
 labels:
   products:
     - cloud
-    - enterprise
-    - oss
 title: Declare incidents from firing alerts
 weight: 1010
 ---
@@ -22,35 +20,37 @@ Declare an incident from a firing alert to streamline your alert to incident wor
 
 ## Before you begin
 
-- Ensure you have Grafana Incident installed
-- You must have a firing alert
+- Ensure you have [Grafana Incident](/docs/grafana-cloud/incident/) installed.
+- You must have a firing alert.
 
 ## Procedure
 
 To declare an incident from a firing alert, complete the following steps.
 
-1. Navigate to Alerts & Incidents -> Alerting -> Alert rules.
-2. From the Alert rules list view, click the firing alert that you want to declare an incident for.
+1. Navigate to **Alerts & Incidents** -> **Alerting** -> **Alert rules**.
+1. From the Alert rules page, find the firing alert that you want to declare an incident for.
+1. Click **More** -> **Declare Incident**.
 
-   **Note:**
+   Alternatively, you can declare an incident from the Alert details page.
 
-   You can also access **Declare Incident** from the alert details page.
-
-3. Click **Declare Incident**.
    The **Declare Incident** pop-up opens in the Grafana Incident application.
-4. In the **Declare Incident** pop-up, enter what's going on.
 
-   **Note**: This field is pre-filled with the name of the alert rule, but you can edit it as required.
+1. In the **Declare Incident** pop-up, enter the **What's going on?** field.
+
+   This field is pre-filled with the name of the alert rule, but you can edit it as required.
 
    The alert rule is also linked to the incident.
 
-5. Select a severity.
-6. Add labels, as required.
-7. Click **More options** to include a channel prefix and status.
-8. Click **Declare Incident**.
+1. Select a severity.
+1. Add labels, as required.
+1. Click **More options** to include a channel prefix and status.
+1. Click **Automated options** to enable automated actions configured by admins.
+1. Click **Declare Incident**.
 
 ## Next steps
 
-View and track the incident in the Grafana Incident application.
+View and manage the incident in the **Grafana Incident** application.
 
-For more information, refer to [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).
+{{< figure src="/media/docs/alerting/incident-response-management-timeline-ui.png" max-width="750px" alt="IRM - Incident management timeline" >}}
+
+For more information, refer to the [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).
