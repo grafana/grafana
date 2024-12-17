@@ -10,6 +10,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SearchResultMeta } from './types';
 import { replaceCurrentFolderQuery } from './utils';
+import { isEmpty } from 'lodash';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -249,9 +250,14 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
     return { fields: [], length: 0 };
   }
   const dashboardHits = hits.map((hit) => {
+    let location = hit.folder;
+    if (hit.kind === 'dashboard' && isEmpty(location)) {
+      location = 'general';
+    }
+
     return {
       ...hit,
-      location: hit.folder,
+      location,
       name: hit.title,
     };
   });
@@ -271,7 +277,13 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   const uri = `${searchURI}?type=folders`;
   const rsp = getBackendSrv().get<SearchAPIResponse>(uri).then((rsp) => {
-    const locationInfo: Record<string, LocationInfo> = {};
+    const locationInfo: Record<string, LocationInfo> = {
+      general: {
+        kind: 'folder',
+        name: 'Dashboards',
+        url: '/dashboards',
+      }, // share location info with everyone
+    };
     for (const hit of rsp.hits) {
       locationInfo[hit.name] = {
         name: hit.title,
