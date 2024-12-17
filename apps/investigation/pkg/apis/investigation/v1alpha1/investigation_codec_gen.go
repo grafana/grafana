@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// JSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type JSONCodec struct{}
+// InvestigationJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type InvestigationJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*JSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*InvestigationJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*JSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*InvestigationJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &JSONCodec{}
+var _ resource.Codec = &InvestigationJSONCodec{}

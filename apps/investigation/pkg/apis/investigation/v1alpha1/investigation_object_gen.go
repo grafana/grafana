@@ -16,10 +16,10 @@ import (
 
 // +k8s:openapi-gen=true
 type Investigation struct {
-	metav1.TypeMeta   `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              Spec   `json:"spec" yaml:"spec"`
-	Status            Status `json:"status" yaml:"status"`
+	metav1.TypeMeta     `json:",inline"`
+	metav1.ObjectMeta   `json:"metadata"`
+	Spec                InvestigationSpec   `json:"spec"`
+	InvestigationStatus InvestigationStatus `json:"status"`
 }
 
 func (o *Investigation) GetSpec() any {
@@ -27,7 +27,7 @@ func (o *Investigation) GetSpec() any {
 }
 
 func (o *Investigation) SetSpec(spec any) error {
-	cast, ok := spec.(Spec)
+	cast, ok := spec.(InvestigationSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -37,14 +37,14 @@ func (o *Investigation) SetSpec(spec any) error {
 
 func (o *Investigation) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.Status,
+		"status": o.InvestigationStatus,
 	}
 }
 
 func (o *Investigation) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.Status, true
+		return o.InvestigationStatus, true
 	default:
 		return nil, false
 	}
@@ -53,11 +53,11 @@ func (o *Investigation) GetSubresource(name string) (any, bool) {
 func (o *Investigation) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(Status)
+		cast, ok := value.(InvestigationStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type Status", value)
+			return fmt.Errorf("cannot set status type %#v, not of type InvestigationStatus", value)
 		}
-		o.Status = cast
+		o.InvestigationStatus = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -224,9 +224,9 @@ var _ resource.Object = &Investigation{}
 
 // +k8s:openapi-gen=true
 type InvestigationList struct {
-	metav1.TypeMeta `json:",inline" yaml:",inline"`
-	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []Investigation `json:"items" yaml:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []Investigation `json:"items"`
 }
 
 func (o *InvestigationList) DeepCopyObject() runtime.Object {

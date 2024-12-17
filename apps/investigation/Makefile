@@ -1,3 +1,3 @@
 .PHONY: generate
 generate:
-	@grafana-app-sdk generate -g ./pkg/apis -c kinds --crdencoding none --nomanifest --postprocess
+	@grafana-app-sdk generate -g ./pkg/apis --kindgrouping=group --postprocess --crdencoding none

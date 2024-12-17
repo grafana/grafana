@@ -6,6 +6,7 @@ go 1.23.1
 use (
 	. // skip:golangci-lint
 	./apps/alerting/notifications
+	./apps/investigation
 	./apps/playlist
 	./kindsv2
 	./pkg/aggregator

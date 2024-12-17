@@ -10,23 +10,23 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaInvestigation = resource.NewSimpleSchema("investigationsapp.ext.grafana.com", "v1alpha1", &Investigation{}, &InvestigationList{}, resource.WithKind("Investigation"),
+	schemaInvestigation = resource.NewSimpleSchema("investigation.grafana.app", "v1alpha1", &Investigation{}, &InvestigationList{}, resource.WithKind("Investigation"),
 		resource.WithPlural("investigations"), resource.WithScope(resource.NamespacedScope))
 	kindInvestigation = resource.Kind{
 		Schema: schemaInvestigation,
 		Codecs: map[resource.KindEncoding]resource.Codec{
-			resource.KindEncodingJSON: &JSONCodec{},
+			resource.KindEncodingJSON: &InvestigationJSONCodec{},
 		},
 	}
 )
 
 // Kind returns a resource.Kind for this Schema with a JSON codec
-func Kind() resource.Kind {
+func InvestigationKind() resource.Kind {
 	return kindInvestigation
 }
 
 // Schema returns a resource.SimpleSchema representation of Investigation
-func Schema() *resource.SimpleSchema {
+func InvestigationSchema() *resource.SimpleSchema {
 	return schemaInvestigation
 }
 
