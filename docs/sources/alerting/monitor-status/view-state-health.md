@@ -1,7 +1,8 @@
 ---
 aliases:
   - ../../alerting/alerting-rules/view-state-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/view-state-health
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-state-health/
+  - ../../alerting/manage-notifications/view-state-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-state-health/
 description: View the state and health of alert rules
 keywords:
   - grafana

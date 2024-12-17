@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-state-on-panels/
+aliases:
+  - ../../alerting/manage-notifications/view-alert-state-on-panels/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-state-on-panels/
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-alert-state-on-panels/
 description: View alert rules
 keywords:
   - grafana

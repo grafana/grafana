@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/
+aliases:
+  - ./manage-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/
 description: Detect and respond for day-to-day triage and analysis of what’s going on and action you need to take
 keywords:
   - grafana
