@@ -322,7 +322,7 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 		return nil, err
 	}
 
-	dataKey, err := s.dataKeyById(ctx, string(keyId), namespace)
+	dataKey, err := s.dataKeyById(ctx, namespace, string(keyId))
 	if err != nil {
 		s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
 		return nil, err
@@ -349,7 +349,7 @@ func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace str
 
 // dataKeyById looks up for data key in cache.
 // Otherwise, it fetches it from database and returns it decrypted.
-func (s *EncryptionManager) dataKeyById(ctx context.Context, id, namespace string) ([]byte, error) {
+func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id string) ([]byte, error) {
 	// 0. Get decrypted data key from in-memory cache.
 	if entry, exists := s.dataKeyCache.getById(namespace, id); exists {
 		return entry.dataKey, nil
