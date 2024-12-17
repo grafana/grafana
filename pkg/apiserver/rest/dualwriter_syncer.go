@@ -17,7 +17,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -160,6 +159,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 		log.Info("starting legacyToUnifiedStorageDataSyncer")
 		startSync := time.Now()
 
+		// Add a claim to the context to allow the background job to use the underlying access_token permissions.
 		orgId := int64(1)
 
 		ctx = klog.NewContext(ctx, log)
