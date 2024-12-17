@@ -16,7 +16,7 @@ type InstanceStore interface {
 	// SaveAlertInstancesForRule overwrites the state for the given rule.
 	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
-	FullSync(ctx context.Context, instances []models.AlertInstance) error
+	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
 }
 
 // InstanceReader provides methods to fetch alert instances.

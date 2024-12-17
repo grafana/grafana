@@ -19,7 +19,7 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { RepositoryResource, RepositorySpec } from './api/types';
+import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
@@ -52,10 +52,10 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
 }
 
 export interface ConfigFormProps {
-  data?: RepositoryResource;
+  data?: Repository;
 }
 export function ConfigForm({ data }: ConfigFormProps) {
-  const [submitData, request] = useCreateOrUpdateRepository(data?.metadata.name);
+  const [submitData, request] = useCreateOrUpdateRepository(data?.metadata?.name);
   const {
     register,
     handleSubmit,

@@ -25,7 +25,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     return null;
   }
 
-  const { enabled, jsonData } = pluginConfig?.meta;
+  const { enabled, autoEnabled, jsonData } = pluginConfig?.meta;
 
   const enable = () => {
     reportInteraction('plugins_detail_enable_clicked', {
@@ -63,7 +63,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
         </Button>
       )}
 
-      {enabled && (
+      {enabled && !autoEnabled && (
         <Button variant="destructive" onClick={disable}>
           Disable
         </Button>

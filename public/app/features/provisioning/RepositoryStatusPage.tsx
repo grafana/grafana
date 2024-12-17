@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
 import {
-  List,
   Alert,
   Card,
   CellProps,
@@ -24,13 +23,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import {
-  useGetRepositoryStatusQuery,
-  useListJobsQuery,
-  useListRepositoryFilesQuery,
-  useTestRepositoryQuery,
-} from './api';
-import { RepositoryResource, FileDetails, TestResponse } from './api/types';
+import { useGetRepositoryStatusQuery, useListJobQuery, useGetRepositoryFilesQuery, Repository } from './api';
+import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
@@ -60,7 +54,7 @@ export default function RepositoryStatusPage() {
     <Page
       navId="provisioning"
       pageNav={{
-        text: query.data?.spec.title ?? 'Repository Status',
+        text: query.data?.spec?.title ?? 'Repository Status',
         subTitle: 'Check the status of configured repository.',
       }}
     >
@@ -74,7 +68,7 @@ export default function RepositoryStatusPage() {
           <>
             {query.data ? (
               <>
-                <ErrorView repo={query.data} />
+                {/*<ErrorView repo={query.data} />*/}
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -102,39 +96,39 @@ export default function RepositoryStatusPage() {
   );
 }
 interface RepoProps {
-  repo: RepositoryResource;
+  repo: Repository;
 }
 
-function ErrorView({ repo }: RepoProps) {
-  const name = repo.metadata.name;
-  const status = useTestRepositoryQuery({ name });
-  if (status.isLoading) {
-    return (
-      <div>
-        <Spinner /> Testing configuration...
-      </div>
-    );
-  }
-  if (status.isError) {
-    let response = (status.error as any)?.data as TestResponse;
-    if (!response || !response.errors) {
-      return <Alert title="Error testing configuration" severity="error" />;
-    }
-
-    return (
-      <Alert title="Error testing configuration" severity="error">
-        <List items={response.errors} renderItem={(error) => <div>{error}</div>} />
-      </Alert>
-    );
-  }
-  return null; // don't show anything when it is OK?
-}
+// function ErrorView({ repo }: RepoProps) {
+//   const name = repo.metadata.name;
+//   const status = useTestRepositoryQuery({ name });
+//   if (status.isLoading) {
+//     return (
+//       <div>
+//         <Spinner /> Testing configuration...
+//       </div>
+//     );
+//   }
+//   if (status.isError) {
+//     let response = (status.error as any)?.data as TestResponse;
+//     if (!response || !response.errors) {
+//       return <Alert title="Error testing configuration" severity="error" />;
+//     }
+//
+//     return (
+//       <Alert title="Error testing configuration" severity="error">
+//         <List items={response.errors} renderItem={(error) => <div>{error}</div>} />
+//       </Alert>
+//     );
+//   }
+//   return null; // don't show anything when it is OK?
+// }
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 
 function FilesView({ repo }: RepoProps) {
-  const name = repo.metadata.name;
-  const query = useListRepositoryFilesQuery({ name });
+  const name = repo.metadata?.name ?? '';
+  const query = useGetRepositoryFilesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
   const data = [...(query.data?.files ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
@@ -205,8 +199,8 @@ function FilesView({ repo }: RepoProps) {
 }
 
 function JobsView({ repo }: RepoProps) {
-  const name = repo.metadata.name;
-  const query = useListJobsQuery({
+  const name = repo.metadata?.name;
+  const query = useListJobQuery({
     labelSelector: [
       {
         key: 'repository',
@@ -241,9 +235,9 @@ function JobsView({ repo }: RepoProps) {
     <div>
       {items.map((item) => {
         return (
-          <Card key={item.metadata.resourceVersion}>
+          <Card key={item.metadata?.resourceVersion}>
             <Card.Heading>
-              {item.spec.action} / {item.status?.state}
+              {item.spec?.action} / {item.status?.state}
             </Card.Heading>
             <Card.Description>
               <span>{JSON.stringify(item.spec)}</span>
@@ -259,9 +253,9 @@ function JobsView({ repo }: RepoProps) {
 function FolderView({ repo }: RepoProps) {
   return (
     <div>
-      <h2>TODO, show folder: {repo.metadata.name}</h2>
+      <h2>TODO, show folder: {repo.metadata?.name}</h2>
       <br />
-      <a href={`/dashboards/f/${repo.spec.folder} /`}>{repo.spec.folder} </a>
+      <a href={`/dashboards/f/${repo.spec?.folder} /`}>{repo.spec?.folder} </a>
     </div>
   );
 }
@@ -269,9 +263,9 @@ function FolderView({ repo }: RepoProps) {
 function SettingsView({ repo }: RepoProps) {
   return (
     <div>
-      <h2>TODO, show settings inline???: {repo.metadata.name}</h2>
+      <h2>TODO, show settings inline???: {repo.metadata?.name}</h2>
 
-      <LinkButton href={`${PROVISIONING_URL}/${repo.metadata.name}/edit`}>Edit</LinkButton>
+      <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/edit`}>Edit</LinkButton>
     </div>
   );
 }

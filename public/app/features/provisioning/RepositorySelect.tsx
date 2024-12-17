@@ -16,8 +16,8 @@ export function RepositorySelect(props: Pick<ComboboxBaseProps<string>, 'value' 
       placeholder={'Select a repository'}
       options={
         listQuery.data?.items?.map((repo) => ({
-          label: repo.spec.title,
-          value: repo.metadata.name,
+          label: repo.spec?.title,
+          value: repo.metadata?.name ?? '',
         })) || []
       }
     />

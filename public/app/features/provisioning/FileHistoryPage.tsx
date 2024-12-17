@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Card, EmptyState, Spinner, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useListRepositoryFileHistoryQuery, useGetRepositoryStatusQuery } from './api';
+import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from './api';
 import { HistoryListResponse } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
@@ -12,7 +12,7 @@ export default function FileHistoryPage() {
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const query = useGetRepositoryStatusQuery({ name });
-  const history = useListRepositoryFileHistoryQuery({ name, path });
+  const history = useGetRepositoryHistoryWithPathQuery({ name, path });
 
   //@ts-expect-error TODO add error types
   const notFound = query.isError && query.error?.status === 404;
@@ -21,7 +21,7 @@ export default function FileHistoryPage() {
       navId="provisioning"
       pageNav={{
         text: `History: ${path}`, //,
-        subTitle: query.data?.spec.title ?? 'Repository',
+        subTitle: query.data?.spec?.title ?? 'Repository',
       }}
     >
       <Page.Contents isLoading={false}>
@@ -31,6 +31,7 @@ export default function FileHistoryPage() {
             <TextLink href={PROVISIONING_URL}>Back to repositories</TextLink>
           </EmptyState>
         ) : (
+          //@ts-expect-error TODO fix history response types
           <div>{history.data ? <HistoryView history={history.data} path={path} repo={name} /> : <Spinner />}</div>
         )}
       </Page.Contents>

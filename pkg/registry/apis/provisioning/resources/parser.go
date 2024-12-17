@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
-	"strings"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -43,6 +43,7 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 		repo:   config,
 		client: client,
 		kinds:  kinds,
+		mapper: NamesFromHashedRepoPath,
 	}
 	if repo.Config().Spec.Linting {
 		ctx := context.Background()
@@ -73,20 +74,13 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 
 type Parser struct {
 	// The target repository
-	repo *provisioning.Repository
+	repo   *provisioning.Repository
+	mapper NameMapper
 
 	// client helper (for this namespace?)
 	client *DynamicClient
 	kinds  KindsLookup
 	linter lint.Linter
-}
-
-func NewParser(repo *provisioning.Repository, client *DynamicClient, kinds KindsLookup) *Parser {
-	return &Parser{
-		repo:   repo,
-		client: client,
-		kinds:  kinds,
-	}
 }
 
 type ParsedResource struct {
@@ -129,9 +123,22 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
+func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string) bool {
+	ext := filepath.Ext(p)
+	if ext == ".yaml" || ext == ".json" {
+		return false
+	}
+
+	return true
+}
+
 func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
 	parsed = &ParsedResource{
 		Info: info,
+	}
+
+	if r.ShouldIgnore(ctx, logger, info.Path) {
+		return parsed, ErrUnableToReadResourceBytes
 	}
 
 	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
@@ -164,15 +171,9 @@ func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repositor
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
-	// When name is missing use the file path as the k8s name
-	if obj.GetName() == "" {
-		name := path.Base(info.Path)
-		suffix := path.Ext(name)
-		if suffix != "" {
-			name = strings.TrimSuffix(name, suffix)
-		}
-		obj.SetName(name)
-	}
+	objName, folderName := r.mapper(cfg.Name, info.Path, obj)
+	obj.SetName(objName)
+	parsed.Meta.SetFolder(folderName)
 
 	// We can not do anything more if no kind is defined
 	if parsed.GVK == nil {

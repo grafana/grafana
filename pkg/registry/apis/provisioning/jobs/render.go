@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -8,37 +8,28 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
-// Render utility -- used by webhook service to create preview images
 type renderer struct {
-	render     rendering.Service
-	blobstore  blob.PublicBlobStore
-	identities auth.BackgroundIdentityService
+	cfg       *provisioning.Repository
+	render    rendering.Service
+	blobstore blob.PublicBlobStore
+	id        identity.Requester
 }
 
 func (r *renderer) IsAvailable(ctx context.Context) bool {
 	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
 }
 
-func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.Repository, path string, ref string) (string, error) {
-	cfg := repo.Config()
-
-	// Get a worker identity
-	id, err := r.identities.WorkerIdentity(ctx, cfg.Namespace)
-	if err != nil {
-		return "", err
-	}
-
-	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", cfg.Name, path, ref)
+func (r *renderer) RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error) {
+	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", r.cfg.Name, path, ref)
 	// fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
 
-	renderContext := identity.WithRequester(context.Background(), id)
+	renderContext := identity.WithRequester(context.Background(), r.id)
 	result, err := r.render.Render(renderContext, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
 			Path: url,
@@ -65,8 +56,8 @@ func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.R
 		return "", err
 	}
 
-	return r.blobstore.SaveBlob(ctx, cfg.Namespace, ext, body, map[string]string{
-		"repo": cfg.Name,
+	return r.blobstore.SaveBlob(ctx, r.cfg.Namespace, ext, body, map[string]string{
+		"repo": r.cfg.Name,
 		"path": path, // only used when saving in GCS/S3++
 		"ref":  ref,
 	})

@@ -33,6 +33,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncContextProvider,
   UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
@@ -668,7 +669,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
             <settings.Component model={settings} />
           </div>
         )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        {topScene && (
+          <UrlSyncContextProvider scene={topScene}>
+            <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+          </UrlSyncContextProvider>
+        )}
       </div>
     );
   };

@@ -273,7 +273,6 @@ def integration_test_pipelines():
     pipelines = []
     volumes = integration_test_services_volumes()
     integration_test_steps = postgres_integration_tests_steps() + \
-                             mysql_integration_tests_steps("mysql57", "5.7") + \
                              mysql_integration_tests_steps("mysql80", "8.0") + \
                              redis_integration_tests_steps() + \
                              memcached_integration_tests_steps() + \

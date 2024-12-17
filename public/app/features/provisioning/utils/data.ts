@@ -1,11 +1,11 @@
-import { RepositorySpec } from '../api/types';
+import { RepositorySpec } from '../api';
 import { RepositoryFormData } from '../types';
 
 export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     folder: data.folder,
-    title: data.title,
+    title: data.title || '',
     editing: data.editing,
     linting: data.linting,
     preferYaml: data.preferYaml,

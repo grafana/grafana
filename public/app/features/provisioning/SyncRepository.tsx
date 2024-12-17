@@ -6,14 +6,12 @@ import { AppEvents } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
-import { Resource } from '../apiserver/types';
 import { Loader } from '../plugins/admin/components/Loader';
 
-import { useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
-import { RepositorySpec } from './api/types';
+import { Repository, useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
 
 interface Props {
-  repository: Resource<RepositorySpec>;
+  repository: Repository;
 }
 
 export function SyncRepository({ repository }: Props) {

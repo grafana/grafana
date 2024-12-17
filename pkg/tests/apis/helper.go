@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +26,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -168,6 +171,48 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	return statusError
 }
 
+func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath string) {
+	c.t.Helper()
+
+	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
+	rsp := DoRequest(c, RequestParams{
+		Method: http.MethodGet,
+		Path:   path,
+		User:   c.Org1.Admin,
+	}, &AnyResource{})
+
+	require.NotNil(c.t, rsp.Response)
+	require.Equal(c.t, 200, rsp.Response.StatusCode)
+
+	spec := spec3.OpenAPI{}
+	err := spec.UnmarshalJSON(rsp.Body)
+	require.NoError(c.t, err)
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
+	body, err := os.ReadFile(fpath)
+	if err == nil {
+		specSaved := spec3.OpenAPI{}
+		err = specSaved.UnmarshalJSON(body)
+		assert.NoError(c.t, err, "error reading")
+
+		if !assert.Equal(c.t, specSaved, spec) {
+			err = fmt.Errorf("mismatch")
+		}
+	}
+
+	if err != nil {
+		pretty, _ := json.MarshalIndent(spec, "", "  ")
+		err = os.WriteFile(fpath, pretty, 0644)
+		if err != nil {
+			require.NoError(c.t, err)
+		}
+		abs, _ := filepath.Abs(fpath)
+		c.t.Errorf("openapi spec has changed: %s", abs)
+		c.t.Fail()
+	}
+}
+
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
 	c.t.Helper()
 
@@ -215,6 +260,9 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
+
+	// remove generation
+	delete(meta, "generation")
 
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
