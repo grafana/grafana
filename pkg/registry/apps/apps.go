@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apps/investigation"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -26,6 +27,7 @@ func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	playlistAppProvider *playlist.PlaylistAppProvider,
+	investigationAppProvider *investigation.InvestigationAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
