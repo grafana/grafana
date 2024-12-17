@@ -9,7 +9,6 @@ import {
   defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
