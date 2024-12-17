@@ -11,6 +11,7 @@ import (
 
 const (
 	TableNameSecureValue = "secret_secure_value"
+	TableNameKeeper      = "secret_keeper"
 )
 
 func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
@@ -55,7 +56,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "secret_keeper",
+		Name: TableNameKeeper,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
