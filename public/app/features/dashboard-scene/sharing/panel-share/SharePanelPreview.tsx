@@ -102,7 +102,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                     },
                     onChange: onChange,
                   })}
-                  placeholder="1000"
+                  placeholder={t('share-panel-image.settings.width-placeholder', '1000')}
                   type="number"
                   suffix="px"
                   data-testid={selector.widthInput}
@@ -124,7 +124,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                     },
                     onChange: onChange,
                   })}
-                  placeholder="500"
+                  placeholder={t('share-panel-image.settings.height-placeholder', '500')}
                   type="number"
                   suffix="px"
                   data-testid={selector.heightInput}
@@ -149,7 +149,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                     },
                     onChange: onChange,
                   })}
-                  placeholder="1"
+                  placeholder={t('share-panel-image.settings.scale-factor-placeholder', '1')}
                   type="number"
                   data-testid={selector.scaleFactorInput}
                 />
