@@ -318,51 +318,6 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 	}
 }
 
-func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
-	if cfg.Spec.Folder == "" {
-		// The root folder can't not exist, so we don't have to do anything.
-		return nil
-	}
-
-	client, _, err := b.client.New(cfg.GetNamespace())
-	if err != nil {
-		return err
-	}
-	// FIXME: make sure folders are actually enabled in the apiserver.
-	folderIface := client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
-	if err == nil {
-		// The folder exists and doesn't need to be created.
-		return nil
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to search for existing repo folder: %w", err)
-	}
-
-	title := cfg.Spec.Title
-	if title == "" {
-		title = cfg.Spec.Folder
-	}
-
-	_, err = folderIface.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      cfg.Spec.Folder,
-				"namespace": cfg.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"title":       title,
-				"description": "Repository-managed folder.",
-			},
-		},
-	}, metav1.CreateOptions{})
-	return err
-}
-
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -454,6 +409,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				b, // repoGetter
 				b.identities,
 				b.tester,
+				b.jobs,
 			)
 			if err != nil {
 				return err

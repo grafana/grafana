@@ -8,6 +8,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -19,6 +20,7 @@ import (
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -26,6 +28,8 @@ type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
+
+	jobs jobs.JobQueue
 
 	// Converts config to instance
 	repoGetter RepoGetter
@@ -48,6 +52,7 @@ func NewRepositoryController(
 	repoGetter RepoGetter,
 	identities auth.BackgroundIdentityService,
 	tester *RepositoryTester,
+	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -63,6 +68,7 @@ func NewRepositoryController(
 		identities: identities,
 		tester:     tester,
 		logger:     slog.Default().With("logger", "provisioning-repository-controller"),
+		jobs:       jobs,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -253,6 +259,20 @@ func (rc *RepositoryController) sync(key string) error {
 		UpdateStatus(ctx, cfg, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("update status: %w", err)
 	}
+
+	job, err := rc.jobs.Add(ctx, &provisioning.Job{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: cfg.Namespace,
+			Labels: map[string]string{
+				"repository": cfg.Name,
+			},
+		},
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionSync,
+		},
+	})
+
+	logger.Info("sync job created", "job", job.Name)
 
 	return nil
 }
