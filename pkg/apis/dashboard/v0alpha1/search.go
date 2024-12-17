@@ -71,13 +71,15 @@ type DashboardHit struct {
 	// Filter tags
 	Tags []string `json:"tags"`
 	// The UID/name for the folder
-	Folder string `json:"location"`
+	Folder string `json:"folder"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitempty"`
 	// Explain the score (if possible)
 	Explain *common.Unstructured `json:"explain,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
+	// The link to the resource
+	Url string `json:"url,omitempty"`
 }
 
 type FacetResult struct {

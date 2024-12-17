@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -26,13 +28,15 @@ type SearchHandler struct {
 	log    log.Logger
 	client resource.ResourceIndexClient
 	tracer trace.Tracer
+	cfg    *setting.Cfg
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(cfg *setting.Cfg, client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
 	return &SearchHandler{
 		client: client,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
+		cfg:    cfg,
 	}
 }
 
@@ -249,6 +253,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	resourceType := queryParams.Get("type")
+	if resourceType != "" {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_KIND,
+			Operator: "=",
+			Values:   []string{resourceType},
+		}}
+	}
+
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
@@ -306,12 +319,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		MaxScore:  result.MaxScore,
 		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
+	appSubUrl := s.cfg.AppSubURL
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
 			Kind:   dashboardv0alpha1.HitKind(row.Key.Resource[:len(row.Key.Resource)-1]),
 			Name:   row.Key.Name,
 			Title:  string(row.Cells[0]),
 			Folder: string(row.Cells[1]),
+			Url:    dashboardPageItemLink(row, appSubUrl),
 		}
 		if row.Cells[2] != nil {
 			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
@@ -344,4 +359,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
+}
+
+func dashboardPageItemLink(row *resource.ResourceTableRow, subURL string) string {
+	folder := string(row.Cells[1])
+	name := row.Key.Name
+	namespace := row.Key.Namespace
+	if folder == "" {
+		return fmt.Sprintf("%s/d/%s/%s", subURL, name, namespace)
+	}
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, name, namespace)
 }

@@ -53,6 +53,9 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
+	// The resource type ( for federated indexes )
+	Kind string `json:"kind,omitempty"`
+
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
 
@@ -161,6 +164,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	}
 	doc := &IndexableDocument{
 		Key:       key,
+		Kind:      key.Resource,
 		RV:        rv,
 		Title:     title, // We always want *something* to display
 		TitleSort: title,
@@ -241,6 +245,7 @@ func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefini
 }
 
 const SEARCH_FIELD_ID = "_id"            // {namespace}/{group}/{resource}/{name}
+const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
 const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
 const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"

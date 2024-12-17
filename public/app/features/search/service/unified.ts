@@ -8,20 +8,22 @@ import {
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from './types';
+import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SearchResultMeta } from './types';
 import { replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
 
 type SearchHit = {
   kind: string;
   name: string;
   title: string;
   location: string;
+  folder: string;
+  url: string;
 }
 
 type SearchAPIResponse = {
@@ -39,7 +41,11 @@ type SearchAPIResponse = {
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  constructor(private fallbackSearcher: GrafanaSearcher) {}
+  locationInfo: Promise<Record<string, LocationInfo>>;
+
+  constructor(private fallbackSearcher: GrafanaSearcher) {
+    this.locationInfo = loadLocationInfo();
+  }
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -127,25 +133,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
-    for (const field of first.fields) {
-      field.display = getDisplayProcessor({ field, theme: config.theme2 });
-    }
-
-    // Make sure the object exists
-    if (!first.meta?.custom) {
-      first.meta = {
-        ...first.meta,
-        custom: {
-          count: first.length,
-          max_score: 1,
-        },
-      };
-    }
-
-    const meta = first.meta.custom as SearchResultMeta;
-    if (!meta.locationInfo) {
-      meta.locationInfo = {}; // always set it so we can append
-    }
+    const meta = first.meta?.custom || {} as SearchResultMeta;
+    meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
     if (meta.sortBy?.length) {
@@ -172,7 +161,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
           limit: nextPageSizes,
         });
         const frame = toDashboardResults(resp.hits);
-
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -263,8 +251,35 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
   const dashboardHits = hits.map((hit) => {
     return {
       ...hit,
+      location: hit.folder,
       name: hit.title,
     };
   });
-  return toDataFrame(dashboardHits);
+  const frame = toDataFrame(dashboardHits);
+  frame.meta = {
+    custom: {
+      count: hits.length,
+      max_score: 1,
+    },
+  }
+  for (const field of frame.fields) {
+    field.display = getDisplayProcessor({ field, theme: config.theme2 });
+  }
+  return frame;
+}
+
+async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
+  const uri = `${searchURI}?type=folders`;
+  const rsp = getBackendSrv().get<SearchAPIResponse>(uri).then((rsp) => {
+    const locationInfo: Record<string, LocationInfo> = {};
+    for (const hit of rsp.hits) {
+      locationInfo[hit.name] = {
+        name: hit.title,
+        kind: 'folder',
+        url: hit.url,
+      }
+    }
+    return locationInfo;
+  });
+  return rsp;
 }

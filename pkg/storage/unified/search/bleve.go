@@ -170,6 +170,7 @@ type bleveIndex struct {
 
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
+	v.Kind = v.Key.Resource
 	// remove references (for now!)
 	v.References = nil
 	if b.batch != nil {
