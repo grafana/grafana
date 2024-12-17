@@ -104,7 +104,7 @@ export const LogRows = memo(
        * The biggest of those values will be used. Else, all rows are rendered.
        */
       renderPreview && !permalinkedRowId
-        ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 2))
+        ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 3))
         : Infinity
     );
     const [popoverState, setPopoverState] = useState<PopoverStateType>({
