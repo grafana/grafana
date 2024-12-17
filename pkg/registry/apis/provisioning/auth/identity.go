@@ -80,7 +80,7 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 
 	id, ok := o.accounts[info.OrgID]
 	if !ok {
-		// Find an admin user
+		// HACK -- find an admin user
 		res, err := o.users.Search(context.Background(), &user.SearchUsersQuery{
 			SignedInUser: &identity.StaticRequester{
 				IsGrafanaAdmin: true,
@@ -109,7 +109,7 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 			return nil, fmt.Errorf("unable to find admin user")
 		}
 
-		// HACK HACK HACK
+		// HACK -- (if false) and still allow lint
 		switch o.serviceAccountNamePrefix {
 		case "NOPE":
 			id, err = o.makeAdminUser(ctx, info.OrgID)
