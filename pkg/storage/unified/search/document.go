@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -22,6 +23,7 @@ func ProvideDocumentBuilders(sql db.DB, sprinkles DashboardStats) resource.Docum
 
 func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
 		ns, err := claims.ParseNamespace(namespace)
 		if err != nil && s.sql != nil {
@@ -49,9 +51,9 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		var stats map[string]map[string]int64
 		if s.sprinkles != nil {
 			stats, err = s.sprinkles.GetStats(ctx, namespace)
-			// Should we just log a warning here if it fails? Seems overkill to return an error for sprinkles and fail the index startup
 			if err != nil {
-				return nil, err
+				// only log a warning. Don't need to fail the indexer if we can't get sprinkles
+				logger.Warn("Failed to get sprinkles", "error", err)
 			}
 		}
 
