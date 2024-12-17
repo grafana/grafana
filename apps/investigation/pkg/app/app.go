@@ -25,11 +25,11 @@ func New(cfg app.Config) (app.App, error) {
 		err                  error
 	)
 
-	playlistConfig, ok := cfg.SpecificConfig.(*InvestigationConfig)
-	if ok && playlistConfig.EnableWatchers {
+	config, ok := cfg.SpecificConfig.(*InvestigationConfig)
+	if ok && config.EnableWatchers {
 		investigationWatcher, err = watchers.NewInvestigationWatcher()
 		if err != nil {
-			return nil, fmt.Errorf("unable to create PlaylistWatcher: %w", err)
+			return nil, fmt.Errorf("unable to create InvestigationWatcher: %w", err)
 		}
 	}
 
