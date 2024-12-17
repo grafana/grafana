@@ -10,10 +10,10 @@ investigation: {
 		backend:  true
 	}
 	pluralName: "Investigations"
-	current: "v1-alpha"
+	current: "v1alpha1"
 	versions: {
-		"v1-alpha": {
-			version: "v1-alpha"
+		"v1alpha1": {
+			version: "v1alpha1"
 			schema: {
 				// spec is the schema of our resource. The spec should include all the user-ediable information for the kind.
 				spec: {
