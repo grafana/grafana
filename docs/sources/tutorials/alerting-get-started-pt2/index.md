@@ -319,6 +319,22 @@ In this tutorial, you have learned how Grafana Alerting can route individual ale
 
 If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-Enjoy your monitoring!
+## Learn more in [Grafana Alerting Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you can learn how to group alert notifications effectively.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you can learn how to group alert notifications effectively.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->
