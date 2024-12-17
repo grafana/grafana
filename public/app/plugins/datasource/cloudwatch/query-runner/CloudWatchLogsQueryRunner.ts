@@ -31,6 +31,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
+import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import {
   CloudWatchJsonData,
@@ -40,6 +41,7 @@ import {
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
+  LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
 } from '../types';
@@ -109,12 +111,40 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
       const logGroupNames = uniq(interpolatedLogGroupNames);
 
+      const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
+        if (
+          (typeof value === 'string' && value.startsWith('arn:') && value.endsWith(':*')) ||
+          (Array.isArray(value) &&
+            value.every((v) => typeof v === 'string' && v.startsWith('arn:') && v.endsWith(':*')))
+        ) {
+          const varName = model.name || '';
+          const variable = this.templateSrv.getVariables().find(({ name }) => name === varName);
+          // checks the raw query string for a log group template variable that occurs inside `logGroups(logGroupIdentifier:[ ... ])\`
+          // to later surround the log group names with backticks
+          // this assumes there's only a single template variable used inside the [ ]
+          const shouldSurroundInQuotes = target.expression
+            ?.replaceAll(/[\r\n\t\s]+/g, '')
+            .includes(`\`logGroups(logGroupIdentifier:[$${varName}])\``);
+          if (variable && 'current' in variable && 'text' in variable.current) {
+            if (Array.isArray(variable.current.text)) {
+              return variable.current.text.map((v) => (shouldSurroundInQuotes ? `'${v}'` : v)).join(',');
+            }
+            return shouldSurroundInQuotes ? `'${variable.current.text}'` : variable.current.text;
+          }
+        }
+
+        return value;
+      };
+      const formatter = target.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
+      const queryString = this.templateSrv.replace(target.expression || '', options.scopedVars, formatter);
+
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString: this.templateSrv.replace(target.expression || '', options.scopedVars),
+        queryString,
         logGroups,
         logGroupNames,
+        queryLanguage: target.queryLanguage,
       };
     });
 
@@ -406,7 +436,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;
 
-    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+    // log groups are not mandatory if language is SQL
+    const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
+    if (isInvalidCWLIQuery || hasMissingQueryString) {
       return false;
     }
 

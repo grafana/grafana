@@ -484,6 +484,10 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "filter-view": {
+        "no-more-results": "No more results – showing {{numberOfRules}} rules",
+        "no-rules-found": "No alert or recording rules matched your current set of filters."
+      },
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {
@@ -1266,6 +1270,8 @@
       "title-with-name": "Table - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Add",
+      "add-to-queryless-extensions": "Go queryless",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
@@ -1289,6 +1295,7 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
+      "missing-otel-labels": "This metric has too many job and instance label values to call the Prometheus label_values endpoint with the match[] parameter. These label values are used to join the metric with target_info, which contains the resource attributes. Please include more resource attributes filters.",
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
@@ -1757,6 +1764,12 @@
     "infinite-scroll": {
       "older-logs": "Older logs"
     },
+    "log-details": {
+      "fields": "Fields",
+      "links": "Links",
+      "log-line": "Log line",
+      "no-details": "No details available"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
@@ -2205,9 +2218,6 @@
     },
     "new-folder": {
       "title": "New folder"
-    },
-    "observability": {
-      "title": "Observability"
     },
     "oncall": {
       "title": "OnCall"
@@ -3234,9 +3244,7 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
-      "data-source": "Data source: ",
-      "date-created": "Date created: ",
-      "metric": "Metric:"
+      "date-created": "Date created: "
     },
     "home": {
       "learn-more": "Learn more",
@@ -3343,6 +3351,12 @@
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
+    },
+    "unknown-table": {
+      "loading": "Loading...",
+      "no-unknowns": "No renamed or missing variables found.",
+      "renamed-or-missing-variables": "Renamed or missing variables",
+      "variable": "Variable"
     }
   }
 }

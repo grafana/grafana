@@ -34,7 +34,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene, isV2Dashboard } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 
 interface Props {
@@ -60,6 +60,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
+  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
@@ -69,7 +70,8 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters;
+  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters && !isEditing;
+  const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -138,12 +140,17 @@ export function ToolbarActions({ dashboard }: Props) {
   toolbarActions.push({
     group: 'icon-actions',
     condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton
-        key="go-to-snapshot-origin"
-        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
-      />
-    ),
+    render: () => {
+      const saveModel = dashboard.getInitialSaveModel();
+
+      if (saveModel && isV2Dashboard(saveModel)) {
+        throw new Error('v2 schema not implemented');
+      }
+
+      return (
+        <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={saveModel?.snapshot?.originalUrl ?? ''} />
+      );
+    },
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -151,74 +158,135 @@ export function ToolbarActions({ dashboard }: Props) {
     addDynamicActions(toolbarActions, dynamicDashNavActions.right, 'icon-actions');
   }
 
-  toolbarActions.push({
-    group: 'add-panel',
-    condition: isEditingAndShowingDashboard,
-    render: () => (
-      <Dropdown
-        key="add-panel-dropdown"
-        onVisibleChange={(isOpen) => {
-          setIsAddPanelMenuOpen(isOpen);
-          DashboardInteractions.toolbarAddClick();
-        }}
-        overlay={() => (
-          <Menu>
-            <Menu.Item
-              key="add-visualization"
-              testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
-              label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
-              }}
-            />
-            <Menu.Item
-              key="add-panel-lib"
-              testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
-              label={t('dashboard.add-menu.import', 'Import from library')}
-              onClick={() => {
-                dashboard.onShowAddLibraryPanelDrawer();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
-              }}
-            />
-            <Menu.Item
-              key="add-row"
-              testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
-              label={t('dashboard.add-menu.row', 'Row')}
-              onClick={() => {
-                dashboard.onCreateNewRow();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-              }}
-            />
-            <Menu.Item
-              key="paste-panel"
-              disabled={!hasCopiedPanel}
-              testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
-              label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
-              onClick={() => {
-                dashboard.pastePanel();
-                DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
-              }}
-            />
-          </Menu>
-        )}
-        placement="bottom"
-        offset={[0, 6]}
-      >
+  if (dashboardNewLayouts) {
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
         <Button
           key="add-panel-button"
-          variant="primary"
+          variant="secondary"
           size="sm"
-          fill="outline"
-          data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewPanel();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_visualization')}
         >
-          <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
-          <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          Panel
         </Button>
-      </Dropdown>
-    ),
-  });
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-button"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          onClick={() => {
+            dashboard.onCreateNewRow();
+          }}
+          data-testid={selectors.components.PageToolbar.itemButton('add_row')}
+        >
+          Row
+        </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-lib"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+          onClick={() => {
+            dashboard.onShowAddLibraryPanelDrawer();
+            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+          }}
+        >
+          Import
+        </Button>
+      ),
+    });
+  } else {
+    toolbarActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Dropdown
+          key="add-panel-dropdown"
+          onVisibleChange={(isOpen) => {
+            setIsAddPanelMenuOpen(isOpen);
+            DashboardInteractions.toolbarAddClick();
+          }}
+          overlay={() => (
+            <Menu>
+              <Menu.Item
+                key="add-visualization"
+                testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
+                label={t('dashboard.add-menu.visualization', 'Visualization')}
+                onClick={() => {
+                  const vizPanel = dashboard.onCreateNewPanel();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+                  dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+                }}
+              />
+              <Menu.Item
+                key="add-panel-lib"
+                testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+                label={t('dashboard.add-menu.import', 'Import from library')}
+                onClick={() => {
+                  dashboard.onShowAddLibraryPanelDrawer();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+                }}
+              />
+              <Menu.Item
+                key="add-row"
+                testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
+                label={t('dashboard.add-menu.row', 'Row')}
+                onClick={() => {
+                  dashboard.onCreateNewRow();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+                }}
+              />
+              <Menu.Item
+                key="paste-panel"
+                disabled={!hasCopiedPanel}
+                testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
+                label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
+                onClick={() => {
+                  dashboard.pastePanel();
+                  DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
+                }}
+              />
+            </Menu>
+          )}
+          placement="bottom"
+          offset={[0, 6]}
+        >
+          <Button
+            key="add-panel-button"
+            variant="primary"
+            size="sm"
+            fill="outline"
+            data-testid={selectors.components.PageToolbar.itemButton('Add button')}
+          >
+            <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
+            <Icon name={isAddPanelMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          </Button>
+        </Dropdown>
+      ),
+    });
+  }
 
   toolbarActions.push({
     group: 'playlist-actions',
@@ -595,6 +663,20 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
+  const rigthActionsElements: React.ReactNode[] = renderActionElements(toolbarActions);
+  const leftActionsElements: React.ReactNode[] = renderActionElements(leftActions);
+  const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
+
+  return (
+    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
+      {showScopesSelector && <ScopesSelector />}
+      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
+      <ToolbarButtonRow alignment="right">{rigthActionsElements}</ToolbarButtonRow>
+    </Stack>
+  );
+}
+
+function renderActionElements(toolbarActions: ToolbarAction[]) {
   const actionElements: React.ReactNode[] = [];
   let lastGroup = '';
 
@@ -610,13 +692,7 @@ export function ToolbarActions({ dashboard }: Props) {
     actionElements.push(action.render());
     lastGroup = action.group;
   }
-
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={showScopesSelector ? 'space-between' : 'flex-end'}>
-      {showScopesSelector && <ScopesSelector />}
-      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return actionElements;
 }
 
 function addDynamicActions(

@@ -255,6 +255,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="queryless"
+          />,
         ].filter(Boolean)}
         forceShowLeftItems
       >
@@ -295,7 +301,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="basic"
+          />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

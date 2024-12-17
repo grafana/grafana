@@ -11,7 +11,6 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -46,16 +45,12 @@ type bleveBackend struct {
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) *bleveBackend {
 	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
-	}
-
-	if reg != nil {
-		b.log.Info("TODO, register metrics collectors!")
 	}
 
 	return b
@@ -90,9 +85,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
-	b.cacheMu.Lock()
-	defer b.cacheMu.Unlock()
-
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -104,11 +96,13 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapper)
-		if err == nil {
-			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
-		}
+
+		// TODO, check last RV so we can see if the numbers have changed
+
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
+		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err
@@ -140,8 +134,23 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
+	b.cacheMu.Lock()
 	b.cache[key] = idx
+	b.cacheMu.Unlock()
 	return idx, nil
+}
+
+// TotalDocs returns the total number of documents across all indices
+func (b *bleveBackend) TotalDocs() int64 {
+	var totalDocs int64
+	for _, v := range b.cache {
+		c, err := v.index.DocCount()
+		if err != nil {
+			continue
+		}
+		totalDocs += int64(c)
+	}
+	return totalDocs
 }
 
 type bleveIndex struct {
@@ -242,7 +251,7 @@ func (b *bleveIndex) Search(
 		searchrequest.Fields = f
 	}
 
-	res, err := index.Search(searchrequest)
+	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +292,27 @@ func (b *bleveIndex) Search(
 		response.Facet[k] = f
 	}
 	return response, nil
+}
+
+func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	if folder == "" {
+		count, err := b.index.DocCount()
+		return int64(count), err
+	}
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query: &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		},
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // make sure the request key matches the index

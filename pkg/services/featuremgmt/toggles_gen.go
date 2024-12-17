@@ -107,10 +107,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagMysqlParseTime
-	// Ensure the parseTime flag is set for MySQL driver
-	FlagMysqlParseTime = "mysqlParseTime"
-
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
@@ -387,9 +383,9 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesDashboardsAPI
-	// Use the kubernetes API in the backend for dashboards
-	FlagKubernetesDashboardsAPI = "kubernetesDashboardsAPI"
+	// FlagKubernetesCliDashboards
+	// Use the k8s client to retrieve dashboards internally
+	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
 
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
@@ -906,4 +902,20 @@ const (
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
+
+	// FlagFeedbackButton
+	// Enables a button to send feedback from the Grafana UI
+	FlagFeedbackButton = "feedbackButton"
+
+	// FlagElasticsearchCrossClusterSearch
+	// Enables cross cluster search in the Elasticsearch datasource
+	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
+
+	// FlagUnifiedHistory
+	// Displays the navigation history so the user can navigate back to previous pages
+	FlagUnifiedHistory = "unifiedHistory"
+
+	// FlagLokiLabelNamesQueryApi
+	// Defaults to using the Loki `/labels` API instead of `/series`
+	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 )

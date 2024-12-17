@@ -17,9 +17,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 // Used in logging to mark a stage
@@ -182,9 +182,9 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
-		sourceErr := exp.Error{}
+		sourceErr := backend.ErrorWithSource{}
 		if errors.As(err, &sourceErr) {
-			lp = append(lp, "statusSource", sourceErr.Source())
+			lp = append(lp, "statusSource", sourceErr.ErrorSource())
 		}
 		if clientRes != nil {
 			lp = append(lp, "statusCode", clientRes.StatusCode)

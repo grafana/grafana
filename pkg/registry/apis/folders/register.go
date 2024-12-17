@@ -3,9 +3,9 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +16,9 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -46,6 +49,7 @@ type FolderAPIBuilder struct {
 	folderSvc     folder.Service
 	storage       grafanarest.Storage
 	accessControl accesscontrol.AccessControl
+	searcher      resource.ResourceIndexClient
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -54,9 +58,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
+	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) {
-		return nil // skip registration unless opting into Kubernetes folders or unless we want to customise registration when testing
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagKubernetesFolders,
+		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+		featuremgmt.FlagProvisioning) {
+		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
 	builder := &FolderAPIBuilder{
@@ -65,6 +74,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:    request.GetNamespaceMapper(cfg),
 		folderSvc:     folderSvc,
 		accessControl: accessControl,
+		searcher:      unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -117,8 +127,8 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
 
 	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {
@@ -139,10 +149,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return v0alpha1.GetOpenAPIDefinitions
-}
-
-func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -234,13 +240,67 @@ var folderValidationRules = struct {
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
+	obj := a.GetObject()
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create:
+		return b.validateOnCreate(ctx, id, obj)
+	case admission.Delete:
+		return b.validateOnDelete(ctx, f)
+	case admission.Update:
+		return nil
+	case admission.Connect:
+		return nil
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Folder) error {
+	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	if err != nil {
+		return err
+	}
+
+	if resp != nil && resp.Error != nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	if resp.Stats == nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	for _, v := range resp.Stats {
+		if v.Count > 0 {
+			return folder.ErrFolderNotEmpty
+		}
+	}
+
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
 	for _, invalidName := range folderValidationRules.invalidNames {
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
 	}
 
-	obj := a.GetObject()
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	if f.Spec.Title == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
 
 	for i := 1; i <= folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)

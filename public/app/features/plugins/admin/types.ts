@@ -216,6 +216,7 @@ export interface Version {
   createdAt: string;
   isCompatible: boolean;
   grafanaDependency: string | null;
+  angularDetected?: boolean;
 }
 
 export interface PluginDetails {
@@ -319,6 +320,7 @@ export type PluginVersion = {
   links: Array<{ rel: string; href: string }>;
   isCompatible: boolean;
   grafanaDependency: string | null;
+  angularDetected?: boolean;
 };
 
 export type InstancePlugin = {

@@ -19,7 +19,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
