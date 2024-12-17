@@ -85,7 +85,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 }
 
 func (s *Service) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
-	if s.cfg.DisableBruteForceLoginProtection {
+	if s.cfg.DisableIPAddressLoginProtection {
 		return true, nil
 	}
 

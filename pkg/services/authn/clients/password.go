@@ -39,6 +39,13 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return nil, errPasswordAuthFailed.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	}
 
+	ok, err = c.loginAttempts.ValidateIPAddress(ctx, web.RemoteAddr(r.HTTPRequest))
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
+	}
+
 	if len(password) == 0 {
 		return nil, errPasswordAuthFailed.Errorf("no password provided")
 	}
