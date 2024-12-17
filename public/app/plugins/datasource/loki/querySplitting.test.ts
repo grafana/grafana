@@ -96,8 +96,8 @@ describe('runSplitQuery()', () => {
       .mocked(datasource.runQuery)
       .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
     await expect(runSplitQuery(datasource, request, { disableRetry: true })).toEmitValuesWith(() => {
-      // 3 days, 3 chunks, no retries, 3 requests.
-      expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      // No retries
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
