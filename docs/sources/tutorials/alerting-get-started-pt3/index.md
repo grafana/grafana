@@ -250,7 +250,7 @@ To follow the above example, we will create notification policies that route ale
 
     **Group by** consolidates alerts that share the same grouping label into a single notification. For example, all alerts with `region=us-west` will be combined into one notification, making it easier to manage and reducing alert fatigue.
 
-1. Set custom timin:
+1. Set custom timing:
    - Toggle **Override general timings**.
    - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes.
 
@@ -294,7 +294,7 @@ To follow the above example, we will create notification policies that route ale
 
     **Group by** consolidates alerts that share the same grouping label into a single notification. For example, all alerts with `region=us-west` will be combined into one notification, making it easier to manage and reducing alert fatigue.
 
-1. Set custom timin:
+1. Set custom timing:
    - Toggle **Override general timings**.
    - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes.
 
@@ -396,7 +396,7 @@ When the configured alert rule detects CPU usage higher than 75% across multiple
 
 As a result, our notification policy will route two notifications: one notification grouping the three alert instances from the `us-east` region and another grouping the two alert instances from the `us-west` region
 
-Gouped notifications example:
+Grouped notifications example:
 
 Webhook - US East
 ```json
