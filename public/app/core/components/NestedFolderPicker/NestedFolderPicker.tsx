@@ -10,12 +10,12 @@ import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafan
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { useRepositoryList } from 'app/features/provisioning/hooks';
+import { selectFolderRepository } from 'app/features/provisioning/api';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString, useSelector } from 'app/types';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -40,7 +40,7 @@ export interface NestedFolderPickerProps {
   permission?: PermissionLevelString.View | PermissionLevelString.Edit;
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: string) => void;
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
@@ -83,7 +83,6 @@ export function NestedFolderPicker({
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
-  const [repositoryConfigs] = useRepositoryList();
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     items: browseFlatTree,
@@ -157,7 +156,7 @@ export function NestedFolderPicker({
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        onChange(item.uid, item.title);
+        onChange(item.uid, item.title, item?.repository);
       }
       setOverlayOpen(false);
     },
@@ -256,12 +255,12 @@ export function NestedFolderPicker({
   if (value === '') {
     label = 'Dashboards';
   }
-  const repo = repositoryConfigs?.find((repo) => repo.spec?.folder === selectedFolder.data?.uid);
+  const repo = useSelector((state) => selectFolderRepository(state, selectedFolder.data?.uid));
   if (repo && label && !overlayOpen) {
     label = (
       <Stack alignItems={'center'}>
         <Text truncate>{label}</Text>
-        <FolderRepo name={repo?.spec?.github?.repository} />
+        <FolderRepo name={repo?.metadata?.name} />
       </Stack>
     );
   }

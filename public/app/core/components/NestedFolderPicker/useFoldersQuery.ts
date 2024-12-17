@@ -103,6 +103,7 @@ export function useFoldersQuery(
   });
 
   const [repositoryConfigs] = useRepositoryList();
+
   // Loads the next page of folders for the given parent UID by inspecting the
   // state to determine what the next page is
   const requestNextPage = useCallback(
@@ -156,7 +157,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
-              repository: repo?.spec?.github?.repository || undefined,
+              repository: repo?.metadata?.name,
             },
           };
 
