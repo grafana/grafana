@@ -353,12 +353,12 @@ func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req 
 	}, nil
 }
 
-func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
-	return nil
+func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	return nil, nil
 }
 
-func (r *localRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) error {
-	return nil
+func (r *localRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error) {
+	return nil, nil
 }
 
 func (r *localRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {

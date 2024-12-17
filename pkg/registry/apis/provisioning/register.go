@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -340,9 +341,35 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		return
 	}
 
-	if err := repo.AfterCreate(ctx, b.logger); err != nil {
+	status, err := repo.AfterCreate(ctx, b.logger)
+	if err != nil {
 		b.logger.Error("failed to run after create", "error", err)
 		return
+	}
+
+	if status != nil {
+		cfg.Status = *status
+		// TODO: Can we use typed client for this?
+		factory := resources.NewFactory(b.identities)
+		dynamicClient, _, err := factory.New(cfg.GetNamespace())
+		if err != nil {
+			b.logger.ErrorContext(ctx, "failed to create dynamic client", err)
+			return
+		}
+
+		client := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+		unstructuredResource := &unstructured.Unstructured{}
+		jj, _ := json.Marshal(cfg)
+		err = json.Unmarshal(jj, &unstructuredResource.Object)
+		if err != nil {
+			b.logger.ErrorContext(ctx, "error loading config json", err)
+			return
+		}
+
+		if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+			b.logger.ErrorContext(ctx, "update repository status", err)
+			return
+		}
 	}
 }
 
@@ -370,9 +397,31 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
 	}
 
-	err = repo.BeginUpdate(ctx, b.logger, oldRepo)
+	status, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
 		b.logger.Warn("error in begin update", "err", err)
+	}
+
+	if status != nil {
+		objCfg.Status = *status
+		// TODO: Can we use typed client for this?
+		factory := resources.NewFactory(b.identities)
+		dynamicClient, _, err := factory.New(objCfg.GetNamespace())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+
+		client := dynamicClient.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+		unstructuredResource := &unstructured.Unstructured{}
+		jj, _ := json.Marshal(oldCfg)
+		err = json.Unmarshal(jj, &unstructuredResource.Object)
+		if err != nil {
+			return nil, fmt.Errorf("error loading config json: %w", err)
+		}
+
+		if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
 	}
 
 	return func(ctx context.Context, success bool) {}, nil

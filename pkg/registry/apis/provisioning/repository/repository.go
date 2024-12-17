@@ -102,9 +102,10 @@ type Repository interface {
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
 
+	// TODO: rename this one
 	// Hooks called after the repository has been created, updated or deleted
-	AfterCreate(ctx context.Context, logger *slog.Logger) error
-	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) error
+	AfterCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
+	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (*provisioning.RepositoryStatus, error)
 	AfterDelete(ctx context.Context, logger *slog.Logger) error
 }
 

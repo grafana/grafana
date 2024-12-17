@@ -132,13 +132,6 @@ type RepositoryStatus struct {
 	Webhook *WebhookStatus `json:"webhook"`
 }
 
-type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
-	URL              string   `json:"url,omitempty"`
-	Secret           string   `json:"secret,omitempty"`
-	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
-}
-
 type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
@@ -174,6 +167,13 @@ type SyncStatus struct {
 
 	// The repository hash when the last sync ran
 	Hash string `json:"hash,omitempty"`
+}
+
+type WebhookStatus struct {
+	ID               int64    `json:"id,omitempty"`
+	URL              string   `json:"url,omitempty"`
+	Secret           string   `json:"secret,omitempty"`
+	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
