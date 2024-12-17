@@ -64,7 +64,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
 				folderUidRoute.Get("/counts", handler.countFolderContent)
-				folderUidRoute.Put("/move", handler.updateFolder)
+				folderUidRoute.Post("/move", handler.updateFolder)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
