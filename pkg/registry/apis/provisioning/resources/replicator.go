@@ -179,19 +179,19 @@ func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.Fil
 		// Just in case no uid is present on the metadata for some reason.
 		logger := logger.With("previous_uid", file.Meta.GetUID(), "previous_resource_version", existingMeta.GetResourceVersion())
 		if uid, ok, _ := unstructured.NestedString(file.Existing.Object, "spec", "uid"); ok {
-			logger.InfoContext(ctx, "updating file's UID with spec.uid", "uid", uid) // TODO: Debug instead
+			logger.DebugContext(ctx, "updating file's UID with spec.uid", "uid", uid)
 			file.Meta.SetUID(types.UID(uid))
 		}
 		if uid := existingMeta.GetUID(); uid != "" {
-			logger.InfoContext(ctx, "updating file's UID with existing meta uid", "uid", uid) // TODO: Debug instead
+			logger.DebugContext(ctx, "updating file's UID with existing meta uid", "uid", uid)
 			file.Meta.SetUID(uid)
 		}
 		if rev := existingMeta.GetResourceVersion(); rev != "" {
-			logger.InfoContext(ctx, "updating file's UID with existing resource version", "version", rev) // TODO: Debug instead
+			logger.DebugContext(ctx, "updating file's UID with existing resource version", "version", rev)
 			file.Meta.SetResourceVersion(rev)
 		}
 		if gen := existingMeta.GetGeneration(); gen != 0 {
-			logger.InfoContext(ctx, "updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1) // TODO: Debug instead
+			logger.DebugContext(ctx, "updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1)
 			file.Meta.SetGeneration(gen + 1)
 		}
 
