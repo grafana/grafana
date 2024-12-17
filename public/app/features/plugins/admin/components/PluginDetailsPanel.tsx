@@ -31,18 +31,17 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
               <div className={styles.pluginVersionDetails}>{plugin.installedVersion}</div>
             </Stack>
           )}
+          <Stack wrap direction="column" gap={0.5}>
+            <Text color="secondary">
+              <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
+            </Text>
+            <div className={styles.pluginVersionDetails}>
+              {plugin.latestVersion || getLatestCompatibleVersion(plugin.details?.versions)?.version}
+            </div>
+          </Stack>
           {pluginExtentionsInfo.map((infoItem, index) => {
             if (infoItem.label === 'Version') {
-              return (
-                <Stack key={index} wrap direction="column" gap={0.5}>
-                  <Text color="secondary">
-                    <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
-                  </Text>
-                  <div className={styles.pluginVersionDetails}>
-                    {plugin.latestVersion || getLatestCompatibleVersion(plugin.details?.versions)?.version}
-                  </div>
-                </Stack>
-              );
+              return null;
             }
             return (
               <Stack key={index} wrap direction="column" gap={0.5}>
