@@ -1,12 +1,14 @@
 import { groupBy } from 'lodash';
 import { useMemo, useRef } from 'react';
 
-import { Stack, Icon, Text } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaRuleGroupListItem } from './PaginatedDataSourceLoader';
+import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
+import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusRuleNamespaces';
@@ -61,5 +63,40 @@ export function PaginatedGrafanaLoader() {
         />
       </Stack>
     </DataSourceSection>
+  );
+}
+
+interface GrafanaRuleGroupListItemProps {
+  group: GrafanaPromRuleGroupDTO;
+  namespaceName: string;
+}
+export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
+  return (
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
+                <Menu.Item label="Re-order rules" icon="flip" />
+                <Menu.Divider />
+                <Menu.Item label="Export" icon="download-alt" />
+                <Menu.Item label="Delete" icon="trash-alt" destructive />
+              </Menu>
+            }
+          >
+            <IconButton name="ellipsis-h" aria-label="rule group actions" />
+          </Dropdown>
+        </>
+      }
+    >
+      {group.rules.map((rule) => {
+        return <GrafanaRuleLoader key={rule.uid} rule={rule} groupName={group.name} namespaceName={namespaceName} />;
+      })}
+    </ListGroup>
   );
 }

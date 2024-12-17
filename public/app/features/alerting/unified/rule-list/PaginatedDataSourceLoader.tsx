@@ -1,16 +1,13 @@
 import { groupBy } from 'lodash';
-import { useRef, useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { Stack, Icon, Dropdown, Menu, IconButton, Text } from '@grafana/ui';
-import { ExternalRulesSourceIdentifier, RuleGroup, DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
+import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
-import { GrafanaRulesSource } from '../utils/datasource';
 import { hashRule } from '../utils/rule-id';
 
 import { AlertRuleLoader } from './AlertRuleLoader';
-import { AlertRuleListItem, RecordingRuleListItem } from './components/AlertRuleListItem';
-import { DataSourceSectionProps, DataSourceSection } from './components/DataSourceSection';
+import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -74,76 +71,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     </DataSourceSection>
   );
 }
-interface GrafanaRuleGroupListItemProps {
-  group: GrafanaPromRuleGroupDTO;
-  namespaceName: string;
-}
-export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
-  return (
-    <ListGroup
-      key={group.name}
-      name={group.name}
-      isOpen={false}
-      actions={
-        <>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
-                <Menu.Item label="Re-order rules" icon="flip" />
-                <Menu.Divider />
-                <Menu.Item label="Export" icon="download-alt" />
-                <Menu.Item label="Delete" icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <IconButton name="ellipsis-h" aria-label="rule group actions" />
-          </Dropdown>
-        </>
-      }
-    >
-      {group.rules.map((rule) => {
-        switch (rule.type) {
-          case PromRuleType.Alerting:
-            return (
-              <AlertRuleListItem
-                name={rule.name}
-                rulesSource={GrafanaRulesSource}
-                application="grafana"
-                group={group.name}
-                namespace={namespaceName}
-                href={''}
-                summary={rule.annotations?.summary}
-                state={rule.state}
-                health={rule.health}
-                error={rule.lastError}
-                labels={rule.labels}
-                isProvisioned={undefined}
-                instancesCount={rule.alerts?.length}
-              />
-            );
-          case PromRuleType.Recording:
-            return (
-              <RecordingRuleListItem
-                name={rule.name}
-                rulesSource={GrafanaRulesSource}
-                application="grafana"
-                group={group.name}
-                namespace={namespaceName}
-                href={''}
-                health={rule.health}
-                error={rule.lastError}
-                labels={rule.labels}
-                isProvisioned={undefined}
-              />
-            );
-          default:
-            return <div>Unknown rule type</div>;
-        }
-      })}
-    </ListGroup>
-  );
-}
+
 interface RuleGroupListItemProps {
   group: RuleGroup;
   rulesSourceIdentifier: ExternalRulesSourceIdentifier;

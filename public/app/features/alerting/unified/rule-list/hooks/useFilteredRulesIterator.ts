@@ -1,32 +1,56 @@
-import { from } from 'ix/asynciterable/index';
+import { AsyncIterableX, from } from 'ix/asynciterable/index';
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  DataSourceRuleGroupIdentifier,
+  ExternalRulesSourceIdentifier,
+  GrafanaRuleGroupIdentifier,
+} from 'app/types/unified-alerting';
+import {
+  GrafanaPromRuleDTO,
+  GrafanaPromRuleGroupDTO,
+  PromRuleDTO,
+  PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
-import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import { GrafanaRulesSource, getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
-import { usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
+import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
-export interface RuleWithOrigin {
+// export interface RuleWithOrigin {
+//   rule: PromRuleDTO;
+//   groupIdentifier: DataSourceRuleGroupIdentifier;
+// }
+
+export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
+
+export interface GrafanaRuleWithOrigin {
+  rule: GrafanaPromRuleDTO;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
+  origin: 'grafana';
+}
+
+export interface PromRuleWithOrigin {
   rule: PromRuleDTO;
   groupIdentifier: DataSourceRuleGroupIdentifier;
+  origin: 'datasource';
 }
 
 export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
-  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
+  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): AsyncIterableX<RuleWithOrigin> => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
       ? filterState.dataSourceNames.map<ExternalRulesSourceIdentifier>((ds) => ({
           name: ds,
@@ -39,12 +63,21 @@ export function useFilteredRulesIteratorProvider() {
       return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
     });
 
-    return merge(source, ...iterables).pipe(
+    const dataSourcesIterator = merge(source, ...iterables).pipe(
       filter(([_, group]) => groupFilter(group, filterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
+
+    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      filter((group) => groupFilter(group, filterState)),
+      flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
+      // filter(([_, rule]) => ruleFilter(rule, filterState)), // TODO Needs to be adjusted for GMA rules
+      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+    );
+
+    return merge(dataSourcesIterator, grafanaIterator);
   };
 
   return { getFilteredRulesIterator };
@@ -54,7 +87,7 @@ function mapRuleToRuleWithOrigin(
   rulesSource: ExternalRulesSourceIdentifier,
   group: PromRuleGroupDTO,
   rule: PromRuleDTO
-): RuleWithOrigin {
+): PromRuleWithOrigin {
   return {
     rule,
     groupIdentifier: {
@@ -63,6 +96,23 @@ function mapRuleToRuleWithOrigin(
       groupName: group.name,
       groupOrigin: 'datasource',
     },
+    origin: 'datasource',
+  };
+}
+
+function mapGrafanaRuleToRuleWithOrigin(
+  group: GrafanaPromRuleGroupDTO,
+  rule: GrafanaPromRuleDTO
+): GrafanaRuleWithOrigin {
+  return {
+    rule,
+    groupIdentifier: {
+      rulesSource: GrafanaRulesSource,
+      namespace: { uid: group.folderUid },
+      groupName: group.name,
+      groupOrigin: 'grafana',
+    },
+    origin: 'grafana',
   };
 }
 
