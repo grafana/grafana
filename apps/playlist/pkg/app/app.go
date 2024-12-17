@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/operator"
@@ -16,21 +15,18 @@ import (
 )
 
 type PlaylistConfig struct {
-	EnableWatchers bool
+	EnableReconcilers bool
 }
 
 func New(cfg app.Config) (app.App, error) {
 	var (
-		playlistWatcher operator.ResourceWatcher
-		err             error
+		playlistReconciler operator.Reconciler
+		err                error
 	)
 
 	playlistConfig, ok := cfg.SpecificConfig.(*PlaylistConfig)
-	if ok && playlistConfig.EnableWatchers {
-		playlistWatcher, err = watchers.NewPlaylistWatcher()
-		if err != nil {
-			return nil, fmt.Errorf("unable to create PlaylistWatcher: %w", err)
-		}
+	if ok && playlistConfig.EnableReconcilers {
+		playlistReconciler = watchers.NewPlaylistReconciler()
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -43,8 +39,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind:    playlistv0alpha1.PlaylistKind(),
-				Watcher: playlistWatcher,
+				Kind:       playlistv0alpha1.PlaylistKind(),
+				Reconciler: playlistReconciler,
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
 						// modify req.Object if needed

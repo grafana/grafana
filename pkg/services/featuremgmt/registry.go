@@ -1591,7 +1591,7 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "playlistsWatcher",
+			Name:            "playlistsReconciler",
 			Description:     "Enables experimental watcher for playlists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
