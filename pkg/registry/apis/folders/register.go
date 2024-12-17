@@ -129,7 +129,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("move")] = &subCountREST{searcher: b.searcher}
 
 	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {

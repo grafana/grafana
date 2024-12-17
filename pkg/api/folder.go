@@ -843,20 +843,6 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, folderDTO)
 }
 
-// func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
-// 	client, ok := fk8s.getClient(c)
-// 	if !ok {
-// 		return
-// 	}
-// 	client.Update(c.Req.Context(), nil, v1.UpdateOptions{}, "move")
-
-// 	c.JSON(http.StatusOK, "")
-// }
-
-// func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
-// 	fk8s.moveFolder(c)
-// }
-
 //-----------------------------------------------------------------------------------------
 // Utility functions
 //-----------------------------------------------------------------------------------------
