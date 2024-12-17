@@ -39,7 +39,7 @@ func newMTDataKeyCache(ttl time.Duration) *dataKeyCache {
 	}
 }
 
-func (c *dataKeyCache) getById(id, namespace string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getById(namespace, id string) (*dataKeyCacheEntry, bool) {
 	var (
 		exists bool
 		entry  *dataKeyCacheEntry
@@ -65,7 +65,7 @@ func (c *dataKeyCache) getById(id, namespace string) (*dataKeyCacheEntry, bool) 
 	return entry, true
 }
 
-func (c *dataKeyCache) getByLabel(label, namespace string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getByLabel(namespace, label string) (*dataKeyCacheEntry, bool) {
 	var (
 		exists bool
 		entry  *dataKeyCacheEntry

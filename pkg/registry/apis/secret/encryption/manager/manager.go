@@ -207,12 +207,12 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, label string, sc
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, label, namespace string) (string, []byte, error) {
 	// 0. Get data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getByLabel(label, namespace); exists && entry.active {
+	if entry, exists := s.dataKeyCache.getByLabel(namespace, label); exists && entry.active {
 		return entry.id, entry.dataKey, nil
 	}
 
 	// 1. Get data key from database.
-	dataKey, err := s.store.GetCurrentDataKey(ctx, label, namespace)
+	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
 		if errors.Is(err, encryption.ErrDataKeyNotFound) {
 			return "", nil, nil
@@ -351,12 +351,12 @@ func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace str
 // Otherwise, it fetches it from database and returns it decrypted.
 func (s *EncryptionManager) dataKeyById(ctx context.Context, id, namespace string) ([]byte, error) {
 	// 0. Get decrypted data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getById(id, namespace); exists {
+	if entry, exists := s.dataKeyCache.getById(namespace, id); exists {
 		return entry.dataKey, nil
 	}
 
 	// 1. Get encrypted data key from database.
-	dataKey, err := s.store.GetDataKey(ctx, id, namespace)
+	dataKey, err := s.store.GetDataKey(ctx, namespace, id)
 	if err != nil {
 		return nil, err
 	}

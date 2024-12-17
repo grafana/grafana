@@ -50,13 +50,13 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test GetDataKey
-	retrievedKey, err := store.GetDataKey(ctx, "test-uid", "test-namespace")
+	retrievedKey, err := store.GetDataKey(ctx, "test-namespace", "test-uid")
 	require.NoError(t, err)
 	require.Equal(t, dataKey.UID, retrievedKey.UID)
 	require.Equal(t, dataKey.Namespace, retrievedKey.Namespace)
 
 	// Test GetCurrentDataKey
-	currentKey, err := store.GetCurrentDataKey(ctx, "test-label", "test-namespace")
+	currentKey, err := store.GetCurrentDataKey(ctx, "test-namespace", "test-label")
 	require.NoError(t, err)
 	require.Equal(t, dataKey.UID, currentKey.UID)
 	require.Equal(t, dataKey.Namespace, currentKey.Namespace)
@@ -72,21 +72,21 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that the data key is disabled
-	disabledKey, err := store.GetDataKey(ctx, "test-uid", "test-namespace")
+	disabledKey, err := store.GetDataKey(ctx, "test-namespace", "test-uid")
 	require.NoError(t, err)
 	require.False(t, disabledKey.Active)
 
 	// Test DeleteDataKey
-	err = store.DeleteDataKey(ctx, "test-uid", "test-namespace")
+	err = store.DeleteDataKey(ctx, "test-namespace", "test-uid")
 	require.NoError(t, err)
 
 	// Verify that the data key is deleted
-	_, err = store.GetDataKey(ctx, "test-uid", "test-namespace")
+	_, err = store.GetDataKey(ctx, "test-namespace", "test-uid")
 	require.Error(t, err)
 	require.Equal(t, ErrDataKeyNotFound, err)
 
 	// Verify that the unchanging data key still exists and is active
-	staticKey, err := store.GetDataKey(ctx, "static-uid", "static-namespace")
+	staticKey, err := store.GetDataKey(ctx, "static-namespace", "static-uid")
 	require.NoError(t, err)
 	require.Equal(t, unchangingDataKey.UID, staticKey.UID)
 	require.Equal(t, unchangingDataKey.Namespace, staticKey.Namespace)

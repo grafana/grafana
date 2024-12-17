@@ -20,13 +20,13 @@ var (
 // DataKeyStorage is the interface for wiring and dependency injection.
 type DataKeyStorage interface {
 	CreateDataKey(ctx context.Context, dataKey *EncryptionDataKey) error
-	GetDataKey(ctx context.Context, uid, namespace string) (*EncryptionDataKey, error)
-	GetCurrentDataKey(ctx context.Context, label, namespace string) (*EncryptionDataKey, error)
+	GetDataKey(ctx context.Context, namespace, uid string) (*EncryptionDataKey, error)
+	GetCurrentDataKey(ctx context.Context, namespace, label string) (*EncryptionDataKey, error)
 	GetAllDataKeys(ctx context.Context, namespace string) ([]*EncryptionDataKey, error)
 	DisableDataKeys(ctx context.Context, namespace string) error
-	DeleteDataKey(ctx context.Context, uid, namespace string) error
+	DeleteDataKey(ctx context.Context, namespace, uid string) error
 
-	ReEncryptDataKeys(ctx context.Context, providers map[encryption.ProviderID]encryption.Provider, currProvider encryption.ProviderID, namespace string) error
+	ReEncryptDataKeys(ctx context.Context, namespace string, providers map[encryption.ProviderID]encryption.Provider, currProvider encryption.ProviderID) error
 }
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
@@ -53,7 +53,7 @@ func ProvideDataKeyStorageStorage(db db.DB, cfg *setting.Cfg, features featuremg
 	return store, nil
 }
 
-func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, uid, namespace string) (*EncryptionDataKey, error) {
+func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*EncryptionDataKey, error) {
 	dataKey := &EncryptionDataKey{
 		UID:       uid,
 		Namespace: namespace,
@@ -77,7 +77,7 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, uid, namespace st
 	return dataKey, nil
 }
 
-func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, label, namespace string) (*EncryptionDataKey, error) {
+func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*EncryptionDataKey, error) {
 	dataKey := &EncryptionDataKey{
 		Label:     label,
 		Namespace: namespace,
@@ -164,8 +164,9 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, uid, namespace
 
 func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 	ctx context.Context,
+	namespace string,
 	providers map[encryption.ProviderID]encryption.Provider,
-	currProvider encryption.ProviderID, namespace string,
+	currProvider encryption.ProviderID,
 ) error {
 	keys := make([]*EncryptionDataKey, 0)
 	cond := &EncryptionDataKey{
