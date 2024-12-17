@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -702,7 +701,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
-		APIServerStorageType:  options.StorageTypeLegacy,
 	}
 
 	// Setup Grafana and its Database

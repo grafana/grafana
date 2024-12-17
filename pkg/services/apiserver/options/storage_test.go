@@ -3,9 +3,10 @@ package options
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStorageOptions_CheckFeatureToggle(t *testing.T) {
@@ -18,7 +19,7 @@ func TestStorageOptions_CheckFeatureToggle(t *testing.T) {
 	}{
 		{
 			name:                 "with legacy storage",
-			StorageType:          StorageTypeLegacy,
+			StorageType:          StorageTypeLegacy, // nolint:staticcheck
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{"playlists.playlist.grafana.app": {DualWriterMode: 2}},
 			features:             featuremgmt.WithFeatures(),
 		},
