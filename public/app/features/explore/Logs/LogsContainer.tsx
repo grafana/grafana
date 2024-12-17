@@ -260,12 +260,12 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   loadLogsVolumeData = () => {
-    this.props.loadSupplementaryQueryData(this.props.exploreId, SupplementaryQueryType.LogsVolume)
-  }
+    this.props.loadSupplementaryQueryData(this.props.exploreId, SupplementaryQueryType.LogsVolume);
+  };
 
   onSetLogsVolumeEnabled = (enabled: boolean) => {
-    setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume)
-  }
+    setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume);
+  };
 
   render() {
     const {
