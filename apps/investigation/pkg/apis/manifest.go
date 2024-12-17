@@ -27,21 +27,7 @@ var appManifestData = app.ManifestData{
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v1alpha1",
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-						Mutation: &app.MutationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-					},
+					Name:   "v1alpha1",
 					Schema: &versionSchemaInvestigationv1alpha1,
 				},
 			},

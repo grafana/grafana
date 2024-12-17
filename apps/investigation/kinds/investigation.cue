@@ -9,8 +9,6 @@ investigation: {
 
 	apiResource: {
 		groupOverride: "investigation.grafana.app"
-		mutation: operations: ["create", "update"]
-		validation: operations: ["create", "update"]
 	}
 
 	codegen: {

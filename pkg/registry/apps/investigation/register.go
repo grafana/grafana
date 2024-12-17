@@ -26,9 +26,6 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: investigationv1alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     investigationapp.GetKinds(),
-		CustomConfig: any(&investigationapp.InvestigationConfig{
-			EnableWatchers: features.IsEnabledGlobally(featuremgmt.FlagInvestigationsWatcher),
-		}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, investigationapp.New)
 	return provider
