@@ -92,7 +92,9 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
   const { saveProvisioned } = drawer.useState();
   const prURL = usePullRequestParam();
   const defaultValues = getDefaultValues(meta);
-  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned ? undefined : defaultValues.path);
+  const [action, request] = useCreateOrUpdateRepositoryFile(
+    saveProvisioned || changeInfo.isNew ? undefined : defaultValues.path
+  );
   const {
     register,
     handleSubmit,
