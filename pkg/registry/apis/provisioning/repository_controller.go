@@ -212,31 +212,6 @@ func (rc *RepositoryController) sync(key string) error {
 		return nil
 	}
 
-	// HACK: Use health status to check if it's update or create
-	// probably this will prevent some updates to be processed.
-	// QUESTION: should we add these errors to the health status?
-	var status *provisioning.RepositoryStatus
-
-	isUpdate := cachedRepo.Status.Health.Checked > 0
-	if isUpdate {
-		status, err = repo.OnUpdate(ctx, logger)
-		if err != nil {
-			return fmt.Errorf("on create repository: %w", err)
-		}
-	} else {
-		status, err = repo.OnCreate(ctx, logger)
-		if err != nil {
-			return fmt.Errorf("on create repository: %w", err)
-		}
-	}
-
-	if status == nil {
-		status = cachedRepo.Status.DeepCopy()
-	}
-
-	status.Health.Checked = time.Now().UnixMilli()
-	status.Health.Generation = cachedRepo.Generation
-
 	res, err := rc.tester.TestRepository(ctx, repo)
 	if err != nil {
 		res = &provisioning.TestResults{
@@ -248,9 +223,51 @@ func (rc *RepositoryController) sync(key string) error {
 		}
 	}
 
+	var status *provisioning.RepositoryStatus
+	if res.Success {
+		// HACK: use status check to determine if we are updating or creating
+		isUpdate := cachedRepo.Status.Health.Checked > 0
+		if isUpdate {
+			status, err = repo.OnUpdate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
+			}
+
+		} else {
+			status, err = repo.OnCreate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
+			}
+		}
+
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cachedRepo.Namespace,
+				Labels: map[string]string{
+					"repository": cachedRepo.Name,
+				},
+			},
+			Spec: provisioning.JobSpec{
+				Action: provisioning.JobActionSync,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("trigger sync job: %w", err)
+		}
+		logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
+	} else {
+		logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
+	}
+
+	if status == nil {
+		status = cachedRepo.Status.DeepCopy()
+	}
+
 	status.Health = provisioning.HealthStatus{
-		Healthy: res.Success,
-		Message: res.Errors,
+		Checked:    status.Health.Checked,
+		Generation: status.Health.Generation,
+		Healthy:    res.Success,
+		Message:    res.Errors,
 	}
 
 	cfg := cachedRepo.DeepCopy()
@@ -259,20 +276,6 @@ func (rc *RepositoryController) sync(key string) error {
 		UpdateStatus(ctx, cfg, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("update status: %w", err)
 	}
-
-	job, err := rc.jobs.Add(ctx, &provisioning.Job{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: cfg.Namespace,
-			Labels: map[string]string{
-				"repository": cfg.Name,
-			},
-		},
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionSync,
-		},
-	})
-
-	logger.Info("sync job created", "job", job.Name)
 
 	return nil
 }
