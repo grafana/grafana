@@ -173,15 +173,18 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
+	ctx := context.Background()
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
 	if apierrors.IsNotFound(err) {
+		rc.logger.DebugContext(ctx, "repository not found", "key", key)
 		return nil
 	}
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
+	rc.logger.DebugContext(ctx, "cached repository", "key", key, "repo", cachedRepo)
+
 	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
 	if err != nil {
 		return err
