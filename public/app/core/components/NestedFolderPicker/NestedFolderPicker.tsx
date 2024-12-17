@@ -17,6 +17,7 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
 
+import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
@@ -260,10 +261,7 @@ export function NestedFolderPicker({
     label = (
       <Stack alignItems={'center'}>
         <Text truncate>{label}</Text>
-        <Text color={'secondary'}>
-          {' '}
-          | <Icon name={'github'} /> {repo?.spec?.github?.repository}
-        </Text>
+        <FolderRepo name={repo?.spec?.github?.repository} />
       </Stack>
     );
   }

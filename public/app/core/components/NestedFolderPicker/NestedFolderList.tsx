@@ -6,7 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
@@ -14,6 +14,8 @@ import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/bro
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';
+
+import { FolderRepo } from './FolderRepo';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
@@ -213,12 +215,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
-          {item.repository && (
-            <Text color={'secondary'}>
-              {' '}
-              | <Icon name={'github'} /> {item.repository}
-            </Text>
-          )}
+          <FolderRepo name={item.repository} />
         </label>
       </div>
     </div>
