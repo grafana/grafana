@@ -96,21 +96,29 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
 1. Create a user account for Grafana on your system:
+
    ```shell
    sudo useradd -r -s /bin/false grafana
    ```
+
 1. Move the unpacked binary to `/usr/local/grafana`:
+
    ```shell
    sudo mv <your_grafana_download> /usr/local/grafana
    ```
+
 1. Change the owner of `/usr/local/grafana` to Grafana users:
+
    ```shell
    sudo chown -R grafana:users /usr/local/grafana
    ```
+
 1. Create a Grafana server `systemd` unit file:
+
    ```shell
    sudo touch /etc/systemd/system/grafana-server.service
    ```
+
 1. Add the following to the unit file in a text editor of your choice:
 
    ```ini
@@ -130,14 +138,19 @@ Complete the following steps to install Grafana using the standalone binaries:
    ```
 
 1. Use the binary to manually start the Grafana server:
-   ```bash
+
+   ```shell
    /usr/local/grafana/bin/grafana-server --homepath /usr/local/grafana
    ```
+
 1. Press `CTRL+C` to stop the Grafana server.
-1. Change the owner of `/usr/local/grafana` to Grafana users again to apply the ownership to the newly created `/data` directory:
+
+1. Change the owner of `/usr/local/grafana` to Grafana users again to apply the ownership to the newly created `/usr/local/grafana/data` directory:
+
    ```shell
    sudo chown -R grafana:users /usr/local/grafana
    ```
+
 1. [Configure the Grafana server to start at boot time using systemd]({{< relref "../../start-restart-grafana#configure-the-grafana-server-to-start-at-boot-using-systemd" >}}).
 
 ## Uninstall on SUSE or openSUSE
