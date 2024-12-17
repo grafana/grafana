@@ -10,15 +10,17 @@ import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 type Props = {
-  info: PageInfoItem[];
+  pluginExtentionsInfo: PageInfoItem[];
   plugin: CatalogPlugin;
+  width?: string;
 };
 
-export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
-  const { info, plugin } = props;
+export function PluginDetailsPanel(props: Props): React.ReactElement | null {
+  const { pluginExtentionsInfo, plugin, width = '250px' } = props;
+
   const styles = useStyles2(getStyles);
   return (
-    <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
+    <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
       <Box padding={2} borderColor="medium" borderStyle="solid">
         <Stack direction="column" gap={2}>
           {plugin.isInstalled && plugin.installedVersion && (
@@ -29,18 +31,17 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
               <div className={styles.pluginVersionDetails}>{plugin.installedVersion}</div>
             </Stack>
           )}
-          {info.map((infoItem, index) => {
+          <Stack wrap direction="column" gap={0.5}>
+            <Text color="secondary">
+              <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
+            </Text>
+            <div className={styles.pluginVersionDetails}>
+              {plugin.latestVersion || getLatestCompatibleVersion(plugin.details?.versions)?.version}
+            </div>
+          </Stack>
+          {pluginExtentionsInfo.map((infoItem, index) => {
             if (infoItem.label === 'Version') {
-              return (
-                <Stack key={index} wrap direction="column" gap={0.5}>
-                  <Text color="secondary">
-                    <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
-                  </Text>
-                  <div className={styles.pluginVersionDetails}>
-                    {getLatestCompatibleVersion(plugin.details?.versions)?.version}
-                  </div>
-                </Stack>
-              );
+              return null;
             }
             return (
               <Stack key={index} wrap direction="column" gap={0.5}>
