@@ -1,6 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/LokiAndPromQueryModellerBase.ts
 import { Registry } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { prometheusRegularEscape } from '../../datasource';
 import { PromVisualQueryOperationCategory } from '../types';
 
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
@@ -89,7 +91,10 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
         expr += ', ';
       }
 
-      expr += `${filter.label}${filter.op}"${filter.value}"`;
+      const labelValue = config.featureToggles.prometheusSpecialCharsInLabelValues
+        ? prometheusRegularEscape(filter.value)
+        : filter.value;
+      expr += `${filter.label}${filter.op}"${labelValue}"`;
     }
 
     return expr + `}`;
