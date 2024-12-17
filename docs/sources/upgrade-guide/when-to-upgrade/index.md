@@ -19,7 +19,7 @@ We no longer wait for the yearly major release to give you access to the next bi
 Having a dependable release process provides users like you with the best Grafana experience possible, and it provides the flexibility to upgrade in a manner that works best for you and your organization.
 
 {{< admonition type="note" >}}
-Grafana Cloud follows a different release cadence than Grafana OSS and Enterprise. To learn more about Cloud release channels, refer to [Rolling release channels for Grafana Cloud](https://grafana.com/docs/rolling-release/).
+Grafana Cloud follows a different release cadence than Grafana OSS and Enterprise. In Cloud, Grafana uses Rolling release channels. To learn more about release channels, refer to [Rolling release channels for Grafana Cloud](https://grafana.com/docs/rolling-release/).
 {{< /admonition >}}
 
 ## What to expect from each release type
@@ -169,9 +169,9 @@ Bugs are unexpected side effects of code changes in the release, which cause pro
 
 Reduce the risk of bugs by staying current and rolling out upgrades across dev or test environments before production. A Grafana Enterprise license entitles you to an additional dev and test instance for this purpose, available through your account team, and in Grafana Cloud you can create dev and test stacks that upgrade before production by using [rolling release channels](https://grafana.com/docs/rolling-release/).
 
+- Back up your database on a regular basis, and especially before you upgrade.
 - Roll back and report issues if you experience problems in dev or test.
-- In Cloud, run a dev or test stack on the `fast` channel, and run your production stack on `steady` or `slow`.
-- To change your release channel, open a support ticket.
+- In Cloud, run a dev or test stack on the `fast` channel, and run your production stack on `steady` or `slow`. To change your release channel, open a support ticket.
 
 ### Known breaking changes
 
