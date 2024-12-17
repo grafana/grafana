@@ -345,7 +345,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         ],
         query: '1m,5m,10m',
-        refresh: 'onDashboardLoad',
+        refresh: 'onTimeRangeChanged',
         skipUrlSync: false,
       },
     },

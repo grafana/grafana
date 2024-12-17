@@ -104,7 +104,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       key: uniqueId('annotations-'),
       query: {
         ...annotation.spec,
-        builtIn: annotation.spec.builtIn ? 1 : 0,
+        builtIn: annotation.spec.builtIn !== undefined ? (annotation.spec.builtIn ? 1 : 0) : undefined,
       },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
@@ -513,6 +513,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,
