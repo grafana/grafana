@@ -2834,7 +2834,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -2865,7 +2865,7 @@ __metadata:
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -2905,7 +2905,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     style-loader: "npm:4.0.0"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -2944,7 +2944,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
     webpack: "npm:5.95.0"
@@ -2986,7 +2986,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     stream-browserify: "npm:3.0.0"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
     webpack: "npm:5.95.0"
@@ -3018,7 +3018,7 @@ __metadata:
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -3049,7 +3049,7 @@ __metadata:
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -3081,7 +3081,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -3129,7 +3129,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -3188,7 +3188,7 @@ __metadata:
     stream-browserify: "npm:3.0.0"
     string_decoder: "npm:1.3.0"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
     webpack: "npm:5.95.0"
@@ -3224,7 +3224,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
   peerDependencies:
@@ -3304,7 +3304,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:1.6.0"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
     xss: "npm:^1.0.14"
@@ -3329,7 +3329,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.1.1"
     rollup-plugin-node-externals: "npm:^7.1.3"
     semver: "npm:7.6.3"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   languageName: unknown
   linkType: soft
@@ -3364,7 +3364,7 @@ __metadata:
     "@typescript-eslint/types": "npm:^8.9.0"
     "@typescript-eslint/utils": "npm:^8.9.0"
     eslint: "npm:9.17.0"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
   languageName: unknown
   linkType: soft
 
@@ -3501,7 +3501,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   peerDependencies:
     react: ^18.0.0
@@ -3575,7 +3575,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   peerDependencies:
     react: ^18.0.0
@@ -3598,7 +3598,7 @@ __metadata:
     glob: "npm:11.0.0"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     webpack: "npm:5.95.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
@@ -3717,7 +3717,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     testing-library-selector: "npm:0.3.1"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
     webpack: "npm:5.95.0"
@@ -3764,7 +3764,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^7.1.3"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.1"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   peerDependencies:
     react: ^18.0.0
@@ -3862,7 +3862,7 @@ __metadata:
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
     rollup-plugin-node-externals: "npm:^7.1.3"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   languageName: unknown
   linkType: soft
@@ -3904,7 +3904,7 @@ __metadata:
     sql-formatter-plus: "npm:^1.3.6"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
   peerDependencies:
@@ -4055,7 +4055,7 @@ __metadata:
     storybook-dark-mode: "npm:4.0.1"
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:1.6.0"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
     uuid: "npm:9.0.1"
@@ -17870,7 +17870,7 @@ __metadata:
     tracelib: "npm:1.0.1"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.7.0"
+    tslib: "npm:2.8.1"
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.5.4"
@@ -29411,7 +29411,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.4.1, tslib@npm:^2.6.2, tslib@npm:^2.7.0, tslib@npm:^2.8.0":
+"tslib@npm:2, tslib@npm:2.8.1, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.4.1, tslib@npm:^2.6.2, tslib@npm:^2.7.0, tslib@npm:^2.8.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
@@ -29429,13 +29429,6 @@ __metadata:
   version: 2.6.3
   resolution: "tslib@npm:2.6.3"
   checksum: 10/52109bb681f8133a2e58142f11a50e05476de4f075ca906d13b596ae5f7f12d30c482feb0bff167ae01cfc84c5803e575a307d47938999246f5a49d174fc558c
-  languageName: node
-  linkType: hard
-
-"tslib@npm:2.7.0":
-  version: 2.7.0
-  resolution: "tslib@npm:2.7.0"
-  checksum: 10/9a5b47ddac65874fa011c20ff76db69f97cf90c78cff5934799ab8894a5342db2d17b4e7613a087046bc1d133d21547ddff87ac558abeec31ffa929c88b7fce6
   languageName: node
   linkType: hard
 
