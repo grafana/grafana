@@ -169,7 +169,7 @@ In the above diagram, alert instances and notification policies are matched by l
 
 ## Create notification policies
 
-Create a notification policy if you want to handle metrics returned by alert rules separately by routing each alert instance to a specific contact point. In Grafana, click on the icon at the top left corner of the screen to access the navigation menu.
+Create a notification policy if you want to handle metrics returned by alert rules separately by routing each alert instance to a specific contact point.
 
 <!-- INTERACTIVE ignore START -->
 
