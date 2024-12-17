@@ -151,7 +151,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		generatePrefix := "generated-"
 
-		testDataKeeperAwsXyz := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xys.yaml")
+		testDataKeeperAwsXyz := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
 		testDataKeeperAwsXyz.SetName("")
 		testDataKeeperAwsXyz.SetGenerateName("generated-")
 

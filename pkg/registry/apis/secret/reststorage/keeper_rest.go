@@ -100,8 +100,10 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 func (s *KeeperRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
+
 	// TODO: How to define this function? perhaps would be useful to keep all validation here.
 	createValidation rest.ValidateObjectFunc,
+
 	// TODO: How can we use these options? Looks useful. `dryRun` for dev as well.
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
@@ -152,7 +154,6 @@ func (s *KeeperRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-
 	current, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("get securevalue: %w", err)
@@ -186,7 +187,6 @@ func (s *KeeperRest) Update(
 	}
 
 	return updatedKeeper, false, nil
-
 }
 
 // Delete calls the inner `store` (persistence) in order to delete the `Keeper`.
@@ -218,26 +218,6 @@ func checkKeeperType(s *secretv0alpha1.Keeper) error {
 		return fmt.Errorf("expecting one of the keeper types to be configured")
 	} else if nonNilCount > 1 {
 		return fmt.Errorf("only one type of keeper may be configured")
-	}
-
-	return nil
-}
-
-func checkCredentialValue(cv secretv0alpha1.CredentialValue) error {
-	secureValueName := cv.SecureValueName
-	valueFromEnv := cv.ValueFromEnv
-	valueFromConfig := cv.ValueFromConfig
-
-	notEmptyCount := 0
-	for _, valueType := range []interface{}{secureValueName, valueFromEnv, valueFromConfig} {
-		if strValue, ok := valueType.(string); ok && strValue != "" {
-			notEmptyCount++
-		}
-	}
-	if notEmptyCount == 0 {
-		return fmt.Errorf("expecting one of the value types to be configured")
-	} else if notEmptyCount > 1 {
-		return fmt.Errorf("only one value type may be configured")
 	}
 
 	return nil
