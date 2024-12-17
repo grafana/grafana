@@ -118,7 +118,7 @@ func (c *dataKeyCache) addByLabel(namespace string, entry *dataKeyCacheEntry) {
 
 	cache, ok := c.namespacedCaches[namespace]
 	if ok {
-		cache.byId[entry.id] = entry
+		cache.byLabel[entry.label] = entry
 	} else {
 		c.namespacedCaches[namespace] = namespacedCache{
 			byId: make(map[string]*dataKeyCacheEntry),
