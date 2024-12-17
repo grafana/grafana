@@ -170,9 +170,9 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 				Description: "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"uid": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UID is the unique identifier for a folder (and the k8s name)",
+							Description: "Name is the k8s name (eg, the unique identifier) for a folder",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -186,6 +186,13 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The folder description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"parent": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The parent folder UID",
@@ -193,8 +200,15 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
+					"detached": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This folder does not resolve",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"uid", "title"},
+				Required: []string{"name", "title"},
 			},
 		},
 	}
