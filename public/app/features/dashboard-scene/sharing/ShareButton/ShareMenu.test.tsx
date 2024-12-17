@@ -31,15 +31,17 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    grantUserPermissions([AccessControlAction.SnapshotsCreate]);
+    grantUserPermissions([AccessControlAction.SnapshotsCreate, AccessControlAction.OrgUsersAdd]);
 
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
+    config.externalUserMngLinkUrl = 'http://localhost:3000';
     setup({ meta: { canEdit: true } });
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.inviteUser)).toBeInTheDocument();
   });
 
   it('should not share externally when public dashboard is disabled', async () => {
@@ -47,6 +49,24 @@ describe('ShareMenu', () => {
     setup();
 
     expect(screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
+  });
+
+  it('should not render invite user when user does not have access', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+
+    expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
+  });
+
+  it('should not render invite user when externalUserMngLinkUrl is not provided', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+    grantUserPermissions([AccessControlAction.OrgUsersAdd]);
+    config.externalUserMngLinkUrl = '';
+
+    expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
   });
 
   describe('ShareSnapshot', () => {
