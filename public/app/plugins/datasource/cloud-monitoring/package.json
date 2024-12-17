@@ -44,7 +44,7 @@
     "react-test-renderer": "18.2.0",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "webpack": "5.97.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
