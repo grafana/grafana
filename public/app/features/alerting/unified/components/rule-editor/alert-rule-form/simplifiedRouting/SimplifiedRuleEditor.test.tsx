@@ -1,7 +1,8 @@
+import { UserEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, userEvent, waitFor } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -41,14 +42,20 @@ const dataSources = {
   }),
 };
 
-const selectFolderAndGroup = async () => {
-  const user = userEvent.setup();
+const selectFolderAndGroup = async (user: UserEvent) => {
   await user.click(await screen.findByRole('button', { name: /select folder/i }));
   await user.click(await screen.findByLabelText(FOLDER_TITLE_HAPPY_PATH));
   const groupInput = await ui.inputs.group.find();
   await user.click(await byRole('combobox').find(groupInput));
   await clickSelectOption(groupInput, grafanaRulerGroup.name);
 };
+
+const selectContactPoint = async (user: UserEvent, contactPointName: string) => {
+  const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
+  await user.click(byRole('combobox').get(contactPointInput));
+  await clickSelectOption(contactPointInput, contactPointName);
+};
+
 setupMswServer();
 describe('Can create a new grafana managed alert using simplified routing', () => {
   testWithFeatureToggles(['alertingSimplifiedRouting']);
@@ -81,7 +88,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
-    await selectFolderAndGroup();
+    await selectFolderAndGroup(user);
 
     //select contact point routing
     await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
@@ -110,13 +117,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
-    await selectFolderAndGroup();
+    await selectFolderAndGroup(user);
 
     //select contact point routing
     await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
-    const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
-    await user.click(byRole('combobox').get(contactPointInput));
-    await clickSelectOption(contactPointInput, contactPointName);
+
+    await selectContactPoint(user, contactPointName);
 
     // save and check what was sent to backend
     await user.click(ui.buttons.saveAndExit.get());
@@ -134,9 +140,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
-      const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
-      await user.click(byRole('combobox').get(contactPointInput));
-      await clickSelectOption(contactPointInput, 'lotsa-emails');
+      await selectContactPoint(user, 'Email');
 
       expect(await screen.findByText('Email')).toBeInTheDocument();
     });
@@ -152,11 +156,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
 
-      await selectFolderAndGroup();
+      await selectFolderAndGroup(user);
 
-      const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
-      await user.click(byRole('combobox').get(contactPointInput));
-      await clickSelectOption(contactPointInput, contactPointName);
+      await selectContactPoint(user, contactPointName);
 
       // save and check what was sent to backend
       await user.click(ui.buttons.saveAndExit.get());
@@ -173,7 +175,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await user.click(ui.inputs.switchModeBasic(5).get()); // switch to notifications step advanced mode
       await user.type(await ui.inputs.name.find(), 'my great new rule');
 
-      await selectFolderAndGroup();
+      await selectFolderAndGroup(user);
 
       // save and check what was sent to backend
       await user.click(ui.buttons.saveAndExit.get());
@@ -188,7 +190,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
 
-      await selectFolderAndGroup();
+      await selectFolderAndGroup(user);
 
       // // from the previous test, we are in advanced mode for both query and notifications steps
       await user.click(ui.inputs.switchModeAdvanced(2).get()); // switch query step to basic mode
