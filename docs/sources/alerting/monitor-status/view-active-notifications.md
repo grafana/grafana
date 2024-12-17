@@ -6,8 +6,8 @@ aliases:
   - ../../alerting/unified-alerting/alert-groups/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alert-groups/
   - ../../alerting/manage-notifications/view-notification-errors/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-notification-errors/
   - ../../alerting/manage-notifications/view-alert-groups/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-groups/
-canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-alert-groups/
-description: The Groups view lists grouped alerts that are actively triggering notifications.
+canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/view-active-notifications/
+description: The Active notifications view lists grouped alerts that are actively triggering notifications.
 keywords:
   - grafana
   - alerting
@@ -20,7 +20,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: View the status of notifications
+title: View active notifications
 weight: 800
 refs:
   alertmanager:
@@ -35,26 +35,33 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
-# View the status of notifications
+# View active notifications
 
-The Groups view page lists grouped alerts that are actively triggering notifications.
+The Active notifications page lists groups of alerts (or alert instances) that are actively triggering notifications.
 
-By default, Grafana Alerting groups similar firing alerts (or alert instances) to prevent notification overload. For details on how notification grouping works, refer to [Group alert notifications](ref:grouping).
+By default, Grafana Alerting [groups similar alerts into a single notification](ref:grouping).
 
-In the Groups view, you can see alert groups, check the state of their notifications, and also filter for alert instances that match specific criteria. This view is useful for debugging and verifying your grouping settings of notification policies.
+In this view, you can:
+
+- Find alert groups and the state of their notifications.
+- Filter for alert instances that match specific criteria.
+
+The Active notifications view is useful for debugging and verifying how notifications are grouped based on your notification policy settings.
 
 ## View alert groups and notification state
 
 To view alert groups, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting**.
-1. Click **Groups** to view the list of groups firing notifications.
+1. Click **Active notifications** to view the list of groups firing notifications.
 
    By default, alert groups are grouped by the notification policies grouping.
 
    Each group displays its label set, contact point, and the number of alert instances (or alerts).
 
    Then, click on a group to access its alert instances. You can find alert instances by their label set and view their notification state.
+
+{{< figure src="/media/docs/alerting/active-notifications-view2.png" max-width="750px" alt="Active notifications view in Grafana Alerting" >}}
 
 ### Notification states
 

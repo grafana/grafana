@@ -52,6 +52,6 @@ To declare an incident from a firing alert, complete the following steps.
 
 View and manage the incident in the **Grafana Incident** application.
 
-{{< figure src="/media/docs/alerting/incident-response-management-timeline-ui.png" max-width="750px" alt="IRM - Incident management timeline" >}}
+{{< figure src="/media/docs/alerting/incident-response-management-timeline-ui.png" max-width="750px" alt="Incident timeline view in Grafana Incident" >}}
 
 For more information, refer to the [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).
