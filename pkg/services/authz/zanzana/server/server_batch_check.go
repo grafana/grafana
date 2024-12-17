@@ -51,7 +51,7 @@ func (s *Server) batchCheckItem(
 ) (*authzv1.CheckResponse, error) {
 	var (
 		relation      = common.VerbMapping[item.GetVerb()]
-		resource      = common.NewResourceFromBatchItem(item)
+		resource      = common.NewResourceInfoFromBatchItem(item)
 		groupResource = resource.GroupResource()
 	)
 

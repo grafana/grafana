@@ -21,7 +21,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
-	resource := common.NewResourceFromList(r)
+	resource := common.NewResourceInfoFromList(r)
 
 	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
@@ -51,7 +51,11 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 	return s.openfga.ListObjects(ctx, req)
 }
 
+<<<<<<< HEAD
 func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.ListResponse, error) {
+=======
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
+>>>>>>> 649428c0e97 (Rename)
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.ListResponse{}, nil
 	}
@@ -73,9 +77,14 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
+<<<<<<< HEAD
 func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.ListResponse, error) {
+=======
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
+>>>>>>> 649428c0e97 (Rename)
 	var (
 		folderRelation = common.FolderResourceRelation(relation)
+		resourceCtx    = resource.Context()
 	)
 
 	// 1. List all folders subject has access to resource type in
@@ -87,7 +96,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Type:                 common.TypeFolder,
 			Relation:             folderRelation,
 			User:                 subject,
-			Context:              resource.Context(),
+			Context:              resourceCtx,
 		})
 
 		if err != nil {
@@ -106,7 +115,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Type:                 common.TypeResource,
 			Relation:             relation,
 			User:                 subject,
-			Context:              resource.Context(),
+			Context:              resourceCtx,
 		})
 		if err != nil {
 			return nil, err

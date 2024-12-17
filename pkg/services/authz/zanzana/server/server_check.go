@@ -22,7 +22,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	resource := common.NewResourceFromCheck(r)
+	resource := common.NewResourceInfoFromCheck(r)
 	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 // checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
 // within it.
-func (s *Server) checkGroupResource(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
+func (s *Server) checkGroupResource(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
 	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
@@ -69,7 +69,7 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation strin
 }
 
 // checkTyped checks on our typed resources e.g. folder.
-func (s *Server) checkTyped(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
+func (s *Server) checkTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
@@ -98,7 +98,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 // checkGeneric check our generic "resource" type. It checks:
 // 1. If subject has access as a sub resource for a folder.
 // 2. If subject has direct access to resource.
-func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.CheckResponse, error) {
+func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
 	var (
 		folderIdent    = resource.FolderIdent()
 		resourceCtx    = resource.Context()
