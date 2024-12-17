@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.EncryptionManager, sqlStore db.DB, namespace string) bool {
+func (s simpleSecret) ReEncrypt(ctx context.Context, namespace string, secretsSrv *manager.EncryptionManager, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret []byte

@@ -11,10 +11,10 @@ import (
 
 func (s simpleSecret) Rollback(
 	ctx context.Context,
+	namespace string,
 	secretsSrv *manager.EncryptionManager,
 	encryptionSrv legacyEncryption.Internal,
 	sqlStore db.DB,
-	namespace string,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {

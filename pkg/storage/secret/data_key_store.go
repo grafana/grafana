@@ -145,7 +145,7 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 	})
 }
 
-func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, uid, namespace string) error {
+func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid string) error {
 	if len(uid) == 0 {
 		return fmt.Errorf("data key id is missing")
 	}
