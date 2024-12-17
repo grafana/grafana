@@ -66,6 +66,22 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Splits datasource queries', async () => {
+    const querySplittingRange = {
+      from: dateTime('2023-02-08T05:00:00.000Z'),
+      to: dateTime('2023-02-10T06:00:00.000Z'),
+      raw: {
+        from: dateTime('2023-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-10T06:00:00.000Z'),
+      },
+    };
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], { range: querySplittingRange });
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 5 shards, 3 groups + empty shard group, 4 requests * 3 days, 3 chunks, 3 requests = 12 requests
+      expect(datasource.runQuery).toHaveBeenCalledTimes(12);
+    });
+  });
+
+  test('Users query splitting for querying over a day', async () => {
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 5 shards, 3 groups + empty shard group, 4 requests
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
