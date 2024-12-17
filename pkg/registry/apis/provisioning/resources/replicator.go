@@ -181,13 +181,10 @@ func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.Fil
 		if uid, ok, _ := unstructured.NestedString(file.Existing.Object, "spec", "uid"); ok {
 			logger.InfoContext(ctx, "updating file's UID with spec.uid", "uid", uid) // TODO: Debug instead
 			file.Meta.SetUID(types.UID(uid))
-			unstructured.SetNestedField(file.Obj.Object, uid, "spec", "uid")
 		}
 		if uid := existingMeta.GetUID(); uid != "" {
 			logger.InfoContext(ctx, "updating file's UID with existing meta uid", "uid", uid) // TODO: Debug instead
 			file.Meta.SetUID(uid)
-			unstructured.SetNestedField(file.Obj.Object, string(uid), "spec", "uid")
-			file.Meta.SetName(string(uid)) // FIXME: does this make sense?? what happens?
 		}
 		if rev := existingMeta.GetResourceVersion(); rev != "" {
 			logger.InfoContext(ctx, "updating file's UID with existing resource version", "version", rev) // TODO: Debug instead
