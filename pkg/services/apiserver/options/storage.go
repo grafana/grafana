@@ -17,9 +17,11 @@ type StorageType string
 const (
 	StorageTypeFile        StorageType = "file"
 	StorageTypeEtcd        StorageType = "etcd"
-	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+
+	// Deprecated: legacy storage is just a shim
+	StorageTypeLegacy StorageType = "legacy"
 )
 
 type StorageOptions struct {
@@ -45,7 +47,7 @@ type StorageOptions struct {
 
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
-		StorageType: StorageTypeLegacy,
+		StorageType: StorageTypeUnified,
 		Address:     "localhost:10000",
 	}
 }

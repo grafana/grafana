@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -63,7 +63,7 @@ func ReadClassicResource(ctx context.Context, logger *slog.Logger, info *reposit
 		value["tags"] != nil {
 		gvk := &schema.GroupVersionKind{
 			Group:   dashboard.GROUP,
-			Version: "v0alpha1",
+			Version: dashboard.VERSION, // v1
 			Kind:    "Dashboard"}
 		return &unstructured.Unstructured{
 			Object: map[string]interface{}{

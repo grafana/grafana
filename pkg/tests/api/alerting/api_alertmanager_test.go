@@ -702,7 +702,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
-		APIServerStorageType:  options.StorageTypeLegacy,
+		APIServerStorageType:  options.StorageTypeUnified,
 	}
 
 	// Setup Grafana and its Database
