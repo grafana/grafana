@@ -419,7 +419,7 @@ func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, 
 		// events is not returned by GitHub.
 		Events:      cfg.Events,
 		Active:      createdHook.GetActive(),
-		URL:         createdHook.GetURL(),
+		URL:         createdHook.GetConfig().GetURL(),
 		ContentType: createdHook.GetConfig().GetContentType(),
 		// Secret is not returned by GitHub.
 		Secret: cfg.Secret,

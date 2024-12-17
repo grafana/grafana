@@ -61,6 +61,9 @@ func (r *Replicator) Sync(ctx context.Context) error {
 
 	var latest string
 	if !isVersioned || lastCommit == "" {
+		if err := r.ensureRepositoryFolderExists(ctx); err != nil {
+			return fmt.Errorf("ensure repository folder exists: %w", err)
+		}
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return fmt.Errorf("replicate tree: %w", err)
 		}
@@ -500,6 +503,38 @@ func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, erro
 		tree:       folders,
 		repoFolder: repoFolder,
 	}, nil
+}
+
+func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
+	_, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+	if err == nil {
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	cfg := r.repository.Config()
+	title := cfg.Spec.Title
+	if title == "" {
+		title = cfg.Spec.Folder
+	}
+
+	if _, err := r.folders.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      cfg.Spec.Folder,
+				"namespace": cfg.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"title":       title,
+				"description": "Repository-managed folder",
+			},
+		},
+	}, metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("failed to create folder: %w", err)
+	}
+
+	return nil
 }
 
 func (*Replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
