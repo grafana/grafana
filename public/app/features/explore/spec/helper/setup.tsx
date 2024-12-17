@@ -1,6 +1,7 @@
 import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
 import { Provider } from 'react-redux';
@@ -30,6 +31,7 @@ import {
   setPluginLinksHook,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -55,6 +57,8 @@ type SetupOptions = {
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
   failAddToLibrary?: boolean;
+  // Use AppChrome wrapper around ExplorePage - needed to test query library/history
+  withAppChrome?: boolean;
 };
 
 type TearDownOptions = {
@@ -177,11 +181,23 @@ export function setupExplore(options?: SetupOptions): {
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
           <QueriesDrawerContextProvider>
-            <Route
-              path="/explore"
-              exact
-              render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-            />
+            {options?.withAppChrome ? (
+              <KBarProvider>
+                <AppChrome>
+                  <Route
+                    path="/explore"
+                    exact
+                    render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+                  />
+                </AppChrome>
+              </KBarProvider>
+            ) : (
+              <Route
+                path="/explore"
+                exact
+                render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+              />
+            )}
           </QueriesDrawerContextProvider>
         </Router>
       </GrafanaContext.Provider>

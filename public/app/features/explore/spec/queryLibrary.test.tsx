@@ -34,6 +34,7 @@ jest.mock('@grafana/runtime', () => ({
     reportInteractionMock(...args);
   },
   getAppEvents: () => testEventBus,
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 jest.mock('app/core/core', () => ({
@@ -41,6 +42,9 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     isSignedIn: true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+    user: {
+      isSignedIn: true,
+    },
   },
 }));
 
@@ -77,6 +81,7 @@ function setupQueryLibrary() {
       queryHistory: [{ datasourceUid: 'loki', queries: [mockQuery] }],
       totalCount: 1,
     },
+    withAppChrome: true,
   });
 }
 

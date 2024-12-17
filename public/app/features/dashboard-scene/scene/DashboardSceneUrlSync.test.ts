@@ -52,8 +52,6 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.kioskMode).toBe(undefined);
       scene.urlSync?.updateFromUrl({ kiosk: '' });
       expect(scene.state.kioskMode).toBe(KioskMode.Full);
-      scene.urlSync?.updateFromUrl({ kiosk: 'tv' });
-      expect(scene.state.kioskMode).toBe(KioskMode.TV);
       scene.urlSync?.updateFromUrl({ kiosk: 'true' });
       expect(scene.state.kioskMode).toBe(KioskMode.Full);
     });
@@ -62,8 +60,6 @@ describe('DashboardSceneUrlSync', () => {
       const scene = buildTestScene();
 
       expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
-      scene.setState({ kioskMode: KioskMode.TV });
-      expect(scene.urlSync?.getUrlState().kiosk).toBe(KioskMode.TV);
       scene.setState({ kioskMode: KioskMode.Full });
       expect(scene.urlSync?.getUrlState().kiosk).toBe('');
     });

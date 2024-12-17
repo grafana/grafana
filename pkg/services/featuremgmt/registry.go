@@ -1441,14 +1441,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "exploreLogsShardSplitting",
 			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
