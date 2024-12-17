@@ -245,6 +245,7 @@
       "edit": "Ēđįŧ",
       "export": "Ēχpőřŧ",
       "export-all": "Ēχpőřŧ äľľ",
+      "loading": "Ŀőäđįŉģ...",
       "view": "Vįęŵ"
     },
     "contact-points": {
@@ -328,6 +329,14 @@
     "mute-timings": {
       "save": "Ŝävę mūŧę ŧįmįŉģ",
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
+    },
+    "notification-preview": {
+      "alertmanager": "Åľęřŧmäŉäģęř:",
+      "error": "Cőūľđ ŉőŧ ľőäđ řőūŧįŉģ přęvįęŵ ƒőř {{alertmanager}}",
+      "initialized": "ßäşęđ őŉ ŧĥę ľäþęľş äđđęđ, äľęřŧ įŉşŧäŉčęş äřę řőūŧęđ ŧő ŧĥę ƒőľľőŵįŉģ ŉőŧįƒįčäŧįőŉ pőľįčįęş. Ēχpäŉđ ęäčĥ ŉőŧįƒįčäŧįőŉ pőľįčy þęľőŵ ŧő vįęŵ mőřę đęŧäįľş.",
+      "preview-routing": "Přęvįęŵ řőūŧįŉģ",
+      "title": "Åľęřŧ įŉşŧäŉčę řőūŧįŉģ přęvįęŵ",
+      "uninitialized": "Ŵĥęŉ yőū ĥävę yőūř ƒőľđęř şęľęčŧęđ äŉđ yőūř qūęřy äŉđ ľäþęľş äřę čőŉƒįģūřęđ, čľįčĸ \"Přęvįęŵ řőūŧįŉģ\" ŧő şęę ŧĥę řęşūľŧş ĥęřę."
     },
     "policies": {
       "default-policy": {
@@ -470,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "filter-view": {
+        "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
+        "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
+      },
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
     },
     "rule-state": {
@@ -1252,6 +1265,8 @@
       "title-with-name": "Ŧäþľę - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Åđđ",
+      "add-to-queryless-extensions": "Ğő qūęřyľęşş",
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-link": "Cőpy ŮŖĿ",
       "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
@@ -1275,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "Cľęäř ƒįľŧęř",
       "labelSelect": "Ŝęľęčŧ",
+      "missing-otel-labels": "Ŧĥįş męŧřįč ĥäş ŧőő mäŉy ĵőþ äŉđ įŉşŧäŉčę ľäþęľ väľūęş ŧő čäľľ ŧĥę Přőmęŧĥęūş ľäþęľ_väľūęş ęŉđpőįŉŧ ŵįŧĥ ŧĥę mäŧčĥ[] päřämęŧęř. Ŧĥęşę ľäþęľ väľūęş äřę ūşęđ ŧő ĵőįŉ ŧĥę męŧřįč ŵįŧĥ ŧäřģęŧ_įŉƒő, ŵĥįčĥ čőŉŧäįŉş ŧĥę řęşőūřčę äŧŧřįþūŧęş. Pľęäşę įŉčľūđę mőřę řęşőūřčę äŧŧřįþūŧęş ƒįľŧęřş.",
       "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ; {{filter}}",
       "sortBy": "Ŝőřŧ þy"
     },
@@ -1746,6 +1762,12 @@
     "infinite-scroll": {
       "older-logs": "Øľđęř ľőģş"
     },
+    "log-details": {
+      "fields": "Fįęľđş",
+      "links": "Ŀįŉĸş",
+      "log-line": "Ŀőģ ľįŉę",
+      "no-details": "Ńő đęŧäįľş äväįľäþľę"
+    },
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę"
@@ -2195,9 +2217,6 @@
     "new-folder": {
       "title": "Ńęŵ ƒőľđęř"
     },
-    "observability": {
-      "title": "Øþşęřväþįľįŧy"
-    },
     "oncall": {
       "title": "ØŉCäľľ"
     },
@@ -2326,12 +2345,6 @@
       "list-label": "Ńävįģäŧįőŉ",
       "open": "Øpęŉ męŉū",
       "undock": "Ůŉđőčĸ męŉū"
-    },
-    "toolbar": {
-      "close-menu": "Cľőşę męŉū",
-      "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
-      "open-menu": "Øpęŉ męŉū",
-      "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
   "news": {
@@ -3043,7 +3056,6 @@
     "mode": "Mőđę",
     "mode-kiosk": "Ķįőşĸ",
     "mode-normal": "Ńőřmäľ",
-    "mode-tv": "ŦV",
     "title": "Ŝĥäřę pľäyľįşŧ"
   },
   "shared": {
@@ -3241,9 +3253,7 @@
       "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"
     },
     "card": {
-      "data-source": "Đäŧä şőūřčę: ",
-      "date-created": "Đäŧę čřęäŧęđ: ",
-      "metric": "Męŧřįč:"
+      "date-created": "Đäŧę čřęäŧęđ: "
     },
     "home": {
       "learn-more": "Ŀęäřŉ mőřę",
@@ -3350,6 +3360,12 @@
       "info-box-content": "Väřįäþľęş ęŉäþľę mőřę įŉŧęřäčŧįvę äŉđ đyŉämįč đäşĥþőäřđş. Ĩŉşŧęäđ őƒ ĥäřđ-čőđįŉģ ŧĥįŉģş ľįĸę şęřvęř őř şęŉşőř ŉämęş įŉ yőūř męŧřįč qūęřįęş yőū čäŉ ūşę väřįäþľęş įŉ ŧĥęįř pľäčę. Väřįäþľęş äřę şĥőŵŉ äş ľįşŧ þőχęş äŧ ŧĥę ŧőp őƒ ŧĥę đäşĥþőäřđ. Ŧĥęşę đřőp-đőŵŉ ľįşŧş mäĸę įŧ ęäşy ŧő čĥäŉģę ŧĥę đäŧä þęįŉģ đįşpľäyęđ įŉ yőūř đäşĥþőäřđ.",
       "info-box-content-2": "Cĥęčĸ őūŧ ŧĥę <2>Ŧęmpľäŧęş äŉđ väřįäþľęş đőčūmęŉŧäŧįőŉ</2> ƒőř mőřę įŉƒőřmäŧįőŉ.",
       "title": "Ŧĥęřę äřę ŉő väřįäþľęş äđđęđ yęŧ"
+    },
+    "unknown-table": {
+      "loading": "Ŀőäđįŉģ...",
+      "no-unknowns": "Ńő řęŉämęđ őř mįşşįŉģ väřįäþľęş ƒőūŉđ.",
+      "renamed-or-missing-variables": "Ŗęŉämęđ őř mįşşįŉģ väřįäþľęş",
+      "variable": "Väřįäþľę"
     }
   }
 }

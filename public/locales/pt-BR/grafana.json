@@ -245,6 +245,7 @@
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
       "view": ""
     },
     "contact-points": {
@@ -328,6 +329,14 @@
     "mute-timings": {
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
@@ -470,6 +479,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1252,6 +1265,8 @@
       "title-with-name": "Tabela — {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorar barra de ferramentas",
       "copy-link": "Copiar URL",
       "copy-link-abs-time": "",
@@ -1275,6 +1290,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1743,6 +1759,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2192,9 +2214,6 @@
     "new-folder": {
       "title": "Nova pasta"
     },
-    "observability": {
-      "title": "Observação"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2323,12 +2342,6 @@
       "list-label": "Navegação",
       "open": "",
       "undock": "Desacoplar menu"
-    },
-    "toolbar": {
-      "close-menu": "Fechar menu",
-      "enable-kiosk": "Ativar modo de quiosque",
-      "open-menu": "Abrir menu",
-      "toggle-search-bar": "Alternar barra de busca superior"
     }
   },
   "news": {
@@ -2937,8 +2950,7 @@
       "loading": "",
       "save-button": "Salvar no arquivo",
       "share-externally-label": "Exportar para compartilhamento externo",
-      "view-button": "Visualizar JSON",
-      "view-button-schemav2": ""
+      "view-button": "Visualizar JSON"
     },
     "library": {
       "info": "Criar painel de biblioteca."
@@ -3023,7 +3035,6 @@
     "mode": "Modo",
     "mode-kiosk": "Quiosque",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Compartilhar lista de reprodução"
   },
   "shared": {
@@ -3221,9 +3232,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",
@@ -3330,6 +3339,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

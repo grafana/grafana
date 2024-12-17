@@ -5,7 +5,7 @@ import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -91,7 +91,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
 
   const shouldRotateSplitIcon = useMemo(
@@ -207,24 +206,20 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   const navBarActions = [<ShortLinkButtonMenu key="share" />];
 
-  if (isSingleTopNav) {
-    if (queryLibraryAvailable) {
-      navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
-    } else {
-      navBarActions.unshift(
-        <ToolbarButton
-          variant={drawerOpened ? 'active' : 'canvas'}
-          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-          onClick={() => setDrawerOpened(!drawerOpened)}
-          data-testid={Components.QueryTab.queryHistoryButton}
-          icon="history"
-        >
-          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-        </ToolbarButton>
-      );
-    }
+  if (queryLibraryAvailable) {
+    navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
   } else {
-    navBarActions.push(<div style={{ flex: 1 }} key="spacer0" />);
+    navBarActions.unshift(
+      <ToolbarButton
+        variant={drawerOpened ? 'active' : 'canvas'}
+        aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+        onClick={() => setDrawerOpened(!drawerOpened)}
+        data-testid={Components.QueryTab.queryHistoryButton}
+        icon="history"
+      >
+        <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+      </ToolbarButton>
+    );
   }
 
   return (
@@ -255,11 +250,16 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="queryless"
+          />,
         ].filter(Boolean)}
         forceShowLeftItems
       >
         {[
-          !isSingleTopNav && <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"
@@ -295,7 +295,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="basic"
+          />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

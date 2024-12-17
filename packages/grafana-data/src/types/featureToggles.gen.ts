@@ -43,7 +43,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -113,7 +112,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
-  kubernetesDashboardsAPI?: boolean;
+  kubernetesCliDashboards?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -157,7 +156,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAlerts?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   scopeApi?: boolean;
@@ -210,7 +208,6 @@ export interface FeatureToggles {
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   alertingPrometheusRulesPrimary?: boolean;
-  singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
@@ -243,4 +240,8 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  feedbackButton?: boolean;
+  elasticsearchCrossClusterSearch?: boolean;
+  unifiedHistory?: boolean;
+  lokiLabelNamesQueryApi?: boolean;
 }

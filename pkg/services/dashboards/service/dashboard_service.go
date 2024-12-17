@@ -10,15 +10,24 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -31,6 +40,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	k8sUser "k8s.io/apiserver/pkg/authentication/user"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 var (
@@ -61,7 +72,21 @@ type DashboardServiceImpl struct {
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
 	zclient              zanzana.Client
+	k8sclient            dashboardK8sHandler
 	metrics              *dashboardsMetrics
+}
+
+// interface to allow for testing
+type dashboardK8sHandler interface {
+	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
+}
+
+var _ dashboardK8sHandler = (*dashk8sHandler)(nil)
+
+type dashk8sHandler struct {
+	namespacer         request.NamespaceMapper
+	gvr                schema.GroupVersionResource
+	restConfigProvider apiserver.RestConfigProvider
 }
 
 // This is the uber service that implements a three smaller services
@@ -70,7 +95,19 @@ func ProvideDashboardServiceImpl(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
+	restConfigProvider apiserver.RestConfigProvider,
 ) (*DashboardServiceImpl, error) {
+	gvr := schema.GroupVersionResource{
+		Group:    v0alpha1.GROUP,
+		Version:  v0alpha1.VERSION,
+		Resource: v0alpha1.DashboardResourceInfo.GetName(),
+	}
+	k8sHandler := &dashk8sHandler{
+		gvr:                gvr,
+		namespacer:         request.GetNamespaceMapper(cfg),
+		restConfigProvider: restConfigProvider,
+	}
+
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
@@ -82,6 +119,7 @@ func ProvideDashboardServiceImpl(
 		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		k8sclient:            k8sHandler,
 		metrics:              newDashboardsMetrics(r),
 	}
 
@@ -588,14 +626,92 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 	}
 }
 
+func (dk8s *dashk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+	dyn, err := dynamic.NewForConfig(dk8s.restConfigProvider.GetRestConfig(ctx))
+	if err != nil {
+		return nil, false
+	}
+	return dyn.Resource(dk8s.gvr).Namespace(dk8s.namespacer(orgID)), true
+}
+
+func (dr *DashboardServiceImpl) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
+	requester, requesterErr := identity.GetRequester(ctx)
+	if requesterErr != nil {
+		return nil, nil, requesterErr
+	}
+
+	user, exists := k8sRequest.UserFrom(ctx)
+	if !exists {
+		// add in k8s user if not there yet
+		var ok bool
+		user, ok = requester.(k8sUser.Info)
+		if !ok {
+			return nil, nil, fmt.Errorf("could not convert user to k8s user")
+		}
+	}
+
+	newCtx := k8sRequest.WithUser(context.Background(), user)
+	newCtx = log.WithContextualAttributes(newCtx, log.FromContext(ctx))
+	// TODO: after GLSA token workflow is removed, make this return early
+	// and move the else below to be unconditional
+	if requesterErr == nil {
+		newCtxWithRequester := identity.WithRequester(newCtx, requester)
+		newCtx = newCtxWithRequester
+	}
+
+	// inherit the deadline from the original context, if it exists
+	deadline, ok := ctx.Deadline()
+	if ok {
+		var newCancel context.CancelFunc
+		newCtx, newCancel = context.WithTimeout(newCtx, time.Until(deadline))
+		return newCtx, newCancel, nil
+	}
+
+	return newCtx, nil, nil
+}
+
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	// TODO: once getting dashboards by ID in unified storage is supported, we can remove the restraint of the uid being provided
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) && query.UID != "" {
+		// create a new context - prevents issues when the request stems from the k8s api itself
+		// otherwise the context goes through the handlers twice and causes issues
+		newCtx, cancel, err := dr.getK8sContext(ctx)
+		if err != nil {
+			return nil, err
+		} else if cancel != nil {
+			defer cancel()
+		}
+
+		client, ok := dr.k8sclient.getClient(newCtx, query.OrgID)
+		if !ok {
+			return nil, nil
+		}
+
+		// if including deleted dashboards, use the /latest subresource
+		subresource := ""
+		if query.IncludeDeleted {
+			subresource = "latest"
+		}
+
+		out, err := client.Get(newCtx, query.UID, v1.GetOptions{}, subresource)
+		if err != nil {
+			return nil, err
+		} else if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
+		return UnstructuredToLegacyDashboard(out, query.OrgID)
+	}
+
 	return dr.dashboardStore.GetDashboard(ctx, query)
 }
 
+// TODO: once getting dashboards by ID in unified storage is supported, need to do the same as the above function
 func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
 	return dr.dashboardStore.GetDashboardUIDByID(ctx, query)
 }
 
+// TODO: add support to get dashboards in unified storage.
 func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
@@ -628,7 +744,7 @@ func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context,
 		DashboardUIDs: dashboardUids,
 		OrgID:         user.GetOrgID(),
 	}
-	sharedDashboards, err := dr.dashboardStore.GetDashboards(ctx, dashboardsQuery)
+	sharedDashboards, err := dr.GetDashboards(ctx, dashboardsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -692,6 +808,7 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 	return userDashboardUIDs, nil
 }
 
+// TODO: add support to find dashboards in unified storage too.
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
 	defer span.End()
@@ -837,4 +954,68 @@ func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (i
 	}
 
 	return deletedDashboardsCount, nil
+}
+
+func UnstructuredToLegacyDashboard(item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
+	spec, ok := item.Object["spec"].(map[string]any)
+	if !ok {
+		return nil, errors.New("error parsing dashboard from k8s response")
+	}
+
+	out := dashboards.Dashboard{
+		OrgID: orgID,
+		Data:  simplejson.NewFromAny(spec),
+	}
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+
+	out.UID = obj.GetName()
+	out.Slug = obj.GetSlug()
+	out.FolderUID = obj.GetFolder()
+
+	out.Created = obj.GetCreationTimestamp().Time
+	updated, err := obj.GetUpdatedTimestamp()
+	if err == nil && updated != nil {
+		out.Updated = *updated
+	}
+	deleted := obj.GetDeletionTimestamp()
+	if deleted != nil {
+		out.Deleted = obj.GetDeletionTimestamp().Time
+	}
+
+	if id, ok := spec["id"].(int64); ok {
+		out.ID = id
+	}
+
+	if gnetID, ok := spec["gnet_id"].(int64); ok {
+		out.GnetID = gnetID
+	}
+
+	if version, ok := spec["version"].(int64); ok {
+		out.Version = int(version)
+	}
+
+	if pluginID, ok := spec["plugin_id"].(string); ok {
+		out.PluginID = pluginID
+	}
+
+	if isFolder, ok := spec["is_folder"].(bool); ok {
+		out.IsFolder = isFolder
+	}
+
+	if hasACL, ok := spec["has_acl"].(bool); ok {
+		out.HasACL = hasACL
+	}
+
+	if title, ok := spec["title"].(string); ok {
+		out.Title = title
+		// if slug isn't in the metadata, add it via the title
+		if out.Slug == "" {
+			out.UpdateSlug()
+		}
+	}
+
+	return &out, nil
 }

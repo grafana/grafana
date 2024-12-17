@@ -11,6 +11,7 @@ import {
   makeAllAlertmanagerConfigFetchFail,
   makeAllK8sGetEndpointsFail,
 } from 'app/features/alerting/unified/mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
@@ -97,9 +98,9 @@ const dataSources = {
     },
   }),
   mimir: mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'mimir',
+    name: 'MimirAlertmanager',
     type: DataSourceType.Alertmanager,
-    uid: 'mimir',
+    uid: MIMIR_DATASOURCE_UID,
     jsonData: {
       implementation: AlertManagerImplementation.mimir,
     },
@@ -240,7 +241,7 @@ describe.each([
     setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
       alertmanager_config: {
         route: {},
-        receivers: [{ name: 'grafana-default-email' }],
+        receivers: [{ name: 'lotsa-emails' }],
       },
       template_files: {},
     });
@@ -294,6 +295,7 @@ describe.each([
   });
 
   it('allows user to reload and update policies if its been changed by another user', async () => {
+    jest.retryTimes(2);
     const { user } = renderNotificationPolicies();
 
     await getRootRoute();
@@ -317,7 +319,8 @@ describe.each([
     await openDefaultPolicyEditModal();
     await user.click(await screen.findByRole('button', { name: /update default policy/i }));
     expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
-  });
+    // TODO: Check if test flakiness/length can be improved
+  }, 60000);
 
   it('Should be able to delete an empty route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {

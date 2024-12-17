@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { CombinedRule, Rule, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -21,7 +21,7 @@ export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
 
 export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: Rule, groupIdentifier: RuleGroupIdentifier) {
+export function useRulePluginLinkExtension(rule: Rule, groupIdentifier: RuleGroupIdentifierV2) {
   const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
   const { links } = usePluginLinks(ruleExtensionPoint);
 
@@ -57,9 +57,11 @@ interface EmptyExtensionPoint {
 
 type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
 
-function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier): RuleExtensionPoint {
+function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
   return useMemo<RuleExtensionPoint>(() => {
     const ruleType = rule.type;
+    const { namespace, groupName } = groupIdentifier;
+    const namespaceIdentifier = 'uid' in namespace ? namespace.uid : namespace.name;
 
     switch (ruleType) {
       case PromRuleType.Alerting:
@@ -67,8 +69,8 @@ function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier)
           extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction,
           context: {
             name: rule.name,
-            namespace: groupIdentifier.namespaceName,
-            group: groupIdentifier.groupName,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
             labels: rule.labels ?? {},
             annotations: rule.annotations ?? {},
@@ -79,8 +81,8 @@ function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier)
           extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction,
           context: {
             name: rule.name,
-            namespace: groupIdentifier.namespaceName,
-            group: groupIdentifier.groupName,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
             labels: rule.labels ?? {},
           },

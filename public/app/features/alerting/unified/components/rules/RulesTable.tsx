@@ -17,7 +17,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';

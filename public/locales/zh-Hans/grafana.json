@@ -245,6 +245,7 @@
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
       "view": ""
     },
     "contact-points": {
@@ -326,6 +327,14 @@
     "mute-timings": {
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
@@ -466,6 +475,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1243,6 +1256,8 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "浏览 工具栏",
       "copy-link": "复制网址",
       "copy-link-abs-time": "",
@@ -1266,6 +1281,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1733,6 +1749,12 @@
     "infinite-scroll": {
       "older-logs": ""
     },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
     "log-row-message": {
       "ellipsis": "",
       "more": ""
@@ -2182,9 +2204,6 @@
     "new-folder": {
       "title": "新建文件夹"
     },
-    "observability": {
-      "title": "可观测性"
-    },
     "oncall": {
       "title": "OnCall"
     },
@@ -2313,12 +2332,6 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    },
-    "toolbar": {
-      "close-menu": "关闭菜单",
-      "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "打开菜单",
-      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -2923,8 +2936,7 @@
       "loading": "",
       "save-button": "保存至文件",
       "share-externally-label": "导出以供外部分享",
-      "view-button": "查看 JSON",
-      "view-button-schemav2": ""
+      "view-button": "查看 JSON"
     },
     "library": {
       "info": "创建库面板。"
@@ -3009,7 +3021,6 @@
     "mode": "模式",
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
-    "mode-tv": "电视",
     "title": "共享播放列表"
   },
   "shared": {
@@ -3207,9 +3218,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",
@@ -3316,6 +3325,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

@@ -557,6 +557,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
+  panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
   headers?: Record<string, string>;

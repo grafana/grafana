@@ -1,5 +1,5 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
@@ -11,22 +11,34 @@ import { ValuePill } from './ValuePill';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
-  value?: string | Array<ComboboxOption<T>>;
-  onChange: (items?: Array<ComboboxOption<T>>) => void;
+  value?: T[] | Array<ComboboxOption<T>>;
+  onChange: (items?: T[]) => void;
 }
 
-type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
+export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder } = props;
+  const { options, placeholder, onChange, value } = props;
+  const isAsync = typeof options === 'function';
+
+  const selectedItems = useMemo(() => {
+    if (!value || isAsync) {
+      //TODO handle async
+      return [];
+    }
+
+    return getSelectedItemsFromValue<T>(value, options);
+  }, [value, options, isAsync]);
 
   const multiStyles = useStyles2(getMultiComboboxStyles);
 
-  const isAsync = typeof options === 'function';
-
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>([]);
+
+  const isOptionSelected = useCallback(
+    (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
+    [selectedItems]
+  );
 
   const [inputValue, setInputValue] = useState('');
 
@@ -39,9 +51,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
         case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           if (newSelectedItems) {
-            setSelectedItems(newSelectedItems);
+            onChange(getComboboxOptionsValues(newSelectedItems));
           }
           break;
+
         default:
           break;
       }
@@ -55,26 +68,37 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     getInputProps,
     highlightedIndex,
     getItemProps,
-    //selectedItem,
   } = useCombobox({
     isOpen,
     items,
     itemToString,
     inputValue,
-    //defaultHighlightedIndex: 0,
     selectedItem: null,
+    stateReducer: (state, actionAndChanges) => {
+      const { changes, type } = actionAndChanges;
+      switch (type) {
+        case useCombobox.stateChangeTypes.InputKeyDownEnter:
+        case useCombobox.stateChangeTypes.ItemClick:
+          return {
+            ...changes,
+            isOpen: true,
+            defaultHighlightedIndex: 0,
+          };
+        default:
+          return changes;
+      }
+    },
 
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
           if (newSelectedItem) {
-            const isAlreadySelected = selectedItems.some((opt) => opt.value === newSelectedItem.value);
-            if (!isAlreadySelected) {
-              setSelectedItems([...selectedItems, newSelectedItem]);
+            if (!isOptionSelected(newSelectedItem)) {
+              onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
               break;
             }
-            removeSelectedItem(newSelectedItem);
+            removeSelectedItem(newSelectedItem); // onChange is handled by multiselect here
           }
           break;
         case useCombobox.stateChangeTypes.InputBlur:
@@ -115,7 +139,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <div>
               {items.map((item, index) => {
                 const itemProps = getItemProps({ item, index });
-                const isSelected = selectedItems.some((opt) => opt.value === item.value);
+                const isSelected = isOptionSelected(item);
+                const id = 'multicombobox-option-' + item.value.toString();
                 return (
                   <li
                     key={item.value}
@@ -124,8 +149,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   >
                     {' '}
                     {/* Add styling with virtualization */}
-                    <Checkbox key={`${item.value}${index}`} value={isSelected} />
-                    <OptionListItem option={item} />
+                    <Checkbox key={id} value={isSelected} aria-labelledby={id} />
+                    <OptionListItem option={item} id={id} />
                   </li>
                 );
               })}
@@ -136,3 +161,44 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     </div>
   );
 };
+
+function getSelectedItemsFromValue<T extends string | number>(
+  value: T[] | Array<ComboboxOption<T>>,
+  options: Array<ComboboxOption<T>>
+) {
+  if (!isComboboxOptions(value)) {
+    const resultingItems: Array<ComboboxOption<T> | undefined> = [];
+
+    for (const item of options) {
+      for (const [index, val] of value.entries()) {
+        if (val === item.value) {
+          resultingItems[index] = item;
+        }
+      }
+      if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
+        // We found all items for the values
+        break;
+      }
+    }
+
+    // Handle values that are not in options
+    for (const [index, val] of value.entries()) {
+      if (resultingItems[index] === undefined) {
+        resultingItems[index] = { value: val };
+      }
+    }
+    return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
+  }
+
+  return value;
+}
+
+function isComboboxOptions<T extends string | number>(
+  value: T[] | Array<ComboboxOption<T>>
+): value is Array<ComboboxOption<T>> {
+  return typeof value[0] === 'object';
+}
+
+function getComboboxOptionsValues<T extends string | number>(optionArray: Array<ComboboxOption<T>>) {
+  return optionArray.map((option) => option.value);
+}

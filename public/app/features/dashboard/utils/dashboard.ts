@@ -5,7 +5,8 @@ import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
 export const NEW_PANEL_TITLE = 'Panel Title';

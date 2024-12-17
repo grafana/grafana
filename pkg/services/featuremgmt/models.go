@@ -23,6 +23,15 @@ type FeatureToggles interface {
 	GetEnabled(ctx context.Context) map[string]bool
 }
 
+func AnyEnabled(f FeatureToggles, flags ...string) bool {
+	for _, flag := range flags {
+		if f.IsEnabledGlobally(flag) {
+			return true
+		}
+	}
+	return false
+}
+
 // FeatureFlagStage indicates the quality level
 type FeatureFlagStage int
 

@@ -71,6 +71,9 @@ type ManagerCfg struct {
 	DoNotSaveNormalState bool
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
+	// alertingSaveStatePeriodic feature flag is enabled.
+	StatePeriodicSaveBatchSize int
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool

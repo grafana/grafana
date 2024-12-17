@@ -18,6 +18,7 @@ const defaultOption: UnifiedAlertListOptions = {
   alertInstanceLabelFilter: '',
   datasource: 'Alertmanager',
   viewMode: ViewMode.List,
+  showInactiveAlerts: false,
 };
 
 const alerts: Alert[] = [
