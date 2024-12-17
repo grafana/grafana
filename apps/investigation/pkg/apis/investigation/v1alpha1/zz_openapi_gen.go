@@ -13,6 +13,12 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.Investigation":                    schema_pkg_apis_investigation_v1alpha1_Investigation(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationAbsoluteTimeRange":   schema_pkg_apis_investigation_v1alpha1_InvestigationAbsoluteTimeRange(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationComment":             schema_pkg_apis_investigation_v1alpha1_InvestigationComment(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDataQueryLogs":       schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryLogs(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDataQueryMetrics":    schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryMetrics(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef":       schema_pkg_apis_investigation_v1alpha1_InvestigationDatasourceRef(ref),
+		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationInvestigationItem":   schema_pkg_apis_investigation_v1alpha1_InvestigationInvestigationItem(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationList":                schema_pkg_apis_investigation_v1alpha1_InvestigationList(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationOperatorState":       schema_pkg_apis_investigation_v1alpha1_InvestigationOperatorState(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationSpec":                schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref),
@@ -65,6 +71,284 @@ func schema_pkg_apis_investigation_v1alpha1_Investigation(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationSpec", "github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationAbsoluteTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AbsoluteTimeRange is a time range specified by absolute timestamps.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "float",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "float",
+						},
+					},
+				},
+				Required: []string{"from", "to"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationComment(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Comment is a comment on an investigation item.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"authorUserID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"bodyMarkdown": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"authorUserID", "bodyMarkdown"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryLogs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DataQueryLogs is a data query for logs.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DatasourceRef is a reference to a datasource.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"),
+						},
+					},
+					"expr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "expr is the expression of the query.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxLines": {
+						SchemaProps: spec.SchemaProps{
+							Description: "maxLines (optional) is used to limit the number of log rows returned.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "refId is the reference ID of the query.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"datasource", "expr", "refId"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryMetrics(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DataQueryMetrics is a data query for metrics.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DatasourceRef is a reference to a datasource.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"),
+						},
+					},
+					"expr": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"datasource", "expr", "refId"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationDatasourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DatasourceRef is a reference to a datasource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"apiVersion", "name", "type", "uid"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_investigation_v1alpha1_InvestigationInvestigationItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "InvestigationItem is an item in an investigation.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dataQuery": {
+						SchemaProps: spec.SchemaProps{
+							Description: "dataQuery contains the query used to generate this item.",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+					"iconPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "iconPath (optional) is the path to the icon for the item.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"note": {
+						SchemaProps: spec.SchemaProps{
+							Description: "note (optional) is a comment on the item.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationComment"),
+									},
+								},
+							},
+						},
+					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "origin is where the item was created from.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "queryType is the type of the query used to generate this item.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AbsoluteTimeRange is a time range specified by absolute timestamps.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationAbsoluteTimeRange"),
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "type is the type of the item \"timeseries\", \"heatmap\", \"log-table\" (not an enum to allow for future extensions).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "url is the URL to the item.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"dataQuery", "id", "origin", "queryType", "timeRange", "title", "type", "url"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationAbsoluteTimeRange", "github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationComment"},
 	}
 }
 
@@ -172,9 +456,29 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref common.Referen
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InvestigationSpec spec is the schema of our resource. The spec should include all the user-ediable information for the kind.",
+				Description: "InvestigationSpec defines model for InvestigationSpec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationInvestigationItem"),
+									},
+								},
+							},
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -183,9 +487,11 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"items", "status", "title"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationInvestigationItem"},
 	}
 }
 
