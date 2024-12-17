@@ -12,6 +12,7 @@ import {
   ResourceClient,
   ObjectMeta,
   K8sAPIGroupList,
+  AnnoKeySavedFromUI,
 } from './types';
 
 export interface GroupVersionResource {
@@ -104,7 +105,7 @@ function setSavedFromUIAnnotation(meta: Partial<ObjectMeta>) {
   if (!meta.annotations) {
     meta.annotations = {};
   }
-  meta.annotations['grafana.app/saved-from-ui'] = config.buildInfo.versionString;
+  meta.annotations[AnnoKeySavedFromUI] = config.buildInfo.versionString;
 }
 
 export class DatasourceAPIVersions {
