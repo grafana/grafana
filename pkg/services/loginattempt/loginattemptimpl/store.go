@@ -26,7 +26,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAtte
 	err = xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
-			IPAddress: cmd.IPAddress,
+			IpAddress: cmd.IPAddress,
 			Created:   xs.now().Unix(),
 		}
 

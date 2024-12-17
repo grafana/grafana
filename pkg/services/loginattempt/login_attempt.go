@@ -20,6 +20,6 @@ type Service interface {
 type LoginAttempt struct {
 	Id        int64
 	Username  string
-	IPAddress string
+	IpAddress string
 	Created   int64
 }
