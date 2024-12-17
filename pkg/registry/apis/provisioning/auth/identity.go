@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -34,6 +35,7 @@ func ProvideProvisioningIdentityService(
 	// service accounts need permissions granted (as far as i can tell)
 	users user.Service,
 	orgs org.Service,
+	db db.DB,
 ) BackgroundIdentityService {
 	prefix := "provisioning-background-worker"
 
@@ -48,6 +50,7 @@ func ProvideProvisioningIdentityService(
 		authn:           authn,
 		users:           users,
 		orgs:            orgs,
+		db:              db,
 	}
 }
 
@@ -62,6 +65,7 @@ type backgroundIdentities struct {
 	accounts map[int64]string
 	mutex    sync.Mutex
 
+	db              db.DB
 	users           user.Service
 	serviceAccounts serviceaccounts.Service
 	authn           authn.Service
@@ -79,20 +83,34 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 
 	id, ok := o.accounts[info.OrgID]
 	if !ok {
-		// HACK, use the global admin!!!
-		id = "user:1"
-
-		// HACK -- (if false) and still allow lint
-		switch o.serviceAccountNamePrefix {
-		case "NOPE":
-			id, err = o.makeAdminUser(ctx, info.OrgID)
-		case "xxxx":
-			id, err = o.verifyServiceAccount(ctx, info.OrgID)
-		}
-
+		// HACK, find a global admin user
+		internal := int64(0)
+		sess := o.db.GetSqlxSession()
+		rows, err := sess.Query(ctx, "SELECT id FROM "+o.db.Quote("user")+
+			" WHERE org_id=? AND is_admin=1", info.OrgID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error looking for admin account %w", err)
 		}
+		if !rows.Next() {
+			return nil, fmt.Errorf("no admin accounts found")
+		}
+		err = rows.Scan(&internal)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find admin internal id %w", err)
+		}
+		id = fmt.Sprintf("user:%d", internal)
+
+		// // HACK -- (if false) and still allow lint
+		// switch o.serviceAccountNamePrefix {
+		// case "NOPE":
+		// 	id, err = o.makeAdminUser(ctx, info.OrgID)
+		// case "xxxx":
+		// 	id, err = o.verifyServiceAccount(ctx, info.OrgID)
+		// }
+
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		o.accounts[info.OrgID] = id
 	}
