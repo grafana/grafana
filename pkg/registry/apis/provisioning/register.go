@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -188,12 +187,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		b.urlProvider,
 	))
 
-	// TODO: move to controller
-	repositoryStorage.AfterCreate = b.afterCreate
-	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
-	repositoryStorage.BeginUpdate = b.beginUpdate
-	repositoryStorage.AfterDelete = b.afterDelete
-
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
@@ -325,35 +318,6 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 	}
 }
 
-func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
-	cfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		b.logger.Error("object is not *provisioning.Repository")
-		return
-	}
-
-	ctx := context.Background()
-	if err := b.ensureRepositoryFolderExists(ctx, cfg); err != nil {
-		b.logger.Error("failed to ensure repository folder exists", "error", err)
-		return
-	}
-}
-
-func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, opts *metav1.UpdateOptions) (registry.FinishFunc, error) {
-	objCfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("new object is not *provisioning.Repository")
-	}
-
-	if err := b.ensureRepositoryFolderExists(ctx, objCfg); err != nil {
-		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
-	}
-
-	// TODO: we should be able to handle folder changes
-
-	return func(ctx context.Context, success bool) {}, nil
-}
-
 func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
 	if cfg.Spec.Folder == "" {
 		// The root folder can't not exist, so we don't have to do anything.
@@ -397,26 +361,6 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 		},
 	}, metav1.CreateOptions{})
 	return err
-}
-
-func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.DeleteOptions) {
-	ctx := context.Background()
-	cfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		b.logger.Error("object is not *provisioning.Repository")
-		return
-	}
-
-	repo, err := b.asRepository(ctx, cfg)
-	if err != nil {
-		b.logger.Error("failed to get repository", "error", err)
-		return
-	}
-
-	if err := repo.OnDelete(ctx, b.logger); err != nil {
-		b.logger.Error("failed to run after delete", "error", err)
-		return
-	}
 }
 
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {

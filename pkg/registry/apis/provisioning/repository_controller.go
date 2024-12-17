@@ -8,6 +8,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -19,6 +21,7 @@ import (
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -206,10 +209,15 @@ func (rc *RepositoryController) sync(key string) error {
 		return nil
 	}
 
+	if err := rc.ensureRepositoryFolderExists(ctx, cachedRepo); err != nil {
+		return fmt.Errorf("ensure repository folder exists: %w", err)
+	}
+
 	// HACK: Use health status to check if it's update or create
 	// probably this will prevent some updates to be processed.
 	// QUESTION: should we add these errors to the health status?
 	var status *provisioning.RepositoryStatus
+
 	isUpdate := cachedRepo.Status.Health.Checked > 0
 	if isUpdate {
 		status, err = repo.OnUpdate(ctx, logger)
@@ -254,4 +262,51 @@ func (rc *RepositoryController) sync(key string) error {
 	}
 
 	return nil
+}
+
+func (rc *RepositoryController) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
+	if cfg.Spec.Folder == "" {
+		// The root folder can't not exist, so we don't have to do anything.
+		return nil
+	}
+
+	factory := resources.NewFactory(rc.identities)
+	client, _, err := factory.New(cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	// FIXME: make sure folders are actually enabled in the apiserver.
+	folderIface := client.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
+	})
+
+	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
+	if err == nil {
+		// The folder exists and doesn't need to be created.
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to search for existing repo folder: %w", err)
+	}
+
+	title := cfg.Spec.Title
+	if title == "" {
+		title = cfg.Spec.Folder
+	}
+
+	_, err = folderIface.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      cfg.Spec.Folder,
+				"namespace": cfg.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"title":       title,
+				"description": "Repository-managed folder.",
+			},
+		},
+	}, metav1.CreateOptions{})
+	return err
 }
