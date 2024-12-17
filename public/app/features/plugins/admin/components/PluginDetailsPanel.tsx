@@ -18,8 +18,6 @@ type Props = {
 export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { pluginExtentionsInfo, plugin, width = '250px' } = props;
 
-  console.log('plugin', plugin);
-  console.log('info', pluginExtentionsInfo);
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
