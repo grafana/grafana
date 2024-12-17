@@ -57,13 +57,10 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      // when using getDashboardAPI, if isV2Mode is not set, we will always return the v1 schema version
-      // isV2Mode is set to true when the feature toggle of dashboardSchemaV2 and useV2DashboardsAPI is enabled
-      // We could create a different feature toggle with better naming if we want, but the idea of using
-      // dashboardSchemaV2 is to indicate that this component is ready to process the new schema
       const isUIReadyForV2 = config.featureToggles.useV2DashboardsAPI;
-
       if (isUIReadyForV2) {
+        // When using getDashboardAPI, if isUIReadyForV2 is true, we will pass `v2` prop
+        // That will return a dashboard response using schema v2. We only ask for `v2` when the component is ready to process the new shape
         const resWithSchemaV2 = await getDashboardAPI('v2').getDashboardDTO(value, undefined);
 
         setCurrent({
@@ -76,7 +73,7 @@ export const DashboardPicker = ({
           label: formatLabel(resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder], resWithSchemaV2.spec.title),
         });
       } else {
-        // this means that the dashboard returned is a v1 schema
+        // when using getDashboardAPI, if isUIReadyForV2 is false, we will always return the v1 schema version
         const resWithSchemaV1 = await getDashboardAPI().getDashboardDTO(value, undefined);
 
         if (resWithSchemaV1.dashboard) {
