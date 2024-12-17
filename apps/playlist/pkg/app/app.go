@@ -7,11 +7,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/apps/playlist/pkg/watchers"
 )
 
 type PlaylistConfig struct {
@@ -26,7 +26,7 @@ func New(cfg app.Config) (app.App, error) {
 
 	playlistConfig, ok := cfg.SpecificConfig.(*PlaylistConfig)
 	if ok && playlistConfig.EnableReconcilers {
-		playlistReconciler = watchers.NewPlaylistReconciler()
+		playlistReconciler = reconcilers.NewPlaylistReconciler()
 	}
 
 	simpleConfig := simple.AppConfig{
