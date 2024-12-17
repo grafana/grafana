@@ -1,6 +1,7 @@
 import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
+import { UrlQueryMap } from '@grafana/data';
 
 const mockDashboardDto: DashboardDTO = {
   meta: {
@@ -12,9 +13,12 @@ const mockDashboardDto: DashboardDTO = {
     schemaVersion: 0,
   },
 };
+
+const backendSrvGetSpy = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
-    get: (dashUrl: string) => {
+    get: (dashUrl: string, params: Object) => {
+      backendSrvGetSpy(dashUrl, params);
       const uid = dashUrl.split('/').pop();
       if (uid === 'folderUid') {
         return Promise.resolve({
@@ -41,7 +45,11 @@ describe('Legacy dashboard API', () => {
 
   it('should return a valid dashboard', async () => {
     const api = new LegacyDashboardAPI();
-    const result = await api.getDashboardDTO('validUid');
+    const params: UrlQueryMap = {
+      param: 1,
+    };
+    const result = await api.getDashboardDTO('validUid', params);
     expect(result).toEqual(mockDashboardDto);
+    expect(backendSrvGetSpy).toHaveBeenLastCalledWith('/api/dashboards/uid/validUid', params);
   });
 });
