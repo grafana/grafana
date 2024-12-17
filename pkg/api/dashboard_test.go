@@ -263,7 +263,7 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil).Maybe()
-			dashSvc.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			dashSvc.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
@@ -838,14 +838,14 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil,
+			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil,
 		)
 		require.NoError(t, err)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil,
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil,
 	)
 	require.NoError(t, err)
 
