@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
@@ -53,6 +53,8 @@ interface TooltipPlugin2Props {
   ) => React.ReactNode;
 
   maxWidth?: number;
+
+  oneClick?: (seriesIdx: number | null, dataIdxs: Array<number | null>) => LinkModel | undefined;
 }
 
 interface TooltipContainerState {
@@ -60,6 +62,7 @@ interface TooltipContainerState {
   style: Partial<CSSProperties>;
   isHovering: boolean;
   isPinned: boolean;
+  hasOneClick: boolean;
   dismiss: () => void;
   contents?: React.ReactNode;
 }
@@ -91,6 +94,7 @@ function initState(): TooltipContainerState {
     style: { transform: '', pointerEvents: 'none' },
     isHovering: false,
     isPinned: false,
+    hasOneClick: false,
     contents: null,
     plot: null,
     dismiss: () => {},
@@ -115,6 +119,7 @@ export const TooltipPlugin2 = ({
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
+  oneClick,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -123,7 +128,11 @@ export const TooltipPlugin2 = ({
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
+  const [{ plot, isHovering, isPinned, contents, style, dismiss, hasOneClick }, setState] = useReducer(
+    mergeState,
+    null,
+    initState
+  );
 
   const sizeRef = useRef<TooltipContainerSize>();
   const styles = useStyles2(getStyles, maxWidth);
@@ -157,6 +166,7 @@ export const TooltipPlugin2 = ({
     let _isHovering = isHovering;
     let _someSeriesIdx = false;
     let _isPinned = isPinned;
+    let _hasOneClick = hasOneClick;
     let _style = style;
 
     let plotVisible = false;
@@ -240,6 +250,7 @@ export const TooltipPlugin2 = ({
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
+        hasOneClick: oneClick ? oneClick(closestSeriesIdx, seriesIdxs) !== undefined : false,
         contents:
           _isHovering || selectedRange != null
             ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
@@ -310,6 +321,12 @@ export const TooltipPlugin2 = ({
             };
 
             scheduleRender(false);
+          } else if (_hasOneClick) {
+            _isPinned = false;
+            let link = oneClick ? oneClick(closestSeriesIdx, seriesIdxs) : false;
+            if (link) {
+              window.open(link.href, link.target ?? '_self');
+            }
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
@@ -570,6 +587,14 @@ export const TooltipPlugin2 = ({
         // transition: transform 100ms;
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
+
+        _hasOneClick = oneClick ? oneClick(closestSeriesIdx, seriesIdxs) !== undefined : false;
+
+        if (_hasOneClick) {
+          u.over.style.cursor = 'pointer';
+        } else {
+          u.over.style.cursor = 'default';
+        }
 
         if (domRef.current != null) {
           domRef.current.style.transform = transform;

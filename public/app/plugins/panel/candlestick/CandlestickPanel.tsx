@@ -21,6 +21,7 @@ import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/p
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
+import { getOneClickLinks } from '../status-history/utils';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
@@ -282,6 +283,14 @@ export const CandlestickPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
+                oneClick={(seriesIdx, dataIdxs) => {
+                  const field = alignedFrame.fields[seriesIdx!];
+                  if (field) {
+                    return getOneClickLinks(field, dataIdxs[seriesIdx!]!);
+                  }
+
+                  return undefined;
+                }}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);

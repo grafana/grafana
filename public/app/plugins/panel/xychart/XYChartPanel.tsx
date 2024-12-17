@@ -17,6 +17,8 @@ import {
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
+import { getOneClickLinks } from '../status-history/utils';
+
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options } from './panelcfg.gen';
 import { prepConfig } from './scatter';
@@ -113,6 +115,18 @@ export const XYChartPanel2 = (props: Props2) => {
             <TooltipPlugin2
               config={builder!}
               hoverMode={TooltipHoverMode.xyOne}
+              oneClick={(seriesIdx, dataIdxs) => {
+                if (seriesIdx !== null) {
+                  const xySeries = series[seriesIdx! - 1];
+                  const yField = xySeries.y.field;
+
+                  if (yField) {
+                    return getOneClickLinks(yField, dataIdxs[seriesIdx!]!);
+                  }
+                }
+
+                return undefined;
+              }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                 return (
                   <XYChartTooltip

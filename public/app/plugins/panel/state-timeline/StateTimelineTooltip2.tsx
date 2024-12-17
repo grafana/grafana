@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { FieldType, TimeRange } from '@grafana/data';
+import { FieldType, OneClickMode, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
 import { TooltipDisplayMode } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -67,13 +67,22 @@ export const StateTimelineTooltip2 = ({
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
     const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
+    if (isPinned || field.config.oneClickMode !== OneClickMode.Off) {
+      footer = (
+        <VizTooltipFooter
+          dataLinks={links}
+          annotate={annotate}
+          actions={actions}
+          oneClickMode={field.config.oneClickMode}
+        />
+      );
+    }
   }
 
   const headerItem: VizTooltipItem = {
