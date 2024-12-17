@@ -22,7 +22,6 @@ type store interface {
 }
 
 func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) (result loginattempt.LoginAttempt, err error) {
-
 	err = xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
