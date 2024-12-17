@@ -38,12 +38,10 @@ jobs:
         BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
       run: |
         if ! git diff --exit-code --quiet; then
-          git config --local user.name "Grot"
-          git config --local user.email "grot@grafana.com"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git config --local --add --bool push.autoSetupRemote true
           echo "Committing and pushing workspace changes"
-          git remote
-          git branch -l
           git commit -a -m "update workspace"
           git push origin $BRANCH_NAME
         fi
