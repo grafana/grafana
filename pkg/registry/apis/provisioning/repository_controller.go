@@ -198,10 +198,7 @@ func (rc *RepositoryController) sync(key string) error {
 		// deleted or changed in the meantime, we'll get called again
 		return nil
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
