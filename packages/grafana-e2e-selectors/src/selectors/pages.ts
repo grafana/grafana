@@ -155,8 +155,9 @@ export const versionedPages = {
         },
         Edit: {
           url: {
-            [MIN_GRAFANA_VERSION]: (annotationIndex: string) =>
-              `/dashboard/new?orgId=1&editview=templating&editIndex=${annotationIndex}`,
+            '11.3.0': (editIndex: string) => `/dashboard/new?orgId=1&editview=variables&editIndex=${editIndex}`,
+            [MIN_GRAFANA_VERSION]: (editIndex: string) =>
+              `/dashboard/new?orgId=1&editview=templating&editIndex=${editIndex}`,
           },
         },
       },
@@ -344,6 +345,7 @@ export const versionedPages = {
       Variables: {
         List: {
           url: {
+            '11.3.0': (dashboardUid: string) => `/d/${dashboardUid}?editview=variables`,
             [MIN_GRAFANA_VERSION]: (dashboardUid: string) => `/d/${dashboardUid}?editview=templating`,
           },
           addVariableCTAV2: {
@@ -376,6 +378,7 @@ export const versionedPages = {
         },
         Edit: {
           urlParams: {
+            '11.3.0': (editIndex: string) => `editview=variables&editIndex=${editIndex}`,
             [MIN_GRAFANA_VERSION]: (editIndex: string) => `editview=templating&editIndex=${editIndex}`,
           },
           General: {
