@@ -37,6 +37,8 @@ export interface TimeSeriesTooltipProps {
   maxHeight?: number;
 
   replaceVariables?: InterpolateFunction;
+
+  hideZeros?: boolean;
 }
 
 export const TimeSeriesTooltip = ({
@@ -50,6 +52,7 @@ export const TimeSeriesTooltip = ({
   annotate,
   maxHeight,
   replaceVariables,
+  hideZeros,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -61,7 +64,8 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum
+    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    (value) => (hideZeros ? value !== '0' : true)
   );
 
   _rest?.forEach((field) => {
