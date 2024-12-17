@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"slices"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -45,7 +45,7 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +73,8 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			if parent == "" {
 				break
 			}
-			
-			obj, err = r.getter.Get(ctx, parent, &v1.GetOptions{})
+
+			obj, err = r.getter.Get(ctx, parent, &metav1.GetOptions{})
 			if err != nil {
 				info.Items = append(info.Items, v0alpha1.FolderInfo{
 					Name:        parent,
@@ -83,7 +83,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 				})
 				break
 			}
-			
+
 			folder, ok = obj.(*v0alpha1.Folder)
 			if !ok {
 				info.Items = append(info.Items, v0alpha1.FolderInfo{
