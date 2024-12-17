@@ -12,6 +12,7 @@ import {
   sceneGraph,
   GroupByVariable,
   AdHocFiltersVariable,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -29,6 +30,7 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_ap
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -208,12 +210,25 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanel = vizPanels[0];
     validateVizPanel(vizPanel, dash);
 
-    // FIXME: Tests for layout
+    // Layout
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    expect(layout.state.grid.state.children.length).toBe(1);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+    const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
+    expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+
+    // Transformations
+    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -241,7 +256,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -269,7 +284,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',

@@ -147,8 +147,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @throws An error if the fetch operation fails.
    */
   async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
-    // If there is no stream selector - use /labels endpoint (https://github.com/grafana/loki/pull/11982)
-    if (!options || !options.streamSelector) {
+    // We'll default to use `/labels`. If the flag is disabled, and there's a streamSelector, we'll use the series endpoint.
+    if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
       const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
@@ -166,14 +166,20 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  private async fetchLabelsByLabelsEndpoint(options?: { timeRange?: TimeRange }): Promise<string[]> {
+  private async fetchLabelsByLabelsEndpoint(options?: {
+    streamSelector?: string;
+    timeRange?: TimeRange;
+  }): Promise<string[]> {
     const url = 'labels';
     const range = options?.timeRange ?? this.getDefaultTimeRange();
-    const timeRange = this.datasource.getTimeRangeParams(range);
-
-    const res = await this.request(url, timeRange);
+    const { start, end } = this.datasource.getTimeRangeParams(range);
+    const params: Record<string, string | number> = { start, end };
+    if (options?.streamSelector) {
+      params['query'] = options.streamSelector;
+    }
+    const res = await this.request(url, params);
     if (Array.isArray(res)) {
-      const labels = res
+      const labels = Array.from(new Set(res))
         .slice()
         .sort()
         .filter((label: string) => label.startsWith('__') === false);

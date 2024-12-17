@@ -85,6 +85,7 @@ module.exports = [
     },
 
     rules: {
+      'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       'react/prop-types': 'off',

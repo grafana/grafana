@@ -495,6 +495,8 @@ export const versionedComponents = {
     },
     applyButton: {
       '9.2.0': 'data-testid Apply changes and go back to dashboard',
+      '9.1.0': 'Apply changes and go back to dashboard',
+      '8.0.0': 'panel editor apply',
     },
     toggleVizPicker: {
       '10.0.0': 'data-testid toggle-viz-picker',

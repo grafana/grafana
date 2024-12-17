@@ -1,8 +1,7 @@
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import {
-  MockDataSourceSrv,
   getCloudRule,
   mockAlertQuery,
   mockCombinedCloudRuleNamespace,
@@ -25,7 +24,7 @@ const dataSources = {
   loki: mockDataSource({ uid: 'loki-1', name: 'loki' }),
 };
 beforeAll(() => {
-  setDataSourceSrv(new MockDataSourceSrv(dataSources));
+  setupDataSources(...Object.values(dataSources));
 });
 
 describe('filterRules', function () {
