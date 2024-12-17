@@ -21,7 +21,7 @@ export const PreviewLogRow = ({ row, showDuplicates, showLabels, showTime, displ
           preview
         />
       ) : (
-        <td>row.entry</td>
+        <td>{row.entry}</td>
       )}
       <td></td>
     </tr>
