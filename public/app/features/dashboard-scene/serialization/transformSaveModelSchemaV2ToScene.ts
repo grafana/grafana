@@ -72,7 +72,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getDashboardSceneFor, getIntervalsFromQueryString } from '../utils/utils';
+import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -194,7 +194,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         const vizPanel = buildVizPanel(panel);
 
         return new DashboardGridItem({
-          key: `grid-item-${panel.spec.uid}`,
+          key: `grid-item-${panel.spec.id}`,
           x: element.spec.x,
           y: element.spec.y,
           width: element.spec.width,
@@ -231,7 +231,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: panel.spec.uid,
+    key: getVizPanelKeyForPanelId(panel.spec.id),
     title: panel.spec.title,
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
@@ -341,8 +341,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,
     dataLayerFilter: {
-      // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-      panelId: Number.isNaN(parseInt(panel.uid, 10)) ? 0 : parseInt(panel.uid, 10),
+      panelId: panel.id,
     },
     $behaviors: [new DashboardDatasourceBehaviour({})],
   });

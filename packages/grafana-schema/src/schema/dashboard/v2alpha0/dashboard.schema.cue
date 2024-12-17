@@ -479,7 +479,7 @@ GridLayoutKind: {
 }
 
 PanelSpec: {
-  uid: string
+  id: number
   title: string
   description: string
   links: [...DataLink]
