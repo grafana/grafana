@@ -538,64 +538,9 @@ describe('DashboardSceneSerializer', () => {
       });
     });
 
-    describe('tracking information', () => {
-      it('provides dashboard tracking information with no initial save model', () => {
-        const serializer = new V1DashboardSerializer();
-        expect(serializer.getTrackingInformation()).toBe(undefined);
-      });
-
-      it('provides dashboard tracking information with from initial save model', () => {
-        const serializer = new V1DashboardSerializer();
-        serializer.initialSaveModel = {
-          schemaVersion: 30,
-          version: 10,
-          uid: 'my-uid',
-          title: 'hello',
-          liveNow: true,
-          panels: [
-            {
-              type: 'text',
-            },
-            {
-              type: 'text',
-            },
-            {
-              type: 'timeseries',
-            },
-          ],
-
-          templating: {
-            list: [
-              {
-                type: 'query',
-                name: 'server',
-              },
-              {
-                type: 'query',
-                name: 'host',
-              },
-              {
-                type: 'textbox',
-                name: 'search',
-              },
-            ],
-          },
-        };
-
-        expect(serializer.getTrackingInformation()).toEqual({
-          uid: 'my-uid',
-          title: 'hello',
-          schemaVersion: 30,
-          panels_count: 3,
-          panel_type_text_count: 2,
-          panel_type_timeseries_count: 1,
-          variable_type_query_count: 2,
-          variable_type_textbox_count: 1,
-          settings_nowdelay: undefined,
-          settings_livenow: true,
-          version_before_migration: 10,
-        });
-      });
+    it('should throw on getTrackingInformation', () => {
+      const serializer = new V2DashboardSerializer();
+      expect(() => serializer.getTrackingInformation()).toThrow('Method not implemented.');
     });
 
     it('should throw on getSaveAsModel', () => {
