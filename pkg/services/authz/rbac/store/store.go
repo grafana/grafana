@@ -131,7 +131,7 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	return &role, nil
 }
 
-func (s *Store) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
+func (s *StoreImpl) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
