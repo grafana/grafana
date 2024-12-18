@@ -372,7 +372,7 @@
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
     "react-highlight-words": "0.20.0",
     "react-hook-form": "^7.49.2",
-    "react-i18next": "^14.0.0",
+    "react-i18next": "^15.0.0",
     "react-inlinesvg": "4.1.5",
     "react-loading-skeleton": "3.5.0",
     "react-moveable": "0.56.0",
