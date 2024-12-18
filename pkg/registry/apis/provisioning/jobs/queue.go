@@ -119,6 +119,7 @@ func (s *jobStore) drainPending() {
 		}
 		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 
+		started := time.Now()
 		var status *provisioning.JobStatus
 		if s.worker == nil {
 			status = &provisioning.JobStatus{
@@ -141,8 +142,9 @@ func (s *jobStore) drainPending() {
 			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
 
-		// FIXME: set start and finish times for the job once it does not create an infinite loop
-		// in the controller
+		status.Started = started.UnixNano()
+		status.Finished = time.Now().UnixNano()
+
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
 			logger.ErrorContext(ctx, "error running job", "error", err)
