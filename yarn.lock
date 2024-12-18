@@ -3315,7 +3315,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.1"
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:1.6.0"
@@ -3342,7 +3342,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:7.6.3"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
@@ -3486,7 +3486,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:1.6.0"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
@@ -3727,7 +3727,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.1"
     sass: "npm:1.83.0"
     sass-loader: "npm:16.0.4"
@@ -3779,7 +3779,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.1"
     tslib: "npm:2.8.1"
@@ -3816,7 +3816,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:7.1.3"
+    rollup-plugin-node-externals: "npm:8.0.0"
     ts-node: "npm:10.9.2"
     typescript: "npm:5.5.4"
   peerDependencies:
@@ -3879,7 +3879,7 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
   languageName: unknown
@@ -4059,7 +4059,7 @@ __metadata:
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
-    rollup-plugin-node-externals: "npm:^7.1.3"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-svg-import: "npm:3.0.0"
     rxjs: "npm:7.8.1"
     sass-loader: "npm:16.0.4"
@@ -26799,12 +26799,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-node-externals@npm:7.1.3, rollup-plugin-node-externals@npm:^7.1.3":
-  version: 7.1.3
-  resolution: "rollup-plugin-node-externals@npm:7.1.3"
+"rollup-plugin-node-externals@npm:8.0.0, rollup-plugin-node-externals@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "rollup-plugin-node-externals@npm:8.0.0"
   peerDependencies:
-    rollup: ^3.0.0 || ^4.0.0
-  checksum: 10/4e8d38ebc3c8a29cb72d11a73f97ba810a4560b5b0f0be445ba32180875073ce4752a9ea4d0b658717ddae642d314738047677e5c818b1893f3d715d18fe413c
+    rollup: ^4.0.0
+  checksum: 10/ef5565e8fdba4acbba81c4b214f789e03d3a3d049cbbe372679151c4f749a21a7f51d8448eff82b0b1bbbe5d2d64862cd292795e0f92e1fcad2afc9954a6fbdd
   languageName: node
   linkType: hard
 
