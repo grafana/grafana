@@ -1715,7 +1715,10 @@
     },
     "share-panel": {
       "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř päŉęľ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
-      "render-image": "Ŗęŉđęř įmäģę"
+      "download-image": "Đőŵŉľőäđ įmäģę",
+      "render-image": "Ğęŉęřäŧę įmäģę",
+      "render-image-error": "Fäįľęđ ŧő řęŉđęř päŉęľ įmäģę",
+      "render-image-error-description": "Åŉ ęřřőř őččūřřęđ ŵĥęŉ ģęŉęřäŧįŉģ ŧĥę įmäģę"
     }
   },
   "login": {
@@ -3031,6 +3034,27 @@
     "new-library-panel": {
       "cancel-button": "Cäŉčęľ",
       "create-button": "Cřęäŧę ľįþřäřy päŉęľ"
+    }
+  },
+  "share-panel-image": {
+    "preview": {
+      "title": "Päŉęľ přęvįęŵ"
+    },
+    "settings": {
+      "height-label": "Ħęįģĥŧ",
+      "height-min": "Ħęįģĥŧ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "height-placeholder": "500",
+      "height-required": "Ħęįģĥŧ įş řęqūįřęđ",
+      "max-warning": "Ŝęŧŧįŉģ mäχįmūmş äřę ľįmįŧęđ þy ŧĥę įmäģę řęŉđęřęř şęřvįčę",
+      "scale-factor-label": "Ŝčäľę ƒäčŧőř",
+      "scale-factor-min": "Ŝčäľę ƒäčŧőř mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "scale-factor-placeholder": "1",
+      "scale-factor-required": "Ŝčäľę ƒäčŧőř įş řęqūįřęđ",
+      "title": "Ĩmäģę şęŧŧįŉģş",
+      "width-label": "Ŵįđŧĥ",
+      "width-min": "Ŵįđŧĥ mūşŧ þę ęqūäľ őř ģřęäŧęř ŧĥäŉ 1",
+      "width-placeholder": "1000",
+      "width-required": "Ŵįđŧĥ įş řęqūįřęđ"
     }
   },
   "share-playlist": {
