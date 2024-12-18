@@ -9,6 +9,7 @@ import {
   LogSortOrderChangeEvent,
   LogsSortOrder,
   SelectableValue,
+  store,
 } from '@grafana/data';
 import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
 import { config, getAppEvents, reportInteraction } from '@grafana/runtime';
@@ -118,13 +119,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
 
-    /**
-     * The default direction is forward because the default sort order is Descending.
-     * See:
-     * - public/app/features/explore/Logs/Logs.tsx
-     * - public/app/plugins/panel/logs/module.tsx
-     */
-    const queryDirection = query.direction ?? LokiQueryDirection.Forward;
+    const queryDirection = query.direction ?? getDefaultQueryDirection(app);
 
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
@@ -272,6 +267,22 @@ function getCollapsedInfo(
   }
 
   return items;
+}
+
+function getDefaultQueryDirection(app?: CoreApp) {
+  if (app !== CoreApp.Explore) {
+    /**
+     * The default direction is forward because the default sort order is Descending.
+     * See:
+     * - public/app/features/explore/Logs/Logs.tsx
+     * - public/app/plugins/panel/logs/module.tsx
+     */
+    return LokiQueryDirection.Forward;
+  }
+  // See app/features/explore/Logs/utils/logs
+  const key = 'grafana.explore.logs.sortOrder';
+  const storedOrder = store.get(key) || LogsSortOrder.Descending;
+  return storedOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 }
 
 LokiQueryBuilderOptions.displayName = 'LokiQueryBuilderOptions';
