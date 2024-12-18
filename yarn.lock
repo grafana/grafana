@@ -6931,20 +6931,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rtk-query/codegen-openapi@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@rtk-query/codegen-openapi@npm:1.2.0"
+"@rtk-query/codegen-openapi@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@rtk-query/codegen-openapi@npm:2.0.0"
   dependencies:
     "@apidevtools/swagger-parser": "npm:^10.0.2"
     commander: "npm:^6.2.0"
-    oazapfts: "npm:^4.8.0"
-    prettier: "npm:^2.2.1"
+    lodash.camelcase: "npm:^4.3.0"
+    oazapfts: "npm:^6.1.0"
+    prettier: "npm:^3.2.5"
     semver: "npm:^7.3.5"
     swagger2openapi: "npm:^7.0.4"
-    typescript: "npm:^5.0.0"
+    typescript: "npm:^5.5.4"
   bin:
-    rtk-query-codegen-openapi: lib/bin/cli.js
-  checksum: 10/74b5d68b40322e6f30fff3f0250bccf378e5408e24bb47c109ad31e3c45a53c99d67b0ea0685ab0abcfc2e598eec9bdfc94aee241b61049ac862b77bd9780518
+    rtk-query-codegen-openapi: lib/bin/cli.mjs
+  checksum: 10/c1dbab43e950c4defc1246034506c770a6a742aaf86a991c1cdbac0ac63cd2232c14bbe05d8c29421339b5e3aeb75740de3d709c5503f2af0b746e71b46caa87
   languageName: node
   linkType: hard
 
@@ -17549,7 +17550,7 @@ __metadata:
     "@react-types/shared": "npm:3.26.0"
     "@reduxjs/toolkit": "npm:2.5.0"
     "@rsdoctor/webpack-plugin": "npm:^0.4.6"
-    "@rtk-query/codegen-openapi": "npm:^1.2.0"
+    "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
     "@stylistic/eslint-plugin-ts": "npm:^2.9.0"
     "@swc/core": "npm:1.10.1"
@@ -21129,6 +21130,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.camelcase@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "lodash.camelcase@npm:4.3.0"
+  checksum: 10/c301cc379310441dc73cd6cebeb91fb254bea74e6ad3027f9346fc43b4174385153df420ffa521654e502fd34c40ef69ca4e7d40ee7129a99e06f306032bfc65
+  languageName: node
+  linkType: hard
+
 "lodash.debounce@npm:^4, lodash.debounce@npm:^4.0.8":
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
@@ -22898,18 +22906,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"oazapfts@npm:^4.8.0":
-  version: 4.12.0
-  resolution: "oazapfts@npm:4.12.0"
+"oazapfts@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "oazapfts@npm:6.1.0"
   dependencies:
     "@apidevtools/swagger-parser": "npm:^10.1.0"
     lodash: "npm:^4.17.21"
     minimist: "npm:^1.2.8"
     swagger2openapi: "npm:^7.0.8"
-    typescript: "npm:^5.2.2"
+    tapable: "npm:^2.2.1"
+    typescript: "npm:^5.4.5"
+  peerDependencies:
+    "@oazapfts/runtime": "*"
   bin:
-    oazapfts: lib/codegen/cli.js
-  checksum: 10/993d2cebfb2aab6178893e63039eda5968248684e02cf7e3df41e8fbc57d3a551c1c4a7b8bc3f1384f9a10557e9fd71717eeef8b1a38948a412ba46c5271f411
+    oazapfts: cli.js
+  checksum: 10/804c3936702acf66bb9bcff6bdcdce2708783b31c83262d7097fb04a53d3720d96114cec345408cbf3f933f9c5d198815457853a07362796c6a6d5db7a31d150
   languageName: node
   linkType: hard
 
@@ -24370,7 +24381,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:3.4.2, prettier@npm:^3.1.1":
+"prettier@npm:3.4.2, prettier@npm:^3.1.1, prettier@npm:^3.2.5":
   version: 3.4.2
   resolution: "prettier@npm:3.4.2"
   bin:
@@ -24379,7 +24390,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.2.1, prettier@npm:^2.3.2, prettier@npm:^2.8.7":
+"prettier@npm:^2.3.2, prettier@npm:^2.8.7":
   version: 2.8.8
   resolution: "prettier@npm:2.8.8"
   bin:
@@ -29718,7 +29729,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.5.4, typescript@npm:>=2.7, typescript@npm:>=3 < 6, typescript@npm:^5.0.0, typescript@npm:^5.0.4, typescript@npm:^5.2.2":
+"typescript@npm:5.5.4":
   version: 5.5.4
   resolution: "typescript@npm:5.5.4"
   bin:
@@ -29728,13 +29739,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=2.7#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=3 < 6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.0#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.4#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
+"typescript@npm:>=2.7, typescript@npm:>=3 < 6, typescript@npm:^5.0.4, typescript@npm:^5.4.5, typescript@npm:^5.5.4":
+  version: 5.7.2
+  resolution: "typescript@npm:5.7.2"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/4caa3904df69db9d4a8bedc31bafc1e19ffb7b24fbde2997a1633ae1398d0de5bdbf8daf602ccf3b23faddf1aeeb9b795223a2ed9c9a4fdcaf07bfde114a401a
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>":
   version: 5.5.4
   resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/746fdd0865c5ce4f15e494c57ede03a9e12ede59cfdb40da3a281807853fe63b00ef1c912d7222143499aa82f18b8b472baa1830df8804746d09b55f6cf5b1cc
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A>=2.7#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=3 < 6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.0.4#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.4.5#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
+  version: 5.7.2
+  resolution: "typescript@patch:typescript@npm%3A5.7.2#optional!builtin<compat/typescript>::version=5.7.2&hash=5786d5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/d75ca10141afc64fd3474b41a8b082b640555bed388d237558aed64e5827ddadb48f90932c7f4205883f18f5bcab8b6a739a2cfac95855604b0dfeb34bc2f3eb
   languageName: node
   linkType: hard
 
