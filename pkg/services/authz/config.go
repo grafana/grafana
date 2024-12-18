@@ -61,6 +61,6 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 		token:            token,
 		tokenExchangeURL: tokenExchangeURL,
 		tokenNamespace:   tokenNamespace,
-		allowInsecure:    cfg.Env == setting.Dev,
+		allowInsecure:    authzSection.Key("allow_insecure").MustBool(cfg.Env == setting.Dev),
 	}, nil
 }
