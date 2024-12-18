@@ -57,18 +57,38 @@ export interface CorrelationsData {
 }
 
 /**
- * TODO: Write good description
+ * Used to work with user defined correlations.
+ * Should be accessed via {@link getCorrelationsService} function.
  *
  * @public
  */
 export interface CorrelationsService {
-  getCorrelationsBySourceUIDs: (sourceUIDs: string[]) => Promise<CorrelationsData>;
+  /**
+   * Creates data links in data frames from provided correlations
+   *
+   * @param dataFrames list of data frames to be processed
+   * @param correlations list of of possible correlations that can be applied
+   * @param dataFrameRefIdToDataSourceUid a map that for provided refId references corresponding data source ui
+   */
   attachCorrelationsToDataFrames: (
     dataFrames: DataFrame[],
     correlations: CorrelationData[],
     dataFrameRefIdToDataSourceUid: Record<string, string>
   ) => DataFrame[];
+
+  /**
+   * Creates a link post processor function that handles correlation transformations
+   *
+   * @param timeRange The current time range
+   */
   correlationsDataLinkPostProcessorFactory: (timeRange: TimeRange) => DataLinkPostProcessor;
+
+  /**
+   * Loads all the correlations defined for the given data sources.
+   *
+   * @param sourceUIDs Data source UIDs
+   */
+  getCorrelationsBySourceUIDs: (sourceUIDs: string[]) => Promise<CorrelationsData>;
 }
 
 let singletonInstance: CorrelationsService;
