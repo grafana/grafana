@@ -229,7 +229,7 @@ export interface FeatureToggles {
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
-  playlistsWatcher?: boolean;
+  playlistsReconciler?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;

@@ -851,9 +851,9 @@ const (
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
 	FlagDashboardSchemaV2 = "dashboardSchemaV2"
 
-	// FlagPlaylistsWatcher
-	// Enables experimental watcher for playlists
-	FlagPlaylistsWatcher = "playlistsWatcher"
+	// FlagPlaylistsReconciler
+	// Enables experimental reconciler for playlists
+	FlagPlaylistsReconciler = "playlistsReconciler"
 
 	// FlagPasswordlessMagicLinkAuthentication
 	// Enable passwordless login via magic link authentication
