@@ -332,7 +332,7 @@ To follow the above example, we will create notification policies that route ale
 
 In this section we configure an alert rule based on our application monitoring example.
 
-1. Go to **Alerting > Alert rules**.
+1. Navigate to **Alerting > Alert rules**.
 2. Click **New alert rule**.
 
 ### Enter an alert rule name
