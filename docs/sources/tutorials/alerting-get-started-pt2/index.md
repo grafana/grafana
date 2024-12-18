@@ -267,7 +267,7 @@ In the [life cycle](http://grafana.com/docs/grafana/next/alerting/fundamentals/a
 To set up evaluation behavior:
 
 1. In **Folder**, click **+ New folder** and enter a name. For example: `web-traffic-alerts`. This folder contains our alert rules.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
+1. In **Evaluation group**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
 1. Choose an Evaluation interval (how often the alert will be evaluated). Choose `1m`.
 1. Set the pending period to `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
