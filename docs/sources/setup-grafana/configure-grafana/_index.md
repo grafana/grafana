@@ -782,6 +782,12 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 
 <hr />
 
+## [datasources]
+
+### default_manage_alerts_ui_toggle
+
+Default behaviour for the "Manage alerts via Alerting UI" toggle when configuring a Datasource. Only works in case there's no configured value beforehand controlled by the datasources' `jsonData.manageAlerts` prop.
+
 ## [sql_datasources]
 
 ### max_open_conns_default
