@@ -204,6 +204,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		repoGetter: b,
 		logger:     b.logger.With("connector", "history"),
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("submissions")] = &submissionSubresource{
+		repoGetter: b,
+		logger:     b.logger.With("connector", "submissions"),
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
@@ -511,6 +515,18 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	sub = oas.Paths.Paths[repoprefix+"/history/{path}"]
 	if sub != nil {
 		sub.Get.Description = "Get the history of a path"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/submissions"]
+	if sub != nil {
+		sub.Get.Description = "Get submissions of repository"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/submissions/{path}"]
+	if sub != nil {
+		sub.Get.Description = "Get submissions of a repository path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 	}
 

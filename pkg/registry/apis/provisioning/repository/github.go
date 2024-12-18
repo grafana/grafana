@@ -343,6 +343,15 @@ func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, pat
 	return ret, nil
 }
 
+func (r *githubRepository) Submissions(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.Submission, error) {
+	return nil, &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submissions are not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // basicGitBranchNameRegex is a regular expression to validate a git branch name
 // it does not cover all cases as positive lookaheads are not supported in Go's regexp
 var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)

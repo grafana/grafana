@@ -98,6 +98,8 @@ type Repository interface {
 
 	// History of changes for a path
 	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
+	// Submissions for a path
+	Submissions(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.Submission, error)
 
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)

@@ -107,6 +107,15 @@ func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path st
 	}
 }
 
+func (r *s3Repository) Submissions(ctx context.Context, logger *slog.Logger, path string, ref string) ([]provisioning.Submission, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submissions are not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements Repository.
 func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return nil, &errors.StatusError{

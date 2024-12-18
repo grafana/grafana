@@ -313,6 +313,24 @@ type TestResults struct {
 	Details *common.Unstructured `json:"details,omitempty"`
 }
 
+// SubmissionList is a list of submissions
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type SubmissionList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// should be named "items", but avoid subresource error for now:
+	Items []Submission `json:"items,omitempty"`
+}
+
+// Submission is a submission of a resource
+type Submission struct {
+	ID      string   `json:"id"`
+	Ref     string   `json:"ref"`
+	URL     string   `json:"url"`
+	Authors []Author `json:"authors"`
+}
+
 // HistoryList is a list of versions of a resource
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HistoryList struct {
