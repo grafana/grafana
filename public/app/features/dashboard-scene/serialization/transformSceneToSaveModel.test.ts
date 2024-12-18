@@ -194,10 +194,13 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
+      consoleWarnSpy.mockRestore();
     });
   });
 
