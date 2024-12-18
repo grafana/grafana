@@ -110,7 +110,7 @@ export function createAnnotationResponse() {
                 refId: 'X',
                 meta: {
                   typeVersion: [0, 0],
-                  executedQueryString: 'Expr: ALERTS{}\nStep: 1m0s'
+                  executedQueryString: 'Expr: ALERTS{}\nStep: 1m0s',
                 },
                 fields: [
                   {
