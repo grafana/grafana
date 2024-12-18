@@ -193,7 +193,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.queue.Forget(item)
 		return true
 	} else {
-		logger.InfoContext(ctx, "RepositoryController will retry")
+		logger.InfoContext(ctx, "RepositoryController will retry as service is unavailable")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -276,15 +276,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			logger.InfoContext(ctx, "handle repository update")
 			status, err = repo.OnUpdate(ctx, logger)
 			if err != nil {
-				rc.logger.Error("OnUpdate", "error", err)
-				// TODO: Should we retry here?
+				return fmt.Errorf("on update: %w", err)
 			}
 		} else {
 			logger.InfoContext(ctx, "handle repository init")
 			status, err = repo.OnCreate(ctx, logger)
 			if err != nil {
-				rc.logger.Error("OnCreate", "error", err)
-				// TODO: Should we retry here?
+				return fmt.Errorf("on create: %w", err)
 			}
 
 			job, err := rc.jobs.Add(ctx, &provisioning.Job{
@@ -301,6 +299,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("trigger sync job: %w", err)
 			}
+
 			logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 		}
 	} else {
