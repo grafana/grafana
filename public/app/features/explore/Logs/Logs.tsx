@@ -189,6 +189,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState,
     eventBus,
     onPinLineCallback,
+    scrollElement,
   } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
@@ -450,14 +451,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         return;
       }
 
-      if (props.scrollElement) {
-        props.scrollElement.scroll({
+      if (scrollElement) {
+        scrollElement.scroll({
           behavior: 'smooth',
-          top: props.scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
         });
       }
     },
-    [props.scrollElement]
+    [scrollElement]
   );
 
   const onChangeLogsSortOrder = () => {
