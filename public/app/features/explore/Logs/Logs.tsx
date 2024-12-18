@@ -33,8 +33,9 @@ import {
   DataHoverEvent,
   serializeStateToUrlParam,
   urlUtil,
+  LogSortOrderChangeEvent,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, getAppEvents, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
@@ -493,6 +494,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
 
       setLogsSortOrder(newSortOrder);
+      getAppEvents().publish(
+        new LogSortOrderChangeEvent({
+          order: newSortOrder,
+        })
+      );
     }, 0);
     cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
   };

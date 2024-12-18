@@ -2,9 +2,15 @@ import { trim } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
+import {
+  CoreApp,
+  isValidDuration,
+  isValidGrafanaDuration,
+  LogSortOrderChangeEvent,
+  SelectableValue,
+} from '@grafana/data';
 import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import {
@@ -86,6 +92,12 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onChange({ ...query, step: trim(e.currentTarget.value) });
       onRunQuery();
     }
+
+    useEffect(() => {
+      getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
+        console.log(sortEvent);
+      });
+    }, []);
 
     let queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
