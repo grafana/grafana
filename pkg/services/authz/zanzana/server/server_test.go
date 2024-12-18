@@ -24,6 +24,8 @@ const (
 
 	folderGroup    = "folder.grafana.app"
 	folderResource = "folders"
+
+	permissionsSubresource = "permissions"
 )
 
 func TestMain(m *testing.M) {
@@ -90,7 +92,10 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 				common.NewFolderParentTuple("6", "5"),
 				common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
 				common.NewFolderResourceTuple("user:9", common.RelationCreate, dashboardGroup, dashboardResource, "", "5"),
-				common.NewResourceTuple("user:10", common.RelationUpdate, dashboardGroup, dashboardResource, "permissions", "10"),
+				common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, permissionsSubresource, "10"),
+				common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, permissionsSubresource, "11"),
+				common.NewGroupResourceTuple("user:11", common.RelationGet, dashboardGroup, dashboardResource, permissionsSubresource),
+				common.NewFolderResourceTuple("user:12", common.RelationGet, dashboardGroup, dashboardResource, permissionsSubresource, "5"),
 			},
 		},
 	})
