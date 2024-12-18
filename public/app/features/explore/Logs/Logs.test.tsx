@@ -14,9 +14,11 @@ import {
   toUtc,
   createDataFrame,
   ExploreLogsPanelState,
+  LogSortOrderChangeEvent,
+  LogsSortOrder,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -30,6 +32,7 @@ import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
     reportInteraction(interactionName, properties),
 }));
@@ -367,6 +370,11 @@ describe('Logs', () => {
   });
 
   it('should flip the order', async () => {
+    const publishMock = jest.fn();
+    // @ts-expect-error
+    jest.mocked(getAppEvents).mockReturnValue({
+      publish: publishMock,
+    });
     setup();
     const oldestFirstSelection = screen.getByLabelText('Oldest first');
     await userEvent.click(oldestFirstSelection);
@@ -375,6 +383,12 @@ describe('Logs', () => {
     expect(logRows.length).toBe(3);
     expect(logRows[0].textContent).toContain('log message 1');
     expect(logRows[2].textContent).toContain('log message 3');
+    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(publishMock).toHaveBeenCalledWith(
+      new LogSortOrderChangeEvent({
+        order: LogsSortOrder.Ascending,
+      })
+    );
   });
 
   describe('for permalinking', () => {
