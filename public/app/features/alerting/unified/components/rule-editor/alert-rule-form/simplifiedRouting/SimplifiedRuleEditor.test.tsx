@@ -61,6 +61,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   testWithFeatureToggles(['alertingSimplifiedRouting']);
 
   beforeEach(() => {
+    window.localStorage.clear();
     setupDataSources(dataSources.default, dataSources.am);
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -192,8 +193,26 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       await selectFolderAndGroup(user);
 
-      // // from the previous test, we are in advanced mode for both query and notifications steps
-      await user.click(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()); // switch query step to basic mode
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch notifications step to advanced mode
+
+      // save and check what was sent to backend
+      await user.click(ui.buttons.saveAndExit.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+      expect(serializedRequests).toMatchSnapshot();
+    });
+    it('can create the new grafana-managed rule with only query step advanced mode', async () => {
+      const contactPointName = 'lotsa-emails';
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      await selectFolderAndGroup(user);
+      await selectContactPoint(user, contactPointName);
+
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch query step to advanced mode
 
       // save and check what was sent to backend
       await user.click(ui.buttons.saveAndExit.get());
