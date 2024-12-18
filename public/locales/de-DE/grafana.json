@@ -241,11 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
       "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -327,6 +329,8 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
     },
@@ -349,6 +353,7 @@
         "warning-1": "",
         "warning-2": ""
       },
+      "filter-description": "",
       "generated-policies": "",
       "matchers": "",
       "metadata": {
