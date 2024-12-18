@@ -199,6 +199,16 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           <Input {...register('path')} readOnly={!saveProvisioned && !changeInfo.isNew} />
         </Field>
 
+        <Field label="Comment">
+          <TextArea
+            {...register('comment')}
+            aria-label="comment"
+            placeholder="Add a note to describe your changes (optional)."
+            autoFocus
+            rows={5}
+          />
+        </Field>
+
         {isGitHub && (
           <>
             <Field label="Workflow">
@@ -222,16 +232,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
             )}
           </>
         )}
-
-        <Field label="Comment">
-          <TextArea
-            {...register('comment')}
-            aria-label="comment"
-            placeholder="Add a note to describe your changes (optional)."
-            autoFocus
-            rows={5}
-          />
-        </Field>
 
         {prURL && (
           <Alert severity="info" title="Pull request created">
