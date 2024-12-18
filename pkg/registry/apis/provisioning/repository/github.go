@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v66/github"
@@ -344,12 +345,64 @@ func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, pat
 }
 
 func (r *githubRepository) Submissions(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.Submission, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "submissions are not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
 	}
+
+	owner := r.config.Spec.GitHub.Owner
+	repoName := r.config.Spec.GitHub.Repository
+
+	prs, err := r.gh.PullRequestsForBranch(ctx, owner, repoName, ref)
+	if err != nil {
+		return nil, fmt.Errorf("get pull requests: %w", err)
+	}
+
+	submissions := make([]provisioning.Submission, 0, len(prs))
+	for _, pr := range prs {
+		// consider both assignees and author as authors for us
+		authors := make([]provisioning.Author, 0)
+		for _, assignee := range pr.Assignees {
+			authors = append(authors, provisioning.Author{
+				Name:      assignee.Name,
+				Username:  assignee.Username,
+				AvatarURL: assignee.AvatarURL,
+			})
+		}
+
+		authors = append(authors, provisioning.Author{
+			Name:      pr.Author.Name,
+			Username:  pr.Author.Username,
+			AvatarURL: pr.Author.AvatarURL,
+		})
+
+		submission := provisioning.Submission{
+			ID:        strconv.Itoa(pr.Number),
+			Title:     pr.Title,
+			Ref:       pr.HeadRef,
+			URL:       pr.URL,
+			Authors:   authors,
+			CreatedAt: pr.CreatedAt.UnixMilli(),
+			UpdatedAt: pr.UpdatedAt.UnixMilli(),
+		}
+
+		if path == "" {
+			submissions = append(submissions, submission)
+			continue
+		}
+
+		files, err := r.gh.ListPullRequestFiles(ctx, owner, repoName, pr.Number)
+		if err != nil {
+			return nil, fmt.Errorf("get pull request files: %w", err)
+		}
+
+		for _, file := range files {
+			if path == file.GetFilename() {
+				submissions = append(submissions, provisioning.Submission{})
+			}
+		}
+	}
+
+	return submissions, nil
 }
 
 // basicGitBranchNameRegex is a regular expression to validate a git branch name

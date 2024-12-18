@@ -1139,6 +1139,13 @@ func schema_pkg_apis_provisioning_v0alpha1_Submission(ref common.ReferenceCallba
 							Format:  "",
 						},
 					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -1167,7 +1174,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Submission(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"id", "ref", "url", "authors"},
+				Required: []string{"id", "title", "ref", "url", "authors"},
 			},
 		},
 		Dependencies: []string{

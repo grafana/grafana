@@ -249,9 +249,9 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 	ret := make([]Commit, 0, len(commits))
 	for _, c := range commits {
 		var createdAt time.Time
-		var author *CommitAuthor
+		var author *User
 		if c.GetCommit().GetAuthor() != nil {
-			author = &CommitAuthor{
+			author = &User{
 				Name:      c.GetCommit().GetAuthor().GetName(),
 				Username:  c.GetAuthor().GetLogin(),
 				AvatarURL: c.GetAuthor().GetAvatarURL(),
@@ -260,9 +260,9 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch 
 			createdAt = c.GetCommit().GetAuthor().GetDate().Time
 		}
 
-		var committer *CommitAuthor
+		var committer *User
 		if c.GetCommitter() != nil {
-			committer = &CommitAuthor{
+			committer = &User{
 				Name:      c.GetCommit().GetCommitter().GetName(),
 				Username:  c.GetCommitter().GetLogin(),
 				AvatarURL: c.GetCommitter().GetAvatarURL(),
@@ -490,6 +490,52 @@ func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cf
 		return ErrServiceUnavailable
 	}
 	return err
+}
+
+func (r *realImpl) PullRequestsForBranch(ctx context.Context, owner, repository, branch string) ([]PullRequest, error) {
+	// TODO: handle pagination
+	prs, _, err := r.gh.PullRequests.List(ctx, owner, repository, &github.PullRequestListOptions{
+		Base:  branch,
+		State: "open",
+	})
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, ErrServiceUnavailable
+		}
+		return nil, err
+	}
+	ret := make([]PullRequest, 0, len(prs))
+	for _, pr := range prs {
+		assignees := make([]User, 0, len(pr.Assignees))
+		for _, a := range pr.Assignees {
+			assignees = append(assignees, User{
+				Name:      a.GetName(),
+				Username:  a.GetLogin(),
+				AvatarURL: a.GetAvatarURL(),
+			})
+		}
+
+		author := User{
+			Name:      pr.GetUser().GetName(),
+			Username:  pr.GetUser().GetLogin(),
+			AvatarURL: pr.GetUser().GetAvatarURL(),
+		}
+
+		ret = append(ret, PullRequest{
+			Number:    pr.GetNumber(),
+			Title:     pr.GetTitle(),
+			URL:       pr.GetHTMLURL(),
+			Assignees: assignees,
+			Author:    author,
+			BaseRef:   pr.GetBase().GetRef(),
+			HeadRef:   pr.GetHead().GetRef(),
+			CreatedAt: pr.GetCreatedAt().Time,
+			UpdatedAt: pr.GetUpdatedAt().Time,
+		})
+	}
+
+	return ret, nil
 }
 
 func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {

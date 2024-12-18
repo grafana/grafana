@@ -325,10 +325,13 @@ type SubmissionList struct {
 
 // Submission is a submission of a resource
 type Submission struct {
-	ID      string   `json:"id"`
-	Ref     string   `json:"ref"`
-	URL     string   `json:"url"`
-	Authors []Author `json:"authors"`
+	ID        string   `json:"id"`
+	Title     string   `json:"title"`
+	Ref       string   `json:"ref"`
+	URL       string   `json:"url"`
+	Authors   []Author `json:"authors"`
+	CreatedAt int64    `json:"createdAt"`
+	UpdatedAt int64    `json:"updatedAt"`
 }
 
 // HistoryList is a list of versions of a resource
