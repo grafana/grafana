@@ -54,7 +54,7 @@ type RepositoryController struct {
 	tester     *RepositoryTester
 
 	// To allow injection for testing.
-	processFn         func(item *queueItem) (shouldRetry bool, err error)
+	processFn         func(item *queueItem) error
 	enqueueRepository func(op operation, obj any)
 	keyFunc           func(obj any) (string, error)
 
@@ -174,27 +174,26 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := rc.logger.With("key", item.key)
 	logger.InfoContext(ctx, "RepositoryController processing key")
 
-	shouldRetry, err := rc.processFn(item)
+	err := rc.processFn(item)
 	if err == nil {
 		rc.queue.Forget(item)
 		return true
 	}
 
-	logger.ErrorContext(ctx, "RepositoryController failed to process key", "error", err)
-
 	item.attempts++
+	logger = logger.With("error", err, "attempts", item.attempts)
 	if item.attempts >= maxAttempts {
-		logger.ErrorContext(ctx, "RepositoryController failed too many times", "attempts", item.attempts, "error", err)
+		logger.ErrorContext(ctx, "RepositoryController failed too many times")
 		rc.queue.Forget(item)
 		return true
 	}
 
-	if !shouldRetry {
+	if !apierrors.IsServiceUnavailable(err) {
 		logger.InfoContext(ctx, "RepositoryController will not retry")
 		rc.queue.Forget(item)
 		return true
 	} else {
-		logger.InfoContext(ctx, "RepositoryController will retry", "attempts", item.attempts)
+		logger.InfoContext(ctx, "RepositoryController will retry")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -204,11 +203,11 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 }
 
 // process is the business logic of the controller.
-func (rc *RepositoryController) process(item *queueItem) (shouldRetry bool, err error) {
+func (rc *RepositoryController) process(item *queueItem) error {
 	logger := rc.logger.With("key", item.key)
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	ctx := context.Background()
@@ -216,38 +215,35 @@ func (rc *RepositoryController) process(item *queueItem) (shouldRetry bool, err 
 		logger.InfoContext(ctx, "handle repository deletion")
 		cfg, ok := item.obj.(*provisioning.Repository)
 		if !ok {
-			return false, errors.New("object is not a repository")
+			return errors.New("object is not a repository")
 		}
 
 		repo, err := rc.repoGetter.AsRepository(ctx, cfg)
 		if err != nil {
-			return false, fmt.Errorf("unable to create repository from object: %w", err)
+			return fmt.Errorf("unable to create repository from object: %w", err)
 		}
 
-		// TODO: Should we retry here?
-		return true, repo.OnDelete(ctx, logger)
+		return repo.OnDelete(ctx, logger)
 	}
 
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
-	if apierrors.IsNotFound(err) {
-		return false, errors.New("repository not found in cache")
-	}
-
-	if err != nil {
-		// TODO: Should we retry here?
-		return true, err
+	switch {
+	case apierrors.IsNotFound(err):
+		return errors.New("repository not found in cache")
+	case err != nil:
+		return err
 	}
 
 	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
 	if err != nil {
-		return true, err
+		return err
 	}
 	ctx = identity.WithRequester(ctx, id)
 	logger = logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {
-		return false, fmt.Errorf("unable to create repository from configuration: %w", err)
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
 	// Did the spec change
@@ -256,11 +252,11 @@ func (rc *RepositoryController) process(item *queueItem) (shouldRetry bool, err 
 	elapsed := time.Duration(now-cachedRepo.Status.Health.Checked) * time.Millisecond
 	if elapsed < time.Millisecond*200 {
 		// avoids possible inf loop!!!
-		return false, nil
+		return nil
 	}
 	if elapsed < time.Second*30 && !generationChanged {
 		// We checked status recently! and the generation has not changed
-		return false, nil
+		return nil
 	}
 
 	res, err := rc.tester.TestRepository(ctx, repo)
@@ -303,8 +299,7 @@ func (rc *RepositoryController) process(item *queueItem) (shouldRetry bool, err 
 				},
 			})
 			if err != nil {
-				// TODO: Should we retry here?
-				return true, fmt.Errorf("trigger sync job: %w", err)
+				return fmt.Errorf("trigger sync job: %w", err)
 			}
 			logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 		}
@@ -329,9 +324,8 @@ func (rc *RepositoryController) process(item *queueItem) (shouldRetry bool, err 
 	cfg.Status = *status
 	if _, err := rc.client.Repositories(cachedRepo.GetNamespace()).
 		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
-		// TODO: Should we retry here?
-		return true, fmt.Errorf("update status: %w", err)
+		return fmt.Errorf("update status: %w", err)
 	}
 
-	return false, nil
+	return nil
 }
