@@ -11,45 +11,45 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
-    getRuleGroupLocationFromFormValues,
-    getRuleGroupLocationFromRuleWithLocation,
-    isCloudAlertingRuleByType,
-    isCloudRecordingRuleByType,
-    isCloudRulerRule,
-    isGrafanaManagedRuleByType,
-    isGrafanaRulerRule,
-    isGrafanaRulerRulePaused,
-    isRecordingRuleByType,
+  getRuleGroupLocationFromFormValues,
+  getRuleGroupLocationFromRuleWithLocation,
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
+  isCloudRulerRule,
+  isGrafanaManagedRuleByType,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-    LogMessages,
-    logInfo,
-    trackAlertRuleFormCancelled,
-    trackAlertRuleFormError,
-    trackAlertRuleFormSaved,
-    trackNewGrafanaAlertRuleFormCancelled,
-    trackNewGrafanaAlertRuleFormError,
-    trackNewGrafanaAlertRuleFormSavedSuccess,
+  LogMessages,
+  logInfo,
+  trackAlertRuleFormCancelled,
+  trackAlertRuleFormError,
+  trackAlertRuleFormSaved,
+  trackNewGrafanaAlertRuleFormCancelled,
+  trackNewGrafanaAlertRuleFormError,
+  trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import {
-    defaultFormValuesForRuleType,
-    formValuesFromExistingRule,
-    formValuesFromPrefill,
-    translateRouteParamToRuleType,
+  defaultFormValuesForRuleType,
+  formValuesFromExistingRule,
+  formValuesFromPrefill,
+  translateRouteParamToRuleType,
 } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
-    MANUAL_ROUTING_KEY,
-    SIMPLIFIED_QUERY_EDITOR_KEY,
-    formValuesToRulerGrafanaRuleDTO,
-    formValuesToRulerRuleDTO,
+  MANUAL_ROUTING_KEY,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
+  formValuesToRulerGrafanaRuleDTO,
+  formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
