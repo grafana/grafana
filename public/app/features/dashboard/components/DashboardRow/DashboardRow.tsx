@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon, TextLink, Themeable2, withTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';

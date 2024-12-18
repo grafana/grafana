@@ -21,7 +21,7 @@ import { GroupActionComponents } from 'app/features/query/components/QueryAction
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange } from '../../scene/PanelTimeRange';

@@ -697,6 +697,26 @@ export const versionedPages = {
       copyUrlButton: {
         '11.3.0': 'data-testid share internally copy url button',
       },
+      SharePanel: {
+        preview: {
+          '11.5.0': 'data-testid share panel internally image generation preview',
+        },
+        widthInput: {
+          '11.5.0': 'data-testid share panel internally width input',
+        },
+        heightInput: {
+          '11.5.0': 'data-testid share panel internally height input',
+        },
+        scaleFactorInput: {
+          '11.5.0': 'data-testid share panel internally scale factor input',
+        },
+        generateImageButton: {
+          '11.5.0': 'data-testid share panel internally generate image button',
+        },
+        downloadImageButton: {
+          '11.5.0': 'data-testid share panel internally download image button',
+        },
+      },
     },
     ShareExternally: {
       container: {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -19,28 +21,46 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+)
+
+const (
+	shortCacheTTL        = 1 * time.Minute
+	shortCleanupInterval = 5 * time.Minute
+	longCacheTTL         = 5 * time.Minute
+	longCleanupInterval  = 10 * time.Minute
 )
 
 type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	store         *store.Store
+	store         store.Store
 	identityStore legacy.LegacyIdentityStore
 	actionMapper  *mappers.K8sRbacMapper
 
 	logger log.Logger
 	tracer tracing.Tracer
+
+	// Cache for user permissions, user team memberships and user basic roles
+	idCache        *localcache.CacheService
+	permCache      *localcache.CacheService
+	teamCache      *localcache.CacheService
+	basicRoleCache *localcache.CacheService
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
 	return &Service{
-		store:         store.NewStore(sql),
-		identityStore: identityStore,
-		actionMapper:  mappers.NewK8sRbacMapper(),
-		logger:        logger,
-		tracer:        tracer,
+		store:          store.NewStore(sql),
+		identityStore:  identityStore,
+		actionMapper:   mappers.NewK8sRbacMapper(),
+		logger:         logger,
+		tracer:         tracer,
+		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
+		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
 	}
 }
 
@@ -116,18 +136,67 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 	}
 
 	checkReq := &CheckRequest{
-		Namespace: ns,
-		UserUID:   userUID,
-		Action:    action,
-		Group:     req.GetGroup(),
-		Resource:  req.GetResource(),
-		Verb:      req.GetVerb(),
-		Name:      req.GetName(),
+		Namespace:    ns,
+		UserUID:      userUID,
+		Action:       action,
+		Group:        req.GetGroup(),
+		Resource:     req.GetResource(),
+		Verb:         req.GetVerb(),
+		Name:         req.GetName(),
+		ParentFolder: req.GetFolder(),
 	}
 	return checkReq, nil
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (map[string]bool, error) {
+	userIdentifiers, err := s.GetUserIdentifiers(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	userPermKey := userPermCacheKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
+	if cached, ok := s.permCache.Get(userPermKey); ok {
+		return cached.(map[string]bool), nil
+	}
+
+	basicRoles, err := s.getUserBasicRole(ctx, req, userIdentifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	teamIDs, err := s.getUserTeams(ctx, req, userIdentifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	userPermQuery := store.PermissionsQuery{
+		UserID:        userIdentifiers.ID,
+		Action:        req.Action,
+		TeamIDs:       teamIDs,
+		Role:          basicRoles.Role,
+		IsServerAdmin: basicRoles.IsAdmin,
+	}
+
+	permissions, err := s.store.GetUserPermissions(ctx, req.Namespace, userPermQuery)
+	if err != nil {
+		return nil, err
+	}
+	scopeMap := getScopeMap(permissions)
+	s.permCache.Set(userPermKey, scopeMap, 0)
+	return scopeMap, nil
+}
+
+func (s *Service) GetUserIdentifiers(ctx context.Context, req *CheckRequest) (*store.UserIdentifiers, error) {
+	uidCacheKey := userIdentifierCacheKey(req.Namespace.Value, req.UserUID)
+	if cached, ok := s.idCache.Get(uidCacheKey); ok {
+		return cached.(*store.UserIdentifiers), nil
+	}
+
+	idCacheKey := userIdentifierCacheKeyById(req.Namespace.Value, req.UserUID)
+	if cached, ok := s.idCache.Get(idCacheKey); ok {
+		return cached.(*store.UserIdentifiers), nil
+	}
+
 	var userIDQuery store.UserIdentifierQuery
 	// Assume that numeric UID is user ID
 	if userID, err := strconv.Atoi(req.UserUID); err == nil {
@@ -140,12 +209,19 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
-	basicRoles, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
-	if err != nil {
-		return nil, fmt.Errorf("could not get basic roles: %w", err)
+	s.idCache.Set(uidCacheKey, userIdentifiers, 0)
+	s.idCache.Set(idCacheKey, userIdentifiers, 0)
+
+	return userIdentifiers, nil
+}
+
+func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+	teamIDs := make([]int64, 0, 50)
+	teamsCacheKey := userTeamCacheKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
+		return cached.([]int64), nil
 	}
 
-	teamIDs := make([]int64, 0, 50)
 	teamQuery := legacy.ListUserTeamsQuery{
 		UserUID:    userIdentifiers.UID,
 		Pagination: common.Pagination{Limit: 50},
@@ -164,27 +240,36 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) ([]
 			break
 		}
 	}
+	s.teamCache.Set(teamsCacheKey, teamIDs, 0)
 
-	userPermQuery := store.PermissionsQuery{
-		UserID:        userIdentifiers.ID,
-		Action:        req.Action,
-		TeamIDs:       teamIDs,
-		Role:          basicRoles.Role,
-		IsServerAdmin: basicRoles.IsAdmin,
-	}
-
-	return s.store.GetUserPermissions(ctx, req.Namespace, userPermQuery)
+	return teamIDs, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, permissions []accesscontrol.Permission, req *CheckRequest) (bool, error) {
+func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+	basicRoleKey := userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID)
+	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
+		return cached.(store.BasicRole), nil
+	}
+
+	basicRole, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	if err != nil {
+		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
+	}
+	if basicRole == nil {
+		basicRole = &store.BasicRole{}
+	}
+	s.basicRoleCache.Set(basicRoleKey, *basicRole, 0)
+
+	return *basicRole, nil
+}
+
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	// Only check action if the request doesn't specify scope
 	if req.Name == "" {
-		return len(permissions) > 0, nil
+		return len(scopeMap) > 0, nil
 	}
-
-	scopeMap := getScopeMap(permissions)
 
 	// Wildcard grant, no further checks needed
 	if scopeMap["*"] {
@@ -196,7 +281,11 @@ func (s *Service) checkPermission(ctx context.Context, permissions []accesscontr
 		ctxLogger.Error("could not get attribute for resource", "resource", req.Resource)
 		return false, fmt.Errorf("could not get attribute for resource")
 	}
-	return scopeMap[scope], nil
+	if scopeMap[scope] {
+		return true, nil
+	}
+
+	return s.checkInheritedPermissions(ctx, scopeMap, req)
 }
 
 func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
@@ -209,4 +298,70 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 		permMap[perm.Scope] = true
 	}
 	return permMap
+}
+
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
+	if req.ParentFolder == "" {
+		return false, nil
+	}
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return false, err
+	}
+
+	currentUID := req.ParentFolder
+	for {
+		if node, has := folderMap[currentUID]; has {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.uid)
+			if scopeMap[scope] {
+				return true, nil
+			}
+			if node.parentUID == nil {
+				break
+			}
+			currentUID = *node.parentUID
+		} else {
+			break
+		}
+	}
+	return false, nil
+}
+
+func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+	folders, err := s.store.GetFolders(ctx, ns)
+	if err != nil {
+		return nil, fmt.Errorf("could not get folders: %w", err)
+	}
+
+	folderMap := make(map[string]FolderNode, len(folders))
+	for _, folder := range folders {
+		if node, has := folderMap[folder.UID]; !has {
+			folderMap[folder.UID] = FolderNode{
+				uid:       folder.UID,
+				parentUID: folder.ParentUID,
+			}
+		} else {
+			node.parentUID = folder.ParentUID
+			folderMap[folder.UID] = node
+		}
+		// Register that the parent has this child node
+		if folder.ParentUID == nil {
+			continue
+		}
+		if parent, has := folderMap[*folder.ParentUID]; has {
+			parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
+			folderMap[*folder.ParentUID] = parent
+		} else {
+			folderMap[*folder.ParentUID] = FolderNode{
+				uid:          *folder.ParentUID,
+				childrenUIDs: []string{folder.UID},
+			}
+		}
+	}
+
+	return folderMap, nil
 }

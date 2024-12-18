@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -106,6 +107,9 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	search2.ProvideDashboardStats,
+	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	search2.ProvideDocumentBuilders,
 )
 
 var wireExtsSet = wire.NewSet(

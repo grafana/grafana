@@ -34,9 +34,11 @@ export async function getMetricNamesWithoutScopes(
   instances: string[],
   limit?: number
 ) {
-  const matchTerms = adhocFilters.map((filter) =>
-    queryModeller.renderLabelExpression({ label: filter.key, op: filter.operator, value: filter.value })
-  );
+  const matchTerms = config.featureToggles.prometheusSpecialCharsInLabelValues
+    ? adhocFilters.map((filter) =>
+        queryModeller.renderLabelExpression({ label: filter.key, op: filter.operator, value: filter.value })
+      )
+    : adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
   let missingOtelTargets = false;
 
   if (jobs.length > 0 && instances.length > 0) {
@@ -103,4 +105,9 @@ export async function getMetricNamesWithScopes(
     limitReached: !!limit && !!response.data.warnings?.includes(LIMIT_REACHED),
     missingOtelTargets: false,
   };
+}
+
+function removeBrackets(input: string): string {
+  const match = input.match(/^\{(.*)\}$/); // extract the content inside the brackets
+  return match?.[1] ?? '';
 }

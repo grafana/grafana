@@ -17,7 +17,7 @@ export type Props = {
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   range: TimeRange;
   rows: LogRowModel[];
-  scrollElement?: HTMLDivElement;
+  scrollElement: HTMLDivElement | null;
   sortOrder: LogsSortOrder;
   timeZone: TimeZone;
   topScrollEnabled?: boolean;

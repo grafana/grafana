@@ -52,4 +52,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
+	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
+	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(100)
 }

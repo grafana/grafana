@@ -77,11 +77,17 @@ This feature was previously called **email sharing**.
 Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
-{{< docs/private-preview product="Sharing externally with specific people" >}}
+<!-- {{< docs/private-preview product="Sharing externally with specific people" >}}-->
+
+{{< admonition type="note" >}}
+Sharing externally with specific people is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). Please contact support to have this feature enabled.
+
+This feature will incur a cost once it is promoted to general availability.
+{{< /admonition >}}
 
 To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people. When you share dashboards by email, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
 
-When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.
+<!--When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.-->
 
 To share a dashboard with specific people, follow these steps:
 
