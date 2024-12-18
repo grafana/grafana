@@ -125,33 +125,27 @@ Only organization administrators can create reports by default. You can customiz
    The Reports page allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
 
 1. Click **+ Create a new report**.
-1. Select report dashboard.
-   - **Source dashboard:** Select the dashboard from which you want to generate the report.
-   - **Time range:** (optional) Use custom time range for the report. For more information, refer to [Report time range](#report-time-range).
-   - **Add another dashboard:** Add more than one dashboard to the report.
-1. Format the report.
-   - **Choose format options for the report:** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
-   - If you selected the PDF format option:
-     - Select an orientation for the report: **Portrait** or **Landscape**.
-     - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-     - Select a zoom level for the report. Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
-     - Click **Preview PDF** to view a rendered PDF with the options you selected.
-1. Schedule report.
-   - Enter scheduling information. Options vary depending on the frequency selected.
-1. Enter report information. All fields are required unless otherwise indicated.
-   - **Report name:** Name of the report as you want it to appear in the **Reports** list. The report name populates the email subject line.
-   - **Recipients:** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
-   - **Reply to:** (optional) The address that appears in the **Reply to** field of the email.
-   - **Message:** (optional) Message body in the email with the report.
-   - **Include a dashboard link:** Include a link to the dashboard from within the report email.
-   - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
-1. Preview and save the report.
-
-### Save as draft
+1. Configure the following report sections:
+   list of links here
+1. Do one of the following:
+   Send or Save as Draft. Or Discard. or Preview?
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
+
+## Select dashboard
+
+1. Select report dashboard.
+   - **Source dashboard:** Select the dashboard from which you want to generate the report.
+   - **Time range:** (optional) Use custom time range for the report. For more information, refer to [Report time range](#report-time-range).
+   - **Add another dashboard:** Add more than one dashboard to the report.
+
+### Add multiple dashboards to a report
+
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+
+You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
 
 ### Choose template variables
 
@@ -162,21 +156,6 @@ You can configure report-specific template variables for the dashboard on the re
 {{% admonition type="note" %}}
 The query variables saved with a report might become of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
 {{% /admonition %}}
-
-### Render a report with panels or rows set to repeat by a variable
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
-
-#### Caveats
-
-- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
-- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
-  - use the dashboard's original template variables for the report, or make a copy of the dashboard
-  - select the new set of template variables
-  - generate a report based on the copied dashboard.
-- Rendering of the repeating panels inside collapsed rows in reports is not supported.
 
 ### Report time range
 
@@ -196,6 +175,22 @@ Reports use the time zone of the dashboard from which they’re generated. You c
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
+
+## Format report
+
+1. Format the report.
+   - **Choose format options for the report:** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
+   - If you selected the PDF format option:
+     - Select an orientation for the report: **Portrait** or **Landscape**.
+     - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
+     - Select a zoom level for the report. Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
+     - Click **Preview PDF** to view a rendered PDF with the options you selected.
+
+### Embed a dashboard as an image into a report
+
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+
+You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
 ### Layout and orientation
 
@@ -231,6 +226,11 @@ When there's more data in your table visualizations than can be shown in the das
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
+## Schedule
+
+1. Schedule report.
+   - Enter scheduling information. Options vary depending on the frequency selected.
+
 ### Scheduling
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
@@ -251,7 +251,40 @@ For reports that have an hourly or daily frequency, you can choose to send them 
 
 When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month.
 
-#### Send a test email
+## Share
+
+1. Enter report information. All fields are required unless otherwise indicated.
+   - **Report name:** Name of the report as you want it to appear in the **Reports** list. The report name populates the email subject line.
+   - **Recipients:** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
+   - **Reply to:** (optional) The address that appears in the **Reply to** field of the email.
+   - **Message:** (optional) Message body in the email with the report.
+   - **Include a dashboard link:** Include a link to the dashboard from within the report email.
+   - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+
+## Confirm
+
+1. Preview and save the report.
+
+## Render a report with panels or rows set to repeat by a variable
+
+<!-- not sure where this will go -->
+
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
+
+### Caveats
+
+- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
+- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
+  - use the dashboard's original template variables for the report, or make a copy of the dashboard
+  - select the new set of template variables
+  - generate a report based on the copied dashboard.
+- Rendering of the repeating panels inside collapsed rows in reports is not supported.
+
+## Send a test email
+
+<!-- not sure where to put this -->
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -262,105 +295,15 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-### Pause a report
+## Pause a report
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
-### Add multiple dashboards to a report
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
-
-### Embed a dashboard as an image into a report
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
-
-## Export dashboard as PDF
-
-You can generate and save PDF files of any dashboard.
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-1. In the dashboard that you want to export as PDF, click the **Share** button.
-1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
-1. Click **Save as PDF** to render the dashboard as a PDF file.
-
-   Grafana opens the PDF file in a new window or browser tab.
-
 ## Send a report via the API
 
 You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
-
-## Rendering configuration
-
-When generating reports, each panel renders separately before being collected in a PDF. You can configure the per-panel rendering timeout and number of concurrently rendered panels.
-
-To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
-
-You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
-
-These options are available in the [configuration](ref:configuration) file.
-
-```ini
-[reporting]
-# Use this option to enable or disable the reporting feature. When disabled, no reports are generated, and the UI is hidden. By default, reporting is enabled.
-enabled = true
-# Set timeout for each panel rendering request
-rendering_timeout = 10s
-# Set maximum number of concurrent calls to the rendering service
-concurrent_render_limit = 4
-# Set the scale factor for rendering images. 2 is enough for monitor resolutions
-# 4 would be better for printed material. Setting a higher value affects performance and memory
-image_scale_factor = 2
-# Set the maximum file size in megabytes for the report email attachments
-max_attachment_size_mb = 10
-# Path to the directory containing font files
-fonts_path =
-# Name of the TrueType font file with regular style
-font_regular = DejaVuSansCondensed.ttf
-# Name of the TrueType font file with bold style
-font_bold = DejaVuSansCondensed-Bold.ttf
-# Name of the TrueType font file with italic style
-font_italic = DejaVuSansCondensed-Oblique.ttf
-# Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
-max_retries_per_panel = 3
-# Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
-allowed_domains = *
-```
-
-## Report settings
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can configure organization-wide report settings in the **Settings** under **Dashboards > Reporting**. Settings are applied to all the reports for current organization.
-
-You can customize the branding options.
-
-### Attachment settings
-
-#### PDF
-
-- **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
-
-- **Theme:** Theme of the PDF attached to the report. Defaults to **Light**. The selected theme is also applied to the PDFs generated when you click **Preview PDF** during report creation or select the **Export as PDF** option on a dashboard. If **Current** is selected, the PDF in the report will be in the Admin's instance theme, but the preview and exported PDFs will be in the user's instance theme.
-
-#### Embedded Image
-
-- **Theme:** Theme of the dashboard image embedded in the email. Defaults to **Dark**.
-
-### Email branding
-
-- **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
-- **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
-- **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
-- **Footer link URL:** Link of the report email footer.
-
-Currently, the API does not allow for the simultaneous upload of files with identical names for both the email logo and report logo. You can still upload the same file for each logo separately in two distinct steps.
 
 ## Troubleshoot reporting
 
