@@ -17,6 +17,21 @@ import { findVizPanelByKey } from '../utils/utils';
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 
 describe('DashboardSceneSerializer', () => {
+  it('should allow retrieving initial dashboard version', () => {
+    const dashboard = transformSaveModelToScene({
+      dashboard: {
+        title: 'hello',
+        uid: 'my-uid',
+        schemaVersion: 30,
+        version: 10,
+      },
+      meta: {},
+    });
+    const initialSaveModel = transformSceneToSaveModel(dashboard);
+    dashboard.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+    expect(dashboard.getInitialVersion()).toBe(10);
+  });
+
   describe('v1 schema', () => {
     it('Can detect no changes', () => {
       const dashboard = setup();
@@ -160,7 +175,7 @@ describe('DashboardSceneSerializer', () => {
             meta: {},
           });
           const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
+          dashboard.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
 
           const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
           variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
@@ -217,7 +232,7 @@ describe('DashboardSceneSerializer', () => {
           });
 
           const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
+          dashboard.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
 
           const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
           variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
@@ -378,7 +393,7 @@ function setup(options: ScenarioOptions = {}) {
   });
 
   const initialSaveModel = transformSceneToSaveModel(dashboard);
-  dashboard.setInitialSaveModel(initialSaveModel);
+  dashboard.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
 
   return dashboard;
 }

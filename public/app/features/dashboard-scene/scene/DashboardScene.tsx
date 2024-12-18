@@ -173,7 +173,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _prevScrollPos?: number;
 
   // TODO: use feature toggle to allow v2 serializer
-  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer(true);
+  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -642,9 +642,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._serializer.initialSaveModel;
   }
 
+  public getInitialVersion = () => {
+    return this._serializer.getInitialVersion();
+  };
+
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
+  public setInitialSaveModel(version: number | undefined, saveModel?: Dashboard | DashboardV2Spec) {
     this._serializer.initialSaveModel = saveModel;
+    this._serializer.initialVersion = version;
   }
 
   public getTrackingInformation() {

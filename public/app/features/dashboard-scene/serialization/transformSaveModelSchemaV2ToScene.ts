@@ -176,6 +176,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
   });
 
+  dashboardScene.setInitialSaveModel(
+    dto.metadata.resourceVersion ? parseInt(dto.metadata.resourceVersion, 10) : undefined,
+    dto.spec
+  );
+
   return dashboardScene;
 }
 
