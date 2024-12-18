@@ -56,7 +56,7 @@
     "debounce-promise": "3.1.2",
     "eventemitter3": "5.0.1",
     "lodash": "4.17.21",
-    "lru-cache": "10.2.2",
+    "lru-cache": "11.0.2",
     "marked": "12.0.2",
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
