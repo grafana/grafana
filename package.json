@@ -109,7 +109,7 @@
     "@types/d3-force": "^3.0.0",
     "@types/d3-scale-chromatic": "3.1.0",
     "@types/debounce-promise": "3.1.9",
-    "@types/diff": "^5",
+    "@types/diff": "^6.0.0",
     "@types/eslint": "9.6.1",
     "@types/eslint-scope": "^3.7.7",
     "@types/file-saver": "2.0.7",

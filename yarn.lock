@@ -9143,10 +9143,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/diff@npm:^5":
-  version: 5.2.3
-  resolution: "@types/diff@npm:5.2.3"
-  checksum: 10/2b426a0e6936c6dd3b8da35146fea8786e3fab4f4d96fe0174ac6bf704ff933fddde08a95e125484568205cea56c3d7dca85b8e11465c0ee5ce8c1f7b877f6df
+"@types/diff@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@types/diff@npm:6.0.0"
+  checksum: 10/ad2dc8ca9e7594c7d06b60832ef1a51c717e39fd92434043be35a5a5a038f61ee7e1b9e89d1e2a49b8c4fa0f020166d1d41f7ccbd62f6cadc9ca1bd3e5df4e5b
   languageName: node
   linkType: hard
 
@@ -17607,7 +17607,7 @@ __metadata:
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/diff": "npm:^5"
+    "@types/diff": "npm:^6.0.0"
     "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
