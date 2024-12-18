@@ -159,38 +159,3 @@ func (s *Store) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Fold
 
 	return folders, nil
 }
-
-func (s *Store) GetDashboards(ctx context.Context, ns claims.NamespaceInfo) ([]Dashboard, error) {
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	query := DashboardQuery{OrgID: ns.OrgID}
-	req := newGetDashboards(sql, &query)
-	q, err := sqltemplate.Execute(sqlDashboards, req)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-	if err != nil {
-		return nil, err
-	}
-
-	var dashboards []Dashboard
-	for rows.Next() {
-		var dash Dashboard
-		if err := rows.Scan(&dash.UID, &dash.ParentUID); err != nil {
-			return nil, err
-		}
-		dashboards = append(dashboards, dash)
-	}
-
-	return dashboards, nil
-}

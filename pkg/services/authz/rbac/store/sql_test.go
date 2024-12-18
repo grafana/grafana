@@ -41,12 +41,6 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
-	getDashboards := func(q *DashboardQuery) sqltemplate.SQLTemplate {
-		v := newGetDashboards(nodb, q)
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -108,14 +102,6 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "folder_query",
 					Data: getFolders(&FolderQuery{
-						OrgID: 1,
-					}),
-				},
-			},
-			sqlDashboards: {
-				{
-					Name: "dashboard_query",
-					Data: getDashboards(&DashboardQuery{
 						OrgID: 1,
 					}),
 				},

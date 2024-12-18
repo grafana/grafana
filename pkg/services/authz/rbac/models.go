@@ -13,7 +13,7 @@ type CheckRequest struct {
 	ParentFolder string
 }
 
-type folderNode struct {
+type FolderNode struct {
 	uid          string
 	parentUID    *string
 	childrenUIDs []string

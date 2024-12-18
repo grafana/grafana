@@ -224,7 +224,7 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	folderMap, err := s.buildFolderAndDashTree(ctx, req.Namespace)
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
 	if err != nil {
 		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 		return false, err
@@ -248,20 +248,16 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	return false, nil
 }
 
-func (s *Service) buildFolderAndDashTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]folderNode, error) {
+func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
 	folders, err := s.store.GetFolders(ctx, ns)
 	if err != nil {
 		return nil, fmt.Errorf("could not get folders: %w", err)
 	}
-	dashboards, err := s.store.GetDashboards(ctx, ns)
-	if err != nil {
-		return nil, fmt.Errorf("could not get dashboards: %w", err)
-	}
 
-	folderMap := make(map[string]folderNode, len(folders))
+	folderMap := make(map[string]FolderNode, len(folders))
 	for _, folder := range folders {
 		if node, has := folderMap[folder.UID]; !has {
-			folderMap[folder.UID] = folderNode{
+			folderMap[folder.UID] = FolderNode{
 				uid:       folder.UID,
 				parentUID: folder.ParentUID,
 			}
@@ -277,22 +273,10 @@ func (s *Service) buildFolderAndDashTree(ctx context.Context, ns claims.Namespac
 			parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
 			folderMap[*folder.ParentUID] = parent
 		} else {
-			folderMap[*folder.ParentUID] = folderNode{
+			folderMap[*folder.ParentUID] = FolderNode{
 				uid:          *folder.ParentUID,
 				childrenUIDs: []string{folder.UID},
 			}
-		}
-	}
-
-	for _, dash := range dashboards {
-		node := folderNode{uid: dash.UID, parentUID: dash.ParentUID}
-		folderMap[dash.UID] = node
-		if dash.ParentUID == nil {
-			continue
-		}
-		if parent, has := folderMap[*dash.ParentUID]; has {
-			parent.childrenUIDs = append(parent.childrenUIDs, dash.UID)
-			folderMap[*dash.ParentUID] = parent
 		}
 	}
 
