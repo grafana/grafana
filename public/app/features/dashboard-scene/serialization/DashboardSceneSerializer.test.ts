@@ -321,6 +321,33 @@ describe('DashboardSceneSerializer', () => {
         });
       });
     });
+
+    it('should allow retrieving snapshot url', () => {
+      const initialSaveModel: Dashboard = {
+        snapshot: {
+          originalUrl: 'originalUrl/snapshot',
+          created: '2023-01-01T00:00:00Z',
+          expires: '2023-12-31T23:59:59Z',
+          external: false,
+          externalUrl: '',
+          id: 1,
+          key: 'snapshot-key',
+          name: 'snapshot-name',
+          orgId: 1,
+          updated: '2023-01-01T00:00:00Z',
+          userId: 1,
+        },
+        title: 'hello',
+        uid: 'my-uid',
+        schemaVersion: 30,
+        version: 10,
+      };
+
+      const serializer = new V1DashboardSerializer();
+      serializer.initialSaveModel = initialSaveModel;
+
+      expect(serializer.getSnapshotUrl()).toBe('originalUrl/snapshot');
+    });
   });
 
   describe('v2 schema', () => {
@@ -354,6 +381,11 @@ describe('DashboardSceneSerializer', () => {
     it('should throw on getDashboardChangesFromScene', () => {
       const serializer = new V2DashboardSerializer();
       expect(() => serializer.getTrackingInformation()).toThrow('Method not implemented.');
+    });
+
+    it('should throw on getSnapshotUrl', () => {
+      const serializer = new V2DashboardSerializer();
+      expect(() => serializer.getSnapshotUrl()).toThrow('Method not implemented.');
     });
   });
 });
