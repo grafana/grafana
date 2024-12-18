@@ -6,7 +6,7 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "11.5.0-pre",
-    "@grafana/experimental": "2.1.5",
+    "@grafana/experimental": "2.1.6",
     "@grafana/runtime": "11.5.0-pre",
     "@grafana/schema": "11.5.0-pre",
     "@grafana/ui": "11.5.0-pre",
@@ -19,10 +19,10 @@
     "prismjs": "1.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-select": "5.8.3",
-    "react-use": "17.5.1",
+    "react-select": "5.9.0",
+    "react-use": "17.6.0",
     "rxjs": "7.8.1",
-    "tslib": "2.7.0"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "11.5.0-pre",
@@ -40,7 +40,7 @@
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "webpack": "5.97.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
