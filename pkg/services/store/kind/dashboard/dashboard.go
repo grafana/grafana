@@ -144,7 +144,7 @@ func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*Dashb
 			dash.ID = iter.ReadInt64()
 
 		case "uid":
-			dash.UID = iter.ReadString()
+			iter.ReadString()
 
 		case "title":
 			dash.Title = iter.ReadString()
