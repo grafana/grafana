@@ -8,6 +8,7 @@ import {
   dateTime,
   FieldType,
   PanelData,
+  setWeekStart,
   standardTransformersRegistry,
   StandardVariableQuery,
   toDataFrame,
@@ -147,6 +148,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+}));
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  setWeekStart: jest.fn(),
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
