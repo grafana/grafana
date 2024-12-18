@@ -160,11 +160,26 @@ export class AppChromeService {
     }
 
     let lastEntry = entries[0];
+
     if (!lastEntry || lastEntry.name !== newPageNav.text) {
       lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
     }
+
     if (lastEntry !== entries[0]) {
-      entries = [lastEntry, ...entries];
+      // When navigating to a dashboard a fake dashboard entry is added so we avoid this by
+      // checking if the url has the dashboard word as it has BrowseDashboards page
+      const isDashboardFakePage = lastEntry.name === 'Dashboards' && !lastEntry.url.includes('dashboards');
+      if (!isDashboardFakePage) {
+        // After checking it is not a fake dashboard entry we do the same with fake home pages
+        // A fake home page won't have the same url as the last entry
+        if (entries[0] && lastEntry.url.includes(entries[0].url) && entries[0].name === 'Home') {
+          // If the last entry is a fake home page we remove it
+          entries[0] = lastEntry;
+        } else {
+          entries = [lastEntry, ...entries];
+        }
+        return entries;
+      }
     }
     return entries;
   }
