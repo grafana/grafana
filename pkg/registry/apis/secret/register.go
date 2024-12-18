@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
@@ -163,6 +164,38 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 }
 
 func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	fmt.Printf("\nMUTATE CALLED WITH OPERATION %v\n", a.GetOperation())
+	obj := a.GetObject()
+	operation := a.GetOperation()
+
+	if obj == nil || operation == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	// When creating a resource and the name is empty, we need to generate one.
+	if operation == admission.Create && a.GetName() == "" {
+		generatedName, err := util.GetRandomString(8)
+		if err != nil {
+			return fmt.Errorf("generate random string: %w", err)
+		}
+
+		switch typedObj := obj.(type) {
+		case *secretV0Alpha1.SecureValue:
+			optionalPrefix := typedObj.GenerateName
+			if optionalPrefix == "" {
+				optionalPrefix = "sv-"
+			}
+
+			typedObj.Name = optionalPrefix + generatedName
+
+		case *secretV0Alpha1.Keeper:
+			optionalPrefix := typedObj.GenerateName
+			if optionalPrefix == "" {
+				optionalPrefix = "kp-"
+			}
+
+			typedObj.Name = optionalPrefix + generatedName
+		}
+	}
+
 	return nil
 }

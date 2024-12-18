@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -112,21 +111,6 @@ func (s *KeeperRest) Create(
 
 	if err := createValidation(ctx, obj); err != nil {
 		return nil, fmt.Errorf("create validation failed: %w", err)
-	}
-
-	// A `keeper` may be created without a `name`, which means it gets generated on-the-fly.
-	if kp.Name == "" {
-		// TODO: how can we make sure there are no conflicts with existing resources?
-		generatedName, err := util.GetRandomString(8)
-		if err != nil {
-			return nil, err
-		}
-
-		optionalPrefix := kp.GenerateName
-		if optionalPrefix == "" {
-			optionalPrefix = "kp-"
-		}
-		kp.Name = optionalPrefix + generatedName
 	}
 
 	createdKeeper, err := s.storage.Create(ctx, kp)

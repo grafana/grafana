@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -117,22 +116,6 @@ func (s *SecureValueRest) Create(
 
 	if err := createValidation(ctx, obj); err != nil {
 		return nil, fmt.Errorf("create validation failed: %w", err)
-	}
-
-	// A `securevalue` may be created without a `name`, which means it gets generated on-the-fly.
-	if sv.Name == "" {
-		// TODO: how can we make sure there are no conflicts with existing resources?
-		generatedName, err := util.GetRandomString(8)
-		if err != nil {
-			return nil, err
-		}
-
-		optionalPrefix := sv.GenerateName
-		if optionalPrefix == "" {
-			optionalPrefix = "sv-"
-		}
-
-		sv.Name = optionalPrefix + generatedName
 	}
 
 	createdSecureValue, err := s.storage.Create(ctx, sv)
