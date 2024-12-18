@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -22,6 +23,20 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
+type operation int
+
+const (
+	operationCreate operation = iota
+	operationUpdate
+	operationDelete
+)
+
+type queueItem struct {
+	key string
+	op  operation
+	obj interface{}
+}
+
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
@@ -36,11 +51,11 @@ type RepositoryController struct {
 	tester     *RepositoryTester
 
 	// To allow injection for testing.
-	syncFn            func(key string) error
-	enqueueRepository func(obj any)
+	processFn         func(item *queueItem) error
+	enqueueRepository func(op operation, obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue  workqueue.TypedRateLimitingInterface[string]
+	queue  workqueue.TypedRateLimitingInterface[*queueItem]
 	logger *slog.Logger
 }
 
@@ -58,8 +73,8 @@ func NewRepositoryController(
 		repoLister: repoInformer.Lister(),
 		repoSynced: repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
+			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
+			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
 				Name: "provisioningRepositoryController",
 			},
 		),
@@ -79,7 +94,7 @@ func NewRepositoryController(
 		return nil, err
 	}
 
-	rc.syncFn = rc.sync
+	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
 
@@ -121,86 +136,94 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}) {
+func (rc *RepositoryController) enqueue(op operation, obj interface{}) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-	rc.queue.Add(key)
+
+	item := queueItem{key: key, obj: obj, op: op}
+	rc.queue.Add(&item)
 }
 
 func (rc *RepositoryController) addRepository(obj interface{}) {
-	rc.enqueueRepository(obj)
+	rc.enqueueRepository(operationCreate, obj)
 }
 
 func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
-	rc.enqueueRepository(newObj)
+	rc.enqueueRepository(operationUpdate, newObj)
 }
 
 func (rc *RepositoryController) deleteRepository(obj interface{}) {
-	rc.enqueueRepository(obj)
+	rc.enqueueRepository(operationDelete, obj)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(_ context.Context) bool {
-	key, quit := rc.queue.Get()
+	item, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
-	defer rc.queue.Done(key)
+	defer rc.queue.Done(item)
 
-	rc.logger.Info("RepositoryController processing key", "key", key)
+	rc.logger.Info("RepositoryController processing key", "key", item)
 
-	err := rc.syncFn(key)
+	err := rc.processFn(item)
 	if err == nil {
-		rc.queue.Forget(key)
+		rc.queue.Forget(item)
 		return true
 	}
 
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
-	rc.queue.AddRateLimited(key)
+	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
+	rc.queue.AddRateLimited(item)
 
 	return true
 }
 
-// sync is the business logic of the controller.
-func (rc *RepositoryController) sync(key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+// process is the business logic of the controller.
+func (rc *RepositoryController) process(item *queueItem) error {
+	logger := rc.logger.With("key", item.key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
 		return err
 	}
 
 	ctx := context.Background()
+	if item.op == operationDelete {
+		logger.InfoContext(ctx, "handle repository deletion")
+		cfg, ok := item.obj.(*provisioning.Repository)
+		if !ok {
+			return errors.New("object is not a repository")
+		}
+
+		repo, err := rc.repoGetter.AsRepository(ctx, cfg)
+		if err != nil {
+			return fmt.Errorf("unable to create repository from object: %w", err)
+		}
+
+		return repo.OnDelete(ctx, logger)
+	}
+
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
 	if apierrors.IsNotFound(err) {
-		rc.logger.DebugContext(ctx, "repository not found", "key", key)
-		return nil
+		return errors.New("repository not found in cache")
 	}
 	if err != nil {
 		return err
 	}
-
-	rc.logger.DebugContext(ctx, "cached repository", "key", key, "repo", cachedRepo)
 
 	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
 	if err != nil {
 		return err
 	}
 	ctx = identity.WithRequester(ctx, id)
-	logger := rc.logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+	logger = logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
-	}
-
-	// The repository is deleted
-	if cachedRepo.DeletionTimestamp != nil {
-		// FIXME: this is never called because the cache does not contain the repository
-		logger.InfoContext(ctx, "deleting repository")
-		return repo.OnDelete(ctx, logger)
 	}
 
 	// Did the spec change
@@ -230,11 +253,13 @@ func (rc *RepositoryController) sync(key string) error {
 	var status *provisioning.RepositoryStatus
 	if res.Success {
 		if cachedRepo.Status.Initialized {
+			logger.InfoContext(ctx, "handle repository update")
 			status, err = repo.OnUpdate(ctx, logger)
 			if err != nil {
 				rc.logger.Error("OnUpdate", "error", err)
 			}
 		} else {
+			logger.InfoContext(ctx, "handle repository init")
 			status, err = repo.OnCreate(ctx, logger)
 			if err != nil {
 				rc.logger.Error("OnCreate", "error", err)
