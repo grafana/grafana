@@ -582,7 +582,7 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              dashboard.openSaveDrawer({ saveProvisioned: Boolean(meta.folderUid) });
+              dashboard.openSaveDrawer({ saveProvisioned: isProvisionedNG });
             }}
             className={styles.buttonWithExtraMargin}
             tooltip="Save changes"
