@@ -3620,6 +3620,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchSprinkles",
+        "resourceVersion": "1734123247356",
+        "creationTimestamp": "2024-12-13T20:54:07Z"
+      },
+      "spec": {
+        "description": "Enable sprinkles on unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",

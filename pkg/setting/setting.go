@@ -523,12 +523,14 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage     map[string]UnifiedStorageConfig
-	IndexPath          string
-	IndexWorkers       int
-	IndexMaxBatchSize  int
-	IndexFileThreshold int
-	IndexMinCount      int
+	UnifiedStorage              map[string]UnifiedStorageConfig
+	IndexPath                   string
+	IndexWorkers                int
+	IndexMaxBatchSize           int
+	IndexFileThreshold          int
+	IndexMinCount               int
+	SprinklesApiServer          string
+	SprinklesApiServerPageLimit int
 }
 
 type UnifiedStorageConfig struct {

@@ -49,7 +49,7 @@ func TestBleveBackend(t *testing.T) {
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
-				Stats:            NewDashboardStatsLookup(nil), // empty stats
+				Stats:            make(map[string]map[string]int64), // empty stats
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
 			}, nil
 		})
