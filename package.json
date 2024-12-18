@@ -168,7 +168,7 @@
     "core-js": "3.39.0",
     "crashme": "0.0.15",
     "css-loader": "7.1.2",
-    "css-minimizer-webpack-plugin": "6.0.0",
+    "css-minimizer-webpack-plugin": "7.0.0",
     "cypress": "13.10.0",
     "cypress-file-upload": "5.0.8",
     "cypress-recurse": "^1.35.3",
