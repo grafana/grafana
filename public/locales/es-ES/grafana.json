@@ -2342,12 +2342,6 @@
       "list-label": "Navegación",
       "open": "",
       "undock": "Desanclar el menú"
-    },
-    "toolbar": {
-      "close-menu": "Cerrar menú",
-      "enable-kiosk": "Activar el modo de quiosco",
-      "open-menu": "Abrir menú",
-      "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },
   "news": {
@@ -3041,7 +3035,6 @@
     "mode": "Modo",
     "mode-kiosk": "Quiosco",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Compartir lista de reproducción"
   },
   "shared": {

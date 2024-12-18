@@ -156,7 +156,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAlerts?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
   secretsManagementAppPlatform?: boolean;
   alertingSaveStatePeriodic?: boolean;
@@ -210,7 +209,6 @@ export interface FeatureToggles {
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   alertingPrometheusRulesPrimary?: boolean;
-  singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
@@ -243,8 +241,10 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
+  investigationsBackend?: boolean;
 }

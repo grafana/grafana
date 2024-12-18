@@ -62,7 +62,11 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 	return f.ExpectedError
 }
 
-func TestService_TryTokenRefresh(t *testing.T) {
+func TestIntegration_TryTokenRefresh(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",
 		RefreshToken: "testrefresh",
@@ -81,11 +85,13 @@ func TestService_TryTokenRefresh(t *testing.T) {
 	}
 
 	type environment struct {
+		sessionService  *authtest.MockUserAuthTokenService
 		authInfoService *authinfotest.FakeService
 		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
 
+		store   db.DB
 		service *Service
 	}
 
@@ -226,6 +232,8 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthTokenType:    expiredToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
 				}
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
 			},
 			expectedToken: unexpiredTokenWithIDToken,
@@ -247,9 +255,35 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
 				}
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
 			},
 			expectedToken: unexpiredTokenWithIDToken,
+		},
+		{
+			desc:     "should return ErrRetriesExhausted when lock cannot be acquired",
+			identity: &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1234,
+					OAuthAccessToken:  unexpiredTokenWithIDToken.AccessToken,
+					OAuthRefreshToken: unexpiredTokenWithIDToken.RefreshToken,
+					OAuthExpiry:       unexpiredTokenWithIDToken.Expiry,
+					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
+					OAuthIdToken:      EXPIRED_ID_TOKEN,
+				}
+				_ = env.store.WithDbSession(context.Background(), func(sess *db.Session) error {
+					_, err := sess.Exec(`INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`, "oauth-refresh-token-1234", time.Now().Add(2*time.Second).Unix(), 0)
+					return err
+				})
+			},
+			expectedErr: ErrRetriesExhausted,
 		},
 	}
 	for _, tt := range tests {
@@ -259,12 +293,14 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			store := db.InitTestDB(t)
 
 			env := environment{
+				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: &authinfotest.FakeService{},
 				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
 				},
+				store: store,
 			}
 
 			if tt.setup != nil {
@@ -278,12 +314,12 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
-				nil,
+				env.sessionService,
 				featuremgmt.WithFeatures(),
 			)
 
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, nil)
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, &usertoken.UserToken{ExternalSessionId: 1})
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
@@ -308,7 +344,11 @@ func TestService_TryTokenRefresh(t *testing.T) {
 	}
 }
 
-func TestService_TryTokenRefresh_WithExternalSessions(t *testing.T) {
+func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	unexpiredToken := &oauth2.Token{
 		AccessToken:  "testaccess",
 		RefreshToken: "testrefresh",
@@ -338,6 +378,7 @@ func TestService_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
 
+		store   db.DB
 		service *Service
 	}
 
@@ -509,6 +550,21 @@ func TestService_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			},
 			expectedToken: unexpiredTokenWithIDToken,
 		},
+		{
+			desc:     "should return ErrRetriesExhausted when lock cannot be acquired",
+			identity: &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+
+				_ = env.store.WithDbSession(context.Background(), func(sess *db.Session) error {
+					_, err := sess.Exec(`INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`, "oauth-refresh-token-1234-1", time.Now().Add(2*time.Second).Unix(), 0)
+					return err
+				})
+			},
+			expectedErr: ErrRetriesExhausted,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -523,6 +579,7 @@ func TestService_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
 				},
+				store: store,
 			}
 
 			if tt.setup != nil {

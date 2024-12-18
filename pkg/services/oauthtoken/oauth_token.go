@@ -35,6 +35,7 @@ var (
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
 	ErrCouldntRefreshToken = errors.New("could not refresh token")
+	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
 type Service struct {
@@ -270,7 +271,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 		if attempts < 5 {
 			return nil
 		}
-		return ErrCouldntRefreshToken
+		return ErrRetriesExhausted
 	}
 
 	var newToken *oauth2.Token
@@ -439,18 +440,18 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
-		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
-				Token: token,
-			}); err != nil {
-				ctxLogger.Error("Failed to update external session during token refresh", "error", err)
-				return token, err
-			}
-		} else {
+		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 				ctxLogger.Error("Failed to update auth info during token refresh", "authID", usr.GetAuthID(), "error", err)
 				return token, err
 			}
+		}
+
+		if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
+			Token: token,
+		}); err != nil {
+			ctxLogger.Error("Failed to update external session during token refresh", "error", err)
+			return token, err
 		}
 
 		ctxLogger.Debug("Updated oauth info for user")
