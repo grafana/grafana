@@ -103,6 +103,15 @@ func (r *unknownRepository) History(ctx context.Context, logger *slog.Logger, pa
 	}
 }
 
+func (r *unknownRepository) Submissions(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.Submission, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submissions are not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements Repository.
 func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return nil, &errors.StatusError{

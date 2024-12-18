@@ -265,6 +265,32 @@ func (_m *MockClient) EditWebhook(ctx context.Context, owner string, repository 
 	return r0
 }
 
+// PullRequestsForBranch provides a mock function with given fields: ctx, owner, repository, branch
+func (_m *MockClient) PullRequestsForBranch(ctx context.Context, owner string, repository string, branch string) ([]PullRequest, error) {
+	ret := _m.Called(ctx, owner, repository, branch)
+	if len(ret) == 0 {
+		panic("no return value specified for PullRequestsForBranch")
+	}
+	var r0 []PullRequest
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) ([]PullRequest, error)); ok {
+		return rf(ctx, owner, repository, branch)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) []PullRequest); ok {
+		r0 = rf(ctx, owner, repository, branch)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]PullRequest)
+		}
+	}
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branch)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
 // GetBranch provides a mock function with given fields: ctx, owner, repository, branchName
 func (_m *MockClient) GetBranch(ctx context.Context, owner string, repository string, branchName string) (Branch, error) {
 	ret := _m.Called(ctx, owner, repository, branchName)
