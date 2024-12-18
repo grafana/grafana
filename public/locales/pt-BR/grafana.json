@@ -2342,12 +2342,6 @@
       "list-label": "Navegação",
       "open": "",
       "undock": "Desacoplar menu"
-    },
-    "toolbar": {
-      "close-menu": "Fechar menu",
-      "enable-kiosk": "Ativar modo de quiosque",
-      "open-menu": "Abrir menu",
-      "toggle-search-bar": "Alternar barra de busca superior"
     }
   },
   "news": {
@@ -2925,6 +2919,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -3041,7 +3036,6 @@
     "mode": "Modo",
     "mode-kiosk": "Quiosque",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Compartilhar lista de reprodução"
   },
   "shared": {

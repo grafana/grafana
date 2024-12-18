@@ -73,7 +73,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20241203173111-9d4ebec5f6b8 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20241211182001-0f317eb6b2f7 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20241212110159-5ae10177a923 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d // @grafana/dataviz-squad
@@ -479,6 +479,8 @@ require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 
 require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 // @grafana/alerting-backend
+
+require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 // @fcjack @matryer
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect

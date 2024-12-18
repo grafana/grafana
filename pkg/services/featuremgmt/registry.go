@@ -714,6 +714,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesCliDashboards",
+			Description: "Use the k8s client to retrieve dashboards internally",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
@@ -1037,12 +1043,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "onPremToCloudMigrationsAlerts",
-			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
@@ -1441,14 +1441,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "exploreLogsShardSplitting",
 			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
@@ -1515,8 +1507,9 @@ var (
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1670,6 +1663,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
@@ -1695,6 +1695,13 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
 		},
 	}
 )

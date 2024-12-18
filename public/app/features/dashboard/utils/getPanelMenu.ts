@@ -24,7 +24,7 @@ import {
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
