@@ -4,7 +4,7 @@ import { memo } from 'react';
 import * as React from 'react';
 
 // Types
-import { SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select, Stack } from '@grafana/ui';
 
@@ -30,6 +30,11 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
 ];
 
 export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
+  {
+    value: undefined,
+    label: 'Auto',
+    description: 'Determined by sort order. Backward for Oldest First, Forward for Newest First',
+  },
   { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backward direction.' },
   {
     value: LokiQueryDirection.Forward,
@@ -37,6 +42,13 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
     description: 'Search in forward direction.',
   },
 ];
+
+export function getQueryDirections(app: CoreApp | undefined) {
+  if (app === CoreApp.Explore) {
+    return queryDirections;
+  }
+  return queryDirections.filter((direction) => direction.value !== undefined);
+}
 
 if (config.featureToggles.lokiShardSplitting) {
   queryDirections.push({
@@ -47,7 +59,8 @@ if (config.featureToggles.lokiShardSplitting) {
   });
 }
 
-export function getQueryDirectionLabel(direction: LokiQueryDirection) {
+export function getQueryDirectionLabel(app: CoreApp | undefined, direction: LokiQueryDirection) {
+  const queryDirections = getQueryDirections(app);
   return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
 }
 

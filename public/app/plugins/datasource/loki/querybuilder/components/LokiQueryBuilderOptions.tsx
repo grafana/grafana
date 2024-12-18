@@ -10,7 +10,7 @@ import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import {
   getQueryDirectionLabel,
   preprocessMaxLines,
-  queryDirections,
+  getQueryDirections,
   queryTypeOptions,
   RESOLUTION_OPTIONS,
 } from '../../components/LokiOptionFields';
@@ -93,8 +93,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
 
-    const queryDirection = query.direction ?? LokiQueryDirection.Backward;
-
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
       onChange({ ...query, queryType: LokiQueryType.Range });
@@ -108,11 +106,15 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       return typeof query.step === 'string' && isValidGrafanaDuration(query.step) && !isNaN(parseInt(query.step, 10));
     }, [query.step]);
 
+    const queryDirections = useMemo(() => getQueryDirections(app), [app]);
+    // Explore supports "Auto" query direction linked to logs sort order.
+    const queryDirection = app === CoreApp.Explore ? query.direction : (query.direction ?? LokiQueryDirection.Backward);
+
     return (
       <EditorRow>
         <QueryOptionGroup
           title="Options"
-          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, queryDirection)}
+          collapsedInfo={getCollapsedInfo(app, query, queryType, maxLines, isLogQuery, isValidStep, queryDirection)}
           queryStats={queryStats}
         >
           <EditorField
@@ -209,12 +211,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 );
 
 function getCollapsedInfo(
+  app: CoreApp | undefined,
   query: LokiQuery,
   queryType: LokiQueryType,
   maxLines: number,
   isLogQuery: boolean,
   isValidStep: boolean,
-  direction: LokiQueryDirection
+  direction: LokiQueryDirection | undefined
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
@@ -229,7 +232,7 @@ function getCollapsedInfo(
 
   if (isLogQuery) {
     items.push(`Line limit: ${query.maxLines ?? maxLines}`);
-    items.push(`Direction: ${getQueryDirectionLabel(direction)}`);
+    items.push(`Direction: ${getQueryDirectionLabel(app, direction)}`);
   } else {
     if (query.step) {
       items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
