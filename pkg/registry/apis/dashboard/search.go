@@ -253,12 +253,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	resourceType := queryParams.Get("type")
-	if resourceType != "" {
+	if queryParams.Has("type") {
+		resourceTypes := []string{}
+		resourceTypes = append(resourceTypes, queryParams["type"]...)
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      resource.SEARCH_FIELD_KIND,
-			Operator: "=",
-			Values:   []string{resourceType},
+			Operator: "in",
+			Values:   resourceTypes,
 		}}
 	}
 

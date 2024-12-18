@@ -463,6 +463,23 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	case selection.LessThan:
 	case selection.Exists:
 	case selection.In:
+		if len(req.Values) == 0 {
+			return query.NewMatchAllQuery(), nil
+		}
+		if len(req.Values) == 1 {
+			q := query.NewMatchQuery(req.Values[0])
+			q.FieldVal = prefix + req.Key
+			return q, nil
+		}
+
+		disjuncts := []query.Query{}
+		for _, v := range req.Values {
+			q := query.NewMatchQuery(v)
+			q.FieldVal = prefix + req.Key
+			disjuncts = append(disjuncts, q)
+		}
+
+		return query.NewDisjunctionQuery(disjuncts), nil
 	case selection.NotIn:
 	}
 	return nil, resource.NewBadRequestError(

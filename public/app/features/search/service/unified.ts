@@ -53,6 +53,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+
+    if (query.kind?.length === 1 && query.kind[0] === 'dashboard') {
+      // TODO: this is browse mode, so skip the search
+      return noDataResponse();
+    }
+
     return this.doSearchQuery(query);
   }
 
@@ -69,16 +75,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       });
     }
     // Nothing is starred
-    return {
-      view: new DataFrameView({ length: 0, fields: [] }),
-      totalRows: 0,
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-        return;
-      },
-      isItemLoaded: (index: number): boolean => {
-        return true;
-      },
-    };
+    return noDataResponse();
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -122,6 +119,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
     uri += `?query=${encodeURIComponent(qry)}`;
     if (req.limit) {
       uri += `&limit=${req.limit}`;
+    }
+
+    if (req.kind) {  // filter resource types
+      // resource "kind" is plural on the backend
+      uri += '&' + req.kind.map((kind) => `type=${encodeURIComponent(`${kind}s`)}`).join('&');
     }
 
     if (req.tags) {
@@ -235,6 +237,19 @@ const sortTimeFields = [
   { name: 'created_at', display: 'Created time' },
   { name: 'updated_at', display: 'Updated time' },
 ];
+
+function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
+  return {
+    view: new DataFrameView({ length: 0, fields: [] }),
+    totalRows: 0,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      return;
+    },
+    isItemLoaded: (index: number): boolean => {
+      return true;
+    },
+  };
+}
 
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
