@@ -28,7 +28,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     dashboard.setState({
       overlay: undefined,
       // Reset meta to initial state if it's a new dashboard to remove provisioned fields
-      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.useState().meta,
+      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.state.meta,
     });
   };
 
