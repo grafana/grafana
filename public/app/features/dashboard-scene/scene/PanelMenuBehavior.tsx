@@ -19,7 +19,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
@@ -90,6 +90,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'link',
         shortcut: 'p u',
         onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.link,
+            shareResource: getTrackingSource(panel?.getRef()),
+          });
+
           const drawer = new ShareDrawer({
             shareView: shareDashboardType.link,
             panelRef: panel.getRef(),
@@ -103,6 +108,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'arrow',
         shortcut: 'p e',
         onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.embed,
+            shareResource: getTrackingSource(panel.getRef()),
+          });
+
           const drawer = new ShareDrawer({
             shareView: shareDashboardType.embed,
             panelRef: panel.getRef(),
@@ -122,6 +132,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           iconClassName: 'camera',
           shortcut: 'p s',
           onClick: () => {
+            DashboardInteractions.sharingCategoryClicked({
+              item: shareDashboardType.snapshot,
+              shareResource: getTrackingSource(panel.getRef()),
+            });
+
             const drawer = new ShareDrawer({
               shareView: shareDashboardType.snapshot,
               panelRef: panel.getRef(),
