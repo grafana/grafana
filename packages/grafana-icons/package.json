@@ -56,7 +56,7 @@
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.1.1",
-    "rollup-plugin-node-externals": "7.1.3",
+    "rollup-plugin-node-externals": "8.0.0",
     "ts-node": "10.9.2",
     "typescript": "5.5.4"
   },
