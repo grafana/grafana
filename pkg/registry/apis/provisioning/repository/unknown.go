@@ -112,15 +112,3 @@ func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, re
 		},
 	}
 }
-
-func (r *unknownRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *unknownRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *unknownRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {
-	return nil
-}

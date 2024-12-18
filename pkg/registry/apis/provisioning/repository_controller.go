@@ -20,6 +20,7 @@ import (
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -199,8 +200,13 @@ func (rc *RepositoryController) sync(key string) error {
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
 		// FIXME: this is never called because the cache does not contain the repository
+		// TODO: use "finalizer"
 		logger.InfoContext(ctx, "deleting repository")
-		return repo.OnDelete(ctx, logger)
+		hooks, ok := repo.(repository.RepositoryHooks)
+		if ok {
+			return hooks.OnDelete(ctx, logger)
+		}
+		return nil
 	}
 
 	// Did the spec change
@@ -229,15 +235,18 @@ func (rc *RepositoryController) sync(key string) error {
 
 	var status *provisioning.RepositoryStatus
 	if res.Success {
-		if cachedRepo.Status.Initialized {
-			status, err = repo.OnUpdate(ctx, logger)
-			if err != nil {
-				return fmt.Errorf("on create repository: %w", err)
-			}
-		} else {
-			status, err = repo.OnCreate(ctx, logger)
-			if err != nil {
-				return fmt.Errorf("on create repository: %w", err)
+		hooks, ok := repo.(repository.RepositoryHooks)
+		if ok {
+			if cachedRepo.Status.Initialized {
+				status, err = hooks.OnUpdate(ctx, logger)
+				if err != nil {
+					return fmt.Errorf("on create repository: %w", err)
+				}
+			} else {
+				status, err = hooks.OnCreate(ctx, logger)
+				if err != nil {
+					return fmt.Errorf("on create repository: %w", err)
+				}
 			}
 		}
 
