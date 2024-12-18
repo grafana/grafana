@@ -75,7 +75,7 @@ export function useFilteredRulesIteratorProvider() {
     const dataSourcesIterator = merge(source, ...iterables).pipe(
       filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
-      // filter(([_, __, rule]) => ruleFilter(rule, filterState)),
+      filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
 

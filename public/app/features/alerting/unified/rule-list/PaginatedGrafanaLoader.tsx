@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
@@ -19,6 +19,13 @@ export function PaginatedGrafanaLoader() {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
   const groupsGenerator = useRef(grafanaGroupsGenerator(GROUP_PAGE_SIZE));
+
+  useEffect(() => {
+    const currentGenerator = groupsGenerator.current;
+    return () => {
+      currentGenerator.return();
+    };
+  }, []);
 
   const {
     page: groupsPage,

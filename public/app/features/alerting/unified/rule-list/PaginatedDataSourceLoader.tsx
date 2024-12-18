@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
@@ -24,6 +24,13 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
 
   const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, GROUP_PAGE_SIZE));
+
+  useEffect(() => {
+    const currentGenerator = groupsGenerator.current;
+    return () => {
+      currentGenerator.return();
+    };
+  }, [groupsGenerator]);
 
   const {
     page: groupsPage,
