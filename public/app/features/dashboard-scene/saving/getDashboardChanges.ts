@@ -6,6 +6,7 @@ import {
   AdHocFilterWithLabels,
   AdhocVariableSpec,
   DashboardV2Spec,
+  VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { jsonDiff } from '../settings/version-history/utils';
@@ -66,8 +67,6 @@ export function getRawDashboardV2Changes(
     diffCount,
     hasChanges: diffCount > 0,
     hasTimeChanges: hasTimeChanged,
-    // TODO: VERSION IS IN METADATA
-    isNew: changedSaveModel.version === 0,
     hasVariableValueChanges,
     hasRefreshChange: hasRefreshChanged,
   };
@@ -110,11 +109,14 @@ export function getRawDashboardChanges(
   };
 }
 
-interface PersistedTimeRangeProps {
+interface DefaultPersistedTimeValue {
   from?: string;
   to?: string;
 }
-export function getHasTimeChanged(newRange: PersistedTimeRangeProps = {}, previousRange: PersistedTimeRangeProps = {}) {
+export function getHasTimeChanged(
+  newRange: DefaultPersistedTimeValue = {},
+  previousRange: DefaultPersistedTimeValue = {}
+) {
   return newRange.from !== previousRange.from || newRange.to !== previousRange.to;
 }
 
@@ -153,18 +155,22 @@ export function applyVariableChangesV2(
   let hasVariableValueChanges = false;
 
   for (const variable of variablesToSave) {
-    const hasCurrent = (v: typeof variable) =>
+    const hasCurrentValueToSave = (v: VariableKind) =>
       v.kind === 'QueryVariable' ||
       v.kind === 'CustomVariable' ||
       v.kind === 'DatasourceVariable' ||
       v.kind === 'ConstantVariable' ||
       v.kind === 'IntervalVariable' ||
-      v.kind === 'TextVariable';
-    const hasOptions = (v: typeof variable) =>
+      v.kind === 'TextVariable' ||
+      v.kind === 'GroupByVariable';
+
+    const hasOptionsToSave = (v: VariableKind) =>
       v.kind === 'QueryVariable' ||
       v.kind === 'CustomVariable' ||
       v.kind === 'DatasourceVariable' ||
-      v.kind === 'IntervalVariable';
+      v.kind === 'IntervalVariable' ||
+      v.kind === 'GroupByVariable';
+
     const original = originalVariables.find(
       ({ spec, kind }) => spec.name === variable.spec.name && kind === variable.kind
     );
@@ -173,7 +179,11 @@ export function applyVariableChangesV2(
       continue;
     }
 
-    if (hasCurrent(variable) && hasCurrent(original) && !isEqual(variable.spec.current, original.spec.current)) {
+    if (
+      hasCurrentValueToSave(variable) &&
+      hasCurrentValueToSave(original) &&
+      !isEqual(variable.spec.current, original.spec.current)
+    ) {
       hasVariableValueChanges = true;
     } else if (
       variable.kind === 'AdhocVariable' &&
@@ -187,10 +197,10 @@ export function applyVariableChangesV2(
       if (variable.kind === 'AdhocVariable') {
         variable.spec.filters = (original.spec as AdhocVariableSpec).filters;
       } else {
-        if (hasCurrent(variable) && hasCurrent(original)) {
+        if (hasCurrentValueToSave(variable) && hasCurrentValueToSave(original)) {
           variable.spec.current = original.spec.current;
         }
-        if (hasOptions(variable) && hasOptions(original)) {
+        if (hasOptionsToSave(variable) && hasOptionsToSave(original)) {
           variable.spec.options = original.spec.options;
         }
       }

@@ -41,7 +41,7 @@ DashboardV2Spec: {
   timeSettings: TimeSettingsSpec
 
   // Configured template variables.
-  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind]
+  variables: [...VariableKind]
 
   elements: [ElementReference.name]: PanelKind // |* more element types in the future
 
@@ -547,6 +547,8 @@ VariableCustomFormatterFn: {
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
 			"system" | "snapshot"
+
+VariableKind: QueryVariableKind  | TextVariableKind  | ConstantVariableKind  | DatasourceVariableKind  | IntervalVariableKind  | CustomVariableKind  | GroupByVariableKind  | AdhocVariableKind
 
 // Sort variable options
 // Accepted values are:

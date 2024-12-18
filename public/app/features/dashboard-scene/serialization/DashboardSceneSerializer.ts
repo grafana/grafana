@@ -5,7 +5,7 @@ import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDa
 import { getV1SchemaPanelCounts, getV1SchemaVariables } from 'app/features/dashboard/utils/tracking';
 import { SaveDashboardResponseDTO } from 'app/types';
 
-import { getRawDashboardChanges } from '../saving/getDashboardChanges';
+import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -126,10 +126,30 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     return {} as DashboardV2Spec;
   }
 
-  getDashboardChangesFromScene(scene: DashboardScene) {
-    throw new Error('v2 schema: Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardChangeInfo;
+  getDashboardChangesFromScene(
+    scene: DashboardScene,
+    options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
+  ) {
+    const changedSaveModel = this.getSaveModel(scene);
+    console.log('changedSaveModel', changedSaveModel);
+    console.log('this.initialSaveModel', this.initialSaveModel);
+    const changeInfo = getRawDashboardV2Changes(
+      this.initialSaveModel!,
+      changedSaveModel,
+      options.saveTimeRange,
+      options.saveVariables,
+      options.saveRefresh
+    );
+
+    const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
+    const isNew = scene.getInitialState()?.meta.isNew;
+
+    return {
+      ...changeInfo,
+      hasFolderChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      isNew,
+    };
   }
 
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {

@@ -436,7 +436,7 @@ function getDefaultDataSourceRef(): DataSourceRef | undefined {
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.bootData.settings.datasources ?? {};
   const ds = dsList[defaultDatasource];
 
   if (ds) {

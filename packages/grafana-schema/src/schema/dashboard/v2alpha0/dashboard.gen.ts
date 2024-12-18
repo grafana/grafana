@@ -30,7 +30,7 @@ export interface DashboardV2Spec {
 	tags?: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
-	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind)[];
+	variables: VariableKind[];
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
@@ -800,6 +800,10 @@ export const defaultVariableCustomFormatterFn = (): VariableCustomFormatterFn =>
 export type VariableType = "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" | "snapshot";
 
 export const defaultVariableType = (): VariableType => ("query");
+
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+
+export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
 // Sort variable options
 // Accepted values are:
