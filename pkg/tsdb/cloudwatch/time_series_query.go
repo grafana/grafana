@@ -34,7 +34,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 
 	timeBatches := backend.BatchDataQueriesByTimeRange(req.Queries)
 	requestQueriesByRegion := make(map[string][]*models.CloudWatchQuery)
-	numQueries := 0
 	for i, timeBatch := range timeBatches {
 		startTime := timeBatch[0].TimeRange.From
 		endTime := timeBatch[0].TimeRange.To
@@ -46,7 +45,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		if err != nil {
 			return nil, err
 		}
-		numQueries += len(requestQueries)
 
 		for _, query := range requestQueries {
 			key := fmt.Sprintf("%d %s", i, query.Region)
@@ -56,7 +54,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 			requestQueriesByRegion[key] = append(requestQueriesByRegion[key], query)
 		}
 	}
-	if numQueries == 0 {
+	if len(requestQueriesByRegion) == 0 {
 		return backend.NewQueryDataResponse(), nil
 	}
 
