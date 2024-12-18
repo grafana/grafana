@@ -485,6 +485,7 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
+	builtIn: false,
 	enable: false,
 	filter: defaultAnnotationPanelFilter(),
 	hide: false,

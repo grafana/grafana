@@ -401,6 +401,7 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
     const result: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: Boolean(layer.state.query.builtIn),
         name: layer.state.query.name,
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
         enable: Boolean(layer.state.isEnabled),
@@ -412,15 +413,11 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
 
     // Check if DataQueryKind exists
     const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query.kind === queryKind) {
+    if (layer.state.query.query?.kind === queryKind) {
       result.spec.query = {
         kind: queryKind,
         spec: layer.state.query.query.spec,
       };
-    }
-
-    if (layer.state.query.builtIn !== undefined) {
-      result.spec.builtIn = Boolean(layer.state.query.builtIn);
     }
 
     annotations.push(result);

@@ -104,7 +104,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       key: uniqueId('annotations-'),
       query: {
         ...annotation.spec,
-        builtIn: annotation.spec.builtIn !== undefined ? (annotation.spec.builtIn ? 1 : 0) : undefined,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
       },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),

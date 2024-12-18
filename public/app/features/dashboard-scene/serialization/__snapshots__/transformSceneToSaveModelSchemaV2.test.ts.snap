@@ -6,6 +6,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
+        "builtIn": false,
         "datasource": {
           "type": "grafana",
           "uid": "-- Grafana --",
@@ -23,6 +24,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
+        "builtIn": false,
         "datasource": {
           "type": "prometheus",
           "uid": "abcdef",
@@ -40,6 +42,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
+        "builtIn": false,
         "datasource": {
           "type": "loki",
           "uid": "Loki",
