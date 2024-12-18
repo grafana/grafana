@@ -329,7 +329,7 @@
     "file-saver": "2.0.5",
     "history": "4.10.1",
     "i18next": "^24.0.0",
-    "i18next-browser-languagedetector": "^7.0.2",
+    "i18next-browser-languagedetector": "^8.0.0",
     "immer": "10.1.1",
     "immutable": "4.3.7",
     "ix": "^7.0.0",
