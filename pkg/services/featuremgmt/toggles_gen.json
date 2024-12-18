@@ -2933,6 +2933,19 @@
     },
     {
       "metadata": {
+        "name": "prometheusSpecialCharsInLabelValues",
+        "resourceVersion": "1734047568531",
+        "creationTimestamp": "2024-12-12T23:52:48Z"
+      },
+      "spec": {
+        "description": "Adds support for quotes and special characters in label values for Prometheus queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusUsesCombobox",
         "resourceVersion": "1726140033271",
         "creationTimestamp": "2024-09-12T11:19:18Z",

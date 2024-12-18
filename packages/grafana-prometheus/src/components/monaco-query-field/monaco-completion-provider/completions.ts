@@ -3,6 +3,7 @@ import UFuzzy from '@leeoniya/ufuzzy';
 
 import { config } from '@grafana/runtime';
 
+import { prometheusRegularEscape } from '../../../datasource';
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
@@ -208,8 +209,13 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
+    insertText: formatLabelValueForCompletion(text, betweenQuotes),
   }));
+}
+
+function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): string {
+  const text = config.featureToggles.prometheusSpecialCharsInLabelValues ? prometheusRegularEscape(value) : value;
+  return betweenQuotes ? text : `"${text}"`;
 }
 
 export function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
