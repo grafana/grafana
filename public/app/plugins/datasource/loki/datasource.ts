@@ -75,6 +75,7 @@ import {
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
 import {
+  applyAutoQueryDirection,
   getLogQueryFromMetricsQuery,
   getLokiQueryFromDataQuery,
   getNodesFromQuery,
@@ -325,6 +326,7 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
+      .map((target) => (request.app === CoreApp.Explore ? applyAutoQueryDirection(target) : target))
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {

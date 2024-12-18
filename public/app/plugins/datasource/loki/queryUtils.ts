@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { store } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -26,7 +27,7 @@ import {
   VectorOp,
   BinOpExpr,
 } from '@grafana/lezer-logql';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, LogsSortOrder } from '@grafana/schema';
 
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
@@ -109,6 +110,16 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
     }
   } catch (e) {}
   return { ...rest, queryType };
+}
+
+export function applyAutoQueryDirection(query: LokiQuery): LokiQuery {
+  // See app/features/explore/Logs/utils/logs
+  const key = 'grafana.explore.logs.sortOrder';
+  const autoOrder = store.get(key) || LogsSortOrder.Descending;
+  if (isLogsQuery(query.expr) && !query.direction) {
+    query.direction = autoOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+  }
+  return query;
 }
 
 export function getLokiQueryType(query: LokiQuery): LokiQueryType {
