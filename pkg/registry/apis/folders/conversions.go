@@ -63,9 +63,7 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (*unstruc
 	return obj, nil
 }
 
-func LegacyMoveCommandToUnstructured(cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
-	obj := &unstructured.Unstructured{}
-	obj.SetName(cmd.UID)
+func LegacyMoveCommandToUnstructured(obj *unstructured.Unstructured, cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
 	if err := setParentUID(obj, cmd.NewParentUID); err != nil {
 		return &unstructured.Unstructured{}, err
 	}

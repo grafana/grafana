@@ -849,6 +849,8 @@ func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
+	ctx := c.Req.Context()
+
 	cmd := folder.MoveFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
@@ -858,7 +860,13 @@ func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
 	cmd.UID = web.Params(c.Req)[":uid"]
 	cmd.SignedInUser = c.SignedInUser
 
-	obj, err := internalfolders.LegacyMoveCommandToUnstructured(cmd)
+	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	obj, err = internalfolders.LegacyMoveCommandToUnstructured(obj, cmd)
 	if err != nil {
 		fk8s.writeError(c, err)
 		return

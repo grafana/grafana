@@ -356,7 +356,6 @@ func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtim
 	var newParent = getParent(obj)
 	if newParent != getParent(fOld) {
 		// it's a move operation
-		obj = fOld // populate the object to be updated with all the values from the existing one
 		return b.validateMove(ctx, obj, newParent)
 	}
 	// it's a spec update
@@ -383,12 +382,5 @@ func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object,
 	if len(parents)+1 >= folderValidationRules.maxDepth {
 		return folder.ErrMaximumDepthReached
 	}
-
-	// updating the parent on the existing folder
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
-	}
-	meta.SetFolder(newParent)
 	return nil
 }
