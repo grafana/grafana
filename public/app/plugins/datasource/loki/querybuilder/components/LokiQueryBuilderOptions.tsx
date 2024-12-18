@@ -7,6 +7,7 @@ import {
   isValidDuration,
   isValidGrafanaDuration,
   LogSortOrderChangeEvent,
+  LogsSortOrder,
   SelectableValue,
 } from '@grafana/data';
 import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
@@ -95,9 +96,15 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     useEffect(() => {
       getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
-        console.log(sortEvent);
+        const newDirection =
+          sortEvent.payload.order === LogsSortOrder.Ascending
+            ? LokiQueryDirection.Forward
+            : LokiQueryDirection.Backward;
+        if (newDirection !== query.direction) {
+          onQueryDirectionChange(newDirection);
+        }
       });
-    }, []);
+    }, [onQueryDirectionChange, query.direction]);
 
     let queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
