@@ -23,9 +23,12 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   public onClose = () => {
-    this.state.dashboardRef.resolve().setState({
+    const dashboard = this.state.dashboardRef.resolve();
+    const changeInfo = dashboard.getDashboardChanges();
+    dashboard.setState({
       overlay: undefined,
-      meta: { k8s: { annotations: { [AnnoKeyRepoName]: undefined } }, folderUid: undefined },
+      // Reset meta to initial state if it's a new dashboard to remove provisioned fields
+      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.useState().meta,
     });
   };
 

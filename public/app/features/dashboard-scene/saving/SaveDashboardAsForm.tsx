@@ -136,7 +136,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
             dashboard.setState({
-              meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+              meta: {
+                k8s: { annotations: { [AnnoKeyRepoName]: repository } },
+                folderUid: uid,
+              },
             });
           }}
           // Old folder picker fields
