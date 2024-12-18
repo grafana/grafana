@@ -229,6 +229,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section                                                                                                                                                                                                                         |
 | `useV2DashboardsAPI`                          | Use the v2 kubernetes API in the frontend for dashboards                                                                                                                                                                                                                          |
 | `unifiedHistory`                              | Displays the navigation history so the user can navigate back to previous pages                                                                                                                                                                                                   |
+| `investigationsBackend`                       | Enable the investigations backend API                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

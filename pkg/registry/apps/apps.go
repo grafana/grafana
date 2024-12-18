@@ -5,10 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apps/investigation"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/client-go/rest"
 )
 
@@ -25,7 +27,9 @@ type Service struct {
 func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
+	features featuremgmt.FeatureToggles,
 	playlistAppProvider *playlist.PlaylistAppProvider,
+	investigationAppProvider *investigation.InvestigationAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
@@ -40,11 +44,19 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+
+	var apiGroupRunner *runner.APIGroupRunner
+	var err error
+	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
+		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider, investigationAppProvider)
+	} else {
+		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	return &Service{runner: runner, log: log.New("app-registry")}, nil
+	return &Service{runner: apiGroupRunner, log: log.New("app-registry")}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {

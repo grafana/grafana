@@ -186,6 +186,15 @@ linters-settings:
         files:
           - ./apps/playlist/*
           - ./apps/playlist/**/*
+      apps-investigation:
+        list-mode: lax
+        allow: []
+        deny:
+          - pkg: github.com/grafana/grafana/pkg
+            desc: apps/investigation is not allowed to import grafana core
+        files:
+          - ./apps/investigation/*
+          - ./apps/investigation/**/*
   gocritic:
     enabled-checks:
       - ruleguard
@@ -295,4 +304,3 @@ issues:
         - gosec
       path: (.+)_test\.go
       text: G601
-
