@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -124,16 +125,35 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return nil // This is normal for sub-resource
 	}
 
+	groupKind := obj.GetObjectKind().GroupVersionKind().GroupKind()
+
+	// Generic validations for all kinds. At this point the name+namespace must not be empty.
+	if a.GetName() == "" {
+		return apierrors.NewInvalid(
+			groupKind,
+			a.GetName(),
+			field.ErrorList{field.Required(field.NewPath("metadata", "name"), "a `name` is required")},
+		)
+	}
+
+	if a.GetNamespace() == "" {
+		return apierrors.NewInvalid(
+			groupKind,
+			a.GetName(),
+			field.ErrorList{field.Required(field.NewPath("metadata", "namespace"), "a `namespace` is required")},
+		)
+	}
+
 	switch typedObj := obj.(type) {
 	case *secretV0Alpha1.SecureValue:
 		if errs := reststorage.ValidateSecureValue(typedObj, operation); len(errs) > 0 {
-			return apierrors.NewInvalid(secretV0Alpha1.SecureValuesResourceInfo.GroupVersionKind().GroupKind(), a.GetName(), errs)
+			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
 
 		return nil
 	case *secretV0Alpha1.Keeper:
 		if errs := reststorage.ValidateKeeper(typedObj, operation); len(errs) > 0 {
-			return apierrors.NewInvalid(secretV0Alpha1.SecureValuesResourceInfo.GroupVersionKind().GroupKind(), a.GetName(), errs)
+			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
 
 		return nil
