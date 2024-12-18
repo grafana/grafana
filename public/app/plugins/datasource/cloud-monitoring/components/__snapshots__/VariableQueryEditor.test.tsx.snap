@@ -93,7 +93,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
             <svg
               aria-hidden={true}
               className="css-1d3xu67-Icon"
-              height={16}
+              height={14}
               id="public/img/icons/unicons/angle-down.svg"
               loader={
                 <div
@@ -101,7 +101,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
                 />
               }
               title=""
-              width={16}
+              width={14}
             />
           </div>
         </div>
