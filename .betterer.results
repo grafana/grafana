@@ -6433,11 +6433,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/dashboard/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/dashboard/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./runSharedRequest\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./DashboardQueryEditor\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./types\`)", "2"]
-    ],
     "public/app/plugins/datasource/dashboard/runSharedRequest.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
