@@ -323,6 +323,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
   };
 
+  onPinLineCallback = () => {
+    this.setState({ contentOutlineVisible: true });
+  };
+
   renderEmptyState(exploreContainerStyles: string) {
     return (
       <div className={cx(exploreContainerStyles)}>
@@ -414,6 +418,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     );
   }
 
+  splitOpenFnLogs = this.onSplitOpen('logs');
+
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -435,14 +441,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onStartScanning={this.onStartScanning}
           onStopScanning={this.onStopScanning}
           eventBus={this.logsEventBus}
-          splitOpenFn={this.onSplitOpen('logs')}
+          splitOpenFn={this.splitOpenFnLogs}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
-          onPinLineCallback={() => {
-            this.setState({ contentOutlineVisible: true });
-          }}
+          onPinLineCallback={this.onPinLineCallback}
         />
       </ContentOutlineItem>
     );
