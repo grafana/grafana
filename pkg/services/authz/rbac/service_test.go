@@ -191,14 +191,14 @@ func TestService_getUserTeams(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			req := &CheckRequest{Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}}
+			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
 
 			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userTeamCacheKey(req.Namespace.Value, userIdentifiers.UID), tc.expectedTeams, 0)
+				cacheService.Set(userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams, 0)
 			}
 
 			s := &Service{
@@ -207,7 +207,7 @@ func TestService_getUserTeams(t *testing.T) {
 				logger:        log.New("test"),
 			}
 
-			teams, err := s.getUserTeams(ctx, req, userIdentifiers)
+			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
 			if tc.expectedError {
 				require.Error(t, err)
 				return
@@ -272,14 +272,14 @@ func TestService_getUserBasicRole(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			req := &CheckRequest{Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}}
+			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
 
 			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID), tc.expectedRole, 0)
+				cacheService.Set(userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole, 0)
 			}
 
 			s := &Service{
@@ -288,7 +288,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 				logger:         log.New("test"),
 			}
 
-			role, err := s.getUserBasicRole(ctx, req, userIdentifiers)
+			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
 			if tc.expectedError {
 				require.Error(t, err)
 				return
@@ -342,15 +342,12 @@ func TestService_getUserPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
-			req := &CheckRequest{
-				Namespace: claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12},
-				UserUID:   userID.UID,
-				Action:    "dashboards:read",
-			}
+			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+			action := "dashboards:read"
 
 			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userPermCacheKey(req.Namespace.Value, userID.UID, req.Action), tc.expectedPerms, 0)
+				cacheService.Set(userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms, 0)
 			}
 
 			store := &fakeStore{
@@ -371,7 +368,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 			}
 
-			perms, err := s.getUserPermissions(ctx, req)
+			perms, err := s.getUserPermissions(ctx, ns, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
