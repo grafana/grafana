@@ -5,18 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Field,
-  Input,
-  LinkButton,
-  RadioButtonGroup,
-  Spinner,
-  Stack,
-  TextArea,
-  TextLink,
-} from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Spinner, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
@@ -161,6 +150,23 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
+        {isGitHub && workflow === WorkflowOption.PullRequest && !isDirty && (
+          <Alert
+            severity="success"
+            title="Branch successfully created"
+            buttonContent={
+              <Stack alignItems={'center'}>
+                <span>Open pull request in GitHub</span>
+                <Icon name="external-link-alt" />
+              </Stack>
+            }
+            onRemove={() => {
+              window.open(href, '_blank');
+            }}
+          >
+            You can now open a pull request in Github.
+          </Alert>
+        )}
         <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
           <Input
             {...register('title', { required: 'Required', validate: validateDashboardName })}
@@ -248,12 +254,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           />
         </Field>
 
-        {workflow === WorkflowOption.PullRequest && isDirty && (
-          <Alert severity="warning" title="Unsaved changes">
-            You have unsaved changes. Please save them before opening a pull request.
-          </Alert>
-        )}
-
         {prURL && (
           <Alert severity="info" title="Pull request created">
             A pull request has been created with changes to this dashboard:{' '}
@@ -269,18 +269,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
             Cancel
           </Button>
-          {isGitHub && workflow === WorkflowOption.PullRequest && (
-            <LinkButton
-              variant="secondary"
-              href={href}
-              fill="outline"
-              target={'_blank'}
-              rel={'noreferrer noopener'}
-              disabled={isDirty}
-            >
-              Open pull request
-            </LinkButton>
-          )}
         </Stack>
       </Stack>
     </form>

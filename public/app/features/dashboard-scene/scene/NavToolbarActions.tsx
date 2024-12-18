@@ -73,6 +73,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+  const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName]);
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -121,7 +122,7 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (meta.k8s?.annotations?.[AnnoKeyRepoName]) {
+  if (isProvisionedNG) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
@@ -593,7 +594,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isProvisionedNG) {
         return (
           <Button
             onClick={() => {
@@ -627,15 +628,6 @@ export function ToolbarActions({ dashboard }: Props) {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
-          {!meta.k8s?.annotations?.[AnnoKeyRepoName] && (
-            <Menu.Item
-              label="Save to repository"
-              icon="github"
-              onClick={() => {
-                dashboard.openSaveDrawer({ saveProvisioned: true });
-              }}
-            />
-          )}
         </Menu>
       );
 
