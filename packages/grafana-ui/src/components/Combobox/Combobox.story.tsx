@@ -33,13 +33,13 @@ const meta: Meta<PropsAndCustomArgs> = {
       {
         label: 'Apple',
         value: 'apple',
-        description: '',
+        description: 'Apples are a great source of fiber and vitamin C.',
       },
       {
         label: 'Banana',
         value: 'banana',
         description:
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+          'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
       },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow

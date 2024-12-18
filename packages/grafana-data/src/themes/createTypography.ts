@@ -30,7 +30,6 @@ export interface ThemeTypography extends ThemeTypographyVariantTypes {
   };
 
   pxToRem: (px: number) => string;
-  remToPx: (rem: number) => number;
 }
 
 export interface ThemeTypographyVariant {
@@ -84,7 +83,6 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 
   const coef = fontSize / 14;
   const pxToRem = (size: number) => `${(size / htmlFontSize) * coef}rem`;
-  const remToPx = (size: number) => (size * htmlFontSize) / coef;
   const buildVariant = (
     fontWeight: number,
     size: number,
@@ -130,7 +128,6 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   return {
     htmlFontSize,
     pxToRem,
-    remToPx,
     fontFamily,
     fontFamilyMonospace,
     fontSize,
