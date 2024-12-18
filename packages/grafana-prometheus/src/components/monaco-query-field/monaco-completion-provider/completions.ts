@@ -11,17 +11,20 @@ import { isValidLegacyName } from '../../../utf8_support';
 import { DataProvider } from './data_provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
-
-import CompletionItemInsertTextRule = languages.CompletionItemInsertTextRule;
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
+
+// We cannot use languages.CompletionItemInsertTextRule.InsertAsSnippet because grafana-prometheus package isn't compatible
+// It should first change the moduleResolution to bundler for TS to correctly resolve the types
+// https://github.com/grafana/grafana/pull/96450
+const InsertAsSnippet = 4;
 
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
-  insertTextRules?: CompletionItemInsertTextRule;
+  insertTextRules?: languages.CompletionItemInsertTextRule;
   detail?: string;
   documentation?: string;
   triggerOnInsert?: boolean;
@@ -88,7 +91,7 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
     ...(metric.isUtf8
       ? {
           insertText: `{"${metric.name}"${snippetMarker}}`,
-          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          insertTextRules: InsertAsSnippet,
         }
       : {
           insertText: metric.name,
@@ -183,7 +186,7 @@ async function getLabelNamesForCompletions(
       ...(isUtf8
         ? {
             insertText: `"${text}"${suffix}`,
-            insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            insertTextRules: InsertAsSnippet,
           }
         : {
             insertText: `${text}${suffix}`,
