@@ -217,7 +217,7 @@ function getCollapsedInfo(
   maxLines: number,
   isLogQuery: boolean,
   isValidStep: boolean,
-  direction: LokiQueryDirection | undefined
+  direction: LokiQueryDirection
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
