@@ -96,6 +96,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           buildUrl={model.buildUrl}
           imageUrl={imageUrl}
           disabled={!isDashboardSaved}
+          theme={selectedTheme}
         />
       </Stack>
     </div>

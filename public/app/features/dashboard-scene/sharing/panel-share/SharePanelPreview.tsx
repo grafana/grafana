@@ -11,6 +11,8 @@ import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { DashboardInteractions } from '../../utils/interactions';
+
 type ImageSettingsForm = {
   width: number;
   height: number;
@@ -22,11 +24,12 @@ type Props = {
   buildUrl: (urlParams: UrlQueryMap) => void;
   imageUrl: string;
   disabled: boolean;
+  theme: string;
 };
 
 const selector = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally.SharePanel;
 
-export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props) {
+export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }: Props) {
   const styles = useStyles2(getStyles);
 
   const {
@@ -48,11 +51,20 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
   }, [buildUrl, watch]);
 
   const [{ loading, value: image, error }, renderImage] = useAsyncFn(async () => {
+    const { width, height, scaleFactor } = watch();
+    DashboardInteractions.generatePanelImageClicked({
+      width,
+      height,
+      scaleFactor,
+      theme,
+      shareResource: 'panel',
+    });
     const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
     return new Blob([response.data], { type: 'image/png' });
-  }, [imageUrl, watch('width'), watch('height')]);
+  }, [imageUrl, watch('width'), watch('height'), watch('scaleFactor'), theme]);
 
   const onDownloadImageClick = () => {
+    DashboardInteractions.downloadPanelImageClicked({ shareResource: 'panel' });
     saveAs(image!, `${title}.png`);
   };
 
