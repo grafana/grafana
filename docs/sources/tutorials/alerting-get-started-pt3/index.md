@@ -337,7 +337,7 @@ In this section we configure an alert rule based on our application monitoring e
 
 ### Enter an alert rule name
 
-Make it short and descriptive as this will appear in your alert notification. For instance, `High CPU usage - Multi-region`.
+Make it short and descriptive as this appears in your alert notification. For instance, `High CPU usage - Multi-region`.
 
 ### Define query and alert condition
 
