@@ -17,6 +17,7 @@ var (
 	sqlUserPerms       = mustTemplate("permission_query.sql")
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
 	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
+	sqlFolders         = mustTemplate("folder_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -88,5 +89,24 @@ func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery)
 		UserRoleTable:    sql.Table("user_role"),
 		TeamRoleTable:    sql.Table("team_role"),
 		BuiltinRoleTable: sql.Table("builtin_role"),
+	}
+}
+
+type getFoldersQuery struct {
+	sqltemplate.SQLTemplate
+	Query *FolderQuery
+
+	FolderTable string
+}
+
+func (r getFoldersQuery) Validate() error {
+	return nil
+}
+
+func newGetFolders(sql *legacysql.LegacyDatabaseHelper, q *FolderQuery) getFoldersQuery {
+	return getFoldersQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       q,
+		FolderTable: sql.Table("folder"),
 	}
 }
