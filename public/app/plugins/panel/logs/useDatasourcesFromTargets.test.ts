@@ -1,5 +1,5 @@
 // CustomHook.test.js
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, waitFor } from '@testing-library/react';
 import { MockDataSourceApi, DatasourceSrvMock } from 'test/mocks/datasource_srv';
 
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets'; // Update the path accordingly
@@ -20,11 +20,11 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('useDatasourcesFromTargets', () => {
   it('returns an empty map when targets are not provided', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useDatasourcesFromTargets(undefined));
+    const { result } = renderHook(() => useDatasourcesFromTargets(undefined));
 
-    await waitForNextUpdate();
-
-    expect(result.current.size).toBe(0);
+    await waitFor(() => {
+      expect(result.current.size).toBe(0);
+    });
   });
 
   it('fetches and returns the data sources map', async () => {
@@ -33,12 +33,12 @@ describe('useDatasourcesFromTargets', () => {
       { refId: '2', datasource: { uid: 'dataSource2' } },
     ];
 
-    const { result, waitForNextUpdate } = renderHook(() => useDatasourcesFromTargets(mockTargets));
+    const { result } = renderHook(() => useDatasourcesFromTargets(mockTargets));
 
-    await waitForNextUpdate();
-
-    expect(result.current.size).toBe(2);
-    expect(result.current.get('1')).toEqual(ds1);
-    expect(result.current.get('2')).toEqual(ds2);
+    await waitFor(() => {
+      expect(result.current.size).toBe(2);
+      expect(result.current.get('1')).toEqual(ds1);
+      expect(result.current.get('2')).toEqual(ds2);
+    });
   });
 });
