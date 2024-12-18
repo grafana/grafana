@@ -3826,11 +3826,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^5.34.0":
-  version: 5.34.0
-  resolution: "@grafana/scenes-react@npm:5.34.0"
+"@grafana/scenes-react@npm:^5.35.0":
+  version: 5.35.0
+  resolution: "@grafana/scenes-react@npm:5.35.0"
   dependencies:
-    "@grafana/scenes": "npm:5.34.0"
+    "@grafana/scenes": "npm:5.35.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3841,13 +3841,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/3aa132d2bce7e2615cc26c73b1f6988176e7d2c77826589237bb8322bc4d180381d9f19742ad84f788c4dbc1fa3ccbafdeaa6c704b6400796069837486cb03cf
+  checksum: 10/f70799e627ed12464266224bc42d7dbc1ce38753dd3e8ff48cef0e14639578e03d82d178657c7a30e8b4e5062b140e0d4faa94e7a4a73d7e0263338a43edf7d7
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.34.0, @grafana/scenes@npm:^5.34.0":
-  version: 5.34.0
-  resolution: "@grafana/scenes@npm:5.34.0"
+"@grafana/scenes@npm:5.35.0, @grafana/scenes@npm:^5.35.0":
+  version: 5.35.0
+  resolution: "@grafana/scenes@npm:5.35.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3864,7 +3864,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/a0b8f9d271a5db05b54345642622546549da1f4a7e36007980e3a4f66513ea98aecbff6403f5ef00cd430609587b83a2807404b4c7d4da670e5b8cc44ff57cb4
+  checksum: 10/deab041b4a3b3f99ed595e58f795aa06519020f85289a9544145e0b8969be6f826e470d98dc4981da9809bf9129f0fa11e26e3f8395fbe50923d51c85554b5ed
   languageName: node
   linkType: hard
 
@@ -17524,8 +17524,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.34.0"
-    "@grafana/scenes-react": "npm:^5.34.0"
+    "@grafana/scenes": "npm:^5.35.0"
+    "@grafana/scenes-react": "npm:^5.35.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"

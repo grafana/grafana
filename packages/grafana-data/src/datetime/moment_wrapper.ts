@@ -157,7 +157,7 @@ export const setWeekStart = (weekStart?: string) => {
   const language = getLocale().replace(suffix, '');
   const dow = weekStart ? getWeekdayIndexByEnglishName(weekStart) : -1;
   if (dow !== -1) {
-    moment.locale(language + suffix, {
+    moment.updateLocale(language + suffix, {
       parentLocale: language,
       week: {
         dow,
