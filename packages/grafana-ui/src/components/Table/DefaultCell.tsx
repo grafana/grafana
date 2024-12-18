@@ -28,13 +28,13 @@ export const DefaultCell = (props: TableCellProps) => {
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
-  const [hover, setHover] = useState(true);
+  const [hover, setHover] = useState(false);
   let value: string | ReactElement;
 
   const OG_TWEET_LENGTH = 140; // 🙏
 
   const onMouseLeave = () => {
-    //setHover(false);
+    setHover(false);
   };
   const onMouseEnter = () => {
     setHover(true);
