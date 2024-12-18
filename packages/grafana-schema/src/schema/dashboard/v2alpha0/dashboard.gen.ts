@@ -695,7 +695,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface PanelSpec {
-	uid: string;
+	id: number;
 	title: string;
 	description: string;
 	links: DataLink[];
@@ -705,7 +705,7 @@ export interface PanelSpec {
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
-	uid: "",
+	id: 0,
 	title: "",
 	description: "",
 	links: [],

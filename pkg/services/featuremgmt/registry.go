@@ -1663,6 +1663,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
@@ -1688,6 +1695,13 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
 		},
 	}
 )
