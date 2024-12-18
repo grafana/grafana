@@ -2332,6 +2332,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.260.3 h1:7ri52MhUMouQKf2q9z3RsxSX464
 github.com/grafana/grafana-plugin-sdk-go v0.260.3/go.mod h1:X+6ipUy022esjdomutNjHbH67CbJJzEhkrvvfMbvL8A=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 h1:JFB5dvs0XwBh/RiDNA5OrqcF3eWCQmTYBm6Hy79PDMQ=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7/go.mod h1:AVvGgNqHsruJINRjKkhhY5NZMh5ke6Ei2bywuQ4Uuus=
+github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 h1:KsHIuuPGww1U0G2CB1JYTasDaboJn0Cq91Je1aluEuc=
+github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6/go.mod h1:gvYsEUZYBqmKwsXapmAMiUBw5x9x7sb7sTLFVYsRpVU=
 github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f h1:zZN/Jy7PjoqtrMiBRV5O3x4xAArcSbUznuyAPACrKXI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f/go.mod h1:e97Zxn1WX4Wn9TXEvwTjMNwU6yrjX/K7uVNSCZyEwxY=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 h1:2H9x4q53pkfUGtSNYD1qSBpNnxrFgylof/TYADb5xMI=
