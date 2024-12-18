@@ -110,22 +110,3 @@ func newGetFolders(sql *legacysql.LegacyDatabaseHelper, q *FolderQuery) getFolde
 		FolderTable: sql.Table("folder"),
 	}
 }
-
-type getDashboardsQuery struct {
-	sqltemplate.SQLTemplate
-	Query *DashboardQuery
-
-	DashboardTable string
-}
-
-func (r getDashboardsQuery) Validate() error {
-	return nil
-}
-
-func newGetDashboards(sql *legacysql.LegacyDatabaseHelper, q *DashboardQuery) getDashboardsQuery {
-	return getDashboardsQuery{
-		SQLTemplate:    sqltemplate.New(sql.DialectForDriver()),
-		Query:          q,
-		DashboardTable: sql.Table("dashboard"),
-	}
-}
