@@ -272,12 +272,12 @@ function getCollapsedInfo(
 function getDefaultQueryDirection(app?: CoreApp) {
   if (app !== CoreApp.Explore) {
     /**
-     * The default direction is forward because the default sort order is Descending.
+     * The default direction is backward because the default sort order is Descending.
      * See:
      * - public/app/features/explore/Logs/Logs.tsx
      * - public/app/plugins/panel/logs/module.tsx
      */
-    return LokiQueryDirection.Forward;
+    return LokiQueryDirection.Backward;
   }
   // See app/features/explore/Logs/utils/logs
   const key = 'grafana.explore.logs.sortOrder';
