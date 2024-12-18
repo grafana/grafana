@@ -18,6 +18,7 @@ export interface AlertRuleTemplateGetPayload {
     page_size: number;
     index: number;
   };
+  reload?: boolean;
 }
 
 interface AlertRuleTemplatesTotals {

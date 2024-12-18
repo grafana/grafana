@@ -21,7 +21,7 @@ export const AlertRuleTemplateService = {
     return api
       .get<TemplatesListAPI, AlertRuleTemplateGetPayload>(BASE_URL, false, {
         cancelToken: token,
-        params: { ...payload },
+        params: { ...payload, reload: true },
       })
       .then(
         ({ totals, templates = [] }): TemplatesList => ({
