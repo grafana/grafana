@@ -120,14 +120,15 @@ When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](re
 
 Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control](ref:role-based-access-control).
 
+The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
+
+<!-- image here -->
+
 To create a report, follow these steps:
 
 1. Click **Dashboards > Reports** in the main menu.
-
-   The **Reports** page allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name at the top of the page.
-
 1. Click **+ Create a new report**.
-1. Configure the following report sections, as needed:
+1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
    - [Select dashboard](#select-dashboard)
    - [Format report](#format-report)
    - [Schedule](#schedule)
@@ -305,7 +306,7 @@ The last saved version of the report will be sent to selected emails. You can us
 
 ## Manage reports
 
-<!-- maybe an image of the reporting main page here -->
+The **Reports** page allows you to view, create, and update your reports.
 
 ### Edit
 
