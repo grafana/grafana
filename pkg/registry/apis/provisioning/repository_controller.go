@@ -7,7 +7,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -19,6 +19,7 @@ import (
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -27,9 +28,12 @@ type RepositoryController struct {
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
 
+	jobs jobs.JobQueue
+
 	// Converts config to instance
 	repoGetter RepoGetter
 	identities auth.BackgroundIdentityService
+	tester     *RepositoryTester
 
 	// To allow injection for testing.
 	syncFn            func(key string) error
@@ -46,6 +50,8 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
 	identities auth.BackgroundIdentityService,
+	tester *RepositoryTester,
+	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -59,7 +65,9 @@ func NewRepositoryController(
 		),
 		repoGetter: repoGetter,
 		identities: identities,
+		tester:     tester,
 		logger:     slog.Default().With("logger", "provisioning-repository-controller"),
+		jobs:       jobs,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -131,19 +139,12 @@ func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
 }
 
 func (rc *RepositoryController) deleteRepository(obj interface{}) {
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		rc.logger.Error("expected a Repository but got %T", obj)
-		return
-	}
-	// TODO: Add job that will remove everything owned by that repository
-	rc.logger.Info("TODO, remove everything from repository", "name", repo.Name)
-	// rc.enqueueRepository(repo)
+	rc.enqueueRepository(obj)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
+func (rc *RepositoryController) processNextWorkItem(_ context.Context) bool {
 	key, quit := rc.queue.Get()
 	if quit {
 		return false
@@ -171,69 +172,113 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
+	ctx := context.Background()
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
 	if apierrors.IsNotFound(err) {
+		rc.logger.DebugContext(ctx, "repository not found", "key", key)
 		return nil
 	}
 	if err != nil {
 		return err
 	}
 
+	rc.logger.DebugContext(ctx, "cached repository", "key", key, "repo", cachedRepo)
+
+	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, id)
+	logger := rc.logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+
+	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
+	if err != nil {
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
+	// The repository is deleted
+	if cachedRepo.DeletionTimestamp != nil {
+		// FIXME: this is never called because the cache does not contain the repository
+		logger.InfoContext(ctx, "deleting repository")
+		return repo.OnDelete(ctx, logger)
+	}
+
+	// Did the spec change
 	now := time.Now().UnixMilli()
-	elapsed := now - cachedRepo.Status.Health.Checked
-	if time.Duration(elapsed)*time.Millisecond < time.Second*30 {
-		// We checked status recently!
-		// avoids inf loop!!!
-		// This logic is not totally right -- we want to force this if anything in spec changed :thinkign:
+	generationChanged := cachedRepo.Generation != cachedRepo.Status.Health.Generation
+	elapsed := time.Duration(now-cachedRepo.Status.Health.Checked) * time.Millisecond
+	if elapsed < time.Millisecond*200 {
+		// avoids possible inf loop!!!
+		return nil
+	}
+	if elapsed < time.Second*30 && !generationChanged {
+		// We checked status recently! and the generation has not changed
 		return nil
 	}
 
-	// This is used for the health check client
-	id, err := rc.identities.WorkerIdentity(context.Background(), namespace)
+	res, err := rc.tester.TestRepository(ctx, repo)
 	if err != nil {
-		return err
-	}
-	ctx := identity.WithRequester(context.Background(), id)
-
-	// Make a copy we can mutate
-	cfg := cachedRepo.DeepCopy()
-	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
-	if err != nil {
-		cfg.Status.Health = provisioning.HealthStatus{
-			Checked: now,
-			Healthy: false,
-			Message: []string{
-				"Unable to create repository from configuration",
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"error running test repository",
 				err.Error(),
 			},
 		}
-	} else {
-		res, err := TestRepository(ctx, repo, rc.logger)
-		if err != nil {
-			res = &provisioning.TestResults{
-				Success: false,
-				Errors: []string{
-					"error running test repository",
-					err.Error(),
-				},
+	}
+
+	var status *provisioning.RepositoryStatus
+	if res.Success {
+		if cachedRepo.Status.Initialized {
+			status, err = repo.OnUpdate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
+			}
+		} else {
+			status, err = repo.OnCreate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
 			}
 		}
-		cfg.Status.Health = provisioning.HealthStatus{
-			Checked: now,
-			Healthy: res.Success,
-			Message: res.Errors,
+
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cachedRepo.Namespace,
+				Labels: map[string]string{
+					"repository": cachedRepo.Name,
+				},
+			},
+			Spec: provisioning.JobSpec{
+				Action: provisioning.JobActionSync,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("trigger sync job: %w", err)
 		}
+		logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
+	} else {
+		logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
 	}
 
-	_, err = rc.client.Repositories(cfg.GetNamespace()).
-		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
+	if status == nil {
+		status = cachedRepo.Status.DeepCopy()
+	} else {
+		status.Initialized = true
+	}
 
-	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
-		// deleted or changed in the meantime, we'll get called again
-		return nil
+	status.Health = provisioning.HealthStatus{
+		Checked:    status.Health.Checked,
+		Generation: status.Health.Generation,
+		Healthy:    res.Success,
+		Message:    res.Errors,
 	}
-	if err != nil {
-		return err
+
+	cfg := cachedRepo.DeepCopy()
+	cfg.Status = *status
+	if _, err := rc.client.Repositories(cachedRepo.GetNamespace()).
+		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update status: %w", err)
 	}
+
 	return nil
 }

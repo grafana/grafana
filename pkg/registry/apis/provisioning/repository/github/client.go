@@ -87,7 +87,8 @@ type Client interface {
 	GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
-	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
+	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error)
 	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
 	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
 

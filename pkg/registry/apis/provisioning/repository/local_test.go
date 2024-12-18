@@ -13,10 +13,11 @@ import (
 func TestLocalResolver(t *testing.T) {
 	resolver := &LocalFolderResolver{
 		PermittedPrefixes: []string{
-			"github/testdata",
+			"/github/testdata",
 		},
-		HomePath: "",
+		HomePath: "/",
 	}
+
 	_, err := resolver.LocalPath("github/testdata")
 	require.NoError(t, err)
 

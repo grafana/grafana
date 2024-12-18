@@ -1,17 +1,14 @@
 package repository
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
-	"path"
 	"regexp"
+	"slices"
 	"strings"
-	"text/template"
 
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,18 +16,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
+var subscribedEvents = []string{"push", "pull_request"}
+
+type SecretsService interface {
+	Encrypt(ctx context.Context, data string) (string, error)
+}
+
 type githubRepository struct {
-	logger        *slog.Logger
-	config        *provisioning.Repository
-	gh            pgh.Client
-	baseURL       *url.URL
-	linterFactory lint.LinterFactory
-	renderer      PreviewRenderer
-	ignore        provisioning.IgnoreFile
+	logger     *slog.Logger
+	config     *provisioning.Repository
+	gh         pgh.Client
+	secrets    SecretsService
+	webhookURL string
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -39,18 +39,15 @@ func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
-	baseURL *url.URL,
-	linterFactory lint.LinterFactory,
-	renderer PreviewRenderer,
+	secrets SecretsService,
+	webhookURL string,
 ) *githubRepository {
 	return &githubRepository{
-		config:        config,
-		logger:        slog.Default().With("logger", "github-repository"),
-		gh:            factory.New(ctx, config.Spec.GitHub.Token),
-		baseURL:       baseURL,
-		linterFactory: linterFactory,
-		renderer:      renderer,
-		ignore:        provisioning.IncludeYamlOrJSON,
+		config:     config,
+		logger:     slog.Default().With("logger", "github-repository"),
+		gh:         factory.New(ctx, config.Spec.GitHub.Token),
+		secrets:    secrets,
+		webhookURL: webhookURL,
 	}
 }
 
@@ -82,17 +79,6 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
 		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
-	}
-	if gh.WebhookURL == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "webhookURL"), "a webhook URL is required"))
-	}
-	if gh.WebhookSecret == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "webhookSecret"), "a webhook secret is required"))
-	}
-
-	_, err := url.Parse(gh.WebhookURL)
-	if err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "webhookURL"), gh.WebhookURL, "invalid URL"))
 	}
 
 	return list
@@ -427,7 +413,11 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 
 // Webhook implements Repository.
 func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
-	payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
+	if r.config.Status.Webhook == nil {
+		return nil, fmt.Errorf("unexpected webhook request")
+	}
+
+	payload, err := github.ValidatePayload(req, []byte(r.config.Status.Webhook.Secret))
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
@@ -473,37 +463,6 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
-	var count int
-	for _, commit := range event.Commits {
-		for _, file := range commit.Added {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-
-		for _, file := range commit.Modified {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-
-		for _, file := range commit.Removed {
-			if r.ignore(file) {
-				continue
-			}
-			count++
-		}
-	}
-
-	if count == 0 {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: "no files require updates",
-		}, nil
-	}
-
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
@@ -536,10 +495,10 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
+	if pr.GetBase().GetRef() != r.config.Spec.GitHub.Branch {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
-			Message: "ignoring pull request event as it is not for the configured branch",
+			Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", pr.GetBase().GetRef()),
 		}, nil
 	}
 
@@ -565,7 +524,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+func (r *githubRepository) LatestRef(ctx context.Context, logger *slog.Logger) (string, error) {
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
@@ -574,31 +533,27 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
-		ref, err = r.LatestRef(ctx)
+		ref, err = r.LatestRef(ctx, logger)
 		if err != nil {
 			return nil, fmt.Errorf("get latest ref: %w", err)
 		}
 	}
 
-	lastSyncCommit := r.config.Status.Sync.Hash
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	files, err := r.gh.CompareCommits(ctx, owner, repo, lastSyncCommit, ref)
+	files, err := r.gh.CompareCommits(ctx, owner, repo, base, ref)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
 	changes := make([]FileChange, 0)
 	for _, f := range files {
-		if r.ignore(f.GetFilename()) {
-			continue
-		}
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
-		case "added":
+		case "added", "copied":
 			changes = append(changes, FileChange{
 				Path:   f.GetFilename(),
 				Ref:    ref,
@@ -611,24 +566,21 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 				Action: FileActionUpdated,
 			})
 		case "renamed":
-			// delete the old file
 			changes = append(changes, FileChange{
-				Path:   f.GetPreviousFilename(),
-				Ref:    lastSyncCommit,
-				Action: FileActionDeleted,
-			})
-			// replicate the new file
-			changes = append(changes, FileChange{
-				Path:   f.GetFilename(),
-				Ref:    ref,
-				Action: FileActionCreated,
+				Path:         f.GetFilename(),
+				PreviousPath: f.GetPreviousFilename(),
+				Ref:          ref,
+				PreviousRef:  base,
+				Action:       FileActionRenamed,
 			})
 		case "removed":
 			changes = append(changes, FileChange{
-				Ref:    lastSyncCommit,
+				Ref:    base,
 				Path:   f.GetFilename(),
 				Action: FileActionDeleted,
 			})
+		case "unchanged":
+			// do nothing
 		default:
 			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
@@ -637,415 +589,175 @@ func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger
 	return changes, nil
 }
 
-// Process is a backend job
-// TODO: move out the pull request processing to a separate worker / processor
-func (r *githubRepository) Process(ctx context.Context, logger *slog.Logger, wrap provisioning.Job, replicator FileReplicator) error {
-	job := wrap.Spec
-
-	// Get the files changed in the pull request
-	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, job.PR)
-	if err != nil {
-		return fmt.Errorf("list pull request files: %w", err)
-	}
-
-	changedResources := make([]changedResource, 0)
-
-	baseBranch := job.Ref
-	mainBranch := r.config.Spec.GitHub.Branch
-	prURL := job.URL
-
-	for _, file := range files {
-		if r.ignore(file.GetFilename()) {
-			continue
-		}
-
-		resource := changedResource{
-			Filename: path.Base(file.GetFilename()),
-			Path:     file.GetFilename(),
-			Action:   file.GetStatus(),
-			Type:     "dashboard", // TODO: get this from the resource
-			Ref:      job.Ref,
-		}
-
-		path := file.GetFilename()
-		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
-
-		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
-		switch file.GetStatus() {
-		case "added":
-			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
-		case "modified":
-			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
-			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
-			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
-		case "removed":
-			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
-			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
-			resource.Ref = baseBranch
-		case "renamed":
-			resource.OriginalURL = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
-			resource.CurrentURL = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
-			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
-		case "changed":
-			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
-			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
-			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
-		case "unchanged":
-			logger.InfoContext(ctx, "ignore unchanged file")
-			continue
-		default:
-			logger.ErrorContext(ctx, "unhandled pull request file")
-			continue
-		}
-
-		f, err := r.Read(ctx, logger, path, resource.Ref)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to read file", "error", err)
-			continue
-		}
-
-		// TODO: how does this validation works vs linting?
-		ok, err := replicator.Validate(ctx, f)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to validate file", "error", err)
-			continue
-		}
-		if !ok {
-			logger.InfoContext(ctx, "ignore file as it is not a valid resource")
-			continue
-		}
-
-		resource.Data = f.Data
-		logger.InfoContext(ctx, "resource changed")
-		changedResources = append(changedResources, resource)
-	}
-
-	if err := r.previewPullRequest(ctx, logger, job.PR, changedResources); err != nil {
-		logger.ErrorContext(ctx, "failed to comment previews", "error", err)
-	}
-
-	headSha := job.Hash
-	if err := r.lintPullRequest(ctx, logger, job.PR, headSha, changedResources); err != nil {
-		logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
-	}
-
-	return nil
-}
-
-// changedResource represents a resource that has changed in a pull request.
-type changedResource struct {
-	Filename             string
-	Path                 string
-	Ref                  string
-	Action               string
-	Type                 string
-	OriginalURL          string
-	CurrentURL           string
-	PreviewURL           string
-	PreviewScreenshotURL string
-	Data                 []byte
-}
-
 func (r *githubRepository) shouldLintPullRequest() bool {
 	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
 }
 
-var lintDashboardIssuesTemplate = `Hey there! 👋
-Grafana found some linting issues in this dashboard you may want to check:
-{{ range .}}
-{{ if eq .Severity "error" }}❌{{ else if eq .Severity "warning" }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
-{{- end }}
-`
-
-// lintPullRequest lints the files changed in the pull request and comments the issues found.
-// The linter is disabled if the configuration does not have PullRequestLinter enabled.
-// The only supported type of file to lint is a dashboard.
-func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resources []changedResource) error {
-	if !r.shouldLintPullRequest() {
-		return nil
-	}
-
-	logger.InfoContext(ctx, "lint pull request")
-
-	// Load linter config
-	cfg, err := r.Read(ctx, logger, r.linterFactory.ConfigPath(), ref)
-	switch {
-	case err == nil:
-		logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
-	case errors.Is(err, pgh.ErrResourceNotFound):
-		logger.InfoContext(ctx, "no linter config found")
-	default:
-		return fmt.Errorf("read linter config: %w", err)
-	}
-
-	linter, err := r.linterFactory.NewFromConfig(cfg.Data)
-	if err != nil {
-		return fmt.Errorf("create linter: %w", err)
-	}
-
-	// Clear all previous comments because we don't know if the files have changed
-	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber); err != nil {
-		return fmt.Errorf("clear pull request comments: %w", err)
-	}
-
-	for _, resource := range resources {
-		if resource.Action == "removed" || resource.Type != "dashboard" {
-			continue
-		}
-
-		logger := logger.With("file", resource.Path)
-		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, linter); err != nil {
-			logger.ErrorContext(ctx, "failed to lint file", "error", err)
-		}
-	}
-
-	return nil
+// ClearAllPullRequestFileComments clears all comments on a pull request
+func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, logger *slog.Logger, prNumber int) error {
+	return r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber)
 }
 
-// lintPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, linter lint.Linter) error {
-	issues, err := linter.Lint(ctx, resource.Data)
-	if err != nil {
-		return fmt.Errorf("lint file: %w", err)
-	}
+// CommentPullRequest adds a comment to a pull request.
+func (r *githubRepository) CommentPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, comment string) error {
+	return r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment)
+}
 
-	if len(issues) == 0 {
-		return nil
-	}
-
-	// FIXME: we should not be compiling this all the time
-	tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
-	if err != nil {
-		return fmt.Errorf("parse lint comment template: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, issues); err != nil {
-		return fmt.Errorf("execute lint comment template: %w", err)
-	}
-
-	comment := pgh.FileComment{
-		Content:  buf.String(),
-		Path:     resource.Path,
+// CommentPullRequestFile lints a file and comments the issues found.
+func (r *githubRepository) CommentPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, path, ref, comment string) error {
+	fileComment := pgh.FileComment{
+		Content:  comment,
+		Path:     path,
 		Position: 1, // create a top-level comment
 		Ref:      ref,
 	}
 
 	// FIXME: comment with Grafana Logo
 	// FIXME: comment author should be written by Grafana and not the user
-	if err := r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
-		return fmt.Errorf("create pull request comment: %w", err)
-	}
-	logger.InfoContext(ctx, "lint comment created", "issues", len(issues))
-
-	return nil
+	return r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, fileComment)
 }
 
-const previewsCommentTemplate = `Hey there! 🎉
-Grafana spotted some changes for your resources in this pull request:
-
-## Summary
-| File Name | Type | Path | Action | Links |
-|-----------|------|------|--------|-------|
-{{- range .}}
-| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .CurrentURL}}, [Current]({{.CurrentURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
-{{- end}}
-
-Click the preview links above to view how your changes will look and compare them with the original and current versions.
-
-{{- range .}}
-{{- if .PreviewScreenshotURL}}
-### Preview of {{.Filename}}
-![Preview]({{.PreviewScreenshotURL}})
-{{- end}}
-{{- end}}`
-
-func (r *githubRepository) previewPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, resources []changedResource) error {
-	if !r.Config().Spec.GitHub.GenerateDashboardPreviews || len(resources) == 0 {
-		return nil
-	}
-
-	// generate preview image for each dashboard if not removed
-	for i, resource := range resources {
-		if resource.Action == "removed" {
-			continue
-		}
-
-		screenshotURL, err := r.renderer.RenderDashboardPreview(ctx, r, resource.Path, resource.Ref)
-		if err != nil {
-			return fmt.Errorf("render dashboard preview: %w", err)
-		}
-
-		resources[i].PreviewScreenshotURL = screenshotURL
-		logger.InfoContext(ctx, "dashboard preview screenshot created", "file", resource.Path, "url", screenshotURL)
-	}
-
-	// FIXME: we should not be compiling this all the time
-	tmpl, err := template.New("comment").Parse(previewsCommentTemplate)
+func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, error) {
+	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
 	if err != nil {
-		return fmt.Errorf("parse comment template: %w", err)
+		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
 	}
 
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, resources); err != nil {
-		return fmt.Errorf("execute comment template: %w", err)
-	}
-
-	comment := buf.String()
-
-	// FIXME: comment with Grafana Logo
-	// FIXME: comment author should be written by Grafana and not the user
-	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
-		return fmt.Errorf("create pull request comment: %w", err)
-	}
-
-	logger.InfoContext(ctx, "preview comment created", "resources", len(resources))
-
-	return nil
-}
-
-// previewURL returns the URL to preview the file in Grafana
-func (r *githubRepository) previewURL(ref, filePath, pullRequestURL string) string {
-	// Copy the baseURL to modify path and query
-	baseURL := *r.baseURL
-	baseURL = *baseURL.JoinPath("/admin/provisioning", r.Config().GetName(), "dashboard/preview", filePath)
-
-	query := baseURL.Query()
-	if ref != "" {
-		query.Set("ref", ref)
-	}
-	if pullRequestURL != "" {
-		query.Set("pull_request_url", url.QueryEscape(pullRequestURL))
-	}
-	baseURL.RawQuery = query.Encode()
-
-	return baseURL.String()
-}
-
-func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
 	cfg := pgh.WebhookConfig{
-		URL:         r.config.Spec.GitHub.WebhookURL,
-		Secret:      r.config.Spec.GitHub.WebhookSecret,
+		URL:         r.webhookURL,
+		Secret:      secret,
 		ContentType: "json",
-		Events:      []string{"push", "pull_request"},
+		Events:      subscribedEvents,
 		Active:      true,
 	}
 
-	if err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg); err != nil {
-		return err
+	hook, err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg)
+	if err != nil {
+		return pgh.WebhookConfig{}, err
 	}
 
-	logger.InfoContext(ctx, "webhook created", "url", cfg.URL)
-	return nil
+	logger.InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
+	return hook, nil
 }
 
-func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger, oldRepo *githubRepository) (UndoFunc, error) {
+// updateWebhook checks if the webhook needs to be updated and updates it if necessary.
+// if the webhook does not exist, it will create it.
+func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, bool, error) {
+	if r.config.Status.Webhook == nil {
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
+		}
+		return hook, true, nil
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	repoName := r.config.Spec.GitHub.Repository
 
-	hooks, err := r.gh.ListWebhooks(ctx, owner, repoName)
-	if err != nil {
-		return nil, fmt.Errorf("list existing webhooks: %w", err)
-	}
-
-	newCfg := r.config.Spec.GitHub
-	oldCfg := oldRepo.Config().Spec.GitHub
-
+	hook, err := r.gh.GetWebhook(ctx, owner, repoName, r.config.Status.Webhook.ID)
 	switch {
-	case newCfg.WebhookURL != oldCfg.WebhookURL:
-		// In this case we cannot find out out which webhook to update, so we delete the old one and create a new one
-		if err := r.createWebhook(ctx, logger); err != nil {
-			return nil, fmt.Errorf("create new webhook: %w", err)
+	case errors.Is(err, pgh.ErrResourceNotFound):
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
 		}
-
-		undoFunc := UndoFunc(func(ctx context.Context) error {
-			if err := r.deleteWebhook(ctx, logger); err != nil {
-				return fmt.Errorf("revert create new webhook: %w", err)
-			}
-
-			logger.InfoContext(ctx, "create new webhook reverted", "url", newCfg.WebhookURL)
-
-			return nil
-		})
-
-		if err := oldRepo.deleteWebhook(ctx, logger); err != nil {
-			return undoFunc, fmt.Errorf("delete old webhook: %w", err)
-		}
-
-		undoFunc = undoFunc.Chain(ctx, func(ctx context.Context) error {
-			if err := oldRepo.createWebhook(ctx, logger); err != nil {
-				return fmt.Errorf("revert delete old webhook: %w", err)
-			}
-
-			logger.InfoContext(ctx, "delete old webhook reverted", "url", oldCfg.WebhookURL)
-
-			return nil
-		})
-
-		return undoFunc, nil
-	case newCfg.WebhookSecret != oldCfg.WebhookSecret:
-		for _, hook := range hooks {
-			if hook.URL == oldCfg.WebhookURL {
-				hook.Secret = newCfg.WebhookSecret
-				err := r.gh.EditWebhook(ctx, owner, repoName, hook)
-				if err != nil {
-					return nil, fmt.Errorf("update webhook secret: %w", err)
-				}
-
-				logger.InfoContext(ctx, "webhook secret updated", "url", newCfg.WebhookURL)
-
-				return func(ctx context.Context) error {
-					hook.Secret = oldCfg.WebhookSecret
-					if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
-						return fmt.Errorf("revert webhook secret: %w", err)
-					}
-
-					logger.InfoContext(ctx, "webhook secret reverted", "url", oldCfg.WebhookURL)
-					return nil
-				}, nil
-			}
-		}
-
-		return nil, errors.New("webhook not found")
-	default:
-		return nil, nil
+		return hook, true, nil
+	case err != nil:
+		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
+
+	var mustUpdate bool
+
+	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	if err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
+	}
+
+	// Compare with status secret as we cannot get the screen from the webhook
+	if secret != r.config.Status.Webhook.Secret {
+		mustUpdate = true
+		hook.Secret = r.config.Status.Webhook.Secret
+	}
+
+	if hook.URL != r.config.Status.Webhook.URL {
+		mustUpdate = true
+		hook.URL = r.webhookURL
+	}
+
+	if !slices.Equal(hook.Events, subscribedEvents) {
+		mustUpdate = true
+		hook.Events = subscribedEvents
+	}
+
+	if !mustUpdate {
+		return hook, false, nil
+	}
+
+	if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
+	}
+
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = secret
+
+	return hook, true, nil
 }
 
 func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logger) error {
+	if r.config.Status.Webhook == nil {
+		return fmt.Errorf("webhook not found")
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	name := r.config.Spec.GitHub.Repository
+	id := r.config.Status.Webhook.ID
 
-	hooks, err := r.gh.ListWebhooks(ctx, owner, name)
-	if err != nil {
-		return fmt.Errorf("list existing webhooks: %w", err)
+	if err := r.gh.DeleteWebhook(ctx, owner, name, id); err != nil {
+		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	for _, hook := range hooks {
-		if hook.URL == r.config.Spec.GitHub.WebhookURL {
-			if err := r.gh.DeleteWebhook(ctx, owner, name, hook.ID); err != nil {
-				return fmt.Errorf("delete webhook: %w", err)
-			}
-		}
-	}
-
-	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Spec.GitHub.WebhookURL)
+	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
-func (r *githubRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
-	return r.createWebhook(ctx, logger)
-}
-
-func (r *githubRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
-	oldGitRepo, ok := old.(*githubRepository)
-	if !ok {
-		return nil, fmt.Errorf("old repository is not a github repository")
+func (r *githubRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	hook, err := r.createWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
 	}
 
-	return r.updateWebhook(ctx, logger, oldGitRepo)
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
 }
 
-func (r *githubRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	hook, updated, err := r.updateWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	if !updated {
+		return nil, nil
+	}
+
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
+}
+
+func (r *githubRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {
 	return r.deleteWebhook(ctx, logger)
 }

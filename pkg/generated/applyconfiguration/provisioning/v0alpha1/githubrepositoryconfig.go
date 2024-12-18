@@ -11,8 +11,6 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Repository                *string `json:"repository,omitempty"`
 	Branch                    *string `json:"branch,omitempty"`
 	Token                     *string `json:"token,omitempty"`
-	WebhookURL                *string `json:"webhookURL,omitempty"`
-	WebhookSecret             *string `json:"webhookSecret,omitempty"`
 	BranchWorkflow            *bool   `json:"branchWorkflow,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
 	PullRequestLinter         *bool   `json:"pullRequestLinter,omitempty"`
@@ -53,22 +51,6 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *Git
 // If called multiple times, the Token field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithToken(value string) *GitHubRepositoryConfigApplyConfiguration {
 	b.Token = &value
-	return b
-}
-
-// WithWebhookURL sets the WebhookURL field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the WebhookURL field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithWebhookURL(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.WebhookURL = &value
-	return b
-}
-
-// WithWebhookSecret sets the WebhookSecret field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the WebhookSecret field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithWebhookSecret(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.WebhookSecret = &value
 	return b
 }
 

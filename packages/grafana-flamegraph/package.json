@@ -50,10 +50,10 @@
     "d3": "^7.8.5",
     "lodash": "4.17.21",
     "react": "18.2.0",
-    "react-use": "17.5.1",
-    "react-virtualized-auto-sizer": "1.0.24",
+    "react-use": "17.6.0",
+    "react-virtualized-auto-sizer": "1.0.25",
     "tinycolor2": "1.6.0",
-    "tslib": "2.7.0"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@babel/core": "7.26.0",

@@ -638,6 +638,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });
@@ -653,6 +654,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });

@@ -58,7 +58,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.getter.GetRepository(identity.WithRequester(ctx, id), name)
+	repo, err := s.getter.GetHealthyRepository(identity.WithRequester(ctx, id), name)
 	if err != nil {
 		return nil, err
 	}

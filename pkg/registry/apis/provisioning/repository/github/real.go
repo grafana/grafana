@@ -392,7 +392,7 @@ func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) (
 	return ret, nil
 }
 
-func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error {
+func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error) {
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
@@ -407,12 +407,51 @@ func (r *realImpl) CreateWebhook(ctx context.Context, owner, repository string, 
 			URL:         &cfg.URL,
 		},
 	}
-	_, _, err := r.gh.Repositories.CreateHook(ctx, owner, repository, hook)
+
+	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, owner, repository, hook)
 	var ghErr *github.ErrorResponse
 	if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-		return ErrServiceUnavailable
+		return WebhookConfig{}, ErrServiceUnavailable
 	}
-	return err
+
+	return WebhookConfig{
+		ID: createdHook.GetID(),
+		// events is not returned by GitHub.
+		Events:      cfg.Events,
+		Active:      createdHook.GetActive(),
+		URL:         createdHook.GetConfig().GetURL(),
+		ContentType: createdHook.GetConfig().GetContentType(),
+		// Secret is not returned by GitHub.
+		Secret: cfg.Secret,
+	}, nil
+}
+
+func (r *realImpl) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
+	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return WebhookConfig{}, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return WebhookConfig{}, ErrResourceNotFound
+		}
+		return WebhookConfig{}, err
+	}
+
+	contentType := hook.GetConfig().GetContentType()
+	if contentType == "" {
+		contentType = "json"
+	}
+
+	return WebhookConfig{
+		ID:          hook.GetID(),
+		Events:      hook.Events,
+		Active:      hook.GetActive(),
+		URL:         hook.GetConfig().GetURL(),
+		ContentType: contentType,
+		// Intentionally not setting Secret.
+	}, nil
 }
 
 func (r *realImpl) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {

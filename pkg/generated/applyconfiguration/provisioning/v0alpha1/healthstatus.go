@@ -7,9 +7,10 @@ package v0alpha1
 // HealthStatusApplyConfiguration represents a declarative configuration of the HealthStatus type for use
 // with apply.
 type HealthStatusApplyConfiguration struct {
-	Healthy *bool    `json:"healthy,omitempty"`
-	Checked *int64   `json:"checked,omitempty"`
-	Message []string `json:"message,omitempty"`
+	Healthy    *bool    `json:"healthy,omitempty"`
+	Checked    *int64   `json:"checked,omitempty"`
+	Generation *int64   `json:"generation,omitempty"`
+	Message    []string `json:"message,omitempty"`
 }
 
 // HealthStatusApplyConfiguration constructs a declarative configuration of the HealthStatus type for use with
@@ -31,6 +32,14 @@ func (b *HealthStatusApplyConfiguration) WithHealthy(value bool) *HealthStatusAp
 // If called multiple times, the Checked field is set to the value of the last call.
 func (b *HealthStatusApplyConfiguration) WithChecked(value int64) *HealthStatusApplyConfiguration {
 	b.Checked = &value
+	return b
+}
+
+// WithGeneration sets the Generation field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Generation field is set to the value of the last call.
+func (b *HealthStatusApplyConfiguration) WithGeneration(value int64) *HealthStatusApplyConfiguration {
+	b.Generation = &value
 	return b
 }
 

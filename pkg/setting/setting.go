@@ -1995,8 +1995,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
-	provisioningPaths := valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", "")
-	if strings.TrimSpace(provisioningPaths) != "|" {
+	provisioningPaths := strings.TrimSpace(valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", ""))
+	if provisioningPaths != "|" && provisioningPaths != "" {
 		cfg.PermittedProvisioningPaths = strings.Split(provisioningPaths, "|")
 		for i, s := range cfg.PermittedProvisioningPaths {
 			s = strings.TrimSpace(s)

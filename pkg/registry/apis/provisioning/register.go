@@ -2,13 +2,9 @@ package provisioning
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"log/slog"
-	"net/url"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,24 +16,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,10 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
-const (
-	resourceNamePlaceholder = "$RESOURCE_NAME_PLACEHOLDER"
-	repoControllerWorkers   = 1
-)
+const repoControllerWorkers = 1
 
 var (
 	_ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
@@ -65,12 +58,14 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
-	renderer          *renderer
+	render            rendering.Service
+	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
+	tester            *RepositoryTester
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -101,12 +96,9 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 			Logger: slog.Default().With("logger", "provisioning-parser-factory"),
 		},
-		renderer: &renderer{
-			render:     render,
-			blobstore:  blobstore,
-			identities: identities,
-		},
-		jobs: jobs.NewJobQueue(50), // in memory for now
+		render:    render,
+		blobstore: blobstore,
+		jobs:      jobs.NewJobQueue(50), // in memory for now
 	}
 
 	return builder
@@ -190,13 +182,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		b.parsers,
 		b.identities,
 		b.logger.With("worker", "github"),
-		provisioning.IncludeYamlOrJSON,
+		b.render,
+		b.blobstore,
+		b.urlProvider,
 	))
-
-	repositoryStorage.AfterCreate = b.afterCreate
-	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
-	repositoryStorage.BeginUpdate = b.beginUpdate
-	repositoryStorage.AfterDelete = b.afterDelete
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
@@ -247,6 +236,53 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 	return b.asRepository(ctx, obj)
 }
 
+func timeSince(when int64) time.Duration {
+	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
+}
+
+func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+	repo, err := b.GetRepository(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	status := repo.Config().Status.Health
+	if !status.Healthy {
+		if timeSince(status.Checked) > time.Second*25 {
+			id, err := b.identities.WorkerIdentity(ctx, repo.Config().Namespace)
+			if err != nil {
+				return nil, err // The status
+			}
+			ctx := identity.WithRequester(ctx, id)
+
+			// Check health again
+			s, err := b.tester.TestRepository(ctx, repo)
+			if err != nil {
+				return nil, err // The status
+			}
+
+			// Write and return the repo with current status
+			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
+			if cfg != nil {
+				status = cfg.Status.Health
+				if cfg.Status.Health.Healthy {
+					status = cfg.Status.Health
+					repo, err = b.AsRepository(ctx, cfg)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+		if !status.Healthy {
+			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusFailedDependency,
+				Message: "The repository configuration is not healthy",
+			}}
+		}
+	}
+	return repo, err
+}
+
 func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
@@ -263,151 +299,22 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
-		if err != nil {
-			return nil, fmt.Errorf("invalid base URL: %w", err)
-		}
-
-		// HACK: replace resource name placeholder in the webhook URL with the actual resource name
-		// In case the name was automatically generated by k8s
-		if r.Spec.GitHub.WebhookURL != "" {
-			r.Spec.GitHub.WebhookURL = strings.ReplaceAll(r.Spec.GitHub.WebhookURL, resourceNamePlaceholder, r.GetName())
-		}
-
-		linterFactory := lint.NewDashboardLinterFactory()
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer), nil
+		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+		webhookURL := fmt.Sprintf(
+			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+			b.urlProvider(r.GetNamespace()),
+			gvr.Group,
+			gvr.Version,
+			r.GetNamespace(),
+			gvr.Resource,
+			r.GetName(),
+		)
+		secretsSvc := secrets.NewService(b.webhookSecretKey)
+		return repository.NewGitHub(ctx, r, b.ghFactory, secretsSvc, webhookURL), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
 		return repository.NewUnknown(r), nil
-	}
-}
-
-func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
-	cfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		b.logger.Error("object is not *provisioning.Repository")
-		return
-	}
-
-	ctx := context.Background()
-	repo, err := b.asRepository(ctx, cfg)
-	if err != nil {
-		b.logger.Error("failed to get repository", "error", err)
-		return
-	}
-
-	if err := b.ensureRepositoryFolderExists(ctx, cfg); err != nil {
-		b.logger.Error("failed to ensure repository folder exists", "error", err)
-		return
-	}
-
-	if err := repo.AfterCreate(ctx, b.logger); err != nil {
-		b.logger.Error("failed to run after create", "error", err)
-		return
-	}
-}
-
-func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, opts *metav1.UpdateOptions) (registry.FinishFunc, error) {
-	objCfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("new object is not *provisioning.Repository")
-	}
-	oldCfg, ok := old.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("old object is not *provisioning.Repository")
-	}
-
-	repo, err := b.asRepository(ctx, objCfg)
-	if err != nil {
-		return nil, fmt.Errorf("get new repository: %w", err)
-	}
-
-	oldRepo, err := b.asRepository(ctx, oldCfg)
-	if err != nil {
-		return nil, fmt.Errorf("get old repository: %w", err)
-	}
-
-	if err := b.ensureRepositoryFolderExists(ctx, objCfg); err != nil {
-		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
-	}
-
-	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
-	if err != nil {
-		b.logger.Warn("error in begin update", "err", err)
-	}
-
-	return func(ctx context.Context, success bool) {
-		if !success && undo != nil {
-			if err := undo(ctx); err != nil {
-				b.logger.ErrorContext(ctx, "failed to undo failed update", "error", err)
-			}
-		}
-	}, nil
-}
-
-func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
-	if cfg.Spec.Folder == "" {
-		// The root folder can't not exist, so we don't have to do anything.
-		return nil
-	}
-
-	client, _, err := b.client.New(cfg.GetNamespace())
-	if err != nil {
-		return err
-	}
-	// FIXME: make sure folders are actually enabled in the apiserver.
-	folderIface := client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
-	if err == nil {
-		// The folder exists and doesn't need to be created.
-		return nil
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to search for existing repo folder: %w", err)
-	}
-
-	title := cfg.Spec.Title
-	if title == "" {
-		title = cfg.Spec.Folder
-	}
-
-	_, err = folderIface.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      cfg.Spec.Folder,
-				"namespace": cfg.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"title":       title,
-				"description": "Repository-managed folder.",
-			},
-		},
-	}, metav1.CreateOptions{})
-	return err
-}
-
-func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.DeleteOptions) {
-	ctx := context.Background()
-	cfg, ok := obj.(*provisioning.Repository)
-	if !ok {
-		b.logger.Error("object is not *provisioning.Repository")
-		return
-	}
-
-	repo, err := b.asRepository(ctx, cfg)
-	if err != nil {
-		b.logger.Error("failed to get repository", "error", err)
-		return
-	}
-
-	if err := repo.AfterDelete(ctx, b.logger); err != nil {
-		b.logger.Error("failed to run after delete", "error", err)
-		return
 	}
 }
 
@@ -430,25 +337,6 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 
 		if r.Spec.GitHub.Branch == "" {
 			r.Spec.GitHub.Branch = "main"
-		}
-
-		if r.Spec.GitHub.WebhookURL == "" {
-			name := a.GetName()
-			// HACK: if the name is empty, it's probably auto-generated by k8s
-			// we insert a placeholder so we can replace it later
-			if name == "" {
-				name = resourceNamePlaceholder
-			}
-
-			gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-			r.Spec.GitHub.WebhookURL = fmt.Sprintf("%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-				b.urlProvider(a.GetNamespace()), // gets the full name
-				gvr.Group, gvr.Version,
-				a.GetNamespace(), gvr.Resource, name)
-		}
-
-		if r.Spec.GitHub.WebhookSecret == "" {
-			r.Spec.GitHub.WebhookSecret = b.generateWebhookSecret(r.Spec.GitHub.Token)
 		}
 	}
 
@@ -508,11 +396,20 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
 
+			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
+			b.tester = &RepositoryTester{
+				clientFactory: b.client,
+				client:        c.ProvisioningV0alpha1(),
+				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
+			}
+
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
 				b.identities,
+				b.tester,
+				b.jobs,
 			)
 			if err != nil {
 				return err
@@ -733,17 +630,4 @@ spec:
 	}
 
 	return oas, nil
-}
-
-// generateWebhookSecret generates a webhook secret from a token
-// using the configured secret key. The generated secret is consistent.
-// TODO: this must be replaced by a app platform secrets once we have that.
-func (b *ProvisioningAPIBuilder) generateWebhookSecret(token string) string {
-	secretKey := []byte(b.webhookSecretKey)
-	h := hmac.New(sha256.New, secretKey)
-
-	h.Write([]byte(token))
-	hashed := h.Sum(nil)
-
-	return hex.EncodeToString(hashed)
 }

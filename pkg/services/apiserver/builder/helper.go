@@ -193,7 +193,7 @@ func SetupConfig(
 
 				w := csv.NewWriter(f)
 				if isNew {
-					w.Write([]string{
+					_ = w.Write([]string{
 						"#Path",
 						"Method",
 						"action",
@@ -205,7 +205,7 @@ func SetupConfig(
 						"metadata",
 					})
 				}
-				w.Write([]string{
+				_ = w.Write([]string{
 					r.Path(),
 					r.Method(),
 					action,
@@ -272,6 +272,8 @@ func InstallAPIs(
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
+
+	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app

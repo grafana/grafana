@@ -74,7 +74,7 @@ func TestParseWebhooks(t *testing.T) {
 			},
 		}},
 		{"push", "ignored", provisioning.WebhookResponse{
-			Code: http.StatusOK, // parsed but nothing required
+			Code: http.StatusAccepted, // parsed but nothing required
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
@@ -101,7 +101,6 @@ func TestParseWebhooks(t *testing.T) {
 			},
 		},
 		logger: slog.Default().With("logger", "github-repository"),
-		ignore: provisioning.IncludeYamlOrJSON,
 	}
 
 	for _, tt := range tests {

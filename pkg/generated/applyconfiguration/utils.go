@@ -38,6 +38,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.S3RepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
+		return &provisioningv0alpha1.WebhookStatusApplyConfiguration{}
 
 		// Group=service.grafana.app, Version=v0alpha1
 	case servicev0alpha1.SchemeGroupVersion.WithKind("ExternalName"):
