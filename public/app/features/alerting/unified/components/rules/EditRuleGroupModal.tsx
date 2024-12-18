@@ -18,6 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RuleGroupIdentifier, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -223,9 +224,11 @@ export function EditRuleGroupModal(props: ModalProps) {
     rulerConfig,
   });
 
+  const loadingText = t('alerting.common.loading', 'Loading...');
+
   return (
     <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
-      {isLoading && <LoadingPlaceholder text="Loading..." />}
+      {isLoading && <LoadingPlaceholder text={loadingText} />}
       {error ? stringifyErrorLike(error) : null}
       {ruleGroup && <EditRuleGroupModalForm {...props} ruleGroup={ruleGroup} />}
     </Modal>
