@@ -373,6 +373,20 @@ SAML's single logout feature allows users to log out from all applications assoc
 `HTTP-Redirect` and `HTTP-POST` bindings are supported for single logout.
 When using `HTTP-Redirect` bindings the query should include a request signature.
 
+#### Configure single logout
+
+{{% admonition type="note" %}}
+Proper `NameID` and `SessionIndex` support is available in public preview behind the `improvedExternalSessionHandling` feature toggle, starting from Grafana v11.5.
+{{% /admonition %}}
+
+Before Grafana version 11.5, the `Login` attribute value (extracted from the SAML assertion using the `assertion_attribute_login` configuration) was used as the `NameID` in the logout request. This could cause issues with single logout if the `assertion_attribute_login` value differed from what the Identity Provider (IdP) expected.
+
+Additionally, Grafana did not support IdP sessions and could not include the `SessionIndex` (a unique identifier for the user session on the IdP side) value in the logout request. This could result in issues such as the user being logged out from all of their applications/IdP sessions when logging out from Grafana.
+
+Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
+
+When configuring `name_id_format` in Grafana, ensure it matches the `NameID` format expected and supported by your IdP.
+
 ### Assertion mapping
 
 During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
