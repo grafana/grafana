@@ -214,6 +214,7 @@ dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
+prometheusSpecialCharsInLabelValues,experimental,@grafana/observability-metrics,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 zipkinBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
@@ -227,4 +228,3 @@ feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,fal
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
-prometheusSpecialCharsInLabelValues,experimental,@grafana/observability-metrics,false,false,true

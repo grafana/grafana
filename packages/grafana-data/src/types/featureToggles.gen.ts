@@ -233,6 +233,7 @@ export interface FeatureToggles {
   playlistsWatcher?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
+  prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
@@ -246,5 +247,4 @@ export interface FeatureToggles {
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
-  prometheusSpecialCharsInLabelValues?: boolean;
 }
