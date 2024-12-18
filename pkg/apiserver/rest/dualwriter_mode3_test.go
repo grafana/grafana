@@ -29,17 +29,17 @@ func TestMode3_Create(t *testing.T) {
 				name:  "creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
 				},
 				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
 				},
 			},
 			{
 				name:  "error when creating object in the legacy store fails",
 				input: failingObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
 				},
 				wantErr: true,
 			},
@@ -47,11 +47,11 @@ func TestMode3_Create(t *testing.T) {
 				name:  "error when creating object in the unistore fails - legacy delete should be called",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Delete", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil)
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, true, nil).Once()
+					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
 				},
 				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, errors.New("error"))
+					m.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, errors.New("error")).Once()
 				},
 				wantErr: true,
 			},
