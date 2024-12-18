@@ -71,7 +71,35 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("creating a keeper returns it without any of the value or ref", func(t *testing.T) {
+	t.Run("creating a keeper without a name generates one", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvrKeepers,
+		})
+
+		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+
+		raw, err := client.Resource.Create(ctx, testDataKeeper, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, raw)
+
+		t.Cleanup(func() {
+			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+		})
+
+		keeper := new(secretv0alpha1.Keeper)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
+		require.NoError(t, err)
+		require.NotNil(t, keeper)
+
+		require.NotEmpty(t, keeper.Name)
+	})
+
+	t.Run("creating a keeper returns it", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
