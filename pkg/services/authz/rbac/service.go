@@ -48,6 +48,7 @@ type Service struct {
 	permCache      *localcache.CacheService
 	teamCache      *localcache.CacheService
 	basicRoleCache *localcache.CacheService
+	folderCache    *localcache.CacheService
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
@@ -61,6 +62,7 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
 	}
 }
 
@@ -307,10 +309,18 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
-	if err != nil {
-		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-		return false, err
+	var folderMap map[string]FolderNode
+	key := folderCacheKey(req.Namespace.Value)
+	if cached, ok := s.folderCache.Get(key); ok {
+		folderMap = cached.(map[string]FolderNode)
+	} else {
+		var err error
+		folderMap, err = s.buildFolderTree(ctx, req.Namespace)
+		if err != nil {
+			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+			return false, err
+		}
+		s.folderCache.Set(key, folderMap, 0)
 	}
 
 	currentUID := req.ParentFolder

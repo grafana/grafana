@@ -1,6 +1,8 @@
 package rbac
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func userIdentifierCacheKey(namespace, userUID string) string {
 	return fmt.Sprintf("UID_%s_%s", namespace, userUID)
@@ -20,4 +22,8 @@ func userBasicRoleCacheKey(namespace, userUID string) string {
 
 func userTeamCacheKey(namespace, userUID string) string {
 	return fmt.Sprintf("%s_%s", namespace, userUID)
+}
+
+func folderCacheKey(namespace string) string {
+	return fmt.Sprintf("%s", namespace)
 }
