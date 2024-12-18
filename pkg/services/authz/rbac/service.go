@@ -98,23 +98,14 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	// TODO validate and parse the request
-	checkReq, err := s.validateCheckRequest(ctx, req)
+	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
-		return deny, err
+		return &authzextv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
-	action := req.GetVerb()
-	ns, err := claims.ParseNamespace(req.GetNamespace())
-	if err != nil {
-		ctxLogger.Error("could not parse namespace", "namespace", req.GetNamespace(), "error", err)
-		return nil, err
-	}
 
-	ctx = request.WithNamespace(ctx, req.GetNamespace())
-
-	permissions, err := s.getUserPermissions(ctx, ns, req.Subject, action)
+	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, req.Subject, listReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return nil, err
@@ -124,7 +115,7 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 		return &authzextv1.ListResponse{All: true}, nil
 	}
 
-	folderMap, err := s.buildFolderTree(ctx, ns)
+	folderMap, err := s.buildFolderTree(ctx, listReq.Namespace)
 	if err != nil {
 		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 		return nil, err
@@ -168,32 +159,17 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	if req.GetNamespace() == "" {
 		return nil, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	//authInfo, has := claims.From(ctx)
-	//if !has {
-	//	return nil, status.Error(codes.Internal, "could not get auth info from context")
-	//}
-	//if !claims.NamespaceMatches(authInfo.GetNamespace(), req.GetNamespace()) {
-	//	return nil, status.Error(codes.PermissionDenied, "namespace does not match")
-	//}
-
-	ns, err := claims.ParseNamespace(req.GetNamespace())
+	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
-		ctxLogger.Error("could not parse namespace", "namespace", req.GetNamespace(), "error", err)
 		return nil, err
 	}
 
 	if req.GetSubject() == "" {
 		return nil, status.Error(codes.InvalidArgument, "subject is required")
 	}
-	user := req.GetSubject()
-	identityType, userUID, err := claims.ParseTypeID(user)
+	userUID, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
-		ctxLogger.Error("could not parse subject", "subject", user, "error", err)
 		return nil, err
-	}
-	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
-		ctxLogger.Warn("unsupported identity type", "type", identityType)
 	}
 
 	if req.GetGroup() == "" || req.GetResource() == "" || req.GetVerb() == "" {
@@ -218,7 +194,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	return checkReq, nil
 }
 
-func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListRequest) (*CheckRequest, error) {
+func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListRequest) (*ListRequest, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if req.GetNamespace() == "" {
@@ -232,15 +208,9 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListR
 	if req.GetSubject() == "" {
 		return nil, status.Error(codes.InvalidArgument, "subject is required")
 	}
-	user := req.GetSubject()
-	identityType, userUID, err := claims.ParseTypeID(user)
+	userUID, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
-		ctxLogger.Error("could not parse subject", "subject", user, "error", err)
 		return nil, err
-	}
-	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
-		ctxLogger.Warn("unsupported identity type", "type", identityType)
 	}
 
 	if req.GetGroup() == "" || req.GetResource() == "" || req.GetVerb() == "" {
@@ -252,17 +222,15 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListR
 		return nil, status.Error(codes.NotFound, "could not find associated rbac action")
 	}
 
-	checkReq := &CheckRequest{
-		Namespace:    ns,
-		UserUID:      userUID,
-		Action:       action,
-		Group:        req.GetGroup(),
-		Resource:     req.GetResource(),
-		Verb:         req.GetVerb(),
-		Name:         req.GetName(),
-		ParentFolder: req.GetFolder(),
+	listReq := &ListRequest{
+		Namespace: ns,
+		UserUID:   userUID,
+		Action:    action,
+		Group:     req.GetGroup(),
+		Resource:  req.GetResource(),
+		Verb:      req.GetVerb(),
 	}
-	return checkReq, nil
+	return listReq, nil
 }
 
 func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
@@ -279,6 +247,19 @@ func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceI
 		return claims.NamespaceInfo{}, err
 	}
 	return ns, nil
+}
+
+func (s *Service) validateSubject(ctx context.Context, subject string) (string, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+	identityType, userUID, err := claims.ParseTypeID(subject)
+	if err != nil {
+		return "", err
+	}
+	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
+	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
+		ctxLogger.Warn("unsupported identity type", "type", identityType)
+	}
+	return userUID, nil
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string) (map[string]bool, error) {
