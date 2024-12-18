@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { FormApi, FormState } from 'final-form';
 import React from 'react';
 import { Form } from 'react-final-form';
@@ -12,6 +12,8 @@ import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDet
 import { trackingOptions, rdsTrackingOptions } from './FormParts.constants';
 import { LabelsFormPart } from './Labels/Labels';
 import { MainDetailsFormPart } from './MainDetails/MainDetails';
+
+jest.mock('app/percona/inventory/Inventory.service');
 
 const form: Partial<FormApi> = {
   change: jest.fn(),
@@ -31,7 +33,7 @@ describe('MainDetailsFormPart ::', () => {
     );
 
     const fields = container.querySelectorAll('input');
-    expect(fields.length).toBe(8);
+    await waitFor(() => expect(fields.length).toBe(8));
 
     expect(screen.getByTestId('address-text-input')).toBeDisabled();
     expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();
@@ -51,7 +53,7 @@ describe('MainDetailsFormPart ::', () => {
     );
 
     const fields = container.querySelectorAll('input');
-    expect(fields.length).toBe(8);
+    await waitFor(() => expect(fields.length).toBe(8));
 
     expect(screen.getByTestId('address-text-input')).not.toBeDisabled();
     expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();

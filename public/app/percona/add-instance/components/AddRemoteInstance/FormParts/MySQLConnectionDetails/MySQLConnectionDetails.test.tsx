@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Form } from 'react-final-form';
 import { Provider } from 'react-redux';
@@ -7,8 +7,10 @@ import { configureStore } from 'app/store/configureStore';
 
 import { MySQLConnectionDetails } from './MySQLConnectionDetails';
 
+jest.mock('app/percona/inventory/Inventory.service');
+
 describe('MySQL connection details:: ', () => {
-  it('should have max query length attribute', () => {
+  it('should have max query length attribute', async () => {
     render(
       <Provider store={configureStore()}>
         <Form onSubmit={jest.fn()} render={() => <MySQLConnectionDetails remoteInstanceCredentials={{}} />} />
@@ -18,6 +20,6 @@ describe('MySQL connection details:: ', () => {
     const textInput = screen.getByTestId('maxQueryLength-text-input');
     fireEvent.change(textInput, { target: { value: '1000' } });
 
-    expect(screen.getByTestId('maxQueryLength-text-input')).toHaveValue('1000');
+    await waitFor(() => expect(screen.getByTestId('maxQueryLength-text-input')).toHaveValue('1000'));
   });
 });

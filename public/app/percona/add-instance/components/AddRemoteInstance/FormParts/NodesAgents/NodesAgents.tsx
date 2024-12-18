@@ -1,9 +1,13 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import { useField } from 'react-final-form';
 
 import { useStyles2 } from '@grafana/ui';
 import { Messages } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/FormParts.messages';
 import { getStyles } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/FormParts.styles';
-import { PMM_SERVER_NODE_AGENT_ID } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents.constants';
+import {
+  PMM_SERVER_NODE_AGENT_ID,
+  PMM_SERVER_NODE_ID,
+} from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents.constants';
 import { NodesAgentsProps } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents.types';
 import { GET_NODES_CANCEL_TOKEN } from 'app/percona/inventory/Inventory.constants';
 import { AgentsOption, NodesOption } from 'app/percona/inventory/Inventory.types';
@@ -14,6 +18,7 @@ import { fetchNodesAction } from 'app/percona/shared/core/reducers/nodes/nodes';
 import { getNodes } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { validators } from 'app/percona/shared/helpers/validatorsForm';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
@@ -21,8 +26,10 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
   const [generateToken] = useCancelToken();
-  const [selectedNode, setSelectedNode] = useState<NodesOption>();
   const { nodes } = useSelector(getNodes);
+  const {
+    input: { value: selectedNode },
+  } = useField('node');
 
   const nodesOptions = useMemo<NodesOption[]>(() => nodesOptionsMapper(nodes), [nodes]);
 
@@ -49,7 +56,7 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
   };
 
   const setNodeAndAgent = (value: NodesOption) => {
-    setSelectedNode(value);
+    form?.change('node', value);
 
     let selectedAgent: AgentsOption | undefined;
     if (value.agents && value.agents?.length > 1) {
@@ -68,6 +75,12 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
   useEffect(() => {
     if (nodesOptions.length === 0) {
       loadData();
+    } else if (!selectedNode) {
+      // preselect pmm-server node
+      const pmmServerNode = nodesOptions.find((node) => node.value === PMM_SERVER_NODE_ID);
+      if (pmmServerNode) {
+        setNodeAndAgent(pmmServerNode);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodesOptions]);
@@ -84,8 +97,8 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
           data-testid="nodes-selectbox"
           onChange={(event) => setNodeAndAgent(event as NodesOption)}
           className={styles.selectField}
-          value={selectedNode}
           aria-label={Messages.form.labels.nodesAgents.nodes}
+          validators={[validators.required]}
         />
       </div>
       <div className={styles.selectFieldWrapper}>
@@ -99,6 +112,7 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
           onChange={(event) => changeAgentValue(event as AgentsOption)}
           className={styles.selectField}
           aria-label={Messages.form.labels.nodesAgents.agents}
+          validators={selectedNode ? [validators.required] : undefined}
         />
       </div>
     </div>

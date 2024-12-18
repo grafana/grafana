@@ -46,6 +46,16 @@ describe('Nodes Agents:: ', () => {
     submitMock.mockClear();
   });
 
+  it('should pick pmm-server node by default when available', async () => {
+    jest.spyOn(InventoryService, 'getNodes').mockReturnValue(Promise.resolve({ nodes: nodesMock }));
+
+    setup();
+
+    await waitFor(() => expect(fetchNodesActionActionSpy).toHaveBeenCalled());
+
+    await waitFor(() => expect(screen.getByTestId('node')).toHaveTextContent(nodesMock[0].node_id));
+  });
+
   it('should not pick any agent when the selected node is not pmm-server', async () => {
     jest
       .spyOn(InventoryService, 'getNodes')
