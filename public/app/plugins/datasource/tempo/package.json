@@ -22,7 +22,7 @@
     "@opentelemetry/semantic-conventions": "1.28.0",
     "buffer": "6.0.3",
     "events": "3.3.0",
-    "i18next": "^23.0.0",
+    "i18next": "^24.0.0",
     "lodash": "4.17.21",
     "lru-cache": "10.2.2",
     "monaco-editor": "0.34.1",
