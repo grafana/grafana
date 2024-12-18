@@ -77,7 +77,7 @@ func (r ResourceInfo) GroupResource() string {
 }
 
 func (r ResourceInfo) GroupResourceIdent() string {
-	return NewGroupResourceIdent(r.group, r.resource)
+	return NewGroupResourceIdent(r.group, r.resource, r.subresource)
 }
 
 func (r ResourceInfo) ResourceIdent() string {
@@ -86,7 +86,7 @@ func (r ResourceInfo) ResourceIdent() string {
 	}
 
 	if r.IsGeneric() {
-		return fmt.Sprintf("%s:%s/%s", r.typ, r.GroupResource(), r.name)
+		return NewResourceIdent(r.group, r.resource, r.subresource, r.name)
 	}
 
 	return fmt.Sprintf("%s:%s", r.typ, r.name)
