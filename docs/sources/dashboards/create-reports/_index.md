@@ -134,9 +134,9 @@ To create a report, follow these steps:
    - [Share](#share)
    - [Confirm](#confirm)
 1. Do one of the following:
-   - **Send**
-   - **Save as draft** - You can save a report as a draft at any point during the report creation or update process even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
-   - **Discard**
+   - **Send** - The report will be sent according the schedule you've set.
+   - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+   - **Discard** - Delete the report draft. This action can't be reversed.
 
 ### Select dashboard
 
@@ -220,7 +220,9 @@ You can send a report email with an image of the dashboard embedded in the email
 
 #### CSV export
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+{{< admonition type="note" >}}
+To use this feature in Grafana Enterprise, you must have [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0.
+{{< /admonition >}}
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](#rendering-configuration).
 
@@ -301,11 +303,11 @@ The last saved version of the report will be sent to selected emails. You can us
 
 1. Preview and save the report.
 
-### Manage reports
+## Manage reports
 
 <!-- maybe an image of the reporting main page here -->
 
-#### Edit
+### Edit
 
 TBD
 
