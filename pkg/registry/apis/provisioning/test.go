@@ -151,7 +151,6 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 		Checked: time.Now().UnixMilli(),
 		Message: res.Errors,
 	}
-	repo.Status.ObservedGeneration = cfg.Generation
 
 	_, err := t.client.Repositories(repo.GetNamespace()).
 		UpdateStatus(ctx, repo, metav1.UpdateOptions{})
