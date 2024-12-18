@@ -815,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagUnifiedStorageSearchSprinkles
+	// Enable sprinkles on unified storage search
+	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -895,6 +899,10 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
+	// FlagUseV2DashboardsAPI
+	// Use the v2 kubernetes API in the frontend for dashboards
+	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
+
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -910,4 +918,8 @@ const (
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
+
+	// FlagInvestigationsBackend
+	// Enable the investigations backend API
+	FlagInvestigationsBackend = "investigationsBackend"
 )

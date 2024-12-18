@@ -220,6 +220,7 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  unifiedStorageSearchSprinkles?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -240,8 +241,10 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
+  investigationsBackend?: boolean;
 }

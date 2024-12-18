@@ -1526,6 +1526,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1663,6 +1671,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
@@ -1688,6 +1703,13 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
 		},
 	}
 )
