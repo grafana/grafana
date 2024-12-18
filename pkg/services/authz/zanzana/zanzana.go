@@ -96,16 +96,16 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
-		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, ""), true
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
 	if translation.typ == TypeResource {
-		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, "", name), true
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
 	}
 
 	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
-			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, "", name), true
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
 		}
 
 		return common.NewFolderTuple(subject, m.relation, name), true
