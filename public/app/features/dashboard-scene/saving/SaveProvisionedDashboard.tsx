@@ -59,7 +59,7 @@ function getDefaultValues(meta: DashboardMeta) {
 }
 
 const getDefaultWorkflow = (config?: RepositorySpec) => {
-  return config?.github?.branchWorkflow ? WorkflowOption.Branch : WorkflowOption.PullRequest;
+  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Branch;
 };
 
 function getWorkflowOptions(branch = 'main') {
