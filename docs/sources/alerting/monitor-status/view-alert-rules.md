@@ -37,7 +37,7 @@ To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Aler
 
 By default, alert rules are grouped by alert rule type: Grafana-managed or data source-managed.
 
-In this view, you can edit and manage alert rules created in Grafana. However, rules created in Prometheus-compatible data sources are displayed but cannot be edited.
+In this view, you can find and edit rules created in Grafana. However, rules created in Prometheus-compatible data sources are displayed but cannot be edited.
 
 This view includes filters to simplify managing large volumes of alerts.
 
