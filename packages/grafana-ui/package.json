@@ -157,7 +157,7 @@
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
     "@types/tinycolor2": "1.4.6",
-    "@types/uuid": "9.0.8",
+    "@types/uuid": "10.0.0",
     "chance": "1.1.12",
     "common-tags": "1.8.2",
     "core-js": "3.39.0",
