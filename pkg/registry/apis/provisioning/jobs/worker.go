@@ -2,10 +2,13 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/url"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -87,9 +90,39 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		err := replicator.Sync(ctx)
-		if err != nil {
-			return nil, err
+		ref, syncError := replicator.Sync(ctx)
+		status := &provisioning.SyncStatus{
+			State: provisioning.JobStateFinished,
+			// FIXME: infinite loop if we set this in the controller
+			// JobID:    job.GetName(), // TODO: Should we use the job id here?
+			Hash:     ref,
+			Started:  0, // FIXME: infinite loop if we set this in the controller
+			Finished: 0, // FIXME: infinite loop if we set this in the controller
+			Message:  []string{},
+		}
+
+		if syncError != nil {
+			status.State = provisioning.JobStateError
+			status.Message = append(status.Message, syncError.Error())
+		}
+
+		cfg := repo.Config().DeepCopy()
+		cfg.Status.Sync = *status
+
+		// TODO: Can we use typed client for this?
+		client := parser.Client().Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+		unstructuredResource := &unstructured.Unstructured{}
+		jj, _ := json.Marshal(cfg)
+		if err := json.Unmarshal(jj, &unstructuredResource.Object); err != nil {
+			return nil, fmt.Errorf("error loading config json: %w", err)
+		}
+
+		if _, err := client.UpdateStatus(ctx, unstructuredResource, v1.UpdateOptions{}); err != nil {
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
+
+		if syncError != nil {
+			return nil, syncError
 		}
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
@@ -124,6 +157,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, err
 		}
 	default:
+		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}
 
 	return &provisioning.JobStatus{

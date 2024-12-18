@@ -53,16 +53,14 @@ func NewReplicator(
 }
 
 // Sync replicates all files in the repository.
-func (r *Replicator) Sync(ctx context.Context) error {
+func (r *Replicator) Sync(ctx context.Context) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
-	// started := time.Now()
-
 	if err := r.ensureRepositoryFolderExists(ctx); err != nil {
-		return fmt.Errorf("ensure repository folder exists: %w", err)
+		return "", fmt.Errorf("ensure repository folder exists: %w", err)
 	}
 
 	var latest string
@@ -70,60 +68,37 @@ func (r *Replicator) Sync(ctx context.Context) error {
 	case !isVersioned:
 		r.logger.InfoContext(ctx, "replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
-			return fmt.Errorf("replicate tree: %w", err)
+			return "", fmt.Errorf("replicate tree: %w", err)
 		}
 	case lastCommit == "":
 		var err error
 		latest, err = versionedRepo.LatestRef(ctx, r.logger)
 		if err != nil {
-			return fmt.Errorf("latest ref: %w", err)
+			return "", fmt.Errorf("latest ref: %w", err)
 		}
 		if err := r.replicateTree(ctx, latest); err != nil {
-			return fmt.Errorf("replicate tree: %w", err)
+			return latest, fmt.Errorf("replicate tree: %w", err)
 		}
 		r.logger.InfoContext(ctx, "initial replication for versioned repository", "latest", latest)
 	default:
 		var err error
 		latest, err = versionedRepo.LatestRef(ctx, r.logger)
 		if err != nil {
-			return fmt.Errorf("latest ref: %w", err)
+			return "", fmt.Errorf("latest ref: %w", err)
 		}
 
 		r.logger.InfoContext(ctx, "replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
 		changes, err := versionedRepo.CompareFiles(ctx, r.logger, lastCommit, latest)
 		if err != nil {
-			return fmt.Errorf("compare files: %w", err)
+			return latest, fmt.Errorf("compare files: %w", err)
 		}
 
 		if err := r.replicateChanges(ctx, changes); err != nil {
-			return fmt.Errorf("replicate changes: %w", err)
+			return latest, fmt.Errorf("replicate changes: %w", err)
 		}
 	}
 
-	// TODO: move the sync status to the job worker
-	status := &provisioning.SyncStatus{
-		// FIXME: these create infinite loop
-		// Started:  started.Unix(),
-		// Finished: time.Now().Unix(),
-		Hash: latest,
-	}
-
-	cfg.Status.Sync = *status
-
-	// TODO: Can we use typed client for this?
-	client := r.client.Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
-	unstructuredResource := &unstructured.Unstructured{}
-	jj, _ := json.Marshal(cfg)
-	err := json.Unmarshal(jj, &unstructuredResource.Object)
-	if err != nil {
-		return fmt.Errorf("error loading config json: %w", err)
-	}
-
-	if _, err := client.UpdateStatus(ctx, unstructuredResource, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("update repository status: %w", err)
-	}
-
-	return nil
+	return latest, nil
 }
 
 // replicateTree replicates all files in the repository.
