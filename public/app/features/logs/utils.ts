@@ -142,32 +142,17 @@ export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
-export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
-  if (logRow.labels.__error__) {
-    return {
-      hasError: true,
-      errorMessage: logRow.labels.__error__,
-    };
-  }
-  return {
-    hasError: false,
-  };
+export const checkLogsError = (logRow: LogRowModel): string | undefined => {
+  return logRow.labels.__error__;
 };
 
-export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
-  if (logRow.labels.__adaptive_logs_sampled__) {
-    let msg =
-      logRow.labels.__adaptive_logs_sampled__ === 'true'
-        ? 'Logs like this one have been dropped by Adaptive Logs'
-        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
-    return {
-      isSampled: true,
-      sampleMessage: msg,
-    };
+export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
+  if (!logRow.labels.__adaptive_logs_sampled__) {
+    return undefined;
   }
-  return {
-    isSampled: false,
-  };
+  return logRow.labels.__adaptive_logs_sampled__ === 'true'
+    ? 'Logs like this one have been dropped by Adaptive Logs'
+    : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
 };
 
 export const escapeUnescapedString = (string: string) =>
