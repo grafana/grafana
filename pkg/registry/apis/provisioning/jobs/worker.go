@@ -2,18 +2,17 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/url"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -28,6 +27,7 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
+	client      client.ProvisioningV0alpha1Interface
 	getter      RepoGetter
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
@@ -40,6 +40,7 @@ type JobWorker struct {
 func NewJobWorker(
 	getter RepoGetter,
 	parsers *resources.ParserFactory,
+	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	logger *slog.Logger,
 	render rendering.Service,
@@ -48,6 +49,7 @@ func NewJobWorker(
 ) *JobWorker {
 	return &JobWorker{
 		getter:      getter,
+		client:      client,
 		parsers:     parsers,
 		identities:  identities,
 		logger:      logger,
@@ -101,16 +103,8 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			Started: started.UnixMilli(),
 		}
 		cfg.Status.Sync = *status
-
-		// TODO: Can we use typed client for this?
-		client := parser.Client().Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
-		unstructuredResource := &unstructured.Unstructured{}
-		jj, _ := json.Marshal(cfg)
-		if err := json.Unmarshal(jj, &unstructuredResource.Object); err != nil {
-			return nil, fmt.Errorf("error loading config json: %w", err)
-		}
-
-		if _, err := client.UpdateStatus(ctx, unstructuredResource, v1.UpdateOptions{}); err != nil {
+		cfg, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{})
+		if err != nil {
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
 
@@ -131,13 +125,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		}
 
 		cfg.Status.Sync = *status
-		unstructuredResource = &unstructured.Unstructured{}
-		jj, _ = json.Marshal(cfg)
-		if err := json.Unmarshal(jj, &unstructuredResource.Object); err != nil {
-			return nil, fmt.Errorf("error loading config json: %w", err)
-		}
-
-		if _, err := client.UpdateStatus(ctx, unstructuredResource, v1.UpdateOptions{}); err != nil {
+		if _, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
 
