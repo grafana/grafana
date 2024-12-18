@@ -325,7 +325,7 @@ If you run into any problems, you are welcome to post questions in our [Grafana 
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you can learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /admonition >}}
 
