@@ -232,6 +232,7 @@ export interface FeatureToggles {
   playlistsWatcher?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
+  prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;

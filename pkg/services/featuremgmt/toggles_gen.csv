@@ -213,6 +213,7 @@ dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
+prometheusSpecialCharsInLabelValues,experimental,@grafana/observability-metrics,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 zipkinBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
