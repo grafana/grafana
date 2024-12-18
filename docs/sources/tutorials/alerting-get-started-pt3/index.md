@@ -246,7 +246,7 @@ To follow the above example, we will create notification policies that route ale
 
    - Select **Webhook**.
 
-   If you don’t have any contact points, add a Contact point.
+   If you don’t have any contact points, add a [Contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#add-a-contact-point).
 
 1. Enable Continue matching:
 
@@ -262,7 +262,7 @@ To follow the above example, we will create notification policies that route ale
 1. Set custom timing:
 
    - Toggle **Override general timings**.
-   - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes.
+   - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes. While the default is 5 minutes, we chose 2 minutes here to provide faster feedback for demonstration purposes.
 
      **Timing options** control how often notifications are sent and can help balance timely alerting with minimizing noise.
 
@@ -314,7 +314,7 @@ To follow the above example, we will create notification policies that route ale
 1. Set custom timing:
 
    - Toggle **Override general timings**.
-   - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes.
+   - **Group interval**: `2m`. This ensures follow-up notifications for the same alert group will be sent at intervals of 2 minutes. While the default is 5 minutes, we chose 2 minutes here to provide faster feedback for demonstration purposes.
 
      **Timing options** control how often notifications are sent and can help balance timely alerting with minimizing noise.
 
@@ -411,7 +411,7 @@ Choose the notification policy where you want to receive your alert notification
 
 Now that the alert rule has been configured, you should receive alert notifications in the contact point whenever alerts trigger.
 
-When the configured alert rule detects CPU usage higher than 75% across multiple regions, it will evaluate the metric every minute. If the condition persists, notifications will be grouped together, with a **Group wait** of 30 seconds before the first alert is sent. Follow-up notifications for the same alert group will be sent at intervals of 2 minutes, reducing the frequency of alerts. If the condition continues for an extended period, a **Repeat interval** of 4 hours ensures that the alert is only resent if the issue persists
+When the configured alert rule detects CPU usage higher than 75% across multiple regions, it will evaluate the metric every minute. If the condition persists, notifications will be grouped together, with a **Group wait** of 30 seconds before the first alert is sent. Follow-up notifications are sent every 2 minutes for quick updates in this demonstration, but for reducing alert frequency, consider using the default or increasing the interval. If the condition continues for an extended period, a **Repeat interval** of 4 hours ensures that the alert is only resent if the issue persists
 
 As a result, our notification policy will route two notifications: one notification grouping the three alert instances from the `us-east` region and another grouping the two alert instances from the `us-west` region
 
