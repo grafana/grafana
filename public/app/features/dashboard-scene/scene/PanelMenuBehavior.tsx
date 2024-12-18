@@ -110,7 +110,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         onClick: () => {
           DashboardInteractions.sharingCategoryClicked({
             item: shareDashboardType.embed,
-            shareResource: getTrackingSource(panel?.getRef()),
+            shareResource: getTrackingSource(panel.getRef()),
           });
 
           const drawer = new ShareDrawer({
@@ -134,7 +134,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           onClick: () => {
             DashboardInteractions.sharingCategoryClicked({
               item: shareDashboardType.snapshot,
-              shareResource: getTrackingSource(panel?.getRef()),
+              shareResource: getTrackingSource(panel.getRef()),
             });
 
             const drawer = new ShareDrawer({
