@@ -1045,12 +1045,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "onPremToCloudMigrationsAlerts",
-			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
 			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
 			Stage:       FeatureStageExperimental,
@@ -1447,14 +1441,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "exploreLogsShardSplitting",
 			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
 			Stage:        FeatureStageExperimental,
@@ -1675,6 +1661,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:         "feedbackButton",

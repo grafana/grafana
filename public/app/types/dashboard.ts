@@ -56,6 +56,7 @@ export interface DashboardMeta {
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
+  folderId?: number;
   created?: string;
   createdBy?: string;
   updated?: string;
@@ -121,7 +122,6 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  TV = 'tv',
   Full = 'full',
 }
 

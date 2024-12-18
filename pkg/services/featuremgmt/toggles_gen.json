@@ -2474,7 +2474,8 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAlerts",
         "resourceVersion": "1728048163201",
-        "creationTimestamp": "2024-10-04T13:22:43Z"
+        "creationTimestamp": "2024-10-04T13:22:43Z",
+        "deletionTimestamp": "2024-12-02T13:37:41Z"
       },
       "spec": {
         "description": "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
@@ -3237,6 +3238,7 @@
         "name": "singleTopNav",
         "resourceVersion": "1732104041490",
         "creationTimestamp": "2024-08-29T08:48:32Z",
+        "deletionTimestamp": "2024-12-13T11:25:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-20 12:00:41.490792 +0000 UTC"
         }
@@ -3616,6 +3618,19 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "useV2DashboardsAPI",
+        "resourceVersion": "1732535420861",
+        "creationTimestamp": "2024-11-25T11:50:20Z"
+      },
+      "spec": {
+        "description": "Use the v2 kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true
       }
     },
     {

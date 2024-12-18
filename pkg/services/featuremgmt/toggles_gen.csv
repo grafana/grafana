@@ -137,7 +137,6 @@ alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
-onPremToCloudMigrationsAlerts,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 onPremToCloudMigrationsAuthApiMig,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -190,7 +189,6 @@ dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,
 newFiltersUI,GA,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
-singleTopNav,GA,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
@@ -223,6 +221,7 @@ reportingUseRawTimeRange,preview,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,true
+useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
