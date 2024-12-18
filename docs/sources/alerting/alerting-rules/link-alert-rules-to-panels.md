@@ -30,9 +30,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   view-alert-state-on-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-state-on-panels/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-alert-state-on-panels/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/#view-alert-state-on-panels
 ---
 
 # Create and link alert rules to panels
