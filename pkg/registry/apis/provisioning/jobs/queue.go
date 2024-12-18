@@ -141,6 +141,8 @@ func (s *jobStore) drainPending() {
 			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
 
+		// FIXME: set start and finish times for the job once it does not create an infinite loop
+		// in the controller
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
 			logger.ErrorContext(ctx, "error running job", "error", err)
