@@ -31,10 +31,13 @@ const (
 	operationDelete
 )
 
+const maxAttempts = 3
+
 type queueItem struct {
-	key string
-	op  operation
-	obj interface{}
+	key      string
+	op       operation
+	obj      interface{}
+	attempts int
 }
 
 // RepositoryController controls how and when CRD is established.
@@ -161,19 +164,36 @@ func (rc *RepositoryController) deleteRepository(obj interface{}) {
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(_ context.Context) bool {
+func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	item, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
 	defer rc.queue.Done(item)
 
-	rc.logger.Info("RepositoryController processing key", "key", item)
+	logger := rc.logger.With("key", item.key)
+	logger.InfoContext(ctx, "RepositoryController processing key")
 
 	err := rc.processFn(item)
 	if err == nil {
 		rc.queue.Forget(item)
 		return true
+	}
+
+	item.attempts++
+	logger = logger.With("error", err, "attempts", item.attempts)
+	if item.attempts >= maxAttempts {
+		logger.ErrorContext(ctx, "RepositoryController failed too many times")
+		rc.queue.Forget(item)
+		return true
+	}
+
+	if !apierrors.IsServiceUnavailable(err) {
+		logger.InfoContext(ctx, "RepositoryController will not retry")
+		rc.queue.Forget(item)
+		return true
+	} else {
+		logger.InfoContext(ctx, "RepositoryController will retry as service is unavailable")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -207,10 +227,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
-	if apierrors.IsNotFound(err) {
+	switch {
+	case apierrors.IsNotFound(err):
 		return errors.New("repository not found in cache")
-	}
-	if err != nil {
+	case err != nil:
 		return err
 	}
 
@@ -235,24 +255,22 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	logger.InfoContext(ctx, "repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
 
 	var status *provisioning.RepositoryStatus
-	if cachedRepo.Status.Initialized {
+	if cachedRepo.Status.ObservedGeneration > 0 {
 		logger.InfoContext(ctx, "handle repository update")
 		status, err = repo.OnUpdate(ctx, logger)
 		if err != nil {
-			rc.logger.Error("OnUpdate", "error", err)
+			return fmt.Errorf("handle repository update: %w", err)
 		}
 	} else {
 		logger.InfoContext(ctx, "handle repository init")
 		status, err = repo.OnCreate(ctx, logger)
 		if err != nil {
-			rc.logger.Error("OnCreate", "error", err)
+			return fmt.Errorf("handle repository create: %w", err)
 		}
 	}
 
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
-	} else {
-		status.Initialized = true
 	}
 	status.ObservedGeneration = cachedRepo.Generation
 
