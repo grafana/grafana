@@ -21,8 +21,6 @@ refs:
 
 # Reporting settings
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
 You can configure organization-wide report settings in the **Settings** under **Dashboards > Reporting**. Settings are applied to all the reports for current organization.
 
 You can customize the branding options.

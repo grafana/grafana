@@ -100,12 +100,12 @@ refs:
 
 Reporting enables you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
 
-> If you have [Role-based access control](ref:role-based-access-control) enabled, for some actions you would need to have relevant permissions.
-> Refer to specific guides to understand what permissions are required.
+{{< admonition type="note" >}}
+If you have [Role-based access control](ref:role-based-access-control) enabled, for some actions you would need to have relevant permissions.
+Refer to specific guides to understand what permissions are required.
+{{< /admonition >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
-
-For information about recent improvements to the reporting UI, refer to [Grafana reporting: How we improved the UX in Grafana](https://grafana.com/blog/2022/06/29/grafana-reporting-how-we-improved-the-ux-in-grafana/).
 
 ## Requirements
 
@@ -116,38 +116,55 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](ref:permission) to create and manage reports.
 
-## Create or update a report
+## Create a report
 
 Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control](ref:role-based-access-control).
 
-1. Click **Dashboards > Reports** in the side navigation menu.
+To create a report, follow these steps:
 
-   The Reports page allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
+1. Click **Dashboards > Reports** in the main menu.
+
+   The **Reports** page allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name at the top of the page.
 
 1. Click **+ Create a new report**.
-1. Configure the following report sections:
-   list of links here
+1. Configure the following report sections, as needed:
+   - [Select dashboard](#select-dashboard)
+   - [Format report](#format-report)
+   - [Schedule](#schedule)
+   - [Share](#share)
+   - [Confirm](#confirm)
 1. Do one of the following:
-   Send or Save as Draft. Or Discard. or Preview?
+   - **Send**
+   - **Save as draft** - You can save a report as a draft at any point during the report creation or update process even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
+   - **Discard**
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
-
-## Select dashboard
+### Select dashboard
 
 1. Select report dashboard.
    - **Source dashboard:** Select the dashboard from which you want to generate the report.
    - **Time range:** (optional) Use custom time range for the report. For more information, refer to [Report time range](#report-time-range).
    - **Add another dashboard:** Add more than one dashboard to the report.
 
-### Add multiple dashboards to a report
+#### Add multiple dashboards to a report
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
 
-### Choose template variables
+#### Render a report with panels or rows set to repeat by a variable
+
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
+
+##### Caveats
+
+- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
+- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
+  - use the dashboard's original template variables for the report, or make a copy of the dashboard
+  - select the new set of template variables
+  - generate a report based on the copied dashboard.
+- Rendering of the repeating panels inside collapsed rows in reports is not supported.
+
+#### Choose template variables
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -157,7 +174,7 @@ You can configure report-specific template variables for the dashboard on the re
 The query variables saved with a report might become of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
 {{% /admonition %}}
 
-### Report time range
+#### Report time range
 
 > **Note:** You can set custom report time ranges in [Grafana Enterprise](ref:grafana-enterprise) 7.2+ and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -168,7 +185,7 @@ By default, reports use the saved time range of the dashboard. You can change th
 
 The page header of the report displays the time range for the dashboard's data queries.
 
-#### Report time zones
+##### Report time zones
 
 Reports use the time zone of the dashboard from which they’re generated. You can control the time zone for your reports by setting the dashboard to a specific time zone. Note that this affects the display of the dashboard for all users.
 
@@ -176,7 +193,7 @@ If a dashboard has the **Browser Time** setting, the reports generated from that
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
-## Format report
+### Format report
 
 1. Format the report.
    - **Choose format options for the report:** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
@@ -186,13 +203,13 @@ If the time zone is set differently between your Grafana server and its remote i
      - Select a zoom level for the report. Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
      - Click **Preview PDF** to view a rendered PDF with the options you selected.
 
-### Embed a dashboard as an image into a report
+#### Embed a dashboard as an image into a report
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
-### Layout and orientation
+#### Layout and orientation
 
 | Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                                                             |
 | ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -201,7 +218,7 @@ You can send a report email with an image of the dashboard embedded in the email
 | Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Grid layout in portrait" >}} |
 | Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Grid layout in landscape" >}}                  |
 
-### CSV export
+#### CSV export
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -213,7 +230,7 @@ When the CSV file is generated, it is temporarily written to the `csv` folder in
 
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime](ref:temp-data-lifetime) setting. This setting also affects how long a renderer PNG file should be stored.
 
-### Table data in PDF
+#### Table data in PDF
 
 {{% admonition type="note" %}}
 Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
@@ -226,12 +243,20 @@ When there's more data in your table visualizations than can be shown in the das
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
-## Schedule
+#### Preview PDF
+
+TBD
+
+#### Download CSV
+
+TBD
+
+### Schedule
 
 1. Schedule report.
    - Enter scheduling information. Options vary depending on the frequency selected.
 
-### Scheduling
+#### Scheduling
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -251,7 +276,7 @@ For reports that have an hourly or daily frequency, you can choose to send them 
 
 When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month.
 
-## Share
+### Share
 
 1. Enter report information. All fields are required unless otherwise indicated.
    - **Report name:** Name of the report as you want it to appear in the **Reports** list. The report name populates the email subject line.
@@ -261,30 +286,7 @@ When you schedule a report with a monthly frequency, and set the start date betw
    - **Include a dashboard link:** Include a link to the dashboard from within the report email.
    - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 
-## Confirm
-
-1. Preview and save the report.
-
-## Render a report with panels or rows set to repeat by a variable
-
-<!-- not sure where this will go -->
-
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
-
-### Caveats
-
-- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
-- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
-  - use the dashboard's original template variables for the report, or make a copy of the dashboard
-  - select the new set of template variables
-  - generate a report based on the copied dashboard.
-- Rendering of the repeating panels inside collapsed rows in reports is not supported.
-
-## Send a test email
-
-<!-- not sure where to put this -->
+#### Send a test email
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -295,9 +297,19 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-## Pause a report
+### Confirm
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+1. Preview and save the report.
+
+### Manage reports
+
+<!-- maybe an image of the reporting main page here -->
+
+#### Edit
+
+TBD
+
+#### Pause or resume a report
 
 You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
