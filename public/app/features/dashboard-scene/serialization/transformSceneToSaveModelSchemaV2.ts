@@ -410,10 +410,11 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       },
     };
 
-    // Check if QueryKind exists
-    if (layer.state.query.query) {
+    // Check if DataQueryKind exists
+    const queryKind = getAnnotationQueryKind(layer.state.query);
+    if (layer.state.query.query.kind === queryKind) {
       result.spec.query = {
-        kind: getAnnotationQueryKind(layer.state.query),
+        kind: queryKind,
         spec: layer.state.query.query.spec,
       };
     }
