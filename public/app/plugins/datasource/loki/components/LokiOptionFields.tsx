@@ -29,7 +29,7 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   },
 ];
 
-export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
+const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
   {
     value: undefined,
     label: 'Auto',
