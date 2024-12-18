@@ -4020,7 +4020,7 @@ __metadata:
     fs-extra: "npm:^11.2.0"
     hoist-non-react-statics: "npm:3.3.2"
     i18next: "npm:^24.0.0"
-    i18next-browser-languagedetector: "npm:^7.0.2"
+    i18next-browser-languagedetector: "npm:^8.0.0"
     immutable: "npm:4.3.7"
     is-hotkey: "npm:0.2.0"
     jquery: "npm:3.7.1"
@@ -17695,7 +17695,7 @@ __metadata:
     html-webpack-plugin: "npm:5.6.3"
     http-server: "npm:14.1.1"
     i18next: "npm:^24.0.0"
-    i18next-browser-languagedetector: "npm:^7.0.2"
+    i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:9.0.2"
     immer: "npm:10.1.1"
     immutable: "npm:4.3.7"
@@ -18517,12 +18517,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next-browser-languagedetector@npm:^7.0.2":
-  version: 7.2.1
-  resolution: "i18next-browser-languagedetector@npm:7.2.1"
+"i18next-browser-languagedetector@npm:^8.0.0":
+  version: 8.0.2
+  resolution: "i18next-browser-languagedetector@npm:8.0.2"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
-  checksum: 10/20c93cbd23d62703e12268ec24679a91743cb6d652a6e83e6a102b2ecb8f79542821046a7f8f567a93fabfdc5cd9353dc7f3050c9c48948fe2ae0640d859a0dd
+  checksum: 10/2d994fbec7d106da7592d3b22a058f03be59a67e0ef7436bc1b5500dca778dc5eb77df34b4e0a054123d5538ef5f8b5c19cd1d7b862dc3403c4571b48c9cabe8
   languageName: node
   linkType: hard
 
