@@ -3,8 +3,10 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apps/feedback"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -26,6 +28,7 @@ func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	playlistAppProvider *playlist.PlaylistAppProvider,
+	feedbackAppProvider *feedback.FeedbackAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
@@ -40,7 +43,13 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+
+	providers := []app.Provider{playlistAppProvider}
+	if feedbackAppProvider != nil {
+		providers = append(providers, feedbackAppProvider)
+	}
+
+	runner, err := runner.NewAPIGroupRunner(cfg, providers...)
 	if err != nil {
 		return nil, err
 	}
