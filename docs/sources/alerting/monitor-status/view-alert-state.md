@@ -74,7 +74,7 @@ To view the state and health of your alert rules and the status of alert instanc
 
    {{< figure src="/media/docs/alerting/view-alert-instance-state.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
-## View alert rule details
+### View from the alert rule details page
 
 To view more alert rule details, complete the following steps.
 
