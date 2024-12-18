@@ -32,6 +32,7 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "opsgenie", expectedSecretFields: []string{"apiKey"}},
 		{receiverType: "webex", expectedSecretFields: []string{"bot_token"}},
 		{receiverType: "sns", expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}},
+		{receiverType: "messagebird", expectedSecretFields: []string{"access_key"}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.receiverType, func(t *testing.T) {

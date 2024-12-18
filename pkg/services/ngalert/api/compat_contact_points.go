@@ -51,7 +51,7 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 		len(cp.Pagerduty) + len(cp.OnCall) + len(cp.Pushover) + len(cp.Sensugo) +
 		len(cp.Sns) + len(cp.Slack) + len(cp.Teams) + len(cp.Telegram) +
 		len(cp.Threema) + len(cp.Victorops) + len(cp.Webhook) + len(cp.Wecom) +
-		len(cp.Webex) + len(cp.Mqtt)
+		len(cp.Webex) + len(cp.Mqtt) + len(cp.MessageBird)
 
 	integration := make([]*notify.GrafanaIntegrationConfig, 0, contactPointsLength)
 
@@ -100,6 +100,13 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 	}
 	for _, i := range cp.Line {
 		el, err := marshallIntegration(j, "line", i, i.DisableResolveMessage)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		integration = append(integration, el)
+	}
+	for _, i := range cp.MessageBird {
+		el, err := marshallIntegration(j, "messagebird", i, i.DisableResolveMessage)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -280,6 +287,11 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 		integration := definitions.LineIntegration{DisableResolveMessage: disable}
 		if err = json.Unmarshal(data, &integration); err == nil {
 			result.Line = append(result.Line, integration)
+		}
+	case "messagebird":
+		integration := definitions.MessageBirdIntegration{DisableResolveMessage: disable}
+		if err = json.Unmarshal(data, &integration); err == nil {
+			result.MessageBird = append(result.MessageBird, integration)
 		}
 	case "mqtt":
 		integration := definitions.MqttIntegration{DisableResolveMessage: disable}
