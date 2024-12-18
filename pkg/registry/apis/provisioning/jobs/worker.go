@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -90,14 +91,37 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		ref, syncError := replicator.Sync(ctx)
+		started := time.Now()
+
+		// Update the status to indicate that we are working on it
+		cfg := repo.Config().DeepCopy()
 		status := &provisioning.SyncStatus{
-			State: provisioning.JobStateFinished,
-			// FIXME: infinite loop if we set this in the controller
-			// JobID:    job.GetName(), // TODO: Should we use the job id here?
+			State:   provisioning.JobStateWorking,
+			JobID:   job.GetName(),
+			Started: started.UnixMilli(),
+		}
+		cfg.Status.Sync = *status
+
+		// TODO: Can we use typed client for this?
+		client := parser.Client().Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
+		unstructuredResource := &unstructured.Unstructured{}
+		jj, _ := json.Marshal(cfg)
+		if err := json.Unmarshal(jj, &unstructuredResource.Object); err != nil {
+			return nil, fmt.Errorf("error loading config json: %w", err)
+		}
+
+		if _, err := client.UpdateStatus(ctx, unstructuredResource, v1.UpdateOptions{}); err != nil {
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
+
+		// Sync the repository
+		ref, syncError := replicator.Sync(ctx)
+		status = &provisioning.SyncStatus{
+			State:    provisioning.JobStateFinished,
+			JobID:    job.GetName(),
 			Hash:     ref,
-			Started:  0, // FIXME: infinite loop if we set this in the controller
-			Finished: 0, // FIXME: infinite loop if we set this in the controller
+			Started:  started.UnixMilli(),
+			Finished: time.Now().UnixMilli(),
 			Message:  []string{},
 		}
 
@@ -106,13 +130,9 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			status.Message = append(status.Message, syncError.Error())
 		}
 
-		cfg := repo.Config().DeepCopy()
 		cfg.Status.Sync = *status
-
-		// TODO: Can we use typed client for this?
-		client := parser.Client().Resource(provisioning.RepositoryResourceInfo.GroupVersionResource())
-		unstructuredResource := &unstructured.Unstructured{}
-		jj, _ := json.Marshal(cfg)
+		unstructuredResource = &unstructured.Unstructured{}
+		jj, _ = json.Marshal(cfg)
 		if err := json.Unmarshal(jj, &unstructuredResource.Object); err != nil {
 			return nil, fmt.Errorf("error loading config json: %w", err)
 		}
