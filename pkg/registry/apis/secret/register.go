@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,5 +117,28 @@ func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
 func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	operation := a.GetOperation()
+
+	if obj == nil || operation == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	switch typedObj := obj.(type) {
+	case *secretV0Alpha1.SecureValue:
+		if errs := reststorage.ValidateSecureValue(typedObj, operation); len(errs) > 0 {
+			return apierrors.NewInvalid(secretV0Alpha1.SecureValuesResourceInfo.GroupVersionKind().GroupKind(), a.GetName(), errs)
+		}
+
+		return nil
+	case *secretV0Alpha1.Keeper:
+		return nil
+	}
+
+	return apierrors.NewBadRequest(fmt.Sprintf("unknown spec %T", obj))
+}
+
+func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	fmt.Printf("\nMUTATE CALLED WITH OPERATION %v\n", a.GetOperation())
 	return nil
 }
