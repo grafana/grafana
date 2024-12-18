@@ -1,3 +1,5 @@
+import { PluginExtensionPoints } from '@grafana/data';
+
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -18,4 +20,16 @@ export const pluginExtensionRegistries: PluginExtensionRegistries = {
 addedLinksRegistry.register({
   pluginId: 'grafana',
   configs: getCoreExtensionConfigurations(),
+});
+debugger;
+addedLinksRegistry.register({
+  pluginId: 'grafana-oncall-app',
+  configs: [
+    {
+      targets: PluginExtensionPoints.AlertingAlertingRuleAction,
+      title: 'OnCall',
+      description: '1',
+      path: '/a/grafana-oncall-app/foo-bar',
+    },
+  ],
 });

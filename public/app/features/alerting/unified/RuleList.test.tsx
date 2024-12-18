@@ -2,7 +2,7 @@ import { SerializedError } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
 import { SetupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -57,15 +57,19 @@ const mocks = {
   },
 };
 
-const renderRuleList = () => {
+const renderRuleList = async () => {
   locationService.push('/');
 
-  return render(
+  const view = render(
     <TestProvider>
       <RuleList />
     </TestProvider>,
     { renderWithRouter: false }
   );
+
+  await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
+
+  return view;
 };
 
 const dataSources = {
@@ -563,7 +567,7 @@ describe('RuleList', () => {
       }
     });
 
-    renderRuleList();
+    await renderRuleList();
 
     const [firstReorderButton] = await screen.findAllByLabelText(/reorder/i);
 
@@ -606,7 +610,7 @@ describe('RuleList', () => {
     test('resuming paused alert rule', async () => {
       const user = userEvent.setup();
 
-      renderRuleList();
+      await renderRuleList();
 
       // Expand the paused rule group so we can assert the rule state
       await user.click(await ui.pausedRuleGroup.find());
@@ -744,7 +748,7 @@ describe('RuleList', () => {
         ]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
-        renderRuleList();
+        await renderRuleList();
 
         const groupRows = await ui.ruleGroup.findAll();
 
@@ -764,7 +768,7 @@ describe('RuleList', () => {
         mocks.api.fetchRules.mockResolvedValue([]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
-        renderRuleList();
+        await renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
@@ -781,7 +785,7 @@ describe('RuleList', () => {
         mocks.api.fetchRules.mockResolvedValue(somePromRules('grafana'));
         mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
 
-        renderRuleList();
+        await renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
@@ -807,7 +811,7 @@ describe('RuleList', () => {
         mocks.api.fetchRules.mockResolvedValue([]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
-        renderRuleList();
+        await renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalled());
         expect(ui.newRuleButton.get()).toBeInTheDocument();
@@ -830,7 +834,7 @@ describe('RuleList', () => {
         mocks.api.fetchRules.mockResolvedValue(somePromRules('Cortex'));
         mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
 
-        renderRuleList();
+        await renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalled());
         expect(ui.newRuleButton.get()).toBeInTheDocument();

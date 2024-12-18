@@ -1,4 +1,5 @@
-import { render } from 'test/test-utils';
+import { ComponentProps } from 'react';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -27,6 +28,12 @@ beforeAll(() => {
   jest.clearAllMocks();
 });
 
+const renderRuleDetails = async (rule: ComponentProps<typeof RuleDetails>['rule']) => {
+  const view = render(<RuleDetails rule={rule} />);
+  await waitFor(async () => screen.queryAllByRole('progressbar').length === 0);
+  return view;
+};
+
 describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons in details', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
@@ -36,7 +43,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      render(<RuleDetails rule={grafanaRule} />);
+      await renderRuleDetails(grafanaRule);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -47,7 +54,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      render(<RuleDetails rule={grafanaRule} />);
+      await renderRuleDetails(grafanaRule);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
@@ -62,7 +69,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      render(<RuleDetails rule={cloudRule} />);
+      await renderRuleDetails(cloudRule);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -73,7 +80,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      render(<RuleDetails rule={cloudRule} />);
+      await renderRuleDetails(cloudRule);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();

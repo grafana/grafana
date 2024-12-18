@@ -1,6 +1,7 @@
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
+import { PluginExtensionPoints } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -61,7 +62,6 @@ const ELEMENTS = {
 };
 
 setupMswServer();
-setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
 
 /**
  * "Grants" permissions via contextSrv mock, and additionally sets folder access control
@@ -299,17 +299,36 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, 
     </AlertRuleProvider>,
     {
       historyOptions: { initialEntries: [path] },
-      pluginLinks: () => ({
-        links: [
-          mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
-          mockPluginLinkExtension({
-            pluginId: 'grafana-asserts-app',
-            title: 'Open workbench',
-            path: '/a/grafana-asserts-app',
-          }),
-        ],
-        isLoading: false,
-      }),
+      pluginLinks: [
+        {
+          pluginId: 'grafana-slo-app',
+          configs: [
+            {
+              targets: PluginExtensionPoints.AlertingAlertingRuleAction,
+              title: 'SLO dashboard',
+              description: '1',
+              path: '/a/grafana-slo-app/foo-bar',
+            },
+          ],
+        },
+        {
+          pluginId: 'grafana-asserts-app',
+          configs: [
+            {
+              targets: PluginExtensionPoints.AlertingAlertingRuleAction,
+              title: 'Open workbench',
+              description: '1',
+              path: '/a/grafana-asserts-app/foo',
+            },
+          ],
+        },
+        // mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
+        // mockPluginLinkExtension({
+        //   pluginId: 'grafana-asserts-app',
+        //   title: 'Open workbench',
+        //   path: '/a/grafana-asserts-app',
+        // }),
+      ],
     }
   );
 

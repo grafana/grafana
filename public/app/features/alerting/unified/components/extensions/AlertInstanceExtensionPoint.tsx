@@ -2,7 +2,7 @@ import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { Dropdown, IconButton } from '@grafana/ui';
+import { Dropdown, Icon, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
 
@@ -21,8 +21,11 @@ export const AlertInstanceExtensionPoint = ({
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const context = useMemo(() => ({ instance, rule }), [instance, rule]);
-  const { links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
+  const { isLoading, links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
 
+  if (isLoading) {
+    return <Icon name="spinner" role="progressbar" />;
+  }
   if (links.length === 0) {
     return null;
   }
