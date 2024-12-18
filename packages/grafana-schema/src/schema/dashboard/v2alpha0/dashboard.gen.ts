@@ -27,7 +27,7 @@ export interface DashboardV2Spec {
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// Tags associated with dashboard.
-	tags?: string[];
+	tags: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
 	variables: VariableKind[];
@@ -49,6 +49,7 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	preload: false,
 	editable: true,
 	links: [],
+	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
 	variables: [],
 	elements: {},

@@ -36,7 +36,7 @@ DashboardV2Spec: {
   links: [...DashboardLink]
 
   // Tags associated with dashboard.
-  tags?: [...string]
+  tags: [...string]
 
   timeSettings: TimeSettingsSpec
 

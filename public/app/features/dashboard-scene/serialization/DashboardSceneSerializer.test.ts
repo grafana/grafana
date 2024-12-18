@@ -10,6 +10,7 @@ import { Dashboard, VariableModel } from '@grafana/schema';
 import {
   DashboardV2Spec,
   defaultDashboardV2Spec,
+  defaultPanelSpec,
   defaultTimeSettingsSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
@@ -22,8 +23,21 @@ import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSe
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn(),
+    };
+  },
+}));
+
 describe('DashboardSceneSerializer', () => {
   describe('v1 schema', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardSchemaV2 = false;
+    });
+
     it('Can detect no changes', () => {
       const dashboard = setup();
       const result = dashboard.getDashboardChanges(false);
@@ -315,7 +329,9 @@ describe('DashboardSceneSerializer', () => {
   });
 
   describe('v2 schema', () => {
-    config.featureToggles.dashboardSchemaV2 = true;
+    beforeEach(() => {
+      config.featureToggles.dashboardSchemaV2 = true;
+    });
 
     it('Can detect no changes', () => {
       const dashboard = setupV2();
@@ -327,7 +343,7 @@ describe('DashboardSceneSerializer', () => {
     it('Can detect time changed', () => {
       const dashboard = setupV2();
 
-      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-10h', to: 'now' });
 
       const result = dashboard.getDashboardChanges(false);
       expect(result.hasChanges).toBe(false);
@@ -338,7 +354,7 @@ describe('DashboardSceneSerializer', () => {
     it('Can save time change', () => {
       const dashboard = setupV2();
 
-      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-10h', to: 'now' });
 
       const result = dashboard.getDashboardChanges(true);
       expect(result.hasChanges).toBe(true);
@@ -361,7 +377,7 @@ describe('DashboardSceneSerializer', () => {
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
-        refreshPicker.setState({ refresh: '5s' });
+        refreshPicker.setState({ refresh: '10m' });
       }
 
       const result = dashboard.getDashboardChanges(false, false, false);
@@ -375,7 +391,7 @@ describe('DashboardSceneSerializer', () => {
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
-        refreshPicker.setState({ refresh: '5s' });
+        refreshPicker.setState({ refresh: '10m' });
       }
 
       const result = dashboard.getDashboardChanges(false, false, true);
@@ -452,8 +468,6 @@ describe('DashboardSceneSerializer', () => {
               },
             ],
           });
-          const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
 
           const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
           variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
@@ -465,52 +479,36 @@ describe('DashboardSceneSerializer', () => {
         });
 
         it('Can detect adhoc filter static options change', () => {
-          const adhocVar = {
-            id: 'adhoc',
-            name: 'adhoc',
-            label: 'Adhoc Label',
-            description: 'Adhoc Description',
-            type: 'adhoc',
-            datasource: {
-              uid: 'gdev-prometheus',
-              type: 'prometheus',
-            },
-            filters: [],
-            baseFilters: [],
-            defaultKeys: [
+          const dashboard = setupV2({
+            variables: [
               {
-                text: 'Host',
-                value: 'host',
-              },
-              {
-                text: 'Region',
-                value: 'region',
+                kind: 'AdhocVariable',
+                spec: {
+                  name: 'adhoc',
+                  label: 'Adhoc Label',
+                  description: 'Adhoc Description',
+                  datasource: {
+                    uid: 'gdev-prometheus',
+                    type: 'prometheus',
+                  },
+                  hide: 'dontHide',
+                  skipUrlSync: false,
+                  filters: [],
+                  baseFilters: [],
+                  defaultKeys: [
+                    {
+                      text: 'Host',
+                      value: 'host',
+                    },
+                    {
+                      text: 'Region',
+                      value: 'region',
+                    },
+                  ],
+                },
               },
             ],
-          } as VariableModel;
-
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
-                },
-              ],
-              version: 10,
-              templating: {
-                list: [adhocVar],
-              },
-            },
-            meta: {},
           });
-
-          const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
 
           const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
           variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
@@ -535,7 +533,7 @@ describe('DashboardSceneSerializer', () => {
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
         const result = dashboard.getDashboardChanges(false, true);
-        const panelSaveModel = (result.changedSaveModel as Dashboard).panels![0];
+        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'].spec;
         expect(panelSaveModel.title).toBe('changed title');
       });
     });
@@ -668,15 +666,45 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
       schemaVersion: 30,
       timeSettings: {
         ...defaultTimeSettingsSpec(),
-        autoRefresh: '5s',
+        autoRefresh: '10s',
         from: 'now-1h',
         to: 'now',
+      },
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            uid: 'panel-1',
+            title: 'Panel 1',
+          },
+        },
+      },
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'panel-1',
+                },
+              },
+            },
+          ],
+        },
       },
       variables: [
         {
           kind: 'CustomVariable',
           spec: {
-            name: 'queryVar',
+            name: 'app',
             label: 'Query Variable',
             description: 'A query variable',
             skipUrlSync: false,
@@ -684,10 +712,10 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
             options: [],
             multi: false,
             current: {
-              text: 'text1',
-              value: 'query1',
+              text: 'app1',
+              value: 'app1',
             },
-            query: 'query1',
+            query: 'app1',
             allValue: '',
             includeAll: false,
           },

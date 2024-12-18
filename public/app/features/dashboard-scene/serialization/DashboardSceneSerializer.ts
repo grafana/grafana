@@ -131,8 +131,6 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
   ) {
     const changedSaveModel = this.getSaveModel(scene);
-    console.log('changedSaveModel', changedSaveModel);
-    console.log('this.initialSaveModel', this.initialSaveModel);
     const changeInfo = getRawDashboardV2Changes(
       this.initialSaveModel!,
       changedSaveModel,
