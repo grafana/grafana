@@ -286,7 +286,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 
-		if res.Success {
+		if !res.Success {
 			logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
 		}
 
