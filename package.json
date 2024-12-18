@@ -342,7 +342,7 @@
     "leven": "^4.0.0",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
-    "lru-cache": "10.2.2",
+    "lru-cache": "11.0.2",
     "lru-memoize": "^1.1.0",
     "lucene": "^2.1.1",
     "marked": "12.0.2",
