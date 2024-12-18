@@ -23,7 +23,10 @@ func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
 	initSecretStore(mg)
 
 	// since it's a new feature enable migration locking by default
-	return mg.Start(true, 0)
+
+	// TODO LND when we are running locally, we are getting lock, so as a temporally fix we will disable locking
+	//return mg.Start(true, 0)
+	return mg.Start(false, 10)
 }
 
 func initSecretStore(mg *migrator.Migrator) string {
