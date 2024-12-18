@@ -1,8 +1,8 @@
 import { dateTime } from '@grafana/data';
+import { notifyApp } from 'app/core/reducers/appNotification';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { notifyApp } from '../../../core/actions';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';

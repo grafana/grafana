@@ -5,7 +5,6 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -14,6 +13,7 @@ import { dispatch } from 'app/store/store';
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
+import { notifyApp } from '../reducers/appNotification';
 
 import { copyStringToClipboard } from './explore';
 
