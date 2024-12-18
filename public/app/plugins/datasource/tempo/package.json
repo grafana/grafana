@@ -24,7 +24,7 @@
     "events": "3.3.0",
     "i18next": "^24.0.0",
     "lodash": "4.17.21",
-    "lru-cache": "10.2.2",
+    "lru-cache": "11.0.2",
     "monaco-editor": "0.34.1",
     "prismjs": "1.29.0",
     "react": "18.2.0",

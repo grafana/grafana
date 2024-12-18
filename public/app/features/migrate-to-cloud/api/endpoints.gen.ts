@@ -23,7 +23,10 @@ const injectedRtkApi = api.injectEndpoints({
     getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshot/${queryArg.snapshotUid}`,
-        params: { resultPage: queryArg.resultPage, resultLimit: queryArg.resultLimit },
+        params: {
+          resultPage: queryArg.resultPage,
+          resultLimit: queryArg.resultLimit,
+        },
       }),
     }),
     cancelSnapshot: build.mutation<CancelSnapshotApiResponse, CancelSnapshotApiArg>({
@@ -41,7 +44,11 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
+        params: {
+          page: queryArg.page,
+          limit: queryArg.limit,
+          sort: queryArg.sort,
+        },
       }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
@@ -95,14 +102,14 @@ export type GetSnapshotApiArg = {
   /** UID of a snapshot */
   snapshotUid: string;
 };
-export type CancelSnapshotApiResponse = /** status 200 (empty) */ void;
+export type CancelSnapshotApiResponse = unknown;
 export type CancelSnapshotApiArg = {
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */
   snapshotUid: string;
 };
-export type UploadSnapshotApiResponse = /** status 200 (empty) */ void;
+export type UploadSnapshotApiResponse = unknown;
 export type UploadSnapshotApiArg = {
   /** Session UID of a session */
   uid: string;
@@ -124,7 +131,7 @@ export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAcc
 export type GetCloudMigrationTokenApiArg = void;
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
 export type CreateCloudMigrationTokenApiArg = void;
-export type DeleteCloudMigrationTokenApiResponse = /** status 204 (empty) */ void;
+export type DeleteCloudMigrationTokenApiResponse = unknown;
 export type DeleteCloudMigrationTokenApiArg = {
   /** UID of a cloud migration token */
   uid: string;
