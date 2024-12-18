@@ -284,14 +284,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 					},
 					"checked": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When the sync job started",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"generation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The generation (spec changed) that triggered this health check",
+							Description: "When the health was checked last time",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -892,6 +885,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Format:      "",
 						},
 					},
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The generation of the spec last time reconciliation ran",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
@@ -901,7 +902,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					},
 					"sync": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Sync information",
+							Description: "Sync information with the last sync information",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"),
 						},
@@ -913,7 +914,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"initialized", "health", "sync", "webhook"},
+				Required: []string{"initialized", "observedGeneration", "health", "sync", "webhook"},
 			},
 		},
 		Dependencies: []string{

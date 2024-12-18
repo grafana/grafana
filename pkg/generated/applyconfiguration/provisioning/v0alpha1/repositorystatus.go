@@ -7,10 +7,11 @@ package v0alpha1
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
 type RepositoryStatusApplyConfiguration struct {
-	Initialized *bool                            `json:"initialized,omitempty"`
-	Health      *HealthStatusApplyConfiguration  `json:"health,omitempty"`
-	Sync        *SyncStatusApplyConfiguration    `json:"sync,omitempty"`
-	Webhook     *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
+	Initialized        *bool                            `json:"initialized,omitempty"`
+	ObservedGeneration *int64                           `json:"observedGeneration,omitempty"`
+	Health             *HealthStatusApplyConfiguration  `json:"health,omitempty"`
+	Sync               *SyncStatusApplyConfiguration    `json:"sync,omitempty"`
+	Webhook            *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -24,6 +25,14 @@ func RepositoryStatus() *RepositoryStatusApplyConfiguration {
 // If called multiple times, the Initialized field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithInitialized(value bool) *RepositoryStatusApplyConfiguration {
 	b.Initialized = &value
+	return b
+}
+
+// WithObservedGeneration sets the ObservedGeneration field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ObservedGeneration field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithObservedGeneration(value int64) *RepositoryStatusApplyConfiguration {
+	b.ObservedGeneration = &value
 	return b
 }
 
