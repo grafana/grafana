@@ -226,3 +226,4 @@ feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,fal
 elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
+investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false

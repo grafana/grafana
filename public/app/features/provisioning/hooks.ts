@@ -22,7 +22,7 @@ export function useCreateOrUpdateRepository(name?: string) {
       if (name) {
         return update({ name, body: { metadata: { name }, spec: data } });
       }
-      return create({ body: { metadata: { generateName: 'repository' }, spec: data } });
+      return create({ body: { metadata: { generateName: 'r' }, spec: data } });
     },
     [create, name, update]
   );
