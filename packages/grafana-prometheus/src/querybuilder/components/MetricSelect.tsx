@@ -125,21 +125,10 @@ export function MetricSelect({
   );
 
   /**
-   * Reformat the query string and label filters to return all valid results for current query editor state
-   */
-  const formatKeyValueStringsForLabelValuesQuery = (
-    query: string,
-    labelsFilters?: QueryBuilderLabelFilter[]
-  ): string => {
-    const queryString = regexifyLabelValuesQueryString(query);
-
-    return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
-  };
-
-  /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
   const getMetricLabels = (query: string) => {
+    // METRIC NAMES
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
@@ -423,4 +412,16 @@ export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFil
   return labelsFilters.map((label) => {
     return `,${label.label}="${label.value}"`;
   });
+};
+
+/**
+ * Reformat the query string and label filters to return all valid results for current query editor state
+ */
+export const formatKeyValueStringsForLabelValuesQuery = (
+  query: string,
+  labelsFilters?: QueryBuilderLabelFilter[]
+): string => {
+  const queryString = regexifyLabelValuesQueryString(query);
+
+  return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
 };

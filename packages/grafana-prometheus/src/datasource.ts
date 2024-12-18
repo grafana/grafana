@@ -660,6 +660,7 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+    // DO NOT USE FOR METRIC NAMES
     const requestId = `[${this.uid}][${options.key}]`;
     if (config.featureToggles.promQLScope) {
       return (

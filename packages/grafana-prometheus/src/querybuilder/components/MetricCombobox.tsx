@@ -45,6 +45,7 @@ export function MetricCombobox({
    */
   const getMetricLabels = useCallback(
     async (query: string) => {
+      // METRIC NAMES
       const results = await datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
 
       const resultsOptions = results.map((result) => {
