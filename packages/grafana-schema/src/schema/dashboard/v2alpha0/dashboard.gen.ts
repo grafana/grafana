@@ -475,7 +475,7 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 
 export interface AnnotationQuerySpec {
 	datasource?: DataSourceRef;
-	query: DataQueryKind;
+	query?: DataQueryKind;
 	builtIn?: boolean;
 	enable: boolean;
 	filter: AnnotationPanelFilter;
@@ -485,7 +485,6 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	query: defaultDataQueryKind(),
 	enable: false,
 	filter: defaultAnnotationPanelFilter(),
 	hide: false,

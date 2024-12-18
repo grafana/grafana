@@ -403,19 +403,20 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       spec: {
         name: layer.state.query.name,
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
-        query: {
-          kind: getAnnotationQueryKind(layer.state.query),
-          // layer.state.query returns an object which is AnnotationQueryKind
-          // with the query field, and inside that field we'll have
-          // this AnnotationQuery object and the things we care about are inside the query.spec field
-          spec: layer.state.query.query.spec,
-        },
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
         iconColor: layer.state.query.iconColor,
       },
     };
+
+    // Check if QueryKind exists
+    if (layer.state.query.query) {
+      result.spec.query = {
+        kind: getAnnotationQueryKind(layer.state.query),
+        spec: layer.state.query.query.spec,
+      };
+    }
 
     if (layer.state.query.builtIn !== undefined) {
       result.spec.builtIn = Boolean(layer.state.query.builtIn);
