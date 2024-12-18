@@ -4,6 +4,7 @@ import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -79,17 +80,24 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   return (
     <div>
       <h4 className={styles.title}>
-        Affected alert rule instances&nbsp;
+        <Trans i18nKey="alerting.silences.affected-instances">Affected alert rule instances</Trans>
         <Tooltip
           content={
             <div>
-              Preview the alert instances affected by this silence.
+              <Trans i18nKey="alerting.silences.preview-affected-instances">
+                Preview the alert instances affected by this silence.
+              </Trans>
               <br />
-              Only alert instances in the firing state are displayed.
+              <Trans i18nKey="alerting.silences.only-firing-instances">
+                Only alert instances in the firing state are displayed.
+              </Trans>
             </div>
           }
         >
-          <Icon name="info-circle" size="sm" />
+          <span>
+            &nbsp;
+            <Icon name="info-circle" size="sm" />
+          </span>
         </Tooltip>
         {tableItemAlerts.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
