@@ -5,14 +5,13 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Spinner, Stack, TextArea, TextLink } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta, useSelector } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
-import { RepositorySelect } from '../../provisioning/RepositorySelect';
-import { useGetRepositoryQuery, RepositorySpec } from '../../provisioning/api';
+import { RepositorySpec, selectFolderRepository } from '../../provisioning/api';
 import { PROVISIONING_URL } from '../../provisioning/constants';
 import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
@@ -97,11 +96,12 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [repo, ref, workflow, path] = watch(['repo', 'ref', 'workflow', 'path']);
-  const repositoryConfigQuery = useGetRepositoryQuery({ name: repo });
-  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const [title, ref, workflow, path] = watch(['title', 'ref', 'workflow', 'path']);
+  const folderRepository = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const repositoryConfig = folderRepository?.spec;
+  const repo = folderRepository?.metadata?.name;
   const isGitHub = repositoryConfig?.type === 'github';
-  const href = createPRLink(repositoryConfig, repo, ref);
+  const href = createPRLink(repositoryConfig, title, ref);
   const { isDirty } = dashboard.state;
   const navigate = useNavigate();
 
@@ -140,13 +140,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
-  if (repositoryConfigQuery.isLoading) {
-    return (
-      <Stack justifyContent={'center'}>
-        <Spinner />
-      </Stack>
-    );
-  }
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
@@ -201,20 +194,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         {!changeInfo.isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
-
-        <Field label="Repository">
-          {saveProvisioned ? (
-            <Controller
-              control={control}
-              name={'repo'}
-              render={({ field: { ref, onChange, ...field } }) => {
-                return <RepositorySelect {...field} onChange={(v) => onChange(v.value)} />;
-              }}
-            />
-          ) : (
-            <Input {...register('repo')} readOnly />
-          )}
-        </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
           <Input {...register('path')} readOnly={!saveProvisioned && !changeInfo.isNew} />

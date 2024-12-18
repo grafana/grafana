@@ -25,9 +25,11 @@ import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
+import { useSelector } from 'app/types';
 
 import { AnnoKeyRepoName } from '../../apiserver/types';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { selectFolderRepository } from '../../provisioning/api';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -73,7 +75,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-  const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName]);
+  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName] || folderRepo);
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -579,7 +582,7 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              dashboard.openSaveDrawer({});
+              dashboard.openSaveDrawer({ saveProvisioned: Boolean(meta.folderUid) });
             }}
             className={styles.buttonWithExtraMargin}
             tooltip="Save changes"
