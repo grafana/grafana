@@ -234,13 +234,13 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListR
 }
 
 func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
-	//authInfo, has := claims.From(ctx)
-	//if !has {
-	//	return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
-	//}
-	//if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
-	//	return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
-	//}
+	authInfo, has := claims.From(ctx)
+	if !has {
+		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
+	}
+	if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
+		return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
+	}
 
 	ns, err := claims.ParseNamespace(nameSpace)
 	if err != nil {
