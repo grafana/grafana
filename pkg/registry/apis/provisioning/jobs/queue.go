@@ -142,8 +142,8 @@ func (s *jobStore) drainPending() {
 			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
 
-		status.Started = started.UnixNano()
-		status.Finished = time.Now().UnixNano()
+		status.Started = started.UnixMilli()
+		status.Finished = time.Now().UnixMilli()
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
