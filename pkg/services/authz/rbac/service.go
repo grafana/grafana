@@ -43,6 +43,7 @@ type Service struct {
 	tracer tracing.Tracer
 
 	// Cache for user permissions, user team memberships and user basic roles
+	idCache        *localcache.CacheService
 	permCache      *localcache.CacheService
 	teamCache      *localcache.CacheService
 	basicRoleCache *localcache.CacheService
@@ -55,6 +56,7 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 		actionMapper:   mappers.NewK8sRbacMapper(),
 		logger:         logger,
 		tracer:         tracer,
+		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
@@ -145,16 +147,9 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (map[string]bool, error) {
-	var userIDQuery store.UserIdentifierQuery
-	// Assume that numeric UID is user ID
-	if userID, err := strconv.Atoi(req.UserUID); err == nil {
-		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
-	} else {
-		userIDQuery = store.UserIdentifierQuery{UserUID: req.UserUID}
-	}
-	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
+	userIdentifiers, err := s.GetUserIdentifiers(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("could not get user internal id: %w", err)
+		return nil, err
 	}
 
 	userPermKey := userPermCacheKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
@@ -187,6 +182,35 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 	scopeMap := getScopeMap(permissions)
 	s.permCache.Set(userPermKey, scopeMap, 0)
 	return scopeMap, nil
+}
+
+func (s *Service) GetUserIdentifiers(ctx context.Context, req *CheckRequest) (*store.UserIdentifiers, error) {
+	uidCacheKey := userIdentifierCacheKey(req.Namespace.Value, req.UserUID)
+	if cached, ok := s.idCache.Get(uidCacheKey); ok {
+		return cached.(*store.UserIdentifiers), nil
+	}
+
+	idCacheKey := userIdentifierCacheKeyById(req.Namespace.Value, req.UserUID)
+	if cached, ok := s.idCache.Get(idCacheKey); ok {
+		return cached.(*store.UserIdentifiers), nil
+	}
+
+	var userIDQuery store.UserIdentifierQuery
+	// Assume that numeric UID is user ID
+	if userID, err := strconv.Atoi(req.UserUID); err == nil {
+		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
+	} else {
+		userIDQuery = store.UserIdentifierQuery{UserUID: req.UserUID}
+	}
+	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
+	if err != nil {
+		return nil, fmt.Errorf("could not get user internal id: %w", err)
+	}
+
+	s.idCache.Set(uidCacheKey, userIdentifiers, 0)
+	s.idCache.Set(idCacheKey, userIdentifiers, 0)
+
+	return userIdentifiers, nil
 }
 
 func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
