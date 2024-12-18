@@ -35,7 +35,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { RoutesMatchingFilters } from '../../NotificationPolicies';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
@@ -51,6 +50,7 @@ import { Spacer } from '../Spacer';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
+import { RoutesMatchingFilters } from './NotificationPoliciesList';
 import { TIMING_OPTIONS_DEFAULTS, TimingOptions } from './timingOptions';
 
 interface PolicyComponentProps {
@@ -742,7 +742,7 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
               href={createMuteTimingLink(timing, alertManagerSourceName)}
               color={canSeeMuteTimings ? 'primary' : 'secondary'}
               variant="bodySmall"
-              inline={false}
+              inline={canSeeMuteTimings ? false : undefined}
             >
               {timing}
             </Wrapper>
