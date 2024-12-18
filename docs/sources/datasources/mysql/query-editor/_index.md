@@ -9,8 +9,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Query editor
-title: Query editor
+menuTitle: MySQL query editor
+title: MySQL query editor
 weight: 1000
 refs:
   add-template-variables-interval-ms:

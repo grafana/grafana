@@ -4,13 +4,14 @@ keywords:
   - grafana
   - mysql
   - guide
+  - configure
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Confgure the MySQL data source
-title: Confgure the MySQL data source
+menuTitle: Configure the MySQL data source
+title: Configure the MySQL data source
 weight: 1000
 refs:
   add-template-variables-interval:
@@ -45,7 +46,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
 ---
 
-# Confgure the MySQL data source
+# Configure the MySQL data source
 
 This document provides instructions for configuring the MySQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
@@ -95,7 +96,7 @@ Following is a list of MySQL configuration options:
 
 **Authentication:**
 
-- **Usename**- Enter the username used to connect to your MySQL database.
+- **Username**- Enter the username used to connect to your MySQL database.
 - **Password** - Enter the password used to connect to the MySQL database.
 - **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**. 
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TSL/SSL mode requires it.

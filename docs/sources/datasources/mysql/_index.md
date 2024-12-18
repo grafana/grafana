@@ -62,9 +62,7 @@ Once you have configured the data source you can:
 - Set up [alerting](ref:alerting)
 - Add [transformations](ref:transformations)
 
-
 View a MySQL overview on Grafana Play:
-
 
 {{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview" >}}
 
