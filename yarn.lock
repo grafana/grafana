@@ -9144,10 +9144,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/diff@npm:^5":
-  version: 5.2.3
-  resolution: "@types/diff@npm:5.2.3"
-  checksum: 10/2b426a0e6936c6dd3b8da35146fea8786e3fab4f4d96fe0174ac6bf704ff933fddde08a95e125484568205cea56c3d7dca85b8e11465c0ee5ce8c1f7b877f6df
+"@types/diff@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@types/diff@npm:6.0.0"
+  checksum: 10/ad2dc8ca9e7594c7d06b60832ef1a51c717e39fd92434043be35a5a5a038f61ee7e1b9e89d1e2a49b8c4fa0f020166d1d41f7ccbd62f6cadc9ca1bd3e5df4e5b
   languageName: node
   linkType: hard
 
@@ -17608,7 +17608,7 @@ __metadata:
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/diff": "npm:^5"
+    "@types/diff": "npm:^6.0.0"
     "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
@@ -20700,8 +20700,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.40.0
-  resolution: "knip@npm:5.40.0"
+  version: 5.41.0
+  resolution: "knip@npm:5.41.0"
   dependencies:
     "@nodelib/fs.walk": "npm:1.2.8"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -20725,7 +20725,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/238d76428a1f0cd3a184ebd9aaea2e07b3b8434cdee6c6e9230d6ae31f18b93188e2b60fbd64769d2448ce5b0114e662ee536843207514b1e95060b8740218d8
+  checksum: 10/a30b986ca4331b735f188c9217cb551b2698ddbed54bc98f1bf3c1fe1e85b3aff589244dafe60d6b5c7a8ee5133726d69366965cc3ae6299b43c33787155a7a2
   languageName: node
   linkType: hard
 
@@ -29698,9 +29698,9 @@ __metadata:
   linkType: hard
 
 "type-fest@npm:^4.18.2, type-fest@npm:^4.26.1":
-  version: 4.26.1
-  resolution: "type-fest@npm:4.26.1"
-  checksum: 10/b82676194f80af228cb852e320d2ea8381c89d667d2e4d9f2bdfc8f254bccc039c7741a90c53617a4de0c9fdca8265ed18eb0888cd628f391c5c381c33a9f94b
+  version: 4.30.2
+  resolution: "type-fest@npm:4.30.2"
+  checksum: 10/c5168b159c366e4fd5b74c7f7b786bed9248c03f67e6e07d52dd5d51354447468fa7c92b9f2142c7fe9279814031f783959370242c3520de848931b65ddb48bb
   languageName: node
   linkType: hard
 

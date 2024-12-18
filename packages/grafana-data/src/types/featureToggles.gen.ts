@@ -245,4 +245,5 @@ export interface FeatureToggles {
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
+  investigationsBackend?: boolean;
 }

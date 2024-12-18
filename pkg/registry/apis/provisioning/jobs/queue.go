@@ -119,6 +119,7 @@ func (s *jobStore) drainPending() {
 		}
 		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
 
+		started := time.Now()
 		var status *provisioning.JobStatus
 		if s.worker == nil {
 			status = &provisioning.JobStatus{
@@ -140,6 +141,9 @@ func (s *jobStore) drainPending() {
 			}
 			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
+
+		status.Started = started.UnixMilli()
+		status.Finished = time.Now().UnixMilli()
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
