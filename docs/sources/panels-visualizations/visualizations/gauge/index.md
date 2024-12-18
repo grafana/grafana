@@ -147,7 +147,7 @@ Adjust how the gauge is displayed.
 | Orientation | Choose a stacking direction:<ul><li>**Auto** - Gauges display in rows and columns.</li><li>**Horizontal** - Gauges display top to bottom.</li><li>**Vertical** - Gauges display left to right.</li></ul> |
 | Show threshold labels | Controls if threshold values are shown. |
 | [Show threshold markers](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
-| Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul> |
+| Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Neutral | Set the starting value from which every gauge will be filled. |
