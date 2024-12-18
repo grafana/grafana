@@ -255,7 +255,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	logger.InfoContext(ctx, "repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
 
 	var status *provisioning.RepositoryStatus
-	if cachedRepo.Status.Initialized {
+	if cachedRepo.Status.ObservedGeneration > 0 {
 		logger.InfoContext(ctx, "handle repository update")
 		status, err = repo.OnUpdate(ctx, logger)
 		if err != nil {
@@ -271,8 +271,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
-	} else {
-		status.Initialized = true
 	}
 	status.ObservedGeneration = cachedRepo.Generation
 
