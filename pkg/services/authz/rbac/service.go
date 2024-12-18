@@ -105,7 +105,7 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, req.Subject, listReq.Action)
+	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.UserUID, listReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return nil, err
@@ -126,7 +126,7 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 	for perm := range permissions {
 		if strings.HasPrefix(perm, "folders:uid:") {
 			identifier := perm[len("folders:uid:"):]
-			folderSet[perm] = struct{}{}
+			folderSet[identifier] = struct{}{}
 			descendants := getChildren(folderMap, identifier)
 			for _, desc := range descendants {
 				folderSet[desc] = struct{}{}
@@ -234,13 +234,13 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListR
 }
 
 func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
-	authInfo, has := claims.From(ctx)
-	if !has {
-		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
-	}
-	if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
-		return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
-	}
+	//authInfo, has := claims.From(ctx)
+	//if !has {
+	//	return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
+	//}
+	//if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
+	//	return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
+	//}
 
 	ns, err := claims.ParseNamespace(nameSpace)
 	if err != nil {
