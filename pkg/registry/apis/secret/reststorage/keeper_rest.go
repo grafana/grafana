@@ -189,6 +189,8 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
 	case admission.Update:
+	case admission.Delete:
+	case admission.Connect:
 	}
 
 	// General validations.
@@ -202,6 +204,7 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 	// TODO: validation of SQL keeper, once we have a finalized spec.
 	if keeper.Spec.SQL != nil {
+		_ = keeper.Spec.SQL
 	}
 
 	if keeper.Spec.AWS != nil {

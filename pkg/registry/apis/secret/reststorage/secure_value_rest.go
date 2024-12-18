@@ -217,6 +217,9 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 		if sv.Spec.Value != "" && sv.Spec.Ref != "" {
 			errs = append(errs, field.Required(field.NewPath("spec"), "either leave both `value` and `ref` empty, or set one of them, but not both"))
 		}
+
+	case admission.Delete:
+	case admission.Connect:
 	}
 
 	// General validations.
