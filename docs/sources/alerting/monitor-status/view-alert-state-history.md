@@ -36,7 +36,7 @@ To access the History view, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **History**.
 
-   {{< figure src="/media/docs/alerting/alerting-history-page.png" max-width="750px" alt="History page in Grafana Alerting" >}}
+   {{< figure src="/media/docs/alerting/alert-history-page.png" max-width="750px" alt="History page in Grafana Alerting" >}}
 
    An Alert Events chart shows your alert activity within a specific time frame. Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.
 

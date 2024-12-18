@@ -19,20 +19,40 @@ labels:
     - oss
 title: View alert rules
 weight: 410
+refs:
+  view-alert-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
 ---
 
 # View alert rules
 
-The Alert rules list view page lists all existing alert rules. By default, alert rules are grouped by alert rule type: Grafana-managed (Grafana) or data source-managed (Mimir/Cortex/Loki). The Grafana section also contains alert rules for Prometheus-compatible data sources. You can view alert rules for Prometheus compatible data sources, but you cannot edit them.
+The Alert rules list view page lists all existing recording and alert rules, including those created in Grafana and those available in configured data sources.
 
-When managing large volumes of alerts, you can use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
+To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 
-From the Alert rule list page, you can duplicate alert rules, silence notifications and pause or resume evaluation. If you pause evaluation, the alert rule state shows as **Paused**.
+{{< figure src="/media/docs/alerting/alert-rules-page.png" max-width="750px" alt="Alert rule view page in Grafana Alerting" >}}
 
-### Grouped view
+By default, alert rules are grouped by alert rule type: Grafana-managed or data source-managed.
 
-Grouped view shows Grafana alert rules grouped by folder and Loki or Prometheus alert rules grouped by `namespace` + `group`. This is the default rule list view, intended for managing alert rules. You can expand each group to view a list of rules in this group.
+In this view, you can edit and manage alert rules created in Grafana. However, rules created in Prometheus-compatible data sources are displayed but cannot be edited.
 
-### State view
+This view includes filters to simplify managing large volumes of alerts.
 
-State view shows alert rules grouped by state. Use this view to get an overview of which rules are in which state. You can expand each group to view more details.
+You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
+
+You can also change how the rule list is displayed using the **View as** option.
+
+- **Grouped**: Displays Grafana rules grouped by folder and evaluation group, and data-source rules by namespace and evaluation group. This is the default view.
+
+- **List**: Displays Grafana rules grouped only by folder.
+
+- **State**: Displays rules grouped by state, providing an overview for each state.
+
+Select a group to expand it and view the list of alert rules within that group.
+
+{{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
+
+For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
