@@ -34,7 +34,6 @@ var (
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
-	ErrCouldntRefreshToken = errors.New("could not refresh token")
 	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
