@@ -174,6 +174,27 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 	})
 
+	t.Run("creating an invalid keeper fails validation and returns an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvrKeepers,
+		})
+
+		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
+		testDataKeeper.Object["spec"].(map[string]any)["title"] = ""
+
+		raw, err := client.Resource.Create(ctx, testDataKeeper, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+	})
+
 	t.Run("deleting a keeper that exists does not return an error", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)

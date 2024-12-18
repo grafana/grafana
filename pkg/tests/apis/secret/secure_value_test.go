@@ -173,6 +173,27 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 	})
 
+	t.Run("creating an invalid secure value fails validation and returns an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvrSecureValues,
+		})
+
+		testDataSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
+		testDataSecureValue.Object["spec"].(map[string]any)["title"] = ""
+
+		raw, err := client.Resource.Create(ctx, testDataSecureValue, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+	})
+
 	t.Run("reading a secure value that does not exist returns a 404", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
