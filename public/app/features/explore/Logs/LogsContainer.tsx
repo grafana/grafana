@@ -264,7 +264,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   onSetLogsVolumeEnabled = (enabled: boolean) => {
-    setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume);
+    this.props.setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume);
   };
 
   render() {
