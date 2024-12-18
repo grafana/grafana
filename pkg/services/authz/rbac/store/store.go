@@ -15,6 +15,7 @@ type Store interface {
 	GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
+	GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error)
 }
 
 type StoreImpl struct {
