@@ -25,16 +25,16 @@ import { isAlertingRule } from '../../utils/rules';
 
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
-// export interface RuleWithOrigin {
-//   rule: PromRuleDTO;
-//   groupIdentifier: DataSourceRuleGroupIdentifier;
-// }
-
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
 
 export interface GrafanaRuleWithOrigin {
   rule: GrafanaPromRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
+  /**
+   * The name of the namespace that contains the rule group
+   * groupIdentifier contains the uid of the namespace, but not the user-friendly display name
+   */
+  namespaceName: string;
   origin: 'grafana';
 }
 
@@ -51,6 +51,8 @@ export function useFilteredRulesIteratorProvider() {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
   const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): AsyncIterableX<RuleWithOrigin> => {
+    const normalizedFilterState = normalizeFilterState(filterState);
+
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
       ? filterState.dataSourceNames.map<ExternalRulesSourceIdentifier>((ds) => ({
           name: ds,
@@ -59,25 +61,25 @@ export function useFilteredRulesIteratorProvider() {
         }))
       : allExternalRulesSources;
 
+    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      filter((group) => groupFilter(group, normalizedFilterState)),
+      flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
+      filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
+      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+    );
+
     const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
       return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
     });
 
     const dataSourcesIterator = merge(source, ...iterables).pipe(
-      filter(([_, group]) => groupFilter(group, filterState)),
+      filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
-      filter(([_, __, rule]) => ruleFilter(rule, filterState)),
+      // filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
 
-    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
-      filter((group) => groupFilter(group, filterState)),
-      flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
-      // filter(([_, rule]) => ruleFilter(rule, filterState)), // TODO Needs to be adjusted for GMA rules
-      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
-    );
-
-    return merge(dataSourcesIterator, grafanaIterator);
+    return merge(grafanaIterator, dataSourcesIterator);
   };
 
   return { getFilteredRulesIterator };
@@ -112,6 +114,7 @@ function mapGrafanaRuleToRuleWithOrigin(
       groupName: group.name,
       groupOrigin: 'grafana',
     },
+    namespaceName: group.file,
     origin: 'grafana',
   };
 }
@@ -124,11 +127,11 @@ function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean
   const { name, file } = group;
 
   // TODO Add fuzzy filtering or not
-  if (filterState.namespace && !file.includes(filterState.namespace)) {
+  if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
     return false;
   }
 
-  if (filterState.groupName && !name.includes(filterState.groupName)) {
+  if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
     return false;
   }
 
@@ -138,11 +141,13 @@ function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean
 function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   const { name, labels = {}, health, type } = rule;
 
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => name.includes(word))) {
+  const nameLower = name.toLowerCase();
+
+  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => nameLower.includes(word))) {
     return false;
   }
 
-  if (filterState.ruleName && !name.includes(filterState.ruleName)) {
+  if (filterState.ruleName && !nameLower.includes(filterState.ruleName)) {
     return false;
   }
 
@@ -176,6 +181,19 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   }
 
   return true;
+}
+
+/**
+ * Lowercase free form words, rule name, group name and namespace
+ */
+function normalizeFilterState(filterState: RulesFilter): RulesFilter {
+  return {
+    ...filterState,
+    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
+    ruleName: filterState.ruleName?.toLowerCase(),
+    groupName: filterState.groupName?.toLowerCase(),
+    namespace: filterState.namespace?.toLowerCase(),
+  };
 }
 
 function looseParseMatcher(matcherQuery: string): Matcher | undefined {

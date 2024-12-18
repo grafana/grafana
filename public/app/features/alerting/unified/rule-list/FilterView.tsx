@@ -114,7 +114,9 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   return (
     <Stack direction="column" gap={0}>
       <ul aria-label="filtered-rule-list">
-        {rules.map(({ key, rule, groupIdentifier, origin }) => {
+        {rules.map((ruleWithOrigin) => {
+          const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
+
           switch (origin) {
             case 'grafana':
               return (
@@ -122,7 +124,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                   key={key}
                   rule={rule}
                   groupName={groupIdentifier.groupName}
-                  namespaceName={groupIdentifier.namespace.uid} // TODO Fix
+                  namespaceName={ruleWithOrigin.namespaceName}
                 />
               );
             case 'datasource':

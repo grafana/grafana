@@ -58,11 +58,10 @@ export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   if (shouldFetchNextPage && !fetchInProgress) {
     fetchMoreGroups(pageSize);
   }
-  const pageNamespaces = useMemo(() => {
-    const pageGroups = groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-    // groupRulesByFileName mutates the array and RTKQ query freezes the response data
-    return structuredClone(pageGroups);
+
+  const groupsPage = useMemo(() => {
+    return groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [groups, currentPage, pageSize]);
 
-  return { isLoading: fetchInProgress, page: pageNamespaces, nextPage, previousPage, canMoveForward, canMoveBackward };
+  return { isLoading: fetchInProgress, page: groupsPage, nextPage, previousPage, canMoveForward, canMoveBackward };
 }

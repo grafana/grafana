@@ -11,7 +11,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusRuleNamespaces';
+import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 export const GROUP_PAGE_SIZE = 40;
 
