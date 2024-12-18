@@ -80,27 +80,22 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
     return result + this.renderQuery(binaryQuery.query, true);
   }
 
+  renderLabelExpression(filter: QueryBuilderLabelFilter): string {
+    const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+    const shouldEscapeLabelValue = config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator;
+    const labelValue = shouldEscapeLabelValue ? prometheusRegularEscape(filter.value) : filter.value;
+    const labelExpression = `${filter.label}${filter.op}"${labelValue}"`;
+
+    return labelExpression;
+  }
+
   renderLabels(labels: QueryBuilderLabelFilter[]) {
     if (labels.length === 0) {
       return '';
     }
 
-    let expr = '{';
-    for (const filter of labels) {
-      if (expr !== '{') {
-        expr += ', ';
-      }
-
-      let labelValue = filter.value;
-      const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
-
-      if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
-        labelValue = prometheusRegularEscape(labelValue);
-      }
-      expr += `${filter.label}${filter.op}"${labelValue}"`;
-    }
-
-    return expr + `}`;
+    const labelExprs = labels.map((filter) => this.renderLabelExpression(filter));
+    return `{${labelExprs.join(', ')}}`;
   }
 
   renderQuery(query: PromLokiVisualQuery, nested?: boolean) {

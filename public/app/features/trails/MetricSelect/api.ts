@@ -35,7 +35,7 @@ export async function getMetricNamesWithoutScopes(
   limit?: number
 ) {
   const matchTerms = adhocFilters.map((filter) =>
-    removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
+    queryModeller.renderLabelExpression({ label: filter.key, op: filter.operator, value: filter.value })
   );
   let missingOtelTargets = false;
 
@@ -103,9 +103,4 @@ export async function getMetricNamesWithScopes(
     limitReached: !!limit && !!response.data.warnings?.includes(LIMIT_REACHED),
     missingOtelTargets: false,
   };
-}
-
-function removeBrackets(input: string): string {
-  const match = input.match(/^\{(.*)\}$/); // extract the content inside the brackets
-  return match?.[1] ?? '';
 }
