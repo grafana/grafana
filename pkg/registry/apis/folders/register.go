@@ -258,6 +258,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return b.validateOnDelete(ctx, f)
 	case admission.Update:
 		old := a.GetOldObject()
+		if old == nil {
+			return fmt.Errorf("old object is nil")
+		}
 		return b.validateOnUpdate(ctx, obj, old)
 	case admission.Connect:
 		return nil
@@ -345,9 +348,15 @@ func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtim
 	if !ok {
 		return fmt.Errorf("obj is not v0alpha1.Folder")
 	}
+
+	fOld, ok := old.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
 	var newParent = getParent(obj)
-	if newParent != getParent(old) {
+	if newParent != getParent(fOld) {
 		// it's a move operation
+		obj = fOld // populate the object to be updated with all the values from the existing one
 		return b.validateMove(ctx, obj, newParent)
 	}
 	// it's a spec update
@@ -374,5 +383,12 @@ func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object,
 	if len(parents)+1 >= folderValidationRules.maxDepth {
 		return folder.ErrMaximumDepthReached
 	}
+
+	// updating the parent on the existing folder
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	meta.SetFolder(newParent)
 	return nil
 }
