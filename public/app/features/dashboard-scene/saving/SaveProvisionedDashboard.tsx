@@ -8,12 +8,12 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { DashboardMeta, useSelector } from 'app/types';
+import { DashboardMeta } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
-import { RepositorySpec, selectFolderRepository } from '../../provisioning/api';
+import { RepositorySpec } from '../../provisioning/api';
 import { PROVISIONING_URL } from '../../provisioning/constants';
-import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from '../../provisioning/hooks';
+import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -97,7 +97,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     },
   });
   const [title, ref, workflow, path] = watch(['title', 'ref', 'workflow', 'path']);
-  const folderRepository = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const folderRepository = useFolderRepository(meta.folderUid);
   const repositoryConfig = folderRepository?.spec;
   const repo = folderRepository?.metadata?.name;
   const isGitHub = repositoryConfig?.type === 'github';
@@ -160,38 +160,42 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
             You can now open a pull request in Github.
           </Alert>
         )}
-        <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
-          <Input
-            {...register('title', { required: 'Required', validate: validateDashboardName })}
-            onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
-              setValue('title', e.target.value, { shouldValidate: true });
-            }, 400)}
-          />
-        </Field>
-        <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
-          <TextArea {...register('description')} />
-        </Field>
+        {changeInfo.isNew && (
+          <>
+            <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
+              <Input
+                {...register('title', { required: 'Required', validate: validateDashboardName })}
+                onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
+                  setValue('title', e.target.value, { shouldValidate: true });
+                }, 400)}
+              />
+            </Field>
+            <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
+              <TextArea {...register('description')} />
+            </Field>
 
-        <Field label={'Target folder'}>
-          <Controller
-            control={control}
-            name={'folder'}
-            render={({ field: { ref, value, onChange, ...field } }) => {
-              return (
-                <FolderPicker
-                  onChange={(uid?: string, title?: string, repository?: string) => {
-                    onChange({ uid, title, repository });
-                    dashboard.setState({
-                      meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
-                    });
-                  }}
-                  value={value.uid}
-                  {...field}
-                />
-              );
-            }}
-          />
-        </Field>
+            <Field label={'Target folder'}>
+              <Controller
+                control={control}
+                name={'folder'}
+                render={({ field: { ref, value, onChange, ...field } }) => {
+                  return (
+                    <FolderPicker
+                      onChange={(uid?: string, title?: string, repository?: string) => {
+                        onChange({ uid, title, repository });
+                        dashboard.setState({
+                          meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+                        });
+                      }}
+                      value={value.uid}
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Field>
+          </>
+        )}
 
         {!changeInfo.isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 

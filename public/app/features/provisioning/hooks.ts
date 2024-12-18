@@ -66,3 +66,17 @@ export const usePullRequestParam = () => {
 
   return decodeURIComponent(prParam);
 };
+
+export const useFolderRepository = (folderUid?: string) => {
+  const [items, isLoading] = useRepositoryList();
+
+  if (!folderUid) {
+    return undefined;
+  }
+
+  if (!items?.length || isLoading || !folderUid) {
+    return undefined;
+  }
+
+  return items.find((repo) => repo.spec?.folder === folderUid);
+};
