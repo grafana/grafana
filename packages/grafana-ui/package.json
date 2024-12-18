@@ -69,7 +69,7 @@
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
     "d3": "7.9.0",
-    "date-fns": "3.6.0",
+    "date-fns": "4.1.0",
     "downshift": "^9.0.6",
     "hoist-non-react-statics": "3.3.2",
     "i18next": "^23.0.0",
