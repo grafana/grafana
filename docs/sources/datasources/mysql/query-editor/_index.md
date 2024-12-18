@@ -1,9 +1,9 @@
 ---
-description: This document describes the MySQL query editor..
+description: This document describes the MySQL query editor.
 keywords:
   - grafana
   - mysql
-  - guide
+  - query
 labels:
   products:
     - cloud
@@ -13,16 +13,6 @@ menuTitle: Query editor
 title: Query editor
 weight: 1000
 refs:
-  add-template-variables-interval:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
   add-template-variables-interval-ms:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
@@ -33,21 +23,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   variable-syntax-advanced-variable-format-options:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   configure-standard-options-display-name:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
@@ -73,69 +53,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-inspector/
-  logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
   query-editor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/  
 ---
 
 # MySQL query editor
 
-Grafana’s query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to Query and transform data.
+Grafana’s query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 The MySQL query editor is located on the [Explore page](ref:explore). You can also access the MySQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
-
-
-<!-- This topic explains querying specific to the MySQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data). -->
-
-<!-- You can run the built query by pressing the `Run query` button in the top right corner of the editor. -->
-
-<!-- {{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}} -->
-
-<!-- {{< figure src="/media/docs/mysql/mysql-query-editor-v11.3.png" class="docs-image--no-shadow" >}} -->
-
-
-{{< figure src="/media/docs/mysql/screenshot-mysql-query-editor.v11.3.png" class="docs-image--no-shadow" >}}  
 
 ## MySQL query editor components
 
 The MySQL query editor has two modes: **Builder** and **Code**.
 
+{{< figure src="/media/docs/mysql/screenshot-mysql-query-editor.v11.3.png" class="docs-image--no-shadow" >}}  
+
 Builder mode helps you build a query using a visual interface.
 
 Code mode allows for advanced querying and offers support for complex SQL query writing. Code mode supports autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
 
-Code mode is best for experienced MySQL users with advanced SQL querying skills. You can construct MySQL queries without builder mode help.
-
-
 ## MySQL builder mode
-
 
 {{% admonition type="note" %}}
 If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor will put quotes around the name. For example, the name `table-name` will be quoted with backticks - `` `table-name` ``.
 {{% /admonition %}}
+
+The following components will help you build a MySQL query:
 
 - **Format** - Select a format response from the drop-down for the MySQL query.  The default is `table`. If you use the `timeseries` format option one of the columns must be `time`. 
 
@@ -143,91 +90,44 @@ If your table or database name contains a reserved word or a [prohibited charact
 
   - **Table** - Select a table from the drop-down. Tables correspond to the chosen database. 
 
-  - **Data operations** - _Optional_  Select an aggregation from the drop-down.
+  - **Data operations** - _Optional_  Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
 
   - **Column** -  Select a column on which to run the aggregation. 
 
-  - **Alias** - _Optional_ Add an alias from the drop-down. 
+  - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
-- **Filter** - Toggle to add filters. Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-Use the second dropdown to choose a filter. To filter on more columns, click the plus (`+`) button to the right of the condition dropdown. o remove a filter, click the `x` button next to that filter's dropdown. After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
+- **Filter** - Toggle to add filters.
 
-  - **Filter by column value** - _Optional_ If you toggle **Filter**
+  - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
+Use the second dropdown to choose a filter. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. To remove a filter, click the `X` button next to that filter's dropdown. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
 
 - **Group** - Toggle to add **Group by column**.
 
   - **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
-<!-- To group the results by column, toggle the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button. -->
 
 - **Order** - Toggle to add an ORDER BY statement.
 
-  - **Order by** - Select a column to order by from the drop-down. Select ascending (ASC) or descending (DESC) order. You can add an optional limit on the retrieved results. 
+  - **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order. You can add an optional limit on the number of retrieved results. 
 
-- **Preview** - Toggle for a preview of the SQL query generated by the query builder. Toggled on by default.
-
+- **Preview** - Toggle for a preview of the SQL query generated by the query builder. Preview is toggled on by default.
 
 {{% admonition type="note" %}}
 If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single pre-configured database for querying.
 {{% /admonition %}}
 
-
-<!-- ### Format
-
-The response from MySQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`. -->
-
-<!-- ### Dataset and Table selection
-
-In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
-When the dataset is selected, the table dropdown is populated with the tables that are available.
-
-**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single pre-configured database for querying. -->
-
-### Columns and Aggregation functions (SELECT)
-
-Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
-
-Add further value columns by clicking the plus button and another column dropdown appears.
-
-<!-- {{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}} -->
-
-<!-- ### Filter data (WHERE)
-
-To add a filter, toggle the **Filter** switch at the top of the editor.
-This reveals a **Filter by column value** section with two dropdown selectors.
-
-Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-Use the second dropdown to choose a filter.
-
-To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
-
-To remove a filter, click the `x` button next to that filter's dropdown.
-
-After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column. -->
-
-<!-- ### Group By
-
-To group the results by column, toggle the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button. -->
-
-<!-- ### Preview
-
-By flipping the preview switch at the top of the editor, you can get a preview of the SQL query generated by the query builder. -->
-
 ## MySQL code mode
+
+To create advanced queries, switch to **Code mode** by clicking **Code**in the upper right of the editor window. Code mode support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
 
 {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
-To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
-
-You can expand the code editor by pressing the `chevron` pointing downwards in the lower right corner of the code editor.
-
-`CTRL/CMD + Return` works as a keyboard shortcut to run the query.
+Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the code mode editor. `CTRL/CMD + Return` works as a keyboard shortcut to run the query.
 
 {{% admonition type="warning" %}}
 Builder mode does not display changes made in code. The query builder will display the last changes you made in builder mode. You will be prompted to copy your code to the clipboard.
 
 If you make changes to a query in code mode, it will not carry over to query mode and your changes will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
 {{% /admonition %}}
-
 
 ## Macros
 
@@ -254,17 +154,11 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp (`fillMode` only works with time series queries).                                                                                              |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (`fillMode` only works with time series queries).                                                                                                                 |
 
-## Table queries
+## Table SQL queries
 
 If the **Format** option is set to **Table**, you can execute virtually any type of SQL query. The Table panel will automatically display the resulting columns and rows from your query.
 
-<!-- If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns and rows your query returns. -->
-
-Example query:
-
-{{< figure src="/static/img/docs/v45/mysql_table_query.png" >}}
-
-The query:
+You can change or customize the name of a Table panel column by using the SQL keyword `AS` syntax.
 
 ```sql
 SELECT
@@ -276,9 +170,7 @@ INNER JOIN user on user.id = dashboard.created_by
 WHERE $__timeFilter(dashboard.created)
 ```
 
-You can change or customize the name of a Table panel column by using the SQL keyword `AS` syntax.
-
-The resulting table panel:
+Table panel results:
 
 ![](/static/img/docs/v43/mysql_table.png)
 
@@ -304,15 +196,11 @@ The examples in this section refer to the data in the following table:
 +---------------------+--------------+---------------------+----------+
 ```
 
-<!-- If the `Format as` query option is set to `Time Series` then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result. -->
-
 A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 {{% admonition type="note" %}}
-For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
+For backward compatibility, an exception to the aforementioned rule applies to queries returning three columns, including a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, and the series name is set to the value of the metric column. Refer to the following example with a metric column.
 {{% /admonition %}}
-
-To optionally customize the default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
 
 **Example with `metric` column:**
 
@@ -340,6 +228,7 @@ Data frame result:
 | 2020-01-02 03:20:00 | 5               |
 +---------------------+-----------------+
 ```
+To customize the default series name formatting (optional), refer to [Standard options definitions](ref:configure-standard-options-display-name).
 
 **Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
@@ -399,8 +288,9 @@ Data frame result:
 +---------------------+-----------------+-----------------+
 ```
 
-Currently, there is no support for a dynamic group by time based on time range and panel width.
-This is something we plan to add.
+{{% admonition type="note" %}}
+Dynamic grouping by time, based on the time range and panel width, is currently not supported.
+{{% /admonition %}}
 
 ## Templating
 
@@ -408,10 +298,7 @@ Instead of hardcoding values like server, application, or sensor names in your m
 
 Refer to [Templates](ref:variables) for an introduction to creating template variables as well as the different types. 
 
-### Query Variable
-
-<!-- If you add a template variable of the type `Query`, you can write a MySQL query that can
-return things like measurement names, key names or key values that are shown as a dropdown select box. -->
+### Query variable
 
 If you add a `Query` template variable you can write a MySQL query to retrieve items such as measurement names, key names, or key values, which will be displayed in the drop-down menu.
 
@@ -435,18 +322,11 @@ To use time range dependent macros like `$__timeFilter(column)` in your query,yo
 SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
 ```
 
-<!-- Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value: -->
-
 Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column must contain unique values (if not, only the first value is used). This allows the drop-down options to display a text-friendly name as the text while using an ID as the value. For example, a query could use `hostname` as the text and `id` as the value:
-
 
 ```sql
 SELECT hostname AS __text, id AS __value FROM my_host
 ```
-
-<!-- You can also create nested variables. For example, if you had another variable named `region` you 
-could have
-the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values): -->
 
 You can also create nested variables. For example, if you have a variable named `region`, you can configure the `hosts` variable to display only the hosts within the currently selected region as shown in the following example. If region is a multi-value variable, use the `IN` operator instead of `=` to match multiple values.
 
@@ -456,25 +336,17 @@ SELECT hostname FROM my_host  WHERE region IN($region)
 
 #### Use `__searchFilter` to filter results in query variable
 
-<!-- Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
-When nothing has been entered by the user the default value for `__searchFilter` is `%`. -->
-
 Using `__searchFilter` in the query field allows the query results to be filtered based on the user’s input in the drop-down selection box. If you do not enter anything, the default value for `__searchFilter` is %
 
-Note that you must surround the `__searchFilter` expression with quotes as Grafana doesn't automatically do so.
+Note that you must enclose the `__searchFilter` expression in quotes as Grafana does not add them automatically.
 
-<!-- The following example shows how to use `__searchFilter` as part of the query field to enable searching for `hostname` while the user types in the dropdown select box. -->
-
-The following example shows how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user types in the drop-down selection box.
-
-
-Query
+The following example demonstrates how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user type in the drop-down selection box.
 
 ```sql
 SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 ```
 
-### Using Variables in queries
+### Using variables in queries
 
 Template variable values are only quoted when the template variable is a `multi-value`.
 
@@ -506,7 +378,7 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
-#### Disabling Quoting for Multi-value Variables
+#### Disabling quoting for multi-value variables
 
 Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
 

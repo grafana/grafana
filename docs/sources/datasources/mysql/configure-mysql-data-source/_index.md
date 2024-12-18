@@ -18,21 +18,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
   add-template-variables-interval-ms:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
@@ -53,16 +43,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Confgure the MySQL data source
 
-This document provides instructions for configuring the MySQL data source and explains available configuration options.
+This document provides instructions for configuring the MySQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
 ## Before you begin
 
@@ -72,7 +57,7 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 Grafana ships with the MySQL data source so there is no need to add a plugin.
 
 {{< admonition type="note" >}}
-When adding a data source, the database user you specify should have only SELECT permissions on the database and tables you wish to query. Grafana does not validate the safety of queries, meaning they can include any SQL statement, such as USE otherdb; or DROP TABLE user;, which would be executed. To mitigate this risk, we strongly recommend creating a dedicated MySQL user with restricted permissions.
+When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
 {{< /admonition >}}
 
 Example:
@@ -97,7 +82,7 @@ You are taken to the **Settings** tab where you will configure the data source.
 
 ## MySQL configuration options
 
-Following is alist of MySQL cponfiguration optiosn:
+Following is a list of MySQL configuration options:
 
 - **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: 
 `mysql-assets-1`, `mysqldb1`.
@@ -116,10 +101,6 @@ Following is alist of MySQL cponfiguration optiosn:
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TSL/SSL mode requires it.
 - **Skip TLS Verification** - Toggle to skip verification of the MySQL server's TLS certificate chain and host name.
 - **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
-
-<!-- https://github.com/go-sql-driver/mysql#tls
-
-**Sending passwords in clear text may be a security problem in some configurations**. To avoid password issues, it is recommended that clients connect to a MySQL server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. | -->
 
 ## Additional settings
 
@@ -144,18 +125,6 @@ The following are additional MySQL settings.
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
 Once you have added your MySQL connection settings, click Save & test to test the data source connection.
-
-<!-- | **Name**                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Default**                   | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Host**                      | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **Database**                  | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Session Timezone**          | Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                      |
-| **Max open**                  | The maximum number of open connections to the database, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| **Auto (max idle)**           | Toggle to set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Allow cleartext passwords** | Allows the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) as required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/en/pam-pluggable-authentication.html). <br />**Sending passwords in clear text may be a security problem in some configurations**. To avoid password issues, it is recommended that clients connect to a MySQL server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. | -->
 
 ### Min time interval
 
