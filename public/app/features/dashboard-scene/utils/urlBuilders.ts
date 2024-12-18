@@ -50,8 +50,8 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
     options.updateQuery = {
       ...options.updateQuery,
-      width: 1000,
-      height: 500,
+      width: options.updateQuery?.width || 1000,
+      height: options.updateQuery?.height || 500,
       tz: options.timeZone,
     };
   }
