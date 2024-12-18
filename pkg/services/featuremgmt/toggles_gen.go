@@ -914,6 +914,7 @@ const (
 	// FlagUnifiedStorageSearchUI
 	// Enable unified storage search UI
 	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
+
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch datasource
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
