@@ -249,22 +249,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
-	job, err := rc.jobs.Add(ctx, &provisioning.Job{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: cachedRepo.Namespace,
-			Labels: map[string]string{
-				"repository": cachedRepo.Name,
-			},
-		},
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionSync,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("trigger sync job: %w", err)
-	}
-	logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
-
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
 	} else {
@@ -303,6 +287,22 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("update status: %w", err)
 	}
+
+	job, err := rc.jobs.Add(ctx, &provisioning.Job{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: cachedRepo.Namespace,
+			Labels: map[string]string{
+				"repository": cachedRepo.Name,
+			},
+		},
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionSync,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("trigger sync job: %w", err)
+	}
+	logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 
 	return nil
 }
