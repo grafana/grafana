@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, locationService } from '@grafana/runtime';

@@ -39,9 +39,7 @@
     "@types/prismjs": "1.26.5",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
-    "@types/react-test-renderer": "18.3.0",
     "react-select-event": "5.5.1",
-    "react-test-renderer": "18.2.0",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
     "webpack": "5.97.1"
