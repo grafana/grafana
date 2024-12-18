@@ -284,24 +284,24 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			if err != nil {
 				return fmt.Errorf("on create: %w", err)
 			}
-
-			job, err := rc.jobs.Add(ctx, &provisioning.Job{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: cachedRepo.Namespace,
-					Labels: map[string]string{
-						"repository": cachedRepo.Name,
-					},
-				},
-				Spec: provisioning.JobSpec{
-					Action: provisioning.JobActionSync,
-				},
-			})
-			if err != nil {
-				return fmt.Errorf("trigger sync job: %w", err)
-			}
-
-			logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 		}
+
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cachedRepo.Namespace,
+				Labels: map[string]string{
+					"repository": cachedRepo.Name,
+				},
+			},
+			Spec: provisioning.JobSpec{
+				Action: provisioning.JobActionSync,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("trigger sync job: %w", err)
+		}
+
+		logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 	} else {
 		logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
 	}
