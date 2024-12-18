@@ -1834,6 +1834,33 @@
     },
     {
       "metadata": {
+        "name": "investigationsBackend",
+        "resourceVersion": "1734447689720",
+        "creationTimestamp": "2024-12-17T15:01:29Z"
+      },
+      "spec": {
+        "description": "Enable the investigations backend API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "investigationsWatcher",
+        "resourceVersion": "1734443690044",
+        "creationTimestamp": "2024-12-17T13:54:50Z",
+        "deletionTimestamp": "2024-12-17T14:54:34Z"
+      },
+      "spec": {
+        "description": "Enables experimental watcher for investigations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
         "creationTimestamp": "2024-11-14T15:53:53Z"

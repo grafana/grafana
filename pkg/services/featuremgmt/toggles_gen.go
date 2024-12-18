@@ -914,4 +914,8 @@ const (
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
+
+	// FlagInvestigationsBackend
+	// Enable the investigations backend API
+	FlagInvestigationsBackend = "investigationsBackend"
 )
