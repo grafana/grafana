@@ -100,7 +100,7 @@
     "@types/react-highlight-words": "0.20.0",
     "@types/react-window": "1.8.8",
     "@types/semver": "7.5.8",
-    "@types/uuid": "9.0.8",
+    "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "8.18.1",
     "@typescript-eslint/parser": "8.18.1",
     "copy-webpack-plugin": "12.0.2",

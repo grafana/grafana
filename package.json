@@ -151,7 +151,7 @@
     "@types/swagger-ui-react": "4.18.3",
     "@types/systemjs": "6.15.1",
     "@types/tinycolor2": "1.4.6",
-    "@types/uuid": "9.0.8",
+    "@types/uuid": "10.0.0",
     "@types/webpack-assets-manifest": "^5",
     "@types/webpack-env": "^1.18.4",
     "@types/yargs": "17.0.33",
