@@ -3,7 +3,9 @@ import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -25,6 +27,7 @@ const NotificationPoliciesFilter = ({
   onChangeMatchers,
   matchingCount,
 }: NotificationPoliciesFilterProps) => {
+  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -68,13 +71,13 @@ const NotificationPoliciesFilter = ({
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Search by matchers</span>
+              <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
+                  <Trans i18nKey="alerting.policies.filter-description">
                     Filter notification policies by using a comma separated list of matchers, e.g.:
                     <pre>severity=critical, region=EMEA</pre>
-                  </div>
+                  </Trans>
                 }
               >
                 <Icon name="info-circle" size="sm" />
@@ -97,24 +100,26 @@ const NotificationPoliciesFilter = ({
           defaultValue={queryString}
         />
       </Field>
-      <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-        <ContactPointSelector
-          selectProps={{
-            id: 'receiver',
-            'aria-label': 'Search by contact point',
-            onChange: (option) => {
-              setSearchParams({ contactPoint: option?.value?.name });
-            },
-            width: 28,
-            isClearable: true,
-          }}
-          selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
-        />
-      </Field>
+      {contactPointsSupported && canSeeContactPoints && (
+        <Field label="Search by contact point" style={{ marginBottom: 0 }}>
+          <ContactPointSelector
+            selectProps={{
+              id: 'receiver',
+              'aria-label': 'Search by contact point',
+              onChange: (option) => {
+                setSearchParams({ contactPoint: option?.value?.name });
+              },
+              width: 28,
+              isClearable: true,
+            }}
+            selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
+          />
+        </Field>
+      )}
       {hasFilters && (
         <Stack alignItems="center">
           <Button variant="secondary" icon="times" onClick={clearFilters}>
-            Clear filters
+            <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
           <Text variant="bodySmall" color="secondary">
             {matchingCount === 0 && 'No policies matching filters.'}
