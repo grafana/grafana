@@ -15,6 +15,7 @@ type Store interface {
 	GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
+	GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error)
 }
 
 type StoreImpl struct {
@@ -131,7 +132,7 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	return &role, nil
 }
 
-func (s *Store) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
+func (s *StoreImpl) GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
