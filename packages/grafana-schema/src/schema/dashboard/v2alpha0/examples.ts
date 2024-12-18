@@ -111,7 +111,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     },
   ],
   elements: {
-    'test-panel-uid': {
+    'panel-1': {
       kind: 'Panel',
       spec: {
         data: {
@@ -171,7 +171,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           { title: 'Test Link 2', url: 'http://test2.com' },
         ],
         title: 'Test Panel',
-        uid: 'test-panel-uid',
+        id: 1,
         vizConfig: {
           kind: 'timeseries',
           spec: {
@@ -195,7 +195,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           spec: {
             element: {
               kind: 'ElementReference',
-              name: 'test-panel-uid',
+              name: 'panel-1',
             },
             height: 100,
             width: 200,

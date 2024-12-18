@@ -141,7 +141,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           children: [
             new DashboardGridItem({
               body: new VizPanel({
-                key: 'test-panel-uid',
+                key: 'panel-1',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
                 titleItems: [

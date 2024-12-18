@@ -62,7 +62,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   "description": "Test Description",
   "editable": true,
   "elements": {
-    "test-panel-uid": {
+    "panel-1": {
       "kind": "Panel",
       "spec": {
         "data": {
@@ -74,6 +74,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         },
         "description": "Test Description",
+        "id": 1,
         "links": [
           {
             "targetBlank": true,
@@ -86,7 +87,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         ],
         "title": "Test Panel",
-        "uid": "test-panel-uid",
         "vizConfig": {
           "kind": "timeseries",
           "spec": {
@@ -111,7 +111,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "spec": {
             "element": {
               "kind": "ElementReference",
-              "name": "test-panel-uid",
+              "name": "panel-1",
             },
             "height": 0,
             "width": 0,
