@@ -54,22 +54,42 @@ func NewReplicator(
 
 // Sync replicates all files in the repository.
 func (r *Replicator) Sync(ctx context.Context) error {
+	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
+	// started := time.Now()
+
+	if err := r.ensureRepositoryFolderExists(ctx); err != nil {
+		return fmt.Errorf("ensure repository folder exists: %w", err)
+	}
+
 	var latest string
-	if !isVersioned || lastCommit == "" {
+	switch {
+	case !isVersioned:
+		r.logger.InfoContext(ctx, "replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return fmt.Errorf("replicate tree: %w", err)
 		}
-	} else {
+	case lastCommit == "":
+		var err error
+		latest, err = versionedRepo.LatestRef(ctx, r.logger)
+		if err != nil {
+			return fmt.Errorf("latest ref: %w", err)
+		}
+		if err := r.replicateTree(ctx, latest); err != nil {
+			return fmt.Errorf("replicate tree: %w", err)
+		}
+		r.logger.InfoContext(ctx, "initial replication for versioned repository", "latest", latest)
+	default:
 		var err error
 		latest, err = versionedRepo.LatestRef(ctx, r.logger)
 		if err != nil {
 			return fmt.Errorf("latest ref: %w", err)
 		}
 
+		r.logger.InfoContext(ctx, "replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
 		changes, err := versionedRepo.CompareFiles(ctx, r.logger, lastCommit, latest)
 		if err != nil {
 			return fmt.Errorf("compare files: %w", err)
@@ -80,10 +100,12 @@ func (r *Replicator) Sync(ctx context.Context) error {
 		}
 	}
 
+	// TODO: move the sync status to the job worker
 	status := &provisioning.SyncStatus{
-		// TODO: rename to ref
+		// FIXME: these create infinite loop
+		// Started:  started.Unix(),
+		// Finished: time.Now().Unix(),
 		Hash: latest,
-		// TODO: add timestamp
 	}
 
 	cfg.Status.Sync = *status
@@ -499,6 +521,38 @@ func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, erro
 		tree:       folders,
 		repoFolder: repoFolder,
 	}, nil
+}
+
+func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
+	_, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+	if err == nil {
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	cfg := r.repository.Config()
+	title := cfg.Spec.Title
+	if title == "" {
+		title = cfg.Spec.Folder
+	}
+
+	if _, err := r.folders.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      cfg.Spec.Folder,
+				"namespace": cfg.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"title":       title,
+				"description": "Repository-managed folder",
+			},
+		},
+	}, metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("failed to create folder: %w", err)
+	}
+
+	return nil
 }
 
 func (*Replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {

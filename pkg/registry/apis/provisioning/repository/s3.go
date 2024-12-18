@@ -117,14 +117,14 @@ func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, req *ht
 	}
 }
 
-func (r *s3Repository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
-	return nil
+func (r *s3Repository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	return nil, nil
 }
 
-func (r *s3Repository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
-	return func(ctx context.Context) error { return nil }, nil
+func (r *s3Repository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	return nil, nil
 }
 
-func (r *s3Repository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *s3Repository) OnDelete(ctx context.Context, logger *slog.Logger) error {
 	return nil
 }

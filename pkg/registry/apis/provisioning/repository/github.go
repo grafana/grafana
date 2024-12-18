@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/google/go-github/v66/github"
@@ -19,10 +19,18 @@ import (
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
+var subscribedEvents = []string{"push", "pull_request"}
+
+type SecretsService interface {
+	Encrypt(ctx context.Context, data string) (string, error)
+}
+
 type githubRepository struct {
-	logger *slog.Logger
-	config *provisioning.Repository
-	gh     pgh.Client
+	logger     *slog.Logger
+	config     *provisioning.Repository
+	gh         pgh.Client
+	secrets    SecretsService
+	webhookURL string
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -31,11 +39,15 @@ func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
+	secrets SecretsService,
+	webhookURL string,
 ) *githubRepository {
 	return &githubRepository{
-		config: config,
-		logger: slog.Default().With("logger", "github-repository"),
-		gh:     factory.New(ctx, config.Spec.GitHub.Token),
+		config:     config,
+		logger:     slog.Default().With("logger", "github-repository"),
+		gh:         factory.New(ctx, config.Spec.GitHub.Token),
+		secrets:    secrets,
+		webhookURL: webhookURL,
 	}
 }
 
@@ -67,17 +79,6 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
 		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
-	}
-	if gh.WebhookURL == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "webhookURL"), "a webhook URL is required"))
-	}
-	if gh.WebhookSecret == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "webhookSecret"), "a webhook secret is required"))
-	}
-
-	_, err := url.Parse(gh.WebhookURL)
-	if err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "github", "webhookURL"), gh.WebhookURL, "invalid URL"))
 	}
 
 	return list
@@ -412,7 +413,11 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 
 // Webhook implements Repository.
 func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
-	payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
+	if r.config.Status.Webhook == nil {
+		return nil, fmt.Errorf("unexpected webhook request")
+	}
+
+	payload, err := github.ValidatePayload(req, []byte(r.config.Status.Webhook.Secret))
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
@@ -519,7 +524,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}, nil
 }
 
-func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+func (r *githubRepository) LatestRef(ctx context.Context, logger *slog.Logger) (string, error) {
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
@@ -531,7 +536,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 func (r *githubRepository) CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
-		ref, err = r.LatestRef(ctx)
+		ref, err = r.LatestRef(ctx, logger)
 		if err != nil {
 			return nil, fmt.Errorf("get latest ref: %w", err)
 		}
@@ -612,130 +617,147 @@ func (r *githubRepository) CommentPullRequestFile(ctx context.Context, logger *s
 	return r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, fileComment)
 }
 
-func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, error) {
+	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	if err != nil {
+		return pgh.WebhookConfig{}, fmt.Errorf("encrypt webhook secret: %w", err)
+	}
+
 	cfg := pgh.WebhookConfig{
-		URL:         r.config.Spec.GitHub.WebhookURL,
-		Secret:      r.config.Spec.GitHub.WebhookSecret,
+		URL:         r.webhookURL,
+		Secret:      secret,
 		ContentType: "json",
-		Events:      []string{"push", "pull_request"},
+		Events:      subscribedEvents,
 		Active:      true,
 	}
 
-	if err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg); err != nil {
-		return err
+	hook, err := r.gh.CreateWebhook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, cfg)
+	if err != nil {
+		return pgh.WebhookConfig{}, err
 	}
 
-	logger.InfoContext(ctx, "webhook created", "url", cfg.URL)
-	return nil
+	logger.InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
+	return hook, nil
 }
 
-func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger, oldRepo *githubRepository) (UndoFunc, error) {
+// updateWebhook checks if the webhook needs to be updated and updates it if necessary.
+// if the webhook does not exist, it will create it.
+func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger) (pgh.WebhookConfig, bool, error) {
+	if r.config.Status.Webhook == nil {
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
+		}
+		return hook, true, nil
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	repoName := r.config.Spec.GitHub.Repository
 
-	hooks, err := r.gh.ListWebhooks(ctx, owner, repoName)
-	if err != nil {
-		return nil, fmt.Errorf("list existing webhooks: %w", err)
-	}
-
-	newCfg := r.config.Spec.GitHub
-	oldCfg := oldRepo.Config().Spec.GitHub
-
+	hook, err := r.gh.GetWebhook(ctx, owner, repoName, r.config.Status.Webhook.ID)
 	switch {
-	case newCfg.WebhookURL != oldCfg.WebhookURL:
-		// In this case we cannot find out out which webhook to update, so we delete the old one and create a new one
-		if err := r.createWebhook(ctx, logger); err != nil {
-			return nil, fmt.Errorf("create new webhook: %w", err)
+	case errors.Is(err, pgh.ErrResourceNotFound):
+		hook, err := r.createWebhook(ctx, logger)
+		if err != nil {
+			return pgh.WebhookConfig{}, false, err
 		}
-
-		undoFunc := UndoFunc(func(ctx context.Context) error {
-			if err := r.deleteWebhook(ctx, logger); err != nil {
-				return fmt.Errorf("revert create new webhook: %w", err)
-			}
-
-			logger.InfoContext(ctx, "create new webhook reverted", "url", newCfg.WebhookURL)
-
-			return nil
-		})
-
-		if err := oldRepo.deleteWebhook(ctx, logger); err != nil {
-			return undoFunc, fmt.Errorf("delete old webhook: %w", err)
-		}
-
-		undoFunc = undoFunc.Chain(ctx, func(ctx context.Context) error {
-			if err := oldRepo.createWebhook(ctx, logger); err != nil {
-				return fmt.Errorf("revert delete old webhook: %w", err)
-			}
-
-			logger.InfoContext(ctx, "delete old webhook reverted", "url", oldCfg.WebhookURL)
-
-			return nil
-		})
-
-		return undoFunc, nil
-	case newCfg.WebhookSecret != oldCfg.WebhookSecret:
-		for _, hook := range hooks {
-			if hook.URL == oldCfg.WebhookURL {
-				hook.Secret = newCfg.WebhookSecret
-				err := r.gh.EditWebhook(ctx, owner, repoName, hook)
-				if err != nil {
-					return nil, fmt.Errorf("update webhook secret: %w", err)
-				}
-
-				logger.InfoContext(ctx, "webhook secret updated", "url", newCfg.WebhookURL)
-
-				return func(ctx context.Context) error {
-					hook.Secret = oldCfg.WebhookSecret
-					if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
-						return fmt.Errorf("revert webhook secret: %w", err)
-					}
-
-					logger.InfoContext(ctx, "webhook secret reverted", "url", oldCfg.WebhookURL)
-					return nil
-				}, nil
-			}
-		}
-
-		return nil, errors.New("webhook not found")
-	default:
-		return nil, nil
+		return hook, true, nil
+	case err != nil:
+		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
+
+	var mustUpdate bool
+
+	secret, err := r.secrets.Encrypt(ctx, r.config.Spec.GitHub.Token)
+	if err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("encrypt webhook secret: %w", err)
+	}
+
+	// Compare with status secret as we cannot get the screen from the webhook
+	if secret != r.config.Status.Webhook.Secret {
+		mustUpdate = true
+		hook.Secret = r.config.Status.Webhook.Secret
+	}
+
+	if hook.URL != r.config.Status.Webhook.URL {
+		mustUpdate = true
+		hook.URL = r.webhookURL
+	}
+
+	if !slices.Equal(hook.Events, subscribedEvents) {
+		mustUpdate = true
+		hook.Events = subscribedEvents
+	}
+
+	if !mustUpdate {
+		return hook, false, nil
+	}
+
+	if err := r.gh.EditWebhook(ctx, owner, repoName, hook); err != nil {
+		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
+	}
+
+	// HACK: GitHub does not return the secret, so we need to update it manually
+	hook.Secret = secret
+
+	return hook, true, nil
 }
 
 func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logger) error {
+	if r.config.Status.Webhook == nil {
+		return fmt.Errorf("webhook not found")
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	name := r.config.Spec.GitHub.Repository
+	id := r.config.Status.Webhook.ID
 
-	hooks, err := r.gh.ListWebhooks(ctx, owner, name)
-	if err != nil {
-		return fmt.Errorf("list existing webhooks: %w", err)
+	if err := r.gh.DeleteWebhook(ctx, owner, name, id); err != nil {
+		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	for _, hook := range hooks {
-		if hook.URL == r.config.Spec.GitHub.WebhookURL {
-			if err := r.gh.DeleteWebhook(ctx, owner, name, hook.ID); err != nil {
-				return fmt.Errorf("delete webhook: %w", err)
-			}
-		}
-	}
-
-	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Spec.GitHub.WebhookURL)
+	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
-func (r *githubRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
-	return r.createWebhook(ctx, logger)
-}
-
-func (r *githubRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
-	oldGitRepo, ok := old.(*githubRepository)
-	if !ok {
-		return nil, fmt.Errorf("old repository is not a github repository")
+func (r *githubRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	hook, err := r.createWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
 	}
 
-	return r.updateWebhook(ctx, logger, oldGitRepo)
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
 }
 
-func (r *githubRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *githubRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+	hook, updated, err := r.updateWebhook(ctx, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	if !updated {
+		return nil, nil
+	}
+
+	status := r.config.Status.DeepCopy()
+	status.Webhook = &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		Secret:           hook.Secret,
+		SubscribedEvents: hook.Events,
+	}
+
+	return status, nil
+}
+
+func (r *githubRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {
 	return r.deleteWebhook(ctx, logger)
 }

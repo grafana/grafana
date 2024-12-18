@@ -40,6 +40,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus":             schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.TestResults":            schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus":          schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
 	}
 }
 
@@ -236,20 +237,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"webhookURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"webhookSecret": {
-						SchemaProps: spec.SchemaProps{
-							Description: "WebhookSecret is the secret used to validate incoming webhooks.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -897,6 +884,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 				Description: "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"initialized": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FIXME: this is temporary field until we use different methods in the controller for create and update Initialized is true when the repository has been initialized",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
@@ -911,12 +906,18 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"),
 						},
 					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Webhook Information (if applicable)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus"),
+						},
+					},
 				},
-				Required: []string{"health", "sync"},
+				Required: []string{"initialized", "health", "sync", "webhook"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
 	}
 }
 
@@ -1313,5 +1314,49 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobSpec"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"secret": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"subscribedEvents": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }

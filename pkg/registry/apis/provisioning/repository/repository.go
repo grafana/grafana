@@ -14,19 +14,6 @@ import (
 
 var ErrFileNotFound error = fs.ErrNotExist
 
-// UndoFunc is a function that can be called to undo a previous operation
-type UndoFunc func(context.Context) error
-
-// Chain is a helper function to chain UndoFuncs together
-func (f UndoFunc) Chain(ctx context.Context, next UndoFunc) UndoFunc {
-	return func(ctx context.Context) error {
-		if err := f(ctx); err != nil {
-			return err
-		}
-		return next(ctx)
-	}
-}
-
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -116,9 +103,9 @@ type Repository interface {
 	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
 
 	// Hooks called after the repository has been created, updated or deleted
-	AfterCreate(ctx context.Context, logger *slog.Logger) error
-	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
-	AfterDelete(ctx context.Context, logger *slog.Logger) error
+	OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
+	OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
+	OnDelete(ctx context.Context, logger *slog.Logger) error
 }
 
 // VersionedRepository is a repository that supports versioning

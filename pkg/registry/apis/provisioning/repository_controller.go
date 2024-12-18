@@ -7,7 +7,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -19,6 +19,7 @@ import (
 	informer "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // RepositoryController controls how and when CRD is established.
@@ -26,6 +27,8 @@ type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
+
+	jobs jobs.JobQueue
 
 	// Converts config to instance
 	repoGetter RepoGetter
@@ -48,6 +51,7 @@ func NewRepositoryController(
 	repoGetter RepoGetter,
 	identities auth.BackgroundIdentityService,
 	tester *RepositoryTester,
+	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -63,6 +67,7 @@ func NewRepositoryController(
 		identities: identities,
 		tester:     tester,
 		logger:     slog.Default().With("logger", "provisioning-repository-controller"),
+		jobs:       jobs,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -167,19 +172,35 @@ func (rc *RepositoryController) sync(key string) error {
 		return err
 	}
 
+	ctx := context.Background()
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
 	if apierrors.IsNotFound(err) {
+		rc.logger.DebugContext(ctx, "repository not found", "key", key)
 		return nil
 	}
 	if err != nil {
 		return err
 	}
 
+	rc.logger.DebugContext(ctx, "cached repository", "key", key, "repo", cachedRepo)
+
+	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, id)
+	logger := rc.logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+
+	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
+	if err != nil {
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
 	// The repository is deleted
 	if cachedRepo.DeletionTimestamp != nil {
-		if err := rc.processDeletedItem(context.Background(), cachedRepo); err != nil {
-			return err
-		}
+		// FIXME: this is never called because the cache does not contain the repository
+		logger.InfoContext(ctx, "deleting repository")
+		return repo.OnDelete(ctx, logger)
 	}
 
 	// Did the spec change
@@ -195,58 +216,69 @@ func (rc *RepositoryController) sync(key string) error {
 		return nil
 	}
 
-	err = rc.processHealthCheck(context.Background(), cachedRepo)
-	if apierrors.IsNotFound(err) || apierrors.IsConflict(err) {
-		// deleted or changed in the meantime, we'll get called again
-		return nil
-	}
-	rc.logger.Info("TODO, whatever cleanup is required for", "repository", cachedRepo.Name)
-	return err
-}
-
-func (rc *RepositoryController) processHealthCheck(ctx context.Context, cachedRepo *provisioning.Repository) error {
-	// This is used for the health check client
-	id, err := rc.identities.WorkerIdentity(ctx, cachedRepo.Namespace)
+	res, err := rc.tester.TestRepository(ctx, repo)
 	if err != nil {
-		return err
-	}
-	ctx = identity.WithRequester(ctx, id)
-
-	// Make a copy we can mutate
-	cfg := cachedRepo.DeepCopy()
-	repo, err := rc.repoGetter.AsRepository(ctx, cfg)
-	if err != nil {
-		cfg.Status.Health = provisioning.HealthStatus{
-			Healthy: false,
-			Message: []string{
-				"Unable to create repository from configuration",
+		res = &provisioning.TestResults{
+			Success: false,
+			Errors: []string{
+				"error running test repository",
 				err.Error(),
 			},
 		}
-	} else {
-		res, err := rc.tester.TestRepository(ctx, repo)
-		if err != nil {
-			res = &provisioning.TestResults{
-				Success: false,
-				Errors: []string{
-					"error running test repository",
-					err.Error(),
-				},
+	}
+
+	var status *provisioning.RepositoryStatus
+	if res.Success {
+		if cachedRepo.Status.Initialized {
+			status, err = repo.OnUpdate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
+			}
+		} else {
+			status, err = repo.OnCreate(ctx, logger)
+			if err != nil {
+				return fmt.Errorf("on create repository: %w", err)
 			}
 		}
-		cfg.Status.Health = provisioning.HealthStatus{
-			Healthy: res.Success,
-			Message: res.Errors,
+
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cachedRepo.Namespace,
+				Labels: map[string]string{
+					"repository": cachedRepo.Name,
+				},
+			},
+			Spec: provisioning.JobSpec{
+				Action: provisioning.JobActionSync,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("trigger sync job: %w", err)
 		}
+		logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
+	} else {
+		logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
 	}
-	cfg.Status.Health.Checked = time.Now().UnixMilli()
-	cfg.Status.Health.Generation = cachedRepo.Generation
 
-	_, err = rc.client.Repositories(cfg.GetNamespace()).
-		UpdateStatus(ctx, cfg, metav1.UpdateOptions{})
-	return err
-}
+	if status == nil {
+		status = cachedRepo.Status.DeepCopy()
+	} else {
+		status.Initialized = true
+	}
 
-func (rc *RepositoryController) processDeletedItem(ctx context.Context, cachedRepo *provisioning.Repository) error {
+	status.Health = provisioning.HealthStatus{
+		Checked:    status.Health.Checked,
+		Generation: status.Health.Generation,
+		Healthy:    res.Success,
+		Message:    res.Errors,
+	}
+
+	cfg := cachedRepo.DeepCopy()
+	cfg.Status = *status
+	if _, err := rc.client.Repositories(cachedRepo.GetNamespace()).
+		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update status: %w", err)
+	}
+
 	return nil
 }

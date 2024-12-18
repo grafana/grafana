@@ -192,21 +192,23 @@ func (_m *MockClient) CreatePullRequestFileComment(ctx context.Context, owner st
 }
 
 // CreateWebhook provides a mock function with given fields: ctx, owner, repository, cfg
-func (_m *MockClient) CreateWebhook(ctx context.Context, owner string, repository string, cfg WebhookConfig) error {
+func (_m *MockClient) CreateWebhook(ctx context.Context, owner string, repository string, cfg WebhookConfig) (WebhookConfig, error) {
 	ret := _m.Called(ctx, owner, repository, cfg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateWebhook")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, WebhookConfig) error); ok {
-		r0 = rf(ctx, owner, repository, cfg)
+	var r0 WebhookConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, WebhookConfig) (WebhookConfig, error)); ok {
+		r0, r1 = rf(ctx, owner, repository, cfg)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(WebhookConfig)
+		r1 = ret.Error(1)
 	}
 
-	return r0
+	return r0, r1
 }
 
 // DeleteFile provides a mock function with given fields: ctx, owner, repository, path, branch, message, hash
@@ -367,6 +369,34 @@ func (_m *MockClient) GetTree(ctx context.Context, owner string, repository stri
 	return r0, r1, r2
 }
 
+// GetWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
+func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository string, webhookID int64) (WebhookConfig, error) {
+	ret := _m.Called(ctx, owner, repository, webhookID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetWebhook")
+	}
+
+	var r0 WebhookConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) (WebhookConfig, error)); ok {
+		return rf(ctx, owner, repository, webhookID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) WebhookConfig); ok {
+		r0 = rf(ctx, owner, repository, webhookID)
+	} else {
+		r0 = ret.Get(0).(WebhookConfig)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int64) error); ok {
+		r1 = rf(ctx, owner, repository, webhookID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IsAuthenticated provides a mock function with given fields: ctx
 func (_m *MockClient) IsAuthenticated(ctx context.Context) error {
 	ret := _m.Called(ctx)
@@ -496,7 +526,8 @@ func (_m *MockClient) UpdateFile(ctx context.Context, owner string, repository s
 func NewMockClient(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockClient {
+},
+) *MockClient {
 	mock := &MockClient{}
 	mock.Mock.Test(t)
 

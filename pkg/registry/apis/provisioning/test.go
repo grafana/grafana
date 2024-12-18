@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -133,31 +131,6 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 		return rsp, nil
 	}
 
-	// Check if the folder exists
-	cfg := repo.Config()
-	if cfg.Spec.Folder != "" {
-		if t.clientFactory == nil {
-			return nil, fmt.Errorf("client factory is not initialized properly")
-		}
-
-		dynamicClient, _, err := t.clientFactory.New(cfg.Namespace)
-		if err != nil {
-			return nil, err
-		}
-		folderClient := dynamicClient.Resource(schema.GroupVersionResource{
-			Group:    "folder.grafana.app",
-			Version:  "v0alpha1",
-			Resource: "folders",
-		})
-		_, err = folderClient.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
-		if apierrors.IsNotFound(err) {
-			return &provisioning.TestResults{
-				Code:    http.StatusFailedDependency,
-				Success: false,
-				Errors:  []string{"Configured folder not found"},
-			}, nil
-		}
-	}
 	return repo.Test(ctx, t.logger)
 }
 
