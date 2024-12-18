@@ -2,10 +2,12 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -125,54 +127,54 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		dashboardsIndex = index
 
-		// rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-		// 	Options: &resource.ListOptions{
-		// 		Key: key,
-		// 	},
-		// 	Limit: 100000,
-		// 	SortBy: []*resource.ResourceSearchRequest_Sort{
-		// 		{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
-		// 	},
-		// 	Facet: map[string]*resource.ResourceSearchRequest_Facet{
-		// 		"tags": {
-		// 			Field: "tags",
-		// 			Limit: 100,
-		// 		},
-		// 	},
-		// }, nil)
-		// require.NoError(t, err)
-		// require.Nil(t, rsp.Error)
-		// require.NotNil(t, rsp.Results)
-		// require.NotNil(t, rsp.Facet)
+		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit: 100000,
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"tags": {
+					Field: "tags",
+					Limit: 100,
+				},
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp.Results)
+		require.NotNil(t, rsp.Facet)
 
-		// resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
+		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 
-		// // Get the tags facets
-		// facet, ok := rsp.Facet["tags"]
-		// require.True(t, ok)
-		// disp, err := json.MarshalIndent(facet, "", "  ")
-		// require.NoError(t, err)
-		// //fmt.Printf("%s\n", disp)
-		// require.JSONEq(t, `{
-		// 	"field": "tags",
-		// 	"total": 4,
-		// 	"terms": [
-		// 		{
-		// 			"term": "aa",
-		// 			"count": 3
-		// 		},
-		// 		{
-		// 			"term": "bb",
-		// 			"count": 1
-		// 		}
-		// 	]
-		// }`, string(disp))
+		// Get the tags facets
+		facet, ok := rsp.Facet["tags"]
+		require.True(t, ok)
+		disp, err := json.MarshalIndent(facet, "", "  ")
+		require.NoError(t, err)
+		//fmt.Printf("%s\n", disp)
+		require.JSONEq(t, `{
+			"field": "tags",
+			"total": 4,
+			"terms": [
+				{
+					"term": "aa",
+					"count": 3
+				},
+				{
+					"term": "bb",
+					"count": 1
+				}
+			]
+		}`, string(disp))
 
-		// count, _ := index.DocCount(ctx, "")
-		// assert.Equal(t, int64(3), count)
+		count, _ := index.DocCount(ctx, "")
+		assert.Equal(t, int64(3), count)
 
-		// count, _ = index.DocCount(ctx, "zzz")
-		// assert.Equal(t, int64(1), count)
+		count, _ = index.DocCount(ctx, "zzz")
+		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -215,18 +217,18 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		foldersIndex = index
 
-		// rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-		// 	Options: &resource.ListOptions{
-		// 		Key: key,
-		// 	},
-		// 	Limit: 100000,
-		// }, nil)
-		// require.NoError(t, err)
-		// require.Nil(t, rsp.Error)
-		// require.NotNil(t, rsp.Results)
-		// require.Nil(t, rsp.Facet)
+		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit: 100000,
+		}, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp.Results)
+		require.Nil(t, rsp.Facet)
 
-		// resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
+		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
@@ -235,68 +237,68 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, foldersIndex)
 
 		// Use a federated query to get both results together, sorted by title
-		// rsp, err := dashboardsIndex.Search(ctx, nil, &resource.ResourceSearchRequest{
-		// 	Options: &resource.ListOptions{
-		// 		Key: dashboardskey,
-		// 	},
-		// 	Fields: []string{
-		// 		"title", "_id",
-		// 	},
-		// 	Federated: []*resource.ResourceKey{
-		// 		folderKey, // This will join in the
-		// 	},
-		// 	Limit: 100000,
-		// 	SortBy: []*resource.ResourceSearchRequest_Sort{
-		// 		{Field: "title", Desc: false},
-		// 	},
-		// 	Facet: map[string]*resource.ResourceSearchRequest_Facet{
-		// 		"region": {
-		// 			Field: "labels.region",
-		// 			Limit: 100,
-		// 		},
-		// 	},
-		// }, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
-		// require.NoError(t, err)
-		// require.Nil(t, rsp.Error)
-		// require.NotNil(t, rsp.Results)
-		// require.NotNil(t, rsp.Facet)
+		rsp, err := dashboardsIndex.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardskey,
+			},
+			Fields: []string{
+				"title", "_id",
+			},
+			Federated: []*resource.ResourceKey{
+				folderKey, // This will join in the
+			},
+			Limit: 100000,
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"region": {
+					Field: "labels.region",
+					Limit: 100,
+				},
+			},
+		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp.Results)
+		require.NotNil(t, rsp.Facet)
 
-		// // Sorted across two indexes
-		// sorted := []string{}
-		// for _, row := range rsp.Results.Rows {
-		// 	sorted = append(sorted, string(row.Cells[0]))
-		// }
-		// require.Equal(t, []string{
-		// 	"aaa (dash)",
-		// 	"bbb (dash)",
-		// 	"ccc (dash)",
-		// 	"yyy (folder)",
-		// 	"zzz (folder)",
-		// }, sorted)
+		// Sorted across two indexes
+		sorted := []string{}
+		for _, row := range rsp.Results.Rows {
+			sorted = append(sorted, string(row.Cells[0]))
+		}
+		require.Equal(t, []string{
+			"aaa (dash)",
+			"bbb (dash)",
+			"ccc (dash)",
+			"yyy (folder)",
+			"zzz (folder)",
+		}, sorted)
 
-		// resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
+		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 
-		// facet, ok := rsp.Facet["region"]
-		// require.True(t, ok)
-		// disp, err := json.MarshalIndent(facet, "", "  ")
-		// require.NoError(t, err)
-		// // fmt.Printf("%s\n", disp)
-		// // NOTE, the west values come from *both* dashboards and folders
-		// require.JSONEq(t, `{
-		// 	"field": "labels.region",
-		// 	"total": 3,
-		// 	"missing": 2,
-		// 	"terms": [
-		// 		{
-		// 			"term": "west",
-		// 			"count": 2
-		// 		},
-		// 		{
-		// 			"term": "east",
-		// 			"count": 1
-		// 		}
-		// 	]
-		// }`, string(disp))
+		facet, ok := rsp.Facet["region"]
+		require.True(t, ok)
+		disp, err := json.MarshalIndent(facet, "", "  ")
+		require.NoError(t, err)
+		// fmt.Printf("%s\n", disp)
+		// NOTE, the west values come from *both* dashboards and folders
+		require.JSONEq(t, `{
+			"field": "labels.region",
+			"total": 3,
+			"missing": 2,
+			"terms": [
+				{
+					"term": "west",
+					"count": 2
+				},
+				{
+					"term": "east",
+					"count": 1
+				}
+			]
+		}`, string(disp))
 	})
 
 	t.Run("filter by folder", func(t *testing.T) {
