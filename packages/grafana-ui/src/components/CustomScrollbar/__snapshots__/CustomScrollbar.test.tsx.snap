@@ -1,82 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`CustomScrollbar renders correctly 1`] = `
-<div
-  className="css-rzpihd"
-  style={
-    {
-      "height": "auto",
-      "maxHeight": "100%",
-      "minHeight": "0",
-      "overflow": "hidden",
-      "position": "relative",
-      "width": "100%",
-    }
-  }
->
+<div>
   <div
-    className="scrollbar-view"
-    style={
-      {
-        "WebkitOverflowScrolling": "auto",
-        "bottom": undefined,
-        "left": undefined,
-        "marginBottom": 0,
-        "marginRight": 0,
-        "maxHeight": "calc(100% + 0px)",
-        "minHeight": "calc(0 + 0px)",
-        "overflow": "scroll",
-        "position": "relative",
-        "right": undefined,
-        "top": undefined,
-      }
-    }
-  >
-    <p>
-      Scrollable content
-    </p>
-  </div>
-  <div
-    className="track-horizontal"
-    style={
-      {
-        "display": "none",
-        "height": 6,
-        "position": "absolute",
-      }
-    }
+    class="css-rzpihd"
+    style="position: relative; overflow: hidden; width: 100%; height: auto; min-height: 0; max-height: 100%;"
   >
     <div
-      className="thumb-horizontal"
-      style={
-        {
-          "display": "block",
-          "height": "100%",
-          "position": "relative",
-        }
-      }
-    />
-  </div>
-  <div
-    className="track-vertical"
-    style={
-      {
-        "display": "none",
-        "position": "absolute",
-        "width": 6,
-      }
-    }
-  >
+      class="scrollbar-view"
+      style="position: relative; overflow: scroll; margin-right: 0px; margin-bottom: 0px; min-height: calc(0 + 0px); max-height: calc(100% + 0px);"
+    >
+      <p>
+        Scrollable content
+      </p>
+    </div>
     <div
-      className="thumb-vertical"
-      style={
-        {
-          "display": "block",
-          "position": "relative",
-          "width": "100%",
-        }
-      }
-    />
+      class="track-horizontal"
+      style="position: absolute; height: 6px; display: none;"
+    >
+      <div
+        class="thumb-horizontal"
+        style="position: relative; display: block; height: 100%;"
+      />
+    </div>
+    <div
+      class="track-vertical"
+      style="position: absolute; width: 6px; display: none;"
+    >
+      <div
+        class="thumb-vertical"
+        style="position: relative; display: block; width: 100%;"
+      />
+    </div>
   </div>
 </div>
 `;

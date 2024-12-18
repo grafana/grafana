@@ -1,5 +1,4 @@
-import { renderHook } from '@testing-library/react';
-import { act } from 'react-test-renderer';
+import { act, renderHook } from '@testing-library/react';
 
 import { useLayout } from './layout';
 import { EdgeDatum, NodeDatum } from './types';

@@ -125,7 +125,6 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-select-event": "5.5.1",
-    "react-test-renderer": "18.2.0",
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.1.1",

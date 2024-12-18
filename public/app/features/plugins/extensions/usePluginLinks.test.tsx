@@ -1,5 +1,4 @@
-import { act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 
