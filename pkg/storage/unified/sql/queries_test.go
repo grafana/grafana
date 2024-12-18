@@ -266,5 +266,49 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceBlobInsert: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						Hash:        "xxx",
+						ContentType: "text/plain",
+						Value:       []byte("abcdefg"),
+					},
+				},
+			},
+
+			sqlResourceBlobQuery: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						UID: "abc",
+					},
+				},
+				{
+					Name: "resource", // NOTE: this returns multiple values
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+						},
+					},
+				},
+			},
 		}})
 }
