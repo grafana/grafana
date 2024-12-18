@@ -30,7 +30,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 			return nil, err
 		}
 
-		groupResource := common.FormatGroupResource(item.GetGroup(), item.GetResource())
+		groupResource := common.FormatGroupResource(item.GetGroup(), item.GetResource(), item.GetSubresource())
 		if _, ok := batchRes.Groups[groupResource]; !ok {
 			batchRes.Groups[groupResource] = &authzextv1.BatchCheckGroupResource{
 				Items: make(map[string]bool),

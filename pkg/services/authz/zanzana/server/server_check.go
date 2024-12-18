@@ -128,7 +128,6 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 	}
 
 	resourceIdent := resource.ResourceIdent()
-
 	if !resource.IsValidRelation(relation) || resourceIdent == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}

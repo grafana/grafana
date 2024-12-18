@@ -131,7 +131,7 @@ func NewTypedIdent(typ string, name string) string {
 }
 
 func NewResourceIdent(group, resource, name string) string {
-	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource), name)
+	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource, ""), name)
 }
 
 func NewFolderIdent(name string) string {
@@ -139,10 +139,14 @@ func NewFolderIdent(name string) string {
 }
 
 func NewGroupResourceIdent(group, resource string) string {
-	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource))
+	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource, ""))
 }
 
-func FormatGroupResource(group, resource string) string {
+func FormatGroupResource(group, resource, subresource string) string {
+	if subresource != "" {
+		return fmt.Sprintf("%s/%s/%s", group, resource, subresource)
+	}
+
 	return fmt.Sprintf("%s/%s", group, resource)
 }
 
@@ -155,7 +159,7 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource, "")),
 				},
 			},
 		},
@@ -177,7 +181,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, folder string) *
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resources": structpb.NewListValue(&structpb.ListValue{
-						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource))},
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, ""))},
 					}),
 				},
 			},
