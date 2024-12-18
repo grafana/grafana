@@ -15,6 +15,7 @@ import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/ser
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -219,6 +220,26 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
+    });
+    it('switch modes are intiallized depending on the local storage - 1', async () => {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+
+      const { user } = renderRuleEditor();
+      await selectFolderAndGroup(user);
+
+      expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
+      expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
+    });
+    it('switch modes are intiallized depending on the local storage - 2', async () => {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+
+      const { user } = renderRuleEditor();
+      await selectFolderAndGroup(user);
+
+      expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
+      expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
     });
   });
 });
