@@ -620,7 +620,6 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
           kind: 'Panel',
           spec: {
             ...defaultPanelSpec(),
-            uid: 'panel-1',
             title: 'Panel 1',
           },
         },
