@@ -232,12 +232,12 @@ func (rc *RepositoryController) sync(key string) error {
 		if cachedRepo.Status.Initialized {
 			status, err = repo.OnUpdate(ctx, logger)
 			if err != nil {
-				return fmt.Errorf("on create repository: %w", err)
+				rc.logger.Error("OnUpdate", "error", err)
 			}
 		} else {
 			status, err = repo.OnCreate(ctx, logger)
 			if err != nil {
-				return fmt.Errorf("on create repository: %w", err)
+				rc.logger.Error("OnCreate", "error", err)
 			}
 		}
 

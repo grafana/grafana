@@ -19,4 +19,3 @@ spec:
     generateDashboardPreviews: true
     pullRequestLinter: true
     token: "github_pat_dummy"
-    webhookSecret: "dummyWebhookSecret"

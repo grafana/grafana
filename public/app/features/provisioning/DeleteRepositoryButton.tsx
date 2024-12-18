@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton } from '@grafana/ui';
 
 import { useDeleteRepositoryMutation } from './api';
 
@@ -26,14 +26,13 @@ export function DeleteRepositoryButton({ name }: { name: string }) {
 
   return (
     <>
-      <Button
-        variant="destructive"
+      <IconButton
+        name="trash-alt"
+        tooltip="Delete this repository"
         onClick={() => {
           setShowModal(true);
         }}
-      >
-        Delete
-      </Button>
+      />
       <ConfirmModal
         isOpen={showModal}
         title={'Delete repository config'}

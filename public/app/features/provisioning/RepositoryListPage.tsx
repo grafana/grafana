@@ -1,7 +1,20 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
-import { Alert, Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack, TextLink } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  EmptySearchResult,
+  EmptyState,
+  FilterInput,
+  Icon,
+  IconButton,
+  IconName,
+  LinkButton,
+  Stack,
+  TextLink,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
@@ -51,36 +64,73 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
             const name = item.metadata?.name ?? '';
-            const healthy = Boolean(item.status?.health.healthy)
+            const healthy = Boolean(item.status?.health.healthy);
+            let icon: IconName = 'database'; // based on type
+            let meta: ReactNode[] = [
+              // TODO... add counts? and sync info
+            ];
+            switch (item.spec?.type) {
+              case 'github':
+                icon = 'github';
+                const spec = item.spec.github;
+                let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+                if (spec?.branch) {
+                  url += `tree/` + spec?.branch;
+                }
+                meta.push(<a href={url}>{url}</a>);
+                break;
+
+              case 'local':
+                meta.push(item.spec.local?.path);
+                break;
+            }
             return (
-              <Card key={item.metadata?.name} className={css({ alignItems: 'center' })}>
-                <Stack direction={'column'}>
-                  <Card.Heading>
-                    <TextLink href={`${PROVISIONING_URL}/${name}`}>{item.spec?.title}</TextLink>
-                  </Card.Heading>
-                  <Card.Meta>{item.spec?.type}</Card.Meta>
-                </Stack>
-                <Stack>
-                  {healthy ? <>
-                    <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
-                      Edit
+              <Card key={item.metadata?.name}>
+                <Card.Figure>
+                  <Icon name={icon} width={40} height={40} />
+                </Card.Figure>
+                <Card.Heading>{item.spec?.title}</Card.Heading>
+                <Card.Description>
+                  {item.spec?.description}
+
+                  {item.status ? (
+                    <>
+                      {!healthy && (
+                        <Alert
+                          title="Repository is unhealthy"
+                          children={item.status?.health?.message?.map((v) => (
+                            <div>
+                              {v}
+                              <br />
+                              <br />
+                            </div>
+                          ))}
+                        ></Alert>
+                      )}
+                    </>
+                  ) : (
+                    <div>
+                      <Alert severity="warning" title="repository initializing" />
+                    </div>
+                  )}
+                </Card.Description>
+                <Card.Meta>{meta}</Card.Meta>
+                <Card.Actions>
+                  <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
+                    Manage
+                  </LinkButton>
+                  {item.spec?.folder && (
+                    <LinkButton href={`/dashboards/f/${item.spec?.folder}/`} variant="secondary">
+                      View
                     </LinkButton>
-                    <SyncRepository repository={item} />
-                    <DeleteRepositoryButton name={name} />
-                  </> : <>
-                    <Alert title='Repository is unhealthy'>
-                      <>
-                        {item.status?.health.message && item.status.health.message.map(v => <div>{v}<br/><br/></div>)}
-                        <div>
-                          <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${name}/edit`}>
-                            Edit
-                          </LinkButton>
-                          <DeleteRepositoryButton name={name} />
-                        </div>
-                      </>
-                    </Alert>
-                  </>}
-                </Stack>
+                  )}
+                  {healthy && <SyncRepository repository={item} />}
+                </Card.Actions>
+                <Card.SecondaryActions>
+                  {/* <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />
+                  <IconButton key="copy" name="copy" tooltip="Tooltip content" /> */}
+                  <DeleteRepositoryButton name={name} />
+                </Card.SecondaryActions>
               </Card>
             );
           })
