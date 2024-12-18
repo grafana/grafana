@@ -365,6 +365,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				actionMapper:   mappers.NewK8sRbacMapper(),
 				logger:         log.New("test"),
 				tracer:         tracing.NewNoopTracerService(),
+				idCache:        localcache.New(longCacheTTL, longCleanupInterval),
 				permCache:      cacheService,
 				basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
 				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
