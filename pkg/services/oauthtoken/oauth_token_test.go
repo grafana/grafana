@@ -85,6 +85,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 	}
 
 	type environment struct {
+		sessionService  *authtest.MockUserAuthTokenService
 		authInfoService *authinfotest.FakeService
 		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
@@ -231,6 +232,8 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					OAuthTokenType:    expiredToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
 				}
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
 			},
 			expectedToken: unexpiredTokenWithIDToken,
@@ -252,6 +255,8 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 					OAuthTokenType:    unexpiredTokenWithIDToken.TokenType,
 					OAuthIdToken:      EXPIRED_ID_TOKEN,
 				}
+				env.sessionService.On("UpdateExternalSession", mock.Anything, int64(1), mock.MatchedBy(verifyUpdateExternalSessionCommand(unexpiredTokenWithIDToken))).Return(nil).Once()
+
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
 			},
 			expectedToken: unexpiredTokenWithIDToken,
@@ -288,6 +293,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			store := db.InitTestDB(t)
 
 			env := environment{
+				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: &authinfotest.FakeService{},
 				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
@@ -308,12 +314,12 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
-				nil,
+				env.sessionService,
 				featuremgmt.WithFeatures(),
 			)
 
 			// token refresh
-			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, nil)
+			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, &usertoken.UserToken{ExternalSessionId: 1})
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
