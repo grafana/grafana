@@ -34,9 +34,11 @@ export async function getMetricNamesWithoutScopes(
   instances: string[],
   limit?: number
 ) {
-  const matchTerms = adhocFilters.map((filter) =>
-    removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
-  );
+  const matchTerms = config.featureToggles.prometheusSpecialCharsInLabelValues
+    ? adhocFilters.map((filter) =>
+        removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
+      )
+    : adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
   let missingOtelTargets = false;
 
   if (jobs.length > 0 && instances.length > 0) {
