@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
-import { MouseEvent, PureComponent, ReactNode } from 'react';
+import { MouseEvent, PureComponent, ReactNode, CSSProperties } from 'react';
 
 import {
   CoreApp,
@@ -54,6 +54,7 @@ interface Props extends Themeable2 {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
+  onRowClick: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
@@ -67,12 +68,13 @@ interface Props extends Themeable2 {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  style: CSSProperties;
+  showDetails: boolean;
 }
 
 interface State {
   permalinked: boolean;
   showingContext: boolean;
-  showDetails: boolean;
   mouseIsOver: boolean;
 }
 
@@ -87,7 +89,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     permalinked: false,
     showingContext: false,
-    showDetails: false,
     mouseIsOver: false,
   };
   logLineRef: React.RefObject<HTMLTableRowElement>;
@@ -108,20 +109,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
-    if (this.props.handleTextSelection?.(e, this.props.row)) {
-      // Event handled by the parent.
-      return;
-    }
-
-    if (!this.props.enableLogDetails) {
-      return;
-    }
-
-    this.setState((state) => {
-      return {
-        showDetails: !state.showDetails,
-      };
-    });
+    this.props.onRowClick(e, this.props.row);
   };
 
   renderTimeStamp(epochMs: number) {
@@ -214,9 +202,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       pinned,
       logRowMenuIconsBefore,
       logRowMenuIconsAfter,
+      style,
+      showDetails,
     } = this.props;
 
-    const { showDetails, showingContext, permalinked } = this.state;
+    const { showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const { sampleMessage, isSampled } = checkLogsSampled(row);
@@ -226,7 +216,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: permalinked && !this.state.showDetails,
+      [styles.highlightBackground]: permalinked && !showDetails,
     });
 
     const processedRow = this.escapeRow(row, forceEscape);
@@ -240,6 +230,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           onMouseMove={this.onMouseMove}
+          style={style}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
@@ -319,13 +310,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
-              expanded={this.state.showDetails}
+              expanded={showDetails}
               logRowMenuIconsBefore={logRowMenuIconsBefore}
               logRowMenuIconsAfter={logRowMenuIconsAfter}
             />
           )}
         </tr>
-        {this.state.showDetails && (
+        {showDetails && (
           <LogDetails
             onPinLine={this.props.onPinLine}
             className={logRowDetailsBackground}
