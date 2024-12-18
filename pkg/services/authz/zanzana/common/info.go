@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -89,7 +87,7 @@ func (r ResourceInfo) ResourceIdent() string {
 		return NewResourceIdent(r.group, r.resource, r.subresource, r.name)
 	}
 
-	return fmt.Sprintf("%s:%s", r.typ, r.name)
+	return NewTypedIdent(r.typ, r.name)
 }
 
 func (r ResourceInfo) FolderIdent() string {

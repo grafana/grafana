@@ -207,7 +207,7 @@ func NewGroupResourceTuple(subject, relation, group, resource, subresource strin
 func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		Object:   NewFolderIdent(folder),
-		Relation: "parent",
+		Relation: RelationParent,
 		User:     NewFolderIdent(parent),
 	}
 }

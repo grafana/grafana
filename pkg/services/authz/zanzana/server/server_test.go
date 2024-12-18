@@ -89,7 +89,8 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 				common.NewFolderParentTuple("5", "4"),
 				common.NewFolderParentTuple("6", "5"),
 				common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
-				common.NewFolderResourceTuple("user:9", "create", dashboardGroup, dashboardResource, "", "5"),
+				common.NewFolderResourceTuple("user:9", common.RelationCreate, dashboardGroup, dashboardResource, "", "5"),
+				common.NewResourceTuple("user:10", common.RelationUpdate, dashboardGroup, dashboardResource, "permissions", "10"),
 			},
 		},
 	})
