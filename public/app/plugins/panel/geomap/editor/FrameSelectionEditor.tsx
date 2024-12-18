@@ -44,6 +44,8 @@ export const FrameMultiSelectionEditor = ({ value, context, onChange }: Props) =
     [onChange]
   );
 
+  console.log('context.data', context.data);
+
   return (
     <RefIDMultiPicker
       value={value?.options}
