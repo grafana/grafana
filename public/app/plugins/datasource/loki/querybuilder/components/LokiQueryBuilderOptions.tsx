@@ -100,6 +100,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     useEffect(() => {
       const subscription = getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
+        if (query.direction === LokiQueryDirection.Scan) {
+          // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
+          return;
+        }
         const newDirection =
           sortEvent.payload.order === LogsSortOrder.Ascending
             ? LokiQueryDirection.Forward
