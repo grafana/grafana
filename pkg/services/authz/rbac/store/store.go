@@ -11,17 +11,23 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type Store struct {
+type Store interface {
+	GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
+	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
+	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
+}
+
+type StoreImpl struct {
 	sql legacysql.LegacyDatabaseProvider
 }
 
-func NewStore(sql legacysql.LegacyDatabaseProvider) *Store {
-	return &Store{
+func NewStore(sql legacysql.LegacyDatabaseProvider) *StoreImpl {
+	return &StoreImpl{
 		sql: sql,
 	}
 }
 
-func (s *Store) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (s *StoreImpl) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -56,7 +62,7 @@ func (s *Store) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo,
 	return perms, nil
 }
 
-func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
+func (s *StoreImpl) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -90,7 +96,7 @@ func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuer
 	return &userIDs, nil
 }
 
-func (s *Store) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error) {
+func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
