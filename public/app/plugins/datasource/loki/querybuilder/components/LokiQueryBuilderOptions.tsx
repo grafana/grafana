@@ -1,5 +1,5 @@
 import { trim } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -51,10 +51,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     };
 
-    const onQueryDirectionChange = (value: LokiQueryDirection) => {
-      onChange({ ...query, direction: value });
-      onRunQuery();
-    };
+    const onQueryDirectionChange = useCallback(
+      (value: LokiQueryDirection) => {
+        onChange({ ...query, direction: value });
+        onRunQuery();
+      },
+      [onChange, onRunQuery, query]
+    );
 
     const onResolutionChange = (option: SelectableValue<number>) => {
       reportInteraction('grafana_loki_resolution_clicked', {
@@ -95,7 +98,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
+      const subscription = getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
         const newDirection =
           sortEvent.payload.order === LogsSortOrder.Ascending
             ? LokiQueryDirection.Forward
@@ -104,6 +107,9 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           onQueryDirectionChange(newDirection);
         }
       });
+      return () => {
+        subscription.unsubscribe();
+      };
     }, [onQueryDirectionChange, query.direction]);
 
     let queryType = getLokiQueryType(query);
@@ -112,7 +118,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
 
-    const queryDirection = query.direction ?? LokiQueryDirection.Backward;
+    /**
+     * The default direction is forward because the default sort order is Descending.
+     * See:
+     * - public/app/features/explore/Logs/Logs.tsx
+     * - public/app/plugins/panel/logs/module.tsx
+     */
+    const queryDirection = query.direction ?? LokiQueryDirection.Forward;
 
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
