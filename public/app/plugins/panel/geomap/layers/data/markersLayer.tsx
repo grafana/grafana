@@ -75,7 +75,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     const style = await getStyleConfigState(config.style);
     //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
-    const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
+    const src = await prepareSVG(
+      getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''),
+      undefined,
+      config.style.text?.fixed
+    );
 
     // TODO support alignment
     const vectorStyle = {
