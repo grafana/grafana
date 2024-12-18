@@ -1,7 +1,6 @@
 import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
@@ -14,7 +13,7 @@ import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString }
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
-import { useMeasureMultiCombobox } from './useMeasureMultiCombobox';
+import { useMeasureMulti } from './useMeasureMulti';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -38,14 +37,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
-  const [shownItems, setShownItems] = useState<number>(selectedItems.length);
-  const [measureRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
 
   const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
-  const finalWidth = width && width !== 'auto' ? width : containerWidth;
 
-  useMeasureMultiCombobox(finalWidth, suffixWidth, selectedItems, setShownItems);
+  const { measureRef, suffixMeasureRef, shownItems } = useMeasureMulti(selectedItems, width);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),

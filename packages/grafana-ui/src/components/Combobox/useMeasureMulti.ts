@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { measureText } from '../../utils';
 
@@ -10,14 +11,18 @@ const EXTRA_PILL_SIZE = 50;
 /**
  * Updates the number of shown items in the multi combobox based on the available width.
  */
-export function useMeasureMultiCombobox<T extends string | number>(
-  containerWidth: number,
-  suffixWidth: number,
+export function useMeasureMulti<T extends string | number>(
   selectedItems: Array<ComboboxOption<T>>,
-  setShownItems: (val: number) => void
+  width?: number | 'auto'
 ) {
+  const [shownItems, setShownItems] = useState<number>(selectedItems.length);
+  const [measureRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
+
+  const finalWidth = width && width !== 'auto' ? width : containerWidth;
+
   useEffect(() => {
-    const maxWidth = containerWidth - suffixWidth;
+    const maxWidth = finalWidth - suffixWidth;
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
       // Measure text width and add size of padding, separator and close button
@@ -33,5 +38,7 @@ export function useMeasureMultiCombobox<T extends string | number>(
         setShownItems(selectedItems.length);
       }
     }
-  }, [containerWidth, suffixWidth, selectedItems, setShownItems]);
+  }, [finalWidth, suffixWidth, selectedItems, setShownItems]);
+
+  return { measureRef, suffixMeasureRef, shownItems };
 }

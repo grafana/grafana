@@ -92,7 +92,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={['d', 'a', 'c']} onChange={jest.fn()} />);
+    render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
     await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
