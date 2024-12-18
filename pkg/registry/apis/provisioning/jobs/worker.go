@@ -92,8 +92,9 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	case provisioning.JobActionSync:
 		ref, syncError := replicator.Sync(ctx)
 		status := &provisioning.SyncStatus{
-			State:    provisioning.JobStateFinished,
-			JobID:    job.GetName(), // TODO: Should we use the job id here?
+			State: provisioning.JobStateFinished,
+			// FIXME: infinite loop if we set this in the controller
+			// JobID:    job.GetName(), // TODO: Should we use the job id here?
 			Hash:     ref,
 			Started:  0, // FIXME: infinite loop if we set this in the controller
 			Finished: 0, // FIXME: infinite loop if we set this in the controller
