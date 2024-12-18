@@ -58,6 +58,7 @@ export function prepSeries(
   colorFieldName?: string
 ): BarSeries {
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
+    // warn message set to empty so that PanelDataErrorView which can handle empty frames / no data scenarios
     return { series: [], _rest: [], warn: '' };
   }
 
