@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -100,11 +102,7 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 func (s *KeeperRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
-
-	// TODO: How to define this function? perhaps would be useful to keep all validation here.
 	createValidation rest.ValidateObjectFunc,
-
-	// TODO: How can we use these options? Looks useful. `dryRun` for dev as well.
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
 	kp, ok := obj.(*secretv0alpha1.Keeper)
@@ -112,10 +110,8 @@ func (s *KeeperRest) Create(
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
 
-	// Make sure only one type of keeper is configured
-	err := checkKeeperType(kp)
-	if err != nil {
-		return nil, err
+	if err := createValidation(ctx, obj); err != nil {
+		return nil, fmt.Errorf("create validation failed: %w", err)
 	}
 
 	// A `keeper` may be created without a `name`, which means it gets generated on-the-fly.
@@ -148,22 +144,23 @@ func (s *KeeperRest) Update(
 	objInfo rest.UpdatedObjectInfo,
 	createValidation rest.ValidateObjectFunc,
 	updateValidation rest.ValidateObjectUpdateFunc,
-
-	// This lets a `Keeper` be created when an `Update` is called.
-	// TODO: Can we control this toggle or is this set by the client? We could always ignore it.
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	current, err := s.Get(ctx, name, &metav1.GetOptions{})
+	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("get securevalue: %w", err)
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.
 	// TODO: this also makes it so the labels and annotations are additive, unless we check and remove manually.
-	tmp, err := objInfo.UpdatedObject(ctx, current)
+	tmp, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return nil, false, fmt.Errorf("k8s updated object: %w", err)
+	}
+
+	if err := updateValidation(ctx, tmp, old); err != nil {
+		return nil, false, fmt.Errorf("update validation failed: %w", err)
 	}
 
 	newKeeper, ok := tmp.(*secretv0alpha1.Keeper)
@@ -173,12 +170,6 @@ func (s *KeeperRest) Update(
 
 	// TODO: do we need to do this here again? Probably not, but double-check!
 	newKeeper.Annotations = cleanAnnotations(newKeeper.Annotations)
-
-	// Make sure only one type of keeper is configured
-	err = checkKeeperType(newKeeper)
-	if err != nil {
-		return nil, false, err
-	}
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
@@ -201,23 +192,142 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 	return nil, true, nil
 }
 
-func checkKeeperType(s *secretv0alpha1.Keeper) error {
-	sql := s.Spec.SQL
-	aws := s.Spec.AWS
-	azure := s.Spec.Azure
-	gcp := s.Spec.GCP
-	hashicorp := s.Spec.HashiCorp
+// ValidateKeeper does basic spec validation of a keeper.
+func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation) field.ErrorList {
+	errs := make(field.ErrorList, 0)
 
-	nonNilCount := 0
-	for _, keeperType := range []interface{}{sql, aws, azure, gcp, hashicorp} {
-		if keeperType != nil && !reflect.ValueOf(keeperType).IsNil() {
-			nonNilCount++
+	// Operation-specific field validation.
+	switch operation {
+	case admission.Create:
+		if keeper.Spec.Title == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+		}
+
+	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
+	case admission.Update:
+	}
+
+	// General validations.
+
+	// Only one keeper type can be configured. Return early and don't validate the specific keeper fields.
+	if err := validateKeepers(keeper); err != nil {
+		errs = append(errs, err)
+
+		return errs
+	}
+
+	// TODO: validation of SQL keeper, once we have a finalized spec.
+	if keeper.Spec.SQL != nil {
+	}
+
+	if keeper.Spec.AWS != nil {
+		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKeyId"), keeper.Spec.AWS.AccessKeyID); err != nil {
+			errs = append(errs, err)
+		}
+
+		if err := validateCredentialValue(field.NewPath("spec", "aws", "secretAccessKey"), keeper.Spec.AWS.SecretAccessKey); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	if nonNilCount == 0 {
-		return fmt.Errorf("expecting one of the keeper types to be configured")
-	} else if nonNilCount > 1 {
-		return fmt.Errorf("only one type of keeper may be configured")
+
+	if keeper.Spec.Azure != nil {
+		if keeper.Spec.Azure.KeyVaultName == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "azure", "keyVaultName"), "a `keyVaultName` is required"))
+		}
+
+		if keeper.Spec.Azure.TenantID == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "azure", "tenantId"), "a `tenantId` is required"))
+		}
+
+		if keeper.Spec.Azure.ClientID == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "azure", "clientId"), "a `clientId` is required"))
+		}
+
+		if err := validateCredentialValue(field.NewPath("spec", "azure", "clientSecret"), keeper.Spec.Azure.ClientSecret); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if keeper.Spec.GCP != nil {
+		if keeper.Spec.GCP.ProjectID == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "gcp", "projectId"), "a `projectId` is required"))
+		}
+
+		if keeper.Spec.GCP.CredentialsFile == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "gcp", "credentialsFile"), "a `credentialsFile` is required"))
+		}
+	}
+
+	if keeper.Spec.HashiCorp != nil {
+		if keeper.Spec.HashiCorp.Address == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "hashicorp", "address"), "a `address` is required"))
+		}
+
+		if err := validateCredentialValue(field.NewPath("spec", "hashicorp", "token"), keeper.Spec.HashiCorp.Token); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errs
+}
+
+func validateKeepers(keeper *secretv0alpha1.Keeper) *field.Error {
+	availableKeepers := map[string]bool{
+		"sql":       keeper.Spec.SQL != nil,
+		"aws":       keeper.Spec.AWS != nil,
+		"azure":     keeper.Spec.Azure != nil,
+		"gcp":       keeper.Spec.GCP != nil,
+		"hashicorp": keeper.Spec.HashiCorp != nil,
+	}
+
+	configuredKeepers := make([]string, 0)
+
+	for keeperKind, notNil := range availableKeepers {
+		if notNil {
+			configuredKeepers = append(configuredKeepers, keeperKind)
+		}
+	}
+
+	if len(configuredKeepers) == 0 {
+		return field.Required(field.NewPath("spec"), "at least one `keeper` must be present")
+	}
+
+	if len(configuredKeepers) > 1 {
+		return field.Invalid(
+			field.NewPath("spec"),
+			strings.Join(configuredKeepers, " & "),
+			"only one `keeper` can be present at a time but found more",
+		)
+	}
+
+	return nil
+}
+
+func validateCredentialValue(path *field.Path, credentials secretv0alpha1.CredentialValue) *field.Error {
+	availableOptions := map[string]bool{
+		"secureValueName": credentials.SecureValueName != "",
+		"valueFromEnv":    credentials.ValueFromEnv != "",
+		"valueFromConfig": credentials.ValueFromConfig != "",
+	}
+
+	configuredCredentials := make([]string, 0)
+
+	for credentialKind, notEmpty := range availableOptions {
+		if notEmpty {
+			configuredCredentials = append(configuredCredentials, credentialKind)
+		}
+	}
+
+	if len(configuredCredentials) == 0 {
+		return field.Required(path, "one of `secureValueName`, `valueFromEnv` or `valueFromConfig` must be present")
+	}
+
+	if len(configuredCredentials) > 1 {
+		return field.Invalid(
+			path,
+			strings.Join(configuredCredentials, " & "),
+			"only one of `secureValueName`, `valueFromEnv` or `valueFromConfig` must be present at a time but found more",
+		)
 	}
 
 	return nil

@@ -132,6 +132,10 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 		return nil
 	case *secretV0Alpha1.Keeper:
+		if errs := reststorage.ValidateKeeper(typedObj, operation); len(errs) > 0 {
+			return apierrors.NewInvalid(secretV0Alpha1.SecureValuesResourceInfo.GroupVersionKind().GroupKind(), a.GetName(), errs)
+		}
+
 		return nil
 	}
 
