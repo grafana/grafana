@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -236,6 +238,29 @@ var folderValidationRules = struct {
 }{
 	maxDepth:     5,
 	invalidNames: []string{"general"},
+}
+
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := a.GetOperation()
+	if verb == admission.Create || verb == admission.Update {
+		if a.GetResource().Group != v0alpha1.GROUP {
+			return fmt.Errorf("obj is not v0alpha1.Folder")
+		}
+		obj := a.GetObject()
+		u, ok := obj.(*unstructured.Unstructured)
+		spec, ok := u.Object["spec"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("obj does not have spec")
+		}
+
+		title, ok := spec["title"].(string)
+		if !ok {
+			return fmt.Errorf("obj does not have spec.title")
+		}
+		strings.Trim(title, " ")
+		return nil
+	}
+	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
