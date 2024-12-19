@@ -215,7 +215,7 @@ function setup() {
   dashboard.setState({ $data: undefined });
 
   const initialSaveModel = transformSceneToSaveModel(dashboard);
-  dashboard.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+  dashboard.setInitialSaveModel(initialSaveModel);
 
   cleanUp();
   cleanUp = dashboard.activate();

@@ -24,7 +24,7 @@ describe('DashboardPrompt', () => {
     describe('when called without original dashboard', () => {
       it('then it should return true', () => {
         const scene = buildTestScene();
-        scene.setInitialSaveModel(undefined, undefined);
+        scene.setInitialSaveModel(undefined);
         expect(ignoreChanges(scene)).toBe(true);
       });
     });
@@ -59,7 +59,7 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        scene.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isEditor = false;
 
@@ -76,7 +76,7 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        scene.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isSignedIn = false;
         expect(ignoreChanges(scene)).toBe(true);
@@ -92,7 +92,7 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        scene.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+        scene.setInitialSaveModel(initialSaveModel);
 
         expect(ignoreChanges(scene)).toBe(true);
       });
@@ -108,7 +108,7 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        scene.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+        scene.setInitialSaveModel(initialSaveModel);
 
         expect(ignoreChanges(scene)).toBe(true);
       });
@@ -124,7 +124,7 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        scene.setInitialSaveModel(initialSaveModel.version, initialSaveModel);
+        scene.setInitialSaveModel(initialSaveModel);
 
         expect(ignoreChanges(scene)).toBe(undefined);
       });

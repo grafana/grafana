@@ -642,18 +642,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._serializer.initialSaveModel;
   }
 
-  public getInitialVersion = () => {
-    return this._serializer.getInitialVersion();
-  };
-
   public getSnapshotUrl = () => {
     return this._serializer.getSnapshotUrl();
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(version: number | undefined, saveModel?: Dashboard | DashboardV2Spec) {
+  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
     this._serializer.initialSaveModel = saveModel;
-    this._serializer.initialVersion = version;
   }
 
   public getTrackingInformation() {
