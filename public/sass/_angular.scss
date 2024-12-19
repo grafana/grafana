@@ -1711,36 +1711,36 @@ input:checked + .gf-form-switch__checkbox {
     }
     // Top and bottom corners
     &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: 0 (-$attachmentOffset);
     }
     &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: 100% (-$attachmentOffset);
     }
     &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: 0 calc(100% + #{$attachmentOffset});
     }
     &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: 100% calc(100% + #{$attachmentOffset});
     }
     // Side corners
     &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 0;
     }
     &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 0;
     }
     &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 100%;
     }
     &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
-      .#{$themePrefix}-content {
+      /* stylelint-disable-line */ .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 100%;
     }
   }
