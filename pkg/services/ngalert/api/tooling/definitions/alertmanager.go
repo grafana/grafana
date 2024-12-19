@@ -481,6 +481,8 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 	SilenceID string `json:"silenceID,omitempty"`
 }
 
+// GettableSilences gettable silences
+//
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -535,11 +537,15 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 // swagger:model gettableGrafanaSilences
 type GettableGrafanaSilences []*GettableGrafanaSilence
 
+// GettableAlerts gettable alerts
+//
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
 type GettableAlert = amv2.GettableAlert
 
+// AlertGroups alert groups
+//
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
