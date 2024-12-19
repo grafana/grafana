@@ -48,6 +48,7 @@ type Service struct {
 	permCache      *localcache.CacheService
 	teamCache      *localcache.CacheService
 	basicRoleCache *localcache.CacheService
+	folderCache    *localcache.CacheService
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
@@ -61,6 +62,7 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
 	}
 }
 
@@ -332,6 +334,11 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 }
 
 func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+	key := folderCacheKey(ns.Value)
+	if cached, ok := s.folderCache.Get(key); ok {
+		return cached.(map[string]FolderNode), nil
+	}
+
 	folders, err := s.store.GetFolders(ctx, ns)
 	if err != nil {
 		return nil, fmt.Errorf("could not get folders: %w", err)
@@ -362,6 +369,8 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 			}
 		}
 	}
+
+	s.folderCache.Set(key, folderMap, 0)
 
 	return folderMap, nil
 }
