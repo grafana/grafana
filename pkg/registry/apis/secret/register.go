@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
@@ -116,5 +119,83 @@ func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
 func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	operation := a.GetOperation()
+
+	if obj == nil || operation == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	groupKind := obj.GetObjectKind().GroupVersionKind().GroupKind()
+
+	// Generic validations for all kinds. At this point the name+namespace must not be empty.
+	if a.GetName() == "" {
+		return apierrors.NewInvalid(
+			groupKind,
+			a.GetName(),
+			field.ErrorList{field.Required(field.NewPath("metadata", "name"), "a `name` is required")},
+		)
+	}
+
+	if a.GetNamespace() == "" {
+		return apierrors.NewInvalid(
+			groupKind,
+			a.GetName(),
+			field.ErrorList{field.Required(field.NewPath("metadata", "namespace"), "a `namespace` is required")},
+		)
+	}
+
+	switch typedObj := obj.(type) {
+	case *secretV0Alpha1.SecureValue:
+		if errs := reststorage.ValidateSecureValue(typedObj, operation); len(errs) > 0 {
+			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
+		}
+
+		return nil
+	case *secretV0Alpha1.Keeper:
+		if errs := reststorage.ValidateKeeper(typedObj, operation); len(errs) > 0 {
+			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
+		}
+
+		return nil
+	}
+
+	return apierrors.NewBadRequest(fmt.Sprintf("unknown spec %T", obj))
+}
+
+func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	operation := a.GetOperation()
+
+	if obj == nil || operation == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	// When creating a resource and the name is empty, we need to generate one.
+	if operation == admission.Create && a.GetName() == "" {
+		generatedName, err := util.GetRandomString(8)
+		if err != nil {
+			return fmt.Errorf("generate random string: %w", err)
+		}
+
+		switch typedObj := obj.(type) {
+		case *secretV0Alpha1.SecureValue:
+			optionalPrefix := typedObj.GenerateName
+			if optionalPrefix == "" {
+				optionalPrefix = "sv-"
+			}
+
+			typedObj.Name = optionalPrefix + generatedName
+
+		case *secretV0Alpha1.Keeper:
+			optionalPrefix := typedObj.GenerateName
+			if optionalPrefix == "" {
+				optionalPrefix = "kp-"
+			}
+
+			typedObj.Name = optionalPrefix + generatedName
+		}
+	}
+
 	return nil
 }

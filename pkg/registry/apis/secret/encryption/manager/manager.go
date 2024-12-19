@@ -84,7 +84,7 @@ func NewEncryptionManager(
 		return nil, err
 	}
 
-	if _, ok := s.providers[secrets.ProviderID(currentProviderID)]; !ok {
+	if _, ok := s.providers[currentProviderID]; !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
