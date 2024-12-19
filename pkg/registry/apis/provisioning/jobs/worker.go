@@ -14,6 +14,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -60,7 +61,7 @@ func NewJobWorker(
 }
 
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
-	logger := g.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+	ctx, logger := plog.FromContext(ctx, g.logger, "job", job.GetName(), "namespace", job.GetNamespace())
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	if !ok {
 		return nil, fmt.Errorf("missing repository name in label")
 	}
-	logger = logger.With("repository", repoName)
+	ctx, logger = logger.With(ctx, "repository", repoName)
 
 	repo, err := g.getter.GetRepository(ctx, repoName)
 	if err != nil {
@@ -86,7 +87,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	replicator, err := resources.NewReplicator(repo, parser, logger)
+	replicator, err := resources.NewReplicator(repo, parser, logger.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("error creating replicator")
 	}
@@ -151,7 +152,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			id:        id,
 		}
 
-		commenter, err := NewPullRequestCommenter(prRepo, parser, logger, renderer, baseURL)
+		commenter, err := NewPullRequestCommenter(prRepo, parser, logger.Logger, renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}

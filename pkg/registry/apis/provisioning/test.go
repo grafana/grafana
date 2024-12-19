@@ -131,7 +131,7 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 		return rsp, nil
 	}
 
-	return repo.Test(ctx, t.logger)
+	return repo.Test(ctx)
 }
 
 // This function will check if the repository is configured and functioning as expected

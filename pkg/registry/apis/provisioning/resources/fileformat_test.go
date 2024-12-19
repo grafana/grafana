@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log/slog"
 	"os"
 	"path"
 	"testing"
@@ -73,7 +72,7 @@ spec:
 
 	t.Run("load dashboard json", func(t *testing.T) {
 		// Support dashboard conversion
-		obj, gvk, classic, err := ReadClassicResource(context.Background(), slog.Default(), &repository.FileInfo{
+		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
 			Data: []byte(`{
 			"schemaVersion": 7,
 			"panels": [],
@@ -115,7 +114,7 @@ spec:
 		parser.linter = lint.NewDashboardLinter()
 
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), slog.Default(), info, validate)
+		parsed, err := parser.Parse(context.Background(), info, validate)
 
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)

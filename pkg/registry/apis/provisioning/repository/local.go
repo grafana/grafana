@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
@@ -83,15 +84,17 @@ var _ Repository = (*localRepository)(nil)
 type localRepository struct {
 	config   *provisioning.Repository
 	resolver *LocalFolderResolver
+	logger   *slog.Logger
 
 	// validated path that can be read if not empty
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver, logger *slog.Logger) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
+		logger:   logger,
 	}
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
@@ -125,7 +128,7 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
-func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
+func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	if r.config.Spec.Local.Path == "" {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
@@ -185,7 +188,7 @@ func (r *localRepository) validateRequest(ref string) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, filePath string, ref string) (*FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*FileInfo, error) {
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -224,7 +227,7 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, filePat
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -277,7 +280,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, sanitisedPath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
@@ -286,6 +289,7 @@ func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, sanit
 
 	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
 	if err != nil {
+		_, logger := plog.FromContext(ctx, r.logger)
 		logger.WarnContext(ctx, "got an invalid path from caller", "path", inputUnsafePath, "err", err)
 		return err
 	}
@@ -305,7 +309,7 @@ func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, sanit
 	return os.WriteFile(sanitisedPath, data, 0600)
 }
 
-func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
@@ -321,7 +325,7 @@ func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path 
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
+func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
@@ -334,7 +338,7 @@ func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path 
 	return os.Remove(path)
 }
 
-func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path string, ref string) ([]provisioning.HistoryItem, error) {
+func (r *localRepository) History(ctx context.Context, path string, ref string) ([]provisioning.HistoryItem, error) {
 	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "history is not yet implemented",
@@ -344,7 +348,7 @@ func (r *localRepository) History(ctx context.Context, logger *slog.Logger, path
 }
 
 // Webhook implements Repository.
-func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
+func (r *localRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
@@ -353,14 +357,14 @@ func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, req 
 	}, nil
 }
 
-func (r *localRepository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+func (r *localRepository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 
-func (r *localRepository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+func (r *localRepository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 
-func (r *localRepository) OnDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *localRepository) OnDelete(ctx context.Context) error {
 	return nil
 }

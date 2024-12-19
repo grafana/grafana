@@ -287,7 +287,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
+		return repository.NewLocal(r, b.localFileResolver, b.logger.With("logger", "local-repository")), nil
 	case provisioning.GitHubRepositoryType:
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 		webhookURL := fmt.Sprintf(

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"io/fs"
-	"log/slog"
 	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,46 +71,46 @@ type Repository interface {
 	Validate() field.ErrorList
 
 	// Called to check if all connection information actually works
-	Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error)
+	Test(ctx context.Context) (*provisioning.TestResults, error)
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
-	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*FileInfo, error)
+	Read(ctx context.Context, path, ref string) (*FileInfo, error)
 
 	// Read all file names from the tree.
 	// This data will be parsed and validated before it is shown.
 	//
 	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
 	// TODO: Test scale: do we want to stream entries instead somehow?
-	ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error)
+	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
-	Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, message string) error
+	Create(ctx context.Context, path, ref string, data []byte, message string) error
 
 	// Update a file in the remote repository
 	// The data has already been validated and is ready for save
-	Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, message string) error
+	Update(ctx context.Context, path, ref string, data []byte, message string) error
 
 	// Delete a file in the remote repository
-	Delete(ctx context.Context, logger *slog.Logger, path, ref, message string) error
+	Delete(ctx context.Context, path, ref, message string) error
 
 	// History of changes for a path
-	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
+	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 
 	// For repositories that support webhooks
-	Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error)
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 
 	// Hooks called after the repository has been created, updated or deleted
-	OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
-	OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error)
-	OnDelete(ctx context.Context, logger *slog.Logger) error
+	OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error)
+	OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error)
+	OnDelete(ctx context.Context) error
 }
 
 // VersionedRepository is a repository that supports versioning
 // this inferface may be extended to make the the original Repository interface
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
-	LatestRef(ctx context.Context, logger *slog.Logger) (string, error)
-	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]FileChange, error)
+	LatestRef(ctx context.Context) (string, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error)
 }

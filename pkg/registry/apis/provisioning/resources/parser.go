@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -37,19 +38,19 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger := f.Logger.With("parser", config.Name)
+	ctx := context.Background()
+	ctx, logger := plog.FromContext(ctx, f.Logger, "parser", config.Name)
 
 	parser := &Parser{
 		repo:   config,
 		client: client,
 		kinds:  kinds,
 		mapper: NamesFromHashedRepoPath,
+		logger: logger.Logger,
 	}
 	if repo.Config().Spec.Linting {
-		ctx := context.Background()
-
 		linterFactory := lint.NewDashboardLinterFactory()
-		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), "")
+		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
 		var linter lint.Linter
 		switch {
@@ -81,6 +82,7 @@ type Parser struct {
 	client *DynamicClient
 	kinds  KindsLookup
 	linter lint.Linter
+	logger *slog.Logger
 }
 
 type ParsedResource struct {
@@ -123,7 +125,7 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
-func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string) bool {
+func (r *Parser) ShouldIgnore(ctx context.Context, p string) bool {
 	ext := filepath.Ext(p)
 	if ext == ".yaml" || ext == ".json" {
 		return false
@@ -132,19 +134,20 @@ func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string
 	return true
 }
 
-func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+	ctx, logger := plog.FromContext(ctx, r.logger)
 	parsed = &ParsedResource{
 		Info: info,
 	}
 
-	if r.ShouldIgnore(ctx, logger, info.Path) {
+	if r.ShouldIgnore(ctx, info.Path) {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
 	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
-		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, logger, info)
+		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil {
 			logger.DebugContext(ctx, "also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err

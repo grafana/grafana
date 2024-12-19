@@ -16,6 +16,7 @@ import (
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -26,7 +27,7 @@ var ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already
 // The file path may determine how the resource is parsed
 //
 // The context and logger are both only used for logging purposes. They do not control any logic.
-func ReadClassicResource(ctx context.Context, logger *slog.Logger, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
+func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
 	var value map[string]any
 
 	// Try parsing as JSON
@@ -46,6 +47,7 @@ func ReadClassicResource(ctx context.Context, logger *slog.Logger, info *reposit
 			return nil, nil, "", ErrClassicResourceIsAlreadyK8sForm
 		}
 
+		_, logger := plog.FromContext(ctx, slog.Default().With("logger", "provisioning-read-classic-resource"))
 		logger.DebugContext(ctx, "TODO... likely a provisioning",
 			"apiVersion", value["apiVersion"],
 			"kind", value["Kind"])

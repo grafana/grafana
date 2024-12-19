@@ -21,6 +21,7 @@ import (
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 )
 
 type operation int
@@ -204,13 +205,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 // process is the business logic of the controller.
 func (rc *RepositoryController) process(item *queueItem) error {
-	logger := rc.logger.With("key", item.key)
+	ctx, logger := plog.FromContext(context.Background(), rc.logger, "key", item.key)
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
 	if item.op == operationDelete {
 		logger.InfoContext(ctx, "handle repository deletion")
 		cfg, ok := item.obj.(*provisioning.Repository)
@@ -223,7 +223,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("unable to create repository from object: %w", err)
 		}
 
-		return repo.OnDelete(ctx, logger)
+		return repo.OnDelete(ctx)
 	}
 
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
@@ -239,7 +239,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 	ctx = identity.WithRequester(ctx, id)
-	logger = logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+	ctx, logger = logger.With(ctx, "repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {
@@ -257,13 +257,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	var status *provisioning.RepositoryStatus
 	if cachedRepo.Status.ObservedGeneration > 0 {
 		logger.InfoContext(ctx, "handle repository update")
-		status, err = repo.OnUpdate(ctx, logger)
+		status, err = repo.OnUpdate(ctx)
 		if err != nil {
 			return fmt.Errorf("handle repository update: %w", err)
 		}
 	} else {
 		logger.InfoContext(ctx, "handle repository init")
-		status, err = repo.OnCreate(ctx, logger)
+		status, err = repo.OnCreate(ctx)
 		if err != nil {
 			return fmt.Errorf("handle repository create: %w", err)
 		}

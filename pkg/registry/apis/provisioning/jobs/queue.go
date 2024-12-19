@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -117,7 +118,7 @@ func (s *jobStore) drainPending() {
 		if job == nil {
 			return // done
 		}
-		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+		ctx, logger := plog.FromContext(ctx, s.logger, "job", job.GetName(), "namespace", job.GetNamespace())
 
 		started := time.Now()
 		var status *provisioning.JobStatus

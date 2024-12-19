@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -158,6 +159,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
 	serviceAccountName := fmt.Sprintf("%s-org-%d", o.serviceAccountNamePrefix, orgId)
+	ctx, logger := plog.FromContext(ctx, o.log, "account_name", serviceAccountName)
 	saForm := serviceaccounts.CreateServiceAccountForm{
 		Name: serviceAccountName,
 		Role: &o.role,
@@ -169,7 +171,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		if accountAlreadyExists {
 			accountId, err := o.serviceAccounts.RetrieveServiceAccountIdByName(ctx, orgId, serviceAccountName)
 			if err != nil {
-				o.log.Error("Failed to retrieve service account", "err", err, "accountName", serviceAccountName)
+				logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
 				return "", err
 			}
 			// update org_role to make sure everything works properly if someone has changed the role since SA's original creation
@@ -178,7 +180,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 				Role: &o.role,
 			})
 			if err != nil {
-				o.log.Error("Failed to update service account", "err", err, "accountName", serviceAccountName)
+				logger.ErrorContext(ctx, "Failed to update service account", "err", err)
 				return "", err
 			}
 
@@ -189,7 +191,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		}
 	}
 	if serviceAccount == nil {
-		o.log.Error("Failed to retrieve service account", "err", err, "accountName", serviceAccountName)
+		logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
 		return "", err
 	}
 

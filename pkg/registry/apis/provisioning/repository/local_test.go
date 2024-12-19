@@ -33,7 +33,7 @@ func TestLocal(t *testing.T) {
 					Path: "invalid/path",
 				},
 			},
-		}, &LocalFolderResolver{})
+		}, &LocalFolderResolver{}, slog.Default())
 
 		// Did not resolve a local path
 		require.Equal(t, "", r.path)
@@ -43,13 +43,13 @@ func TestLocal(t *testing.T) {
 
 		expected := "the path given ('invalid/path') is invalid for a local repository (no permitted prefixes were configured)"
 
-		rsp, err := r.Test(context.Background(), slog.Default())
+		rsp, err := r.Test(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, false, rsp.Success)
 		require.Equal(t, []string{expected}, rsp.Errors)
 
 		// We get the same error when trying to read a file
-		_, err = r.Read(context.Background(), slog.Default(), "path/to/file", "")
+		_, err = r.Read(context.Background(), "path/to/file", "")
 		require.Equal(t, expected, err.Error())
 	})
 }
