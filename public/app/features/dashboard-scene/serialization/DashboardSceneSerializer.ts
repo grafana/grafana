@@ -175,8 +175,10 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     if (this.initialSaveModel && s) {
       return {
         // TODO: schemaVersion and version_before_migration are not stored anywhere in the v2 schema
-        schemaVersion: 2,
-        version_before_migration: s.state.meta.version,
+        // version_before_migration need to be stored in the serializer to be used for tracking purposes
+        // schemaVersion needs to be stored in the dashboard model to be used for the migration strategy too
+        schemaVersion: 1, // placeholder value
+        version_before_migration: undefined, // placeholder value
         uid: s.state.uid,
         title: this.initialSaveModel.title,
         panels_count: panelPluginIds.length || 0,
