@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -128,7 +129,7 @@ func toUpdateRow(currentRow *secureValueDB, newSecureValue *secretv0alpha1.Secur
 func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
-		cleanedAnnotations := CleanAnnotations(sv.Annotations)
+		cleanedAnnotations := xkube.CleanAnnotations(sv.Annotations)
 		if len(cleanedAnnotations) > 0 {
 			sv.Annotations = make(map[string]string) // Safety: reset to prohibit use of sv.Annotations further.
 

@@ -16,7 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 var (
@@ -32,13 +33,13 @@ var (
 
 // KeeperRest is an implementation of CRUDL operations on a `keeper` backed by TODO.
 type KeeperRest struct {
-	storage        secretstorage.KeeperStorage
+	storage        contracts.KeeperStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(storage secretstorage.KeeperStorage, resource utils.ResourceInfo) *KeeperRest {
+func NewKeeperRest(storage contracts.KeeperStorage, resource utils.ResourceInfo) *KeeperRest {
 	return &KeeperRest{storage, resource, resource.TableConverter()}
 }
 
@@ -72,7 +73,7 @@ func (s *KeeperRest) ConvertToTable(ctx context.Context, object runtime.Object, 
 
 // List calls the inner `store` (persistence) and returns a list of `Keepers` within a `namespace` filtered by the `options`.
 func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
+	namespace := xkube.Namespace(request.NamespaceValue(ctx))
 
 	keepersList, err := s.storage.List(ctx, namespace, options)
 	if err != nil {
@@ -84,11 +85,14 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 
 // Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.
 func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
+	nn := xkube.NameNamespace{
+		Name:      name,
+		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
+	}
 
-	kp, err := s.storage.Read(ctx, namespace, name)
+	kp, err := s.storage.Read(ctx, nn)
 	if err != nil {
-		if errors.Is(err, secretstorage.ErrKeeperNotFound) {
+		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
 		}
 		return nil, fmt.Errorf("failed to read keeper: %w", err)
@@ -153,7 +157,7 @@ func (s *KeeperRest) Update(
 	}
 
 	// TODO: do we need to do this here again? Probably not, but double-check!
-	newKeeper.Annotations = cleanAnnotations(newKeeper.Annotations)
+	newKeeper.Annotations = xkube.CleanAnnotations(newKeeper.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
@@ -167,9 +171,12 @@ func (s *KeeperRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `Keeper`.
 // The second return parameter `bool` indicates whether the delete was intant or not. It always is for `Keepers`.
 func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	namespace := request.NamespaceValue(ctx)
+	nn := xkube.NameNamespace{
+		Name:      name,
+		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
+	}
 
-	if err := s.storage.Delete(ctx, namespace, name); err != nil {
+	if err := s.storage.Delete(ctx, nn); err != nil {
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 
