@@ -1,4 +1,5 @@
 import { MetricFindValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
@@ -121,6 +122,9 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
 
     // start with the deployment environment
     let allFilters = `deployment_environment${op}"${val}"`;
+    if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+      allFilters = `deployment_environment${op}'${val}'`;
+    }
     let allLabels = 'deployment_environment';
 
     // add the other OTEL resource filters
@@ -129,7 +133,11 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
-      allFilters += `,${labelName}${op}"${labelValue}"`;
+      if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+        allFilters += `,${labelName}${op}'${labelValue}'`;
+      } else {
+        allFilters += `,${labelName}${op}"${labelValue}"`;
+      }
 
       const addLabelToGroupLeft = labelName !== 'job' && labelName !== 'instance';
 
@@ -167,8 +175,8 @@ export function limitOtelMatchTerms(
   let initialCharAmount = matchTerms.join(',').length;
 
   // start to add values to the regex and start quote
-  let jobsRegex = 'job=~"';
-  let instancesRegex = 'instance=~"';
+  let jobsRegex = `job=~'`;
+  let instancesRegex = `instance=~'`;
 
   // iterate through the jobs and instances,
   // count the chars as they are added,
@@ -206,8 +214,8 @@ export function limitOtelMatchTerms(
     }
   }
   // complete the quote after values have been added
-  jobsRegex += '"';
-  instancesRegex += '"';
+  jobsRegex += `'`;
+  instancesRegex += `'`;
 
   return {
     missingOtelTargets,

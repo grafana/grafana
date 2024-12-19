@@ -776,7 +776,24 @@ func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+
+	var out *unstructured.Unstructured
+	var err error
+
+	if uid == accesscontrol.GeneralFolderUID {
+		out = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"spec": map[string]interface{}{
+					"title":       folder.RootFolder.Title,
+					"description": folder.RootFolder.Description,
+				},
+			},
+		}
+		out.SetName(folder.RootFolder.UID)
+	} else {
+		out, err = client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	}
+
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
