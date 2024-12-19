@@ -257,8 +257,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UID/name for the folder",
-							Default:     "",
+							Description: "The k8s name (eg, grafana UID) for the parent folder",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -283,7 +282,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"resource", "name", "title", "tags", "folder"},
+				Required: []string{"resource", "name", "title"},
 			},
 		},
 		Dependencies: []string{

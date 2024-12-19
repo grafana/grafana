@@ -41,6 +41,7 @@ type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
 	opts   BleveOptions
+	start  time.Time
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
@@ -64,6 +65,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) (*bleveBackend, err
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
+		start:  time.Now(),
 	}, nil
 }
 
@@ -102,17 +104,34 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var err error
 	var index bleve.Index
 
+	build := true
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
-		// TODO? cleanup old indexes!
+		fname := fmt.Sprintf("rv%d", resourceVersion)
+		if resourceVersion == 0 {
+			fname = b.start.Format("tmp-20060102-150405")
+		}
 		dir := filepath.Join(b.opts.Root, key.Namespace,
 			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-			time.Now().Format("2006-01-02_15-04-05"), // timestamp folder
+			fname,
 		)
-		index, err = bleve.New(dir, mapper)
-
-		// TODO, check last RV so we can see if the numbers have changed
+		if resourceVersion > 0 {
+			_, err := os.Stat(dir)
+			if err == nil {
+				index, _ = bleve.Open(dir) // NOTE, will use the same mappings!!!
+				if index != nil {
+					found, err := index.DocCount()
+					if err == nil && int64(found) == size {
+						build = false // we can skip building
+					}
+				}
+			}
+		}
+		if index == nil {
+			// TODO? cleanup old indexes???
+			index, err = bleve.New(dir, mapper)
+		}
 
 		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
@@ -138,15 +157,17 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
-	_, err = builder(idx)
-	if err != nil {
-		return nil, err
-	}
+	if build {
+		_, err = builder(idx)
+		if err != nil {
+			return nil, err
+		}
 
-	// Flush the batch
-	err = idx.Flush()
-	if err != nil {
-		return nil, err
+		// Flush the batch
+		err = idx.Flush()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	b.cacheMu.Lock()

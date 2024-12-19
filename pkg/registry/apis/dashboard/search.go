@@ -218,26 +218,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
-				Namespace: user.GetNamespace(),
-				Group:     dashboardv0alpha1.GROUP,
-				Resource:  "dashboards",
-			},
-		},
-		Query:  queryParams.Get("query"),
-		Limit:  int64(limit),
-		Offset: int64(offset),
+		Options: &resource.ListOptions{},
+		Query:   queryParams.Get("query"),
+		Limit:   int64(limit),
+		Offset:  int64(offset),
 		Fields: []string{
 			"title",
 			"folder",
 			"tags",
 		},
-		Federated: []*resource.ResourceKey{{
-			Namespace: user.GetNamespace(),
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}},
 	}
 
 	// Add the folder constraint. Note this does not do recursive search
@@ -259,30 +248,28 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	// NOTE: only folders || dashboards is supported
-	if queryParams.Has("type") {
-		types := queryParams["type"]
-		switch len(types) {
-		case 0:
-			err = apierrors.NewBadRequest("missing type values")
-		case 1:
-			searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-		case 2:
-			var federate *resource.ResourceKey
-			searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-			if err != nil {
-				federate, err = asResourceKey(user.GetNamespace(), types[0])
-				if err != nil {
-					searchRequest.Federated = []*resource.ResourceKey{federate}
-				}
-			}
-		default:
-			err = apierrors.NewBadRequest("too many type requests")
-		}
+	types := queryParams["type"]
+	switch len(types) {
+	case 0:
+		// When no type specified, search for dashboards
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), "dashboards")
+	case 1:
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+	case 2:
+		var federate *resource.ResourceKey
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
 		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
+			federate, err = asResourceKey(user.GetNamespace(), types[0])
+			if err != nil {
+				searchRequest.Federated = []*resource.ResourceKey{federate}
+			}
 		}
+	default:
+		err = apierrors.NewBadRequest("too many type requests")
+	}
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
 
 	// Add sorting
