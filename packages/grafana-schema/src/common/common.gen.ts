@@ -573,6 +573,11 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 export type TimelineValueAlignment = ('center' | 'left' | 'right');
 
 /**
+ * Controls the name alignment in the TimelineChart component
+ */
+export type TimelineNameAlignment = ('left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {

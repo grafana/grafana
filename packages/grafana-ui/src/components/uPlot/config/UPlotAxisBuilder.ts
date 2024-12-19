@@ -40,6 +40,7 @@ export interface AxisProps {
   border?: uPlot.Axis.Border;
   decimals?: DecimalCount;
   distr?: ScaleDistribution;
+  align?: Axis.Align;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -90,6 +91,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       border,
       decimals,
       distr = ScaleDistribution.Linear,
+      align = 2, // right
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -144,6 +146,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         }),
       filter,
       incrs,
+      align,
     };
 
     if (border?.show) {
