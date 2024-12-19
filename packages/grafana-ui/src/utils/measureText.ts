@@ -16,8 +16,8 @@ export function getCanvasContext() {
 /**
  * @beta
  */
-export function measureText(text: string, fontSize: number, fontWeight = 400): TextMetrics {
-  const fontStyle = `${fontWeight} ${fontSize}px 'Inter'`;
+export function measureText(text: string, fontSize: number, fontWeight = 400, unit: 'px' | 'rem' = 'px'): TextMetrics {
+  const fontStyle = `${fontWeight} ${fontSize}${unit} 'Inter'`;
   const cacheKey = text + fontStyle;
   const fromCache = cache.get(cacheKey);
 
