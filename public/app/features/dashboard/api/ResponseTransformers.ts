@@ -39,7 +39,7 @@ export function ensureV2Response(
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
-    tags: dashboard.tags,
+    tags: dashboard.tags ?? [],
     schemaVersion: dashboard.schemaVersion,
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,

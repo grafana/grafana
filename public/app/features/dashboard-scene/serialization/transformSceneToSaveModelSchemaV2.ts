@@ -114,11 +114,13 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF layout
   };
 
-  if (isDashboardSchemaV2(dashboardSchemaV2)) {
-    return dashboardSchemaV2;
+  try {
+    validateDashboardSchemaV2(dashboardSchemaV2);
+    return dashboardSchemaV2 as DashboardV2Spec;
+  } catch (reason) {
+    console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
+    throw new Error('Error transforming dashboard to schema v2: ' + reason);
   }
-  console.error('Error transforming dashboard to schema v2');
-  throw new Error('Error transforming dashboard to schema v2');
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -436,7 +438,7 @@ function getDefaultDataSourceRef(): DataSourceRef | undefined {
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.bootData.settings.datasources ?? {};
   const ds = dsList[defaultDatasource];
 
   if (ds) {
@@ -447,98 +449,98 @@ function getDefaultDataSourceRef(): DataSourceRef | undefined {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
+function validateDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
-    return false;
+    throw new Error('Dashboard is not an object or is null');
   }
 
   if (typeof dash.title !== 'string') {
-    return false;
+    throw new Error('Title is not a string');
   }
   if (typeof dash.description !== 'string') {
-    return false;
+    throw new Error('Description is not a string');
   }
   if (typeof dash.cursorSync !== 'string') {
-    return false;
+    throw new Error('CursorSync is not a string');
   }
   if (typeof dash.liveNow !== 'boolean') {
-    return false;
+    throw new Error('LiveNow is not a boolean');
   }
   if (typeof dash.preload !== 'boolean') {
-    return false;
+    throw new Error('Preload is not a boolean');
   }
   if (typeof dash.editable !== 'boolean') {
-    return false;
+    throw new Error('Editable is not a boolean');
   }
   if (!Array.isArray(dash.links)) {
-    return false;
+    throw new Error('Links is not an array');
   }
   if (!Array.isArray(dash.tags)) {
-    return false;
+    throw new Error('Tags is not an array');
   }
 
   if (dash.id !== undefined && typeof dash.id !== 'number') {
-    return false;
+    throw new Error('ID is not a number');
   }
 
   // Time settings
   if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
-    return false;
+    throw new Error('TimeSettings is not an object or is null');
   }
   if (typeof dash.timeSettings.timezone !== 'string') {
-    return false;
+    throw new Error('Timezone is not a string');
   }
   if (typeof dash.timeSettings.from !== 'string') {
-    return false;
+    throw new Error('From is not a string');
   }
   if (typeof dash.timeSettings.to !== 'string') {
-    return false;
+    throw new Error('To is not a string');
   }
   if (typeof dash.timeSettings.autoRefresh !== 'string') {
-    return false;
+    throw new Error('AutoRefresh is not a string');
   }
   if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
-    return false;
+    throw new Error('AutoRefreshIntervals is not an array');
   }
   if (!Array.isArray(dash.timeSettings.quickRanges)) {
-    return false;
+    throw new Error('QuickRanges is not an array');
   }
   if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
-    return false;
+    throw new Error('HideTimepicker is not a boolean');
   }
   if (typeof dash.timeSettings.weekStart !== 'string') {
-    return false;
+    throw new Error('WeekStart is not a string');
   }
   if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
-    return false;
+    throw new Error('FiscalYearStartMonth is not a number');
   }
   if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
-    return false;
+    throw new Error('NowDelay is not a string');
   }
 
   // Other sections
   if (!Array.isArray(dash.variables)) {
-    return false;
+    throw new Error('Variables is not an array');
   }
   if (typeof dash.elements !== 'object' || dash.elements === null) {
-    return false;
+    throw new Error('Elements is not an object or is null');
   }
   if (!Array.isArray(dash.annotations)) {
-    return false;
+    throw new Error('Annotations is not an array');
   }
 
   // Layout
   if (typeof dash.layout !== 'object' || dash.layout === null) {
-    return false;
+    throw new Error('Layout is not an object or is null');
   }
   if (dash.layout.kind !== 'GridLayout') {
-    return false;
+    throw new Error('Layout kind is not GridLayout');
   }
   if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
-    return false;
+    throw new Error('Layout spec is not an object or is null');
   }
   if (!Array.isArray(dash.layout.spec.items)) {
-    return false;
+    throw new Error('Layout spec items is not an array');
   }
 
   return true;

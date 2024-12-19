@@ -7,7 +7,12 @@ import {
   SceneRefreshPicker,
 } from '@grafana/scenes';
 import { Dashboard, VariableModel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
+  defaultPanelSpec,
+  defaultTimeSettingsSpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -15,9 +20,24 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
+import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: jest.fn(),
+    };
+  },
+}));
 
 describe('DashboardSceneSerializer', () => {
   describe('v1 schema', () => {
+    beforeEach(() => {
+      config.featureToggles.useV2DashboardsAPI = false;
+    });
+
     it('Can detect no changes', () => {
       const dashboard = setup();
       const result = dashboard.getDashboardChanges(false);
@@ -309,16 +329,224 @@ describe('DashboardSceneSerializer', () => {
   });
 
   describe('v2 schema', () => {
+    beforeEach(() => {
+      config.featureToggles.useV2DashboardsAPI = true;
+    });
+
+    it('Can detect no changes', () => {
+      const dashboard = setupV2();
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(false);
+      expect(result.diffCount).toBe(0);
+    });
+
+    it('Can detect time changed', () => {
+      const dashboard = setupV2();
+
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-10h', to: 'now' });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(false);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasTimeChanges).toBe(true);
+    });
+
+    it('Can save time change', () => {
+      const dashboard = setupV2();
+
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-10h', to: 'now' });
+
+      const result = dashboard.getDashboardChanges(true);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(1);
+    });
+
+    it('Can detect folder change', () => {
+      const dashboard = setupV2();
+
+      dashboard.state.meta.folderUid = 'folder-2';
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
+      expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect refresh changed', () => {
+      const dashboard = setupV2();
+
+      const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+      if (refreshPicker instanceof SceneRefreshPicker) {
+        refreshPicker.setState({ refresh: '10m' });
+      }
+
+      const result = dashboard.getDashboardChanges(false, false, false);
+      expect(result.hasChanges).toBe(false);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasRefreshChange).toBe(true);
+    });
+
+    it('Can save refresh change', () => {
+      const dashboard = setupV2();
+
+      const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+      if (refreshPicker instanceof SceneRefreshPicker) {
+        refreshPicker.setState({ refresh: '10m' });
+      }
+
+      const result = dashboard.getDashboardChanges(false, false, true);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(1);
+    });
+
+    describe('variable changes', () => {
+      it('Can detect variable change', () => {
+        const dashboard = setupV2();
+
+        const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
+        appVar.changeValueTo('app2');
+
+        const result = dashboard.getDashboardChanges(false, false);
+
+        expect(result.hasVariableValueChanges).toBe(true);
+        expect(result.hasChanges).toBe(false);
+        expect(result.diffCount).toBe(0);
+      });
+
+      it('Can save variable value change', () => {
+        const dashboard = setupV2();
+
+        const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
+        appVar.changeValueTo('app2');
+
+        const result = dashboard.getDashboardChanges(false, true);
+
+        expect(result.hasVariableValueChanges).toBe(true);
+        expect(result.hasChanges).toBe(true);
+        expect(result.diffCount).toBe(2);
+      });
+
+      describe('Experimental variables', () => {
+        beforeAll(() => {
+          config.featureToggles.groupByVariable = true;
+        });
+
+        afterAll(() => {
+          config.featureToggles.groupByVariable = false;
+        });
+
+        it('Can detect group by static options change', () => {
+          const dashboard = setupV2({
+            variables: [
+              {
+                kind: 'GroupByVariable',
+                spec: {
+                  current: {
+                    text: 'Host',
+                    value: 'host',
+                  },
+                  datasource: {
+                    type: 'ds',
+                    uid: 'ds-uid',
+                  },
+                  name: 'GroupBy',
+                  options: [
+                    {
+                      text: 'Host',
+                      value: 'host',
+                    },
+                    {
+                      text: 'Region',
+                      value: 'region',
+                    },
+                  ],
+                  multi: false,
+                  includeAll: false,
+                  hide: 'dontHide',
+                  skipUrlSync: false,
+                },
+              },
+            ],
+          });
+
+          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
+          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
+          const result = dashboard.getDashboardChanges(false, true);
+
+          expect(result.hasVariableValueChanges).toBe(false);
+          expect(result.hasChanges).toBe(true);
+          expect(result.diffCount).toBe(1);
+        });
+
+        it('Can detect adhoc filter static options change', () => {
+          const dashboard = setupV2({
+            variables: [
+              {
+                kind: 'AdhocVariable',
+                spec: {
+                  name: 'adhoc',
+                  label: 'Adhoc Label',
+                  description: 'Adhoc Description',
+                  datasource: {
+                    uid: 'gdev-prometheus',
+                    type: 'prometheus',
+                  },
+                  hide: 'dontHide',
+                  skipUrlSync: false,
+                  filters: [],
+                  baseFilters: [],
+                  defaultKeys: [
+                    {
+                      text: 'Host',
+                      value: 'host',
+                    },
+                    {
+                      text: 'Region',
+                      value: 'region',
+                    },
+                  ],
+                },
+              },
+            ],
+          });
+
+          const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
+          variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
+          const result = dashboard.getDashboardChanges(false, false);
+
+          expect(result.hasVariableValueChanges).toBe(false);
+          expect(result.hasChanges).toBe(true);
+          expect(result.diffCount).toBe(1);
+        });
+      });
+    });
+
+    describe('Saving from panel edit', () => {
+      it('Should commit panel edit changes', () => {
+        const dashboard = setupV2();
+        const panel = findVizPanelByKey(dashboard, 'panel-1')!;
+        const editScene = buildPanelEditScene(panel);
+
+        dashboard.onEnterEditMode();
+        dashboard.setState({ editPanel: editScene });
+
+        editScene.state.panelRef.resolve().setState({ title: 'changed title' });
+
+        const result = dashboard.getDashboardChanges(false, true);
+        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'].spec;
+        expect(panelSaveModel.title).toBe('changed title');
+      });
+    });
+
+    it('should throw on getTrackingInformation', () => {
+      const serializer = new V2DashboardSerializer();
+      expect(() => serializer.getTrackingInformation()).toThrow('Method not implemented.');
+    });
+
     it('should throw on getSaveAsModel', () => {
       const serializer = new V2DashboardSerializer();
       const dashboard = setup();
       expect(() => serializer.getSaveAsModel(dashboard, {})).toThrow('Method not implemented.');
-    });
-
-    it('should throw on getDashboardChangesFromScene', () => {
-      const serializer = new V2DashboardSerializer();
-      const dashboard = setup();
-      expect(() => serializer.getDashboardChangesFromScene(dashboard)).toThrow('Method not implemented.');
     });
 
     it('should throw on onSaveComplete', () => {
@@ -335,19 +563,10 @@ describe('DashboardSceneSerializer', () => {
         })
       ).toThrow('Method not implemented.');
     });
-
-    it('should throw on getDashboardChangesFromScene', () => {
-      const serializer = new V2DashboardSerializer();
-      expect(() => serializer.getTrackingInformation()).toThrow('Method not implemented.');
-    });
   });
 });
 
-interface ScenarioOptions {
-  fromPanelEdit?: boolean;
-}
-
-function setup(options: ScenarioOptions = {}) {
+function setup() {
   const dashboard = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
@@ -378,6 +597,92 @@ function setup(options: ScenarioOptions = {}) {
   });
 
   const initialSaveModel = transformSceneToSaveModel(dashboard);
+  dashboard.setInitialSaveModel(initialSaveModel);
+
+  return dashboard;
+}
+
+function setupV2(spec?: Partial<DashboardV2Spec>) {
+  const dashboard = transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    spec: {
+      ...defaultDashboardV2Spec(),
+      title: 'hello',
+      schemaVersion: 30,
+      timeSettings: {
+        ...defaultTimeSettingsSpec(),
+        autoRefresh: '10s',
+        from: 'now-1h',
+        to: 'now',
+      },
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel 1',
+          },
+        },
+      },
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'panel-1',
+                },
+              },
+            },
+          ],
+        },
+      },
+      variables: [
+        {
+          kind: 'CustomVariable',
+          spec: {
+            name: 'app',
+            label: 'Query Variable',
+            description: 'A query variable',
+            skipUrlSync: false,
+            hide: 'dontHide',
+            options: [],
+            multi: false,
+            current: {
+              text: 'app1',
+              value: 'app1',
+            },
+            query: 'app1',
+            allValue: '',
+            includeAll: false,
+          },
+        },
+      ],
+      ...spec,
+    },
+    apiVersion: 'v1',
+    metadata: {
+      name: 'dashboard-test',
+      resourceVersion: '1',
+      creationTimestamp: '2023-01-01T00:00:00Z',
+    },
+    access: {
+      canEdit: true,
+      canSave: true,
+      canStar: true,
+      canShare: true,
+    },
+  });
+
+  const initialSaveModel = transformSceneToSaveModelSchemaV2(dashboard);
   dashboard.setInitialSaveModel(initialSaveModel);
 
   return dashboard;
