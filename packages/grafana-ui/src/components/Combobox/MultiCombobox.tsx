@@ -6,13 +6,16 @@ import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
+import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
+import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
@@ -35,8 +38,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return getSelectedItemsFromValue<T>(value, options);
   }, [value, options, isAsync]);
 
+  const styles = useStyles2(getComboboxStyles);
+
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
+
+  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
   const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
 
@@ -124,7 +131,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
 
   return (
-    <div>
+    <div ref={containerRef}>
       <div
         style={{ width: width === 'auto' ? undefined : width }}
         className={multiStyles.wrapper}
@@ -175,31 +182,37 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           />
         </span>
       </div>
-      <div {...getMenuProps()}>
-        <Portal>
+      <Portal>
+        <div
+          className={cx(styles.menu, !isOpen && styles.menuClosed)}
+          style={{ ...floatStyles }}
+          {...getMenuProps({ ref: floatingRef })}
+        >
           {isOpen && (
-            <div>
-              {items.map((item, index) => {
-                const itemProps = getItemProps({ item, index });
-                const isSelected = isOptionSelected(item);
-                const id = 'multicombobox-option-' + item.value.toString();
-                return (
-                  <li
-                    key={item.value}
-                    {...itemProps}
-                    style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
-                  >
-                    {' '}
-                    {/* Add styling with virtualization */}
-                    <Checkbox key={id} value={isSelected} aria-labelledby={id} />
-                    <OptionListItem option={item} id={id} />
-                  </li>
-                );
-              })}
-            </div>
+            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+              <ul>
+                {items.map((item, index) => {
+                  const itemProps = getItemProps({ item, index });
+                  const isSelected = isOptionSelected(item);
+                  const id = 'multicombobox-option-' + item.value.toString();
+                  return (
+                    <li
+                      key={item.value}
+                      {...itemProps}
+                      style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
+                    >
+                      {' '}
+                      {/* Add styling with virtualization */}
+                      <Checkbox key={id} value={isSelected} aria-labelledby={id} />
+                      <OptionListItem option={item} id={id} />
+                    </li>
+                  );
+                })}
+              </ul>
+            </ScrollContainer>
           )}
-        </Portal>
-      </div>
+        </div>
+      </Portal>
     </div>
   );
 };

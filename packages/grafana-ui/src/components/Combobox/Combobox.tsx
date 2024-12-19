@@ -354,7 +354,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
   const isAutoSize = width === 'auto';
 
