@@ -14,7 +14,8 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { ConfirmModal, PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -237,7 +238,7 @@ export const LogRows = memo(
       },
       [handleDeselection, popoverMenuSupported]
     );
-    
+
     const onDisablePopoverMenu = useCallback(() => {
       setShowDisablePopoverOptions(true);
     }, []);
@@ -268,7 +269,18 @@ export const LogRows = memo(
           <ConfirmModal
             isOpen
             title="Disable menu"
-            body="You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the shift key."
+            body={
+              <>
+                <Trans i18nKey="logs.log-rows.disable-popover.message">
+                  You are about to disable the logs filter menu. To re-enable it, select text in a log line while
+                  holding the shift key.
+                </Trans>
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" title="keyboard shortcut" />
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">shift+select to enable again</Trans>
+                </div>
+              </>
+            }
             confirmText="Confirm"
             icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
