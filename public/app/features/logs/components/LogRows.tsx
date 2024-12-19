@@ -14,11 +14,12 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
-import { sortLogRows, targetIsElement } from '../utils';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
@@ -112,6 +113,7 @@ export const LogRows = memo(
       selectedRow: null,
       popoverMenuCoordinates: { x: 0, y: 0 },
     });
+    const [showDisablePopoverOptions, setShowDisablePopoverOptions] = useState(false);
     const logRowsRef = useRef<HTMLDivElement>(null);
     const theme = useTheme2();
     const styles = getLogRowStyles(theme);
@@ -121,7 +123,6 @@ export const LogRows = memo(
       [dedupedRows]
     );
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    // Staged rendering
     const orderedRows = useMemo(
       () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
       [dedupedRows, logsSortOrder]
@@ -130,7 +131,6 @@ export const LogRows = memo(
     const getRows = useMemo(() => () => orderedRows, [orderedRows]);
     const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
     const keyMaker = new UniqueKeyMaker();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     useEffect(() => {
       return () => {
@@ -169,7 +169,7 @@ export const LogRows = memo(
     );
 
     const popoverMenuSupported = useCallback(() => {
-      if (!config.featureToggles.logRowsPopoverMenu) {
+      if (!config.featureToggles.logRowsPopoverMenu || isPopoverMenuDisabled()) {
         return false;
       }
       return Boolean(onClickFilterOutString || onClickFilterString);
@@ -209,6 +209,9 @@ export const LogRows = memo(
         if (!selection) {
           return false;
         }
+        if (e.shiftKey) {
+          enablePopoverMenu();
+        }
         if (popoverMenuSupported() === false) {
           // This signals onRowClick inside LogRow to skip the event because the user is selecting text
           return selection ? true : false;
@@ -236,6 +239,19 @@ export const LogRows = memo(
       [handleDeselection, popoverMenuSupported]
     );
 
+    const onDisablePopoverMenu = useCallback(() => {
+      setShowDisablePopoverOptions(true);
+    }, []);
+
+    const onDisableCancel = useCallback(() => {
+      setShowDisablePopoverOptions(false);
+    }, []);
+
+    const onDisableConfirm = useCallback(() => {
+      disablePopoverMenu();
+      setShowDisablePopoverOptions(false);
+    }, []);
+
     return (
       <div className={styles.logRows} ref={logRowsRef}>
         {popoverState.selection && popoverState.selectedRow && (
@@ -246,6 +262,29 @@ export const LogRows = memo(
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
+            onDisable={onDisablePopoverMenu}
+          />
+        )}
+        {showDisablePopoverOptions && (
+          <ConfirmModal
+            isOpen
+            title="Disable menu"
+            body={
+              <>
+                <Trans i18nKey="logs.log-rows.disable-popover.message">
+                  You are about to disable the logs filter menu. To re-enable it, select text in a log line while
+                  holding the shift key.
+                </Trans>
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" title="keyboard shortcut" />
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">shift+select to enable again</Trans>
+                </div>
+              </>
+            }
+            confirmText="Confirm"
+            icon="exclamation-triangle"
+            onConfirm={onDisableConfirm}
+            onDismiss={onDisableCancel}
           />
         )}
         <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>

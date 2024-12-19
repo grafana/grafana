@@ -1776,6 +1776,14 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the shift key."
+      },
+      "disable-popover-message": {
+        "shortcut": "shift+select to enable again"
+      }
     }
   },
   "migrate-to-cloud": {
