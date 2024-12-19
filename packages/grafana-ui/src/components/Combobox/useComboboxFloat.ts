@@ -1,6 +1,7 @@
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
+import { useTheme2 } from '../../themes';
 import { measureText } from '../../utils';
 
 import { ComboboxOption } from './Combobox';
@@ -23,12 +24,17 @@ export const useComboboxFloat = (
   range: { startIndex: number; endIndex: number } | null,
   isOpen: boolean
 ) => {
+  const theme = useTheme2();
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
+  const descriptionToLabelRatio = useMemo(
+    () => parseFloat(theme.typography.bodySmall.fontSize) / parseFloat(theme.typography.pxToRem(MENU_ITEM_FONT_SIZE)),
+    [theme]
+  );
 
   // the order of middleware is important!
   const middleware = [
@@ -61,24 +67,56 @@ export const useComboboxFloat = (
 
   const longestItemWidth = useMemo(() => {
     let longestItem = '';
+    let isLongestItemDescription = false;
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
+    let fontSize = MENU_ITEM_FONT_SIZE;
+    let fontWeight = MENU_ITEM_FONT_WEIGHT;
 
     for (let i = 0; i < itemsToLookAt; i++) {
       const itemLabel = items[i].label ?? items[i].value.toString();
-      longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
+      const description = items[i].description;
+
+      if (isLongestItemDescription) {
+        // Description vs label
+        longestItem = longestItem.length / descriptionToLabelRatio > itemLabel.length ? longestItem : itemLabel;
+      } else {
+        // Label vs label
+        longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
+      }
+
+      if (description != null && !isLongestItemDescription) {
+        // Label vs description
+        longestItem = description?.length / descriptionToLabelRatio > longestItem.length ? description : longestItem;
+      } else if (description != null && isLongestItemDescription) {
+        // Description vs description
+        longestItem = description.length > longestItem.length ? description : longestItem;
+      }
+
+      if (longestItem === itemLabel) {
+        isLongestItemDescription = false;
+        fontSize = MENU_ITEM_FONT_SIZE;
+        fontWeight = MENU_ITEM_FONT_WEIGHT;
+      }
+
+      if (longestItem === description) {
+        isLongestItemDescription = true;
+        fontSize = parseFloat(theme.typography.bodySmall.fontSize);
+        fontWeight = theme.typography.fontWeightRegular;
+      }
     }
 
-    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
-
+    const size = measureText(longestItem, fontSize, fontWeight, isLongestItemDescription ? 'rem' : 'px').width;
+    if (isLongestItemDescription) {
+      console.log('longestItemDescription', longestItem, size);
+    }
     return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
-  }, [items, scrollbarWidth]);
+  }, [items, scrollbarWidth, descriptionToLabelRatio, theme]);
 
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
     maxWidth: popoverMaxSize?.width,
     minWidth: inputRef.current?.offsetWidth,
-
     maxHeight: popoverMaxSize?.height,
   };
 
