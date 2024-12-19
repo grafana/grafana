@@ -3436,6 +3436,19 @@
     },
     {
       "metadata": {
+        "name": "templateVariablesUsesCombobox",
+        "resourceVersion": "1734616967805",
+        "creationTimestamp": "2024-12-19T14:02:47Z"
+      },
+      "spec": {
+        "description": "Use new combobox component for template variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1728565214224",
         "creationTimestamp": "2024-10-10T13:00:14Z"

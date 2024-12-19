@@ -248,4 +248,5 @@ export interface FeatureToggles {
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
   investigationsBackend?: boolean;
+  templateVariablesUsesCombobox?: boolean;
 }
