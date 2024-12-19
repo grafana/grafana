@@ -284,14 +284,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 					},
 					"checked": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When the sync job started",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"generation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The generation (spec changed) that triggered this health check",
+							Description: "When the health was checked last time",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -884,12 +877,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 				Description: "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"initialized": {
+					"observedGeneration": {
 						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: this is temporary field until we use different methods in the controller for create and update Initialized is true when the repository has been initialized",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "The generation of the spec last time reconciliation ran",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"health": {
@@ -901,7 +894,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					},
 					"sync": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Sync information",
+							Description: "Sync information with the last sync information",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"),
 						},
@@ -913,7 +906,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"initialized", "health", "sync", "webhook"},
+				Required: []string{"observedGeneration", "health", "sync", "webhook"},
 			},
 		},
 		Dependencies: []string{

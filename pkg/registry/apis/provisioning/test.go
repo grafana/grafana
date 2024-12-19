@@ -147,10 +147,9 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 
 	repo := cfg.DeepCopy()
 	repo.Status.Health = provisioning.HealthStatus{
-		Healthy:    res.Success,
-		Checked:    time.Now().UnixMilli(),
-		Generation: cfg.Generation,
-		Message:    res.Errors,
+		Healthy: res.Success,
+		Checked: time.Now().UnixMilli(),
+		Message: res.Errors,
 	}
 
 	_, err := t.client.Repositories(repo.GetNamespace()).

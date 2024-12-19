@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -24,6 +27,7 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
+	client      client.ProvisioningV0alpha1Interface
 	getter      RepoGetter
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
@@ -36,6 +40,7 @@ type JobWorker struct {
 func NewJobWorker(
 	getter RepoGetter,
 	parsers *resources.ParserFactory,
+	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	logger *slog.Logger,
 	render rendering.Service,
@@ -44,6 +49,7 @@ func NewJobWorker(
 ) *JobWorker {
 	return &JobWorker{
 		getter:      getter,
+		client:      client,
 		parsers:     parsers,
 		identities:  identities,
 		logger:      logger,
@@ -87,9 +93,44 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		err := replicator.Sync(ctx)
+		started := time.Now()
+
+		// Update the status to indicate that we are working on it
+		cfg := repo.Config().DeepCopy()
+		status := &provisioning.SyncStatus{
+			State:   provisioning.JobStateWorking,
+			JobID:   job.GetName(),
+			Started: started.UnixMilli(),
+		}
+		cfg.Status.Sync = *status
+		cfg, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
+
+		// Sync the repository
+		ref, syncError := replicator.Sync(ctx)
+		status = &provisioning.SyncStatus{
+			State:    provisioning.JobStateFinished,
+			JobID:    job.GetName(),
+			Hash:     ref,
+			Started:  started.UnixMilli(),
+			Finished: time.Now().UnixMilli(),
+			Message:  []string{},
+		}
+
+		if syncError != nil {
+			status.State = provisioning.JobStateError
+			status.Message = append(status.Message, syncError.Error())
+		}
+
+		cfg.Status.Sync = *status
+		if _, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
+			return nil, fmt.Errorf("update repository status: %w", err)
+		}
+
+		if syncError != nil {
+			return nil, syncError
 		}
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
@@ -124,6 +165,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, err
 		}
 	default:
+		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}
 
 	return &provisioning.JobStatus{

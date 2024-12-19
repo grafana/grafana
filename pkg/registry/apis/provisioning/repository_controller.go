@@ -31,10 +31,13 @@ const (
 	operationDelete
 )
 
+const maxAttempts = 3
+
 type queueItem struct {
-	key string
-	op  operation
-	obj interface{}
+	key      string
+	op       operation
+	obj      interface{}
+	attempts int
 }
 
 // RepositoryController controls how and when CRD is established.
@@ -161,19 +164,36 @@ func (rc *RepositoryController) deleteRepository(obj interface{}) {
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(_ context.Context) bool {
+func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	item, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
 	defer rc.queue.Done(item)
 
-	rc.logger.Info("RepositoryController processing key", "key", item)
+	logger := rc.logger.With("key", item.key)
+	logger.InfoContext(ctx, "RepositoryController processing key")
 
 	err := rc.processFn(item)
 	if err == nil {
 		rc.queue.Forget(item)
 		return true
+	}
+
+	item.attempts++
+	logger = logger.With("error", err, "attempts", item.attempts)
+	if item.attempts >= maxAttempts {
+		logger.ErrorContext(ctx, "RepositoryController failed too many times")
+		rc.queue.Forget(item)
+		return true
+	}
+
+	if !apierrors.IsServiceUnavailable(err) {
+		logger.InfoContext(ctx, "RepositoryController will not retry")
+		rc.queue.Forget(item)
+		return true
+	} else {
+		logger.InfoContext(ctx, "RepositoryController will retry as service is unavailable")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -207,10 +227,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
-	if apierrors.IsNotFound(err) {
+	switch {
+	case apierrors.IsNotFound(err):
 		return errors.New("repository not found in cache")
-	}
-	if err != nil {
+	case err != nil:
 		return err
 	}
 
@@ -226,76 +246,57 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
-	// Did the spec change
-	now := time.Now().UnixMilli()
-	generationChanged := cachedRepo.Generation != cachedRepo.Status.Health.Generation
-	elapsed := time.Duration(now-cachedRepo.Status.Health.Checked) * time.Millisecond
-	if elapsed < time.Millisecond*200 {
-		// avoids possible inf loop!!!
-		return nil
-	}
-	if elapsed < time.Second*30 && !generationChanged {
-		// We checked status recently! and the generation has not changed
+	hasSpecChanged := cachedRepo.Generation != cachedRepo.Status.ObservedGeneration
+	if !hasSpecChanged {
+		logger.InfoContext(ctx, "repository spec unchanged")
 		return nil
 	}
 
-	res, err := rc.tester.TestRepository(ctx, repo)
-	if err != nil {
-		res = &provisioning.TestResults{
-			Success: false,
-			Errors: []string{
-				"error running test repository",
-				err.Error(),
-			},
-		}
-	}
+	logger.InfoContext(ctx, "repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
 
 	var status *provisioning.RepositoryStatus
-	if res.Success {
-		if cachedRepo.Status.Initialized {
-			logger.InfoContext(ctx, "handle repository update")
-			status, err = repo.OnUpdate(ctx, logger)
-			if err != nil {
-				rc.logger.Error("OnUpdate", "error", err)
-			}
-		} else {
-			logger.InfoContext(ctx, "handle repository init")
-			status, err = repo.OnCreate(ctx, logger)
-			if err != nil {
-				rc.logger.Error("OnCreate", "error", err)
-			}
-		}
-
-		job, err := rc.jobs.Add(ctx, &provisioning.Job{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: cachedRepo.Namespace,
-				Labels: map[string]string{
-					"repository": cachedRepo.Name,
-				},
-			},
-			Spec: provisioning.JobSpec{
-				Action: provisioning.JobActionSync,
-			},
-		})
+	if cachedRepo.Status.ObservedGeneration > 0 {
+		logger.InfoContext(ctx, "handle repository update")
+		status, err = repo.OnUpdate(ctx, logger)
 		if err != nil {
-			return fmt.Errorf("trigger sync job: %w", err)
+			return fmt.Errorf("handle repository update: %w", err)
 		}
-		logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 	} else {
-		logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
+		logger.InfoContext(ctx, "handle repository init")
+		status, err = repo.OnCreate(ctx, logger)
+		if err != nil {
+			return fmt.Errorf("handle repository create: %w", err)
+		}
 	}
 
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
-	} else {
-		status.Initialized = true
 	}
+	status.ObservedGeneration = cachedRepo.Generation
 
-	status.Health = provisioning.HealthStatus{
-		Checked:    status.Health.Checked,
-		Generation: status.Health.Generation,
-		Healthy:    res.Success,
-		Message:    res.Errors,
+	if time.Since(time.UnixMilli(cachedRepo.Status.Health.Checked)) < 200*time.Millisecond {
+		logger.InfoContext(ctx, "skipping health check as it was recently checked")
+	} else {
+		res, err := rc.tester.TestRepository(ctx, repo)
+		if err != nil {
+			res = &provisioning.TestResults{
+				Success: false,
+				Errors: []string{
+					"error running test repository",
+					err.Error(),
+				},
+			}
+		}
+
+		if !res.Success {
+			logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
+		}
+
+		status.Health = provisioning.HealthStatus{
+			Checked: status.Health.Checked,
+			Healthy: res.Success,
+			Message: res.Errors,
+		}
 	}
 
 	cfg := cachedRepo.DeepCopy()
@@ -304,6 +305,22 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("update status: %w", err)
 	}
+
+	job, err := rc.jobs.Add(ctx, &provisioning.Job{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: cachedRepo.Namespace,
+			Labels: map[string]string{
+				"repository": cachedRepo.Name,
+			},
+		},
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionSync,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("trigger sync job: %w", err)
+	}
+	logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
 
 	return nil
 }

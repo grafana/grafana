@@ -122,14 +122,13 @@ type EditingOptions struct {
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 // As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatus struct {
-	// FIXME: this is temporary field until we use different methods in the controller for create and update
-	// Initialized is true when the repository has been initialized
-	Initialized bool `json:"initialized"`
+	// The generation of the spec last time reconciliation ran
+	ObservedGeneration int64 `json:"observedGeneration"`
 
 	// This will get updated with the current health status (and updated periodically)
 	Health HealthStatus `json:"health"`
 
-	// Sync information
+	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
 
 	// Webhook Information (if applicable)
@@ -140,11 +139,8 @@ type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
 
-	// When the sync job started
+	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
-
-	// The generation (spec changed) that triggered this health check
-	Generation int64 `json:"generation,omitempty"`
 
 	// Summary messages (will be shown to users)
 	Message []string `json:"message,omitempty"`
