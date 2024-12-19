@@ -1,11 +1,15 @@
-import * as H from 'history';
-import { pick } from 'lodash';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 
-import { HistoryWrapper, locationService as mainLocationService, LocationService } from './LocationService';
+import { createLocationStorageHistory } from './LocalStorageMemoryHistory';
+import {
+  HistoryWrapper,
+  locationService as mainLocationService,
+  LocationService,
+  locationServiceSecondary,
+} from './LocationService';
 
 // Only allow sidecar to be opened on these routes. It does not seem to make sense to keep the sidecar opened on
 // config/admin pages for example.
@@ -30,22 +34,25 @@ const ALLOW_ROUTES = [
 export class SidecarService_EXPERIMENTAL {
   private _initialContext: BehaviorSubject<unknown | undefined>;
 
-  private sidecarLocationService: LocationService;
+  private secondaryMemoryLocationService: LocationService;
   private mainLocationService: LocationService;
+  private secondaryLocationService: LocationService;
 
   // If true we don't close the sidecar when user navigates to another app or part of Grafana from where the sidecar
   // was opened.
   private follow = false;
+  private memory = false;
 
   // Keep track of where the sidecar was originally opened for autoclose behaviour.
   private mainLocationWhenOpened: string | undefined;
 
   private mainOnAllowedRoute = false;
 
-  constructor(mainLocationService: LocationService) {
+  constructor(options: { mainLocationService: LocationService; secondaryLocationService: LocationService }) {
     this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
-    this.mainLocationService = mainLocationService;
-    this.sidecarLocationService = new HistoryWrapper(
+    this.mainLocationService = options.mainLocationService;
+    this.secondaryLocationService = options.secondaryLocationService;
+    this.secondaryMemoryLocationService = new HistoryWrapper(
       createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
     );
     this.handleMainLocationChanges();
@@ -80,6 +87,13 @@ export class SidecarService_EXPERIMENTAL {
       this.mainLocationService.getLocation().pathname.match(prefix)
     );
 
+    // This is run during construction so we initialize stuff based on current state of the URL.
+    if (!this.mainOnAllowedRoute) {
+      this.closeApp();
+    } else if (this.activePluginId) {
+      this.mainLocationWhenOpened = this.mainLocationService.getLocation().pathname;
+    }
+
     this.mainLocationService.getLocationObservable().subscribe((location) => {
       if (!this.activePluginId) {
         return;
@@ -110,11 +124,13 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginIdObservable() {
-    return this.sidecarLocationService.getLocationObservable().pipe(
-      map((val) => {
-        return getPluginIdFromUrl(val?.pathname || '');
-      })
-    );
+    return this.getLocationService()
+      .getLocationObservable()
+      .pipe(
+        map((val) => {
+          return getPluginIdFromUrl(val?.pathname || '');
+        })
+      );
   }
 
   /**
@@ -138,11 +154,15 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginId() {
-    return getPluginIdFromUrl(this.sidecarLocationService.getLocation().pathname);
+    return getPluginIdFromUrl(this.getLocationService().getLocation().pathname);
   }
 
   getLocationService() {
-    return this.sidecarLocationService;
+    if (this.memory) {
+      return this.secondaryMemoryLocationService;
+    } else {
+      return this.secondaryLocationService;
+    }
   }
 
   /**
@@ -176,15 +196,18 @@ export class SidecarService_EXPERIMENTAL {
    *
    * @experimental
    */
-  openAppV3(options: { pluginId: string; path?: string; follow?: boolean }) {
+  openAppV3(options: { pluginId: string; path?: string; follow?: boolean; memory?: boolean }) {
     if (!(this.assertFeatureEnabled() && this.mainOnAllowedRoute)) {
       return;
     }
 
     this.follow = options.follow || false;
 
+    // TODO: probably also clear state in locationService we used before
+    this.memory = options.memory || false;
+
     this.updateMainLocationWhenOpened();
-    this.sidecarLocationService.push({ pathname: `/a/${options.pluginId}${options.path || ''}` });
+    this.getLocationService().push({ pathname: `/a/${options.pluginId}${options.path || ''}` });
     reportInteraction('sidecar_service_open_app', { pluginId: options.pluginId, follow: options.follow });
   }
 
@@ -199,7 +222,10 @@ export class SidecarService_EXPERIMENTAL {
     this.follow = false;
     this.mainLocationWhenOpened = undefined;
     this._initialContext.next(undefined);
-    this.sidecarLocationService.replace({ pathname: '/' });
+
+    // Do both just to be sure some state does not linger
+    this.secondaryMemoryLocationService.replace({ pathname: '/' });
+    this.secondaryLocationService.replace({ pathname: '/' });
 
     reportInteraction('sidecar_service_close_app');
   }
@@ -255,87 +281,7 @@ function getMainAppPluginId() {
   return mainApp || 'unknown';
 }
 
-type LocalStorageHistoryOptions = {
-  storageKey: string;
-};
-
-interface LocationStorageHistory extends H.MemoryHistory {
-  getLocationObservable(): Observable<H.Location | undefined>;
-}
-
-/**
- * Simple wrapper over the memory history that persists the location in the localStorage.
- *
- * @param options
- */
-function createLocationStorageHistory(options: LocalStorageHistoryOptions): LocationStorageHistory {
-  const storedLocation = localStorage.getItem(options.storageKey);
-  const initialEntry = storedLocation ? JSON.parse(storedLocation) : '/';
-  const locationSubject = new BehaviorSubject<H.Location | undefined>(initialEntry);
-  const memoryHistory = H.createMemoryHistory({ initialEntries: [initialEntry] });
-
-  let currentLocation = memoryHistory.location;
-
-  function maybeUpdateLocation() {
-    if (memoryHistory.location !== currentLocation) {
-      localStorage.setItem(
-        options.storageKey,
-        JSON.stringify(pick(memoryHistory.location, 'pathname', 'search', 'hash'))
-      );
-      currentLocation = memoryHistory.location;
-      locationSubject.next(memoryHistory.location);
-    }
-  }
-
-  // This creates a sort of proxy over the memory location just to add the localStorage persistence and the location
-  // observer. We could achieve the same effect by a listener but that would create a memory leak as there would be no
-  // reasonable way to unsubcribe the listener later on.
-  // Another issue is that react router for some reason does not care about proper `this` binding and just calls these
-  // as normal functions. So if this were to be a class we would still need to bind each of these methods to the
-  // instance so at that moment this just seems easier.
-  return {
-    ...memoryHistory,
-    // Getter aren't destructured as getter but as values, so they have to be still here even though we are not
-    // modifying them.
-    get index() {
-      return memoryHistory.index;
-    },
-    get entries() {
-      return memoryHistory.entries;
-    },
-    get length() {
-      return memoryHistory.length;
-    },
-    get action() {
-      return memoryHistory.action;
-    },
-    get location() {
-      return memoryHistory.location;
-    },
-    push(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
-      memoryHistory.push(location, state);
-      maybeUpdateLocation();
-    },
-    replace(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
-      memoryHistory.replace(location, state);
-      maybeUpdateLocation();
-    },
-    go(n: number) {
-      memoryHistory.go(n);
-      maybeUpdateLocation();
-    },
-    goBack() {
-      memoryHistory.goBack();
-      maybeUpdateLocation();
-    },
-    goForward() {
-      memoryHistory.goForward();
-      maybeUpdateLocation();
-    },
-    getLocationObservable() {
-      return locationSubject.asObservable();
-    },
-  };
-}
-
-export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL(mainLocationService);
+export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL({
+  mainLocationService: mainLocationService,
+  secondaryLocationService: locationServiceSecondary,
+});
