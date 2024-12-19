@@ -2,7 +2,12 @@
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  AdHocFilterWithLabels,
+  AdhocVariableSpec,
+  DashboardV2Spec,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -30,7 +35,6 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
-// TODO[schema v2]
 export function getRawDashboardV2Changes(
   initial: DashboardV2Spec,
   changed: DashboardV2Spec,
@@ -38,16 +42,33 @@ export function getRawDashboardV2Changes(
   saveVariables?: boolean,
   saveRefresh?: boolean
 ) {
+  const initialSaveModel = initial;
+  const changedSaveModel = changed;
+  const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
+  const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
+  const hasRefreshChanged = changedSaveModel.timeSettings.autoRefresh !== initialSaveModel.timeSettings.autoRefresh;
+
+  if (!saveTimeRange) {
+    changedSaveModel.timeSettings.from = initialSaveModel.timeSettings.from;
+    changedSaveModel.timeSettings.to = initialSaveModel.timeSettings.to;
+  }
+
+  if (!saveRefresh) {
+    changedSaveModel.timeSettings.autoRefresh = initialSaveModel.timeSettings.autoRefresh;
+  }
+
+  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
+
   return {
-    changedSaveModel: changed,
-    initialSaveModel: initial,
-    diffs: jsonDiff(initial, changed),
-    diffCount: 0,
-    hasChanges: false,
-    hasTimeChanges: false,
-    isNew: false,
-    hasVariableValueChanges: false,
-    hasRefreshChange: false,
+    changedSaveModel,
+    initialSaveModel,
+    diffs: diff,
+    diffCount,
+    hasChanges: diffCount > 0,
+    hasTimeChanges: hasTimeChanged,
+    hasVariableValueChanges,
+    hasRefreshChange: hasRefreshChanged,
   };
 }
 
@@ -60,7 +81,7 @@ export function getRawDashboardChanges(
 ) {
   const initialSaveModel = initial;
   const changedSaveModel = changed;
-  const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
+  const hasTimeChanged = getHasTimeChanged(changedSaveModel.time, initialSaveModel.time);
   const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
   const hasRefreshChanged = changedSaveModel.refresh !== initialSaveModel.refresh;
 
@@ -88,33 +109,105 @@ export function getRawDashboardChanges(
   };
 }
 
-export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashboard) {
-  return saveModel.time?.from !== originalSaveModel.time?.from || saveModel.time?.to !== originalSaveModel.time?.to;
+interface DefaultPersistedTimeValue {
+  from?: string;
+  to?: string;
+}
+export function getHasTimeChanged(
+  newRange: DefaultPersistedTimeValue = {},
+  previousRange: DefaultPersistedTimeValue = {}
+) {
+  return newRange.from !== previousRange.from || newRange.to !== previousRange.to;
 }
 
-export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
-  if (a.filters === undefined && b.filters === undefined) {
+export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
+  if (filtersA === undefined && filtersB === undefined) {
     console.warn('Adhoc variable filter property is undefined');
     return true;
   }
 
-  if ((a.filters === undefined && b.filters !== undefined) || (b.filters === undefined && a.filters !== undefined)) {
+  if ((filtersA === undefined && filtersB !== undefined) || (filtersB === undefined && filtersA !== undefined)) {
     console.warn('Adhoc variable filter property is undefined');
     return false;
   }
 
-  if (a.filters.length !== b.filters.length) {
+  if (filtersA?.length !== filtersB?.length) {
     return false;
   }
 
-  for (let i = 0; i < a.filters.length; i++) {
-    const aFilter = a.filters[i];
-    const bFilter = b.filters[i];
-    if (aFilter.key !== bFilter.key || aFilter.operator !== bFilter.operator || aFilter.value !== bFilter.value) {
+  for (let i = 0; i < (filtersA?.length ?? 0); i++) {
+    const aFilter = filtersA?.[i];
+    const bFilter = filtersB?.[i];
+    if (aFilter?.key !== bFilter?.key || aFilter?.operator !== bFilter?.operator || aFilter?.value !== bFilter?.value) {
       return false;
     }
   }
   return true;
+}
+
+export function applyVariableChangesV2(
+  saveModel: DashboardV2Spec,
+  originalSaveModel: DashboardV2Spec,
+  saveVariables?: boolean
+) {
+  const originalVariables = originalSaveModel.variables ?? [];
+  const variablesToSave = saveModel.variables ?? [];
+  let hasVariableValueChanges = false;
+
+  for (const variable of variablesToSave) {
+    const hasCurrentValueToSave = (v: VariableKind) =>
+      v.kind === 'QueryVariable' ||
+      v.kind === 'CustomVariable' ||
+      v.kind === 'DatasourceVariable' ||
+      v.kind === 'ConstantVariable' ||
+      v.kind === 'IntervalVariable' ||
+      v.kind === 'TextVariable' ||
+      v.kind === 'GroupByVariable';
+
+    const hasOptionsToSave = (v: VariableKind) =>
+      v.kind === 'QueryVariable' ||
+      v.kind === 'CustomVariable' ||
+      v.kind === 'DatasourceVariable' ||
+      v.kind === 'IntervalVariable' ||
+      v.kind === 'GroupByVariable';
+
+    const original = originalVariables.find(
+      ({ spec, kind }) => spec.name === variable.spec.name && kind === variable.kind
+    );
+
+    if (!original) {
+      continue;
+    }
+
+    if (
+      hasCurrentValueToSave(variable) &&
+      hasCurrentValueToSave(original) &&
+      !isEqual(variable.spec.current, original.spec.current)
+    ) {
+      hasVariableValueChanges = true;
+    } else if (
+      variable.kind === 'AdhocVariable' &&
+      original.kind === 'AdhocVariable' &&
+      !adHocVariableFiltersEqual(variable.spec.filters, original.spec.filters)
+    ) {
+      hasVariableValueChanges = true;
+    }
+
+    if (!saveVariables) {
+      if (variable.kind === 'AdhocVariable') {
+        variable.spec.filters = (original.spec as AdhocVariableSpec).filters;
+      } else {
+        if (hasCurrentValueToSave(variable) && hasCurrentValueToSave(original)) {
+          variable.spec.current = original.spec.current;
+        }
+        if (hasOptionsToSave(variable) && hasOptionsToSave(original)) {
+          variable.spec.options = original.spec.options;
+        }
+      }
+    }
+  }
+
+  return hasVariableValueChanges;
 }
 
 export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
@@ -138,7 +231,10 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       hasVariableValueChanges = true;
     } else if (
       variable.type === 'adhoc' &&
-      !adHocVariableFiltersEqual(variable as AdHocVariableModel, original as AdHocVariableModel)
+      !adHocVariableFiltersEqual(
+        (variable as AdHocVariableModel | undefined)?.filters,
+        (original as AdHocVariableModel | undefined)?.filters
+      )
     ) {
       hasVariableValueChanges = true;
     }
