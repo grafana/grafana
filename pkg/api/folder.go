@@ -49,7 +49,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
 				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
@@ -65,6 +64,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
 				folderUidRoute.Get("/counts", handler.countFolderContent)
+				folderUidRoute.Post("/move", handler.moveFolder)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -74,6 +74,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 				folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
 				folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+				folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 			})
 		}
 	})
@@ -844,7 +845,51 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
-	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
+	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	folderDTO, err := fk8s.newToFolderDto(c, *out, c.SignedInUser.GetOrgID())
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, folderDTO)
+}
+
+func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	ctx := c.Req.Context()
+
+	cmd := folder.MoveFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UID = web.Params(c.Req)[":uid"]
+	cmd.SignedInUser = c.SignedInUser
+
+	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	obj, err = internalfolders.LegacyMoveCommandToUnstructured(obj, cmd)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
