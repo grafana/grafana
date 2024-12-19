@@ -1443,9 +1443,10 @@ var (
 		{
 			Name:         "exploreLogsShardSplitting",
 			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "exploreLogsAggregatedMetrics",

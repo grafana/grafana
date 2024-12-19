@@ -1398,14 +1398,18 @@
     {
       "metadata": {
         "name": "exploreLogsShardSplitting",
-        "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "resourceVersion": "1734617129715",
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-19 14:05:29.715382 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
