@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -217,16 +218,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
-				Namespace: user.GetNamespace(),
-				Group:     dashboardv0alpha1.GROUP,
-				Resource:  "dashboards",
-			},
-		},
-		Query:  queryParams.Get("query"),
-		Limit:  int64(limit),
-		Offset: int64(offset),
+		Options: &resource.ListOptions{},
+		Query:   queryParams.Get("query"),
+		Limit:   int64(limit),
+		Offset:  int64(offset),
 		Fields: []string{
 			"title",
 			"folder",
@@ -244,6 +239,34 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	types := queryParams["type"]
+	var federate *resource.ResourceKey
+	switch len(types) {
+	case 0:
+		// When no type specified, search for dashboards
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), "dashboards")
+		// Currently a search query is across folders and dashboards
+		if searchRequest.Query != "" {
+			federate, err = asResourceKey(user.GetNamespace(), "folders")
+		}
+	case 1:
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+	case 2:
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+		if err == nil {
+			federate, err = asResourceKey(user.GetNamespace(), types[1])
+		}
+	default:
+		err = apierrors.NewBadRequest("too many type requests")
+	}
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	if federate != nil {
+		searchRequest.Federated = []*resource.ResourceKey{federate}
+	}
+
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
@@ -256,15 +279,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Also query folders
-	if searchRequest.Query != "" {
-		searchRequest.Federated = []*resource.ResourceKey{{
-			Namespace: searchRequest.Options.Key.Namespace,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}}
-	}
-
 	// The facet term fields
 	facets, ok := queryParams["facet"]
 	if ok {
@@ -275,6 +289,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				Limit: 50,
 			}
 		}
+	}
+
+	// The tags filter
+	tags, ok := queryParams["tag"]
+	if ok {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "tags",
+			Operator: "=",
+			Values:   tags,
+		}}
 	}
 
 	// Run the query
@@ -293,10 +317,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
-			Kind:   dashboardv0alpha1.HitTypeDash,
-			Name:   row.Key.Name,
-			Title:  string(row.Cells[0]),
-			Folder: string(row.Cells[1]),
+			Resource: row.Key.Resource, // folders | dashboards
+			Name:     row.Key.Name,     // The Grafana UID
+			Title:    string(row.Cells[0]),
+			Folder:   string(row.Cells[1]),
 		}
 		if row.Cells[2] != nil {
 			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
@@ -329,4 +353,34 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
+}
+
+// Given a namespace and type convert it to a search key
+func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
+	if ns == "" {
+		return nil, apierrors.NewBadRequest("missing namespace")
+	}
+	switch k {
+	case "folders", "folder":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+		}, nil
+	case "dashboards", "dashboard":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     dashboardv0alpha1.GROUP,
+			Resource:  "dashboards",
+		}, nil
+
+	// NOT really supported in the dashboard search UI, but useful for manual testing
+	case "playlist", "playlists":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+		}, nil
+	}
+	return nil, apierrors.NewBadRequest("unknown resource type")
 }

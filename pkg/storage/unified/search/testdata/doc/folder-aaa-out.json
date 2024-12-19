@@ -5,8 +5,10 @@
     "resource": "dashboards",
     "name": "aaa"
   },
+  "kind": "dashboards",
   "rv": 1234,
-  "title": "aaa",
+  "title": "test-aaa",
+  "title_sort": "test-aaa",
   "created": 1730490142000,
   "createdBy": "user:1",
   "repository": {

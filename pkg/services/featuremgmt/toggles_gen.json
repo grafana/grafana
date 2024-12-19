@@ -3635,11 +3635,28 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchSprinkles",
-        "resourceVersion": "1734123247356",
-        "creationTimestamp": "2024-12-13T20:54:07Z"
+        "resourceVersion": "1734563607668",
+        "creationTimestamp": "2024-12-18T23:13:27Z"
       },
       "spec": {
         "description": "Enable sprinkles on unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearchUI",
+        "resourceVersion": "1734563607668",
+        "creationTimestamp": "2024-12-10T21:28:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-18 23:13:27.66802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable unified storage search UI",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

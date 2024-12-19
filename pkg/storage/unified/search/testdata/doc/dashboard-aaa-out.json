@@ -5,8 +5,10 @@
     "resource": "dashboards",
     "name": "aaa"
   },
+  "kind": "dashboards",
   "rv": 1234,
   "title": "Test title",
+  "title_sort": "Test title",
   "description": "test description",
   "tags": [
     "a",

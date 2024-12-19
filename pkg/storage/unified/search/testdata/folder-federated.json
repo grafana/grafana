@@ -19,51 +19,6 @@
   "rows": [
     {
       "cells": [
-        "aaa (dash)",
-        "ns/dashboard.grafana.app/dashboards/aaa"
-      ],
-      "object": {
-        "kind": "dashboards",
-        "apiVersion": "dashboard.grafana.app",
-        "metadata": {
-          "name": "aaa",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
-        "bbb (dash)",
-        "ns/dashboard.grafana.app/dashboards/bbb"
-      ],
-      "object": {
-        "kind": "dashboards",
-        "apiVersion": "dashboard.grafana.app",
-        "metadata": {
-          "name": "bbb",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
-        "ccc (dash)",
-        "ns/dashboard.grafana.app/dashboards/ccc"
-      ],
-      "object": {
-        "kind": "dashboards",
-        "apiVersion": "dashboard.grafana.app",
-        "metadata": {
-          "name": "ccc",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
         "yyy (folder)",
         "ns/folder.grafana.app/folders/yyy"
       ],
