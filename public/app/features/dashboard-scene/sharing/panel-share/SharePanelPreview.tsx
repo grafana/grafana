@@ -112,6 +112,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                       value: 1,
                       message: t('share-panel-image.settings.width-min', 'Width must be equal or greater than 1'),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.width-placeholder', '1000')}
@@ -134,6 +135,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                       value: 1,
                       message: t('share-panel-image.settings.height-min', 'Height must be equal or greater than 1'),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.height-placeholder', '500')}
@@ -159,6 +161,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                         'Scale factor must be equal or greater than 1'
                       ),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.scale-factor-placeholder', '1')}
