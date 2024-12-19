@@ -51,6 +51,7 @@ export interface Props {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
+  onRowClick: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
@@ -63,6 +64,8 @@ export interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  style: CSSProperties;
+  showDetails: boolean;
 }
 
 export const LogRow = ({
@@ -93,10 +96,11 @@ export const LogRow = ({
   scrollIntoView,
   handleTextSelection,
   onLogRowHover,
+  style,
+  showDetails,
   ...props
 }: Props) => {
   const [showingContext, setShowingContext] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [mouseIsOver, setMouseIsOver] = useState(false);
   const [permalinked, setPermalinked] = useState(false);
   const logLineRef = useRef<HTMLTableRowElement | null>(null);
@@ -163,18 +167,9 @@ export const LogRow = ({
 
   const onRowClick = useCallback(
     (e: MouseEvent<HTMLTableRowElement>) => {
-      if (handleTextSelection?.(e, row)) {
-        // Event handled by the parent.
-        return;
-      }
-
-      if (!enableLogDetails) {
-        return;
-      }
-
-      setShowDetails((showDetails: boolean) => !showDetails);
+      props.onRowClick(e, row);
     },
-    [enableLogDetails, handleTextSelection, row]
+    [props, row]
   );
 
   const onMouseEnter = useCallback(() => {
@@ -217,6 +212,7 @@ export const LogRow = ({
          * using the keyboard.
          */
         onFocus={onMouseEnter}
+        style={style}
       >
         {showDuplicates && (
           <td className={styles.logsRowDuplicates}>
