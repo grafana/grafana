@@ -119,8 +119,8 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if resourceVersion > 0 {
 			_, err := os.Stat(dir)
 			if err == nil {
-				index, _ = bleve.Open(dir) // NOTE, will use the same mappings!!!
-				if index != nil {
+				index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
+				if err == nil {
 					found, err := index.DocCount()
 					if err == nil && int64(found) == size {
 						build = false // we can skip building
