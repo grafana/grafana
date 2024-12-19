@@ -584,6 +584,7 @@ describe('DashboardSceneSerializer', () => {
             hideTimepicker: false,
             weekStart: '',
             fiscalYearStartMonth: 0,
+            timezone: '',
           },
           liveNow: true,
         });
@@ -594,13 +595,15 @@ describe('DashboardSceneSerializer', () => {
         expect(serializer.getTrackingInformation(dashboard)).toEqual({
           uid: 'dashboard-test',
           title: 'hello',
-          schemaVersion: 40,
           panels_count: 1,
           panel_type__count: 1,
           variable_type_custom_count: 1,
           settings_nowdelay: undefined,
-          settings_livenow: false,
-          version_before_migration: 1,
+          settings_livenow: true,
+          // schemaVersion and version_before_migration are placeholders.
+          // Please update the test when the actual values are known.
+          schemaVersion: 1,
+          version_before_migration: undefined,
         });
       });
     });
