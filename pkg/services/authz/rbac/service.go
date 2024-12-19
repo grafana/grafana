@@ -128,6 +128,9 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 	for perm := range permissions {
 		if strings.HasPrefix(perm, "folders:uid:") {
 			identifier := perm[len("folders:uid:"):]
+			if _, ok := folderSet[identifier]; ok {
+			 			 continue
+			}
 			folderSet[identifier] = struct{}{}
 			descendants := getChildren(folderMap, identifier)
 			for _, desc := range descendants {
