@@ -123,9 +123,7 @@ export class GeneralSettingsEditView
   };
 
   public onWeekStartChange = (value: string) => {
-    this.getTimeRange().setState({
-      weekStart: value,
-    });
+    this.getTimeRange().setState({ weekStart: value });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
