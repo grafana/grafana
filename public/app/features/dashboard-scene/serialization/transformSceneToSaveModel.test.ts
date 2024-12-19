@@ -149,6 +149,11 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(),
 }));
 
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  setWeekStart: jest.fn(),
+}));
+
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 jest.mock('@grafana/scenes', () => ({
