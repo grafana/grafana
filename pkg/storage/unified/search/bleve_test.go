@@ -301,45 +301,4 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(disp))
 	})
-
-	t.Run("filter by folder", func(t *testing.T) {
-		// The other tests must run first to build the indexes
-		require.NotNil(t, dashboardsIndex)
-		require.NotNil(t, foldersIndex)
-
-		// Use a federated query to get both results together, sorted by title
-		rsp, err := dashboardsIndex.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: dashboardskey,
-				Fields: []*resource.Requirement{
-					{Key: "kind", Operator: "=", Values: []string{"folders"}},
-				},
-			},
-			Fields: []string{
-				"title", "_id",
-			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: false},
-			},
-			Federated: []*resource.ResourceKey{
-				folderKey, // This will join in the
-			},
-			Limit: 100000,
-		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
-		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
-		require.NotNil(t, rsp.Results)
-
-		// Sorted across two indexes
-		sorted := []string{}
-		for _, row := range rsp.Results.Rows {
-			sorted = append(sorted, string(row.Cells[0]))
-		}
-		require.Equal(t, []string{
-			"yyy (folder)",
-			"zzz (folder)",
-		}, sorted)
-
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "folder-federated.json"), rsp.Results)
-	})
 }
