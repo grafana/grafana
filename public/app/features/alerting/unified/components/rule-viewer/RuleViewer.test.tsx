@@ -1,8 +1,7 @@
-import { within } from '@testing-library/react';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { PluginExtensionPoints } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -63,18 +62,6 @@ const ELEMENTS = {
 };
 
 setupMswServer();
-
-setPluginLinksHook(() => ({
-  links: [
-    mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
-    mockPluginLinkExtension({
-      pluginId: 'grafana-asserts-app',
-      title: 'Open workbench',
-      path: '/a/grafana-asserts-app',
-    }),
-  ],
-  isLoading: false,
-}));
 
 /**
  * "Grants" permissions via contextSrv mock, and additionally sets folder access control
@@ -157,7 +144,7 @@ describe('RuleViewer', () => {
     });
 
     it('should render a Grafana managed alert rule', async () => {
-      await renderRuleViewer(mockRule, mockRuleIdentifier);
+      const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       // assert on basic info to be visible
       expect(screen.getByText('Test alert')).toBeInTheDocument();
@@ -183,7 +170,7 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
       // check the "more actions" button
-      await userEvent.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.button.get());
       const menuItems = Object.values(ELEMENTS.actions.more.actions);
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
@@ -244,11 +231,9 @@ describe('RuleViewer', () => {
       );
       const sloRuleIdentifier = ruleId.fromCombinedRule(mimir.name, sloRule);
 
-      const user = userEvent.setup();
+      const { user } = await renderRuleViewer(sloRule, sloRuleIdentifier);
 
-      renderRuleViewer(sloRule, sloRuleIdentifier);
-
-      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
+      expect(await ELEMENTS.actions.more.button.find()).toBeInTheDocument();
 
       await user.click(ELEMENTS.actions.more.button.get());
 
@@ -265,11 +250,11 @@ describe('RuleViewer', () => {
       );
       const assertsRuleIdentifier = ruleId.fromCombinedRule(mimir.name, assertsRule);
 
-      renderRuleViewer(assertsRule, assertsRuleIdentifier);
+      const { user } = await renderRuleViewer(assertsRule, assertsRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
-      await userEvent.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.button.get());
 
       expect(ELEMENTS.actions.more.pluginActions.assertsWorkbench.get()).toBeInTheDocument();
       expect(ELEMENTS.actions.more.pluginActions.sloDashboard.query()).not.toBeInTheDocument();
@@ -308,17 +293,46 @@ describe('RuleViewer', () => {
 
 const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
   const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
-  render(
+  const view = render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
-    { historyOptions: { initialEntries: [path] } }
+    {
+      historyOptions: { initialEntries: [path] },
+      pluginLinks: [
+        {
+          pluginId: 'grafana-slo-app',
+          configs: [
+            {
+              targets: PluginExtensionPoints.AlertingAlertingRuleAction,
+              title: 'SLO dashboard',
+              description: '1',
+              path: '/a/grafana-slo-app/foo-bar',
+            },
+          ],
+        },
+        {
+          pluginId: 'grafana-asserts-app',
+          configs: [
+            {
+              targets: PluginExtensionPoints.AlertingAlertingRuleAction,
+              title: 'Open workbench',
+              description: '1',
+              path: '/a/grafana-asserts-app/foo',
+            },
+          ],
+        },
+        // mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
+        // mockPluginLinkExtension({
+        //   pluginId: 'grafana-asserts-app',
+        //   title: 'Open workbench',
+        //   path: '/a/grafana-asserts-app',
+        // }),
+      ],
+    }
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
-};
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
+  return view;
+};
