@@ -228,7 +228,7 @@ export interface FeatureToggles {
   userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
-  playlistsWatcher?: boolean;
+  playlistsReconciler?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;

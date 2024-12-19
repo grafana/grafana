@@ -7,6 +7,7 @@ init_cmds = [
 watch_all = true
 follow_symlinks = true
 watch_dirs = [
+  "$WORKDIR/apps",
   "$WORKDIR/pkg",
   "$WORKDIR/public/views",
   "$WORKDIR/conf",
