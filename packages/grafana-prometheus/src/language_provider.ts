@@ -209,7 +209,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
-    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName);
+    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
@@ -300,7 +300,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       requestOptions = undefined;
     }
 
-    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName ?? '');
+    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName ?? ''));
 
     const value = await this.request(
       `/api/v1/label/${interpolatedAndEscapedName}/values`,
@@ -502,4 +502,11 @@ function isCancelledError(error: unknown): error is {
   cancelled: boolean;
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
+}
+
+// For utf8 labels we use quotes around the label
+// While requesting the label values we must remove the quotes
+export function removeQuotesIfExist(input: string): string {
+  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
+  return match?.[1] ?? input;
 }
