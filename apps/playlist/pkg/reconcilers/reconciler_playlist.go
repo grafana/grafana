@@ -9,10 +9,11 @@ import (
 	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 )
 
-func NewPlaylistReconciler() operator.Reconciler {
+func NewPlaylistReconciler(patchClient operator.PatchClient) (operator.Reconciler, error) {
 	inner := operator.TypedReconciler[*playlist.Playlist]{}
 
 	inner.ReconcileFunc = func(ctx context.Context, request operator.TypedReconcileRequest[*playlist.Playlist]) (operator.ReconcileResult, error) {
+		klog.InfoS("Playlist Reconciler", "request", request)
 		switch request.Action {
 		case operator.ReconcileActionCreated:
 			klog.InfoS("Added resource", "name", request.Object.GetStaticMetadata().Identifier().Name)
@@ -35,5 +36,12 @@ func NewPlaylistReconciler() operator.Reconciler {
 		return operator.ReconcileResult{}, nil
 	}
 
-	return &operator.OpinionatedReconciler{Reconciler: &inner}
+	// prefixing the finalizer with <group>-<kind> similar to how OpinionatedWatcher does
+	reconciler, err := operator.NewOpinionatedReconciler(patchClient, "playlist-playlists-finalizer")
+	if err != nil {
+		klog.ErrorS(err, "Error creating opinionated reconciler for playlists")
+		return nil, err
+	}
+	reconciler.Reconciler = &inner
+	return reconciler, nil
 }

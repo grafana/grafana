@@ -4,18 +4,27 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+
+	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 )
 
 type PlaylistConfig struct {
 	EnableReconcilers bool
+}
+
+func getPatchClient(restConfig rest.Config, playlistKind resource.Kind) (operator.PatchClient, error) {
+	clientGenerator := k8s.NewClientRegistry(restConfig, k8s.ClientConfig{})
+	return clientGenerator.ClientFor(playlistKind)
 }
 
 func New(cfg app.Config) (app.App, error) {
@@ -26,7 +35,17 @@ func New(cfg app.Config) (app.App, error) {
 
 	playlistConfig, ok := cfg.SpecificConfig.(*PlaylistConfig)
 	if ok && playlistConfig.EnableReconcilers {
-		playlistReconciler = reconcilers.NewPlaylistReconciler()
+		patchClient, err := getPatchClient(cfg.KubeConfig, playlist.PlaylistKind())
+		if err != nil {
+			klog.ErrorS(err, "Error getting patch client for use with opinionated reconciler")
+			return nil, err
+		}
+
+		playlistReconciler, err = reconcilers.NewPlaylistReconciler(patchClient)
+		if err != nil {
+			klog.ErrorS(err, "Error creating playlist reconciler")
+			return nil, err
+		}
 	}
 
 	simpleConfig := simple.AppConfig{
