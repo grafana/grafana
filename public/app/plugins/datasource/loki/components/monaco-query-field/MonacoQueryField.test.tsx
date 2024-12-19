@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -31,8 +32,11 @@ function renderComponent({
 describe('MonacoQueryField', () => {
   test('Renders with no errors', async () => {
     renderComponent();
-
+    const user = userEvent.setup();
     const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
     expect(monacoEditor).toBeInTheDocument();
+
+    const editor = await screen.findByLabelText(/editor content/i);
+    await user.type(editor, '1');
   });
 });
