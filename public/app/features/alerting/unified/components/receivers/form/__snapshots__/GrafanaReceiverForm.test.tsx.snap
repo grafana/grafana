@@ -27,5 +27,6 @@ exports[`GrafanaReceiverForm alertingApiServer handles nested secure fields corr
     ],
     "title": "mqtt contact point",
   },
+  "status": {},
 }
 `;
