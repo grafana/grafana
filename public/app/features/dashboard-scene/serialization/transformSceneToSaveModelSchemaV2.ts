@@ -114,14 +114,13 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF layout
   };
 
-  const { isValid, reason } = validateDashboardSchemaV2(dashboardSchemaV2);
-
-  if (isValid) {
+  try {
+    validateDashboardSchemaV2(dashboardSchemaV2);
     return dashboardSchemaV2 as DashboardV2Spec;
+  } catch (reason) {
+    console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
+    throw new Error('Error transforming dashboard to schema v2: ' + reason);
   }
-
-  console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
-  throw new Error('Error transforming dashboard to schema v2: ' + reason);
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -450,99 +449,99 @@ function getDefaultDataSourceRef(): DataSourceRef | undefined {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function validateDashboardSchemaV2(dash: any): { isValid: boolean; reason: string } {
+function validateDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
-    return { isValid: false, reason: 'Dashboard is not an object or is null' };
+    throw new Error('Dashboard is not an object or is null');
   }
 
   if (typeof dash.title !== 'string') {
-    return { isValid: false, reason: 'Title is not a string' };
+    throw new Error('Title is not a string');
   }
   if (typeof dash.description !== 'string') {
-    return { isValid: false, reason: 'Description is not a string' };
+    throw new Error('Description is not a string');
   }
   if (typeof dash.cursorSync !== 'string') {
-    return { isValid: false, reason: 'CursorSync is not a string' };
+    throw new Error('CursorSync is not a string');
   }
   if (typeof dash.liveNow !== 'boolean') {
-    return { isValid: false, reason: 'LiveNow is not a boolean' };
+    throw new Error('LiveNow is not a boolean');
   }
   if (typeof dash.preload !== 'boolean') {
-    return { isValid: false, reason: 'Preload is not a boolean' };
+    throw new Error('Preload is not a boolean');
   }
   if (typeof dash.editable !== 'boolean') {
-    return { isValid: false, reason: 'Editable is not a boolean' };
+    throw new Error('Editable is not a boolean');
   }
   if (!Array.isArray(dash.links)) {
-    return { isValid: false, reason: 'Links is not an array' };
+    throw new Error('Links is not an array');
   }
   if (!Array.isArray(dash.tags)) {
-    return { isValid: false, reason: 'Tags is not an array' };
+    throw new Error('Tags is not an array');
   }
 
   if (dash.id !== undefined && typeof dash.id !== 'number') {
-    return { isValid: false, reason: 'ID is not a number' };
+    throw new Error('ID is not a number');
   }
 
   // Time settings
   if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
-    return { isValid: false, reason: 'TimeSettings is not an object or is null' };
+    throw new Error('TimeSettings is not an object or is null');
   }
   if (typeof dash.timeSettings.timezone !== 'string') {
-    return { isValid: false, reason: 'Timezone is not a string' };
+    throw new Error('Timezone is not a string');
   }
   if (typeof dash.timeSettings.from !== 'string') {
-    return { isValid: false, reason: 'From is not a string' };
+    throw new Error('From is not a string');
   }
   if (typeof dash.timeSettings.to !== 'string') {
-    return { isValid: false, reason: 'To is not a string' };
+    throw new Error('To is not a string');
   }
   if (typeof dash.timeSettings.autoRefresh !== 'string') {
-    return { isValid: false, reason: 'AutoRefresh is not a string' };
+    throw new Error('AutoRefresh is not a string');
   }
   if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
-    return { isValid: false, reason: 'AutoRefreshIntervals is not an array' };
+    throw new Error('AutoRefreshIntervals is not an array');
   }
   if (!Array.isArray(dash.timeSettings.quickRanges)) {
-    return { isValid: false, reason: 'QuickRanges is not an array' };
+    throw new Error('QuickRanges is not an array');
   }
   if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
-    return { isValid: false, reason: 'HideTimepicker is not a boolean' };
+    throw new Error('HideTimepicker is not a boolean');
   }
   if (typeof dash.timeSettings.weekStart !== 'string') {
-    return { isValid: false, reason: 'WeekStart is not a string' };
+    throw new Error('WeekStart is not a string');
   }
   if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
-    return { isValid: false, reason: 'FiscalYearStartMonth is not a number' };
+    throw new Error('FiscalYearStartMonth is not a number');
   }
   if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
-    return { isValid: false, reason: 'NowDelay is not a string' };
+    throw new Error('NowDelay is not a string');
   }
 
   // Other sections
   if (!Array.isArray(dash.variables)) {
-    return { isValid: false, reason: 'Variables is not an array' };
+    throw new Error('Variables is not an array');
   }
   if (typeof dash.elements !== 'object' || dash.elements === null) {
-    return { isValid: false, reason: 'Elements is not an object or is null' };
+    throw new Error('Elements is not an object or is null');
   }
   if (!Array.isArray(dash.annotations)) {
-    return { isValid: false, reason: 'Annotations is not an array' };
+    throw new Error('Annotations is not an array');
   }
 
   // Layout
   if (typeof dash.layout !== 'object' || dash.layout === null) {
-    return { isValid: false, reason: 'Layout is not an object or is null' };
+    throw new Error('Layout is not an object or is null');
   }
   if (dash.layout.kind !== 'GridLayout') {
-    return { isValid: false, reason: 'Layout kind is not GridLayout' };
+    throw new Error('Layout kind is not GridLayout');
   }
   if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
-    return { isValid: false, reason: 'Layout spec is not an object or is null' };
+    throw new Error('Layout spec is not an object or is null');
   }
   if (!Array.isArray(dash.layout.spec.items)) {
-    return { isValid: false, reason: 'Layout spec items is not an array' };
+    throw new Error('Layout spec items is not an array');
   }
 
-  return { isValid: true, reason: 'Valid DashboardV2Spec' };
+  return true;
 }
