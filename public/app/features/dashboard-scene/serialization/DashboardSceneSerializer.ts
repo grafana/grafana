@@ -99,7 +99,8 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
-    const panels = getV1SchemaPanelCounts(this.initialSaveModel?.panels || []);
+    const panelTypes = this.initialSaveModel?.panels?.map((p) => p.type) || [];
+    const panels = getPanelPluginCounts(panelTypes);
     const variables = getV1SchemaVariables(this.initialSaveModel?.templating?.list || []);
 
     if (this.initialSaveModel) {
