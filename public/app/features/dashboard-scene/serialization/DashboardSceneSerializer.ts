@@ -29,6 +29,7 @@ export interface DashboardSceneSerializerLike<T> {
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: () => DashboardTrackingInfo | undefined;
+  getSnapshotUrl: () => string | undefined;
 }
 
 interface DashboardTrackingInfo {
@@ -111,6 +112,10 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     }
     return undefined;
   }
+
+  getSnapshotUrl() {
+    return this.initialSaveModel?.snapshot?.originalUrl;
+  }
 }
 
 export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
@@ -155,6 +160,11 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getTrackingInformation() {
+    throw new Error('v2 schema: Method not implemented.');
+    return undefined;
+  }
+
+  getSnapshotUrl() {
     throw new Error('v2 schema: Method not implemented.');
     return undefined;
   }
