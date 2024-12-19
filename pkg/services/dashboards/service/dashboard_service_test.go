@@ -542,7 +542,6 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 				"spec": map[string]interface{}{
 					"title":   title,
 					"version": int64(1),
-					"id":      int64(1),
 				},
 			},
 		}
@@ -553,6 +552,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		obj.SetName(uid)
 		obj.SetCreatedBy("user:useruid")
 		obj.SetUpdatedBy("user:useruid")
+		obj.SetDeprecatedInternalID(1)
 
 		result, err := dr.UnstructuredToLegacyDashboard(context.Background(), item, orgID)
 		assert.NoError(t, err)
@@ -564,6 +564,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		assert.Equal(t, false, result.HasACL)
 		assert.Equal(t, false, result.IsFolder)
 		assert.Equal(t, int64(1), result.ID)
+		assert.Equal(t, int64(1), result.Data.Get("id").MustInt64())
 		assert.Equal(t, now.Time.Format(time.RFC3339), result.Created.Format(time.RFC3339))
 		assert.Equal(t, int64(10), result.CreatedBy)
 		assert.Equal(t, now.Time.Format(time.RFC3339), result.Updated.Format(time.RFC3339)) // updated should default to created

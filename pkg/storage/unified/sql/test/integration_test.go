@@ -436,7 +436,7 @@ func writeEvent(ctx context.Context, store sql.Backend, name string, action reso
 		return 0, err
 	}
 	meta.SetFolder("folderuid")
-	return store.WriteEvent(ctx, resource.WriteEvent{
+	return store.WriteEvent(ctx, &resource.WriteEvent{
 		Type:  action,
 		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
 		Key: &resource.ResourceKey{

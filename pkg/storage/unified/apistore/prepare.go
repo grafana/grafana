@@ -115,6 +115,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+	obj.SetDeprecatedInternalID(previous.GetDepreactedInternalID())
 
 	// Read+write will verify that origin format is accurate
 	repo, err := obj.GetRepositoryInfo()

@@ -81,7 +81,7 @@ type StorageBackend interface {
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
-	WriteEvent(context.Context, WriteEvent) (int64, error)
+	WriteEvent(context.Context, *WriteEvent) (int64, error)
 
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *ReadRequest) *BackendReadResponse
@@ -486,10 +486,11 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	var err error
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+	rsp.DeprecatedInternalId = event.Object.GetDepreactedInternalID()
 	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
@@ -537,7 +538,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.PreviousRV = latest.ResourceVersion
 
 	var err error
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
@@ -628,7 +629,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 			fmt.Sprintf("unable creating deletion marker, %v", err))
 	}
 
-	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
+	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, &event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
@@ -860,7 +861,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 			},
 		}, nil
 	}
-	rv, err := s.backend.WriteEvent(ctx, *event)
+	rv, err := s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		return &RestoreResponse{
 			Error: &ErrorResult{

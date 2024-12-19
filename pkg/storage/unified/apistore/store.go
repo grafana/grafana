@@ -175,6 +175,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 	meta.SetResourceVersionInt64(rsp.ResourceVersion)
+	meta.SetDeprecatedInternalID(rsp.DeprecatedInternalId)
 
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {

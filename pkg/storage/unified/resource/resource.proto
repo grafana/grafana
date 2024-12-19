@@ -148,6 +148,10 @@ message CreateResponse {
 
   // The updated resource version
   int64 resource_version = 2;
+
+  // Returns the deprecated internal_id of the created object to keep  unified & legacy in sync.
+  // Do not add new uses of it, as it will be removed in Grafana 13.
+  int64 deprecated_internal_id = 3;
 }
 
 message UpdateRequest {
