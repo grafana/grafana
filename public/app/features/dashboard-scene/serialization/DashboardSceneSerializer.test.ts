@@ -35,7 +35,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('DashboardSceneSerializer', () => {
   describe('v1 schema', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardSchemaV2 = false;
+      config.featureToggles.useV2DashboardsAPI = false;
     });
 
     it('Can detect no changes', () => {
@@ -330,7 +330,7 @@ describe('DashboardSceneSerializer', () => {
 
   describe('v2 schema', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardSchemaV2 = true;
+      config.featureToggles.useV2DashboardsAPI = true;
     });
 
     it('Can detect no changes', () => {

@@ -160,15 +160,8 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 }
 
-export function getDashboardSceneSerializer(
-  forceLegacy?: boolean
-): DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> {
-  // When we have end-to-end v2 API integration, this will be controlled by a feature toggle, no need for forceLegacy
-  if (forceLegacy) {
-    return new V1DashboardSerializer();
-  }
-
-  if (config.featureToggles.dashboardSchemaV2) {
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> {
+  if (config.featureToggles.useV2DashboardsAPI) {
     return new V2DashboardSerializer();
   }
 

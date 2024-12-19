@@ -645,10 +645,10 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with dashboardSchemaV2 feature toggle on.
+  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && config.featureToggles.dashboardSchemaV2,
+    condition: uid && config.featureToggles.useV2DashboardsAPI,
     render: () => {
       return (
         <ToolbarButton
