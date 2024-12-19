@@ -26,15 +26,13 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query history' });
+  const button = screen.getByRole('button', { name: 'Query history' });
   await userEvent.click(button);
   expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
 export const openQueryLibrary = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query library' });
+  const button = screen.getByRole('button', { name: 'Query library' });
   await userEvent.click(button);
   await waitFor(async () => {
     screen.getByRole('tab', {
