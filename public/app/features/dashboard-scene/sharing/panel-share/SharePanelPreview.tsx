@@ -36,7 +36,6 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
     handleSubmit,
     register,
     watch,
-
     formState: { errors, isValid },
   } = useForm<ImageSettingsForm>({
     mode: 'onChange',
