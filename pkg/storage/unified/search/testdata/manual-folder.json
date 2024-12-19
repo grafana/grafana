@@ -47,7 +47,7 @@
   "rows": [
     {
       "cells": [
-        "ns/g/folders/yyy",
+        "ns/folder.grafana.app/folders/yyy",
         "yyy (folder)",
         null,
         null,
@@ -56,7 +56,7 @@
       ],
       "object": {
         "kind": "folders",
-        "apiVersion": "g",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "yyy",
           "namespace": "ns",
@@ -66,7 +66,7 @@
     },
     {
       "cells": [
-        "ns/g/folders/zzz",
+        "ns/folder.grafana.app/folders/zzz",
         "zzz (folder)",
         null,
         null,
@@ -75,7 +75,7 @@
       ],
       "object": {
         "kind": "folders",
-        "apiVersion": "g",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "zzz",
           "namespace": "ns",

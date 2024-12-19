@@ -20,11 +20,14 @@ const loadingFrameName = 'Loading';
 const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
 
 type SearchHit = {
-  kind: string;
+  resource: string; // dashboards | folders
   name: string;
   title: string;
   location: string;
   folder: string;
+  tags: string[];
+
+  // calculated in the frontend
   url: string;
 }
 
@@ -122,8 +125,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (req.kind) {  // filter resource types
-      // resource "kind" is plural on the backend
-      uri += '&' + req.kind.map((kind) => `type=${encodeURIComponent(`${kind}s`)}`).join('&');
+      uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
     }
 
     if (req.tags) {
@@ -273,14 +275,18 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
   }
   const dashboardHits = hits.map((hit) => {
     let location = hit.folder;
-    if (hit.kind === 'dashboard' && isEmpty(location)) {
+    if (hit.resource === 'dashboards' && isEmpty(location)) {
       location = 'general';
     }
 
     return {
       ...hit,
+      url: toURL(hit.resource, hit.name),
+      tags: hit.tags || [],
+      folder: hit.folder || 'general',
       location,
-      name: hit.title,
+      name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
+      kind: hit.resource.substring(0, hit.resource.length - 1),  // dashboard "kind" is not plural
     };
   });
   const frame = toDataFrame(dashboardHits);
@@ -310,10 +316,17 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
       locationInfo[hit.name] = {
         name: hit.title,
         kind: 'folder',
-        url: hit.url,
+        url: toURL('folders', hit.name),
       }
     }
     return locationInfo;
   });
   return rsp;
+}
+
+function toURL(resource: string, name: string): string {
+  if (resource === 'folders') {
+    return `/dashboards/f/${name}`;
+  }
+  return `/d/${name}`;
 }
