@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -10,11 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataInput(ctx context.Context, startTime time.Time, endTime time.Time,
+func (e *cloudWatchExecutor) buildMetricDataInput(ctx context.Context,
 	queries []*models.CloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
 	metricDataInput := &cloudwatch.GetMetricDataInput{
-		StartTime: aws.Time(startTime),
-		EndTime:   aws.Time(endTime),
+		StartTime: aws.Time(queries[0].StartTime),
+		EndTime:   aws.Time(queries[0].EndTime),
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 

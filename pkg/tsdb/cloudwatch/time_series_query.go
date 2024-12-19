@@ -25,12 +25,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	if len(req.Queries) == 0 {
 		return nil, backend.DownstreamError(fmt.Errorf("request contains no queries"))
 	}
-	// startTime and endTime are always the same for all queries
-	startTime := req.Queries[0].TimeRange.From
-	endTime := req.Queries[0].TimeRange.To
-	if !startTime.Before(endTime) {
-		return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
-	}
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
@@ -38,29 +32,35 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		return resp, nil
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
-		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
-	if err != nil {
-		return nil, err
-	}
-
-	if len(requestQueries) == 0 {
-		return backend.NewQueryDataResponse(), nil
-	}
-
+	timeBatches := utils.BatchDataQueriesByTimeRange(req.Queries)
 	requestQueriesByRegion := make(map[string][]*models.CloudWatchQuery)
-	for _, query := range requestQueries {
-		if _, exist := requestQueriesByRegion[query.Region]; !exist {
-			requestQueriesByRegion[query.Region] = []*models.CloudWatchQuery{}
+	for i, timeBatch := range timeBatches {
+		startTime := timeBatch[0].TimeRange.From
+		endTime := timeBatch[0].TimeRange.To
+		if !startTime.Before(endTime) {
+			return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
 		}
-		requestQueriesByRegion[query.Region] = append(requestQueriesByRegion[query.Region], query)
+		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
+			features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
+		if err != nil {
+			return nil, err
+		}
+
+		for _, query := range requestQueries {
+			key := fmt.Sprintf("%d %s", i, query.Region)
+			if _, exist := requestQueriesByRegion[key]; !exist {
+				requestQueriesByRegion[key] = []*models.CloudWatchQuery{}
+			}
+			requestQueriesByRegion[key] = append(requestQueriesByRegion[key], query)
+		}
+	}
+	if len(requestQueriesByRegion) == 0 {
+		return backend.NewQueryDataResponse(), nil
 	}
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
-	for r, regionQueries := range requestQueriesByRegion {
-		region := r
-
+	for _, regionQueries := range requestQueriesByRegion {
 		batches := [][]*models.CloudWatchQuery{regionQueries}
 		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
 			batches = getMetricQueryBatches(regionQueries, e.logger.FromContext(ctx))
@@ -68,6 +68,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 
 		for _, batch := range batches {
 			requestQueries := batch
+			region := requestQueries[0].Region
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
@@ -87,7 +88,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				metricDataInput, err := e.buildMetricDataInput(ctx, startTime, endTime, requestQueries)
+				metricDataInput, err := e.buildMetricDataInput(ctx, requestQueries)
 				if err != nil {
 					return err
 				}
@@ -113,7 +114,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				res, err := e.parseResponse(ctx, startTime, endTime, mdo, requestQueries)
+				res, err := e.parseResponse(ctx, mdo, requestQueries)
 				if err != nil {
 					return err
 				}
@@ -130,7 +131,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	if err := eg.Wait(); err != nil {
 		dataResponse := backend.ErrorResponseWithErrorSource(fmt.Errorf("metric request error: %w", err))
 		resultChan <- &responseWrapper{
-			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
+			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueriesByRegion),
 			DataResponse: &dataResponse,
 		}
 	}
@@ -143,14 +144,16 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	return resp, nil
 }
 
-func getQueryRefIdFromErrorString(err string, queries []*models.CloudWatchQuery) string {
+func getQueryRefIdFromErrorString(err string, queriesByRegion map[string][]*models.CloudWatchQuery) string {
 	// error can be in format "Error in expression 'test': Invalid syntax"
 	// so we can find the query id or ref id between the quotations
 	erroredRefId := ""
 
-	for _, query := range queries {
-		if regexp.MustCompile(`'`+query.RefId+`':`).MatchString(err) || regexp.MustCompile(`'`+query.Id+`':`).MatchString(err) {
-			erroredRefId = query.RefId
+	for _, queries := range queriesByRegion {
+		for _, query := range queries {
+			if regexp.MustCompile(`'`+query.RefId+`':`).MatchString(err) || regexp.MustCompile(`'`+query.Id+`':`).MatchString(err) {
+				erroredRefId = query.RefId
+			}
 		}
 	}
 	// if errorRefId is empty, it means the error concerns all queries (error metric limit exceeded, for example)
