@@ -1,16 +1,17 @@
 import { isEmpty } from 'lodash';
 
-import {
-  DataFrame,
-  DataFrameView,
-  getDisplayProcessor,
-  SelectableValue,
-  toDataFrame,
-} from '@grafana/data';
+import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SearchResultMeta } from './types';
+import {
+  DashboardQueryResult,
+  GrafanaSearcher,
+  LocationInfo,
+  QueryResponse,
+  SearchQuery,
+  SearchResultMeta,
+} from './types';
 import { replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
@@ -29,7 +30,7 @@ type SearchHit = {
 
   // calculated in the frontend
   url: string;
-}
+};
 
 type SearchAPIResponse = {
   hits: SearchHit[];
@@ -38,9 +39,9 @@ type SearchAPIResponse = {
       terms?: Array<{
         term: string;
         count: number;
-      }>
-    }
-  }
+      }>;
+    };
+  };
 };
 
 const folderViewSort = 'name_sort';
@@ -118,20 +119,21 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
 
     let uri = searchURI;
-    const qry = req.query || "*";
+    const qry = req.query || '*';
     uri += `?query=${encodeURIComponent(qry)}`;
     if (req.limit) {
       uri += `&limit=${req.limit}`;
     }
 
-    if (req.kind) {  // filter resource types
+    if (req.kind) {
+      // filter resource types
       uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
     }
 
     if (req.tags) {
       uri += '&' + req.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }
-    
+
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
     const first = toDashboardResults(rsp.hits);
@@ -139,7 +141,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
-    const meta = first.meta?.custom || {} as SearchResultMeta;
+    const meta = first.meta?.custom || ({} as SearchResultMeta);
     const locationInfo = await this.locationInfo;
     const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
     if (hasMissing) {
@@ -268,7 +270,6 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-
 function toDashboardResults(hits: SearchHit[]): DataFrame {
   if (hits.length < 1) {
     return { fields: [], length: 0 };
@@ -286,7 +287,7 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
       folder: hit.folder || 'general',
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
-      kind: hit.resource.substring(0, hit.resource.length - 1),  // dashboard "kind" is not plural
+      kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
     };
   });
   const frame = toDataFrame(dashboardHits);
@@ -295,7 +296,7 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
       count: hits.length,
       max_score: 1,
     },
-  }
+  };
   for (const field of frame.fields) {
     field.display = getDisplayProcessor({ field, theme: config.theme2 });
   }
@@ -304,23 +305,25 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   const uri = `${searchURI}?type=folders`;
-  const rsp = getBackendSrv().get<SearchAPIResponse>(uri).then((rsp) => {
-    const locationInfo: Record<string, LocationInfo> = {
-      general: {
-        kind: 'folder',
-        name: 'Dashboards',
-        url: '/dashboards',
-      }, // share location info with everyone
-    };
-    for (const hit of rsp.hits) {
-      locationInfo[hit.name] = {
-        name: hit.title,
-        kind: 'folder',
-        url: toURL('folders', hit.name),
+  const rsp = getBackendSrv()
+    .get<SearchAPIResponse>(uri)
+    .then((rsp) => {
+      const locationInfo: Record<string, LocationInfo> = {
+        general: {
+          kind: 'folder',
+          name: 'Dashboards',
+          url: '/dashboards',
+        }, // share location info with everyone
+      };
+      for (const hit of rsp.hits) {
+        locationInfo[hit.name] = {
+          name: hit.title,
+          kind: 'folder',
+          url: toURL('folders', hit.name),
+        };
       }
-    }
-    return locationInfo;
-  });
+      return locationInfo;
+    });
   return rsp;
 }
 
