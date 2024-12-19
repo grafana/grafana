@@ -53,11 +53,17 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
+	// The resource type ( for federated indexes )
+	Kind string `json:"kind,omitempty"`
+
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
 
 	// The generic display name
 	Title string `json:"title,omitempty"`
+
+	// internal sort field for title ( don't set this directly )
+	TitleSort string `json:"title_sort,omitempty"`
 
 	// A generic description -- helpful in global search
 	Description string `json:"description,omitempty"`
@@ -99,6 +105,10 @@ type IndexableDocument struct {
 	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
 }
 
+func (m *IndexableDocument) Type() string {
+	return m.Key.Resource
+}
+
 type ResourceReference struct {
 	Relation string `json:"relation"`          // eg: depends-on
 	Group    string `json:"group,omitempty"`   // the api group
@@ -138,10 +148,26 @@ func (m ResourceReferences) Less(i, j int) bool {
 
 // Create a new indexable document based on a generic k8s resource
 func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
+	title := obj.FindTitle(key.Name)
+	if title == key.Name {
+		// TODO: something wrong with FindTitle
+		spec, err := obj.GetSpec()
+		if err == nil {
+			specValue, ok := spec.(map[string]any)
+			if ok {
+				specTitle, ok := specValue["title"].(string)
+				if ok {
+					title = specTitle
+				}
+			}
+		}
+	}
 	doc := &IndexableDocument{
 		Key:       key,
+		Kind:      key.Resource,
 		RV:        rv,
-		Title:     obj.FindTitle(key.Name), // We always want *something* to display
+		Title:     title, // We always want *something* to display
+		TitleSort: title,
 		Labels:    obj.GetLabels(),
 		Folder:    obj.GetFolder(),
 		CreatedBy: obj.GetCreatedBy(),
@@ -178,7 +204,6 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *Resour
 	}
 
 	doc := NewIndexableDocument(key, rv, obj)
-	doc.Title = obj.FindTitle(key.Name)
 	return doc, nil
 }
 
@@ -220,11 +245,13 @@ func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefini
 }
 
 const SEARCH_FIELD_ID = "_id"            // {namespace}/{group}/{resource}/{name}
+const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
 const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
 const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
+const SEARCH_FIELD_TITLE_SORT = "title_sort"
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one

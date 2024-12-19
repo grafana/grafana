@@ -18,7 +18,7 @@ export function getGrafanaSearcher(): GrafanaSearcher {
       return new FrontendSearcher(searcher);
     }
 
-    const useUnifiedStorageSearch = false; // TODO, frontend FF config.featureToggles.unifiedStorageSearch;
+    const useUnifiedStorageSearch = config.featureToggles.unifiedStorageSearchUI;
     searcher = useUnifiedStorageSearch ? new UnifiedSearcher(sqlSearcher) : sqlSearcher;
   }
   return searcher!;

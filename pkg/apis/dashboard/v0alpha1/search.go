@@ -57,8 +57,8 @@ type HitKind string
 
 // PluginType values
 const (
-	HitTypeDash   HitKind = "Dashboard"
-	HitTypeFolder HitKind = "Folder"
+	HitTypeDash   HitKind = "dashboard"
+	HitTypeFolder HitKind = "folder"
 )
 
 type DashboardHit struct {
@@ -69,15 +69,17 @@ type DashboardHit struct {
 	// The display nam
 	Title string `json:"title"`
 	// Filter tags
-	Tags []string `json:"tags,omitempty"`
+	Tags []string `json:"tags"`
 	// The UID/name for the folder
-	Folder string `json:"folder,omitempty"`
+	Folder string `json:"folder"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitempty"`
 	// Explain the score (if possible)
 	Explain *common.Unstructured `json:"explain,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
+	// The link to the resource
+	Url string `json:"url,omitempty"`
 }
 
 type FacetResult struct {
