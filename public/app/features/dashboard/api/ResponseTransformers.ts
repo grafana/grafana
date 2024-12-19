@@ -243,7 +243,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
             url: l.url || '',
             targetBlank: l.targetBlank,
           })) || [],
-        uid: p.id!.toString(), // TODO[schema v2]: handle undefined id?!!?!?
+        id: p.id!,
         data: {
           kind: 'QueryGroup',
           spec: {
