@@ -2176,6 +2176,16 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "history-container": {
+      "drawer-tittle": "History"
+    },
+    "history-wrapper": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "show-more": "Show more",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
     "home": {
       "title": "Home"
     },
