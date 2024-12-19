@@ -2974,7 +2974,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3016,7 +3016,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3216,7 +3216,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3747,7 +3747,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
     webpack-cli: "npm:5.1.4"
     whatwg-fetch: "npm:3.6.20"
@@ -3933,7 +3933,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
   peerDependencies:
     "@grafana/runtime": 10.4.0-pre
   languageName: unknown
@@ -4045,7 +4045,7 @@ __metadata:
     rc-drawer: "npm:7.2.0"
     rc-slider: "npm:11.1.7"
     rc-time-picker: "npm:^3.7.3"
-    rc-tooltip: "npm:6.3.1"
+    rc-tooltip: "npm:6.3.2"
     react: "npm:18.2.0"
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
@@ -4083,7 +4083,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     react: ^18.0.0
@@ -17840,7 +17840,7 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -25091,9 +25091,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:6.3.1":
-  version: 6.3.1
-  resolution: "rc-tooltip@npm:6.3.1"
+"rc-tooltip@npm:6.3.2":
+  version: 6.3.2
+  resolution: "rc-tooltip@npm:6.3.2"
   dependencies:
     "@babel/runtime": "npm:^7.11.2"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -25101,7 +25101,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/e871f4430ba3711edc002cb55cd189471ae353bc2262ce648d14148d2648efa0849af87e85a750d03b23532a56c506724a6756bef1d42dcd48d061ccdf0024d8
+  checksum: 10/5bc59020243759725417320a060ead8b54e863cef7e57a2b849eec7f4931d828507c473a328849894544a26168a3a4ce54049af738109ec7197f3d1363569e8e
   languageName: node
   linkType: hard
 
@@ -30145,12 +30145,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.1, uuid@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "uuid@npm:9.0.1"
+"uuid@npm:11.0.3, uuid@npm:^11.0.2":
+  version: 11.0.3
+  resolution: "uuid@npm:11.0.3"
   bin:
-    uuid: dist/bin/uuid
-  checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
+    uuid: dist/esm/bin/uuid
+  checksum: 10/251385563195709eb0697c74a834764eef28e1656d61174e35edbd129288acb4d95a43f4ce8a77b8c2fc128e2b55924296a0945f964b05b9173469d045625ff2
   languageName: node
   linkType: hard
 
@@ -30163,21 +30163,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^11.0.2":
-  version: 11.0.3
-  resolution: "uuid@npm:11.0.3"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/251385563195709eb0697c74a834764eef28e1656d61174e35edbd129288acb4d95a43f4ce8a77b8c2fc128e2b55924296a0945f964b05b9173469d045625ff2
-  languageName: node
-  linkType: hard
-
 "uuid@npm:^8.3.2":
   version: 8.3.2
   resolution: "uuid@npm:8.3.2"
   bin:
     uuid: dist/bin/uuid
   checksum: 10/9a5f7aa1d6f56dd1e8d5f2478f855f25c645e64e26e347a98e98d95781d5ed20062d6cca2eecb58ba7c84bc3910be95c0451ef4161906abaab44f9cb68ffbdd1
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "uuid@npm:9.0.1"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
   languageName: node
   linkType: hard
 
