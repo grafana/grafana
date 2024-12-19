@@ -108,15 +108,6 @@ func newInProcLegacyClient(server *legacyServer, tracer tracing.Tracer) (authzli
 		server,
 	)
 
-	channel.RegisterService(
-		grpchan.InterceptServer(
-			&authzextv1.AuthzExtentionService_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(noAuth),
-			grpcAuth.StreamServerInterceptor(noAuth),
-		),
-		server,
-	)
-
 	return authzlib.NewClient(
 		&authzlib.ClientConfig{},
 		authzlib.WithGrpcConnectionClientOption(channel),
