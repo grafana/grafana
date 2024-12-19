@@ -926,6 +926,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
+                wrapLogMessage={wrapLogMessage}
+                setWrapLogMessage={onChangeWrapLogMessage}
                 logsSortOrder={logsSortOrder}
                 range={props.range}
                 splitOpen={splitOpen}
