@@ -943,7 +943,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           )}
           {visualisationType === 'logs' && (
             <div
-              className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
+              className={styles.logRows}
               data-testid="logRows"
               ref={logsContainerRef}
             >
