@@ -30,10 +30,11 @@ func TestBleveBackend(t *testing.T) {
 	tmpdir, err := os.CreateTemp("", "bleve-test")
 	require.NoError(t, err)
 
-	backend := NewBleveBackend(BleveOptions{
+	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir.Name(),
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 	}, tracing.NewNoopTracerService())
+	require.NoError(t, err)
 
 	// AVOID NPE in test
 	resource.NewIndexMetrics(backend.opts.Root, backend)
