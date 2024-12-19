@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -100,7 +99,6 @@ func TestParseWebhooks(t *testing.T) {
 				},
 			},
 		},
-		logger: slog.Default().With("logger", "github-repository"),
 	}
 
 	for _, tt := range tests {
