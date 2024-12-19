@@ -70,7 +70,7 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
       </div>
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="expressions-container">
-          {expressions.map(({ model, refId, datasourceUid }, index) => {
+          {expressions.map(({ model, refId }, index) => {
             return (
               isExpressionQuery(model) && (
                 <ExpressionPreview
