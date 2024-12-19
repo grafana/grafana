@@ -13,6 +13,7 @@ interface PopoverMenuProps {
   y: number;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
+  onDisable: () => void;
   row: LogRowModel;
   close: () => void;
 }
@@ -22,6 +23,7 @@ export const PopoverMenu = ({
   y,
   onClickFilterString,
   onClickFilterOutString,
+  onDisable,
   selection,
   row,
   close,
@@ -49,43 +51,46 @@ export const PopoverMenu = ({
   }
 
   return (
-    <div className={styles.menu} style={{ top: y, left: x }}>
-      <Menu ref={containerRef}>
-        <Menu.Item
-          label="Copy selection"
-          onClick={() => {
-            copyText(selection, containerRef);
-            close();
-            track('copy', selection.length, row.datasourceType);
-          }}
-        />
-        {onClickFilterString && (
+    <>
+      <div className={styles.menu} style={{ top: y, left: x }}>
+        <Menu ref={containerRef}>
           <Menu.Item
-            label="Add as line contains filter"
+            label="Copy selection"
             onClick={() => {
-              onClickFilterString(selection, row.dataFrame.refId);
+              copyText(selection, containerRef);
               close();
-              track('line_contains', selection.length, row.datasourceType);
+              track('copy', selection.length, row.datasourceType);
             }}
           />
-        )}
-        {onClickFilterOutString && (
+          {onClickFilterString && (
+            <Menu.Item
+              label="Add as line contains filter"
+              onClick={() => {
+                onClickFilterString(selection, row.dataFrame.refId);
+                close();
+                track('line_contains', selection.length, row.datasourceType);
+              }}
+            />
+          )}
+          {onClickFilterOutString && (
+            <Menu.Item
+              label="Add as line does not contain filter"
+              onClick={() => {
+                onClickFilterOutString(selection, row.dataFrame.refId);
+                close();
+                track('line_does_not_contain', selection.length, row.datasourceType);
+              }}
+            />
+          )}
+          <Menu.Divider />
           <Menu.Item
-            label="Add as line does not contain filter"
-            onClick={() => {
-              onClickFilterOutString(selection, row.dataFrame.refId);
-              close();
-              track('line_does_not_contain', selection.length, row.datasourceType);
-            }}
-          />
-        )}
-        <Menu.Divider />
-        <Menu.Item
-            label="Disable menu"
-            onClick={() => {}}
-          />
-      </Menu>
-    </div>
+              label="Disable menu"
+              onClick={onDisable}
+            />
+        </Menu>
+      </div>
+      
+    </>
   );
 };
 
