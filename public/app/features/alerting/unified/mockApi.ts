@@ -264,9 +264,7 @@ const server = setupServer(...allHandlers);
  * Sets up beforeAll, afterAll and beforeEach handlers for mock server
  */
 export function setupMswServer() {
-  beforeAll(() => {
-    setBackendSrv(backendSrv);
-    server.listen({ onUnhandledRequest: 'error' });
+  beforeEach(() => {
     server.use(
       http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories', () => {
         return HttpResponse.json({
@@ -274,6 +272,10 @@ export function setupMswServer() {
         });
       })
     );
+  });
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    server.listen({ onUnhandledRequest: 'error' });
   });
 
   afterEach(() => {
