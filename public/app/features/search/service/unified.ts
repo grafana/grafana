@@ -280,6 +280,7 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
 
     return {
       ...hit,
+      uid: hit.name,
       url: toURL(hit.resource, hit.name),
       tags: hit.tags || [],
       folder: hit.folder || 'general',
