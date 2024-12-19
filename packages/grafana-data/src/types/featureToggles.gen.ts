@@ -228,7 +228,6 @@ export interface FeatureToggles {
   userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
-  dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
