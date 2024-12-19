@@ -1,36 +1,68 @@
-import {
-  DataFrame,
-  DataFrameJSON,
-  DataFrameView,
-  getDisplayProcessor,
-  SelectableValue,
-  toDataFrame,
-} from '@grafana/data';
+import { isEmpty } from 'lodash';
+
+import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from './types';
+import {
+  DashboardQueryResult,
+  GrafanaSearcher,
+  LocationInfo,
+  QueryResponse,
+  SearchQuery,
+  SearchResultMeta,
+} from './types';
 import { replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = 'api/unified-search';
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
+
+type SearchHit = {
+  resource: string; // dashboards | folders
+  name: string;
+  title: string;
+  location: string;
+  folder: string;
+  tags: string[];
+
+  // calculated in the frontend
+  url: string;
+};
 
 type SearchAPIResponse = {
-  frames: DataFrameJSON[];
+  hits: SearchHit[];
+  facets?: {
+    tags?: {
+      terms?: Array<{
+        term: string;
+        count: number;
+      }>;
+    };
+  };
 };
 
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  constructor(private fallbackSearcher: GrafanaSearcher) {}
+  locationInfo: Promise<Record<string, LocationInfo>>;
+
+  constructor(private fallbackSearcher: GrafanaSearcher) {
+    this.locationInfo = loadLocationInfo();
+  }
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+
+    if (query.kind?.length === 1 && query.kind[0] === 'dashboard') {
+      // TODO: this is browse mode, so skip the search
+      return noDataResponse();
+    }
+
     return this.doSearchQuery(query);
   }
 
@@ -47,41 +79,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
       });
     }
     // Nothing is starred
-    return {
-      view: new DataFrameView({ length: 0, fields: [] }),
-      totalRows: 0,
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-        return;
-      },
-      isItemLoaded: (index: number): boolean => {
-        return true;
-      },
-    };
+    return noDataResponse();
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const req = {
-      ...query,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tags' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
-    };
-
-    const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    const frames = resp.frames.map((f) => toDataFrame(f));
-
-    if (frames[0]?.name === loadingFrameName) {
-      return this.fallbackSearcher.tags(query);
-    }
-
-    for (const frame of frames) {
-      if (frame.name === 'tags') {
-        return getTermCountsFrom(frame);
-      }
-    }
-
-    return [];
+    const qry = query.query ?? '*';
+    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    return resp.facets?.tags?.terms || [];
   }
 
   // TODO: Implement this correctly
@@ -113,34 +118,37 @@ export class UnifiedSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
-    const frames = rsp.frames.map((f) => toDataFrame(f));
+    let uri = searchURI;
+    const qry = req.query || '*';
+    uri += `?query=${encodeURIComponent(qry)}`;
+    if (req.limit) {
+      uri += `&limit=${req.limit}`;
+    }
 
-    const first = frames.length ? toDataFrame(frames[0]) : { fields: [], length: 0 };
+    if (req.kind) {
+      // filter resource types
+      uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
+    }
 
+    if (req.tags) {
+      uri += '&' + req.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
+    }
+
+    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+
+    const first = toDashboardResults(rsp.hits);
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
     }
 
-    for (const field of first.fields) {
-      field.display = getDisplayProcessor({ field, theme: config.theme2 });
+    const meta = first.meta?.custom || ({} as SearchResultMeta);
+    const locationInfo = await this.locationInfo;
+    const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
+    if (hasMissing) {
+      // sync the location info ( folders )
+      this.locationInfo = loadLocationInfo();
     }
-
-    // Make sure the object exists
-    if (!first.meta?.custom) {
-      first.meta = {
-        ...first.meta,
-        custom: {
-          count: first.length,
-          max_score: 1,
-        },
-      };
-    }
-
-    const meta = first.meta.custom as SearchResultMeta;
-    if (!meta.locationInfo) {
-      meta.locationInfo = {}; // always set it so we can append
-    }
+    meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
     if (meta.sortBy?.length) {
@@ -155,6 +163,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
     const getNextPage = async () => {
+      // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
         const from = view.dataFrame.length;
         if (from >= meta.count) {
@@ -165,8 +174,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
           from,
           limit: nextPageSizes,
         });
-        const frame = toDataFrame(resp.frames[0]);
-
+        const frame = toDashboardResults(resp.hits);
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -220,16 +228,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
 const firstPageSize = 50;
 const nextPageSizes = 100;
 
-function getTermCountsFrom(frame: DataFrame): TermCount[] {
-  const tags = frame.fields[0].values;
-  const vals = frame.fields[1].values;
-  const counts: TermCount[] = [];
-  for (let i = 0; i < frame.length; i++) {
-    counts.push({ term: tags[i], count: vals[i] });
-  }
-  return counts;
-}
-
 // Enterprise only sort field values for dashboards
 const sortFields = [
   { name: 'views_total', display: 'Views total' },
@@ -244,6 +242,19 @@ const sortTimeFields = [
   { name: 'updated_at', display: 'Updated time' },
 ];
 
+function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
+  return {
+    view: new DataFrameView({ length: 0, fields: [] }),
+    totalRows: 0,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      return;
+    },
+    isItemLoaded: (index: number): boolean => {
+      return true;
+    },
+  };
+}
+
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
@@ -257,4 +268,68 @@ function getSortFieldDisplayName(name: string) {
     }
   }
   return name;
+}
+
+function toDashboardResults(hits: SearchHit[]): DataFrame {
+  if (hits.length < 1) {
+    return { fields: [], length: 0 };
+  }
+  const dashboardHits = hits.map((hit) => {
+    let location = hit.folder;
+    if (hit.resource === 'dashboards' && isEmpty(location)) {
+      location = 'general';
+    }
+
+    return {
+      ...hit,
+      url: toURL(hit.resource, hit.name),
+      tags: hit.tags || [],
+      folder: hit.folder || 'general',
+      location,
+      name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
+      kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+    };
+  });
+  const frame = toDataFrame(dashboardHits);
+  frame.meta = {
+    custom: {
+      count: hits.length,
+      max_score: 1,
+    },
+  };
+  for (const field of frame.fields) {
+    field.display = getDisplayProcessor({ field, theme: config.theme2 });
+  }
+  return frame;
+}
+
+async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
+  const uri = `${searchURI}?type=folders`;
+  const rsp = getBackendSrv()
+    .get<SearchAPIResponse>(uri)
+    .then((rsp) => {
+      const locationInfo: Record<string, LocationInfo> = {
+        general: {
+          kind: 'folder',
+          name: 'Dashboards',
+          url: '/dashboards',
+        }, // share location info with everyone
+      };
+      for (const hit of rsp.hits) {
+        locationInfo[hit.name] = {
+          name: hit.title,
+          kind: 'folder',
+          url: toURL('folders', hit.name),
+        };
+      }
+      return locationInfo;
+    });
+  return rsp;
+}
+
+function toURL(resource: string, name: string): string {
+  if (resource === 'folders') {
+    return `/dashboards/f/${name}`;
+  }
+  return `/d/${name}`;
 }

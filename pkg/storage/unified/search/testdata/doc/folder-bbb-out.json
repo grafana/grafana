@@ -5,8 +5,10 @@
     "resource": "dashboards",
     "name": "bbb"
   },
+  "kind": "dashboards",
   "rv": 1234,
-  "title": "bbb",
+  "title": "test-bbb",
+  "title_sort": "test-bbb",
   "created": 1730490142000,
   "createdBy": "user:1",
   "repository": {

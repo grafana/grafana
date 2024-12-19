@@ -243,6 +243,7 @@ export interface FeatureToggles {
   alertingNotificationsStepMode?: boolean;
   useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
+  unifiedStorageSearchUI?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
