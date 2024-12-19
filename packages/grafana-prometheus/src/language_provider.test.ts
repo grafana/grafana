@@ -120,7 +120,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         `/api/v1/labels`,
@@ -145,7 +151,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -174,7 +186,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         `/api/v1/labels`,
@@ -569,20 +587,20 @@ describe('Language completion provider', () => {
     it('should interpolate variable in series', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
       fetchLabelValues('$job');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
-        '/api/v1/label/interpolated-job/values',
-        [],
-        {
-          end: toPrometheusTimeString,
-          start: fromPrometheusTimeString,
-        },
-        undefined
+          '/api/v1/label/interpolated_job/values',
+          [],
+          {
+            end: toPrometheusTimeString,
+            start: fromPrometheusTimeString,
+          },
+          undefined
       );
     });
   });

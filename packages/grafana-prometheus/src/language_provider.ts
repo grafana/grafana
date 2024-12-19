@@ -29,6 +29,7 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -208,7 +209,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
-    const url = `/api/v1/label/${interpolatedName}/values`;
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName);
+    const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
   };
@@ -232,10 +234,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
-        searchParams.append('match[]', visualQuery.query.metric);
+        const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+        searchParams.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
         if (visualQuery.query.binaryQueries) {
           visualQuery.query.binaryQueries.forEach((bq) => {
-            searchParams.append('match[]', bq.query.metric);
+            searchParams.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
           });
         }
       }
@@ -297,7 +300,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       requestOptions = undefined;
     }
 
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, requestOptions);
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName ?? '');
+
+    const value = await this.request(
+      `/api/v1/label/${interpolatedAndEscapedName}/values`,
+      [],
+      urlParams,
+      requestOptions
+    );
     return value ?? [];
   };
 
