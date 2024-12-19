@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,13 +14,13 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 // This only works for github right now
 type webhookConnector struct {
 	client auth.BackgroundIdentityService
 	getter RepoGetter
-	logger *slog.Logger
 	jobs   jobs.JobQueue
 }
 
@@ -64,8 +63,8 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := s.logger.With("repo", name)
-		rsp, err := repo.Webhook(ctx, logger, r)
+		ctx, _ := slogctx.From(ctx, "logger", "webhook-connector", "repo", name)
+		rsp, err := repo.Webhook(ctx, r)
 		if err != nil {
 			responder.Error(err)
 			return

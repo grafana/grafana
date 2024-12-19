@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +14,6 @@ import (
 
 type syncConnector struct {
 	repoGetter RepoGetter
-	logger     *slog.Logger
 	jobs       jobs.JobQueue
 }
 

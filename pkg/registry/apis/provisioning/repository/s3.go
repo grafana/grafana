@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,7 +42,7 @@ func (r *s3Repository) Validate() (list field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *s3Repository) Test(ctx context.Context, logger *slog.Logger) (*provisioning.TestResults, error) {
+func (r *s3Repository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
@@ -53,7 +52,7 @@ func (r *s3Repository) Test(ctx context.Context, logger *slog.Logger) (*provisio
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *s3Repository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+func (r *s3Repository) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
@@ -62,7 +61,7 @@ func (r *s3Repository) Read(ctx context.Context, logger *slog.Logger, path strin
 	}
 }
 
-func (r *s3Repository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+func (r *s3Repository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read file tree resource is not yet implemented",
@@ -71,7 +70,7 @@ func (r *s3Repository) ReadTree(ctx context.Context, logger *slog.Logger, ref st
 	}
 }
 
-func (r *s3Repository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+func (r *s3Repository) Create(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -80,7 +79,7 @@ func (r *s3Repository) Create(ctx context.Context, logger *slog.Logger, path str
 	}
 }
 
-func (r *s3Repository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+func (r *s3Repository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -89,7 +88,7 @@ func (r *s3Repository) Update(ctx context.Context, logger *slog.Logger, path str
 	}
 }
 
-func (r *s3Repository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
+func (r *s3Repository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",
@@ -98,7 +97,7 @@ func (r *s3Repository) Delete(ctx context.Context, logger *slog.Logger, path str
 	}
 }
 
-func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path string, ref string) ([]provisioning.HistoryItem, error) {
+func (r *s3Repository) History(ctx context.Context, path string, ref string) ([]provisioning.HistoryItem, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "history is not yet implemented",
@@ -108,7 +107,7 @@ func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path st
 }
 
 // Webhook implements Repository.
-func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, req *http.Request) (*provisioning.WebhookResponse, error) {
+func (r *s3Repository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Code:    http.StatusNotImplemented,
@@ -117,14 +116,14 @@ func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, req *ht
 	}
 }
 
-func (r *s3Repository) OnCreate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+func (r *s3Repository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 
-func (r *s3Repository) OnUpdate(ctx context.Context, logger *slog.Logger) (*provisioning.RepositoryStatus, error) {
+func (r *s3Repository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
 	return nil, nil
 }
 
-func (r *s3Repository) OnDelete(ctx context.Context, logger *slog.Logger) error {
+func (r *s3Repository) OnDelete(ctx context.Context) error {
 	return nil
 }
