@@ -353,14 +353,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         // 1. Set deployment variable values
         // 2. update all other variables and state
         if (hasOtelResources && deploymentEnvironments.length > 0) {
-          // apply VAR FILTERS manually
-          // otherwise they will appear anywhere the query contains {} characters
+          // hide the original label filters
           filtersVariable.setState({
-            addFilterButtonText: 'Select metric attributes',
-            label: 'Select metric attribute',
+            hide: VariableHide.hideVariable,
           });
 
           // 1. set deployment variable values
+          // REMOVE THE DEPLOYMENT ENVIRONMENT LATER
           let varQuery = '';
           const options = deploymentEnvironments.map((env) => {
             varQuery += env + ',';
@@ -476,50 +475,53 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     // the datasourceHelper will give us access to the
     // Prometheus functions getTagKeys and getTagValues
     // because we can access the ds
-    const datasourceHelper = this.datasourceHelper;
-    // now we reset the override tagKeys and tagValues functions of the adhoc variable
-    otelResourcesVariable.setState({
-      getTagKeysProvider: async (
-        variable: AdHocFiltersVariable,
-        currentKey: string | null
-      ): Promise<{
-        replace?: boolean;
-        values: GetTagResponse | MetricFindValue[];
-      }> => {
-        // apply filters here
-        // we're passing the queries so we get the labels that adhere to the queries
-        // we're also passing the scopes so we get the labels that adhere to the scopes filters
-        let values = await datasourceHelper.getTagKeys({
-          filters,
-          scopes: getSelectedScopes(),
-          queries: this.getQueries(),
-        });
-        values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
-        return { replace: true, values };
-      },
-      getTagValuesProvider: async (
-        variable: AdHocFiltersVariable,
-        filter: AdHocVariableFilter
-      ): Promise<{
-        replace?: boolean;
-        values: GetTagResponse | MetricFindValue[];
-      }> => {
-        // apply filters here
-        // remove current selected filter if refiltering
-        filters = filters.filter((f) => f.key !== filter.key);
-        // we're passing the queries so we get the label values that adhere to the queries
-        // we're also passing the scopes so we get the label values that adhere to the scopes filters
-        const values = await datasourceHelper.getTagValues({
-          key: filter.key,
-          filters,
-          scopes: getSelectedScopes(),
-          queries: this.getQueries(),
-        });
-        return { replace: true, values };
-      },
-      // HIDE THE OTEL RESOURCE VARIABLE
-      // hide: VariableHide.hideLabel,
-    });
+    // REMOVE THE OTEL FILTERS VARIBLE PARTS
+    //  - we do not query it, we just fill it with values
+    //  - keep it hidden
+    // const datasourceHelper = this.datasourceHelper;
+    // // now we reset the override tagKeys and tagValues functions of the adhoc variable
+    // otelResourcesVariable.setState({
+    //   getTagKeysProvider: async (
+    //     variable: AdHocFiltersVariable,
+    //     currentKey: string | null
+    //   ): Promise<{
+    //     replace?: boolean;
+    //     values: GetTagResponse | MetricFindValue[];
+    //   }> => {
+    //     // apply filters here
+    //     // we're passing the queries so we get the labels that adhere to the queries
+    //     // we're also passing the scopes so we get the labels that adhere to the scopes filters
+    //     let values = await datasourceHelper.getTagKeys({
+    //       filters,
+    //       scopes: getSelectedScopes(),
+    //       queries: this.getQueries(),
+    //     });
+    //     values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
+    //     return { replace: true, values };
+    //   },
+    //   getTagValuesProvider: async (
+    //     variable: AdHocFiltersVariable,
+    //     filter: AdHocVariableFilter
+    //   ): Promise<{
+    //     replace?: boolean;
+    //     values: GetTagResponse | MetricFindValue[];
+    //   }> => {
+    //     // apply filters here
+    //     // remove current selected filter if refiltering
+    //     filters = filters.filter((f) => f.key !== filter.key);
+    //     // we're passing the queries so we get the label values that adhere to the queries
+    //     // we're also passing the scopes so we get the label values that adhere to the scopes filters
+    //     const values = await datasourceHelper.getTagValues({
+    //       key: filter.key,
+    //       filters,
+    //       scopes: getSelectedScopes(),
+    //       queries: this.getQueries(),
+    //     });
+    //     return { replace: true, values };
+    //   },
+    //   // HIDE THE OTEL RESOURCE VARIABLE
+    //   // hide: VariableHide.hideLabel,
+    // });
 
     // 2. Get the otel join query for state and variable
     // Because we need to define the deployment environment variable
