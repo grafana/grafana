@@ -1,4 +1,4 @@
-import { updateNavIndex } from 'app/core/actions';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
