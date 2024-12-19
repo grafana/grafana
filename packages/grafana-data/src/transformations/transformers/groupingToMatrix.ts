@@ -183,6 +183,8 @@ function getSpecialValue(specialValue: SpecialValue) {
       return true;
     case SpecialValue.Null:
       return null;
+    case SpecialValue.Zero:
+      return 0;
     case SpecialValue.Empty:
     default:
       return '';
