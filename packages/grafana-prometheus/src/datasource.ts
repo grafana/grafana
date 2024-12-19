@@ -71,6 +71,7 @@ import {
   RawRecordingRules,
   RuleQueryMapping,
 } from './types';
+import { wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
@@ -925,7 +926,16 @@ export class PrometheusDatasource
 
     // We need a first replace to evaluate variables before applying adhoc filters
     // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
-    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+    const expr = this.templateSrv.replace(
+      target.expr,
+      variables,
+      (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+        if (typeof value === 'string' && target.fromExploreMetrics && variable.name === 'filters') {
+          value = wrapUtf8Filters(value);
+        }
+        return this.interpolateQueryExpr(value, variable);
+      }
+    );
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable

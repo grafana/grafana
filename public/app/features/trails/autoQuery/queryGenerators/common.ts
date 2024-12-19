@@ -24,6 +24,7 @@ export function generateCommonAutoQueryInfo({
     refId: 'A',
     expr: mainQueryExpr,
     legendFormat: description,
+    fromExploreMetrics: true,
   };
 
   const main = {
@@ -48,6 +49,7 @@ export function generateCommonAutoQueryInfo({
         refId: 'A',
         expr: breakdownQueryExpr,
         legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
+        fromExploreMetrics: true,
       },
     ],
     vizBuilder: () => simpleGraphBuilder(breakdown),
