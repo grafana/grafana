@@ -306,7 +306,7 @@ function getPromRuleFingerprint(rule: Rule) {
 }
 
 // there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-export function hashQuery(query: string) {
+export function oldhashQuery(query: string) {
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
@@ -315,6 +315,34 @@ export function hashQuery(query: string) {
   query = query.replace(/\s|\n/g, '');
   // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
   return query.split('').sort().join('');
+}
+export function hashQuery(query: string): string {
+  // Step 1: Remove enclosing parentheses if present
+  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
+    query = query.slice(1, -1);
+  }
+
+  // Step 2: Remove whitespace and newlines
+  query = query.replace(/\s|\n/g, '');
+
+  // Step 3: Count character occurrences
+  const charCounts = new Map<number, number>(); // Use a map to support UTF-16 code units
+  for (let i = 0; i < query.length; i++) {
+    const code = query.codePointAt(i)!; // Get the UTF-16 code point
+    charCounts.set(code, (charCounts.get(code) || 0) + 1);
+    // Advance i for surrogate pairs
+    if (code > 0xffff) {
+      i++;
+    }
+  }
+
+  // Step 4: Sort and construct the result
+  const sortedQuery = Array.from(charCounts.entries())
+    .sort((a, b) => a[0] - b[0]) // Sort by code point
+    .map(([code, count]) => String.fromCodePoint(code).repeat(count)) // Expand the counts
+    .join('');
+
+  return sortedQuery;
 }
 
 export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
