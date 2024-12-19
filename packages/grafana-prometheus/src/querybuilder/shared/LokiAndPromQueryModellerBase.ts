@@ -1,7 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/LokiAndPromQueryModellerBase.ts
 import { Registry } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
+import { prometheusRegularEscape } from '../../datasource';
 import { PromVisualQueryOperationCategory } from '../types';
 
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
@@ -84,11 +86,22 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
       return '';
     }
 
-    const renderedLabels = labels
-      .map((filter) => `${utf8Support(filter.label)}${filter.op}"${filter.value}"`)
-      .join(', ');
+      let expr = '{';
+      for (const filter of labels) {
+          if (expr !== '{') {
+              expr += ', ';
+          }
 
-    return `{${renderedLabels}}`;
+          let labelValue = filter.value;
+          const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+
+          if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
+              labelValue = prometheusRegularEscape(labelValue);
+          }
+          expr += `${utf8Support(filter.label)}${filter.op}"${labelValue}"`;
+      }
+
+      return expr + `}`;
   }
 
   renderQuery(query: PromLokiVisualQuery, nested?: boolean) {

@@ -1526,6 +1526,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1599,6 +1607,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
 			HideFromDocs: true,
+		},
+		{
+			Name:         "prometheusSpecialCharsInLabelValues",
+			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:            "enableExtensionsAdminPage",
