@@ -140,7 +140,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logsRowLabels: css({
       label: 'logs-row__labels',
       whiteSpace: 'nowrap',
-      maxWidth: '22em',
+      maxWidth: '17vw',
 
       /* This is to make the labels vertical align */
       '> span': {
@@ -173,6 +173,8 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       margin: theme.spacing(2.5, 1, 2.5, 2),
       cursor: 'default',
+      height: '35vh',
+      overflowY: 'scroll',
     }),
     logDetailsTable: css({
       label: 'logs-row-details-table',
@@ -298,6 +300,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logDetails: css({
       label: 'logDetailsDefaultCursor',
       cursor: 'default',
+      overflowY: 'scroll',
 
       '&:hover': {
         backgroundColor: theme.colors.background.primary,

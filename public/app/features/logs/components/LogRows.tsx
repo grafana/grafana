@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo, CSSProperties } from 'react';
+import { VariableSizeList } from 'react-window';
 
 import {
   TimeZone,
@@ -17,12 +18,10 @@ import { DataQuery } from '@grafana/schema';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
-import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
-//Components
 import { LogRow } from './LogRow';
-import { PreviewLogRow } from './PreviewLogRow';
+import { restructureLog } from './LogRowMessage';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export interface Props {
@@ -98,15 +97,7 @@ export const LogRows = memo(
     permalinkedRowId,
     ...props
   }: Props) => {
-    const [previewSize, setPreviewSize] = useState(
-      /**
-       * If renderPreview is enabled, either half of the log rows or twice the screen size of log rows will be rendered.
-       * The biggest of those values will be used. Else, all rows are rendered.
-       */
-      renderPreview && !permalinkedRowId
-        ? Math.max(2 * Math.ceil(window.innerHeight / 20), Math.ceil(logRows.length / 3))
-        : Infinity
-    );
+    const [showLogDetails, setShowLogDetails] = useState<number[]>([]);
     const [popoverState, setPopoverState] = useState<PopoverStateType>({
       selection: '',
       selectedRow: null,
@@ -121,7 +112,6 @@ export const LogRows = memo(
       [dedupedRows]
     );
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    // Staged rendering
     const orderedRows = useMemo(
       () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
       [dedupedRows, logsSortOrder]
@@ -129,8 +119,6 @@ export const LogRows = memo(
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = useMemo(() => () => orderedRows, [orderedRows]);
     const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
-    const keyMaker = new UniqueKeyMaker();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     useEffect(() => {
       return () => {
@@ -140,21 +128,6 @@ export const LogRows = memo(
         }
       };
     }, []);
-
-    useEffect(() => {
-      if (!scrollElement) {
-        return;
-      }
-
-      function renderAll() {
-        setPreviewSize(Infinity);
-        scrollElement?.removeEventListener('scroll', renderAll);
-        scrollElement?.removeEventListener('wheel', renderAll);
-      }
-
-      scrollElement.addEventListener('scroll', renderAll);
-      scrollElement.addEventListener('wheel', renderAll);
-    }, [logRows.length, scrollElement]);
 
     /**
      * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
@@ -236,6 +209,91 @@ export const LogRows = memo(
       [handleDeselection, popoverMenuSupported]
     );
 
+    const onRowClick = useCallback(
+      (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => {
+        if (handleSelection(e, row)) {
+          // Event handled by the parent.
+          return;
+        }
+
+        if (!enableLogDetails) {
+          return;
+        }
+
+        const rowIndex = orderedRows.indexOf(row);
+        if (rowIndex === undefined) {
+          return;
+        }
+        const newShowLogDetails: number[] = [...showLogDetails];
+        if (showLogDetails.indexOf(rowIndex) >= 0) {
+          newShowLogDetails.splice(showLogDetails.indexOf(rowIndex), 1);
+        } else {
+          newShowLogDetails.push(rowIndex);
+        }
+
+        setShowLogDetails(newShowLogDetails);
+      },
+      [enableLogDetails, handleSelection, orderedRows, showLogDetails]
+    );
+
+    const isRowExpanded = useCallback(
+      (row: LogRowModel) => {
+        const rowIndex = orderedRows.indexOf(row) ?? -1;
+        return showLogDetails.indexOf(rowIndex) >= 0;
+      },
+      [orderedRows, showLogDetails]
+    );
+
+    const Row = useCallback(
+      ({ index, style }: { index: number; style: CSSProperties }) => {
+        return (
+          <LogRow
+            style={style}
+            getRows={getRows}
+            row={orderedRows[index]}
+            showDuplicates={showDuplicates}
+            logsSortOrder={logsSortOrder}
+            onOpenContext={openContext}
+            styles={styles}
+            onPermalinkClick={props.onPermalinkClick}
+            scrollIntoView={props.scrollIntoView}
+            permalinkedRowId={permalinkedRowId}
+            onPinLine={props.onPinLine}
+            onUnpinLine={props.onUnpinLine}
+            pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+            pinned={
+              props.pinnedRowId === orderedRows[index].uid ||
+              pinnedLogs?.some((logId) => logId === orderedRows[index].rowId)
+            }
+            isFilterLabelActive={props.isFilterLabelActive}
+            handleTextSelection={popoverMenuSupported() ? handleSelection : undefined}
+            showDetails={isRowExpanded(orderedRows[index])}
+            onRowClick={onRowClick}
+            enableLogDetails={enableLogDetails}
+            {...props}
+          />
+        );
+      },
+      [
+        enableLogDetails,
+        getRows,
+        handleSelection,
+        isRowExpanded,
+        logsSortOrder,
+        onRowClick,
+        openContext,
+        orderedRows,
+        permalinkedRowId,
+        pinnedLogs,
+        popoverMenuSupported,
+        props,
+        showDuplicates,
+        styles,
+      ]
+    );
+
+    const height = window.innerHeight * 0.75;
+
     return (
       <div className={styles.logRows} ref={logRowsRef}>
         {popoverState.selection && popoverState.selectedRow && (
@@ -250,44 +308,80 @@ export const LogRows = memo(
         )}
         <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <tbody>
-            {orderedRows.map((row, index) =>
-              index < previewSize ? (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={openContext}
-                  styles={styles}
-                  onPermalinkClick={props.onPermalinkClick}
-                  scrollIntoView={props.scrollIntoView}
-                  permalinkedRowId={permalinkedRowId}
-                  onPinLine={props.onPinLine}
-                  onUnpinLine={props.onUnpinLine}
-                  pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
-                  pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                  isFilterLabelActive={props.isFilterLabelActive}
-                  handleTextSelection={handleSelection}
-                  enableLogDetails={enableLogDetails}
-                  {...props}
-                />
-              ) : (
-                <PreviewLogRow
-                  key={`preview_${keyMaker.getKey(row.uid)}`}
-                  enableLogDetails={false}
-                  getRows={getRows}
-                  onOpenContext={openContext}
-                  styles={styles}
-                  showDuplicates={showDuplicates}
-                  {...props}
-                  row={row}
-                />
-              )
-            )}
+            <VariableSizeList
+              height={height}
+              itemCount={orderedRows?.length || 0}
+              itemSize={estimateRowHeight.bind(
+                null,
+                orderedRows,
+                isRowExpanded,
+                props.prettifyLogMessage,
+                props.wrapLogMessage,
+                props.showTime,
+                props.showLabels
+              )}
+              itemKey={(index: number) => index}
+              width={'100%'}
+              layout="vertical"
+            >
+              {Row}
+            </VariableSizeList>
           </tbody>
         </table>
       </div>
     );
   }
 );
+
+/**
+ * Heuristic function to estimate row size. Needs to be updated when log row styles changes.
+ * It does not need to be exact, just know the amount of lines that the message will use if the
+ * message is wrapped.
+ */
+const estimateRowHeight = (
+  rows: LogRowModel[],
+  isRowExpanded: (r: LogRowModel) => boolean,
+  prettifyLogMessage: boolean,
+  wrapLogMessage: boolean,
+  showTime: boolean,
+  showLabels: boolean,
+  index: number
+) => {
+  const rowHeight = 20.14;
+  const lineHeight = 18.5;
+  const detailsHeight = isRowExpanded(rows[index]) ? window.innerHeight * 0.35 + 41 : 0;
+  const line = restructureLog(rows[index].raw, prettifyLogMessage, wrapLogMessage, isRowExpanded(rows[index]));
+
+  if (prettifyLogMessage) {
+    try {
+      const parsed: Record<string, string> = JSON.parse(line);
+      let jsonHeight = 2 * rowHeight; // {}
+      for (let key in parsed) {
+        jsonHeight +=
+          estimateMessageLines(`  "${key}": "${parsed[key]}"`, wrapLogMessage, showTime, showLabels) * lineHeight;
+      }
+      return jsonHeight + detailsHeight;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  if (!wrapLogMessage) {
+    return rowHeight + detailsHeight;
+  }
+  return estimateMessageLines(line, wrapLogMessage, showTime, showLabels) * rowHeight + detailsHeight;
+};
+
+const estimateMessageLines = (line: string, wrapLogMessage: boolean, showTime: boolean, showLabels: boolean) => {
+  if (!wrapLogMessage) {
+    return 1;
+  }
+  let margins = 48 + 65;
+  if (showTime) {
+    margins += 177;
+  }
+  if (showLabels) {
+    margins += Math.round(window.innerWidth * 0.17);
+  }
+  const letter = 8.4;
+  return Math.ceil((line.length * letter) / (window.innerWidth - margins));
+};
