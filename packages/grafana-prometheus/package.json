@@ -57,7 +57,7 @@
     "eventemitter3": "5.0.1",
     "lodash": "4.17.21",
     "lru-cache": "11.0.2",
-    "marked": "12.0.2",
+    "marked": "15.0.4",
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
     "moment-timezone": "0.5.46",
