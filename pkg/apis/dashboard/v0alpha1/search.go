@@ -51,19 +51,9 @@ type SortableField struct {
 	Type    string `json:"type,omitempty"` // string or number
 }
 
-// Dashboard or folder hit
-// +enum
-type HitKind string
-
-// PluginType values
-const (
-	HitTypeDash   HitKind = "dashboard"
-	HitTypeFolder HitKind = "folder"
-)
-
 type DashboardHit struct {
 	// Dashboard or folder
-	Kind HitKind `json:"kind"`
+	Resource string `json:"resource"` // dashboards | folders
 	// The k8s "name" (eg, grafana UID)
 	Name string `json:"name"`
 	// The display nam
@@ -78,8 +68,6 @@ type DashboardHit struct {
 	Explain *common.Unstructured `json:"explain,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
-	// The link to the resource
-	Url string `json:"url,omitempty"`
 }
 
 type FacetResult struct {

@@ -2,13 +2,13 @@ package dashboard
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -18,7 +18,6 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -28,15 +27,13 @@ type SearchHandler struct {
 	log    log.Logger
 	client resource.ResourceIndexClient
 	tracer trace.Tracer
-	cfg    *setting.Cfg
 }
 
-func NewSearchHandler(cfg *setting.Cfg, client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
 	return &SearchHandler{
 		client: client,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
-		cfg:    cfg,
 	}
 }
 
@@ -253,14 +250,39 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	if queryParams.Has("type") {
-		resourceTypes := []string{}
-		resourceTypes = append(resourceTypes, queryParams["type"]...)
-		searchRequest.Options.Fields = []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_KIND,
-			Operator: "in",
-			Values:   resourceTypes,
+	// Currently a search query is across folders and dashboards
+	if searchRequest.Query != "" {
+		searchRequest.Federated = []*resource.ResourceKey{{
+			Namespace: searchRequest.Options.Key.Namespace,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
 		}}
+	}
+
+	// NOTE: only folders || dashboards is supported
+	if queryParams.Has("type") {
+		types := queryParams["type"]
+		switch len(types) {
+		case 0:
+			err = apierrors.NewBadRequest("missing type values")
+		case 1:
+			searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+		case 2:
+			var federate *resource.ResourceKey
+			searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
+			if err != nil {
+				federate, err = asResourceKey(user.GetNamespace(), types[0])
+				if err != nil {
+					searchRequest.Federated = []*resource.ResourceKey{federate}
+				}
+			}
+		default:
+			err = apierrors.NewBadRequest("too many type requests")
+		}
+		if err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
 	}
 
 	// Add sorting
@@ -273,15 +295,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, s)
 		}
-	}
-
-	// Also query folders
-	if searchRequest.Query != "" {
-		searchRequest.Federated = []*resource.ResourceKey{{
-			Namespace: searchRequest.Options.Key.Namespace,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}}
 	}
 
 	// The facet term fields
@@ -320,14 +333,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		MaxScore:  result.MaxScore,
 		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
-	appSubUrl := s.cfg.AppSubURL
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
-			Kind:   dashboardv0alpha1.HitKind(row.Key.Resource[:len(row.Key.Resource)-1]),
-			Name:   row.Key.Name,
-			Title:  string(row.Cells[0]),
-			Folder: string(row.Cells[1]),
-			Url:    dashboardPageItemLink(row, appSubUrl),
+			Resource: row.Key.Resource, // folders | dashboards
+			Name:     row.Key.Name,     // The Grafana UID
+			Title:    string(row.Cells[0]),
+			Folder:   string(row.Cells[1]),
 		}
 		if row.Cells[2] != nil {
 			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
@@ -362,12 +373,32 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	_ = json.NewEncoder(w).Encode(obj)
 }
 
-func dashboardPageItemLink(row *resource.ResourceTableRow, subURL string) string {
-	folder := string(row.Cells[1])
-	name := row.Key.Name
-	namespace := row.Key.Namespace
-	if folder == "" {
-		return fmt.Sprintf("%s/d/%s/%s", subURL, name, namespace)
+// Given a namespace and type convert it to a search key
+func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
+	if ns == "" {
+		return nil, apierrors.NewBadRequest("missing namespace")
 	}
-	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, name, namespace)
+	switch k {
+	case "folders", "folder":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+		}, nil
+	case "dashboards", "dashboard":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     dashboardv0alpha1.GROUP,
+			Resource:  "dashboards",
+		}, nil
+
+	// NOT really supported in the dashboard search UI, but useful for manual testing
+	case "playlist", "playlists":
+		return &resource.ResourceKey{
+			Namespace: ns,
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+		}, nil
+	}
+	return nil, apierrors.NewBadRequest("unknown resource type")
 }

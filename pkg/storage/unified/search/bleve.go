@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
@@ -45,15 +47,24 @@ type bleveBackend struct {
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) *bleveBackend {
-	b := &bleveBackend{
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) (*bleveBackend, error) {
+	if opts.Root == "" {
+		return nil, fmt.Errorf("bleve backend missing root folder configuration")
+	}
+	root, err := os.Stat(opts.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error opening bleve root folder %w", err)
+	}
+	if !root.IsDir() {
+		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
+	}
+
+	return &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
-	}
-
-	return b
+	}, nil
 }
 
 // This will return nil if the key does not exist
@@ -94,7 +105,11 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
-		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
+		// TODO? cleanup old indexes!
+		dir := filepath.Join(b.opts.Root, key.Namespace,
+			fmt.Sprintf("%s.%s", key.Resource, key.Group),
+			time.Now().Format("2006-01-02_15-04-05"), // timestamp folder
+		)
 		index, err = bleve.New(dir, mapper)
 
 		// TODO, check last RV so we can see if the numbers have changed
@@ -170,7 +185,6 @@ type bleveIndex struct {
 
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
-	v.Kind = v.Key.Resource
 	// remove references (for now!)
 	v.References = nil
 	if b.batch != nil {
@@ -330,7 +344,7 @@ func (b *bleveIndex) getIndex(
 				return nil, fmt.Errorf("federated indexes must be the same type")
 			}
 			if typedindex.verifyKey(req.Federated[i]) != nil {
-				return nil, fmt.Errorf("federated index keys do not match")
+				return nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
 			}
 			all = append(all, typedindex.index)
 		}
