@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,8 +19,8 @@ const (
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"dashboards", "dashboard", "Dashboard",
-	func() runtime.Object { return &Dashboard{} },
-	func() runtime.Object { return &DashboardList{} },
+	func() runtime.Object { return &dashboard.Dashboard{} },
+	func() runtime.Object { return &dashboard.DashboardList{} },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -27,7 +28,7 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			dash, ok := obj.(*Dashboard)
+			dash, ok := obj.(*dashboard.Dashboard)
 			if ok {
 				if dash != nil {
 					return []interface{}{
@@ -44,8 +45,8 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"librarypanels", "librarypanel", "LibraryPanel",
-	func() runtime.Object { return &LibraryPanel{} },
-	func() runtime.Object { return &LibraryPanelList{} },
+	func() runtime.Object { return &dashboard.LibraryPanel{} },
+	func() runtime.Object { return &dashboard.LibraryPanelList{} },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -54,7 +55,7 @@ var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			dash, ok := obj.(*LibraryPanel)
+			dash, ok := obj.(*dashboard.LibraryPanel)
 			if ok {
 				if dash != nil {
 					return []interface{}{
