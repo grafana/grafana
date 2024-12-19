@@ -271,8 +271,10 @@ func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, o
 }
 
 func (rs *RenderingService) render(ctx context.Context, renderType RenderType, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
+	logger := rs.log.FromContext(ctx)
+
 	if !rs.IsAvailable(ctx) {
-		rs.log.Warn("Could not render image, no image renderer found/installed. " +
+		logger.Warn("Could not render image, no image renderer found/installed. " +
 			"For image rendering support please install the grafana-image-renderer plugin. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		if opts.ErrorRenderUnavailable {
@@ -282,7 +284,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	}
 
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
-		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
+		logger.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
 		}
@@ -312,7 +314,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}
 	}
 
-	rs.log.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
+	logger.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
@@ -325,10 +327,10 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 
 	res, err := rs.renderAction(ctx, renderType, renderKey, opts)
 	if err != nil {
-		rs.log.Error("Failed to render image", "path", opts.Path, "error", err)
+		logger.Error("Failed to render image", "path", opts.Path, "error", err)
 		return nil, err
 	}
-	rs.log.Debug("Successfully rendered image", "path", opts.Path)
+	logger.Debug("Successfully rendered image", "path", opts.Path)
 
 	return res, nil
 }
@@ -367,15 +369,17 @@ func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGReq
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
-		return nil, ErrConcurrentLimitReached
-	}
+	logger := rs.log.FromContext(ctx)
 
 	if !rs.IsAvailable(ctx) {
 		return nil, ErrRenderUnavailable
 	}
 
-	rs.log.Info("Rendering", "path", opts.Path)
+	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+		return nil, ErrConcurrentLimitReached
+	}
+
+	logger.Info("Rendering", "path", opts.Path)
 	renderKey, err := renderKeyProvider.get(ctx, opts.AuthOpts)
 	if err != nil {
 		return nil, err
