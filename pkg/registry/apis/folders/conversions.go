@@ -92,13 +92,20 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		createdTime = (*created).UTC()
 	}
 
+	url := getURL(meta, title)
+
+	// RootFolder does not have URL
+	if uid == folder.RootFolder.UID {
+		url = ""
+	}
+
 	f := &folder.Folder{
 		UID:       uid,
 		Title:     title,
 		ID:        id,
 		ParentUID: meta.GetFolder(),
 		// #TODO add created by field if necessary
-		URL: getURL(meta, title),
+		URL: url,
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
