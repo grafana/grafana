@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
