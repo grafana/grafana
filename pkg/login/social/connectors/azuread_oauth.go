@@ -352,8 +352,12 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 }
 
 func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.ClientAuthentication != social.ManagedIdentity {
+		return nil
+	}
 	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
 		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
+
 			return nil
 		}
 	}
