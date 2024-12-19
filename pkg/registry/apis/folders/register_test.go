@@ -577,3 +577,206 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		})
 	}
 }
+
+func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *v0alpha1.Folder
+		expected *v0alpha1.Folder
+		wantErr  bool
+	}{
+		{
+			name: "should trim a title",
+			input: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{
+					Title: "  foo  ",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			expected: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{
+					Title: "foo",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+		},
+		{
+			name: "should return error if title doesnt exist",
+			input: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if spec doesnt exist",
+			input: &v0alpha1.Folder{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	s := (grafanarest.Storage)(nil)
+	m := &mock.Mock{}
+	us := storageMock{m, s}
+	sm := searcherMock{Mock: m}
+	b := &FolderAPIBuilder{
+		gv:            resourceInfo.GroupVersion(),
+		features:      nil,
+		namespacer:    func(_ int64) string { return "123" },
+		folderSvc:     foldertest.NewFakeService(),
+		storage:       us,
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
+		searcher:      sm,
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				tt.input,
+				nil,
+				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				"stacks-123",
+				tt.input.Name,
+				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"CREATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			), nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
+	existingObj := &v0alpha1.Folder{
+		Spec: v0alpha1.Spec{
+			Title: "some title",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Folder",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "valid-name",
+		},
+	}
+	tests := []struct {
+		name     string
+		input    *v0alpha1.Folder
+		expected *v0alpha1.Folder
+		wantErr  bool
+	}{
+		{
+			name: "should trim a title",
+			input: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{
+					Title: "  foo  ",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			expected: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{
+					Title: "foo",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+		},
+		{
+			name: "should return error if title doesnt exist",
+			input: &v0alpha1.Folder{
+				Spec: v0alpha1.Spec{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if spec doesnt exist",
+			input: &v0alpha1.Folder{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	s := (grafanarest.Storage)(nil)
+	m := &mock.Mock{}
+	us := storageMock{m, s}
+	sm := searcherMock{Mock: m}
+	b := &FolderAPIBuilder{
+		gv:            resourceInfo.GroupVersion(),
+		features:      nil,
+		namespacer:    func(_ int64) string { return "123" },
+		folderSvc:     foldertest.NewFakeService(),
+		storage:       us,
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
+		searcher:      sm,
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				tt.input,
+				existingObj,
+				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				"stacks-123",
+				tt.input.Name,
+				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"UPDATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			), nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

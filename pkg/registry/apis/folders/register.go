@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -236,6 +237,20 @@ var folderValidationRules = struct {
 }{
 	maxDepth:     5,
 	invalidNames: []string{"general"},
+}
+
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := a.GetOperation()
+	if verb == admission.Create || verb == admission.Update {
+		obj := a.GetObject()
+		f, ok := obj.(*v0alpha1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not v0alpha1.Folder")
+		}
+		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		return nil
+	}
+	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
