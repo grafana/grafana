@@ -881,6 +881,7 @@ export const versionedComponents = {
   Select: {
     menu: {
       '11.4.0': 'data-testid Select menu',
+      [MIN_GRAFANA_VERSION]: 'Select options menu',
     },
     option: {
       '11.1.0': 'data-testid Select option',
