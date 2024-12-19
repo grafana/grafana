@@ -288,7 +288,7 @@ describe('buildVisualQueryFromString', () => {
       ],
     };
     expect(buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) by (app, version)')).toEqual(
-        noErrors(visQuery)
+      noErrors(visQuery)
     );
     expect(buildVisualQueryFromString('sum by (app, version)(metric_name{instance="internal:3000"})')).toEqual(
       noErrors(visQuery)
