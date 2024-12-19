@@ -860,12 +860,25 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - apk add --update make bash go
+  - make devenv sources=prometheus
+  depends_on:
+  - clone
+  image: docker:27-cli
+  name: setup-prometheus-devenv
+  volumes:
+  - name: prometheus-data
+    path: /var/lib/prometheus
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
   - grafana-server
   - build-test-plugins
+  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -2282,12 +2295,25 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - apk add --update make bash go
+  - make devenv sources=prometheus
+  depends_on:
+  - clone
+  image: docker:27-cli
+  name: setup-prometheus-devenv
+  volumes:
+  - name: prometheus-data
+    path: /var/lib/prometheus
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
   depends_on:
   - grafana-server
   - build-test-plugins
+  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -5579,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
+hmac: 71f8579c4d999fedf9d1d87ca90e43ce73762d541bdafde3bc052ea988fa00ee
 
 ...

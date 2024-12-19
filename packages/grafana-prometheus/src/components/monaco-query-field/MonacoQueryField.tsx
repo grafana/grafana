@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -117,6 +117,7 @@ const MonacoQueryField = (props: Props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+  const [currentEditorValue, setCurrentEditorValue] = useState(initialValue);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -128,6 +129,7 @@ const MonacoQueryField = (props: Props) => {
   return (
     <div
       data-testid={selectors.components.QueryField.container}
+      data-queryexpr={currentEditorValue}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
@@ -211,6 +213,7 @@ const MonacoQueryField = (props: Props) => {
           const updateCurrentEditorValue = debounce(() => {
             const editorValue = editor.getValue();
             onChangeRef.current(editorValue);
+            setCurrentEditorValue(editorValue);
           }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
 
           editor.getModel()?.onDidChangeContent(() => {
