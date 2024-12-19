@@ -345,7 +345,7 @@
     "lru-cache": "11.0.2",
     "lru-memoize": "^1.1.0",
     "lucene": "^2.1.1",
-    "marked": "12.0.2",
+    "marked": "15.0.4",
     "memoize-one": "6.0.0",
     "micro-memoize": "^4.1.2",
     "ml-regression-polynomial": "^3.0.0",
