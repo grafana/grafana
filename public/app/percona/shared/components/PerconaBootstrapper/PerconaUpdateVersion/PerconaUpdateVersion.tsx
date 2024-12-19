@@ -67,8 +67,8 @@ const PerconaUpdateVersion = () => {
               {Messages.fullReleaseNotes}
             </a>
           </p>
-          <h5>{Messages.howToUpdate}</h5>
-          <p>{Messages.howToUpdateDescription}</p>
+          <h5 className={styles.readyForUpdate}>{Messages.readyForAnUpdate}</h5>
+          <span>{Messages.updateDescription}</span>
           <div className={styles.updateButtons}>
             <Button type="button" variant="secondary" onClick={snoozeUpdate} className={styles.snoozeButton}>
               {Messages.snooze}
@@ -97,8 +97,8 @@ const PerconaUpdateVersion = () => {
               </li>
             ))}
           </ul>
-          <h5 className={styles.howToUpdate}>{Messages.howToUpdate}</h5>
-          <p>{Messages.howToUpdateDescription}</p>
+          <h5 className={styles.readyForUpdate}>{Messages.readyForAnUpdate}</h5>
+          <span>{Messages.updateDescription}</span>
           <div className={styles.updateButtons}>
             <Button type="button" variant="secondary" onClick={snoozeUpdate} className={styles.snoozeButton}>
               {Messages.snooze}

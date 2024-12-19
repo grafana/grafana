@@ -40,4 +40,7 @@ export const getStyles = ({ v1: { spacing, colors, typography } }: GrafanaTheme2
       color: ${colors.textBlue};
     },
   `,
+  readyForUpdate: css`
+    margin-top: 10px;
+  `,
 });

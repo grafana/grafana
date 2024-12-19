@@ -23,13 +23,15 @@ export const responseToPayload = (response: CheckUpdatesResponse): CheckUpdatesP
 });
 
 export const mapUpdatesChangeLogs = (response: CheckUpdatesChangeLogsResponse): CheckUpdatesChangeLogs => {
-  const responseMapping = response.updates.map((item) => ({
-    version: item.version,
-    tag: item.tag,
-    timestamp: item.timestamp,
-    releaseNotesUrl: item.release_notes_url,
-    releaseNotesText: item.release_notes_text,
-  }));
+  const responseMapping = response.updates
+    .map((item) => ({
+      version: item.version,
+      tag: item.tag,
+      timestamp: item.timestamp,
+      releaseNotesUrl: item.release_notes_url,
+      releaseNotesText: item.release_notes_text,
+    }))
+    .sort((firstItem, nextItem) => nextItem.version.localeCompare(firstItem.version, undefined, { numeric: true }));
   return {
     lastCheck: response.last_check,
     updates: responseMapping,
