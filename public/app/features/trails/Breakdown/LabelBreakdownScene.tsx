@@ -466,6 +466,7 @@ export function buildAllLayout(
               refId: `A-${option.label}`,
               expr,
               legendFormat: `{{${option.label}}}`,
+              fromExploreMetrics: true,
             },
           ],
         })
