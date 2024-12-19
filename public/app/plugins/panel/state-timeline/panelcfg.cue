@@ -33,10 +33,14 @@ composableKinds: PanelCfg: {
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the row height
 					rowHeight: float & <=1 | *0.9
+					//Controls the y axis width
+					yAxisWidth: number
 					//Merge equal consecutive values
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
+					//Controls name alignment
+					alignName?: ui.TimelineNameAlignment & (*"right" | _)
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")
