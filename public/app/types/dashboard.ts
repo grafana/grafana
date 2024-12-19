@@ -69,6 +69,7 @@ export interface DashboardMeta {
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+  version?: number;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
