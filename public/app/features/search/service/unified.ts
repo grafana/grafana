@@ -111,29 +111,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-    query = await replaceCurrentFolderQuery(query);
-    const req = {
-      ...query,
-      query: query.query ?? '*',
-      limit: query.limit ?? firstPageSize,
-    };
-
-    let uri = searchURI;
-    const qry = req.query || '*';
-    uri += `?query=${encodeURIComponent(qry)}`;
-    if (req.limit) {
-      uri += `&limit=${req.limit}`;
-    }
-
-    if (req.kind) {
-      // filter resource types
-      uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
-    }
-
-    if (req.tags) {
-      uri += '&' + req.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
-    }
-
+    const uri = await this.newRequest(query);
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
     const first = toDashboardResults(rsp.hits);
@@ -169,11 +147,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
         if (from >= meta.count) {
           return;
         }
-        const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, {
-          ...(req ?? {}),
-          from,
-          limit: nextPageSizes,
-        });
+        const nextPageUrl = `${searchURI}&from=${from}&limit=${nextPageSizes}`;
+        const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
         const frame = toDashboardResults(resp.hits);
         if (!frame) {
           console.log('no results', frame);
@@ -218,6 +193,30 @@ export class UnifiedSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  private async newRequest(query: SearchQuery) {
+    query = await replaceCurrentFolderQuery(query);
+
+    let uri = searchURI;
+    uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
+    uri += `&limit=${query.limit ?? firstPageSize}`;
+  
+
+    if (query.kind) {
+      // filter resource types
+      uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
+    }
+
+    if (query.tags) {
+      uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
+    }
+
+    if (query.sort) { 
+      const sort = query.sort.replace('_sort', '').replace('name', 'title');
+      uri += `&sort=${sort}`;
+    }
+    return uri;
   }
 
   getFolderViewSort(): string {
