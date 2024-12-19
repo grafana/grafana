@@ -27,7 +27,7 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.MkdirTemp("", "bleve-test")
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
 	backend, err := NewBleveBackend(BleveOptions{

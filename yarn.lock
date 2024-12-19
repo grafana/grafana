@@ -1680,7 +1680,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-parser-algorithms@npm:^3.0.4":
+"@csstools/css-parser-algorithms@npm:^3.0.1, @csstools/css-parser-algorithms@npm:^3.0.4":
   version: 3.0.4
   resolution: "@csstools/css-parser-algorithms@npm:3.0.4"
   peerDependencies:
@@ -1689,10 +1689,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@csstools/css-tokenizer@npm:^3.0.3":
+"@csstools/css-tokenizer@npm:^3.0.1, @csstools/css-tokenizer@npm:^3.0.3":
   version: 3.0.3
   resolution: "@csstools/css-tokenizer@npm:3.0.3"
   checksum: 10/6baa3160e426e1f177b8f10d54ec7a4a596090f65a05f16d7e9e4da049962a404eabc5f885f4867093702c259cd4080ac92a438326e22dea015201b3e71f5bbb
+  languageName: node
+  linkType: hard
+
+"@csstools/media-query-list-parser@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@csstools/media-query-list-parser@npm:3.0.1"
+  peerDependencies:
+    "@csstools/css-parser-algorithms": ^3.0.1
+    "@csstools/css-tokenizer": ^3.0.1
+  checksum: 10/794344c67b126ad93d516ab3f01254d44cfa794c3401e34e8cc62ddc7fc13c9ab6c76cb517b643dbda47b57f2eb578c6a11c4a9a4b516d88e260a4016b64ce7f
   languageName: node
   linkType: hard
 
@@ -2964,7 +2974,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3006,7 +3016,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3206,7 +3216,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3302,7 +3312,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
-    marked: "npm:12.0.2"
+    marked: "npm:15.0.4"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.46"
@@ -3595,16 +3605,16 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.11.0":
-  version: 1.14.0
-  resolution: "@grafana/plugin-e2e@npm:1.14.0"
+  version: 1.14.1
+  resolution: "@grafana/plugin-e2e@npm:1.14.1"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^11.5.0-213998"
+    "@grafana/e2e-selectors": "npm:^11.5.0-214310"
     semver: "npm:^7.5.4"
     uuid: "npm:^11.0.2"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/d854f1bcf218072fd79942cb145facfd3b2f8f2d0a5321fce8bc89ecd2440b21b18e34d7ccbfb8c04eb39f8e6f10fe7b2653966dc671b5936c9074340d9a7d32
+  checksum: 10/bd2a1688ab5d49668cd72102e91107f84a9f8dfcddbd5ca3cd2a551a5219870c50c73355f8e3a599190c1f341680d1bb6f13a3cdeb84c69cfa6ba061ff7af59f
   languageName: node
   linkType: hard
 
@@ -3709,7 +3719,7 @@ __metadata:
     jest-matcher-utils: "npm:29.7.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:11.0.2"
-    marked: "npm:12.0.2"
+    marked: "npm:15.0.4"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.46"
@@ -3737,7 +3747,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
     webpack-cli: "npm:5.1.4"
     whatwg-fetch: "npm:3.6.20"
@@ -3923,7 +3933,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
   peerDependencies:
     "@grafana/runtime": 10.4.0-pre
   languageName: unknown
@@ -4035,7 +4045,7 @@ __metadata:
     rc-drawer: "npm:7.2.0"
     rc-slider: "npm:11.1.7"
     rc-time-picker: "npm:^3.7.3"
-    rc-tooltip: "npm:6.3.1"
+    rc-tooltip: "npm:6.3.2"
     react: "npm:18.2.0"
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
@@ -4073,7 +4083,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     webpack: "npm:5.97.1"
   peerDependencies:
     react: ^18.0.0
@@ -7617,6 +7627,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@stylistic/stylelint-plugin@npm:^3.0.1":
+  version: 3.1.1
+  resolution: "@stylistic/stylelint-plugin@npm:3.1.1"
+  dependencies:
+    "@csstools/css-parser-algorithms": "npm:^3.0.1"
+    "@csstools/css-tokenizer": "npm:^3.0.1"
+    "@csstools/media-query-list-parser": "npm:^3.0.1"
+    is-plain-object: "npm:^5.0.0"
+    postcss-selector-parser: "npm:^6.1.2"
+    postcss-value-parser: "npm:^4.2.0"
+    style-search: "npm:^0.1.0"
+    stylelint: "npm:^16.8.2"
+  peerDependencies:
+    stylelint: ^16.8.0
+  checksum: 10/a7276c74a69b7c37e1db15fb8d0c7eeb5bce40f346a50c94d4a712c1100d83a9969dc1bc64494436bbb6c946ed606ccbd87a7c3fe697f2accb5504ead89c83d8
+  languageName: node
+  linkType: hard
+
 "@svgr/babel-plugin-add-jsx-attribute@npm:8.0.0":
   version: 8.0.0
   resolution: "@svgr/babel-plugin-add-jsx-attribute@npm:8.0.0"
@@ -11029,6 +11057,13 @@ __metadata:
   version: 2.0.3
   resolution: "ansicolor@npm:2.0.3"
   checksum: 10/0ecac28dbb3ed5ed77cba0392586391c35872806098f5ad4c47825e92a710b673d1504aca5b8a0903f5a8bd3a61ab6759d55e62f8d78bc21fbced14eb78eb99c
+  languageName: node
+  linkType: hard
+
+"ansis@npm:^3.2.0":
+  version: 3.4.0
+  resolution: "ansis@npm:3.4.0"
+  checksum: 10/828ad5a8235ff9e745b9b16e7f8f42efc86943cd2ca8fd253a5a18497a573bb2a5d2abdce8c86805c94b67b9a29d9802a27d5299f04e97775d948ba9363ddd78
   languageName: node
   linkType: hard
 
@@ -17715,7 +17750,7 @@ __metadata:
     lru-cache: "npm:11.0.2"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
-    marked: "npm:12.0.2"
+    marked: "npm:15.0.4"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
@@ -17795,7 +17830,7 @@ __metadata:
     smtp-tester: "npm:^2.1.0"
     style-loader: "npm:4.0.0"
     stylelint: "npm:16.12.0"
-    stylelint-config-sass-guidelines: "npm:11.1.0"
+    stylelint-config-sass-guidelines: "npm:12.1.0"
     swagger-ui-react: "npm:5.18.2"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.15.1"
@@ -17812,7 +17847,7 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.31"
-    uuid: "npm:9.0.1"
+    uuid: "npm:11.0.3"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -17821,7 +17856,7 @@ __metadata:
     webpack-livereload-plugin: "npm:3.0.2"
     webpack-manifest-plugin: "npm:5.0.0"
     webpack-merge: "npm:5.10.0"
-    webpackbar: "npm:^6.0.0"
+    webpackbar: "npm:^7.0.0"
     whatwg-fetch: "npm:3.6.20"
     xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
     yaml: "npm:^2.0.0"
@@ -20673,8 +20708,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.41.0
-  resolution: "knip@npm:5.41.0"
+  version: 5.41.1
+  resolution: "knip@npm:5.41.1"
   dependencies:
     "@nodelib/fs.walk": "npm:1.2.8"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -20698,7 +20733,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/a30b986ca4331b735f188c9217cb551b2698ddbed54bc98f1bf3c1fe1e85b3aff589244dafe60d6b5c7a8ee5133726d69366965cc3ae6299b43c33787155a7a2
+  checksum: 10/683afc2abf205598d015106175dcdd8847e99db4a1e9daff160d6144032b5ece39aca82e23ba9e33f41b7df95858389edc954b07be230a87736197305cd2511e
   languageName: node
   linkType: hard
 
@@ -21522,15 +21557,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"markdown-table@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "markdown-table@npm:2.0.0"
-  dependencies:
-    repeat-string: "npm:^1.0.0"
-  checksum: 10/8018cd1a1733ffda916a0548438e50f3d21b6c6b71fb23696b33c0b5922a8cc46035eb4b204a59c6054f063076f934461ae094599656a63f87c1c3a80bd3c229
-  languageName: node
-  linkType: hard
-
 "marked-mangle@npm:1.1.10":
   version: 1.1.10
   resolution: "marked-mangle@npm:1.1.10"
@@ -21540,12 +21566,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:12.0.2":
-  version: 12.0.2
-  resolution: "marked@npm:12.0.2"
+"marked@npm:15.0.4":
+  version: 15.0.4
+  resolution: "marked@npm:15.0.4"
   bin:
     marked: bin/marked.js
-  checksum: 10/24d4fc58d37c1779197fa7f93c504d8c71d4df54eb69cbbc14a55ba2a8e2ad83d723801fc25452c21ce74b38a483c5863c53449f130253a597be9e9c1d3e7e2b
+  checksum: 10/c4dfc1d42c655c411d1bbe25851585d22ba24e8edc296d3e4123c6685a4ae4c2bef05c144678a737d7ece7cc489921ced3261800b715a30fcc1f4e24bf1e69d5
   languageName: node
   linkType: hard
 
@@ -25063,9 +25089,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:6.3.1":
-  version: 6.3.1
-  resolution: "rc-tooltip@npm:6.3.1"
+"rc-tooltip@npm:6.3.2":
+  version: 6.3.2
+  resolution: "rc-tooltip@npm:6.3.2"
   dependencies:
     "@babel/runtime": "npm:^7.11.2"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -25073,7 +25099,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/e871f4430ba3711edc002cb55cd189471ae353bc2262ce648d14148d2648efa0849af87e85a750d03b23532a56c506724a6756bef1d42dcd48d061ccdf0024d8
+  checksum: 10/5bc59020243759725417320a060ead8b54e863cef7e57a2b849eec7f4931d828507c473a328849894544a26168a3a4ce54049af738109ec7197f3d1363569e8e
   languageName: node
   linkType: hard
 
@@ -26454,7 +26480,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"repeat-string@npm:^1.0.0, repeat-string@npm:^1.5.2":
+"repeat-string@npm:^1.5.2":
   version: 1.6.1
   resolution: "repeat-string@npm:1.6.1"
   checksum: 10/1b809fc6db97decdc68f5b12c4d1a671c8e3f65ec4a40c238bc5200e44e85bcc52a54f78268ab9c29fcf5fe4f1343e805420056d1f30fa9a9ee4c2d93e3cc6c0
@@ -28557,6 +28583,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"style-search@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "style-search@npm:0.1.0"
+  checksum: 10/841049768c863737389558fafffa0b765f553bde041b7997c4cd54606b64b0d139936e2efee74dc1ce59fcde78aaa88484d9894838c31d5c98c1ccace312a59b
+  languageName: node
+  linkType: hard
+
 "stylehacks@npm:^7.0.4":
   version: 7.0.4
   resolution: "stylehacks@npm:7.0.4"
@@ -28569,16 +28602,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-sass-guidelines@npm:11.1.0":
-  version: 11.1.0
-  resolution: "stylelint-config-sass-guidelines@npm:11.1.0"
+"stylelint-config-sass-guidelines@npm:12.1.0":
+  version: 12.1.0
+  resolution: "stylelint-config-sass-guidelines@npm:12.1.0"
   dependencies:
+    "@stylistic/stylelint-plugin": "npm:^3.0.1"
     postcss-scss: "npm:^4.0.9"
     stylelint-scss: "npm:^6.2.1"
   peerDependencies:
     postcss: ^8.4.21
     stylelint: ^16.1.0
-  checksum: 10/2585e83932ffa1fa5b2895f8e3edbec1d3a39bc1f9737b8eb8c055ff4fc9a1d62950287d9525e0b98ad653c5777eb4bfdfe066804440938c170c263117351ba3
+  checksum: 10/35a19408b4ce7428e1fbd782f6d7b3fdc3fce82e0272240d520e263c7aa9aabe7c12257304bbcbfacc0ad5e377227d7a12a73bc7b5425649d50df914c9db26a2
   languageName: node
   linkType: hard
 
@@ -28597,7 +28631,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint@npm:16.12.0":
+"stylelint@npm:16.12.0, stylelint@npm:^16.8.2":
   version: 16.12.0
   resolution: "stylelint@npm:16.12.0"
   dependencies:
@@ -30109,12 +30143,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.1, uuid@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "uuid@npm:9.0.1"
+"uuid@npm:11.0.3, uuid@npm:^11.0.2":
+  version: 11.0.3
+  resolution: "uuid@npm:11.0.3"
   bin:
-    uuid: dist/bin/uuid
-  checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
+    uuid: dist/esm/bin/uuid
+  checksum: 10/251385563195709eb0697c74a834764eef28e1656d61174e35edbd129288acb4d95a43f4ce8a77b8c2fc128e2b55924296a0945f964b05b9173469d045625ff2
   languageName: node
   linkType: hard
 
@@ -30127,21 +30161,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^11.0.2":
-  version: 11.0.3
-  resolution: "uuid@npm:11.0.3"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/251385563195709eb0697c74a834764eef28e1656d61174e35edbd129288acb4d95a43f4ce8a77b8c2fc128e2b55924296a0945f964b05b9173469d045625ff2
-  languageName: node
-  linkType: hard
-
 "uuid@npm:^8.3.2":
   version: 8.3.2
   resolution: "uuid@npm:8.3.2"
   bin:
     uuid: dist/bin/uuid
   checksum: 10/9a5f7aa1d6f56dd1e8d5f2478f855f25c645e64e26e347a98e98d95781d5ed20062d6cca2eecb58ba7c84bc3910be95c0451ef4161906abaab44f9cb68ffbdd1
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "uuid@npm:9.0.1"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
   languageName: node
   linkType: hard
 
@@ -30728,21 +30762,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpackbar@npm:^6.0.0":
-  version: 6.0.1
-  resolution: "webpackbar@npm:6.0.1"
+"webpackbar@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "webpackbar@npm:7.0.0"
   dependencies:
-    ansi-escapes: "npm:^4.3.2"
-    chalk: "npm:^4.1.2"
+    ansis: "npm:^3.2.0"
     consola: "npm:^3.2.3"
-    figures: "npm:^3.2.0"
-    markdown-table: "npm:^2.0.0"
     pretty-time: "npm:^1.1.0"
     std-env: "npm:^3.7.0"
-    wrap-ansi: "npm:^7.0.0"
   peerDependencies:
+    "@rspack/core": "*"
     webpack: 3 || 4 || 5
-  checksum: 10/9da47f8dcbc9173b19e41e3e1049fa451b0c02095ffa003e8c09c56aa2cc544334d1c6fff0797162a807b29090db9cf9a269cd5ec453196142543f9275cbbf70
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+    webpack:
+      optional: true
+  checksum: 10/d123164e26cf3ab77611574602cc2bdd339b3f7e929074d90b53bd4409ab1b778e746cd0ea232f78a7746a938638d1bc4d218fe69aff396c41c77da15a26e659
   languageName: node
   linkType: hard
 

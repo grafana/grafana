@@ -57,7 +57,7 @@
     "eventemitter3": "5.0.1",
     "lodash": "4.17.21",
     "lru-cache": "11.0.2",
-    "marked": "12.0.2",
+    "marked": "15.0.4",
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
     "moment-timezone": "0.5.46",
@@ -71,7 +71,7 @@
     "rxjs": "7.8.1",
     "semver": "7.6.3",
     "tslib": "2.8.1",
-    "uuid": "9.0.1",
+    "uuid": "11.0.3",
     "whatwg-fetch": "3.6.20"
   },
   "devDependencies": {
