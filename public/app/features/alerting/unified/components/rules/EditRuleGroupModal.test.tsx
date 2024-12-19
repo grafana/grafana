@@ -1,17 +1,20 @@
 import { render } from 'test/test-utils';
 import { byLabelText, byTestId, byText, byTitle } from 'testing-library-selector';
 
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { setupMswServer } from '../../mockApi';
 import {
   mockCombinedRule,
   mockCombinedRuleNamespace,
-  mockDataSource,
   mockPromAlertingRule,
   mockPromRecordingRule,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
 } from '../../mocks';
+import { mimirDataSource } from '../../mocks/server/configure';
+import { setupDataSources } from '../../testSetup/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { EditRuleGroupModal } from './EditRuleGroupModal';
@@ -29,18 +32,27 @@ const ui = {
 };
 
 const noop = () => jest.fn();
+setupMswServer();
 
 describe('EditGroupModal', () => {
+  const { dataSource, rulerConfig } = mimirDataSource();
+  setupDataSources(dataSource);
+
   it('Should disable all inputs but interval when intervalEditOnly is set', async () => {
-    const namespace = mockCombinedRuleNamespace({
-      name: 'my-alerts',
-      rulesSource: mockDataSource(),
-      groups: [{ name: 'default-group', interval: '90s', rules: [], totals: {} }],
-    });
+    const rulerGroupIdentifier: RuleGroupIdentifier = {
+      dataSourceName: dataSource.name,
+      groupName: 'default-group',
+      namespaceName: 'my-namespace',
+    };
 
-    const group = namespace.groups[0];
-
-    render(<EditRuleGroupModal namespace={namespace} group={group} intervalEditOnly onClose={noop} />);
+    render(
+      <EditRuleGroupModal
+        ruleGroupIdentifier={rulerGroupIdentifier}
+        intervalEditOnly
+        onClose={noop}
+        rulerConfig={rulerConfig}
+      />
+    );
 
     expect(await ui.input.namespace.find()).toHaveAttribute('readonly');
     expect(ui.input.group.get()).toHaveAttribute('readonly');
@@ -49,7 +61,8 @@ describe('EditGroupModal', () => {
 });
 
 describe('EditGroupModal component on cloud alert rules', () => {
-  const promDsSettings = mockDataSource({ name: 'Prometheus-1', uid: 'Prometheus-1' });
+  const { dataSource, rulerConfig } = mimirDataSource();
+  setupDataSources(dataSource);
 
   const alertingRule = mockCombinedRule({
     namespace: undefined,
@@ -72,15 +85,19 @@ describe('EditGroupModal component on cloud alert rules', () => {
   it('Should show alert table in case of having some non-recording rules in the group', async () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
-      rulesSource: promDsSettings,
+      rulesSource: dataSource,
       groups: [
         { name: 'default-group', interval: '90s', rules: [alertingRule, recordingRule1, recordingRule2], totals: {} },
       ],
     });
 
-    const group = promNs.groups[0];
+    const ruleGroupIdentifier: RuleGroupIdentifier = {
+      dataSourceName: dataSource.name,
+      groupName: promNs.groups[0].name,
+      namespaceName: promNs.name,
+    };
 
-    render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
+    render(<EditRuleGroupModal ruleGroupIdentifier={ruleGroupIdentifier} rulerConfig={rulerConfig} onClose={noop} />);
 
     expect(await ui.input.namespace.find()).toHaveValue('prometheus-ns');
     expect(ui.input.namespace.get()).not.toHaveAttribute('readonly');
@@ -93,13 +110,17 @@ describe('EditGroupModal component on cloud alert rules', () => {
   it('Should not show alert table in case of having exclusively recording rules in the group', async () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
-      rulesSource: promDsSettings,
+      rulesSource: dataSource,
       groups: [{ name: 'default-group', interval: '90s', rules: [recordingRule1, recordingRule2], totals: {} }],
     });
 
-    const group = promNs.groups[0];
+    const ruleGroupIdentifier: RuleGroupIdentifier = {
+      dataSourceName: dataSource.name,
+      groupName: promNs.groups[0].name,
+      namespaceName: promNs.name,
+    };
 
-    render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
+    render(<EditRuleGroupModal rulerConfig={rulerConfig} ruleGroupIdentifier={ruleGroupIdentifier} onClose={noop} />);
     expect(ui.table.query()).not.toBeInTheDocument();
     expect(await ui.noRulesText.find()).toBeInTheDocument();
   });
@@ -108,7 +129,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
 describe('EditGroupModal component on grafana-managed alert rules', () => {
   const grafanaNamespace: CombinedRuleNamespace = {
     name: 'namespace1',
-    rulesSource: GRAFANA_RULES_SOURCE_NAME,
+    rulesSource: 'grafana',
     groups: [
       {
         name: 'grafanaGroup1',
@@ -131,9 +152,16 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
   };
 
   const grafanaGroup1 = grafanaNamespace.groups[0];
+  const ruleGroupIdentifier: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaGroup1.name,
+    namespaceName: grafanaNamespace.name,
+  };
 
   const renderWithGrafanaGroup = () =>
-    render(<EditRuleGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={noop} />);
+    render(
+      <EditRuleGroupModal ruleGroupIdentifier={ruleGroupIdentifier} rulerConfig={GRAFANA_RULER_CONFIG} onClose={noop} />
+    );
 
   it('Should show alert table', async () => {
     renderWithGrafanaGroup();

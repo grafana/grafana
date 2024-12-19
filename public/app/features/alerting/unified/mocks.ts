@@ -733,7 +733,7 @@ export function mockStore(recipe: (state: StoreState) => void) {
   return configureStore(produce(defaultState, recipe));
 }
 
-export function mockAlertQuery(query: Partial<AlertQuery>): AlertQuery {
+export function mockAlertQuery(query: Partial<AlertQuery> = {}): AlertQuery {
   return {
     datasourceUid: '--uid--',
     refId: 'A',
