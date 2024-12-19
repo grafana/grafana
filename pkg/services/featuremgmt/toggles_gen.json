@@ -2673,6 +2673,7 @@
         "name": "playlistsReconciler",
         "resourceVersion": "1734463170112",
         "creationTimestamp": "2024-11-01T12:08:30Z",
+        "deletionTimestamp": "2024-12-19T19:17:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-17 19:19:30.112629 +0000 UTC"
         }
