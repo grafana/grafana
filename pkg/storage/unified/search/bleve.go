@@ -117,19 +117,23 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			fname,
 		)
 		if resourceVersion > 0 {
-			_, err := os.Stat(dir)
-			if err == nil {
-				index, _ = bleve.Open(dir) // NOTE, will use the same mappings!!!
-				if index != nil {
+			info, _ := os.Stat(dir)
+			if info != nil && info.IsDir() {
+				index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
+				if err == nil {
 					found, err := index.DocCount()
-					if err == nil && int64(found) == size {
-						build = false // we can skip building
+					if err != nil || int64(found) != size {
+						b.log.Info("this size changed since the last time the index opened")
+						_ = index.Close()
+						index = nil
+					} else {
+						build = false // no need to build the index
 					}
 				}
 			}
 		}
+
 		if index == nil {
-			// TODO? cleanup old indexes???
 			index, err = bleve.New(dir, mapper)
 		}
 
