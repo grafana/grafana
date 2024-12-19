@@ -1026,7 +1026,8 @@
       "metadata": {
         "name": "dashboardSchemaV2",
         "resourceVersion": "1730192092473",
-        "creationTimestamp": "2024-10-29T08:54:52Z"
+        "creationTimestamp": "2024-10-29T08:54:52Z",
+        "deletionTimestamp": "2024-12-19T12:03:44Z"
       },
       "spec": {
         "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
