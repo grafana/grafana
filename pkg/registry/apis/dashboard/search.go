@@ -253,8 +253,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
 	case 2:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-		if err != nil {
-			federate, err = asResourceKey(user.GetNamespace(), types[0])
+		if err == nil {
+			federate, err = asResourceKey(user.GetNamespace(), types[1])
 		}
 	default:
 		err = apierrors.NewBadRequest("too many type requests")

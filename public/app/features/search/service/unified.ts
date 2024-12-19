@@ -125,8 +125,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (req.kind) {  // filter resource types
-      // resource "kind" is plural on the backend
-      uri += '&' + req.kind.map((kind) => `type=${encodeURIComponent(`${kind}s`)}`).join('&');
+      uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
     }
 
     if (req.tags) {
