@@ -40,6 +40,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setNestedFolderPicker,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -53,6 +54,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
+import { NestedFolderPicker } from './core/components/NestedFolderPicker/NestedFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
@@ -144,6 +146,7 @@ export class GrafanaApp {
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
+      setNestedFolderPicker(NestedFolderPicker);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setEmbeddedDashboard(EmbeddedDashboardLazy);
