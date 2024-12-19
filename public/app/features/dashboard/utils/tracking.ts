@@ -4,6 +4,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
+import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
@@ -38,18 +39,49 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export function getV1SchemaPanelCounts(panels: Panel[] | PanelModel[]) {
-  return panels
-    .map((p) => p.type)
-    .reduce((r: Record<string, number>, p) => {
-      r[panelName(p)] = 1 + r[panelName(p)] || 1;
-      return r;
-    }, {});
+export function getPanelPluginCounts(panels: string[] | string[]) {
+  return panels.reduce((r: Record<string, number>, p) => {
+    r[panelName(p)] = 1 + r[panelName(p)] || 1;
+    return r;
+  }, {});
 }
 
 export function getV1SchemaVariables(variableList: VariableModel[]) {
   return variableList
     .map((v) => v.type)
+    .reduce((r: Record<string, number>, k) => {
+      r[variableName(k)] = 1 + r[variableName(k)] || 1;
+      return r;
+    }, {});
+}
+
+function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | undefined {
+  switch (type) {
+    case 'AdhocVariable':
+      return 'adhoc';
+    case 'CustomVariable':
+      return 'custom';
+    case 'QueryVariable':
+      return 'query';
+    case 'IntervalVariable':
+      return 'interval';
+    case 'ConstantVariable':
+      return 'constant';
+    case 'DatasourceVariable':
+      return 'datasource';
+    case 'TextVariable':
+      return 'textbox';
+    case 'GroupByVariable':
+      return 'groupby';
+    default:
+      return undefined;
+  }
+}
+
+export function getV2SchemaVariables(variableList: VariableKind[]) {
+  return variableList
+    .map((v) => mapNewToOldTypes(v.kind))
+    .filter((v) => v !== undefined)
     .reduce((r: Record<string, number>, k) => {
       r[variableName(k)] = 1 + r[variableName(k)] || 1;
       return r;
