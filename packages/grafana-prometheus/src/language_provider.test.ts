@@ -732,7 +732,6 @@ describe('Language completion provider', () => {
   });
 });
 
-
 describe('removeQuotesIfExist', () => {
   it('removes quotes from a string with double quotes', () => {
     const input = '"hello"';
@@ -788,4 +787,3 @@ describe('removeQuotesIfExist', () => {
     expect(result).toBe('12345');
   });
 });
-

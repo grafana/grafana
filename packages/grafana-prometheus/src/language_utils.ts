@@ -388,8 +388,8 @@ const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
 };
 
 const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLikeMap) as Record<
-    AbstractLabelOperator,
-    string
+  AbstractLabelOperator,
+  string
 >;
 
 export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
@@ -478,7 +478,13 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
  * @param cacheLevel
  * @param range
  */
-export function getRangeSnapInterval(cacheLevel: PrometheusCacheLevel, range: TimeRange): { start: string; end: string } {
+export function getRangeSnapInterval(
+  cacheLevel: PrometheusCacheLevel,
+  range: TimeRange
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {
