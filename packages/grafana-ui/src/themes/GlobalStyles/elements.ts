@@ -35,7 +35,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     body: {
-      height: '100%',
+      minHeight: '100vh',
       width: '100%',
       position: 'unset',
       color: theme.colors.text.primary,
