@@ -95,7 +95,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       }
 
       if (isProvisionedNG) {
-        return <SaveProvisionedDashboard meta={meta} dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+        return <SaveProvisionedDashboard dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 
       if (saveAsCopy || changeInfo.isNew) {

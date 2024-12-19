@@ -12,7 +12,6 @@ import { DashboardMeta } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 import { RepositorySpec } from '../../provisioning/api';
-import { PROVISIONING_URL } from '../../provisioning/constants';
 import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
@@ -36,13 +35,12 @@ type FormData = {
 function getDefaultValues(meta: DashboardMeta) {
   const anno = meta.k8s?.annotations;
   const timestamp = Date.now();
-  let ref = `dashboard/${timestamp}`;
+  const ref = `dashboard/${timestamp}`;
   const pathName = meta.slug || `new-dashboard-${timestamp}`;
   let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
   const repo = anno?.[AnnoKeyRepoName] ?? '';
   const idx = path.indexOf('#');
   if (idx > 0) {
-    ref = path.substring(idx + 1);
     path = path.substring(0, idx);
   }
 
@@ -51,8 +49,6 @@ function getDefaultValues(meta: DashboardMeta) {
     path,
     repo,
     comment: '',
-    title: 'New dashboard',
-    description: '',
     folder: { uid: meta.folderUid, title: '', repository: '' },
   };
 }
@@ -69,20 +65,19 @@ function getWorkflowOptions(branch = 'main') {
 }
 
 export interface Props {
-  meta: DashboardMeta;
   dashboard: DashboardScene;
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
+export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
   // Saving as a new provisioned dashboard
   const { saveProvisioned } = drawer.useState();
+  const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
   const defaultValues = getDefaultValues(meta);
-  const [action, request] = useCreateOrUpdateRepositoryFile(
-    saveProvisioned || changeInfo.isNew ? undefined : defaultValues.path
-  );
+  const isNew = !meta.k8s?.annotations?.[AnnoKeyRepoPath];
+  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
     handleSubmit,
@@ -90,9 +85,11 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     formState: { errors },
     control,
     setValue,
-  } = useForm({
+  } = useForm<FormData>({
     defaultValues: {
       ...defaultValues,
+      title: defaultTitle,
+      description: defaultDescription,
       workflow: WorkflowOption.PullRequest,
     },
   });
@@ -113,10 +110,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-
-      if (saveProvisioned) {
-        navigate(`${PROVISIONING_URL}/${repo}/dashboard/preview/${path}?ref=${ref}`);
-      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -129,15 +122,22 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
   }, [repositoryConfig, setValue]);
 
-  const doSave = ({ ref, path, comment, repo }: FormData) => {
+  const doSave = async ({ ref, path, comment, repo, title, description }: FormData) => {
     if (!repo || !path) {
       return;
     }
 
+    const saveModel = dashboard.getSaveAsModel({
+      isNew: isNew,
+      title: title,
+      description: description,
+    });
+
     if (workflow === WorkflowOption.Branch) {
       ref = repositoryConfig?.github?.branch || 'main';
     }
-    action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+
+    action({ ref, name: repo, path, message: comment, body: saveModel });
   };
 
   return (
@@ -160,7 +160,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
             You can now open a pull request in Github.
           </Alert>
         )}
-        {changeInfo.isNew && (
+        {isNew && (
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
               <Input
@@ -197,10 +197,10 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           </>
         )}
 
-        {!changeInfo.isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+        {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly={!saveProvisioned && !changeInfo.isNew} />
+          <Input {...register('path')} readOnly={false} />
         </Field>
 
         <Field label="Comment">
