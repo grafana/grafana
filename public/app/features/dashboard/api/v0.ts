@@ -88,6 +88,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
         isFolder: false,
         uid: dash.metadata.name,
         k8s: dash.metadata,
+        version: parseInt(dash.metadata.resourceVersion, 10),
       },
       dashboard: dash.spec,
     };

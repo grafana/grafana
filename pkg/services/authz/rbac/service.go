@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -47,6 +48,7 @@ type Service struct {
 	permCache      *localcache.CacheService
 	teamCache      *localcache.CacheService
 	basicRoleCache *localcache.CacheService
+	folderCache    *localcache.CacheService
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
@@ -60,6 +62,7 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
 	}
 }
 
@@ -135,13 +138,14 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 	}
 
 	checkReq := &CheckRequest{
-		Namespace: ns,
-		UserUID:   userUID,
-		Action:    action,
-		Group:     req.GetGroup(),
-		Resource:  req.GetResource(),
-		Verb:      req.GetVerb(),
-		Name:      req.GetName(),
+		Namespace:    ns,
+		UserUID:      userUID,
+		Action:       action,
+		Group:        req.GetGroup(),
+		Resource:     req.GetResource(),
+		Verb:         req.GetVerb(),
+		Name:         req.GetName(),
+		ParentFolder: req.GetFolder(),
 	}
 	return checkReq, nil
 }
@@ -279,7 +283,11 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		ctxLogger.Error("could not get attribute for resource", "resource", req.Resource)
 		return false, fmt.Errorf("could not get attribute for resource")
 	}
-	return scopeMap[scope], nil
+	if scopeMap[scope] {
+		return true, nil
+	}
+
+	return s.checkInheritedPermissions(ctx, scopeMap, req)
 }
 
 func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
@@ -292,4 +300,77 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 		permMap[perm.Scope] = true
 	}
 	return permMap
+}
+
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
+	if req.ParentFolder == "" {
+		return false, nil
+	}
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return false, err
+	}
+
+	currentUID := req.ParentFolder
+	for {
+		if node, has := folderMap[currentUID]; has {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.uid)
+			if scopeMap[scope] {
+				return true, nil
+			}
+			if node.parentUID == nil {
+				break
+			}
+			currentUID = *node.parentUID
+		} else {
+			break
+		}
+	}
+	return false, nil
+}
+
+func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+	key := folderCacheKey(ns.Value)
+	if cached, ok := s.folderCache.Get(key); ok {
+		return cached.(map[string]FolderNode), nil
+	}
+
+	folders, err := s.store.GetFolders(ctx, ns)
+	if err != nil {
+		return nil, fmt.Errorf("could not get folders: %w", err)
+	}
+
+	folderMap := make(map[string]FolderNode, len(folders))
+	for _, folder := range folders {
+		if node, has := folderMap[folder.UID]; !has {
+			folderMap[folder.UID] = FolderNode{
+				uid:       folder.UID,
+				parentUID: folder.ParentUID,
+			}
+		} else {
+			node.parentUID = folder.ParentUID
+			folderMap[folder.UID] = node
+		}
+		// Register that the parent has this child node
+		if folder.ParentUID == nil {
+			continue
+		}
+		if parent, has := folderMap[*folder.ParentUID]; has {
+			parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
+			folderMap[*folder.ParentUID] = parent
+		} else {
+			folderMap[*folder.ParentUID] = FolderNode{
+				uid:          *folder.ParentUID,
+				childrenUIDs: []string{folder.UID},
+			}
+		}
+	}
+
+	s.folderCache.Set(key, folderMap, 0)
+
+	return folderMap, nil
 }

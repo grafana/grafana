@@ -67,7 +67,7 @@ export function ensureV2Response(
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
-    tags: dashboard.tags,
+    tags: dashboard.tags ?? [],
     schemaVersion: dashboard.schemaVersion,
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
@@ -135,50 +135,14 @@ export function ensureV1Response(
   if (isDashboardV0Spec(spec)) {
     return {
       meta: {
-        created: dashboard.metadata.creationTimestamp,
-        createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
-        updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-        updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
-        folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
-        slug: dashboard.metadata.annotations?.[AnnoKeySlug],
-        url: dashboard.access.url,
-        canAdmin: dashboard.access.canAdmin,
-        canDelete: dashboard.access.canDelete,
-        canEdit: dashboard.access.canEdit,
-        canSave: dashboard.access.canSave,
-        canShare: dashboard.access.canShare,
-        canStar: dashboard.access.canStar,
-        annotationsPermissions: dashboard.access.annotationsPermissions,
-      },
-      dashboard: {
+        ...dashboard.access,
+        isNew: false,
+        isFolder: false,
         uid: dashboard.metadata.name,
-        title: spec.title,
-        description: spec.description,
-        tags: spec.tags,
-        schemaVersion: spec.schemaVersion,
-        graphTooltip: spec.graphTooltip,
-        preload: spec.preload,
-        liveNow: spec.liveNow,
-        editable: spec.editable,
-        time: {
-          from: spec.time?.from || 'now-6h',
-          to: spec.time?.to || 'now',
-        },
-        timezone: spec.timezone,
-        refresh: spec.refresh,
-        timepicker: {
-          refresh_intervals: spec.timepicker?.refresh_intervals,
-          hidden: spec.timepicker?.hidden,
-          time_options: spec.timepicker?.time_options,
-          nowDelay: spec.timepicker?.nowDelay,
-        },
-        fiscalYearStartMonth: spec.fiscalYearStartMonth,
-        weekStart: spec.weekStart,
+        k8s: dashboard.metadata,
         version: parseInt(dashboard.metadata.resourceVersion, 10),
-        links: spec.links,
-        // TODO[schema v2]: handle annotations
-        annotations: { list: [] },
       },
+      dashboard: spec,
     };
   } else {
     // if dashboard is on v2 schema convert to v1 schema
