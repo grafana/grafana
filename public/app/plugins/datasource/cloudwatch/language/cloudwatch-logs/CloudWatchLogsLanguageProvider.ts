@@ -7,7 +7,7 @@ import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, Typeahe
 
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchQuery, LogGroup } from '../../types';
-import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../../utils/templateVariableUtils';
+import { fetchLogGroupFields } from '../utils';
 
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
@@ -130,24 +130,6 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
       suggestions: [],
     };
   }
-
-  private fetchFields = async (logGroups: LogGroup[], region: string): Promise<string[]> => {
-    const interpolatedLogGroups = interpolateStringArrayUsingSingleOrMultiValuedVariable(
-      this.templateSrv,
-      logGroups.map((lg) => lg.name),
-      {},
-      'text'
-    );
-    const results = await Promise.all(
-      interpolatedLogGroups.map((logGroupName) =>
-        this.datasource.resources
-          .getLogGroupFields({ logGroupName, region })
-          .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
-      )
-    );
-
-    return results.flat();
-  };
 
   private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroups, context?.region || 'default');
@@ -312,7 +294,7 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
       return { suggestions: [] };
     }
 
-    const fields = await this.fetchFields(logGroups, region);
+    const fields = await fetchLogGroupFields(logGroups, region, this.templateSrv, this.datasource.resources);
     return {
       suggestions: [
         {

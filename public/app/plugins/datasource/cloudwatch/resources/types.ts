@@ -12,11 +12,6 @@ export interface ResourceRequest {
   accountId?: string;
 }
 
-export interface GetLogGroupFieldsRequest extends ResourceRequest {
-  arn?: string;
-  logGroupName: string;
-}
-
 export interface GetDimensionKeysRequest extends ResourceRequest {
   metricName?: string;
   namespace?: string;
