@@ -1,7 +1,8 @@
+import { Team } from '@grafana/data';
 import { Permissions } from 'app/core/components/AccessControl';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { AccessControlAction, Team } from '../../types';
+import { AccessControlAction } from '../../types';
 
 type TeamPermissionsProps = {
   team: Team;
