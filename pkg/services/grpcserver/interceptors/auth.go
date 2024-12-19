@@ -17,6 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+type AuthenticatorFunc func(ctx context.Context) (context.Context, error)
+
+func (a AuthenticatorFunc) Authenticate(ctx context.Context) (context.Context, error) {
+	return a(ctx)
+}
+
 type Authenticator interface {
 	Authenticate(ctx context.Context) (context.Context, error)
 }
