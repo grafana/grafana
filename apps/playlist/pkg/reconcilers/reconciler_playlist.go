@@ -13,7 +13,6 @@ func NewPlaylistReconciler(patchClient operator.PatchClient) (operator.Reconcile
 	inner := operator.TypedReconciler[*playlist.Playlist]{}
 
 	inner.ReconcileFunc = func(ctx context.Context, request operator.TypedReconcileRequest[*playlist.Playlist]) (operator.ReconcileResult, error) {
-		klog.InfoS("Playlist Reconciler", "request", request)
 		switch request.Action {
 		case operator.ReconcileActionCreated:
 			klog.InfoS("Added resource", "name", request.Object.GetStaticMetadata().Identifier().Name)
