@@ -1,38 +1,66 @@
+import { config } from '@grafana/runtime';
+import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schema';
 import {
+  AnnotationQueryKind,
   DashboardV2Spec,
+  DataLink,
+  DatasourceVariableKind,
   defaultDashboardV2Spec,
+  defaultFieldConfigSource,
   defaultTimeSettingsSpec,
+  PanelQueryKind,
+  QueryVariableKind,
+  TransformationKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { transformCursorSynctoEnum } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
+import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyFolder,
+  AnnoKeySlug,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
+import {
+  transformCursorSynctoEnum,
+  transformDataTopic,
+  transformSortVariableToEnum,
+  transformVariableHideToEnum,
+  transformVariableRefreshToEnum,
+} from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Spec } from './utils';
+import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
-  if (isDashboardResource(dto) && isDashboardV2Spec(dto.spec)) {
-    return dto as DashboardWithAccessInfo<DashboardV2Spec>;
+  if (isDashboardV2Resource(dto)) {
+    return dto;
   }
+  let dashboard: DashboardDataDTO;
 
-  // after discarding the dto is not a v2 spec, we can safely assume it's a v0 spec or a dashboardDTO
-  dto = dto as unknown as DashboardWithAccessInfo<DashboardDataDTO> | DashboardDTO;
+  if (isDashboardResource(dto)) {
+    dashboard = dto.spec;
+  } else {
+    dashboard = dto.dashboard;
+  }
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
-
-  const dashboard = isDashboardResource(dto) ? dto.spec : dto.dashboard;
+  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  const variables = getVariables(dashboard.templating?.list || []);
+  const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   const accessAndMeta = isDashboardResource(dto)
     ? {
         ...dto.access,
         created: dto.metadata.creationTimestamp,
-        createdBy: dto.metadata.annotations?.['grafana.app/createdBy'],
-        updatedBy: dto.metadata.annotations?.['grafana.app/updatedBy'],
-        updated: dto.metadata.annotations?.['grafana.app/updatedTimestamp'],
-        folderUid: dto.metadata.annotations?.['grafana.app/folder'],
-        slug: dto.metadata.annotations?.['grafana.app/slug'],
+        createdBy: dto.metadata.annotations?.[AnnoKeyCreatedBy],
+        updatedBy: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
+        updated: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+        folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
+        slug: dto.metadata.annotations?.[AnnoKeySlug],
       }
     : dto.meta;
 
@@ -58,16 +86,10 @@ export function ensureV2Response(
       nowDelay: dashboard.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
     },
     links: dashboard.links || [],
-    annotations: [], // TODO
-    variables: [], // todo
-    elements: {}, // todo
-    layout: {
-      // todo
-      kind: 'GridLayout',
-      spec: {
-        items: [],
-      },
-    },
+    annotations,
+    variables,
+    elements,
+    layout,
   };
 
   return {
@@ -78,11 +100,11 @@ export function ensureV2Response(
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
       annotations: {
-        'grafana.app/createdBy': accessAndMeta.createdBy,
-        'grafana.app/updatedBy': accessAndMeta.updatedBy,
-        'grafana.app/updatedTimestamp': accessAndMeta.updated,
-        'grafana.app/folder': accessAndMeta.folderUid,
-        'grafana.app/slug': accessAndMeta.slug,
+        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
+        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
+        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
+        [AnnoKeyFolder]: accessAndMeta.folderUid,
+        [AnnoKeySlug]: accessAndMeta.slug,
       },
     },
     spec,
@@ -113,13 +135,50 @@ export function ensureV1Response(
   if (isDashboardV0Spec(spec)) {
     return {
       meta: {
-        ...dashboard.access,
-        isNew: false,
-        isFolder: false,
-        uid: dashboard.metadata.name,
-        k8s: dashboard.metadata,
+        created: dashboard.metadata.creationTimestamp,
+        createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
+        updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+        updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
+        folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
+        slug: dashboard.metadata.annotations?.[AnnoKeySlug],
+        url: dashboard.access.url,
+        canAdmin: dashboard.access.canAdmin,
+        canDelete: dashboard.access.canDelete,
+        canEdit: dashboard.access.canEdit,
+        canSave: dashboard.access.canSave,
+        canShare: dashboard.access.canShare,
+        canStar: dashboard.access.canStar,
+        annotationsPermissions: dashboard.access.annotationsPermissions,
       },
-      dashboard: spec,
+      dashboard: {
+        uid: dashboard.metadata.name,
+        title: spec.title,
+        description: spec.description,
+        tags: spec.tags,
+        schemaVersion: spec.schemaVersion,
+        graphTooltip: spec.graphTooltip,
+        preload: spec.preload,
+        liveNow: spec.liveNow,
+        editable: spec.editable,
+        time: {
+          from: spec.time?.from || 'now-6h',
+          to: spec.time?.to || 'now',
+        },
+        timezone: spec.timezone,
+        refresh: spec.refresh,
+        timepicker: {
+          refresh_intervals: spec.timepicker?.refresh_intervals,
+          hidden: spec.timepicker?.hidden,
+          time_options: spec.timepicker?.time_options,
+          nowDelay: spec.timepicker?.nowDelay,
+        },
+        fiscalYearStartMonth: spec.fiscalYearStartMonth,
+        weekStart: spec.weekStart,
+        version: parseInt(dashboard.metadata.resourceVersion, 10),
+        links: spec.links,
+        // TODO[schema v2]: handle annotations
+        annotations: { list: [] },
+      },
     };
   } else {
     // if dashboard is on v2 schema convert to v1 schema
@@ -177,3 +236,217 @@ export const ResponseTransformers = {
   ensureV2Response,
   ensureV1Response,
 };
+
+// TODO[schema v2]: handle rows
+function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+  const elements: DashboardV2Spec['elements'] = {};
+  const layout: DashboardV2Spec['layout'] = {
+    kind: 'GridLayout',
+    spec: {
+      items: [],
+    },
+  };
+
+  if (!panels) {
+    return [elements, layout];
+  }
+
+  // iterate over panels
+  for (const p of panels) {
+    const queries = getPanelQueries(
+      (p.targets as unknown as DataQuery[]) || [],
+      p.datasource?.type || getDefaultDatasourceType()
+    );
+
+    const transformations = getPanelTransformations(p.transformations || []);
+
+    elements[p.id!] = {
+      kind: 'Panel',
+      spec: {
+        title: p.title || '',
+        description: p.description || '',
+        vizConfig: {
+          kind: p.type,
+          spec: {
+            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+            options: p.options as any,
+            pluginVersion: p.pluginVersion!,
+          },
+        },
+        links:
+          p.links?.map<DataLink>((l) => ({
+            title: l.title,
+            url: l.url || '',
+            targetBlank: l.targetBlank,
+          })) || [],
+        uid: p.id!.toString(), // TODO[schema v2]: handle undefined id?!!?!?
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries,
+            transformations, // TODO[schema v2]: handle transformations
+            queryOptions: {
+              cacheTimeout: p.cacheTimeout,
+              maxDataPoints: p.maxDataPoints,
+              interval: p.interval,
+              hideTimeOverride: p.hideTimeOverride,
+              queryCachingTTL: p.queryCachingTTL,
+              timeFrom: p.timeFrom,
+              timeShift: p.timeShift,
+            },
+          },
+        },
+      },
+    };
+
+    layout.spec.items.push({
+      kind: 'GridLayoutItem',
+      spec: {
+        x: p.gridPos!.x,
+        y: p.gridPos!.y,
+        width: p.gridPos!.w,
+        height: p.gridPos!.h,
+        element: {
+          kind: 'ElementReference',
+          name: p.id!.toString(),
+        },
+      },
+    });
+  }
+
+  return [elements, layout];
+}
+
+function getDefaultDatasourceType() {
+  const datasources = config.datasources;
+  // find default datasource in datasources
+  return Object.values(datasources).find((ds) => ds.isDefault)!.type;
+}
+
+function getPanelQueries(targets: DataQuery[], panelDatasourceType: string): PanelQueryKind[] {
+  return targets.map((t) => {
+    const { refId, hide, datasource, ...query } = t;
+    const q: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: t.refId,
+        hidden: t.hide ?? false,
+        // TODO[schema v2]: ds coming from panel ?!?!!?! AAAAAAAAAAAAA! Send help!
+        datasource: t.datasource ? t.datasource : undefined,
+        query: {
+          kind: t.datasource?.type || panelDatasourceType,
+          spec: {
+            ...query,
+          },
+        },
+      },
+    };
+    return q;
+  });
+}
+
+function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
+  return transformations.map((t) => {
+    return {
+      kind: t.id,
+      spec: {
+        ...t,
+        topic: transformDataTopic(t.topic),
+      },
+    };
+  });
+}
+
+function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
+  const variables: DashboardV2Spec['variables'] = [];
+  for (const v of vars) {
+    switch (v.type) {
+      case 'query':
+        let query = v.query || {};
+
+        if (typeof query === 'string') {
+          console.error('Query variable query is a string. It needs to extend DataQuery.');
+          query = {};
+        }
+
+        const qv: QueryVariableKind = {
+          kind: 'QueryVariable',
+          spec: {
+            name: v.name,
+            label: v.label,
+            hide: transformVariableHideToEnum(v.hide),
+            skipUrlSync: Boolean(v.skipUrlSync),
+            multi: Boolean(v.multi),
+            includeAll: Boolean(v.includeAll),
+            allValue: v.allValue,
+            current: v.current || { text: '', value: '' },
+            options: v.options || [],
+            refresh: transformVariableRefreshToEnum(v.refresh),
+            datasource: v.datasource ?? undefined,
+            regex: v.regex || '',
+            sort: transformSortVariableToEnum(v.sort),
+            query: {
+              kind: v.datasource?.type || getDefaultDatasourceType(),
+              spec: {
+                ...query,
+              },
+            },
+          },
+        };
+        variables.push(qv);
+        break;
+      case 'datasource':
+        let pluginId = getDefaultDatasourceType();
+
+        if (v.query && typeof v.query === 'string') {
+          pluginId = v.query;
+        }
+
+        const dv: DatasourceVariableKind = {
+          kind: 'DatasourceVariable',
+          spec: {
+            name: v.name,
+            label: v.label,
+            hide: transformVariableHideToEnum(v.hide),
+            skipUrlSync: Boolean(v.skipUrlSync),
+            multi: Boolean(v.multi),
+            includeAll: Boolean(v.includeAll),
+            allValue: v.allValue,
+            current: v.current || { text: '', value: '' },
+            options: v.options || [],
+            refresh: transformVariableRefreshToEnum(v.refresh),
+            pluginId,
+            regex: v.regex || '',
+            description: v.description || '',
+          },
+        };
+        variables.push(dv);
+        break;
+    }
+  }
+  return variables;
+}
+
+function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
+  return annotations.map((a) => {
+    const aq: AnnotationQueryKind = {
+      kind: 'AnnotationQuery',
+      spec: {
+        name: a.name,
+        datasource: a.datasource ?? undefined,
+        enable: a.enable,
+        hide: Boolean(a.hide),
+        iconColor: a.iconColor,
+        builtIn: Boolean(a.builtIn),
+        query: {
+          kind: a.datasource?.type || getDefaultDatasourceType(),
+          spec: {
+            ...a.target,
+          },
+        },
+        filter: a.filter,
+      },
+    };
+    return aq;
+  });
+}
