@@ -86,13 +86,13 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenNthCalledWith(3, [third]);
   });
 
-  it('should be able to render a valie that is not in the options', async () => {
+  it('should be able to render a value that is not in the options', async () => {
     const options = [
       { label: 'A', value: 'a' },
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
+    render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
     await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
