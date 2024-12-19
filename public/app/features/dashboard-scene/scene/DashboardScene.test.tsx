@@ -168,6 +168,7 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(false);
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
+        expect(scene.state.meta.version).toEqual(2);
       });
 
       it('Should start the detect changes worker', () => {

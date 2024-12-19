@@ -8,7 +8,7 @@ import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
-import { DashboardScene, isV2Dashboard } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
@@ -155,16 +155,12 @@ const getStyles = () => ({
 export function ignoreChanges(scene: DashboardScene | null) {
   const original = scene?.getInitialSaveModel();
 
-  if (original && isV2Dashboard(original)) {
-    throw new Error('isV2Dashboard is not implemented');
-  }
-
   if (!original) {
     return true;
   }
 
   // Ignore changes if original is unsaved
-  if (original.version === 0) {
+  if (scene?.state.meta.version === 0) {
     return true;
   }
 
