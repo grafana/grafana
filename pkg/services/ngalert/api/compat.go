@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -223,9 +224,29 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		result.Annotations = &rule.Annotations
 	}
 	if rule.Labels != nil {
-		result.Labels = &rule.Labels
+		result.Labels = escapeLabelsForFileProvisioning(rule.Labels)
 	}
 	return result, nil
+}
+
+// this is to prevent the string from being interpreted as a variable in the provisioning engine
+func escapeLabelsForFileProvisioning(labels map[string]string) *map[string]string {
+	escapedLabels := make(map[string]string)
+	for k, v := range labels {
+		escapedLabels[k] = addEscapeCharactersToString(v)
+	}
+	return &escapedLabels
+}
+
+func addEscapeCharactersToString(s string) string {
+	// loop over words in the string and add escape characters to any word that starts with $
+	words := strings.Split(s, " ")
+	for i, word := range words {
+		if strings.HasPrefix(word, "$") {
+			words[i] = "$" + word
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 func encodeQueryModel(m map[string]any) (string, error) {
