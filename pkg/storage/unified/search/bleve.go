@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
@@ -39,21 +41,32 @@ type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
 	opts   BleveOptions
+	start  time.Time
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) *bleveBackend {
-	b := &bleveBackend{
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) (*bleveBackend, error) {
+	if opts.Root == "" {
+		return nil, fmt.Errorf("bleve backend missing root folder configuration")
+	}
+	root, err := os.Stat(opts.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error opening bleve root folder %w", err)
+	}
+	if !root.IsDir() {
+		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
+	}
+
+	return &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
 		opts:   opts,
-	}
-
-	return b
+		start:  time.Now(),
+	}, nil
 }
 
 // This will return nil if the key does not exist
@@ -91,13 +104,38 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var err error
 	var index bleve.Index
 
+	build := true
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
-		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
-		index, err = bleve.New(dir, mapper)
+		fname := fmt.Sprintf("rv%d", resourceVersion)
+		if resourceVersion == 0 {
+			fname = b.start.Format("tmp-20060102-150405")
+		}
+		dir := filepath.Join(b.opts.Root, key.Namespace,
+			fmt.Sprintf("%s.%s", key.Resource, key.Group),
+			fname,
+		)
+		if resourceVersion > 0 {
+			info, _ := os.Stat(dir)
+			if info != nil && info.IsDir() {
+				index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
+				if err == nil {
+					found, err := index.DocCount()
+					if err != nil || int64(found) != size {
+						b.log.Info("this size changed since the last time the index opened")
+						_ = index.Close()
+						index = nil
+					} else {
+						build = false // no need to build the index
+					}
+				}
+			}
+		}
 
-		// TODO, check last RV so we can see if the numbers have changed
+		if index == nil {
+			index, err = bleve.New(dir, mapper)
+		}
 
 		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
@@ -123,15 +161,17 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
-	_, err = builder(idx)
-	if err != nil {
-		return nil, err
-	}
+	if build {
+		_, err = builder(idx)
+		if err != nil {
+			return nil, err
+		}
 
-	// Flush the batch
-	err = idx.Flush()
-	if err != nil {
-		return nil, err
+		// Flush the batch
+		err = idx.Flush()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	b.cacheMu.Lock()
