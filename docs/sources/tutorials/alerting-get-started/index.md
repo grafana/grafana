@@ -11,10 +11,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 1 of 2
+title: Get started with Grafana Alerting - Part 1 of 3
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 1 of 2
+  title: Get started with Grafana Alerting - Part 1 of 3
   description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live — Part 1.
   backend:
     imageid: ubuntu
@@ -22,7 +22,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 1 of 2
+# Get started with Grafana Alerting - Part 1 of 3
 
 In this guide, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
