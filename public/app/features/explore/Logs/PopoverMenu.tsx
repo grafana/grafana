@@ -79,6 +79,11 @@ export const PopoverMenu = ({
             }}
           />
         )}
+        <Menu.Divider />
+        <Menu.Item
+            label="Disable menu"
+            onClick={() => {}}
+          />
       </Menu>
     </div>
   );
