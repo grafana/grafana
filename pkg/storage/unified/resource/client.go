@@ -129,7 +129,12 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	return authInfo.GetIDToken(), nil
+	extra := authInfo.GetExtra()
+	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
+		return token[0], nil
+	}
+
+	return "", nil
 }
 
 func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
