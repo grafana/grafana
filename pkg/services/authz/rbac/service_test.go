@@ -387,8 +387,95 @@ func TestService_getUserPermissions(t *testing.T) {
 	}
 }
 
+func TestService_buildFolderTree(t *testing.T) {
+	type testCase struct {
+		name         string
+		folders      []store.Folder
+		cacheHit     bool
+		expectedTree map[string]FolderNode
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return folder tree from cache if available",
+			folders: []store.Folder{
+				{UID: "folder1", ParentUID: nil},
+				{UID: "folder2", ParentUID: strPtr("folder1")},
+			},
+			cacheHit: true,
+			expectedTree: map[string]FolderNode{
+				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
+				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
+			},
+		},
+		{
+			name: "should return folder tree from store if not in cache",
+			folders: []store.Folder{
+				{UID: "folder1", ParentUID: nil},
+				{UID: "folder2", ParentUID: strPtr("folder1")},
+			},
+			cacheHit: false,
+			expectedTree: map[string]FolderNode{
+				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
+				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
+
+			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
+			if tc.cacheHit {
+				cacheService.Set(folderCacheKey(ns.Value), tc.expectedTree, 0)
+			}
+
+			store := &fakeStore{folders: tc.folders}
+
+			s := &Service{
+				store:       store,
+				folderCache: cacheService,
+				logger:      log.New("test"),
+			}
+
+			tree, err := s.buildFolderTree(ctx, ns)
+
+			require.NoError(t, err)
+			require.Len(t, tree, len(tc.expectedTree))
+			for _, folder := range tc.folders {
+				node, ok := tree[folder.UID]
+				require.True(t, ok)
+				// Check parent
+				if folder.ParentUID != nil {
+					require.NotNil(t, node.parentUID)
+					require.Equal(t, *folder.ParentUID, *node.parentUID)
+				} else {
+					require.Nil(t, node.parentUID)
+				}
+				// Check children
+				if len(node.childrenUIDs) > 0 {
+					epectedChildren := tc.expectedTree[folder.UID].childrenUIDs
+					require.ElementsMatch(t, node.childrenUIDs, epectedChildren)
+				}
+			}
+			if tc.cacheHit {
+				require.Zero(t, store.calls)
+			} else {
+				require.Equal(t, 1, store.calls)
+			}
+		})
+	}
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
 type fakeStore struct {
 	store.Store
+	folders         []store.Folder
 	basicRole       *store.BasicRole
 	userID          *store.UserIdentifiers
 	userPermissions []accesscontrol.Permission
@@ -418,6 +505,14 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.Nam
 		return nil, fmt.Errorf("store error")
 	}
 	return f.userPermissions, nil
+}
+
+func (f *fakeStore) GetFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("store error")
+	}
+	return f.folders, nil
 }
 
 type fakeIdentityStore struct {
