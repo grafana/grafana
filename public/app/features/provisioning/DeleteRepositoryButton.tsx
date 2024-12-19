@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, ConfirmModal, IconButton } from '@grafana/ui';
+import { ConfirmModal, IconButton } from '@grafana/ui';
 
 import { useDeleteRepositoryMutation } from './api';
 

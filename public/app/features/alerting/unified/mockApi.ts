@@ -220,6 +220,13 @@ export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
       server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
+      server.use(
+        http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories', () => {
+          return HttpResponse.json({
+            items: [],
+          });
+        })
+      );
     },
   };
 }
@@ -260,6 +267,13 @@ export function setupMswServer() {
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
+    server.use(
+      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories', () => {
+        return HttpResponse.json({
+          items: [],
+        });
+      })
+    );
   });
 
   afterEach(() => {
