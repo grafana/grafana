@@ -1776,6 +1776,14 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "message": "Ÿőū äřę äþőūŧ ŧő đįşäþľę ŧĥę ľőģş ƒįľŧęř męŉū. Ŧő řę-ęŉäþľę įŧ, şęľęčŧ ŧęχŧ įŉ ä ľőģ ľįŉę ŵĥįľę ĥőľđįŉģ ŧĥę şĥįƒŧ ĸęy."
+      },
+      "disable-popover-message": {
+        "shortcut": "şĥįƒŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
+      }
     }
   },
   "migrate-to-cloud": {
