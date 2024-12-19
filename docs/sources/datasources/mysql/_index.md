@@ -47,7 +47,7 @@ refs:
 
 Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database like MariaDB or Percona Server. You don't need to install a plugin in order to add the MySQL data source to your Grafana instance.
 
-Grafana offers several configuratio options for this data source as well as a visual and code-based query editor.
+Grafana offers several configuration options for this data source as well as a visual and code-based query editor.
 
 ## Get started with the MySQL data source
 
