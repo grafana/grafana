@@ -20,11 +20,13 @@ const loadingFrameName = 'Loading';
 const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
 
 type SearchHit = {
-  kind: string;
+  resource: string; // dashboards | folders
   name: string;
   title: string;
   location: string;
   folder: string;
+
+  // calculated in the frontend
   url: string;
 }
 
@@ -273,14 +275,15 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
   }
   const dashboardHits = hits.map((hit) => {
     let location = hit.folder;
-    if (hit.kind === 'dashboard' && isEmpty(location)) {
+    if (hit.resource === 'dashboards' && isEmpty(location)) {
       location = 'general';
     }
 
     return {
       ...hit,
+      url: toURL(hit.resource, hit.name),
       location,
-      name: hit.title,
+      name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
     };
   });
   const frame = toDataFrame(dashboardHits);
@@ -310,10 +313,17 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
       locationInfo[hit.name] = {
         name: hit.title,
         kind: 'folder',
-        url: hit.url,
+        url: toURL('folders', hit.name),
       }
     }
     return locationInfo;
   });
   return rsp;
+}
+
+function toURL(resource: string, name: string): string {
+  if (resource === 'folders') {
+    return `/dashboards/f/${name}`;
+  }
+  return `/d/${name}`;
 }

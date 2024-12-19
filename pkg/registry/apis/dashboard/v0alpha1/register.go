@@ -71,7 +71,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
-		search:           dashboard.NewSearchHandler(cfg, unified, tracing),
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
