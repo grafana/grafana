@@ -25,6 +25,7 @@ type SearchHit = {
   title: string;
   location: string;
   folder: string;
+  tags: string[];
 
   // calculated in the frontend
   url: string;
@@ -282,8 +283,11 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
     return {
       ...hit,
       url: toURL(hit.resource, hit.name),
+      tags: hit.tags || [],
+      folder: hit.folder || 'general',
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
+      kind: hit.resource.substring(0, hit.resource.length - 1),  // dashboard "kind" is not plural
     };
   });
   const frame = toDataFrame(dashboardHits);
