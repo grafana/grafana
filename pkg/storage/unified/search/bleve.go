@@ -305,27 +305,9 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// Write frame as JSON
-	//response.Frame, err = frame.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
 	// parse the facet fields
 	for k, v := range res.Facets {
-		f := &resource.ResourceSearchResponse_Facet{
-			Field:   v.Field,
-			Total:   int64(v.Total),
-			Missing: int64(v.Missing),
-		}
-		if v.Terms != nil {
-			for _, t := range v.Terms.Terms() {
-				f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
-					Term:  t.Term,
-					Count: int64(t.Count),
-				})
-			}
-		}
+		f := newResponseFacet(v)
 		if response.Facet == nil {
 			response.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
 		}
@@ -387,7 +369,7 @@ func (b *bleveIndex) getIndex(
 				return nil, fmt.Errorf("federated indexes must be the same type")
 			}
 			if typedindex.verifyKey(req.Federated[i]) != nil {
-				return nil, fmt.Errorf("federated index keys do not match")
+				return nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
 			}
 			all = append(all, typedindex.index)
 		}
@@ -397,11 +379,16 @@ func (b *bleveIndex) getIndex(
 }
 
 func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+	facets := bleve.FacetsRequest{}
+	for _, f := range req.Facet {
+		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
+	}
 	searchrequest := &bleve.SearchRequest{
 		Fields:  req.Fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
 		Explain: req.Explain,
+		Facets:  facets,
 	}
 
 	// Currently everything is within an AND query
@@ -415,6 +402,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 			queries = append(queries, q)
 		}
 	}
+	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
 			q, err := requirementQuery(v, "")
@@ -425,12 +413,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		}
 	}
 
-	if req.Query != "" {
-		// ??? Should expose the full power of query parsing here?
-		// it is great for exploration, but also hard to change in the future
-		q := bleve.NewQueryStringQuery(req.Query)
-		queries = append(queries, q)
-	}
+	queries = append(queries, newTextQuery(req))
 
 	if access != nil {
 		// TODO AUTHZ!!!!
@@ -458,30 +441,11 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	}
 
 	// Add the sort fields
-	for _, sort := range req.SortBy {
-		// hardcoded (for now)
-		if strings.HasPrefix(sort.Field, "stats.") {
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   sort.Field,
-				Desc:    sort.Desc,
-				Type:    search.SortFieldAsNumber, // force for now!
-				Mode:    search.SortFieldDefault,  // ???
-				Missing: search.SortFieldMissingLast,
-			})
-			continue
-		}
-
-		// Default support
-		input := sort.Field
-		if sort.Desc {
-			input = "-" + sort.Field
-		}
-		s := search.ParseSearchSortString(input)
-		searchrequest.Sort = append(searchrequest.Sort, s)
-	}
+	sorting := getSortFields(req)
+	searchrequest.SortBy(sorting)
 
 	// Always sort by *something*, otherwise the order is unstable
-	if len(searchrequest.Sort) == 0 {
+	if len(sorting) == 0 {
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
 			Desc: false,
 		})
@@ -490,23 +454,71 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	return searchrequest, nil
 }
 
+func getSortFields(req *resource.ResourceSearchRequest) []string {
+	sorting := []string{}
+	for _, sort := range req.SortBy {
+		input := sort.Field
+		if field, ok := textSortFields[input]; ok {
+			input = field
+		}
+
+		if sort.Desc {
+			input = "-" + input
+		}
+		sorting = append(sorting, input)
+	}
+	return sorting
+}
+
+// fields that we went to sort by the full text
+var textSortFields = map[string]string{
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
+}
+
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
-		if len(req.Values) != 1 {
-			return nil, resource.NewBadRequestError("equals query can have one value")
+		if len(req.Values) == 0 {
+			return query.NewMatchAllQuery(), nil
 		}
-		q := query.NewMatchQuery(req.Values[0])
-		q.FieldVal = prefix + req.Key
-		return q, nil
+		if len(req.Values[0]) == 1 {
+			q := query.NewMatchQuery(req.Values[0])
+			q.FieldVal = prefix + req.Key
+			return q, nil
+		}
 
+		conjuncts := []query.Query{}
+		for _, v := range req.Values {
+			q := query.NewMatchQuery(v)
+			q.FieldVal = prefix + req.Key
+			conjuncts = append(conjuncts, q)
+		}
+
+		return query.NewConjunctionQuery(conjuncts), nil
 	case selection.NotEquals:
 	case selection.DoesNotExist:
 	case selection.GreaterThan:
 	case selection.LessThan:
 	case selection.Exists:
 	case selection.In:
+		if len(req.Values) == 0 {
+			return query.NewMatchAllQuery(), nil
+		}
+		if len(req.Values) == 1 {
+			q := query.NewMatchQuery(req.Values[0])
+			q.FieldVal = prefix + req.Key
+			return q, nil
+		}
+
+		disjuncts := []query.Query{}
+		for _, v := range req.Values {
+			q := query.NewMatchQuery(v)
+			q.FieldVal = prefix + req.Key
+			disjuncts = append(disjuncts, q)
+		}
+
+		return query.NewDisjunctionQuery(disjuncts), nil
 	case selection.NotIn:
 	}
 	return nil, resource.NewBadRequestError(
@@ -614,4 +626,30 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		}
 	}
 	return fields, nil
+}
+
+func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Facet {
+	f := &resource.ResourceSearchResponse_Facet{
+		Field:   v.Field,
+		Total:   int64(v.Total),
+		Missing: int64(v.Missing),
+	}
+	if v.Terms != nil {
+		for _, t := range v.Terms.Terms() {
+			f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
+				Term:  t.Term,
+				Count: int64(t.Count),
+			})
+		}
+	}
+	return f
+}
+
+func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
+	if req.Query == "" || req.Query == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	// TODO: wildcard query?
+	// return bleve.NewWildcardQuery(req.Query)
+	return bleve.NewFuzzyQuery(req.Query)
 }
