@@ -688,6 +688,18 @@ export interface VizTooltipOptions {
 export interface Labels {}
 
 /**
+ * Compare two values
+ */
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -930,16 +942,10 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
-/**
- * Compare two values
- */
-export enum ComparisonOperation {
-  EQ = 'eq',
-  GT = 'gt',
-  GTE = 'gte',
-  LT = 'lt',
-  LTE = 'lte',
-  NEQ = 'neq',
+export enum SortWithReducer {
+  Az = 'az',
+  None = 'none',
+  Za = 'za',
 }
 
 /**
