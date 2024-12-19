@@ -27,9 +27,10 @@ import {
   TimeZone,
   toUtc,
   urlUtil,
+  LogSortOrderChangeEvent,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -130,7 +131,6 @@ export const LogsPanel = ({
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
-  const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
@@ -142,12 +142,16 @@ export const LogsPanel = ({
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
   let closeCallback = useRef<() => void>();
+  const { eventBus, onAddAdHocFilter } = usePanelContext();
 
   useEffect(() => {
-    scrollElement?.scrollTo(0, scrollTop);
-  }, [scrollElement, scrollTop]);
+    getAppEvents().publish(
+      new LogSortOrderChangeEvent({
+        order: sortOrder,
+      })
+    );
+  }, [sortOrder]);
 
-  const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (row) {
@@ -278,12 +282,16 @@ export const LogsPanel = ({
   }, [data]);
 
   useLayoutEffect(() => {
-    if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.offsetHeight);
-    } else {
-      setScrollTop(0);
+    // If the user has enabled infinite scrolling, we don't want to interfere with the scroll position.
+    if (!logsContainerRef.current || !scrollElement || enableInfiniteScrolling) {
+      return;
     }
-  }, [isAscending, logRows]);
+    if (sortOrder === LogsSortOrder.Ascending) {
+      scrollElement.scrollTo(0, logsContainerRef.current.offsetHeight);
+    } else {
+      scrollElement.scrollTo(0, 0);
+    }
+  }, [enableInfiniteScrolling, scrollElement, sortOrder, logRows]);
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
