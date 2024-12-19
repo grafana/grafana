@@ -257,7 +257,11 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	case admission.Delete:
 		return b.validateOnDelete(ctx, f)
 	case admission.Update:
-		return nil
+		old := a.GetOldObject()
+		if old == nil {
+			return fmt.Errorf("old object is nil")
+		}
+		return b.validateOnUpdate(ctx, obj, old)
 	case admission.Connect:
 		return nil
 	}
@@ -302,22 +306,12 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		return dashboards.ErrFolderTitleEmpty
 	}
 
-	for i := 1; i <= folderValidationRules.maxDepth; i++ {
-		parent := getParent(obj)
-		if parent == "" {
-			break
-		}
-		if i == folderValidationRules.maxDepth {
-			return folder.ErrMaximumDepthReached
-		}
-
-		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		obj = parentObj
+	_, err := b.checkFolderMaxDepth(ctx, obj)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	return err
 }
 
 func getParent(o runtime.Object) string {
@@ -326,4 +320,67 @@ func getParent(o runtime.Object) string {
 		return ""
 	}
 	return meta.GetFolder()
+}
+
+func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.Object) ([]string, error) {
+	var parents = []string{}
+	for i := 0; i < folderValidationRules.maxDepth; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		parents = append(parents, parent)
+		if i+1 == folderValidationRules.maxDepth {
+			return parents, folder.ErrMaximumDepthReached
+		}
+
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return parents, err
+		}
+		obj = parentObj
+	}
+	return parents, nil
+}
+
+func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+
+	fOld, ok := old.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	var newParent = getParent(obj)
+	if newParent != getParent(fOld) {
+		// it's a move operation
+		return b.validateMove(ctx, obj, newParent)
+	}
+	// it's a spec update
+	if f.Spec.Title == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object, newParent string) error {
+	// folder cannot be moved to a k6 folder
+	if newParent == accesscontrol.K6FolderUID {
+		return fmt.Errorf("k6 project may not be moved")
+	}
+
+	//FIXME: until we have a way to represent the tree, we can only
+	// look at folder parents to check how deep the new folder tree will be
+	parents, err := b.checkFolderMaxDepth(ctx, obj)
+	if err != nil {
+		return err
+	}
+
+	// if by moving a folder we exceed the max depth, return an error
+	if len(parents)+1 >= folderValidationRules.maxDepth {
+		return folder.ErrMaximumDepthReached
+	}
+	return nil
 }
