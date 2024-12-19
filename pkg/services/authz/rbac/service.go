@@ -309,18 +309,10 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	var folderMap map[string]FolderNode
-	key := folderCacheKey(req.Namespace.Value)
-	if cached, ok := s.folderCache.Get(key); ok {
-		folderMap = cached.(map[string]FolderNode)
-	} else {
-		var err error
-		folderMap, err = s.buildFolderTree(ctx, req.Namespace)
-		if err != nil {
-			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-			return false, err
-		}
-		s.folderCache.Set(key, folderMap, 0)
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return false, err
 	}
 
 	currentUID := req.ParentFolder
@@ -342,6 +334,11 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 }
 
 func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+	key := folderCacheKey(ns.Value)
+	if cached, ok := s.folderCache.Get(key); ok {
+		return cached.(map[string]FolderNode), nil
+	}
+
 	folders, err := s.store.GetFolders(ctx, ns)
 	if err != nil {
 		return nil, fmt.Errorf("could not get folders: %w", err)
@@ -372,6 +369,8 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 			}
 		}
 	}
+
+	s.folderCache.Set(key, folderMap, 0)
 
 	return folderMap, nil
 }
