@@ -8,7 +8,6 @@ import {
   dateTime,
   FieldType,
   PanelData,
-  setWeekStart,
   standardTransformersRegistry,
   StandardVariableQuery,
   toDataFrame,
