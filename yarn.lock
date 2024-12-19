@@ -17855,7 +17855,7 @@ __metadata:
     webpack-dev-server: "npm:5.2.0"
     webpack-livereload-plugin: "npm:3.0.2"
     webpack-manifest-plugin: "npm:5.0.0"
-    webpack-merge: "npm:5.10.0"
+    webpack-merge: "npm:6.0.1"
     webpackbar: "npm:^7.0.0"
     whatwg-fetch: "npm:3.6.20"
     xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
@@ -30649,6 +30649,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"webpack-merge@npm:6.0.1":
+  version: 6.0.1
+  resolution: "webpack-merge@npm:6.0.1"
+  dependencies:
+    clone-deep: "npm:^4.0.1"
+    flat: "npm:^5.0.2"
+    wildcard: "npm:^2.0.1"
+  checksum: 10/39ab911c26237922295d9b3d0617c8ea0c438c35a3b21b05506616a10423f5ece1962bccbedec932c5db61af57999b6d055d56d1f1755c63e2701bd4a55c3887
+  languageName: node
+  linkType: hard
+
 "webpack-sources@npm:^1.4.3":
   version: 1.4.3
   resolution: "webpack-sources@npm:1.4.3"
@@ -30959,10 +30970,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wildcard@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "wildcard@npm:2.0.0"
-  checksum: 10/56d4f8be540918ab3a676f0e57c9cac1d13009dc9974dbdc751a073bf71ec080376697eded083e8a8f86fcb3479135bfa9d4489e25e6c748666d3a53ee096d24
+"wildcard@npm:^2.0.0, wildcard@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "wildcard@npm:2.0.1"
+  checksum: 10/e0c60a12a219e4b12065d1199802d81c27b841ed6ad6d9d28240980c73ceec6f856771d575af367cbec2982d9ae7838759168b551776577f155044f5a5ba843c
   languageName: node
   linkType: hard
 
