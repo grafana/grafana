@@ -2,12 +2,7 @@ import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import {
-  getPanelPluginCounts,
-  getV1SchemaPanelCounts,
-  getV1SchemaVariables,
-  getV2SchemaVariables,
-} from 'app/features/dashboard/utils/tracking';
+import { getV1SchemaPanelCounts, getV1SchemaVariables } from 'app/features/dashboard/utils/tracking';
 import { SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
@@ -33,7 +28,7 @@ export interface DashboardSceneSerializerLike<T> {
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
+  getTrackingInformation: () => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
 }
 
@@ -41,7 +36,7 @@ interface DashboardTrackingInfo {
   uid?: string;
   title?: string;
   schemaVersion: number;
-  version_before_migration?: number | string;
+  version_before_migration?: number;
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
@@ -164,29 +159,8 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     throw new Error('v2 schema: Method not implemented.');
   }
 
-  getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
-    const panelPluginIds =
-      Object.values(this.initialSaveModel?.elements ?? [])
-        .filter((e) => e.kind === 'Panel')
-        .map((p) => p.spec.vizConfig.kind) || [];
-    const panels = getPanelPluginCounts(panelPluginIds);
-    const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
-
-    if (this.initialSaveModel && s) {
-      return {
-        // TODO: schemaVersion and version_before_migration are not stored anywhere in the v2 schema
-        schemaVersion: 2,
-        version_before_migration: s.state.meta.version,
-        uid: s.state.uid,
-        title: this.initialSaveModel.title,
-        panels_count: panelPluginIds.length || 0,
-        settings_nowdelay: undefined,
-        settings_livenow: !!this.initialSaveModel.liveNow,
-        ...panels,
-        ...variables,
-      };
-    }
-
+  getTrackingInformation() {
+    throw new Error('v2 schema: Method not implemented.');
     return undefined;
   }
 
