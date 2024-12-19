@@ -133,6 +133,10 @@ func TestDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "folders",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "library_elements"
 			}
 		]`, string(jj))
 	})
@@ -161,6 +165,10 @@ func TestDirectSQLStats(t *testing.T) {
 			{
 				"group": "sql-fallback",
 				"resource": "folders"
+			},
+						{
+				"group": "sql-fallback",
+				"resource": "library_elements"
 			}
 		]`, string(jj))
 	})
