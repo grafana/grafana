@@ -341,10 +341,9 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		})
 
 		require.NoError(t, err)
-		sessionCache.AssertExpectations(t) // method is defined to only return "Once()" for each region.
-		// AssertExpectations will fail if those methods were not called Once(), so expected number of calls is asserted by this line
+		sessionCache.AssertExpectations(t) // method is defined to return twice (once for each batch)
 		mockMetricClient.AssertNumberOfCalls(t, "GetMetricDataWithContext", 2)
-		// GetMetricData is asserted to have been called 2 times, presumably once for each group of regions (2 regions total)
+		// GetMetricData is asserted to have been called 2 times, presumably once for each time range (2 time ranges total)
 	})
 }
 

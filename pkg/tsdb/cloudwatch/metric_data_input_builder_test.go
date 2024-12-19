@@ -32,9 +32,9 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			query := getBaseQuery()
 			query.TimezoneUTCOffset = tc.timezoneUTCOffset
 
-			query.StartTime = now.Add(time.Hour * -2)
-			query.EndTime = now.Add(time.Hour * -1)
-			mdi, err := executor.buildMetricDataInput(context.Background(), []*models.CloudWatchQuery{query})
+			from := now.Add(time.Hour * -2)
+			to := now.Add(time.Hour * -1)
+			mdi, err := executor.buildMetricDataInput(context.Background(), from, to, []*models.CloudWatchQuery{query})
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdi)

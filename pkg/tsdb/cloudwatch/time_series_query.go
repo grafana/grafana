@@ -33,7 +33,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	}
 
 	timeBatches := utils.BatchDataQueriesByTimeRange(req.Queries)
-	requestQueriesByRegion := make(map[string][]*models.CloudWatchQuery)
+	requestQueriesByTimeAndRegion := make(map[string][]*models.CloudWatchQuery)
 	for i, timeBatch := range timeBatches {
 		startTime := timeBatch[0].TimeRange.From
 		endTime := timeBatch[0].TimeRange.To
@@ -48,27 +48,31 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 
 		for _, query := range requestQueries {
 			key := fmt.Sprintf("%d %s", i, query.Region)
-			if _, exist := requestQueriesByRegion[key]; !exist {
-				requestQueriesByRegion[key] = []*models.CloudWatchQuery{}
+			if _, exist := requestQueriesByTimeAndRegion[key]; !exist {
+				requestQueriesByTimeAndRegion[key] = []*models.CloudWatchQuery{}
 			}
-			requestQueriesByRegion[key] = append(requestQueriesByRegion[key], query)
+			requestQueriesByTimeAndRegion[key] = append(requestQueriesByTimeAndRegion[key], query)
 		}
 	}
-	if len(requestQueriesByRegion) == 0 {
+	if len(requestQueriesByTimeAndRegion) == 0 {
 		return backend.NewQueryDataResponse(), nil
 	}
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
-	for _, regionQueries := range requestQueriesByRegion {
-		batches := [][]*models.CloudWatchQuery{regionQueries}
+	for _, timeAndRegionQueries := range requestQueriesByTimeAndRegion {
+		batches := [][]*models.CloudWatchQuery{timeAndRegionQueries}
 		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
-			batches = getMetricQueryBatches(regionQueries, e.logger.FromContext(ctx))
+			batches = getMetricQueryBatches(timeAndRegionQueries, e.logger.FromContext(ctx))
 		}
+
+		// region, startTime, and endTime are the same for the set of queries
+		region := timeAndRegionQueries[0].Region
+		startTime := timeAndRegionQueries[0].StartTime
+		endTime := timeAndRegionQueries[0].EndTime
 
 		for _, batch := range batches {
 			requestQueries := batch
-			region := requestQueries[0].Region
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
@@ -88,7 +92,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				metricDataInput, err := e.buildMetricDataInput(ctx, requestQueries)
+				metricDataInput, err := e.buildMetricDataInput(ctx, startTime, endTime, requestQueries)
 				if err != nil {
 					return err
 				}
@@ -131,7 +135,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	if err := eg.Wait(); err != nil {
 		dataResponse := backend.ErrorResponseWithErrorSource(fmt.Errorf("metric request error: %w", err))
 		resultChan <- &responseWrapper{
-			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueriesByRegion),
+			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueriesByTimeAndRegion),
 			DataResponse: &dataResponse,
 		}
 	}
