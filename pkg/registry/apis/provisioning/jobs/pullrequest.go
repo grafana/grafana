@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log/slog"
 	"net/url"
 	"path"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 // resourcePreview represents a resource that has changed in a pull request.
@@ -69,7 +68,6 @@ type PreviewRenderer interface {
 type PullRequestCommenter struct {
 	repo         PullRequestRepo
 	parser       *resources.Parser
-	logger       *slog.Logger
 	lintTemplate *template.Template
 	prevTemplate *template.Template
 	baseURL      *url.URL
@@ -79,7 +77,6 @@ type PullRequestCommenter struct {
 func NewPullRequestCommenter(
 	repo PullRequestRepo,
 	parser *resources.Parser,
-	logger *slog.Logger,
 	renderer PreviewRenderer,
 	baseURL *url.URL,
 ) (*PullRequestCommenter, error) {
@@ -95,7 +92,6 @@ func NewPullRequestCommenter(
 	return &PullRequestCommenter{
 		repo:         repo,
 		parser:       parser,
-		logger:       logger,
 		lintTemplate: lintTemplate,
 		prevTemplate: prevTemplate,
 		renderer:     renderer,
@@ -115,7 +111,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		return nil
 	}
 
-	ctx, logger := plog.FromContext(ctx, c.logger, "pr", job.Spec.PR)
+	ctx, logger := slogctx.From(ctx, "component", "pull-request-commenter", "pr", job.Spec.PR)
 	logger.InfoContext(ctx, "process pull request")
 	defer logger.InfoContext(ctx, "pull request processed")
 
@@ -146,7 +142,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			continue
 		}
 
-		ctx, logger := logger.With(ctx, "file", f.Path)
+		ctx, logger := slogctx.With(ctx, logger, "file", f.Path)
 		fileInfo, err := c.repo.Read(ctx, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)

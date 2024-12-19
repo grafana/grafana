@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
 
@@ -12,13 +11,13 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type BackgroundIdentityService interface {
@@ -44,7 +43,6 @@ func ProvideProvisioningIdentityService(
 		role:                     org.RoleAdmin,
 		clientConfigProvider:     clientConfigProvider,
 
-		log:             slog.Default().With("logger", "background-identities", "prefix", prefix),
 		accounts:        make(map[int64]string),
 		serviceAccounts: serviceAccounts,
 		authn:           authn,
@@ -54,8 +52,6 @@ func ProvideProvisioningIdentityService(
 }
 
 type backgroundIdentities struct {
-	log *slog.Logger
-
 	serviceAccountNamePrefix string
 	role                     org.RoleType
 	clientConfigProvider     apiserver.DirectRestConfigProvider
@@ -159,7 +155,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
 	serviceAccountName := fmt.Sprintf("%s-org-%d", o.serviceAccountNamePrefix, orgId)
-	ctx, logger := plog.FromContext(ctx, o.log, "account_name", serviceAccountName)
+	ctx, logger := slogctx.From(ctx, "account_name", serviceAccountName)
 	saForm := serviceaccounts.CreateServiceAccountForm{
 		Name: serviceAccountName,
 		Role: &o.role,

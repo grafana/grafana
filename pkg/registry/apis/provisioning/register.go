@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -57,7 +56,6 @@ type ProvisioningAPIBuilder struct {
 	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
-	logger            *slog.Logger
 	render            rendering.Service
 	blobstore         blob.PublicBlobStore
 	client            *resources.ClientFactory
@@ -86,7 +84,6 @@ func NewProvisioningAPIBuilder(
 	builder := &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
-		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecretKey,
 		features:          features,
 		ghFactory:         ghFactory,
@@ -94,7 +91,6 @@ func NewProvisioningAPIBuilder(
 		client:            clientFactory,
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
-			Logger: slog.Default().With("logger", "provisioning-parser-factory"),
 		},
 		render:    render,
 		blobstore: blobstore,
@@ -189,29 +185,23 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		getter: b,
 		client: b.identities,
 		jobs:   b.jobs,
-		logger: b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
-		logger: b.logger.With("connector", "test"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter:  b,
 		parsers: b.parsers,
-		logger:  b.logger.With("connector", "files"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
-		logger:     b.logger.With("connector", "history"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		logger:     b.logger.With("connector", "sync"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
-		logger:     b.logger.With("connector", "export"),
 		queue:      b.jobs,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -287,7 +277,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver, b.logger.With("logger", "local-repository")), nil
+		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 		webhookURL := fmt.Sprintf(
@@ -390,7 +380,6 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 			b.tester = &RepositoryTester{
 				clientFactory: b.client,
 				client:        c.ProvisioningV0alpha1(),
-				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
 			}
 
 			b.jobs.Register(jobs.NewJobWorker(
@@ -398,7 +387,6 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				b.parsers,
 				c.ProvisioningV0alpha1(),
 				b.identities,
-				b.logger.With("worker", "github"),
 				b.render,
 				b.blobstore,
 				b.urlProvider,

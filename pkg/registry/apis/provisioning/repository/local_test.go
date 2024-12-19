@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,7 +32,7 @@ func TestLocal(t *testing.T) {
 					Path: "invalid/path",
 				},
 			},
-		}, &LocalFolderResolver{}, slog.Default())
+		}, &LocalFolderResolver{})
 
 		// Did not resolve a local path
 		require.Equal(t, "", r.path)

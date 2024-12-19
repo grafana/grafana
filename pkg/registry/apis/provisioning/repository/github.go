@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"regexp"
 	"slices"
@@ -16,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var subscribedEvents = []string{"push", "pull_request"}
@@ -27,7 +26,6 @@ type SecretsService interface {
 }
 
 type githubRepository struct {
-	logger     *slog.Logger
 	config     *provisioning.Repository
 	gh         pgh.Client
 	secrets    SecretsService
@@ -45,7 +43,6 @@ func NewGitHub(
 ) *githubRepository {
 	return &githubRepository{
 		config:     config,
-		logger:     slog.Default().With("logger", "github-repository"),
 		gh:         factory.New(ctx, config.Spec.GitHub.Token),
 		secrets:    secrets,
 		webhookURL: webhookURL,
@@ -181,7 +178,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 	}
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	ctx, logger := plog.FromContext(ctx, r.logger, "owner", owner, "repo", repo, "ref", ref)
+	ctx, logger := slogctx.From(ctx, "component", "github-repository", "owner", owner, "repo", repo, "ref", ref)
 
 	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
 	if err != nil {
@@ -387,7 +384,8 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 	}
 
 	if ok {
-		r.logger.InfoContext(ctx, "branch already exists", "branch", branchName)
+		_, logger := slogctx.From(ctx, "component", "github-repository")
+		logger.InfoContext(ctx, "branch already exists", "branch", branchName)
 
 		return nil
 	}
@@ -583,7 +581,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		case "unchanged":
 			// do nothing
 		default:
-			_, logger := plog.FromContext(ctx, r.logger)
+			_, logger := slogctx.From(ctx, "component", "github-repository")
 			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
 	}
@@ -638,7 +636,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, err
 	}
 
-	_, logger := plog.FromContext(ctx, r.logger)
+	_, logger := slogctx.From(ctx)
 	logger.InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
 }
@@ -719,7 +717,7 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	_, logger := plog.FromContext(ctx, r.logger)
+	_, logger := slogctx.From(ctx)
 	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }

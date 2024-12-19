@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"path"
 	"path/filepath"
 
@@ -21,32 +20,29 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
 	Client *ClientFactory
-	Logger *slog.Logger
 }
 
-func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
+func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
 	config := repo.Config()
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {
 		return nil, err
 	}
-	ctx := context.Background()
-	ctx, logger := plog.FromContext(ctx, f.Logger, "parser", config.Name)
+	ctx, logger := slogctx.From(ctx, "parser", config.Name)
 
 	parser := &Parser{
 		repo:   config,
 		client: client,
 		kinds:  kinds,
 		mapper: NamesFromHashedRepoPath,
-		logger: logger.Logger,
 	}
 	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
@@ -82,7 +78,6 @@ type Parser struct {
 	client *DynamicClient
 	kinds  KindsLookup
 	linter lint.Linter
-	logger *slog.Logger
 }
 
 type ParsedResource struct {
@@ -135,7 +130,7 @@ func (r *Parser) ShouldIgnore(ctx context.Context, p string) bool {
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	ctx, logger := plog.FromContext(ctx, r.logger)
+	ctx, logger := slogctx.From(ctx, "path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}

@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -14,7 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
+	"github.com/grafana/grafana/pkg/slogctx"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,12 +24,10 @@ func NewJobQueue(capacity int) JobQueue {
 		jobs:      []provisioning.Job{},
 		watchSet:  NewWatchSet(),
 		versioner: &storage.APIObjectVersioner{},
-		logger:    slog.Default().With("logger", "job-queue"),
 	}
 }
 
 type jobStore struct {
-	logger   *slog.Logger
 	capacity int
 	worker   Worker
 
@@ -112,13 +109,13 @@ func (s *jobStore) drainPending() {
 	var err error
 	for {
 		time.Sleep(time.Microsecond * 200)
-		ctx := context.Background()
+		ctx, logger := slogctx.From(context.Background(), "logger", "job-store")
 
 		job := s.Checkout(ctx, nil)
 		if job == nil {
 			return // done
 		}
-		ctx, logger := plog.FromContext(ctx, s.logger, "job", job.GetName(), "namespace", job.GetNamespace())
+		ctx, logger = slogctx.With(ctx, logger, "job", job.GetName(), "namespace", job.GetNamespace())
 
 		started := time.Now()
 		var status *provisioning.JobStatus

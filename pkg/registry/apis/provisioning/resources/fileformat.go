@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,8 +15,8 @@ import (
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var ErrUnableToReadResourceBytes = errors.New("unable to read bytes as a resource")
@@ -47,7 +46,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", ErrClassicResourceIsAlreadyK8sForm
 		}
 
-		_, logger := plog.FromContext(ctx, slog.Default().With("logger", "provisioning-read-classic-resource"))
+		_, logger := slogctx.From(ctx)
 		logger.DebugContext(ctx, "TODO... likely a provisioning",
 			"apiVersion", value["apiVersion"],
 			"kind", value["Kind"])

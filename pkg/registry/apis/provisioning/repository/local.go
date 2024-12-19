@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,8 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type LocalFolderResolver struct {
@@ -84,17 +83,15 @@ var _ Repository = (*localRepository)(nil)
 type localRepository struct {
 	config   *provisioning.Repository
 	resolver *LocalFolderResolver
-	logger   *slog.Logger
 
 	// validated path that can be read if not empty
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver, logger *slog.Logger) *localRepository {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
-		logger:   logger,
 	}
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
@@ -289,7 +286,7 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 
 	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
 	if err != nil {
-		_, logger := plog.FromContext(ctx, r.logger)
+		_, logger := slogctx.From(ctx, "component", "local-repository")
 		logger.WarnContext(ctx, "got an invalid path from caller", "path", inputUnsafePath, "err", err)
 		return err
 	}

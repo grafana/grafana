@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"path"
 	"strings"
@@ -16,15 +15,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/plog"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type filesConnector struct {
 	getter  RepoGetter
 	parsers *resources.ParserFactory
-	logger  *slog.Logger
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -59,7 +57,7 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ctx, logger := plog.FromContext(ctx, s.logger, "repository_name", name)
+	ctx, logger := slogctx.From(ctx, "logger", "files-connector", "repository_name", name)
 	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find repository", "error", err)
@@ -70,7 +68,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
-		ctx, logger := logger.With(r.Context(), "url", r.URL.Path, "ref", ref, "message", message)
+		ctx, logger := slogctx.With(r.Context(), logger, "url", r.URL.Path, "ref", ref, "message", message)
 
 		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
@@ -148,7 +146,7 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 		return 0, nil, err
 	}
 
-	parser, err := s.parsers.GetParser(repo)
+	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -162,7 +160,7 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 	if parsed.GVR == nil {
 		if parsed.GVK != nil {
 			//nolint:govet
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: "+parsed.GVK.Kind))
+			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: %s", parsed.GVK.Kind))
 		} else {
 			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
 		}
@@ -195,7 +193,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		Ref:  ref,
 	}
 
-	parser, err := s.parsers.GetParser(repo)
+	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +257,8 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err
 	}
 
-	fmt.Printf("TODO! trigger sync for this file we just deleted... %s\n", path)
+	_, logger := slogctx.From(ctx, "path", path)
+	logger.InfoContext(ctx, "TODO! trigger sync for this file we just deleted...")
 
 	return &provisioning.ResourceWrapper{
 		Path: path,

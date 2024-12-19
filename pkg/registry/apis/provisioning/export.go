@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,11 +12,11 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	logger     *slog.Logger
 	queue      jobs.JobQueue
 }
 
@@ -63,12 +62,14 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 	ns := repo.Config().GetNamespace()
-	logger := c.logger.With("repository", name, "namespace", ns)
+	ctx, logger := slogctx.From(ctx, "logger", "export-connector", "repository", name, "namespace", ns)
 
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		job, err := c.queue.Add(r.Context(), &provisioning.Job{
+		ctx := r.Context()
+
+		job, err := c.queue.Add(ctx, &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: ns,
 				Labels: map[string]string{
