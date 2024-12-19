@@ -1381,9 +1381,10 @@ var (
 		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:        "cloudWatchRoundUpEndTime",
