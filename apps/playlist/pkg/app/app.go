@@ -12,7 +12,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
@@ -35,7 +34,7 @@ func New(cfg app.Config) (app.App, error) {
 
 	playlistConfig, ok := cfg.SpecificConfig.(*PlaylistConfig)
 	if ok && playlistConfig.EnableReconcilers {
-		patchClient, err := getPatchClient(cfg.KubeConfig, playlist.PlaylistKind())
+		patchClient, err := getPatchClient(cfg.KubeConfig, playlistv0alpha1.PlaylistKind())
 		if err != nil {
 			klog.ErrorS(err, "Error getting patch client for use with opinionated reconciler")
 			return nil, err
