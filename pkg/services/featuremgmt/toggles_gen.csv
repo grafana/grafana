@@ -209,7 +209,6 @@ prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,f
 userStorageAPI,experimental,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
-dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
