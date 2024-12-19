@@ -8,6 +8,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -101,6 +102,15 @@ func newInProcLegacyClient(server *legacyServer, tracer tracing.Tracer) (authzli
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&authzv1.AuthzService_ServiceDesc,
+			grpcAuth.UnaryServerInterceptor(noAuth),
+			grpcAuth.StreamServerInterceptor(noAuth),
+		),
+		server,
+	)
+
+	channel.RegisterService(
+		grpchan.InterceptServer(
+			&authzextv1.AuthzExtentionService_ServiceDesc,
 			grpcAuth.UnaryServerInterceptor(noAuth),
 			grpcAuth.StreamServerInterceptor(noAuth),
 		),
