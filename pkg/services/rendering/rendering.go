@@ -440,6 +440,15 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 		subPath = rs.Cfg.AppSubURL
 	}
 
+	if rs.Cfg.RendererCallbackUrl != "" {
+		u, err := url.Parse(rs.Cfg.RendererCallbackUrl)
+		if err != nil {
+			// Error handling here if renderer callback url is not a valid URL?
+		}
+		rs.domain = u.Hostname()
+		return fmt.Sprintf("%s://%s%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
+	}
+
 	// &render=1 signals to the legacy redirect layer to
 	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }

@@ -31,6 +31,14 @@ func TestGetUrl(t *testing.T) {
 		require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
 	})
 
+	t.Run("When callback url is configured and https should return domain of callback url plus path", func(t *testing.T) {
+		rs.Cfg.RendererUrl = ""
+		rs.Cfg.RendererCallbackUrl = "https://public-grafana.com/"
+		rs.Cfg.Protocol = setting.HTTPSScheme
+		url := rs.getGrafanaCallbackURL(path)
+		require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
+	})
+
 	t.Run("When renderer url not configured", func(t *testing.T) {
 		rs.Cfg.RendererUrl = ""
 		rs.domain = "localhost"
