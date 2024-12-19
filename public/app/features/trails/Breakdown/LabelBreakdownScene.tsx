@@ -4,6 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
@@ -449,7 +450,7 @@ export function buildAllLayout(
       break;
     }
 
-    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
+    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, utf8Support(String(option.value)));
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
