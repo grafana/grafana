@@ -9540,6 +9540,10 @@
           "pdfCombineOneFile": {
             "type": "boolean"
           },
+          "pdfScaleFactor": {
+            "format": "float",
+            "type": "number"
+          },
           "pdfShowTemplateVariables": {
             "type": "boolean"
           },
