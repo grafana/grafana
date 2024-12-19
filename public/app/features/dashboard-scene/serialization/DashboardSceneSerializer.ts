@@ -4,7 +4,6 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import {
   getPanelPluginCounts,
-  getV1SchemaPanelCounts,
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
