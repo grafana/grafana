@@ -4045,7 +4045,7 @@ __metadata:
     rc-drawer: "npm:7.2.0"
     rc-slider: "npm:11.1.7"
     rc-time-picker: "npm:^3.7.3"
-    rc-tooltip: "npm:6.3.1"
+    rc-tooltip: "npm:6.3.2"
     react: "npm:18.2.0"
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
@@ -25091,9 +25091,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:6.3.1":
-  version: 6.3.1
-  resolution: "rc-tooltip@npm:6.3.1"
+"rc-tooltip@npm:6.3.2":
+  version: 6.3.2
+  resolution: "rc-tooltip@npm:6.3.2"
   dependencies:
     "@babel/runtime": "npm:^7.11.2"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -25101,7 +25101,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/e871f4430ba3711edc002cb55cd189471ae353bc2262ce648d14148d2648efa0849af87e85a750d03b23532a56c506724a6756bef1d42dcd48d061ccdf0024d8
+  checksum: 10/5bc59020243759725417320a060ead8b54e863cef7e57a2b849eec7f4931d828507c473a328849894544a26168a3a4ce54049af738109ec7197f3d1363569e8e
   languageName: node
   linkType: hard
 
