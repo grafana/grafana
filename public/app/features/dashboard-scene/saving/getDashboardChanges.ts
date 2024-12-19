@@ -46,6 +46,7 @@ export function getRawDashboardV2Changes(
   const changedSaveModel = changed;
   const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
   const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
+  //FixME: error is triggered because initial save model is not v2
   const hasRefreshChanged = changedSaveModel.timeSettings.autoRefresh !== initialSaveModel.timeSettings.autoRefresh;
 
   if (!saveTimeRange) {

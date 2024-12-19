@@ -53,8 +53,8 @@ import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
+    [P in keyof T]?: DeepPartial<T[P]>;
+  }
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
@@ -64,9 +64,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const controlsState = oldDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
+  const title = oldDash.title ?? 'sdsadasd';
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
-    title: oldDash.title,
+    title,
     description: oldDash.description ?? '',
     cursorSync: getCursorSync(oldDash),
     liveNow: getLiveNow(oldDash),
@@ -115,8 +117,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   };
 
   try {
-    validateDashboardSchemaV2(dashboardSchemaV2);
-    return dashboardSchemaV2 as DashboardV2Spec;
+    // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
+    if (validateDashboardSchemaV2(dashboardSchemaV2)) {
+      return dashboardSchemaV2;
+    }
+    // should never reach this point, validation should throw an error
+    throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
   } catch (reason) {
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);

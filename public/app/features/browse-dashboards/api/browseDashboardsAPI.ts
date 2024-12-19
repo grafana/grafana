@@ -2,7 +2,7 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -338,6 +338,11 @@ export const browseDashboardsAPI = createApi({
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
       queryFn: async (cmd) => {
         try {
+          // When we use the `useV2DashboardsAPI` flag, we can save 'v2' schema dashboards
+          if (config.featureToggles.useV2DashboardsAPI) {
+            const response = await getDashboardAPI('v2').saveDashboard(cmd);
+            return { data: response };
+          }
           const rsp = await getDashboardAPI().saveDashboard(cmd);
           return { data: rsp };
         } catch (error) {
