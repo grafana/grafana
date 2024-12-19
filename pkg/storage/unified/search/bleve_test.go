@@ -27,13 +27,14 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.CreateTemp("", "bleve-test")
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
-	backend := NewBleveBackend(BleveOptions{
-		Root:          tmpdir.Name(),
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 	}, tracing.NewNoopTracerService())
+	require.NoError(t, err)
 
 	// AVOID NPE in test
 	resource.NewIndexMetrics(backend.opts.Root, backend)
