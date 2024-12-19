@@ -211,6 +211,6 @@ export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
 
-export class HistoryChangedEvent extends BusEventWithPayload<HistoryEntryView> {
-  static type = 'history-changed';
+export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
+  static type = 'record-history-entry';
 }

@@ -311,6 +311,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		folder.NewFakeStore(),
 		nil,
 		zanzana.NewNoopClient(),
+		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -398,6 +400,8 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, zanzana.NewNoopClient(),
+		nil,
+		nil,
 	)
 	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -459,7 +463,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(),
+			nil, zanzana.NewNoopClient(), nil, nil,
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)

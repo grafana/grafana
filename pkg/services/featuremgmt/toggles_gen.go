@@ -383,6 +383,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesCliDashboards
+	// Use the k8s client to retrieve dashboards internally
+	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
+
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
@@ -554,10 +558,6 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
-
-	// FlagOnPremToCloudMigrationsAlerts
-	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
-	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
 
 	// FlagOnPremToCloudMigrationsAuthApiMig
 	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
@@ -767,10 +767,6 @@ const (
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
-	// FlagSingleTopNav
-	// Unifies the top search bar and breadcrumb bar into one
-	FlagSingleTopNav = "singleTopNav"
-
 	// FlagExploreLogsShardSplitting
 	// Used in Explore Logs to split queries into multiple queries based on the number of shards
 	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
@@ -819,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagUnifiedStorageSearchSprinkles
+	// Enable sprinkles on unified storage search
+	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -863,6 +863,10 @@ const (
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
+	// FlagPrometheusSpecialCharsInLabelValues
+	// Adds support for quotes and special characters in label values for Prometheus queries
+	FlagPrometheusSpecialCharsInLabelValues = "prometheusSpecialCharsInLabelValues"
+
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
@@ -899,6 +903,10 @@ const (
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 
+	// FlagUseV2DashboardsAPI
+	// Use the v2 kubernetes API in the frontend for dashboards
+	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
+
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
@@ -910,4 +918,12 @@ const (
 	// FlagUnifiedHistory
 	// Displays the navigation history so the user can navigate back to previous pages
 	FlagUnifiedHistory = "unifiedHistory"
+
+	// FlagLokiLabelNamesQueryApi
+	// Defaults to using the Loki `/labels` API instead of `/series`
+	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
+
+	// FlagInvestigationsBackend
+	// Enable the investigations backend API
+	FlagInvestigationsBackend = "investigationsBackend"
 )

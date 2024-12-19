@@ -5,7 +5,8 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { HistoryChangedEvent } from 'app/types/events';
+import { t } from 'app/core/internationalization';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -18,7 +19,7 @@ export function HistoryContainer() {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const sub = appEvents.subscribe(HistoryChangedEvent, (ev) => {
+    const sub = appEvents.subscribe(RecordHistoryEntryEvent, (ev) => {
       const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
       if (clickedHistory) {
         store.setObject('CLICKING_HISTORY', false);
@@ -48,10 +49,19 @@ export function HistoryContainer() {
 
   return (
     <>
-      <ToolbarButton onClick={onToggleShowHistoryDrawer} iconOnly icon="history" aria-label="History" />
+      <ToolbarButton
+        onClick={onToggleShowHistoryDrawer}
+        iconOnly
+        icon="history"
+        aria-label={t('nav.history-container.drawer-tittle', 'History')}
+      />
       <NavToolbarSeparator className={styles.separator} />
       {showHistoryDrawer && (
-        <Drawer title="History" onClose={onToggleShowHistoryDrawer} size="md">
+        <Drawer
+          title={t('nav.history-container.drawer-tittle', 'History')}
+          onClose={onToggleShowHistoryDrawer}
+          size="md"
+        >
           <HistoryWrapper onClose={() => onToggleShowHistoryDrawer(false)} />
         </Drawer>
       )}

@@ -23,9 +23,9 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
     const date = moment(entry.time);
     let key = '';
     if (date.isSame(moment(), 'day')) {
-      key = 'Today';
+      key = t('nav.history-wrapper.today', 'Today');
     } else if (date.isSame(moment().subtract(1, 'day'), 'day')) {
-      key = 'Yesterday';
+      key = t('nav.history-wrapper.yesterday', 'Yesterday');
     } else {
       key = date.format('YYYY-MM-DD');
     }
@@ -58,7 +58,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
       </Box>
       {history.length > numItemsToShow && (
         <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
-          {t('nav.history.show-more', 'Show more')}
+          {t('nav.history-wrapper.show-more', 'Show more')}
         </Button>
       )}
     </Stack>
@@ -75,6 +75,9 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const theme = useTheme2();
   const [isExpanded, setIsExpanded] = useState(isSelected && entry.views.length > 0);
   const { breadcrumbs, views, time, url, sparklineData } = entry;
+  const expandedLabel = isExpanded
+    ? t('nav.history-wrapper.collapse', 'Collapse')
+    : t('nav.history-wrapper.expand', 'Expand');
 
   const selectedViewTime =
     isSelected &&
@@ -89,7 +92,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           <IconButton
             name={isExpanded ? 'angle-down' : 'angle-right'}
             onClick={() => setIsExpanded(!isExpanded)}
-            aria-label="Expand / collapse"
+            aria-label={expandedLabel}
             className={styles.iconButton}
           />
         ) : (
