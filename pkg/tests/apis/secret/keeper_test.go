@@ -147,7 +147,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			require.EqualValues(t, keeper, anotherKeeper)
 		})
 
-		t.Run("and listing keepers returns the created secure value", func(t *testing.T) {
+		t.Run("and listing keepers returns the created keeper", func(t *testing.T) {
 			rawList, err := client.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawList)

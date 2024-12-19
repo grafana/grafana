@@ -1,4 +1,4 @@
-package reststorage
+package xkube
 
 import "github.com/grafana/grafana/pkg/apimachinery/utils"
 
@@ -12,7 +12,7 @@ var (
 	}
 )
 
-func cleanAnnotations(anno map[string]string) map[string]string {
+func CleanAnnotations(anno map[string]string) map[string]string {
 	copy := make(map[string]string)
 	for k, v := range anno {
 		if skipAnnotations[k] {

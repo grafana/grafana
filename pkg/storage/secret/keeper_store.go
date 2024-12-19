@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/authlib/claims"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,16 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// KeeperStorage is the interface for wiring and dependency injection.
-type KeeperStorage interface {
-	Create(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
-	Read(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, error)
-	Update(ctx context.Context, sv *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error)
-	Delete(ctx context.Context, namespace string, name string) error
-	List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error)
-}
-
-func ProvideKeeperStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (KeeperStorage, error) {
+func ProvideKeeperStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.KeeperStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperStorage{}, nil
@@ -66,13 +59,13 @@ func (s *keeperStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keepe
 	return createdKeeper, nil
 }
 
-func (s *keeperStorage) Read(ctx context.Context, namespace string, name string) (*secretv0alpha1.Keeper, error) {
+func (s *keeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.Keeper, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &Keeper{Name: name, Namespace: namespace}
+	row := &Keeper{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
 		if err != nil {
@@ -80,7 +73,7 @@ func (s *keeperStorage) Read(ctx context.Context, namespace string, name string)
 		}
 
 		if !found {
-			return ErrKeeperNotFound
+			return contracts.ErrKeeperNotFound
 		}
 
 		return nil
@@ -111,7 +104,7 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 		}
 
 		if !found {
-			return ErrKeeperNotFound
+			return contracts.ErrKeeperNotFound
 		}
 
 		return nil
@@ -142,13 +135,13 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 	return keeper, nil
 }
 
-func (s *keeperStorage) Delete(ctx context.Context, namespace string, name string) error {
+func (s *keeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
 	}
 
-	row := &Keeper{Name: name, Namespace: namespace}
+	row := &Keeper{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("failed to delete row: %w", err)
@@ -163,7 +156,7 @@ func (s *keeperStorage) Delete(ctx context.Context, namespace string, name strin
 	return nil
 }
 
-func (s *keeperStorage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (s *keeperStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")

@@ -2,19 +2,15 @@ package secret
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-)
-
-var (
-	ErrKeeperNotFound = errors.New("keeper not found")
 )
 
 type KeeperType string
@@ -148,7 +144,7 @@ func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, act
 func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
 	var annotations string
 	if len(kp.Annotations) > 0 {
-		cleanedAnnotations := CleanAnnotations(kp.Annotations)
+		cleanedAnnotations := xkube.CleanAnnotations(kp.Annotations)
 		if len(cleanedAnnotations) > 0 {
 			kp.Annotations = make(map[string]string) // Safety: reset to prohibit use of kp.Annotations further.
 

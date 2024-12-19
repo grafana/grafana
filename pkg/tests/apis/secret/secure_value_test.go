@@ -2,7 +2,6 @@ package secret
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -18,17 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 var gvrSecureValues = schema.GroupVersionResource{
 	Group:    "secret.grafana.app",
 	Version:  "v0alpha1",
 	Resource: "securevalues",
-}
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
 }
 
 func TestIntegrationSecureValue(t *testing.T) {
@@ -43,27 +37,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagSecretsManagementAppPlatform,
 		},
-	})
-
-	t.Run("check discovery client", func(t *testing.T) {
-		disco := helper.NewDiscoveryClient()
-
-		resources, err := disco.ServerResourcesForGroupVersion("secret.grafana.app/v0alpha1")
-		require.NoError(t, err)
-
-		v1Disco, err := json.MarshalIndent(resources, "", "  ")
-		require.NoError(t, err)
-
-		var apiResourceList map[string]any
-		require.NoError(t, json.Unmarshal(v1Disco, &apiResourceList))
-
-		groupVersion, ok := apiResourceList["groupVersion"].(string)
-		require.True(t, ok)
-		require.Equal(t, "secret.grafana.app/v0alpha1", groupVersion)
-
-		apiResources, ok := apiResourceList["resources"].([]any)
-		require.True(t, ok)
-		require.Len(t, apiResources, 2) // securevalue + keeper + (subresources...)
 	})
 
 	t.Run("creating a secure value without a name generates one", func(t *testing.T) {

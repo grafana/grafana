@@ -15,30 +15,30 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	secretV0Alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
 
 type SecretAPIBuilder struct {
-	secureValueStorage secretstorage.SecureValueStorage
-	keeperStorage      secretstorage.KeeperStorage
+	secureValueStorage contracts.SecureValueStorage
+	keeperStorage      contracts.KeeperStorage
 }
 
-func NewSecretAPIBuilder(secureValueStorage secretstorage.SecureValueStorage, keeperStorage secretstorage.KeeperStorage) *SecretAPIBuilder {
+func NewSecretAPIBuilder(secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage) *SecretAPIBuilder {
 	return &SecretAPIBuilder{secureValueStorage, keeperStorage}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	secureValueStorage secretstorage.SecureValueStorage,
-	keeperStorage secretstorage.KeeperStorage,
+	secureValueStorage contracts.SecureValueStorage,
+	keeperStorage contracts.KeeperStorage,
 ) *SecretAPIBuilder {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -53,26 +53,26 @@ func RegisterAPIService(
 
 // GetGroupVersion returns the tuple of `group` and `version` for the API which uniquely identifies it.
 func (b *SecretAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return secretV0Alpha1.SchemeGroupVersion
+	return secretv0alpha1.SchemeGroupVersion
 }
 
 // InstallSchema is called by the `apiserver` which exposes the defined kinds.
 func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	secretV0Alpha1.AddKnownTypes(scheme, secretV0Alpha1.VERSION)
+	secretv0alpha1.AddKnownTypes(scheme, secretv0alpha1.VERSION)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	secretV0Alpha1.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	secretv0alpha1.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
 	// Internal Kubernetes metadata API. Presumably to display the available APIs?
 	// e.g. http://localhost:3000/apis/secret.grafana.app/v0alpha1
-	metav1.AddToGroupVersion(scheme, secretV0Alpha1.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, secretv0alpha1.SchemeGroupVersion)
 
 	// This sets the priority in case we have multiple versions.
 	// By default Kubernetes will only let you use `kubectl get <resource>` with one version.
 	// In case there are multiple versions, we'd need to pass the full path with the `--raw` flag.
-	if err := scheme.SetVersionPriority(secretV0Alpha1.SchemeGroupVersion); err != nil {
+	if err := scheme.SetVersionPriority(secretv0alpha1.SchemeGroupVersion); err != nil {
 		return fmt.Errorf("scheme set version priority: %w", err)
 	}
 
@@ -81,8 +81,8 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 // UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	secureValueResource := secretV0Alpha1.SecureValuesResourceInfo
-	keeperResource := secretV0Alpha1.KeeperResourceInfo
+	secureValueResource := secretv0alpha1.SecureValuesResourceInfo
+	keeperResource := secretv0alpha1.KeeperResourceInfo
 
 	// rest.Storage is a generic interface for RESTful storage services.
 	// The constructors need to at least implement this interface, but will most likely implement
@@ -96,13 +96,13 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperStorage, keeperResource),
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[secretV0Alpha1.VERSION] = secureRestStorage
+	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
 	return nil
 }
 
 // GetOpenAPIDefinitions, is this only for documentation?
 func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return secretV0Alpha1.GetOpenAPIDefinitions
+	return secretv0alpha1.GetOpenAPIDefinitions
 }
 
 // GetAuthorizer: [TODO] who can create secrets? must be multi-tenant first
@@ -146,13 +146,13 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	}
 
 	switch typedObj := obj.(type) {
-	case *secretV0Alpha1.SecureValue:
+	case *secretv0alpha1.SecureValue:
 		if errs := reststorage.ValidateSecureValue(typedObj, operation); len(errs) > 0 {
 			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
 
 		return nil
-	case *secretV0Alpha1.Keeper:
+	case *secretv0alpha1.Keeper:
 		if errs := reststorage.ValidateKeeper(typedObj, operation); len(errs) > 0 {
 			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
@@ -179,7 +179,7 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 
 		switch typedObj := obj.(type) {
-		case *secretV0Alpha1.SecureValue:
+		case *secretv0alpha1.SecureValue:
 			optionalPrefix := typedObj.GenerateName
 			if optionalPrefix == "" {
 				optionalPrefix = "sv-"
@@ -187,7 +187,7 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 
 			typedObj.Name = optionalPrefix + generatedName
 
-		case *secretV0Alpha1.Keeper:
+		case *secretv0alpha1.Keeper:
 			optionalPrefix := typedObj.GenerateName
 			if optionalPrefix == "" {
 				optionalPrefix = "kp-"

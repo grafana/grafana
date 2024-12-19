@@ -17,7 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 var (
@@ -33,13 +34,13 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	storage        secretstorage.SecureValueStorage
+	storage        contracts.SecureValueStorage
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage secretstorage.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(storage contracts.SecureValueStorage, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{storage, resource, resource.TableConverter()}
 }
 
@@ -73,7 +74,7 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := secretstorage.Namespace(request.NamespaceValue(ctx))
+	namespace := xkube.Namespace(request.NamespaceValue(ctx))
 
 	secureValueList, err := s.storage.List(ctx, namespace, options)
 	if err != nil {
@@ -85,14 +86,14 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
 func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	nn := secretstorage.NameNamespace{
+	nn := xkube.NameNamespace{
 		Name:      name,
-		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
+		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
 	}
 
 	sv, err := s.storage.Read(ctx, nn)
 	if err != nil {
-		if errors.Is(err, secretstorage.ErrSecureValueNotFound) {
+		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
 		}
 
@@ -159,7 +160,7 @@ func (s *SecureValueRest) Update(
 	}
 
 	// TODO: do we need to do this here again? Probably not, but double-check!
-	newSecureValue.Annotations = cleanAnnotations(newSecureValue.Annotations)
+	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue)
@@ -173,9 +174,9 @@ func (s *SecureValueRest) Update(
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	nn := secretstorage.NameNamespace{
+	nn := xkube.NameNamespace{
 		Name:      name,
-		Namespace: secretstorage.Namespace(request.NamespaceValue(ctx)),
+		Namespace: xkube.Namespace(request.NamespaceValue(ctx)),
 	}
 
 	if err := s.storage.Delete(ctx, nn); err != nil {

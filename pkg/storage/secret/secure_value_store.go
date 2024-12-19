@@ -2,13 +2,13 @@ package secret
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,20 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
-)
-
-// SecureValueStorage is the interface for wiring and dependency injection.
-type SecureValueStorage interface {
-	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, nn NameNamespace) (*secretv0alpha1.SecureValue, error)
-	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, nn NameNamespace) error
-	List(ctx context.Context, namespace Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
-}
-
-func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
+func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &storage{}, nil
@@ -82,7 +69,7 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 	return createdSecureValue, nil
 }
 
-func (s *storage) Read(ctx context.Context, nn NameNamespace) (*secretv0alpha1.SecureValue, error) {
+func (s *storage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
 	row, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read internal: %w", err)
@@ -102,9 +89,9 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	nn := NameNamespace{
+	nn := xkube.NameNamespace{
 		Name:      newSecureValue.Name,
-		Namespace: Namespace(newSecureValue.Namespace),
+		Namespace: xkube.Namespace(newSecureValue.Namespace),
 	}
 
 	currentRow, err := s.readInternal(ctx, nn)
@@ -141,7 +128,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
-func (s *storage) Delete(ctx context.Context, nn NameNamespace) error {
+func (s *storage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -167,7 +154,7 @@ func (s *storage) Delete(ctx context.Context, nn NameNamespace) error {
 	return nil
 }
 
-func (s *storage) List(ctx context.Context, namespace Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *storage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -211,7 +198,7 @@ func (s *storage) List(ctx context.Context, namespace Namespace, options *intern
 	}, nil
 }
 
-func (s *storage) readInternal(ctx context.Context, nn NameNamespace) (*secureValueDB, error) {
+func (s *storage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -226,7 +213,7 @@ func (s *storage) readInternal(ctx context.Context, nn NameNamespace) (*secureVa
 		}
 
 		if !found {
-			return ErrSecureValueNotFound
+			return contracts.ErrSecureValueNotFound
 		}
 
 		return nil
@@ -236,26 +223,4 @@ func (s *storage) readInternal(ctx context.Context, nn NameNamespace) (*secureVa
 	}
 
 	return row, nil
-}
-
-// TODO: move this somewhere else!
-var (
-	// Exclude these annotations
-	skipAnnotations = map[string]bool{
-		"kubectl.kubernetes.io/last-applied-configuration": true, // force server side apply
-		utils.AnnoKeyCreatedBy:                             true,
-		utils.AnnoKeyUpdatedBy:                             true,
-		utils.AnnoKeyUpdatedTimestamp:                      true,
-	}
-)
-
-func CleanAnnotations(anno map[string]string) map[string]string {
-	copy := make(map[string]string)
-	for k, v := range anno {
-		if skipAnnotations[k] {
-			continue
-		}
-		copy[k] = v
-	}
-	return copy
 }
