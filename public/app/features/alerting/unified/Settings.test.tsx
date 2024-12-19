@@ -7,7 +7,7 @@ import SettingsPage from './Settings';
 import DataSourcesResponse from './components/settings/__mocks__/api/datasources.json';
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/__mocks__/server';
 import { setupMswServer } from './mockApi';
-import { grantUserRole } from './mocks';
+import { grantAllUserRoles } from './mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -39,7 +39,7 @@ const ui = {
 
 describe('Alerting settings', () => {
   beforeEach(() => {
-    grantUserRole('ServerAdmin');
+    grantAllUserRoles();
     setupGrafanaManagedServer(server);
   });
 

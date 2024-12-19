@@ -36,24 +36,21 @@ import { safeParsePrometheusDuration } from '../utils/time';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
-  async (
-    {
-      rulesSourceName,
-      filter,
-      limitAlerts,
-      matcher,
-      state,
-      identifier,
-    }: {
-      rulesSourceName: string;
-      filter?: FetchPromRulesFilter;
-      limitAlerts?: number;
-      matcher?: Matcher[];
-      state?: string[];
-      identifier?: RuleIdentifier;
-    },
-    thunkAPI
-  ): Promise<RuleNamespace[]> => {
+  async ({
+    rulesSourceName,
+    filter,
+    limitAlerts,
+    matcher,
+    state,
+    identifier,
+  }: {
+    rulesSourceName: string;
+    filter?: FetchPromRulesFilter;
+    limitAlerts?: number;
+    matcher?: Matcher[];
+    state?: string[];
+    identifier?: RuleIdentifier;
+  }): Promise<RuleNamespace[]> => {
     const fetchRulesWithLogging = withPromRulesMetadataLogging('unifiedalerting/fetchPromRules', fetchRules, {
       dataSourceName: rulesSourceName,
       thunk: 'unifiedalerting/fetchPromRules',
@@ -75,7 +72,7 @@ export const fetchRulerRulesAction = createAsyncThunk(
       rulesSourceName: string;
       filter?: FetchRulerRulesFilter;
     },
-    { dispatch, getState }
+    { dispatch }
   ): Promise<RulerRulesConfigDTO | null> => {
     const { data: dsFeatures } = await dispatch(
       featureDiscoveryApi.endpoints.discoverDsFeatures.initiate({ rulesSourceName })

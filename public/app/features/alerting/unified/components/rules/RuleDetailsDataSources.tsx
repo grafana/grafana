@@ -50,7 +50,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
 
   return (
     <DetailsField label="Data source">
-      {dataSources.map(({ name, icon }, index) => (
+      {dataSources.map(({ name, icon }) => (
         <div key={name}>
           {icon && (
             <>
