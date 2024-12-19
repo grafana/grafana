@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -23,10 +23,10 @@ export const PopoverMenu = ({
   y,
   onClickFilterString,
   onClickFilterOutString,
-  onDisable,
   selection,
   row,
   close,
+  ...props
 }: PopoverMenuProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const styles = useStyles2(getStyles);
@@ -43,6 +43,11 @@ export const PopoverMenu = ({
       document.removeEventListener('keyup', handleEscape);
     };
   }, [close]);
+
+  const onDisable = useCallback(() => {
+    track('line_contains', selection.length, row.datasourceType);
+    props.onDisable();
+  }, [props, row.datasourceType, selection.length]);
 
   const supported = onClickFilterString || onClickFilterOutString;
 
@@ -83,13 +88,9 @@ export const PopoverMenu = ({
             />
           )}
           <Menu.Divider />
-          <Menu.Item
-              label="Disable menu"
-              onClick={onDisable}
-            />
+          <Menu.Item label="Disable menu" onClick={onDisable} />
         </Menu>
       </div>
-      
     </>
   );
 };
