@@ -126,6 +126,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    renderWithCombobox: true,
   };
   if (variable.type === 'adhoc') {
     return new AdHocFiltersVariable({
