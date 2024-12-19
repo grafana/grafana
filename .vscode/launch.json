@@ -9,12 +9,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": [
-        "server", 
-        "--homepath", "${workspaceFolder}", 
-        "--packaging", "dev", 
-        "cfg:app_mode=development",
-      ]
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
       "name": "Attach to Test Process",
@@ -23,7 +18,7 @@
       "mode": "remote",
       "host": "127.0.0.1",
       "port": 50480,
-      "apiVersion": 2,
+      "apiVersion": 2
     },
     {
       "name": "Run API Server (testdata)",
@@ -90,6 +85,15 @@
       "env": {
         "NODE_ENV": "test"
       }
+    },
+    {
+      "name": "Debug ESLint",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["run", "eslint", "${file}"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "Debug Go test",
