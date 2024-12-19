@@ -257,7 +257,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'select',
       description: 'The client authentication method used to authenticate to the token endpoint.',
       multi: false,
-      options: orgMappingClientAuthentication(provider),
+      options: clientAuthenticationOptions(provider),
       defaultValue: { value: 'client_secret_post', label: 'Client secret' },
       validation: {
         required: true,
@@ -679,7 +679,7 @@ function orgMappingDescription(provider: string): string {
   }
 }
 
-function orgMappingClientAuthentication(provider: string): Array<SelectableValue<string>> {
+function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
   switch (provider) {
     case 'azuread':
       return [
