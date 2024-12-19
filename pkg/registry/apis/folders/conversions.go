@@ -41,9 +41,9 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstructured.Unstructured, error) {
+func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
 	// #TODO add other fields ; do we support updating the UID/orgID?
-	obj := unstructured.Unstructured{
+	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
 				"title":       cmd.NewTitle,
@@ -56,8 +56,16 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstruct
 	if cmd.NewParentUID == nil {
 		return obj, nil
 	}
-	if err := setParentUID(&obj, *cmd.NewParentUID); err != nil {
-		return unstructured.Unstructured{}, err
+	if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
+		return &unstructured.Unstructured{}, err
+	}
+
+	return obj, nil
+}
+
+func LegacyMoveCommandToUnstructured(obj *unstructured.Unstructured, cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
+	if err := setParentUID(obj, cmd.NewParentUID); err != nil {
+		return &unstructured.Unstructured{}, err
 	}
 
 	return obj, nil
@@ -92,13 +100,20 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		createdTime = (*created).UTC()
 	}
 
+	url := getURL(meta, title)
+
+	// RootFolder does not have URL
+	if uid == folder.RootFolder.UID {
+		url = ""
+	}
+
 	f := &folder.Folder{
 		UID:       uid,
 		Title:     title,
 		ID:        id,
 		ParentUID: meta.GetFolder(),
 		// #TODO add created by field if necessary
-		URL: getURL(meta, title),
+		URL: url,
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with

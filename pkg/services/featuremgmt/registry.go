@@ -1532,6 +1532,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1576,13 +1584,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "dashboardSchemaV2",
-			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "playlistsWatcher",
 			Description:     "Enables experimental watcher for playlists",
 			Stage:           FeatureStageExperimental,
@@ -1605,6 +1606,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
 			HideFromDocs: true,
+		},
+		{
+			Name:         "prometheusSpecialCharsInLabelValues",
+			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:            "enableExtensionsAdminPage",

@@ -221,6 +221,7 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  unifiedStorageSearchSprinkles?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -228,10 +229,10 @@ export interface FeatureToggles {
   userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
-  dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
+  prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
