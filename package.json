@@ -413,7 +413,7 @@
     "tween-functions": "^1.2.0",
     "type-fest": "^4.18.2",
     "uplot": "1.6.31",
-    "uuid": "9.0.1",
+    "uuid": "11.0.3",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.6.20",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
