@@ -4348,6 +4348,10 @@ exports[`better eslint`] = {
     "public/app/features/explore/PrometheusListView/RawListContainer.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
+    "public/app/features/explore/PrometheusListView/RawListItem.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
     "public/app/features/explore/PrometheusListView/RawListItemAttributes.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -4832,10 +4836,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"]
-    ],
-    "public/app/features/logs/components/LogRows.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/logs/components/log-context/LogContextButtons.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
