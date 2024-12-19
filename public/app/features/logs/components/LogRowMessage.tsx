@@ -113,7 +113,7 @@ const getEllipsisStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const restructureLog = (
+export const restructureLog = (
   line: string,
   prettifyLogMessage: boolean,
   wrapLogMessage: boolean,
