@@ -1556,19 +1556,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/eslint@npm:5.4.0":
-  version: 5.4.0
-  resolution: "@betterer/eslint@npm:5.4.0"
-  dependencies:
-    "@betterer/betterer": "npm:^5.4.0"
-    "@betterer/errors": "npm:^5.3.0"
-    tslib: "npm:^2.3.1"
-  peerDependencies:
-    eslint: ">=7.0.0"
-  checksum: 10/8af4e490814c3c7e93dd23ea23d5aff19abb2a1b5e179307fb1ec5a66018ce1a14b9b4d5dce05df6862b642d6cfadb561b020ddb637cb761ceddd4f9d63a49c6
-  languageName: node
-  linkType: hard
-
 "@betterer/logger@npm:^5.3.4":
   version: 5.3.4
   resolution: "@betterer/logger@npm:5.3.4"
@@ -17521,7 +17508,6 @@ __metadata:
     "@babel/runtime": "npm:7.26.0"
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
-    "@betterer/eslint": "npm:5.4.0"
     "@bsull/augurs": "npm:^0.7.0"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.13.5"
