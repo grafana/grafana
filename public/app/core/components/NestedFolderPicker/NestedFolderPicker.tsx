@@ -156,7 +156,12 @@ export function NestedFolderPicker({
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        onChange(item.uid, item.title, item?.repository);
+        if (item?.repository) {
+          // Do not pass undefined repo so the tests do not break
+          onChange(item.uid, item.title, item.repository);
+        } else {
+          onChange(item.uid, item.title);
+        }
       }
       setOverlayOpen(false);
     },
