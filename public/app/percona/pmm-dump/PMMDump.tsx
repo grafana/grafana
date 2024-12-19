@@ -5,14 +5,14 @@ import { Row } from 'react-table';
 import { HorizontalGroup, Icon, useStyles2, Badge, BadgeColor, LinkButton, Button } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { DATA_INTERVAL } from 'app/percona/backup/components/BackupInventory/BackupInventory.constants';
 import { DetailedDate } from 'app/percona/backup/components/DetailedDate';
-import { useRecurringCall } from 'app/percona/backup/hooks/recurringCall.hook';
 import { DumpStatus, DumpStatusColor, DumpStatusText, PMMDumpServices } from 'app/percona/pmm-dump/PmmDump.types';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
 import { Action } from 'app/percona/shared/components/Elements/MultipleActions';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { PMM_DUMP_PAGE } from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation';
+import { DATA_INTERVAL } from 'app/percona/shared/core';
+import { useRecurringCall } from 'app/percona/shared/core/hooks/recurringCall.hook';
 import {
   deletePmmDumpAction,
   downloadPmmDumpAction,
@@ -32,6 +32,7 @@ import { Messages } from './PMMDump.messages';
 import { getStyles } from './PmmDump.styles';
 import { SendToSupportModal } from './SendToSupportModal';
 import { PmmDumpLogsModal } from './components/PmmDumpLogsModal/PmmDumpLogsModal';
+
 export const NEW_BACKUP_URL = '/pmm-dump/new';
 
 export const PMMDump = () => {

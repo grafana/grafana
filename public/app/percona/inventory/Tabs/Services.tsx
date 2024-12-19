@@ -10,6 +10,8 @@ import { ReadMoreLink } from 'app/percona/shared/components/Elements/TechnicalPr
 import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { DATA_INTERVAL } from 'app/percona/shared/core';
+import { useRecurringCall } from 'app/percona/shared/core/hooks/recurringCall.hook';
 import { fetchActiveServiceTypesAction, fetchServicesAction } from 'app/percona/shared/core/reducers/services';
 import { getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -32,11 +34,13 @@ export const Services = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selected, setSelectedRows] = useState<Array<Row<FlattenService>>>([]);
   const [actionItem, setActionItem] = useState<FlattenService | null>(null);
+  const [triggerTimeout] = useRecurringCall();
   const navModel = usePerconaNavModel('inventory-services');
   const [generateToken] = useCancelToken();
   const dispatch = useAppDispatch();
-  const { isLoading, services: fetchedServices } = useSelector(getServices);
+  const { services: fetchedServices } = useSelector(getServices);
   const styles = useStyles2(getStyles);
+  const [isLoading, setIsLoading] = useState(true);
   const flattenServices = useMemo(
     () =>
       fetchedServices.map((value) => {
@@ -69,10 +73,14 @@ export const Services = () => {
   }, []);
 
   useEffect(() => {
-    loadData();
-
+    loadData()
+      .then(() => {
+        triggerTimeout(loadData, DATA_INTERVAL);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadData]);
 
   const handleSelectionChange = useCallback((rows: Array<Row<FlattenService>>) => {
     setSelectedRows(rows);

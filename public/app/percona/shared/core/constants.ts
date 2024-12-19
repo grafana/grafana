@@ -1,5 +1,6 @@
 import { Databases } from './types';
 
+export const DATA_INTERVAL = 5000;
 export const API = {
   ALERTMANAGER: '/alertmanager/api/v2',
   SETTINGS: '/v1/Settings/Get',

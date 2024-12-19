@@ -2,11 +2,11 @@ import React, { FC, useCallback, useEffect, useState, useRef } from 'react';
 
 import { ClipboardButton, useStyles } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { useRecurringCall } from 'app/percona/shared/core/hooks/recurringCall.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
 
 import { BackupLogChunk } from '../../Backup.types';
-import { useRecurringCall } from '../../hooks/recurringCall.hook';
 
 import { LIMIT, LOGS_CANCEL_TOKEN, STREAM_INTERVAL } from './ChunkedLogsViewer.constants';
 import { Messages } from './ChunkedLogsViewer.messages';

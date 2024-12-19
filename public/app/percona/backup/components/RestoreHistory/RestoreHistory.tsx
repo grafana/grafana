@@ -9,6 +9,7 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { useRecurringCall } from 'app/percona/shared/core/hooks/recurringCall.hook';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -18,7 +19,6 @@ import { useSelector } from 'app/types';
 
 import { Messages } from '../../Backup.messages';
 import { formatLocationsToMap } from '../../Backup.utils';
-import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { DetailedDate } from '../DetailedDate';
 import { Status } from '../Status';
 

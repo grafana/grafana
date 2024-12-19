@@ -13,7 +13,8 @@ import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal'
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { ApiVerboseError, Databases, DATABASE_LABELS, DATA_INTERVAL } from 'app/percona/shared/core';
+import { useRecurringCall } from 'app/percona/shared/core/hooks/recurringCall.hook';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -24,12 +25,11 @@ import { useSelector } from 'app/types';
 import { NEW_BACKUP_URL, RESTORES_URL } from '../../Backup.constants';
 import { Messages } from '../../Backup.messages';
 import { BackupModeMap, formatBackupMode } from '../../Backup.utils';
-import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { DetailedDate } from '../DetailedDate';
 import { Status } from '../Status';
 import { LocationType } from '../StorageLocations/StorageLocations.types';
 
-import { DATA_INTERVAL, LIST_ARTIFACTS_CANCEL_TOKEN, RESTORE_CANCEL_TOKEN } from './BackupInventory.constants';
+import { LIST_ARTIFACTS_CANCEL_TOKEN, RESTORE_CANCEL_TOKEN } from './BackupInventory.constants';
 import { BackupInventoryService } from './BackupInventory.service';
 import { getStyles } from './BackupInventory.styles';
 import { BackupRow } from './BackupInventory.types';
