@@ -20,6 +20,7 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
+import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -167,6 +168,35 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
       expect(scene.state.$variables?.state.variables).toBeDefined();
+    });
+
+    it('should not return lazy loaded panels when user is image renderer', () => {
+      contextSrv.user.authenticatedBy = 'render';
+
+      const panel1 = createPanelSaveModel({
+        title: 'test1',
+        gridPos: { x: 0, y: 1, w: 12, h: 8 },
+      }) as Panel;
+
+      const panel2 = createPanelSaveModel({
+        title: 'test2',
+        gridPos: { x: 0, y: 10, w: 12, h: 8 },
+      }) as Panel;
+
+      const dashboard = {
+        ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
+        panels: [panel1, panel2],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const layout = scene.state.body as DefaultGridLayoutManager;
+      const body = layout.state.grid;
+
+      expect(body.state.isLazy).toBeFalsy();
     });
   });
 
