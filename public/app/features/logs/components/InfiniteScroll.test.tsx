@@ -28,6 +28,7 @@ const defaultProps: Omit<Props, 'children'> = {
   rows: [],
   sortOrder: LogsSortOrder.Descending,
   timeZone: 'browser',
+  scrollElement: null,
 };
 
 function ScrollWithWrapper({ children, ...props }: Props) {

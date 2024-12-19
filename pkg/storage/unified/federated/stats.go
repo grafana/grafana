@@ -63,6 +63,12 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resource.ResourceS
 		if err != nil {
 			return err
 		}
+
+		// Legacy library_elements table
+		err = fn("library_element", "org_id=? AND folder_uid=?", group, "library_elements")
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 
