@@ -113,7 +113,11 @@ func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, min
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
+func (s *cdkBackend) WriteEvent(ctx context.Context, event *WriteEvent) (rv int64, err error) {
+	if event == nil {
+		return 0, fmt.Errorf("nil event")
+	}
+
 	// Scope the lock
 	{
 		s.mutex.Lock()
@@ -129,7 +133,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	if s.stream != nil {
 		go func() {
 			write := &WrittenEvent{
-				WriteEvent:      event,
+				WriteEvent:      *event,
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,
 			}

@@ -154,20 +154,25 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 	return res, err
 }
 
-func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) WriteEvent(ctx context.Context, event *resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
+
+	if event == nil {
+		return 0, fmt.Errorf("nil event")
+	}
+
 	// TODO: validate key ?
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
 		if event.ObjectOld != nil {
-			return b.restore(ctx, event)
+			return b.restore(ctx, *event)
 		}
-		return b.create(ctx, event)
+		return b.create(ctx, *event)
 	case resource.WatchEvent_MODIFIED:
-		return b.update(ctx, event)
+		return b.update(ctx, *event)
 	case resource.WatchEvent_DELETED:
-		return b.delete(ctx, event)
+		return b.delete(ctx, *event)
 	default:
 		return 0, fmt.Errorf("unsupported event type")
 	}

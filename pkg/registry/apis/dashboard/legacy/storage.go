@@ -42,13 +42,17 @@ func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 	return nil
 }
 
-func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
+func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event *resource.WriteEvent) (rv int64, err error) {
 	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
 	}
 	if err != nil {
 		return 0, err
+	}
+
+	if event == nil {
+		return 0, fmt.Errorf("nil event")
 	}
 
 	switch event.Type {
@@ -60,7 +64,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	// The difference depends on embedded internal ID
 	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:
 		{
-			dash, err := getDashboardFromEvent(event)
+			dash, err := getDashboardFromEvent(*event)
 			if err != nil {
 				return 0, err
 			}
@@ -78,6 +82,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				if err != nil {
 					return 0, err
 				}
+				event.Object = meta
 			}
 		}
 	default:
@@ -88,7 +93,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	if a.subscribers != nil {
 		go func() {
 			write := &resource.WrittenEvent{
-				WriteEvent: event,
+				WriteEvent: *event,
 
 				Timestamp:       time.Now().UnixMilli(),
 				ResourceVersion: rv,

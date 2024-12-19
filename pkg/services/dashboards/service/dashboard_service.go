@@ -1168,8 +1168,9 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.UpdatedBy = updator.ID
 	}
 
-	if id, ok := spec["id"].(int64); ok {
-		out.ID = id
+	out.ID = obj.GetDepreactedInternalID()
+	if out.ID != 0 {
+		spec["id"] = out.ID
 	}
 
 	if gnetID, ok := spec["gnet_id"].(int64); ok {

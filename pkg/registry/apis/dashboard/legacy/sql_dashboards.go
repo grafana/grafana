@@ -214,7 +214,7 @@ func (r *rowsWrapper) Value() []byte {
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	dash := &dashboard.Dashboard{
 		TypeMeta:   dashboard.DashboardResourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
+		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string), Labels: make(map[string]string)},
 	}
 	row := &dashboardRow{Dash: dash}
 
@@ -261,6 +261,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
+		meta.SetDeprecatedInternalID(dashboard_id)
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
