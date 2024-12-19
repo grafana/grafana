@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { hasCredentials } from '@grafana/azure-sdk';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { AlertingSettingsOverhaul, PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
-import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaulPackage';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
@@ -20,8 +21,8 @@ export const ConfigEditor = (props: Props) => {
 
   const azureAuthSettings = {
     azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: DataSourceSettings): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: DataSourceSettings, enabled: boolean) =>
+    getAzureAuthEnabled: (config: AzurePromDataSourceSettings): boolean => hasCredentials(config),
+    setAzureAuthEnabled: (config: AzurePromDataSourceSettings, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
