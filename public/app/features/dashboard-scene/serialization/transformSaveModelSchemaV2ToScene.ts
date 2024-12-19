@@ -51,8 +51,16 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyDashboardNotFound,
+  AnnoKeyFolder,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -111,6 +119,39 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       isHidden: Boolean(annotation.spec.hide),
     });
   });
+
+  const isDashboardEditable = Boolean(dashboard.editable);
+  const canSave = dto.access.canSave !== false;
+
+  const meta: DashboardMeta = {
+    canShare: dto.access.canShare !== false,
+    canSave,
+    canStar: dto.access.canStar !== false,
+    canEdit: dto.access.canEdit !== false,
+    canDelete: dto.access.canDelete !== false,
+    canAdmin: dto.access.canAdmin !== false,
+    url: dto.access.url,
+    slug: dto.access.slug,
+    annotationsPermissions: dto.access.annotationsPermissions,
+    created: metadata.creationTimestamp,
+    createdBy: metadata.annotations?.[AnnoKeyCreatedBy],
+    updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+    updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
+    folderUid: metadata.annotations?.[AnnoKeyFolder],
+
+    // UI-only metadata, ref: DashboardModel.initMeta
+    showSettings: Boolean(dto.access.canEdit),
+    canMakeEditable: canSave && !isDashboardEditable,
+    hasUnsavedFolderChange: false,
+    dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
+  };
+
+  // Ref: DashboardModel.initMeta
+  if (!isDashboardEditable) {
+    meta.canEdit = false;
+    meta.canDelete = false;
+    meta.canSave = false;
+  }
 
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
@@ -177,6 +218,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       hideTimeControls: dashboard.timeSettings.hideTimepicker,
     }),
   });
+
+  dashboardScene.setInitialSaveModel(dto.spec);
 
   return dashboardScene;
 }
