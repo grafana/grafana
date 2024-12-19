@@ -169,10 +169,12 @@ export class AppChromeService {
       // When navigating to a dashboard a fake dashboard entry is added so we avoid this by
       // checking if the url has the dashboard word as it has BrowseDashboards page
       const isDashboardFakePage = lastEntry.name === 'Dashboards' && !lastEntry.url.includes('dashboards');
-      if (!isDashboardFakePage) {
-        // After checking it is not a fake dashboard entry we do the same with fake home pages
-        // A fake home page won't have the same url as the last entry
-        if (entries[0] && lastEntry.url.includes(entries[0].url) && entries[0].name === 'Home') {
+      // We also avoid adding the Explore page itself as it does not have a proper page, it is always the one that specifies the data source used
+      const isExplore = lastEntry.name === 'Explore' && lastEntry.url.includes('explore');
+      if (!isDashboardFakePage || !isExplore) {
+        // After checking it is not a fake dashboard entry we do the same with fake pages
+        // A fake page won't have the same url as the last entry
+        if (entries[0] && lastEntry.url.includes(entries[0].url)) {
           // If the last entry is a fake home page we remove it
           entries[0] = lastEntry;
         } else {
