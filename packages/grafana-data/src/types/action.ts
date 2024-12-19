@@ -10,6 +10,7 @@ export enum ActionType {
 export interface Action {
   type: ActionType;
   title: string;
+  confirmation?: string;
 
   // Options for the selected type
   // Currently this is required because there is only one valid type (fetch)
