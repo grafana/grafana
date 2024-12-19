@@ -239,30 +239,22 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	// Currently a search query is across folders and dashboards
-	if searchRequest.Query != "" {
-		searchRequest.Federated = []*resource.ResourceKey{{
-			Namespace: searchRequest.Options.Key.Namespace,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}}
-	}
-
 	types := queryParams["type"]
+	var federate *resource.ResourceKey
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), "dashboards")
+		// Currently a search query is across folders and dashboards
+		if searchRequest.Query != "" {
+			federate, err = asResourceKey(user.GetNamespace(), "folders")
+		}
 	case 1:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
 	case 2:
-		var federate *resource.ResourceKey
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
 		if err != nil {
 			federate, err = asResourceKey(user.GetNamespace(), types[0])
-			if err != nil {
-				searchRequest.Federated = []*resource.ResourceKey{federate}
-			}
 		}
 	default:
 		err = apierrors.NewBadRequest("too many type requests")
@@ -270,6 +262,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+	if federate != nil {
+		searchRequest.Federated = []*resource.ResourceKey{federate}
 	}
 
 	// Add sorting
