@@ -321,6 +321,13 @@ export const FUNCTIONS = [
       'Calculates the increase in the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. The increase is extrapolated to cover the full time range as specified in the range vector selector, so that it is possible to get a non-integer result even if a counter increases only by integer increments.',
   },
   {
+    insertText: 'info',
+    label: 'info',
+    detail: 'info(v instant-vector[, ls data-label-selector])',
+    documentation:
+      'A way to get the latest details or metadata about a group of metrics, like their labels and current values, without doing any calculations',
+  },
+  {
     insertText: 'irate',
     label: 'irate',
     detail: 'irate(v range-vector)',
