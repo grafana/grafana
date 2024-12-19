@@ -710,15 +710,11 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatestRVs")
 	defer span.End()
-	var grvs []*groupResourceVersion
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		grvs, err = dbutil.Query(ctx, tx, sqlResourceVersionList, &sqlResourceVersionListRequest{
-			SQLTemplate:          sqltemplate.New(b.dialect),
-			groupResourceVersion: new(groupResourceVersion),
-		})
 
-		return err
+	// TODO: error about transaction within transaction
+	grvs, err := dbutil.Query(ctx, b.db, sqlResourceVersionList, &sqlResourceVersionListRequest{
+		SQLTemplate:          sqltemplate.New(b.dialect),
+		groupResourceVersion: new(groupResourceVersion),
 	})
 	if err != nil {
 		return nil, err

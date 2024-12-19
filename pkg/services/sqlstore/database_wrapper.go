@@ -11,10 +11,10 @@ import (
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"modernc.org/sqlite"
 	"xorm.io/core"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,6 +34,8 @@ func init() {
 		Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 	}, []string{"status"})
 
+	sql.Register("sqlite3", &sqlite.Driver{})
+
 	prometheus.MustRegister(databaseQueryHistogram)
 }
 
@@ -42,7 +44,7 @@ func init() {
 // database queries. It also registers the metrics.
 func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
-		migrator.SQLite:   &sqlite3.SQLiteDriver{},
+		migrator.SQLite:   &sqlite.Driver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
 		migrator.Postgres: &pq.Driver{},
 	}

@@ -7,10 +7,11 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -88,9 +89,9 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 
 		ctxLogger := tsclogger.FromContext(ctx)
 
-		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
-			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+		var sqlError *sqlite.Error
+		if errors.As(err, &sqlError) && (sqlError.Code() == sqlite3.SQLITE_LOCKED || sqlError.Code() == sqlite3.SQLITE_BUSY) {
+			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code())
 			// retryer immediately returns the error (if there is one) without checking the response
 			// therefore we only have to send it if we have reached the maximum retries
 			if retry >= ss.dbCfg.QueryRetries {

@@ -9,13 +9,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -313,7 +314,8 @@ func (mg *Migrator) doMigration(ctx context.Context, m Migration) error {
 		err := mg.exec(ctx, m, sess)
 		// if we get an sqlite busy/locked error, sleep 100ms and try again
 		cnt := 0
-		for cnt < 3 && (errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)) {
+		var sqlError *sqlite.Error
+		for errors.As(err, &sqlError) && (sqlError.Code() == sqlite3.SQLITE_LOCKED || sqlError.Code() == sqlite3.SQLITE_BUSY) && cnt < 3 {
 			cnt++
 			logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
 			span.AddEvent("Database locked, sleeping then retrying",

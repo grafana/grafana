@@ -3,8 +3,8 @@ package xorm
 import (
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
 func TestNewEngine(t *testing.T) {
