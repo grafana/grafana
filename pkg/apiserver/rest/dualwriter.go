@@ -26,8 +26,16 @@ var (
 	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
+// ComparisonFunc is a function that compares two objects and returns true if they are equal.
+type ComparisonFunc func(storageObj, legacyObj runtime.Object) bool
+
+// DualWriterBuilderOptions is a struct that holds options for the DualWriterBuilder.
+type DualWriterBuilderOptions struct {
+	ComparisonFunc ComparisonFunc
+}
+
 // Function that will create a dual writer
-type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
+type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage, options ...DualWriterBuilderOptions) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
@@ -114,25 +122,31 @@ func NewDualWriter(
 	storage Storage,
 	reg prometheus.Registerer,
 	resource string,
+	comparisonFunc ComparisonFunc,
 ) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
+
+	if comparisonFunc == nil {
+		comparisonFunc = DefaultComparisonFunc
+	}
+
 	switch mode {
 	case Mode0:
 		return legacy
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, storage, metrics, resource, comparisonFunc)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics, resource)
+		return newDualWriterMode2(legacy, storage, metrics, resource, comparisonFunc)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics, resource)
+		return newDualWriterMode3(legacy, storage, metrics, resource, comparisonFunc)
 	case Mode4, Mode5:
 		return storage
 	default:
-		return newDualWriterMode1(legacy, storage, metrics, resource)
+		return newDualWriterMode1(legacy, storage, metrics, resource, comparisonFunc)
 	}
 }
 
@@ -237,8 +251,8 @@ func SetDualWritingMode(
 
 var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
 
-// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func Compare(storageObj, legacyObj runtime.Object) bool {
+// DefaultComparisonFunc asserts on the equality of object's spec returned from both stores (object storage and legacy storage).
+func DefaultComparisonFunc(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}

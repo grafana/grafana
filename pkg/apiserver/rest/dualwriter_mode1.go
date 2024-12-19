@@ -20,19 +20,21 @@ type DualWriterMode1 struct {
 	*dualWriterMetrics
 	resource string
 	Log      klog.Logger
+	compare  ComparisonFunc
 }
 
 const mode1Str = "1"
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func newDualWriterMode1(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode1 {
+func newDualWriterMode1(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string, compare ComparisonFunc) *DualWriterMode1 {
 	return &DualWriterMode1{
 		Legacy:            legacy,
 		Storage:           storage,
 		Log:               klog.NewKlogr().WithName("DualWriterMode1").WithValues("mode", mode1Str, "resource", resource),
 		dualWriterMetrics: dwm,
 		resource:          resource,
+		compare:           compare,
 	}
 }
 
@@ -94,7 +96,7 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, createVali
 		log.Error(errObjectSt, "unable to create object in storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, createdCopy)
+	areEqual := d.compare(storageObj, createdCopy)
 	d.recordOutcome(mode1Str, getName(createdCopy), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -137,7 +139,7 @@ func (d *DualWriterMode1) getFromUnifiedStorage(ctx context.Context, objFromLega
 		cancel()
 	}
 
-	areEqual := Compare(storageObj, objFromLegacy)
+	areEqual := d.compare(storageObj, objFromLegacy)
 	d.recordOutcome(mode1Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -180,7 +182,7 @@ func (d *DualWriterMode1) listFromUnifiedStorage(ctx context.Context, options *m
 		log.Error(err, "unable to list objects from unified storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, objFromLegacy)
+	areEqual := d.compare(storageObj, objFromLegacy)
 	d.recordOutcome(mode1Str, getName(objFromLegacy), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -222,7 +224,7 @@ func (d *DualWriterMode1) deleteFromUnifiedStorage(ctx context.Context, res runt
 		log.Error(err, "unable to delete object from unified storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, res)
+	areEqual := d.compare(storageObj, res)
 	d.recordOutcome(mode1Str, name, areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -265,7 +267,7 @@ func (d *DualWriterMode1) deleteCollectionFromUnifiedStorage(ctx context.Context
 		log.Error(err, "unable to delete collection object from unified storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, res)
+	areEqual := d.compare(storageObj, res)
 	d.recordOutcome(mode1Str, getName(res), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
@@ -311,7 +313,7 @@ func (d *DualWriterMode1) updateOnUnifiedStorageMode1(ctx context.Context, objLe
 		log.Error(err, "unable to update object from unified storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, objLegacy)
+	areEqual := d.compare(storageObj, objLegacy)
 	d.recordOutcome(mode1Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")

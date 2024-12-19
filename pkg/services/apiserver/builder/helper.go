@@ -181,7 +181,7 @@ func InstallAPIs(
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage, options ...grafanarest.DualWriterBuilderOptions) (grafanarest.Storage, error) {
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
 
 			// Get the option from custom.ini/command line
@@ -250,7 +250,15 @@ func InstallAPIs(
 			if currentMode != mode {
 				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+
+			comparisonFunc := grafanarest.DefaultComparisonFunc
+			if len(options) > 0 {
+				if options[0].ComparisonFunc != nil {
+					comparisonFunc = options[0].ComparisonFunc
+				}
+			}
+
+			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key, comparisonFunc), nil
 		}
 	}
 

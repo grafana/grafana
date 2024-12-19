@@ -121,7 +121,7 @@ func TestCompare(t *testing.T) {
 	}
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, Compare(tt.input1, tt.input2))
+			assert.Equal(t, tt.expected, DefaultComparisonFunc(tt.input1, tt.input2))
 		})
 	}
 }

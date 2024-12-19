@@ -52,7 +52,7 @@ func TestMode3_Create(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
@@ -114,7 +114,7 @@ func TestMode1_CreateOnLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 			err := dw.(*DualWriterMode3).createOnLegacyStorage(ctx, tt.input, exampleObj, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 			assert.NoError(t, err)
 		})
@@ -161,7 +161,7 @@ func TestMode3_Get(t *testing.T) {
 			}
 
 			p := prometheus.NewRegistry()
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -223,7 +223,7 @@ func TestMode1_GetFromLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 			err := dw.(*DualWriterMode3).getFromLegacyStorage(ctx, exampleObj, tt.input, &metav1.GetOptions{})
 			assert.NoError(t, err)
 		})
@@ -269,7 +269,7 @@ func TestMode3_List(t *testing.T) {
 				tt.setupStorageFn(m, tt.options)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			res, err := dw.List(context.Background(), tt.options)
 
@@ -328,7 +328,7 @@ func TestMode1_ListFromLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode3).listFromLegacyStorage(ctx, &metainternalversion.ListOptions{}, anotherList)
 			assert.NoError(t, err)
@@ -375,7 +375,7 @@ func TestMode3_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -435,7 +435,7 @@ func TestMode1_DeleteFromLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode3).deleteFromLegacyStorage(ctx, exampleObj, tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 			assert.NoError(t, err)
@@ -482,7 +482,7 @@ func TestMode3_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
@@ -544,7 +544,7 @@ func TestMode1_DeleteCollectionFromLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode3).deleteCollectionFromLegacyStorage(ctx, exampleObj, func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 			assert.NoError(t, err)
@@ -598,7 +598,7 @@ func TestMode3_Update(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
@@ -673,7 +673,7 @@ func TestMode1_UpdateOnLegacyStorage(t *testing.T) {
 				ctx = *tt.ctx
 			}
 
-			dw := NewDualWriter(Mode3, ls, us, p, kind)
+			dw := NewDualWriter(Mode3, ls, us, p, kind, DefaultComparisonFunc)
 
 			err := dw.(*DualWriterMode3).updateOnLegacyStorageMode3(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 			assert.NoError(t, err)
