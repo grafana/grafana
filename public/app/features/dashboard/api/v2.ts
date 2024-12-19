@@ -7,12 +7,14 @@ import {
   AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
   ResourceClient,
+  ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { SaveDashboardCommand, SaveDashboardCommandV2 } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
@@ -62,7 +64,46 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
     throw new Error('Method not implemented.');
   }
 
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
-    throw new Error('Method not implemented.');
+  async saveDashboard(options: SaveDashboardCommandV2): Promise<SaveDashboardResponseDTO> {
+    const dashboard = options.dashboard;
+
+    const obj: ResourceForCreate<DashboardV2Spec> = {
+      // the metadata will have the name that's the uid
+      metadata: {
+        ...options?.k8s,
+      },
+      spec: {
+        ...dashboard,
+      },
+    };
+
+    // add annotations
+    if (options.message) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyMessage]: options.message,
+      };
+    } else if (obj.metadata.annotations) {
+      delete obj.metadata.annotations[AnnoKeyMessage];
+    }
+
+    // add folder annotation
+    if (options.folderUid) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyFolder]: options.folderUid,
+      };
+    }
+
+    // check we have the uid from metadata
+
+    const uid = obj.metadata.name;
+
+    if (!uid) {
+      throw new Error('Dashboard uid is required');
+    }
+
+    const savedDashboard = await this.client.create(obj);
+    console.log('dashboard is saved in backend!', savedDashboard);
   }
 }
