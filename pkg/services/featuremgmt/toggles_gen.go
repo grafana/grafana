@@ -815,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagUnifiedStorageSearchSprinkles
+	// Enable sprinkles on unified storage search
+	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -858,6 +862,10 @@ const (
 	// FlagExploreMetricsRelatedLogs
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagPrometheusSpecialCharsInLabelValues
+	// Adds support for quotes and special characters in label values for Prometheus queries
+	FlagPrometheusSpecialCharsInLabelValues = "prometheusSpecialCharsInLabelValues"
 
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
