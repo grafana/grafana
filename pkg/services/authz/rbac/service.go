@@ -129,13 +129,10 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 		if strings.HasPrefix(perm, "folders:uid:") {
 			identifier := perm[len("folders:uid:"):]
 			if _, ok := folderSet[identifier]; ok {
-			 			 continue
+				continue
 			}
 			folderSet[identifier] = struct{}{}
-			descendants := getChildren(folderMap, identifier)
-			for _, desc := range descendants {
-				folderSet[desc] = struct{}{}
-			}
+			getChildren(folderMap, identifier, folderSet)
 		} else if strings.HasPrefix(perm, "dashboards:uid:") {
 			identifier := perm[len("dashboards:uid:"):]
 			dashSet[identifier] = struct{}{}
@@ -159,31 +156,19 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 }
 
 func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
-	ctxLogger := s.logger.FromContext(ctx)
-
-	if req.GetNamespace() == "" {
-		return nil, status.Error(codes.InvalidArgument, "namespace is required")
-	}
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
-	if req.GetSubject() == "" {
-		return nil, status.Error(codes.InvalidArgument, "subject is required")
-	}
 	userUID, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return nil, err
 	}
 
-	if req.GetGroup() == "" || req.GetResource() == "" || req.GetVerb() == "" {
-		return nil, status.Error(codes.InvalidArgument, "group, resource and verb are required")
-	}
-	action, ok := s.actionMapper.Action(req.GetGroup(), req.GetResource(), req.GetVerb())
-	if !ok {
-		ctxLogger.Error("could not find associated rbac action", "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb())
-		return nil, status.Error(codes.NotFound, "could not find associated rbac action")
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	if err != nil {
+		return nil, err
 	}
 
 	checkReq := &CheckRequest{
@@ -200,31 +185,19 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 }
 
 func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListRequest) (*ListRequest, error) {
-	ctxLogger := s.logger.FromContext(ctx)
-
-	if req.GetNamespace() == "" {
-		return nil, status.Error(codes.InvalidArgument, "namespace is required")
-	}
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
-	if req.GetSubject() == "" {
-		return nil, status.Error(codes.InvalidArgument, "subject is required")
-	}
 	userUID, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return nil, err
 	}
 
-	if req.GetGroup() == "" || req.GetResource() == "" || req.GetVerb() == "" {
-		return nil, status.Error(codes.InvalidArgument, "group, resource and verb are required")
-	}
-	action, ok := s.actionMapper.Action(req.GetGroup(), req.GetResource(), req.GetVerb())
-	if !ok {
-		ctxLogger.Error("could not find associated rbac action", "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb())
-		return nil, status.Error(codes.NotFound, "could not find associated rbac action")
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	if err != nil {
+		return nil, err
 	}
 
 	listReq := &ListRequest{
@@ -239,6 +212,9 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListR
 }
 
 func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
+	if nameSpace == "" {
+		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
+	}
 	authInfo, has := claims.From(ctx)
 	if !has {
 		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
@@ -255,6 +231,10 @@ func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceI
 }
 
 func (s *Service) validateSubject(ctx context.Context, subject string) (string, error) {
+	if subject == "" {
+		return "", status.Error(codes.InvalidArgument, "subject is required")
+	}
+
 	ctxLogger := s.logger.FromContext(ctx)
 	identityType, userUID, err := claims.ParseTypeID(subject)
 	if err != nil {
@@ -265,6 +245,19 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 		ctxLogger.Warn("unsupported identity type", "type", identityType)
 	}
 	return userUID, nil
+}
+
+func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+	if group == "" || resource == "" || verb == "" {
+		return "", status.Error(codes.InvalidArgument, "group, resource and verb are required")
+	}
+	action, ok := s.actionMapper.Action(group, resource, verb)
+	if !ok {
+		ctxLogger.Error("could not find associated rbac action", "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb())
+		return "", status.Error(codes.NotFound, "could not find associated rbac action")
+	}
+	return action, nil
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string) (map[string]bool, error) {
@@ -492,15 +485,13 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	return folderMap, nil
 }
 
-func getChildren(folderMap map[string]FolderNode, folderUID string) []string {
+func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
 	folder, has := folderMap[folderUID]
 	if !has {
-		return nil
+		return
 	}
-	descendants := make([]string, 0, len(folder.childrenUIDs))
 	for _, child := range folder.childrenUIDs {
-		descendants = append(descendants, child)
-		descendants = append(descendants, getChildren(folderMap, child)...)
+		folderSet[child] = struct{}{}
+		getChildren(folderMap, child, folderSet)
 	}
-	return descendants
 }
