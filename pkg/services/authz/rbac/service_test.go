@@ -155,6 +155,7 @@ func TestService_checkPermission(t *testing.T) {
 		})
 	}
 }
+
 func TestService_getUserTeams(t *testing.T) {
 	type testCase struct {
 		name          string
@@ -462,6 +463,187 @@ func TestService_buildFolderTree(t *testing.T) {
 			} else {
 				require.Equal(t, 1, store.calls)
 			}
+		})
+	}
+}
+
+func TestService_listPermission(t *testing.T) {
+	type testCase struct {
+		name               string
+		permissions        []accesscontrol.Permission
+		folderTree         map[string]FolderNode
+		list               ListRequest
+		expectedDashboards []string
+		expectedFolders    []string
+		expectedAll        bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "should return wildcard if user has a wildcard permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "dashboards:read",
+					Scope:  "*",
+					Kind:   "*",
+				},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+			expectedAll: true,
+		},
+		{
+			name: "should return dashboards and folders that user has direct access to",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "dashboards:uid:some_dashboard",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "some_dashboard",
+				},
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_1",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_1",
+				},
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_2",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_2",
+				},
+			},
+			folderTree: map[string]FolderNode{
+				"some_folder_1": {uid: "some_folder_1"},
+				"some_folder_2": {uid: "some_folder_2"},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+			expectedDashboards: []string{"some_dashboard"},
+			expectedFolders:    []string{"some_folder_1", "some_folder_2"},
+		},
+		{
+			name: "should return folders that user has inherited access to",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_1",
+				},
+			},
+			folderTree: map[string]FolderNode{
+				"some_folder_parent":      {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":       {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild1", "some_folder_subchild2"}},
+				"some_folder_subchild1":   {uid: "some_folder_subchild1", parentUID: strPtr("some_folder_child")},
+				"some_folder_subchild2":   {uid: "some_folder_subchild2", parentUID: strPtr("some_folder_child"), childrenUIDs: []string{"some_folder_subsubchild"}},
+				"some_folder_subsubchild": {uid: "some_folder_subsubchild", parentUID: strPtr("some_folder_subchild2")},
+				"some_folder_1":           {uid: "some_folder_1", parentUID: strPtr("some_other_folder")},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_subchild1", "some_folder_subchild2", "some_folder_subsubchild"},
+		},
+		{
+			name: "should return folders that user has inherited access to as well as dashboards that user has direct access to",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "dashboards:uid:some_dashboard",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "some_dashboard",
+				},
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_parent",
+				},
+			},
+			folderTree: map[string]FolderNode{
+				"some_folder_parent": {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":  {uid: "some_folder_child", parentUID: strPtr("some_folder_parent")},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+			expectedDashboards: []string{"some_dashboard"},
+			expectedFolders:    []string{"some_folder_parent", "some_folder_child"},
+		},
+		{
+			name: "should deduplicate folders that user has inherited as well as direct access to",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_parent",
+				},
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_child",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_child",
+				},
+			},
+			folderTree: map[string]FolderNode{
+				"some_folder_parent": {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":  {uid: "some_folder_child", parentUID: strPtr("some_folder_parent")},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child"},
+		},
+		{
+			name:        "return no dashboards and folders if the user doesn't have access to any resources",
+			permissions: []accesscontrol.Permission{},
+			folderTree: map[string]FolderNode{
+				"some_folder_1": {uid: "some_folder_1"},
+			},
+			list: ListRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
+			if tc.folderTree != nil {
+				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
+			}
+			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper(), folderCache: folderCache}
+			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedAll, got.All)
+			assert.ElementsMatch(t, tc.expectedDashboards, got.Items)
+			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
 		})
 	}
 }

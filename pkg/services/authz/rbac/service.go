@@ -113,46 +113,7 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 		return nil, err
 	}
 
-	if permissions["*"] {
-		return &authzextv1.ListResponse{All: true}, nil
-	}
-
-	folderMap, err := s.buildFolderTree(ctx, listReq.Namespace)
-	if err != nil {
-		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-		return nil, err
-	}
-
-	folderSet := make(map[string]struct{}, len(permissions))
-	dashSet := make(map[string]struct{}, len(permissions))
-	for perm := range permissions {
-		if strings.HasPrefix(perm, "folders:uid:") {
-			identifier := perm[len("folders:uid:"):]
-			if _, ok := folderSet[identifier]; ok {
-				continue
-			}
-			folderSet[identifier] = struct{}{}
-			getChildren(folderMap, identifier, folderSet)
-		} else if strings.HasPrefix(perm, "dashboards:uid:") {
-			identifier := perm[len("dashboards:uid:"):]
-			dashSet[identifier] = struct{}{}
-		}
-	}
-
-	folderList := make([]string, 0, len(folderSet))
-	for folder := range folderSet {
-		folderList = append(folderList, folder)
-	}
-
-	dashList := make([]string, 0, len(dashSet))
-	for dash := range dashSet {
-		dashList = append(dashList, dash)
-	}
-
-	return &authzextv1.ListResponse{
-		Folders: folderList,
-		Items:   dashList,
-	}, nil
+	return s.listPermission(ctx, permissions, listReq)
 }
 
 func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
@@ -483,6 +444,48 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	s.folderCache.Set(key, folderMap, 0)
 
 	return folderMap, nil
+}
+
+func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzextv1.ListResponse, error) {
+	if scopeMap["*"] {
+		return &authzextv1.ListResponse{All: true}, nil
+	}
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return nil, err
+	}
+
+	folderSet := make(map[string]struct{}, len(scopeMap))
+	dashSet := make(map[string]struct{}, len(scopeMap))
+	for scope := range scopeMap {
+		if strings.HasPrefix(scope, "folders:uid:") {
+			identifier := scope[len("folders:uid:"):]
+			if _, ok := folderSet[identifier]; ok {
+				continue
+			}
+			folderSet[identifier] = struct{}{}
+			getChildren(folderMap, identifier, folderSet)
+		} else if strings.HasPrefix(scope, "dashboards:uid:") {
+			identifier := scope[len("dashboards:uid:"):]
+			dashSet[identifier] = struct{}{}
+		}
+	}
+
+	folderList := make([]string, 0, len(folderSet))
+	for folder := range folderSet {
+		folderList = append(folderList, folder)
+	}
+
+	dashList := make([]string, 0, len(dashSet))
+	for dash := range dashSet {
+		dashList = append(dashList, dash)
+	}
+
+	return &authzextv1.ListResponse{Folders: folderList, Items: dashList}, nil
 }
 
 func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
