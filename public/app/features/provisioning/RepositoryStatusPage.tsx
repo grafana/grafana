@@ -23,6 +23,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { isNotFoundError } from '../alerting/unified/api/util';
+
 import { useGetRepositoryStatusQuery, useListJobQuery, useGetRepositoryFilesQuery, Repository } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -30,14 +32,10 @@ import { PROVISIONING_URL } from './constants';
 enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
-  Folder = 'folder', // the configured folder
-  Settings = 'settings',
 }
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files' },
   { value: TabSelection.Jobs, label: 'Recent Events' },
-  { value: TabSelection.Folder, label: 'Folder' },
-  { value: TabSelection.Settings, label: 'Settings' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -48,8 +46,7 @@ export default function RepositoryStatusPage() {
   const [queryParams] = useQueryParams();
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Files;
 
-  //@ts-expect-error TODO add error types
-  const notFound = query.isError && query.error?.status === 404;
+  const notFound = query.isError && isNotFoundError(query.error);
   return (
     <Page
       navId="provisioning"
@@ -82,8 +79,6 @@ export default function RepositoryStatusPage() {
                 <TabContent>
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Folder && <FolderView repo={query.data} />}
-                  {tab === TabSelection.Settings && <SettingsView repo={query.data} />}
                 </TabContent>
               </>
             ) : (
@@ -246,26 +241,6 @@ function JobsView({ repo }: RepoProps) {
           </Card>
         );
       })}
-    </div>
-  );
-}
-
-function FolderView({ repo }: RepoProps) {
-  return (
-    <div>
-      <h2>TODO, show folder: {repo.metadata?.name}</h2>
-      <br />
-      <a href={`/dashboards/f/${repo.spec?.folder}/`}>{repo.spec?.folder} </a>
-    </div>
-  );
-}
-
-function SettingsView({ repo }: RepoProps) {
-  return (
-    <div>
-      <h2>TODO, show settings inline???: {repo.metadata?.name}</h2>
-
-      <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/edit`}>Edit</LinkButton>
     </div>
   );
 }
