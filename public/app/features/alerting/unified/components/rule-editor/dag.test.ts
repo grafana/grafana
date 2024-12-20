@@ -39,8 +39,8 @@ describe('working with dag', () => {
         refId: 'D',
         model: {
           refId: 'D',
-          // A non-math expression, that would trigger an error if not correctly handled
-          expression: 'vector(1)',
+          expression: 'B',
+          type: 'threshold',
         },
       },
     ] as AlertQuery[];
@@ -60,15 +60,39 @@ describe('working with dag', () => {
     expect(dag.getNode('A').outputEdges).toHaveLength(0);
 
     expect(dag.getNode('B').inputEdges).toHaveLength(0);
-    expect(dag.getNode('B').outputEdges).toHaveLength(1);
+    expect(dag.getNode('B').outputEdges).toHaveLength(2);
     expect(dag.getNode('B').outputEdges[0].outputNode).toHaveProperty('name', 'C');
+    expect(dag.getNode('B').outputEdges[1].outputNode).toHaveProperty('name', 'D');
 
     expect(dag.getNode('C').inputEdges).toHaveLength(1);
-    expect(dag.getNode('C').outputEdges).toHaveLength(0);
     expect(dag.getNode('C').inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('C').outputEdges).toHaveLength(0);
 
-    expect(dag.getNode('D').inputEdges).toHaveLength(0);
+    expect(dag.getNode('D').inputEdges).toHaveLength(1);
+    expect(dag.getNode('D').inputEdges[0].inputNode).toHaveProperty('name', 'B');
     expect(dag.getNode('D').outputEdges).toHaveLength(0);
+  });
+
+  test('data queries cannot have references', () => {
+    const queries = [
+      {
+        refId: 'A',
+        model: {
+          refId: 'A',
+          expression: 'vector(1)',
+        },
+      },
+    ] as AlertQuery[];
+
+    expect(() => _createDagFromQueries(queries)).not.toThrow();
+
+    const dag = _createDagFromQueries(queries);
+
+    expect(Object.keys(dag.nodes)).toHaveLength(1);
+
+    expect(() => {
+      dag.getNode('A');
+    }).not.toThrow();
   });
 });
 
