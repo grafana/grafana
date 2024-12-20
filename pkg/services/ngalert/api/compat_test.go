@@ -84,3 +84,35 @@ func TestAlertRuleMetadataFromModelMetadata(t *testing.T) {
 		require.True(t, apiMetadata.EditorSettings.SimplifiedNotificationsSection)
 	})
 }
+
+func TestExportWithTemplateStringsInLabels(t *testing.T) {
+	t.Run("should export alert rule with template strings in labels", func(t *testing.T) {
+		rule := models.AlertRule{
+			Title: "Test",
+			Labels: map[string]string{
+				"test":      "{{ $labels.Test }}   with another reference to {{ $labels.Test }}",
+				"test2":     "value",
+				"multiline": "{{ $labels.Test }} on line1\n{{ $labels.Test2 }}line2",
+				"dollars":   "$50",
+			},
+			Annotations: map[string]string{
+				"test": "{{ $labels.Test }}",
+			},
+		}
+
+		exportedRule, err := AlertRuleExportFromAlertRule(rule)
+
+		require.NoError(t, err)
+
+		require.Equal(t, "Test", exportedRule.Title)
+		require.Equal(t, map[string]string{
+			"test":      "{{ $$labels.Test }}   with another reference to {{ $$labels.Test }}",
+			"test2":     "value",
+			"multiline": "{{ $$labels.Test }} on line1\n{{ $$labels.Test2 }}line2",
+			"dollars":   "$$50",
+		}, *exportedRule.Labels)
+		require.Equal(t, map[string]string{
+			"test": "{{ $labels.Test }}",
+		}, *exportedRule.Annotations)
+	})
+}
