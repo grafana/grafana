@@ -8,6 +8,10 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 	return "ID_" + namespace + "_" + ID
 }
 
+func anonymousPermCacheKey(namespace, action string) string {
+	return namespace + "_anonymous_" + action
+}
+
 func userPermCacheKey(namespace, userUID, action string) string {
 	return namespace + "_" + userUID + "_" + action
 }

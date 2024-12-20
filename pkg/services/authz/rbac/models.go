@@ -4,6 +4,7 @@ import "github.com/grafana/authlib/claims"
 
 type CheckRequest struct {
 	Namespace    claims.NamespaceInfo
+	IdentityType claims.IdentityType
 	UserUID      string
 	Action       string
 	Group        string
@@ -14,12 +15,13 @@ type CheckRequest struct {
 }
 
 type ListRequest struct {
-	Namespace claims.NamespaceInfo
-	UserUID   string
-	Group     string
-	Resource  string
-	Verb      string
-	Action    string
+	Namespace    claims.NamespaceInfo
+	IdentityType claims.IdentityType
+	UserUID      string
+	Group        string
+	Resource     string
+	Verb         string
+	Action       string
 }
 
 type FolderNode struct {
