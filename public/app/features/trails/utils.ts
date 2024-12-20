@@ -297,20 +297,23 @@ export async function callSuggestionsApi(
  * 1. The adhoc filters will contain all the otel resources (happens by default because list contains target_info)
  *   [x] the filter list will sort otel resources to the top
  * 2. Hide the otel resources variable
- *   a. remove the updates when it is changed
- *   b. migrate any old otel selected url values to adhoc to show them in the new filter
- * 2. When a filter is selected, we need to identify the following
- *   a. an otel resource (on target_info)
- *   b. It is not promoted as a label on metric
+ *   a. [x] remove the updates when it is changed
+ * 3. When a filter is selected, we need to identify the following
+ *   a. [x] an otel resource (on target_info)
+ *   b. [x] It is not promoted as a label on metric
  *     - [x] How to identify otel resource? Add function to make a collection
- *     - Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
- *     - call for list of target_info labels and list of labels minut target info
- *     - find the otel resources that do not exist in the labels
+ *     - [x] Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
+ *     - [x] call for list of target_info labels and list of labels minut target info
+ *     - [x] find the otel resources that do not exist in the labels
  *     - these are the non promoted resources
- *     - if it is a resource attribute, it should be stored as such so it can be filtered in the join
- *   d. Add selected otel resources to the hidden variable
- * 3. Remove special the deployment environment variable totally
+ *     - [x] if it is a resource attribute, it should be stored as such so it can be filtered in the join
+ *   d. [x] Add selected otel resources to the hidden variable
+ * 4. Remove special the deployment environment variable totally
  *   a. automatically select deployment_environment OR environment if it exists
  *   b. if deployment environment is promoted, this is fine and we can support more otel data sources
  *      - we did not support those that did not have them on target_info before
+ * 5. Migrate any variable url values to adhoc to show them in the new filter
+ *   a. otel filter
+ *   b. deployment environment
+ *   c. var filters get placed in the new otel metric filter
  */
