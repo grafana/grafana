@@ -2,19 +2,15 @@ package dashboard
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -67,10 +63,10 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 	ctx = legacy.WithLegacyAccess(ctx)
 	obj, err := s.Store.Create(ctx, obj, createValidation, options)
 	access := legacy.GetLegacyAccess(ctx)
-	if access != nil && access.Dashboard != nil {
-		id, ok, _ := unstructured.NestedInt64(access.Dashboard.Spec.Object, "id")
-		if ok {
-			err = setInternalID(obj, id)
+	if access != nil && access.DashboardID > 0 {
+		meta, _ := utils.MetaAccessor(obj)
+		if meta != nil {
+			meta.SetDeprecatedInternalID(access.DashboardID)
 		}
 	}
 	return obj, err
@@ -81,27 +77,11 @@ func (s *storeWrapper) Update(ctx context.Context, name string, objInfo rest.Upd
 	ctx = legacy.WithLegacyAccess(ctx)
 	obj, created, err := s.Store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	access := legacy.GetLegacyAccess(ctx)
-	if access != nil && access.Dashboard != nil {
-		id, ok, _ := unstructured.NestedInt64(access.Dashboard.Spec.Object, "id")
-		if ok {
-			err = setInternalID(obj, id)
+	if access != nil && access.DashboardID > 0 {
+		meta, _ := utils.MetaAccessor(obj)
+		if meta != nil {
+			meta.SetDeprecatedInternalID(access.DashboardID)
 		}
 	}
 	return obj, created, err
-}
-
-func setInternalID(obj runtime.Object, id int64) error {
-	d0, ok := obj.(*v0alpha1.Dashboard)
-	if ok {
-		d0.Spec.Object["id"] = id
-		return nil
-	}
-
-	d1, ok := obj.(*v1alpha1.Dashboard)
-	if ok {
-		d1.Spec.Object["id"] = id
-		return nil
-	}
-
-	return fmt.Errorf("unable to set internal ID (unsupported type: %T)", obj)
 }

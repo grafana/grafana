@@ -11,6 +11,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
@@ -408,10 +409,13 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 
-	// stash the raw value in context (if requrested)
+	// stash the raw value in context (if requested)
 	access := GetLegacyAccess(ctx)
 	if access != nil {
-		access.Dashboard = dash
+		id, ok, _ := unstructured.NestedInt64(dash.Spec.Object, "id")
+		if ok {
+			access.DashboardID = id
+		}
 	}
 	return dash, created, err
 }

@@ -2,12 +2,10 @@ package legacy
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 )
 
 type LegacyValue struct {
-	Dashboard *dashboard.Dashboard
+	DashboardID int64
 }
 
 type accessKey struct{}
