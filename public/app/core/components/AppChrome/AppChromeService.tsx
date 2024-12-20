@@ -146,11 +146,19 @@ export class AppChromeService {
     }
 
     let lastEntry = entries[0];
+
     if (!lastEntry || lastEntry.name !== newPageNav.text) {
       lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
     }
+
+    // We avoid adding an entry with the same url twice so when the last history entry has the same url as the new entry
+    // we override the last entry with the new one
     if (lastEntry !== entries[0]) {
-      entries = [lastEntry, ...entries];
+      if (entries[0] && lastEntry.url === entries[0].url) {
+        entries[0] = lastEntry;
+      } else {
+        entries = [lastEntry, ...entries];
+      }
     }
     return entries;
   }
