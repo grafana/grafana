@@ -88,10 +88,6 @@ type TeamHTTPHeader struct {
 	Value  string `json:"value"`
 }
 
-func (ds DataSource) TeamHTTPHeaders() (*TeamHTTPHeaders, error) {
-	return GetTeamHTTPHeaders(ds.JsonData)
-}
-
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 	teamHTTPHeaders := &TeamHTTPHeaders{}
 	if jsonData == nil {
