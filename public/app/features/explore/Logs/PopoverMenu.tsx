@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { copyText } from '../../logs/utils';
 
@@ -60,7 +61,7 @@ export const PopoverMenu = ({
       <div className={styles.menu} style={{ top: y, left: x }}>
         <Menu ref={containerRef}>
           <Menu.Item
-            label="Copy selection"
+            label={t('logs.popover-menu.copy', 'Copy selection')}
             onClick={() => {
               copyText(selection, containerRef);
               close();
@@ -69,7 +70,7 @@ export const PopoverMenu = ({
           />
           {onClickFilterString && (
             <Menu.Item
-              label="Add as line contains filter"
+              label={t('logs.popover-menu.line-contains', 'Add as line contains filter')}
               onClick={() => {
                 onClickFilterString(selection, row.dataFrame.refId);
                 close();
@@ -79,7 +80,7 @@ export const PopoverMenu = ({
           )}
           {onClickFilterOutString && (
             <Menu.Item
-              label="Add as line does not contain filter"
+              label={t('logs.popover-menu.line-contains-not', 'Add as line does not contain filter')}
               onClick={() => {
                 onClickFilterOutString(selection, row.dataFrame.refId);
                 close();
@@ -88,7 +89,7 @@ export const PopoverMenu = ({
             />
           )}
           <Menu.Divider />
-          <Menu.Item label="Disable menu" onClick={onDisable} />
+          <Menu.Item label={t('logs.popover-menu.disable-menu', 'Disable menu')} onClick={onDisable} />
         </Menu>
       </div>
     </>
