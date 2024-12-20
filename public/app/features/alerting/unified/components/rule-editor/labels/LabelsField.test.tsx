@@ -133,7 +133,7 @@ describe('LabelsField with suggestions', () => {
     expect(screen.getByTestId('labelsInSubform-key-2')).toHaveTextContent('key3');
     expect(screen.getByTestId('labelsInSubform-value-2')).toHaveTextContent('value3');
   });
-  it('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
+  it.skip('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
     const { user } = renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));

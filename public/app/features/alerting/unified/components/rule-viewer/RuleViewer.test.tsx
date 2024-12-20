@@ -80,7 +80,7 @@ setPluginLinksHook(() => ({
  * "Grants" permissions via contextSrv mock, and additionally sets folder access control
  * API response to match
  */
-const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
+export const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
   const permissionsHash = permissions.reduce((hash, permission) => ({ ...hash, [permission]: true }), {});
   grantUserPermissions(permissions);
   setFolderAccessControl(permissionsHash);

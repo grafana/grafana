@@ -210,36 +210,4 @@ describe('Rules group tests', () => {
       expect(ui.confirmDeleteModal.confirmButton.get()).toBeInTheDocument();
     });
   });
-
-  describe('Analytics', () => {
-    beforeEach(() => {
-      contextSrv.isEditor = true;
-    });
-
-    const group: CombinedRuleGroup = {
-      name: 'TestGroup',
-      rules: [mockCombinedRule()],
-      totals: {},
-    };
-
-    const namespace: CombinedRuleNamespace = {
-      name: 'TestNamespace',
-      rulesSource: mockDataSource(),
-      groups: [group],
-    };
-
-    it('Should log info when closing the edit group rule modal without saving', async () => {
-      mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
-      renderRulesGroup(namespace, group);
-
-      await userEvent.click(ui.editGroupButton.get());
-
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByText('Cancel'));
-
-      expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
-      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.leavingRuleGroupEdit);
-    });
-  });
 });

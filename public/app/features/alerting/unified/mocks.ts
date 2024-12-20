@@ -196,14 +196,11 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   ...partial,
 });
 
-export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerAlertingRuleDTO => ({
-  alert: 'alert1',
+export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerRecordingRuleDTO => ({
+  record: 'alert1',
   expr: 'up = 1',
   labels: {
     severity: 'warning',
-  },
-  annotations: {
-    summary: 'test alert',
   },
   ...partial,
 });
