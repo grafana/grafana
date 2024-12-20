@@ -10,6 +10,7 @@ import {
   IconName,
   LinkButton,
   Stack,
+  Text,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -80,6 +81,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 meta.push(item.spec.local?.path);
                 break;
             }
+
             return (
               <Card key={item.metadata?.name}>
                 <Card.Figure>
@@ -88,25 +90,17 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 <Card.Heading>{item.spec?.title}</Card.Heading>
                 <Card.Description>
                   {item.spec?.description}
-
+                  {/*TODO move this elsewhere, the description is a p tag and cannot have div children*/}
                   {item.status ? (
-                    <>
-                      {!healthy && (
-                        <Alert
-                          title="Repository is unhealthy"
-                          children={item.status?.health?.message?.map((v) => (
-                            <div>
-                              {v}
-                              <br />
-                              <br />
-                            </div>
-                          ))}
-                        ></Alert>
-                      )}
-                    </>
+                    !healthy && (
+                      <Alert
+                        title="Repository is unhealthy"
+                        children={item.status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}
+                      />
+                    )
                   ) : (
                     <div>
-                      <Alert severity="warning" title="repository initializing" />
+                      <Alert severity="warning" title="Repository initializing" />
                     </div>
                   )}
                 </Card.Description>
@@ -116,8 +110,8 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                     Manage
                   </LinkButton>
                   {item.spec?.folder && (
-                    <LinkButton href={`/dashboards/f/${item.spec?.folder}/`} variant="secondary">
-                      View
+                    <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
+                      Edit
                     </LinkButton>
                   )}
                   {healthy && <SyncRepository repository={item} />}
