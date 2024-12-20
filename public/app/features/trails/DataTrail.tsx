@@ -367,7 +367,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // must set this right away, but feels gross
       this.setState({
         nonPromotedOtelResources,
-        useOtelExperience: hasOtelResources,
       });
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
