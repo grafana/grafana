@@ -46,10 +46,14 @@ const resourcesMetadataHandler = () =>
     HttpResponse.json({ status: 'success', data: {} })
   );
 
+const resourcesLabelsHandler2 = () =>
+  http.get('/api/datasources/uid/:datasourceUid/resources/labels', () => HttpResponse.json({ status: 'success' }));
+
 const datasourcesHandlers = [
   datasourceBuildInfoHandler(),
   labelValuesHandler(),
   resourcesLabelsHandler(),
   resourcesMetadataHandler(),
+  resourcesLabelsHandler2(),
 ];
 export default datasourcesHandlers;
