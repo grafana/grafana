@@ -593,29 +593,30 @@ func TestService_listPermission(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "dashboards:read",
-					Scope:      "folders:uid:some_folder_parent",
-					Kind:       "folders",
-					Attribute:  "uid",
-					Identifier: "some_folder_parent",
-				},
-				{
-					Action:     "dashboards:read",
 					Scope:      "folders:uid:some_folder_child",
 					Kind:       "folders",
 					Attribute:  "uid",
 					Identifier: "some_folder_child",
 				},
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:some_folder_parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_parent",
+				},
 			},
 			folderTree: map[string]FolderNode{
-				"some_folder_parent": {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":  {uid: "some_folder_child", parentUID: strPtr("some_folder_parent")},
+				"some_folder_parent":   {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":    {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild"}},
+				"some_folder_subchild": {uid: "some_folder_subchild", parentUID: strPtr("some_folder_child")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 			},
-			expectedFolders: []string{"some_folder_parent", "some_folder_child"},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child", "some_folder_subchild"},
 		},
 		{
 			name:        "return no dashboards and folders if the user doesn't have access to any resources",

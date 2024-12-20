@@ -494,6 +494,10 @@ func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet ma
 		return
 	}
 	for _, child := range folder.childrenUIDs {
+		// We have already processed all the children of this folder
+		if _, ok := folderSet[child]; ok {
+			return
+		}
 		folderSet[child] = struct{}{}
 		getChildren(folderMap, child, folderSet)
 	}
