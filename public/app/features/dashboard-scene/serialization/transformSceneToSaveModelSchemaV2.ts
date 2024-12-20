@@ -36,7 +36,6 @@ import {
   AdhocVariableKind,
   AnnotationQueryKind,
   defaultAnnotationPanelFilter,
-  defaultAnnotationQuerySpec,
   DataLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -66,6 +65,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
+    id: oldDash.id ? oldDash.id : undefined,
     title: oldDash.title,
     description: oldDash.description ?? '',
     cursorSync: getCursorSync(oldDash),
@@ -265,13 +265,13 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
     vizPanelQueries.forEach((query) => {
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
-        spec: query,
+        spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
         datasource: datasource ?? getDefaultDataSourceRef(),
         query: dataQuery,
         refId: query.refId,
-        hidden: query.hidden,
+        hidden: Boolean(query.hide),
       };
       queries.push({
         kind: 'PanelQuery',
@@ -312,9 +312,12 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
           id: transformation.filter?.id ?? '',
           options: transformation.filter?.options ?? {},
         },
-        topic: transformation.topic,
         options: transformation.options,
       };
+
+      if (transformation.topic !== undefined) {
+        transformationSpec.topic = transformation.topic;
+      }
 
       transformations.push({
         kind: transformation.id,
@@ -349,6 +352,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   if (panelTime instanceof PanelTimeRange) {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
+    queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
   }
   return queryOptions;
 }
@@ -399,22 +403,25 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
     const result: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: Boolean(layer.state.query.builtIn),
         name: layer.state.query.name,
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
-        query: {
-          kind: getAnnotationQueryKind(layer.state.query),
-          spec: omit(layer.state.query, 'datasource'),
-        },
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
         iconColor: layer.state.query.iconColor,
-        builtIn:
-          layer.state.query.builtIn === undefined
-            ? Boolean(layer.state.query.builtIn)
-            : defaultAnnotationQuerySpec().builtIn,
       },
     };
+
+    // Check if DataQueryKind exists
+    const queryKind = getAnnotationQueryKind(layer.state.query);
+    if (layer.state.query.query?.kind === queryKind) {
+      result.spec.query = {
+        kind: queryKind,
+        spec: layer.state.query.query.spec,
+      };
+    }
+
     annotations.push(result);
   }
   return annotations;
