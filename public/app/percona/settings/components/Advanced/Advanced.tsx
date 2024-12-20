@@ -140,7 +140,7 @@ export const Advanced: FC = () => {
       enable_telemetry: telemetry,
       enable_advisor: stt,
       enable_azurediscover: azureDiscover,
-      pmm_public_address: publicAddress,
+      pmm_public_address: publicAddress || '',
       enable_alerting: alerting,
       advisor_run_intervals: !!stt ? sttCheckIntervals : undefined,
       enable_backup_management: backup,
