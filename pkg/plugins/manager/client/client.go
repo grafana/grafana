@@ -3,12 +3,15 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/textproto"
+	"runtime/debug"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/extensions/datasource/dsrunner/pluginmetrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -37,7 +40,24 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 	}
 }
 
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func panicRecover(ctx context.Context, err error, endpoint string) {
+	if r := recover(); r != nil {
+		if theErr, ok := r.(error); ok {
+			err = theErr
+		} else if theErrString, ok := r.(string); ok {
+			err = errors.New(theErrString)
+		} else {
+			err = fmt.Errorf("unexpected error - %w", err)
+		}
+
+		slug := ""
+		slug, _ = pluginmetrics.SlugFromContext(ctx)
+
+		backend.Logger.Error("panic triggered", "endpoint", endpoint, "slug", slug, "error", err, "stack", string(debug.Stack()))
+	}
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (resp *backend.QueryDataResponse, err error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -47,7 +67,24 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	resp, err := p.QueryData(ctx, req)
+	defer func() {
+		if r := recover(); r != nil {
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = errors.New(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error - %w", err)
+			}
+
+			slug := ""
+			slug, _ = pluginmetrics.SlugFromContext(ctx)
+
+			backend.Logger.Error("panic triggered", "endpoint", "QueryData", "slug", slug, "error", err, "stack", string(debug.Stack()))
+		}
+	}()
+
+	resp, err = p.QueryData(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
@@ -76,7 +113,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return resp, err
 }
 
-func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) (err error) {
 	if req == nil {
 		return errNilRequest
 	}
@@ -89,6 +126,23 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return plugins.ErrPluginNotRegistered
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = errors.New(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error - %w", err)
+			}
+
+			slug := ""
+			slug, _ = pluginmetrics.SlugFromContext(ctx)
+
+			backend.Logger.Error("panic triggered", "endpoint", "CallResource", "slug", slug, "error", err, "stack", string(debug.Stack()))
+		}
+	}()
 
 	removeConnectionHeaders(req.Headers)
 	removeHopByHopHeaders(req.Headers)
@@ -114,7 +168,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return sender.Send(res)
 	})
 
-	err := p.CallResource(ctx, req, wrappedSender)
+	err = p.CallResource(ctx, req, wrappedSender)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
@@ -148,7 +202,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 	return resp, nil
 }
 
-func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (resp *backend.CheckHealthResult, err error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -158,7 +212,24 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	resp, err := p.CheckHealth(ctx, req)
+	defer func() {
+		if r := recover(); r != nil {
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = errors.New(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error - %w", err)
+			}
+
+			slug := ""
+			slug, _ = pluginmetrics.SlugFromContext(ctx)
+
+			backend.Logger.Error("panic triggered", "endpoint", "CheckHealth", "slug", slug, "error", err, "stack", string(debug.Stack()))
+		}
+	}()
+
+	resp, err = p.CheckHealth(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
