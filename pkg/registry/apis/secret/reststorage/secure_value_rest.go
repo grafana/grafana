@@ -225,7 +225,9 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 
 	// General validations.
 
-	// Audience should match "{group}/{name OR *}"
+	audienceGroups := make(map[string]map[string]int, 0)
+
+	// Audience must match "{group}/{name OR *}" and must be unique.
 	for i, audience := range sv.Spec.Audiences {
 		group, name, found := strings.Cut(audience, "/")
 		if !found {
@@ -233,6 +235,8 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 				errs,
 				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience must have the format `{string}/{string}`"),
 			)
+
+			continue
 		}
 
 		if group == "" {
@@ -240,6 +244,8 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 				errs,
 				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience group must be present"),
 			)
+
+			continue
 		}
 
 		if found && name == "" {
@@ -247,6 +253,49 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 				errs,
 				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "an audience name must be present (use * for match-all)"),
 			)
+
+			continue
+		}
+
+		if _, exists := audienceGroups[group][name]; exists {
+			errs = append(
+				errs,
+				field.Invalid(
+					field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"),
+					audience,
+					"the same audience already exists and must be unique",
+				),
+			)
+
+			continue
+		}
+
+		if audienceGroups[group] == nil {
+			audienceGroups[group] = make(map[string]int)
+		}
+
+		audienceGroups[group][name] = i
+	}
+
+	// In case of a "{group}/*" any other "{group}/{name}" with a matching "{group}" is redundant.
+	for group, names := range audienceGroups {
+		const wildcard = "*"
+
+		if _, exists := names[wildcard]; exists && len(names) > 1 {
+			for name, i := range names {
+				if name == wildcard {
+					continue
+				}
+
+				errs = append(
+					errs,
+					field.Invalid(
+						field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"),
+						group+"/"+name,
+						`the audience is not required as there is a wildcard "`+group+`/*" which takes precedence`,
+					),
+				)
+			}
 		}
 	}
 

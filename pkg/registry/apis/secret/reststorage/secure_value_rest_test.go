@@ -16,7 +16,7 @@ func TestValidateSecureValue(t *testing.T) {
 				Title:     "title",
 				Value:     "value",
 				Keeper:    "keeper",
-				Audiences: []string{"group/*", "group/name"},
+				Audiences: []string{"group1/*", "group2/name"},
 			},
 		}
 
@@ -80,6 +80,39 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 	})
 
+	t.Run("`audiences` must have unique items", func(t *testing.T) {
+		t.Run("with regular group-names", func(t *testing.T) {
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Audiences: []string{
+						"my.grafana.app/app-1",
+						"my.grafana.app/app-1",
+						"my.grafana.app/app-2",
+					},
+				},
+			}
+
+			errs := ValidateSecureValue(sv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
+		})
+
+		t.Run("with the wildcard name", func(t *testing.T) {
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Audiences: []string{
+						"my.grafana.app/*",
+						"my.grafana.app/*",
+					},
+				},
+			}
+
+			errs := ValidateSecureValue(sv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
+		})
+	})
+
 	t.Run("`audiences` must match the expected format", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
@@ -97,5 +130,27 @@ func TestValidateSecureValue(t *testing.T) {
 		for i, err := range errs {
 			require.Equal(t, fmt.Sprintf("spec.audiences.[%d]", i), err.Field)
 		}
+	})
+
+	t.Run("`audiences` with redundant group-names are reported", func(t *testing.T) {
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Audiences: []string{
+					// "app-1" and "app-2" lines are not needed as "*" takes precedence for the whole group.
+					"my.grafana.app/app-1",
+					"my.grafana.app/*",
+					"my.grafana.app/app-2",
+				},
+			},
+		}
+
+		errs := ValidateSecureValue(sv, admission.Update)
+		require.Len(t, errs, 2)
+
+		actualBadValues := make([]string, 0, 2)
+		for _, err := range errs {
+			actualBadValues = append(actualBadValues, err.BadValue.(string))
+		}
+		require.EqualValues(t, []string{"my.grafana.app/app-1", "my.grafana.app/app-2"}, actualBadValues)
 	})
 }
