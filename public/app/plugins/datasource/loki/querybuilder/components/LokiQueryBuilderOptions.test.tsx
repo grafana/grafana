@@ -1,9 +1,37 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LokiQuery, LokiQueryType } from '../../types';
+import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
+import { config, getAppEvents } from '@grafana/runtime';
 
-import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
+
+import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      ...jest.requireActual('@grafana/runtime').featureToggles,
+      lokiShardSplitting: true,
+    },
+  },
+  getAppEvents: jest.fn(),
+}));
+
+const subscribeMock = jest.fn();
+beforeAll(() => {
+  config.featureToggles.lokiShardSplitting = true;
+  subscribeMock.mockImplementation(() => ({ unsubscribe: jest.fn() }));
+  jest.mocked(getAppEvents).mockReturnValue({
+    publish: jest.fn(),
+    getStream: jest.fn(),
+    subscribe: subscribeMock,
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  });
+});
 
 describe('LokiQueryBuilderOptions', () => {
   it('can change query type', async () => {
@@ -184,9 +212,68 @@ describe('LokiQueryBuilderOptions', () => {
       step: '4s',
     });
   });
+
+  describe('Query direction', () => {
+    it('uses backward as default direction when not in Explore', () => {
+      setup({ expr: '{foo="bar"}' }, jest.fn(), { app: undefined });
+      expect(screen.getByText(/Direction: Backward/)).toBeInTheDocument();
+    });
+
+    it('uses backward as default in Explore with no previous stored preference', () => {
+      store.delete('grafana.explore.logs.sortOrder');
+      setup({ expr: '{foo="bar"}' }, jest.fn(), { app: CoreApp.Explore });
+      expect(screen.getByText(/Direction: Backward/)).toBeInTheDocument();
+    });
+
+    it('uses the stored sorting option to determine direction in Explore', () => {
+      store.set('grafana.explore.logs.sortOrder', LogsSortOrder.Ascending);
+      setup({ expr: '{foo="bar"}' }, jest.fn(), { app: CoreApp.Explore });
+      expect(screen.getByText(/Direction: Forward/)).toBeInTheDocument();
+      store.delete('grafana.explore.logs.sortOrder');
+    });
+
+    describe('Event handling', () => {
+      let listener: (event: LogSortOrderChangeEvent) => void = jest.fn();
+      const onChangeMock = jest.fn();
+      beforeEach(() => {
+        onChangeMock.mockClear();
+        listener = jest.fn();
+        subscribeMock.mockImplementation((_: unknown, callback: (event: LogSortOrderChangeEvent) => void) => {
+          listener = callback;
+          return { unsubscribe: jest.fn() };
+        });
+      });
+      it('subscribes to sort change event and updates the direction', () => {
+        setup({ expr: '{foo="bar"}' }, onChangeMock, { app: undefined });
+        expect(screen.getByText(/Direction: Backward/)).toBeInTheDocument();
+        listener(
+          new LogSortOrderChangeEvent({
+            order: LogsSortOrder.Ascending,
+          })
+        );
+        expect(onChangeMock).toHaveBeenCalledTimes(1);
+        expect(onChangeMock).toHaveBeenCalledWith({
+          direction: 'forward',
+          expr: '{foo="bar"}',
+          refId: 'A',
+        });
+      });
+
+      it('does not change the direction when the current direction is scan', () => {
+        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Scan }, onChangeMock, { app: undefined });
+        expect(screen.getByText(/Direction: Scan/)).toBeInTheDocument();
+        listener(
+          new LogSortOrderChangeEvent({
+            order: LogsSortOrder.Ascending,
+          })
+        );
+        expect(onChangeMock).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
 
-function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn()) {
+function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), propOverrides: Partial<Props> = {}) {
   const props = {
     query: {
       refId: 'A',
@@ -197,6 +284,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn()) {
     onChange,
     maxLines: 20,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
+    ...propOverrides,
   };
 
   const { container } = render(<LokiQueryBuilderOptions {...props} />);
