@@ -43,7 +43,7 @@ func (s *DashboardStorage) NewStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	if err != nil {
 		return nil, err
 	}
-	client := resource.NewDirectResourceClient(server) // same context
+	client := legacy.NewDirectResourceClient(server) // same context
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
 	)
@@ -66,6 +66,7 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 	if access != nil && access.DashboardID > 0 {
 		meta, _ := utils.MetaAccessor(obj)
 		if meta != nil {
+			// nolint:staticcheck
 			meta.SetDeprecatedInternalID(access.DashboardID)
 		}
 	}
