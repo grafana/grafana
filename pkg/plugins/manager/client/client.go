@@ -40,23 +40,6 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 	}
 }
 
-func panicRecover(ctx context.Context, err error, endpoint string) {
-	if r := recover(); r != nil {
-		if theErr, ok := r.(error); ok {
-			err = theErr
-		} else if theErrString, ok := r.(string); ok {
-			err = errors.New(theErrString)
-		} else {
-			err = fmt.Errorf("unexpected error - %w", err)
-		}
-
-		slug := ""
-		slug, _ = pluginmetrics.SlugFromContext(ctx)
-
-		backend.Logger.Error("panic triggered", "endpoint", endpoint, "slug", slug, "error", err, "stack", string(debug.Stack()))
-	}
-}
-
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (resp *backend.QueryDataResponse, err error) {
 	if req == nil {
 		return nil, errNilRequest
