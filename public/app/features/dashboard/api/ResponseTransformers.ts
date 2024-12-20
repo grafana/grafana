@@ -15,6 +15,7 @@ import {
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardId,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
@@ -105,6 +106,7 @@ export function ensureV2Response(
         [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
         [AnnoKeyFolder]: accessAndMeta.folderUid,
         [AnnoKeySlug]: accessAndMeta.slug,
+        [AnnoKeyDashboardId]: dashboard.id ?? undefined,
       },
     },
     spec,
@@ -386,6 +388,8 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         };
         variables.push(dv);
         break;
+      default:
+        throw new Error(`Variable transformation not implemented: ${v.type}`);
     }
   }
   return variables;

@@ -1,4 +1,12 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyDashboardId,
+  AnnoKeyFolder,
+  AnnoKeySlug,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
@@ -9,6 +17,7 @@ describe('ResponseTransformers', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
       const dashboardV1: DashboardDataDTO = {
         uid: 'dashboard-uid',
+        id: 123,
         title: 'Dashboard Title',
         description: 'Dashboard Description',
         tags: ['tag1', 'tag2'],
@@ -59,11 +68,11 @@ describe('ResponseTransformers', () => {
 
           creationTimestamp: '2023-01-01T00:00:00Z',
           annotations: {
-            'grafana.app/createdBy': 'user1',
-            'grafana.app/updatedBy': 'user2',
-            'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
-            'grafana.app/folder': 'folder1',
-            'grafana.app/slug': 'dashboard-slug',
+            [AnnoKeyCreatedBy]: 'user1',
+            [AnnoKeyUpdatedBy]: 'user2',
+            [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
+            [AnnoKeyFolder]: 'folder1',
+            [AnnoKeySlug]: 'dashboard-slug',
           },
         },
       };
@@ -72,7 +81,12 @@ describe('ResponseTransformers', () => {
 
       expect(transformed.apiVersion).toBe('v2alpha1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
-      expect(transformed.metadata).toEqual(dto.metadata);
+      expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
+      expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
+      expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
+      expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
+      expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardId]).toBe(123);
 
       const spec = transformed.spec;
       expect(spec.title).toBe(dashboardV1.title);

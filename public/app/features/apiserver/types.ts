@@ -38,6 +38,7 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
+export const AnnoKeyDashboardId = 'grafana.app/dashboardId';
 
 // Identify where values came from
 export const AnnoKeyRepoName = 'grafana.app/repoName';
@@ -56,6 +57,7 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
+  [AnnoKeyDashboardId]?: number;
 
   [AnnoKeyRepoName]?: string;
   [AnnoKeyRepoPath]?: string;
