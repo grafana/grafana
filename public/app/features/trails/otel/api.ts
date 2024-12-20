@@ -51,8 +51,14 @@ export async function getOtelResources(
 }
 
 /**
- * Get the total amount of job/instance pairs on a metric.
- * Can be used for target_info.
+ * Get the total amount of job/instance for target_info or for a metric. 
+ * 
+ * If used for target_info, this is the metric preview scene with many panels and 
+ * the job/instance pairs will be used to filter the metric list.
+ * 
+ * If used for a metric, this is the metric preview scene with a single panel and
+ * the job/instance pairs will be used to identify otel resource attributes for the metric
+ * and distinguish between resource attributes and promoted attributes.
  *
  * @param dataSourceUid
  * @param timeRange
@@ -348,7 +354,7 @@ export async function getNonPromotedOtelResources(
     end,
     'match[]': metricMatchParam,
   };
-
+  // Get the metric labels but exclude any labels found on target_info.
   // We prioritize metric attributes over resource attributes.
   // If a label is present in both metric and target_info, we exclude it from the resource attributes.
   // This prevents errors in the join query.
