@@ -50,8 +50,13 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
     buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
   }, [buildUrl, watch]);
 
-  const [{ loading, value: image, error }, renderImage] = useAsyncFn(async () => {
-    const { width, height, scaleFactor } = watch();
+  const [{ loading, value: image, error }, renderImage] = useAsyncFn(async (imageUrl) => {
+    const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
+    return new Blob([response.data], { type: 'image/png' });
+  }, []);
+
+  const onRenderImageClick = async (data: ImageSettingsForm) => {
+    const { width, height, scaleFactor } = data;
     DashboardInteractions.generatePanelImageClicked({
       width,
       height,
@@ -59,9 +64,9 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
       theme,
       shareResource: 'panel',
     });
-    const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
-    return new Blob([response.data], { type: 'image/png' });
-  }, [imageUrl, watch('width'), watch('height'), watch('scaleFactor'), theme]);
+
+    await renderImage(imageUrl);
+  };
 
   const onDownloadImageClick = () => {
     DashboardInteractions.downloadPanelImageClicked({ shareResource: 'panel' });
@@ -78,7 +83,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
         <Text element="h4">
           <Trans i18nKey="share-panel-image.preview.title">Panel preview</Trans>
         </Text>
-        <form onSubmit={handleSubmit(renderImage)}>
+        <form onSubmit={handleSubmit(onRenderImageClick)}>
           <FieldSet
             disabled={!config.rendererAvailable}
             label={
@@ -112,6 +117,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                       value: 1,
                       message: t('share-panel-image.settings.width-min', 'Width must be equal or greater than 1'),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.width-placeholder', '1000')}
@@ -134,6 +140,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                       value: 1,
                       message: t('share-panel-image.settings.height-min', 'Height must be equal or greater than 1'),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.height-placeholder', '500')}
@@ -159,6 +166,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                         'Scale factor must be equal or greater than 1'
                       ),
                     },
+                    valueAsNumber: true,
                     onChange: onChange,
                   })}
                   placeholder={t('share-panel-image.settings.scale-factor-placeholder', '1')}
