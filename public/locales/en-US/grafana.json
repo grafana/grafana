@@ -1789,6 +1789,12 @@
       "disable-popover-message": {
         "shortcut": "shift+select to enable again"
       }
+    },
+    "popover-menu": {
+      "copy": "Copy selection",
+      "disable-menu": "Disable menu",
+      "line-contains": "Add as line contains filter",
+      "line-contains-not": "Add as line does not contain filter"
     }
   },
   "migrate-to-cloud": {

@@ -1789,6 +1789,12 @@
       "disable-popover-message": {
         "shortcut": "şĥįƒŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
       }
+    },
+    "popover-menu": {
+      "copy": "Cőpy şęľęčŧįőŉ",
+      "disable-menu": "Đįşäþľę męŉū",
+      "line-contains": "Åđđ äş ľįŉę čőŉŧäįŉş ƒįľŧęř",
+      "line-contains-not": "Åđđ äş ľįŉę đőęş ŉőŧ čőŉŧäįŉ ƒįľŧęř"
     }
   },
   "migrate-to-cloud": {
