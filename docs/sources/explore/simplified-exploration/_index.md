@@ -1,4 +1,9 @@
 ---
+labels:
+  products:
+    - oss
+    - cloud
+    - enterprise
 description: Use your telemetry data to explore and determine the root cause of issues without performing queries.
 keywords:
   - Simplified exploration
