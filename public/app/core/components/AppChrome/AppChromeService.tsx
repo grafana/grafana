@@ -165,22 +165,13 @@ export class AppChromeService {
       lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
     }
 
+    // We avoid adding an entry with the same url twice so when the last history entry has the same url as the new entry
+    // we override the last entry with the new one
     if (lastEntry !== entries[0]) {
-      // When navigating to a dashboard a fake dashboard entry is added so we avoid this by
-      // checking if the url has the dashboard word as it has BrowseDashboards page
-      const isDashboardFakePage = lastEntry.name === 'Dashboards' && !lastEntry.url.includes('dashboards');
-      // We also avoid adding the Explore page itself as it does not have a proper page, it is always the one that specifies the data source used
-      const isExplore = lastEntry.name === 'Explore' && lastEntry.url.includes('explore');
-      if (!isDashboardFakePage || !isExplore) {
-        // After checking it is not a fake dashboard entry we do the same with fake pages
-        // A fake page won't have the same url as the last entry
-        if (entries[0] && lastEntry.url.includes(entries[0].url)) {
-          // If the last entry is a fake home page we remove it
-          entries[0] = lastEntry;
-        } else {
-          entries = [lastEntry, ...entries];
-        }
-        return entries;
+      if (entries[0] && lastEntry.url === entries[0].url) {
+        entries[0] = lastEntry;
+      } else {
+        entries = [lastEntry, ...entries];
       }
     }
     return entries;
