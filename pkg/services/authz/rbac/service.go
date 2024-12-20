@@ -380,5 +380,9 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 		return folderMap, nil
 	})
 
-	return res.(map[string]FolderNode), err
+	if err != nil {
+		return nil, err
+	}
+
+	return res.(map[string]FolderNode), nil
 }
