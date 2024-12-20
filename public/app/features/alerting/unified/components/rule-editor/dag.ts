@@ -24,8 +24,11 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   graph.createNodes(nodes);
 
   queries.forEach((query) => {
+    if (!isExpressionQuery(query.model)) {
+      return;
+    }
     const source = query.refId;
-    const isMathExpression = isExpressionQuery(query.model) && query.model.type === 'math';
+    const isMathExpression = query.model.type === 'math';
 
     // some expressions have multiple targets (like the math expression)
     const targets = isMathExpression
