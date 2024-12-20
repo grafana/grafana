@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, toURLRange } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -39,7 +39,7 @@ const getPrometheusExploreUrl = ({
   const urlState: ExploreUrlState = {
     datasource: (queries?.length && queries[0].datasource?.uid) || null,
     queries:
-      queries?.map(({ expr, refId }, i) => {
+      queries?.map(({ expr, refId }) => {
         return { expr, refId };
       }) || [],
     range: toURLRange(range ? { from: range.from, to: range.to } : { from: 'now-1h', to: 'now' }),
@@ -128,7 +128,7 @@ export class InsightsMenuButton extends SceneObjectBase<InsightsMenuButtonState>
   static Component = InsightsMenuButtonRenderer;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   buttonsContainer: css({
     display: 'flex',
     flexDirection: 'row',
