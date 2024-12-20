@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -222,6 +223,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			"title",
 			"folder",
@@ -308,6 +310,17 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scoreIDX := 0
+	explainIDX := 0
+	for i, v := range result.Results.Columns {
+		switch v.Name {
+		case resource.SEARCH_FIELD_EXPLAIN:
+			explainIDX = i
+		case resource.SEARCH_FIELD_SCORE:
+			scoreIDX = i
+		}
+	}
+
 	sr := &dashboardv0alpha1.SearchResults{
 		Offset:    searchRequest.Offset,
 		TotalHits: result.TotalHits,
@@ -316,7 +329,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 	for i, row := range result.Results.Rows {
-		hit := &dashboardv0alpha1.DashboardHit{
+		hit := dashboardv0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[0]),
@@ -325,7 +338,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		if row.Cells[2] != nil {
 			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
 		}
-		sr.Hits[i] = *hit
+
+		if explainIDX > 0 && row.Cells[explainIDX] != nil {
+			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
+		}
+		if scoreIDX > 0 && row.Cells[scoreIDX] != nil {
+			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
+		}
+		sr.Hits[i] = hit
 	}
 
 	// Add facet results
