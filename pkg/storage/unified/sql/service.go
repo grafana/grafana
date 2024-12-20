@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var (
@@ -51,6 +50,8 @@ type service struct {
 
 	log log.Logger
 	reg prometheus.Registerer
+
+	docBuilders resource.DocumentBuilderSupplier
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -59,6 +60,7 @@ func ProvideUnifiedStorageGrpcService(
 	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
+	docBuilders resource.DocumentBuilderSupplier,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -78,7 +80,7 @@ func ProvideUnifiedStorageGrpcService(
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing, &grpc.Authenticator{})
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{})
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +94,7 @@ func ProvideUnifiedStorageGrpcService(
 		db:            db,
 		log:           log,
 		reg:           reg,
+		docBuilders:   docBuilders,
 	}
 
 	// This will be used when running as a dskit service
@@ -106,11 +109,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// TODO, for standalone this will need to be started from enterprise
-	// Connecting to the correct remote services (cloudconfig for DS info and usage stats)
-	docs := search.ProvideDocumentBuilders(nil)
-
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, docs, s.tracing, s.reg, authzClient)
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.docBuilders, s.tracing, s.reg, authzClient)
 	if err != nil {
 		return err
 	}
