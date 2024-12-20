@@ -49,7 +49,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const libPanelModel = new PanelModel(libPanel.model);
 
     const vizPanelState: VizPanelState = {
-      title: libPanelModel.title,
+      title: this.state.title || libPanel.name,
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
@@ -70,7 +70,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
 
     const layoutElement = vizPanel.parent!;
 
