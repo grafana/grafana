@@ -666,8 +666,8 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	if !ok {
 		return // error is already sent
 	}
-	cmd := folder.CreateFolderCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	cmd := &folder.CreateFolderCommand{}
+	if err := web.Bind(c.Req, cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
@@ -676,7 +676,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
-	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
+	out, err := client.Create(c.Req.Context(), obj, v1.CreateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -829,23 +829,27 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 
-	cmd := folder.UpdateFolderCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	var ctx = c.Req.Context()
+
+	cmd := &folder.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]
-	cmd.SignedInUser = c.SignedInUser
-	// #TODO add version?
 
-	obj, err := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
 
-	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
+	updated, err := internalfolders.LegacyUpdateCommandToUnstructured(obj, cmd)
+	if err != nil {
+		return
+	}
+
+	out, err := client.Update(ctx, updated, v1.UpdateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -873,9 +877,7 @@ func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]
-	cmd.SignedInUser = c.SignedInUser
 
 	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
 	if err != nil {
