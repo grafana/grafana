@@ -325,6 +325,12 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       height: theme.spacing(3),
       lineHeight: theme.spacing(2.5),
     }),
+    logDimensionsTable: css({
+      position: 'absolute',
+      top: '-9999px',
+      left: '-9999px',
+      visibility: 'hidden',
+    }),
   };
 });
 

@@ -23,6 +23,7 @@ import { sortLogRows, targetIsElement } from '../utils';
 import { LogRow } from './LogRow';
 import { restructureLog } from './LogRowMessage';
 import { getLogRowStyles } from './getLogRowStyles';
+import { LogRowDimensions } from './LogRowDimensions';
 
 export interface Props {
   logRows?: LogRowModel[];
@@ -80,6 +81,8 @@ type PopoverStateType = {
   popoverMenuCoordinates: { x: number; y: number };
 };
 
+type RowDimension = { rowHeight: number; logWidth: number };
+
 export const LogRows = memo(
   ({
     deduplicatedRows,
@@ -119,6 +122,7 @@ export const LogRows = memo(
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = useMemo(() => () => orderedRows, [orderedRows]);
     const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
+    const [rowDimensions, setRowDimensions] = useState<RowDimension | null>(null);
 
     useEffect(() => {
       return () => {
@@ -292,6 +296,10 @@ export const LogRows = memo(
       ]
     );
 
+    const setRenderDimensions = useCallback((rowHeight: number, logWidth: number) => {
+      setRowDimensions({ rowHeight, logWidth });
+    }, []);
+
     const height = window.innerHeight * 0.75;
 
     return (
@@ -306,28 +314,38 @@ export const LogRows = memo(
             onClickFilterOutString={onClickFilterOutString}
           />
         )}
-        <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
-          <tbody>
-            <VariableSizeList
-              height={height}
-              itemCount={orderedRows?.length || 0}
-              itemSize={estimateRowHeight.bind(
-                null,
-                orderedRows,
-                isRowExpanded,
-                props.prettifyLogMessage,
-                props.wrapLogMessage,
-                props.showTime,
-                props.showLabels
-              )}
-              itemKey={(index: number) => index}
-              width={'100%'}
-              layout="vertical"
-            >
-              {Row}
-            </VariableSizeList>
-          </tbody>
-        </table>
+        {rowDimensions && (
+          <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
+            <tbody>
+              <VariableSizeList
+                height={height}
+                itemCount={orderedRows?.length || 0}
+                itemSize={estimateRowHeight.bind(
+                  null,
+                  orderedRows,
+                  rowDimensions,
+                  isRowExpanded,
+                  props.prettifyLogMessage,
+                  props.wrapLogMessage
+                )}
+                itemKey={(index: number) => index}
+                width={'100%'}
+                layout="vertical"
+              >
+                {Row}
+              </VariableSizeList>
+            </tbody>
+          </table>
+        )}
+        <LogRowDimensions
+          overflowingContent={props.overflowingContent}
+          showDuplicates={showDuplicates}
+          logsSortOrder={logsSortOrder}
+          styles={styles}
+          enableLogDetails={enableLogDetails}
+          onCalculate={setRenderDimensions}
+          {...props}
+        />
       </div>
     );
   }
@@ -340,14 +358,12 @@ export const LogRows = memo(
  */
 const estimateRowHeight = (
   rows: LogRowModel[],
+  dimensions: RowDimension,
   isRowExpanded: (r: LogRowModel) => boolean,
   prettifyLogMessage: boolean,
   wrapLogMessage: boolean,
-  showTime: boolean,
-  showLabels: boolean,
   index: number
 ) => {
-  const rowHeight = 20.14;
   const lineHeight = 18.5;
   const detailsHeight = isRowExpanded(rows[index]) ? window.innerHeight * 0.35 + 41 : 0;
   const line = restructureLog(rows[index].raw, prettifyLogMessage, wrapLogMessage, isRowExpanded(rows[index]));
@@ -355,10 +371,10 @@ const estimateRowHeight = (
   if (prettifyLogMessage) {
     try {
       const parsed: Record<string, string> = JSON.parse(line);
-      let jsonHeight = 2 * rowHeight; // {}
+      let jsonHeight = 2 * dimensions.rowHeight; // {}
       for (let key in parsed) {
         jsonHeight +=
-          estimateMessageLines(`  "${key}": "${parsed[key]}"`, wrapLogMessage, showTime, showLabels) * lineHeight;
+          estimateMessageLines(`  "${key}": "${parsed[key]}"`, dimensions.logWidth, wrapLogMessage) * lineHeight;
       }
       return jsonHeight + detailsHeight;
     } catch (e) {
@@ -366,22 +382,15 @@ const estimateRowHeight = (
     }
   }
   if (!wrapLogMessage) {
-    return rowHeight + detailsHeight;
+    return dimensions.rowHeight + detailsHeight;
   }
-  return estimateMessageLines(line, wrapLogMessage, showTime, showLabels) * rowHeight + detailsHeight;
+  return estimateMessageLines(line, dimensions.logWidth, wrapLogMessage) * dimensions.rowHeight + detailsHeight;
 };
 
-const estimateMessageLines = (line: string, wrapLogMessage: boolean, showTime: boolean, showLabels: boolean) => {
+const estimateMessageLines = (line: string, lineWidth: number, wrapLogMessage: boolean) => {
   if (!wrapLogMessage) {
     return 1;
   }
-  let margins = 48 + 65;
-  if (showTime) {
-    margins += 177;
-  }
-  if (showLabels) {
-    margins += Math.round(window.innerWidth * 0.17);
-  }
   const letter = 8.4;
-  return Math.ceil((line.length * letter) / (window.innerWidth - margins));
+  return Math.ceil((line.length * letter) / lineWidth);
 };
