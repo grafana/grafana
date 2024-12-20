@@ -11,7 +11,7 @@ import (
 
 func GetPerconaSaasHost(c *contextmodel.ReqContext) response.Response {
 	saasHost := "https://portal.percona.com"
-	envHost, ok := os.LookupEnv("PERCONA_PORTAL_URL")
+	envHost, ok := os.LookupEnv("PMM_DEV_PORTAL_URL")
 
 	if ok {
 		saasHost = envHost
