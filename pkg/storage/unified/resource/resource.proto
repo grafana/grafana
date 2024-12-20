@@ -108,24 +108,24 @@ message ErrorDetails {
 }
 
 message ErrorCause {
-	// A machine-readable description of the cause of the error. If this value is
-	// empty there is no information available.
-	string reason = 1;
-	// A human-readable description of the cause of the error.  This field may be
-	// presented as-is to a reader.
-	// +optional
-	string message = 2;
-	// The field of the resource that has caused this error, as named by its JSON
-	// serialization. May include dot and postfix notation for nested attributes.
-	// Arrays are zero-indexed.  Fields may appear more than once in an array of
-	// causes due to fields having multiple errors.
-	// Optional.
-	//
-	// Examples:
-	//   "name" - the field "name" on the current resource
-	//   "items[0].name" - the field "name" on the first array entry in "items"
-	// +optional
-	string field = 3;
+  // A machine-readable description of the cause of the error. If this value is
+  // empty there is no information available.
+  string reason = 1;
+  // A human-readable description of the cause of the error.  This field may be
+  // presented as-is to a reader.
+  // +optional
+  string message = 2;
+  // The field of the resource that has caused this error, as named by its JSON
+  // serialization. May include dot and postfix notation for nested attributes.
+  // Arrays are zero-indexed.  Fields may appear more than once in an array of
+  // causes due to fields having multiple errors.
+  // Optional.
+  //
+  // Examples:
+  //   "name" - the field "name" on the current resource
+  //   "items[0].name" - the field "name" on the first array entry in "items"
+  // +optional
+  string field = 3;
 }
 
 // ----------------------------------
@@ -192,7 +192,9 @@ message ReadRequest {
   ResourceKey key = 1;
 
   // Optionally pick an explicit resource version
-  int64 resource_version = 3;
+  int64 resource_version = 2;
+  // Optionally decide to return the latest RV if deleted
+  bool include_deleted = 3;
 }
 
 message ReadResponse {
@@ -323,21 +325,122 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-message SearchRequest {
-  // query string for chosen implementation (currently just bleve)
-  string query = 1;
-  // default to bleve
-  string queryType = 2;
-  string tenant = 3;
-  // resource kind (playlists, dashboards, etc)
-  string kind = 4;
-  // pagination support
-  int64 limit = 5;
-  int64 offset = 6;
+// Get statistics across multiple resources
+// For these queries, we do not need authorization to see the actual values
+message ResourceStatsRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+
+  // An optional list of group/resource identifiers
+  // when empty, we assume searching across everything
+  // NOTE, this query may need to federate across a few storage instances
+  repeated string kinds = 2;
+
+  // Limit the stats within a folder (not recursive!) 
+  string folder = 3;
 }
 
-message SearchResponse {
-  repeated ResourceWrapper items = 1;
+message ResourceStatsResponse {
+  message Stats {
+    // Resource group
+    string group = 1;
+    // Resource name
+    string resource = 2;
+    // Number of items
+    int64 count = 3;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // All results exist within this key
+  repeated Stats stats = 2;
+}
+
+// Search within a single resource
+message ResourceSearchRequest {
+  message Sort {
+    string field = 1;
+    bool desc = 2; // defaults to ascending
+  }
+  
+  message Facet {
+    string field = 1;
+    int64 limit = 2;
+    // For now, only term queries, eventually?
+    // numeric queries
+    // date queries
+  }
+
+  // The key must include namespace + group + resource
+  ListOptions options = 1;
+
+  // To search additional resource types, add additional keys to this list
+  // NOTE: queries will only support federation across kinds with common fields
+  repeated ResourceKey federated = 2; 
+  
+  // When a query exists, it is parsed and used to influence
+  // query string for chosen implementation (currently just bleve)
+  // The score is only relevant when a query exists
+  string query = 3;
+
+  // max results
+  int64 limit = 4;
+
+  // where to start the query (eg, From)
+  int64 offset = 5;
+
+  // sorting
+  repeated Sort sortBy = 6;
+
+  // calculate field statistics
+  map<string,Facet> facet = 7;
+
+  // the return fields (empty will return everything)
+  repeated string fields = 8;
+
+  // explain each result (added to the each row)
+  bool explain = 9;
+}
+
+message ResourceSearchResponse {
+  message Facet {
+    string field = 1;
+    // The distinct terms
+    int64 total = 2;
+    // The number of documents that do *not* have this field
+    int64 missing = 3;
+    // Top term stats
+    repeated TermFacet terms = 4;
+    // numeric range
+    // date range facets 
+  }
+
+  message TermFacet {
+    string term = 1;
+    int64 count = 2;
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // All results exist within this key
+  ResourceKey key = 2;
+
+  // Query results
+  ResourceTable results = 3;
+
+  // The total hit count
+  int64 total_hits = 4;
+
+  // indicates how expensive was the query with respect to bytes read
+  double query_cost = 5;
+
+  // maximum score across all fields
+  double max_score = 6;
+
+  // Facet results
+  map<string,Facet> facet = 7;
 }
 
 message HistoryRequest {
@@ -431,6 +534,137 @@ message HealthCheckResponse {
   ServingStatus status = 1;
 }
 
+// ResourceTable is a protobuf variation of the kubernetes Table object.
+// This format allows specifying a flexible set of columns related to a given resource
+message ResourceTable {
+  // Columns describes each column in the returned items array. The number of cells per row
+  // will always match the number of column definitions.
+  repeated ResourceTableColumnDefinition columns = 1;
+
+  // rows is the list of items in the table.
+  repeated ResourceTableRow rows = 2;
+
+  // When more results exist, pass this in the next request
+  string next_page_token = 3;
+
+  // ResourceVersion of the list response
+  // +optional
+  int64 resource_version = 4;
+
+  // remainingItemCount is the number of subsequent items in the list which are not included in this
+  // list response. If the list request contained label or field selectors, then the number of
+  // remaining items is unknown and the field will be left unset and omitted during serialization.
+  // If the list is complete (either because it is not chunking or because this is the last chunk),
+  // then there are no more remaining items and this field will be left unset and omitted during
+  // serialization.
+  //
+  // The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
+  // should not rely on the remainingItemCount to be set or to be exact.
+  // +optional
+  int64 remaining_item_count = 5;
+}
+
+// TableColumnDefinition contains information about a column returned in the Table.
+message ResourceTableColumnDefinition {
+  // See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types for more.
+  // When converted to a k8s Table, this will become two fields: type and format
+  enum ColumnType {
+    UNKNOWN_TYPE = 0;
+    STRING = 1;
+    BOOLEAN = 2;
+    INT32 = 3;
+    INT64 = 4; 
+    FLOAT = 5;  
+    DOUBLE = 6; 
+    DATE = 7; 
+    DATE_TIME = 8; 
+    BINARY = 9;  
+    OBJECT = 10; // map[string]any
+  }
+
+  // These values are not part of standard k8s format 
+  // however these are useful when indexing and analyzing results
+  message Properties {
+    // All values in this columns should be unique
+    bool unique_values = 1;
+
+    // The string value is free text; using text analyzers is appropriate
+    bool free_text = 2;
+
+    // The value(s) are reasonable to use for search refinement
+    // When indexing, these values would be good to add to an index
+    bool filterable = 3;
+
+    // When true, every value should exist
+    // not_null with a nil default_value should be an error
+    bool not_null = 4;
+
+    // When missing, this value can be used
+    bytes default_value = 5;
+  }
+
+  // name is a human readable name for the column.
+  string name = 1;
+
+  // Defines the column type.  In k8s, this will resolve into both the type and format fields
+  ColumnType type = 2;
+
+  // The value is an arry of given type
+  bool is_array = 3;
+
+  // description is a human readable description of this column.
+  string description = 4;
+
+  // Properties about this column (helpful for indexing and search)
+  Properties properties = 5;
+
+  // priority is an integer defining the relative importance of this column compared to others. Lower
+  // numbers are considered higher priority. Columns that may be omitted in limited space scenarios
+  // should be given a higher priority.
+  int32 priority = 6;
+}
+
+// TableRow is an individual row in a table.
+message ResourceTableRow {
+  // The resource referenced by this row
+  ResourceKey key = 1;
+
+  // The resource version for the given values
+  int64 resource_version = 2;
+
+  // Cells will be as wide as the column definitions array 
+  // Numeric values will be encoded using big endian bytes
+  // All arrays will be JSON encoded
+  repeated bytes cells = 3;
+
+  // This field may contains the additional information about each object based on the request.
+  // The value will be at least a partial object metadata, and perhaps the full object metadata.
+  // When this value exists, it should include both the key and the resource_version otherwise
+  // they may be lost in the conversion to k8s resource
+  // +optional
+  bytes object = 4;
+}
+
+//----------------------------
+// Restore Support
+//----------------------------
+
+message RestoreRequest {
+  // Full key must be set
+  ResourceKey key = 1;
+  
+  // The resource version to restore
+  int64 resource_version = 2;
+}
+
+message RestoreResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
+
 //----------------------------
 // Blob Support
 //----------------------------
@@ -440,7 +674,7 @@ message PutBlobRequest {
     // Use the inline raw []byte
     GRPC = 0;
 
-    // Get a signed URL and PUT the value 
+    // Get a signed URL and PUT the value
     HTTP = 1;
   }
 
@@ -501,7 +735,7 @@ message GetBlobResponse {
   // When this is set, neither info nor value will be set
   string url = 2;
 
-  // Content type 
+  // Content type
   string content_type = 3;
 
   // The raw object value
@@ -517,6 +751,7 @@ service ResourceStore {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Restore(RestoreRequest) returns (RestoreResponse);
 
   // The results *may* include values that should not be returned to the user
   // This will perform best-effort filtering to increase performace.
@@ -532,7 +767,10 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-   rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
+
+  // Get the resource stats
+  rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
@@ -549,7 +787,7 @@ service BlobStore {
   // For large payloads, signed URLs are required to avoid protobuf message size limits
   rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
 
-  // NOTE: there is no direct access to delete blobs 
+  // NOTE: there is no direct access to delete blobs
   // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 

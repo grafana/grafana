@@ -82,7 +82,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  setComponentsFromLegacyExports(pluginExports: any) {
+  setComponentsFromLegacyExports(pluginExports: System.Module) {
     if (pluginExports.ConfigCtrl) {
       this.angularConfigCtrl = pluginExports.ConfigCtrl;
     }
@@ -145,7 +145,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     this.addComponent({
       targets: [extension.extensionPointId],
       ...extension,
-      component: extension.component as ComponentType,
+      component: extension.component,
     });
 
     return this;

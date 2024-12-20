@@ -357,52 +357,6 @@ describe('AddedComponentsRegistry', () => {
     });
   });
 
-  it('should log a warning when added component id is not suffixed with component version', async () => {
-    const registry = new AddedComponentsRegistry();
-    const extensionPointId = 'grafana/test/home';
-
-    registry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1 title',
-          description: 'Component 1 description',
-          targets: [extensionPointId],
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(log.warning).toHaveBeenCalledWith(
-      `Added component "Component 1 title": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
-    );
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(1);
-  });
-
-  it('should not register component when description is missing', async () => {
-    const registry = new AddedComponentsRegistry();
-    const extensionPointId = 'grafana/alerting/home';
-
-    registry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1 title',
-          description: '',
-          targets: [extensionPointId],
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalledWith(
-      "Could not register added component with title 'Component 1 title'. Reason: Description is missing."
-    );
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(0);
-  });
-
   it('should not register component when title is missing', async () => {
     const registry = new AddedComponentsRegistry();
     const extensionPointId = 'grafana/alerting/home';
@@ -419,7 +373,7 @@ describe('AddedComponentsRegistry', () => {
       ],
     });
 
-    expect(log.error).toHaveBeenCalledWith('Could not register added component. Reason: Title is missing.');
+    expect(log.error).toHaveBeenCalledWith('Could not register component extension. Reason: Title is missing.');
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
@@ -505,7 +459,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should register a component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
@@ -528,7 +482,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register a component added by a plugin in production mode even if the meta-info is missing', async () => {
@@ -554,7 +508,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register a component added by a plugin in dev-mode if the meta-info is present', async () => {

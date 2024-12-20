@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,
@@ -6,15 +8,17 @@ import {
   SceneObjectBase,
   SceneObjectState,
   VariableDependencyConfig,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { getUnitFromMetric } from '../autoQuery/units';
 import { reportExploreMetrics } from '../interactions';
-import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
+import { updateOtelJoinWithGroupLeft } from '../otel/util';
+import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_OTEL_GROUP_LEFT } from '../shared';
 import { getMetricSceneFor, getTrailFor } from '../utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
@@ -51,6 +55,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
   private onReferencedVariableValueChanged() {
     this.updateMetadata();
+    this.updateOtelGroupLeft();
   }
 
   private async updateMetadata() {
@@ -63,12 +68,41 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     this.setState({ metadata, metadataLoading: false });
   }
 
+  private async updateOtelGroupLeft() {
+    const trail = getTrailFor(this);
+
+    if (trail.state.useOtelExperience) {
+      await updateOtelJoinWithGroupLeft(trail, trail.state.metric ?? '');
+    }
+  }
+
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
     const { metadata, metadataLoading } = model.useState();
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
-    const { useOtelExperience } = getTrailFor(model).useState();
+    let allLabelOptions = labelOptions;
+
+    const trail = getTrailFor(model);
+    const { useOtelExperience } = trail.useState();
+
+    if (useOtelExperience) {
+      // when the group left variable is changed we should get all the resource attributes + labels
+      const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
+      if (typeof resourceAttributes === 'string') {
+        const attributeArray: VariableValueOption[] = resourceAttributes
+          .split(',')
+          .map((el) => ({ label: el, value: el }));
+        allLabelOptions = attributeArray.concat(allLabelOptions);
+      }
+    }
+
+    useEffect(() => {
+      if (useOtelExperience) {
+        // this will update the group left variable
+        model.updateOtelGroupLeft();
+      }
+    }, [model, useOtelExperience]);
 
     // Get unit name from the metric name
     const metricScene = getMetricSceneFor(model);
@@ -113,13 +147,13 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
                 {useOtelExperience ? (
-                  <Trans i18nKey="trails.metric-overview.metric-attributes">Metric attributes</Trans>
+                  <Trans i18nKey="trails.metric-overview.metric-attributes">Attributes</Trans>
                 ) : (
                   <Trans i18nKey="trails.metric-overview.labels">Labels</Trans>
                 )}
               </Text>
-              {labelOptions.length === 0 && 'Unable to fetch labels.'}
-              {labelOptions.map((l) => (
+              {allLabelOptions.length === 0 && 'Unable to fetch labels.'}
+              {allLabelOptions.map((l) => (
                 <TextLink
                   key={l.label}
                   href={`#View breakdown for ${l.label}`}

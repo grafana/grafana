@@ -3,7 +3,8 @@ import { Subject } from 'rxjs';
 
 import { applyFieldOverrides, createTheme, DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data';
 
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
+import { getGrafanaSearcher } from '../../service/searcher';
+import { DashboardQueryResult, QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
 import { SearchResultsTable } from './SearchResultsTable';

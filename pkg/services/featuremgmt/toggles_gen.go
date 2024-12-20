@@ -23,10 +23,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPublicDashboards
-	// [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.
-	FlagPublicDashboards = "publicDashboards"
-
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
@@ -75,10 +71,6 @@ const (
 	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
 
-	// FlagAutoMigrateXYChartPanel
-	// Migrate old XYChart panel to new XYChart2 model
-	FlagAutoMigrateXYChartPanel = "autoMigrateXYChartPanel"
-
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
@@ -114,10 +106,6 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagMysqlParseTime
-	// Ensure the parseTime flag is set for MySQL driver
-	FlagMysqlParseTime = "mysqlParseTime"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
@@ -178,10 +166,6 @@ const (
 	// FlagPrometheusRunQueriesInParallel
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
-	// FlagLokiMetricDataplane
-	// Changes metric responses from Loki to be compliant with the dataplane specification.
-	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
@@ -255,10 +239,6 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
-	// FlagVizAndWidgetSplit
-	// Split panels between visualizations and widgets
-	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -290,6 +270,10 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
+
+	// FlagProvisioning
+	// Next generation provisioning... and git
+	FlagProvisioning = "provisioning"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -399,9 +383,9 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesDashboardsAPI
-	// Use the kubernetes API in the backend for dashboards
-	FlagKubernetesDashboardsAPI = "kubernetesDashboardsAPI"
+	// FlagKubernetesCliDashboards
+	// Use the k8s client to retrieve dashboards internally
+	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
 
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
@@ -575,17 +559,25 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
-	// FlagOnPremToCloudMigrationsAlerts
-	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
-	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
+	// FlagOnPremToCloudMigrationsAuthApiMig
+	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
+	// FlagScopeApi
+	// In-development feature flag for the scope api using the app platform.
+	FlagScopeApi = "scopeApi"
+
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagLogQLScope
+	// In-development feature that will allow injection of labels into loki queries.
+	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
@@ -699,6 +691,10 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
+	// FlagSqlQuerybuilderFunctionParameters
+	// Enables SQL query builder function parameters
+	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
+
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -730,6 +726,10 @@ const (
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
+
+	// FlagEnableScopesInMetricsExplore
+	// Enables the scopes usage in Metrics Explore
+	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
@@ -766,10 +766,6 @@ const (
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
-
-	// FlagSingleTopNav
-	// Unifies the top search bar and breadcrumb bar into one
-	FlagSingleTopNav = "singleTopNav"
 
 	// FlagExploreLogsShardSplitting
 	// Used in Explore Logs to split queries into multiple queries based on the number of shards
@@ -819,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagUnifiedStorageSearchSprinkles
+	// Enable sprinkles on unified storage search
+	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -835,7 +835,95 @@ const (
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
+	// FlagUserStorageAPI
+	// Enables the user storage API
+	FlagUserStorageAPI = "userStorageAPI"
+
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagPreinstallAutoUpdate
+	// Enables automatic updates for pre-installed plugins
+	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
+
+	// FlagPlaylistsReconciler
+	// Enables experimental reconciler for playlists
+	FlagPlaylistsReconciler = "playlistsReconciler"
+
+	// FlagPasswordlessMagicLinkAuthentication
+	// Enable passwordless login via magic link authentication
+	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
+
+	// FlagExploreMetricsRelatedLogs
+	// Display Related Logs in Explore Metrics
+	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagPrometheusSpecialCharsInLabelValues
+	// Adds support for quotes and special characters in label values for Prometheus queries
+	FlagPrometheusSpecialCharsInLabelValues = "prometheusSpecialCharsInLabelValues"
+
+	// FlagEnableExtensionsAdminPage
+	// Enables the extension admin page regardless of development mode
+	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
+
+	// FlagZipkinBackendMigration
+	// Enables querying Zipkin data source without the proxy
+	FlagZipkinBackendMigration = "zipkinBackendMigration"
+
+	// FlagEnableSCIM
+	// Enables SCIM support for user and group management
+	FlagEnableSCIM = "enableSCIM"
+
+	// FlagCrashDetection
+	// Enables browser crash detection reporting to Faro.
+	FlagCrashDetection = "crashDetection"
+
+	// FlagJaegerBackendMigration
+	// Enables querying the Jaeger data source without the proxy
+	FlagJaegerBackendMigration = "jaegerBackendMigration"
+
+	// FlagReportingUseRawTimeRange
+	// Uses the original report or dashboard time range instead of making an absolute transformation
+	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
+
+	// FlagAlertingUIOptimizeReducer
+	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
+	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
+
+	// FlagAzureMonitorEnableUserAuth
+	// Enables user auth for Azure Monitor datasource only
+	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
+	// FlagAlertingNotificationsStepMode
+	// Enables simplified step mode in the notifications section
+	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
+
+	// FlagUseV2DashboardsAPI
+	// Use the v2 kubernetes API in the frontend for dashboards
+	FlagUseV2DashboardsAPI = "useV2DashboardsAPI"
+
+	// FlagFeedbackButton
+	// Enables a button to send feedback from the Grafana UI
+	FlagFeedbackButton = "feedbackButton"
+
+	// FlagUnifiedStorageSearchUI
+	// Enable unified storage search UI
+	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
+
+	// FlagElasticsearchCrossClusterSearch
+	// Enables cross cluster search in the Elasticsearch datasource
+	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
+
+	// FlagUnifiedHistory
+	// Displays the navigation history so the user can navigate back to previous pages
+	FlagUnifiedHistory = "unifiedHistory"
+
+	// FlagLokiLabelNamesQueryApi
+	// Defaults to using the Loki `/labels` API instead of `/series`
+	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
+
+	// FlagInvestigationsBackend
+	// Enable the investigations backend API
+	FlagInvestigationsBackend = "investigationsBackend"
 )

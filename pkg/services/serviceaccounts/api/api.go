@@ -55,15 +55,16 @@ func NewServiceAccountsAPI(
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
+	saUIDResolver := serviceaccounts.MiddlewareServiceAccountUIDResolver(api.service, ":serviceAccountId")
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
-		serviceAccountsRoute.Patch("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
-		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
-		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+		serviceAccountsRoute.Get("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Patch("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+		serviceAccountsRoute.Post("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
+		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
 		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 	}, requestmeta.SetOwner(requestmeta.TeamAuth))
@@ -125,12 +126,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), scopeID)
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: ctx.SignedInUser.GetOrgID(),
+		ID:    saID,
+	})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
@@ -167,7 +171,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
@@ -181,7 +185,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
-	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), scopeID, &cmd)
+	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID, &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
@@ -223,11 +227,11 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole org.RoleTyp
 // 403: forbiddenError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), scopeID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
@@ -277,6 +281,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 		Limit:        perPage,
 		Filter:       filter,
 		SignedInUser: c.SignedInUser,
+		CountTokens:  true,
 	}
 	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, &q)
 	if err != nil {
@@ -292,13 +297,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
-		tokens, err := api.service.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
-			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
-		})
-		if err != nil {
-			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
-		}
-		sa.Tokens = int64(len(tokens))
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)

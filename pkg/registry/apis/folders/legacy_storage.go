@@ -66,7 +66,6 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	parentUID := ""
 	// // translate grafana.app/* label selectors into field requirements
 	// requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
 	// if err != nil {
@@ -88,13 +87,13 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	// When nested folders are not enabled, all folders are root folders
-	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
-		UID:          parentUID, // NOTE!  we should do a different query when nested folders are enabled!
+	// List must return all folders
+	hits, err := s.service.GetFolders(ctx, folder.GetFoldersQuery{
 		SignedInUser: user,
-		Limit:        paging.page,
 		OrgID:        orgId,
-		Page:         paging.limit,
+		// TODO: enable pagination
+		// Limit:        paging.page,
+		// Page:         paging.limit,
 	})
 	if err != nil {
 		return nil, err

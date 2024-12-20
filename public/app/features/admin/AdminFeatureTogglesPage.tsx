@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
@@ -36,15 +37,17 @@ export default function AdminFeatureTogglesPage() {
 
   const subTitle = (
     <div>
-      View and edit feature toggles. Read more about feature toggles at{' '}
-      <a
-        className="external-link"
-        target="_new"
-        href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
-      >
-        grafana.com
-      </a>
-      .
+      <Trans i18nKey="admin.feature-toggles.sub-title">
+        View and edit feature toggles. Read more about feature toggles at{' '}
+        <a
+          className="external-link"
+          target="_new"
+          href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
+        >
+          grafana.com
+        </a>
+        .
+      </Trans>
     </div>
   );
 

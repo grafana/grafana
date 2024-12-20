@@ -26,11 +26,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
-  create-alerts-from-panel:
+  link-alert-rules-to-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-alerts-panels/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-alerts-panels/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
   templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
@@ -87,17 +87,19 @@ Labels that you manually configure in the alert rule to identify the generated a
 
 Additionally, you can use a [template](ref:templates) to customize the label value and generate dynamic values from query data.
 
-**Data source query labels**
+**Query labels**
 
-For example, if you are monitoring temperature readings and each time series for these readings has a `sensor_id`, and a `location` label, an alert instance might have the labels `{sensor_id="1",location="NY"}`, while another alert instance might have `{sensor_id="2",location="WA"}`.
+Query labels are labels returned by the data source query.
 
-Data source query labels labels are also used to generate multiple alert instances from the same alert rule, helping to distinguish alerts from different data.
+{{< figure src="/media/docs/alerting/query-labels-and-values.png" max-width="1200px" caption="An alert rule query returning labels from the query." >}}
+
+Query labels can generate multiple alert instances from the same alert rule, helping to distinguish alerts from different data. In this example, the `instance` label generates an alert instance for each server.
 
 **Reserved labels**
 
 Reserved labels are automatically added by Grafana:
 
-- `alert_name`: the name of the alert rule.
+- `alertname`: the name of the alert rule.
 - `grafana_folder`: the title of the folder containing the alert.
 
 Labels prefixed with `grafana_` are reserved by Grafana for special use. You can disable reserved labels via the [`unified_alerting.reserved_labels`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) option.
@@ -139,7 +141,7 @@ Annotations are displayed in Grafana and are included by default in notification
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `dashboardUId` and `panelId`: Link the alert to a dashboard and panel. These are automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
+- `dashboardUId` and `panelId`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
 
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 

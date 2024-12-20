@@ -1,280 +1,28 @@
+import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import {
-  DataFrame,
-  FieldColorModeId,
-  fieldColorModeRegistry,
+  FALLBACK_COLOR,
+  Field,
+  FieldType,
   formattedValueToString,
-  getDisplayProcessor,
   getFieldColorModeForField,
-  getFieldDisplayName,
-  getFieldSeriesColor,
   GrafanaTheme2,
+  MappingType,
+  SpecialValueMatch,
+  ThresholdsMode,
 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { config } from '@grafana/runtime';
-import {
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-  VisibilityMode,
-  ScaleDimensionConfig,
-  ScaleDimensionMode,
-} from '@grafana/schema';
+import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+import { valuesToFills } from '../heatmap/utils';
 
-import { DEFAULT_POINT_SIZE } from './config';
-import { isGraphable } from './dims';
-import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
-import { DimensionValues, ScatterSeries } from './types';
-
-export interface ScatterPanelInfo {
-  error?: string;
-  series: ScatterSeries[];
-  builder?: UPlotConfigBuilder;
-}
-
-/**
- * This is called when options or structure rev changes
- */
-export function prepScatter(options: Options, getData: () => DataFrame[], theme: GrafanaTheme2): ScatterPanelInfo {
-  let series: ScatterSeries[];
-  let builder: UPlotConfigBuilder;
-
-  try {
-    series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme);
-  } catch (e) {
-    let errorMsg = 'Unknown error in prepScatter';
-    if (typeof e === 'string') {
-      errorMsg = e;
-    } else if (e instanceof Error) {
-      errorMsg = e.message;
-    }
-
-    return {
-      error: errorMsg,
-      series: [],
-    };
-  }
-
-  return {
-    series,
-    builder,
-  };
-}
-
-interface Dims {
-  pointColorIndex?: number;
-  pointColorFixed?: string;
-
-  pointSizeIndex?: number;
-  pointSizeConfig?: ScaleDimensionConfig;
-}
-
-function getScatterSeries(
-  seriesIndex: number,
-  frames: DataFrame[],
-  frameIndex: number,
-  xIndex: number,
-  yIndex: number,
-  dims: Dims
-): ScatterSeries {
-  const frame = frames[frameIndex];
-  const y = frame.fields[yIndex];
-  let state = y.state ?? {};
-  state.seriesIndex = seriesIndex;
-  y.state = state;
-
-  // Color configs
-  //----------------
-  let seriesColor = dims.pointColorFixed
-    ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
-    : getFieldSeriesColor(y, config.theme2).color;
-  let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
-  let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
-  if (dims.pointColorIndex) {
-    const f = frames[frameIndex].fields[dims.pointColorIndex];
-    if (f) {
-      pointColorMode = getFieldColorModeForField(y);
-      if (pointColorMode.isByValue) {
-        const index = dims.pointColorIndex;
-        pointColor = (frame: DataFrame) => {
-          const field = frame.fields[index];
-
-          if (field.state?.range) {
-            // this forces local min/max recalc, rather than using global min/max from field.state
-            field.state.range = undefined;
-          }
-
-          field.display = getDisplayProcessor({ field, theme: config.theme2 });
-
-          return field.values.map((v) => field.display!(v).color!); // slow!
-        };
-      } else {
-        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
-        pointColor = () => seriesColor;
-      }
-    }
-  }
-
-  // Size configs
-  //----------------
-  let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? DEFAULT_POINT_SIZE;
-  let pointSize: DimensionValues<number> = () => pointSizeFixed;
-  if (dims.pointSizeIndex) {
-    pointSize = (frame) => {
-      const s = getScaledDimensionForField(
-        frame.fields[dims.pointSizeIndex!],
-        dims.pointSizeConfig!,
-        ScaleDimensionMode.Quad
-      );
-      const vals = Array(frame.length);
-      for (let i = 0; i < frame.length; i++) {
-        vals[i] = s.get(i);
-      }
-      return vals;
-    };
-  } else {
-    pointSizeHints = {
-      fixed: pointSizeFixed,
-      min: pointSizeFixed,
-      max: pointSizeFixed,
-    };
-  }
-
-  // Series config
-  //----------------
-  const name = getFieldDisplayName(y, frame, frames);
-  return {
-    name,
-
-    frame: (frames) => frames[frameIndex],
-
-    x: (frame) => frame.fields[xIndex],
-    y: (frame) => frame.fields[yIndex],
-    legend: () => {
-      return [
-        {
-          label: name,
-          color: seriesColor, // single color for series?
-          getItemKey: () => name,
-          yAxis: yIndex, // << but not used
-        },
-      ];
-    },
-
-    showLine: fieldConfig.show !== ScatterShow.Points,
-    lineWidth: fieldConfig.lineWidth ?? 2,
-    lineStyle: fieldConfig.lineStyle!,
-    lineColor: () => seriesColor,
-
-    showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
-    pointSize,
-    pointColor,
-    pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
-
-    label: VisibilityMode.Never,
-    labelValue: () => '',
-    show: !frame.fields[yIndex].config.custom.hideFrom?.viz,
-
-    hints: {
-      pointSize: pointSizeHints!,
-      pointColor: {
-        mode: pointColorMode,
-      },
-    },
-  };
-}
-
-function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
-  let seriesIndex = 0;
-  if (!frames.length) {
-    throw 'Missing data';
-  }
-
-  if (options.seriesMapping === 'manual') {
-    if (!options.series?.length) {
-      throw 'Missing series config';
-    }
-
-    const scatterSeries: ScatterSeries[] = [];
-
-    for (const series of options.series) {
-      if (!series?.x) {
-        throw 'Select X dimension';
-      }
-
-      if (!series?.y) {
-        throw 'Select Y dimension';
-      }
-
-      for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-        // When a frame filter is applied, only include matching frame index
-        if (series.frame !== undefined && series.frame !== frameIndex) {
-          continue;
-        }
-        const frame = frames[frameIndex];
-        const xIndex = findFieldIndex(series.x, frame, frames);
-
-        if (xIndex != null) {
-          // TODO: this should find multiple y fields
-          const yIndex = findFieldIndex(series.y, frame, frames);
-
-          if (yIndex == null) {
-            throw 'Y must be in the same frame as X';
-          }
-
-          const dims: Dims = {
-            pointColorFixed: series.pointColor?.fixed,
-            pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
-            pointSizeConfig: series.pointSize,
-            pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
-          };
-          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
-        }
-      }
-    }
-
-    return scatterSeries;
-  }
-
-  // Default behavior
-  const dims = options.dims ?? {};
-  const frameIndex = dims.frame ?? 0;
-  const frame = frames[frameIndex];
-  const numericIndices: number[] = [];
-
-  let xIndex = findFieldIndex(dims.x, frame, frames);
-  for (let i = 0; i < frame.fields.length; i++) {
-    if (isGraphable(frame.fields[i])) {
-      if (xIndex == null || i === xIndex) {
-        xIndex = i;
-        continue;
-      }
-      if (dims.exclude && dims.exclude.includes(getFieldDisplayName(frame.fields[i], frame, frames))) {
-        continue; // skip
-      }
-
-      numericIndices.push(i);
-    }
-  }
-
-  if (xIndex == null) {
-    throw 'Missing X dimension';
-  }
-
-  if (!numericIndices.length) {
-    throw 'No Y values';
-  }
-  return numericIndices.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
-}
+import { PointShape } from './panelcfg.gen';
+import { XYSeries } from './types2';
+import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -285,12 +33,15 @@ interface DrawBubblesOpts {
     };
     color: {
       values: (u: uPlot, seriesIdx: number) => string[];
-      alpha: number;
     };
   };
 }
 
-const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
+export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
+  if (xySeries.length === 0) {
+    return { builder: null, prepData: () => [] };
+  }
+
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -317,29 +68,26 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
           arc
         ) => {
           const pxRatio = uPlot.pxRatio;
-          const scatterInfo = scatterSeries[seriesIdx - 1];
+          const scatterInfo = xySeries[seriesIdx - 1];
           let d = u.data[seriesIdx] as unknown as FacetSeries;
+
+          // showLine: boolean;
+          // lineStyle: common.LineStyle;
+          // showPoints: common.VisibilityMode;
 
           let showLine = scatterInfo.showLine;
           let showPoints = scatterInfo.showPoints === VisibilityMode.Always;
-          if (!showPoints && scatterInfo.showPoints === VisibilityMode.Auto) {
-            showPoints = d[0].length < 1000;
-          }
-
-          // always show something
-          if (!showPoints && !showLine) {
-            showLine = true;
-          }
-
-          let strokeWidth = 1;
+          let strokeWidth = scatterInfo.pointStrokeWidth ?? 0;
 
           u.ctx.save();
 
           u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
           u.ctx.clip();
 
-          u.ctx.fillStyle = (series.fill as any)(); // assumes constant
-          u.ctx.strokeStyle = (series.stroke as any)();
+          let pointAlpha = scatterInfo.fillOpacity / 100;
+
+          u.ctx.fillStyle = alpha((series.fill as any)(), pointAlpha);
+          u.ctx.strokeStyle = alpha((series.stroke as any)(), 1);
           u.ctx.lineWidth = strokeWidth;
 
           let deg360 = 2 * Math.PI;
@@ -347,10 +95,11 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
           let xKey = scaleX.key!;
           let yKey = scaleY.key!;
 
-          let pointHints = scatterInfo.hints.pointSize;
-          const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
+          //const colorMode = getFieldColorModeForField(field); // isByValue
+          const pointSize = scatterInfo.y.field.config.custom.pointSize;
+          const colorByValue = scatterInfo.color.field != null; // && colorMode.isByValue;
 
-          let maxSize = (pointHints.max ?? pointHints.fixed) * pxRatio;
+          let maxSize = (pointSize.max ?? pointSize.fixed) * pxRatio;
 
           // todo: this depends on direction & orientation
           // todo: calc once per redraw, not per path
@@ -360,19 +109,23 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
           let filtTop = u.posToVal(-maxSize / 2, yKey);
 
           let sizes = opts.disp.size.values(u, seriesIdx);
-          let pointColors = opts.disp.color.values(u, seriesIdx);
-          let pointAlpha = opts.disp.color.alpha;
+          // let pointColors = opts.disp.color.values(u, seriesIdx);
+          let pointColors = dispColors[seriesIdx - 1].values; // idxs
+          let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
+
+          let isSquare = scatterInfo.pointShape === PointShape.Square;
 
           let linePath: Path2D | null = showLine ? new Path2D() : null;
 
-          let curColor: CanvasRenderingContext2D['fillStyle'] | null = null;
+          let curColorIdx = -1;
 
           for (let i = 0; i < d[0].length; i++) {
             let xVal = d[0][i];
             let yVal = d[1][i];
-            let size = sizes[i] * pxRatio;
 
             if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+              let size = Math.round(sizes[i] * pxRatio);
               let cx = valToPosX(xVal, scaleX, xDim, xOff);
               let cy = valToPosY(yVal, scaleY, yDim, yOff);
 
@@ -381,22 +134,39 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
               }
 
               if (showPoints) {
-                // if pointHints.fixed? don't recalc size
-                // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
-
-                u.ctx.beginPath();
-                u.ctx.arc(cx, cy, size / 2, 0, deg360);
-
                 if (colorByValue) {
-                  if (pointColors[i] !== curColor) {
-                    curColor = pointColors[i];
-                    u.ctx.fillStyle = alpha(curColor, pointAlpha);
-                    u.ctx.strokeStyle = curColor;
+                  if (pointColors[i] !== curColorIdx) {
+                    curColorIdx = pointColors[i];
+                    let c = curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
+                    u.ctx.fillStyle = paletteHasAlpha ? c : alpha(c as string, pointAlpha);
+                    u.ctx.strokeStyle = alpha(c as string, 1);
                   }
                 }
 
-                u.ctx.fill();
-                u.ctx.stroke();
+                if (isSquare) {
+                  let x = Math.round(cx - size / 2);
+                  let y = Math.round(cy - size / 2);
+
+                  if (colorByValue || pointAlpha > 0) {
+                    u.ctx.fillRect(x, y, size, size);
+                  }
+
+                  if (strokeWidth > 0) {
+                    u.ctx.strokeRect(x, y, size, size);
+                  }
+                } else {
+                  u.ctx.beginPath();
+                  u.ctx.arc(cx, cy, size / 2, 0, deg360);
+
+                  if (colorByValue || pointAlpha > 0) {
+                    u.ctx.fill();
+                  }
+
+                  if (strokeWidth > 0) {
+                    u.ctx.stroke();
+                  }
+                }
+
                 opts.each(
                   u,
                   seriesIdx,
@@ -411,8 +181,7 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
           }
 
           if (showLine) {
-            let frame = scatterInfo.frame(getData());
-            u.ctx.strokeStyle = scatterInfo.lineColor(frame);
+            u.ctx.strokeStyle = scatterInfo.color.fixed!;
             u.ctx.lineWidth = scatterInfo.lineWidth * pxRatio;
 
             const { lineStyle } = scatterInfo;
@@ -451,7 +220,6 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
         values: (u, seriesIdx) => {
           return u.data[seriesIdx][3] as any;
         },
-        alpha: 0.5,
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -508,6 +276,11 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
     },
   });
 
+  // clip hover points/bubbles to plotting area
+  builder.addHook('init', (u, r) => {
+    u.over.style.overflow = 'hidden';
+  });
+
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
@@ -524,8 +297,7 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
 
   builder.setMode(2);
 
-  const frames = getData();
-  let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
+  let xField = xySeries[0].x.field;
 
   let fieldConfig = xField.config;
   let customConfig = fieldConfig.custom;
@@ -550,6 +322,21 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
   // why does this fall back to '' instead of null or undef?
   let xAxisLabel = customConfig.axisLabel;
 
+  if (xAxisLabel == null || xAxisLabel === '') {
+    let dispNames = xySeries.map((s) => s.x.field.state?.displayName ?? '');
+
+    let xAxisAutoLabel =
+      xySeries.length === 1
+        ? (xField.state?.displayName ?? xField.name)
+        : new Set(dispNames).size === 1
+          ? dispNames[0]
+          : getCommonPrefixSuffix(dispNames);
+
+    if (xAxisAutoLabel !== '') {
+      xAxisLabel = xAxisAutoLabel;
+    }
+  }
+
   builder.addAxis({
     scaleKey: 'x',
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
@@ -557,19 +344,15 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
-    label:
-      xAxisLabel == null || xAxisLabel === ''
-        ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
-        : xAxisLabel,
+    label: xAxisLabel,
     formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
-  scatterSeries.forEach((s, si) => {
-    let frame = s.frame(frames);
-    let field = s.y(frame);
+  xySeries.forEach((s, si) => {
+    let field = s.y.field;
 
-    const lineColor = s.lineColor(frame);
-    const pointColor = asSingleValue(frame, s.pointColor) as string;
+    const lineColor = s.color.fixed;
+    const pointColor = s.color.fixed;
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
@@ -594,7 +377,22 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
     });
 
     // why does this fall back to '' instead of null or undef?
-    let yAxisLabel = customConfig?.axisLabel;
+    let yAxisLabel = customConfig.axisLabel;
+
+    if (yAxisLabel == null || yAxisLabel === '') {
+      let dispNames = xySeries.map((s) => s.y.field.state?.displayName ?? '');
+
+      let yAxisAutoLabel =
+        xySeries.length === 1
+          ? (field.state?.displayName ?? field.name)
+          : new Set(dispNames).size === 1
+            ? dispNames[0]
+            : getCommonPrefixSuffix(dispNames);
+
+      if (yAxisAutoLabel !== '') {
+        yAxisLabel = yAxisAutoLabel;
+      }
+    }
 
     builder.addAxis({
       scaleKey,
@@ -604,10 +402,8 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
       grid: { show: customConfig?.axisGridShow },
       border: { show: customConfig?.axisBorderShow },
       size: customConfig?.axisWidth,
-      label:
-        yAxisLabel == null || yAxisLabel === ''
-          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
-          : yAxisLabel,
+      // label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
+      label: yAxisLabel,
       formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
     });
 
@@ -625,80 +421,269 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: alpha('' + lineColor, 1),
-      fillColor: alpha(pointColor, 0.5),
-      show: !customConfig.hideFrom?.viz,
+      lineColor: alpha(lineColor ?? '#ffff', 1),
+      fillColor: alpha(pointColor ?? '#ffff', 0.5),
+      show: !field.state?.hideFrom?.viz,
     });
   });
 
-  /*
-  builder.setPrepData((frames) => {
-    let seriesData = lookup.fieldMaps.flatMap((f, i) => {
-      let { fields } = frames[i];
+  const dispColors = xySeries.map((s): FieldColorValuesWithCache => {
+    const cfg: FieldColorValuesWithCache = {
+      index: [],
+      getAll: () => [],
+      getOne: () => -1,
+      // cache for renderer, refreshed in prepData()
+      values: [],
+      hasAlpha: false,
+    };
 
-      return f.y.map((yIndex, frameSeriesIndex) => {
-        let xValues = fields[f.x[frameSeriesIndex]].values;
-        let yValues = fields[f.y[frameSeriesIndex]].values;
-        let sizeValues = f.size![frameSeriesIndex](frames[i]);
+    const f = s.color.field;
 
-        if (!Array.isArray(sizeValues)) {
-          sizeValues = Array(xValues.length).fill(sizeValues);
+    if (f != null) {
+      Object.assign(cfg, fieldValueColors(f, theme));
+      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
+    }
+
+    return cfg;
+  });
+
+  function prepData(xySeries: XYSeries[]): FacetedData {
+    // if (info.error || !data.length) {
+    //   return [null];
+    // }
+
+    const { size: sizeRange, color: colorRange } = getGlobalRanges(xySeries);
+
+    xySeries.forEach((s, i) => {
+      dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
+    });
+
+    return [
+      null,
+      ...xySeries.map((s, idx) => {
+        let len = s.x.field.values.length;
+
+        let diams: number[];
+
+        if (s.size.field != null) {
+          let { min, max } = s.size;
+
+          // todo: this scaling should be in renderer from raw values (not by passing css pixel diams via data)
+          let minPx = min! ** 2;
+          let maxPx = max! ** 2;
+          // use quadratic size scaling in byValue modes
+          let pxRange = maxPx - minPx;
+
+          let vals = s.size.field.values;
+          let minVal = sizeRange.min;
+          let maxVal = sizeRange.max;
+          let valRange = maxVal - minVal;
+
+          diams = Array(len);
+
+          for (let i = 0; i < vals.length; i++) {
+            let val = vals[i];
+
+            let valPct = (val - minVal) / valRange;
+            let pxArea = minPx + valPct * pxRange;
+            diams[i] = pxArea ** 0.5;
+          }
+        } else {
+          diams = Array(len).fill(s.size.fixed!);
         }
 
-        return [xValues, yValues, sizeValues];
-      });
-    });
+        return [
+          s.x.field.values, // X
+          s.y.field.values, // Y
+          diams,
+          Array(len).fill(s.color.fixed!), // TODO: fails for by value
+        ];
+      }),
+    ];
+  }
 
-    return [null, ...seriesData];
-  });
-  */
-
-  return builder;
+  return { builder, prepData };
 };
 
-/**
- * This is called everytime the data changes
- *
- * from?  is this where we would support that?  -- need the previous values
- */
-export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: number): FacetedData {
-  if (info.error || !data.length) {
-    return [null];
-  }
-  return [
-    null,
-    ...info.series.map((s, idx) => {
-      const frame = s.frame(data);
+export type PrepData = (xySeries: XYSeries[]) => FacetedData;
 
-      let colorValues;
-      const r = s.pointColor(frame);
-      if (Array.isArray(r)) {
-        colorValues = r;
-      } else {
-        colorValues = Array(frame.length).fill(r);
+const getGlobalRanges = (xySeries: XYSeries[]) => {
+  const ranges = {
+    size: {
+      min: Infinity,
+      max: -Infinity,
+    },
+    color: {
+      min: Infinity,
+      max: -Infinity,
+    },
+  };
+
+  xySeries.forEach((series) => {
+    [series.size, series.color].forEach((facet, fi) => {
+      if (facet.field != null) {
+        let range = fi === 0 ? ranges.size : ranges.color;
+
+        const vals = facet.field.values;
+
+        for (let i = 0; i < vals.length; i++) {
+          const v = vals[i];
+
+          if (v != null) {
+            if (v < range.min) {
+              range.min = v;
+            }
+
+            if (v > range.max) {
+              range.max = v;
+            }
+          }
+        }
       }
-      return [
-        s.x(frame).values, // X
-        s.y(frame).values, // Y
-        asArray(frame, s.pointSize),
-        colorValues,
-      ];
-    }),
-  ];
+    });
+  });
+
+  return ranges;
+};
+
+function getHex8Color(color: string, theme: GrafanaTheme2) {
+  return tinycolor(theme.visualization.getColorByName(color)).toHex8String();
 }
 
-function asArray<T>(frame: DataFrame, lookup: DimensionValues<T>): T[] {
-  const r = lookup(frame);
-  if (Array.isArray(r)) {
-    return r;
-  }
-  return Array(frame.length).fill(r);
+interface FieldColorValues {
+  index: unknown[];
+  getOne: GetOneValue;
+  getAll: GetAllValues;
 }
+interface FieldColorValuesWithCache extends FieldColorValues {
+  values: number[];
+  hasAlpha: boolean;
+}
+type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
+type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
-function asSingleValue<T>(frame: DataFrame, lookup: DimensionValues<T>): T {
-  const r = lookup(frame);
-  if (Array.isArray(r)) {
-    return r[0];
+/** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
+function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
+  let index: unknown[] = [];
+  let getAll: GetAllValues = () => [];
+  let getOne: GetOneValue = () => -1;
+
+  let conds = '';
+
+  // if any mappings exist, use them regardless of other settings
+  if (f.config.mappings?.length ?? 0 > 0) {
+    let mappings = f.config.mappings!;
+
+    for (let i = 0; i < mappings.length; i++) {
+      let m = mappings[i];
+
+      if (m.type === MappingType.ValueToText) {
+        for (let k in m.options) {
+          let { color } = m.options[k];
+
+          if (color != null) {
+            let rhs = f.type === FieldType.string ? JSON.stringify(k) : Number(k);
+            conds += `v === ${rhs} ? ${index.length} : `;
+            index.push(getHex8Color(color, theme));
+          }
+        }
+      } else if (m.options.result.color != null) {
+        let { color } = m.options.result;
+
+        if (m.type === MappingType.RangeToText) {
+          let range = [];
+
+          if (m.options.from != null) {
+            range.push(`v >= ${Number(m.options.from)}`);
+          }
+
+          if (m.options.to != null) {
+            range.push(`v <= ${Number(m.options.to)}`);
+          }
+
+          if (range.length > 0) {
+            conds += `${range.join(' && ')} ? ${index.length} : `;
+            index.push(getHex8Color(color, theme));
+          }
+        } else if (m.type === MappingType.SpecialValue) {
+          let spl = m.options.match;
+
+          if (spl === SpecialValueMatch.NaN) {
+            conds += `isNaN(v)`;
+          } else if (spl === SpecialValueMatch.NullAndNaN) {
+            conds += `v == null || isNaN(v)`;
+          } else {
+            conds += `v ${
+              spl === SpecialValueMatch.True
+                ? '=== true'
+                : spl === SpecialValueMatch.False
+                  ? '=== false'
+                  : spl === SpecialValueMatch.Null
+                    ? '== null'
+                    : spl === SpecialValueMatch.Empty
+                      ? '=== ""'
+                      : '== null'
+            }`;
+          }
+
+          conds += ` ? ${index.length} : `;
+          index.push(getHex8Color(color, theme));
+        } else if (m.type === MappingType.RegexToText) {
+          // TODO
+        }
+      }
+    }
+
+    conds += '-1'; // ?? what default here? null? FALLBACK_COLOR?
+  } else if (f.config.color?.mode === FieldColorModeId.Thresholds) {
+    if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
+      let steps = f.config.thresholds.steps;
+      let lasti = steps.length - 1;
+
+      for (let i = lasti; i > 0; i--) {
+        conds += `v >= ${steps[i].value} ? ${i} : `;
+      }
+
+      conds += '0';
+
+      index = steps.map((s) => getHex8Color(s.color, theme));
+    } else {
+      // TODO: percent thresholds?
+    }
+  } else if (f.config.color?.mode?.startsWith('continuous')) {
+    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
+
+    index = Array(32);
+
+    for (let i = 0; i < index.length; i++) {
+      let pct = i / (index.length - 1);
+      index[i] = getHex8Color(calc(pct, pct), theme);
+    }
+
+    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
   }
-  return r;
+
+  if (conds !== '') {
+    getOne = new Function('v', `return ${conds};`) as GetOneValue;
+
+    getAll = new Function(
+      'vals',
+      `
+      let idxs = Array(vals.length);
+
+      for (let i = 0; i < vals.length; i++) {
+        let v = vals[i];
+        idxs[i] = ${conds};
+      }
+
+      return idxs;
+    `
+    ) as GetAllValues;
+  }
+
+  return {
+    index,
+    getOne,
+    getAll,
+  };
 }

@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -51,6 +53,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	if err != nil {
 		logger.Error("Failed to do healthcheck request", "error", err, "url", esUrl.String())
+		if backend.IsDownstreamHTTPError(err) {
+			err = errorsource.DownstreamError(err, false)
+		}
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
 			Message: "Failed to do healthcheck request",
@@ -62,6 +67,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			Status:  backend.HealthStatusError,
 			Message: "Elasticsearch data source is not healthy",
 		}, nil
+	}
+
+	if response.StatusCode >= 400 {
+		errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(response.StatusCode), fmt.Errorf("unexpected status code: %d", response.StatusCode), false)
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Elasticsearch data source is not healthy. Status: %s", response.Status),
+		}, errWithSource
 	}
 
 	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start))

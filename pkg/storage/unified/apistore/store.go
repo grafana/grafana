@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -39,6 +40,12 @@ const (
 )
 
 var _ storage.Interface = (*Storage)(nil)
+
+// Optional settings that apply to a single resource
+type StorageOptions struct {
+	LargeObjectSupport LargeObjectSupport
+	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
+}
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
@@ -56,9 +63,8 @@ type Storage struct {
 
 	versioner storage.Versioner
 
-	// Defines if we want to outsource large objects to another storage type.
-	// By default, this feature is disabled.
-	largeObjectSupport bool
+	// Resource options like large object support
+	opts StorageOptions
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -78,7 +84,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	largeObjectSupport bool,
+	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:        store,
@@ -95,7 +101,7 @@ func NewStorage(
 
 		versioner: &storage.APIObjectVersioner{},
 
-		largeObjectSupport: largeObjectSupport,
+		opts: opts,
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -125,6 +131,14 @@ func NewStorage(
 
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
+}
+
+func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
+	if s.opts.InternalConversion != nil {
+		return s.opts.InternalConversion(data, obj)
+	}
+	obj, _, err := s.codec.Decode(data, nil, obj)
+	return obj, err
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
@@ -305,7 +319,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return resource.GetError(rsp.Error)
 	}
 
-	_, _, err = s.codec.Decode(rsp.Value, nil, objPtr)
+	_, err = s.convertToObject(rsp.Value, objPtr)
 	if err != nil {
 		return err
 	}
@@ -355,7 +369,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, item := range rsp.Items {
-		obj, _, err := s.codec.Decode(item.Value, nil, s.newFunc())
+		obj, err := s.convertToObject(item.Value, s.newFunc())
 		if err != nil {
 			return err
 		}
@@ -456,7 +470,7 @@ func (s *Storage) GuaranteedUpdate(
 		existingObj = s.newFunc()
 		if len(rsp.Value) > 0 {
 			created = false
-			_, _, err = s.codec.Decode(rsp.Value, nil, existingObj)
+			_, err = s.convertToObject(rsp.Value, existingObj)
 			if err != nil {
 				return err
 			}
@@ -468,11 +482,24 @@ func (s *Storage) GuaranteedUpdate(
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
 			res.ResourceVersion = uint64(rsp.ResourceVersion)
 
-			if err := preconditions.Check(key, existingObj); err != nil {
-				if attempt >= MaxUpdateAttempts {
-					return fmt.Errorf("precondition failed: %w", err)
+			if rest.IsDualWriteUpdate(ctx) {
+				// Ignore the RV when updating legacy values
+				mmm.SetResourceVersion("")
+			} else {
+				if err := preconditions.Check(key, existingObj); err != nil {
+					if attempt >= MaxUpdateAttempts {
+						return fmt.Errorf("precondition failed: %w", err)
+					}
+					continue
 				}
-				continue
+			}
+
+			// restore the full original object before tryUpdate
+			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
+				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
+				if err != nil {
+					return err
+				}
 			}
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)

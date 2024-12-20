@@ -33,6 +33,7 @@ func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
 	section := s.settingsProvider.Section("auth.saml")
 	result := map[string]any{
 		"enabled":                    section.KeyValue("enabled").MustBool(false),
+		"entity_id":                  section.KeyValue("entity_id").MustString(""),
 		"name":                       section.KeyValue("name").MustString("SAML"),
 		"single_logout":              section.KeyValue("single_logout").MustBool(false),
 		"allow_sign_up":              section.KeyValue("allow_sign_up").MustBool(false),

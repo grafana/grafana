@@ -84,6 +84,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Grafana Enterprise includes all of the Grafana OSS APIs as well as the following APIs:
 
 - [Data source permissions API]({{< relref "datasource_permissions/" >}})
+- [Group attribute sync API]({{< relref "group_attribute_sync/" >}})
 - [License API]({{< relref "licensing/" >}})
 - [Query and resource caching API]({{< relref "query_and_resource_caching/" >}})
 - [Reporting API]({{< relref "reporting/" >}})

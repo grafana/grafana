@@ -8,9 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,10 +40,19 @@ type Service struct {
 	log             log.Logger
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
+	pluginRepo      repo.Service
+	features        featuremgmt.FeatureToggles
 	failOnErr       bool
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, promReg prometheus.Registerer) (*Service, error) {
+func ProvideService(
+	cfg *setting.Cfg,
+	pluginStore pluginstore.Store,
+	pluginInstaller plugins.Installer,
+	promReg prometheus.Registerer,
+	pluginRepo repo.Service,
+	features featuremgmt.FeatureToggles,
+) (*Service, error) {
 	once.Do(func() {
 		promReg.MustRegister(installRequestCounter)
 		promReg.MustRegister(installRequestDuration)
@@ -53,6 +64,8 @@ func ProvideService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInsta
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
 		failOnErr:       !cfg.PreinstallPluginsAsync, // Fail on error if preinstall is synchronous
+		pluginRepo:      pluginRepo,
+		features:        features,
 	}
 	if !cfg.PreinstallPluginsAsync {
 		// Block initialization process until plugins are installed
@@ -88,23 +101,66 @@ func (s *Service) installPluginsWithTimeout() error {
 	}
 }
 
-func (s *Service) installPlugins(ctx context.Context) error {
-	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string) bool {
+	info, err := s.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, "", repo.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH))
+	if err != nil {
+		s.log.Error("Failed to get plugin info", "pluginId", pluginID, "error", err)
+		return false
+	}
 
+	// If we are already on the latest version, skip the installation
+	if info.Version == currentVersion {
+		s.log.Debug("Latest plugin already installed", "pluginId", pluginID, "version", info.Version)
+		return false
+	}
+
+	// If the latest version is a new major version, skip the installation
+	parsedLatestVersion, err := semver.NewVersion(info.Version)
+	if err != nil {
+		s.log.Error("Failed to parse latest version, skipping potential update", "pluginId", pluginID, "version", info.Version, "error", err)
+		return false
+	}
+	parsedCurrentVersion, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		s.log.Error("Failed to parse current version, skipping potential update", "pluginId", pluginID, "version", currentVersion, "error", err)
+		return false
+	}
+	if parsedLatestVersion.Major() > parsedCurrentVersion.Major() {
+		s.log.Debug("New major version available, skipping update due to possible breaking changes", "pluginId", pluginID, "version", info.Version)
+		return false
+	}
+
+	// We should update the plugin
+	return true
+}
+
+func (s *Service) installPlugins(ctx context.Context) error {
 	for _, installPlugin := range s.cfg.PreinstallPlugins {
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
 			// If it's installed, check if we are looking for a specific version
-			if installPlugin.Version == "" || p.Info.Version == installPlugin.Version {
+			if p.Info.Version == installPlugin.Version {
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
+			}
+			if installPlugin.Version == "" {
+				if !s.features.IsEnabled(ctx, featuremgmt.FlagPreinstallAutoUpdate) {
+					// Skip updating the plugin if the feature flag is disabled
+					continue
+				}
+				// The plugin is installed but it's not pinned to a specific version
+				// Check if there is a newer version available
+				if !s.shouldUpdate(ctx, installPlugin.ID, p.Info.Version) {
+					continue
+				}
 			}
 		}
 
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		start := time.Now()
 		ctx = repo.WithRequestOrigin(ctx, "preinstall")
+		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, installPlugin.URL)
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError

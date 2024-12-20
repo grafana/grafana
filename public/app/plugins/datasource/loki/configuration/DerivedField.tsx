@@ -34,6 +34,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   internalLink: css({
     marginRight: theme.spacing(1),
   }),
+  openNewTab: css({
+    marginRight: theme.spacing(1),
+  }),
   dataSource: css({}),
   nameMatcherField: css({
     width: theme.spacing(20),
@@ -53,6 +56,7 @@ export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className, validateName } = props;
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
+  const [openInNewTab, setOpenInNewTab] = useState(!!value.targetBlank);
   const previousUid = usePrevious(value.datasourceUid);
   const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'regex');
 
@@ -197,6 +201,22 @@ export const DerivedField = (props: Props) => {
             />
           </Field>
         )}
+      </div>
+
+      <div className="gf-form">
+        <Field label="Open in new tab" className={styles.openNewTab}>
+          <Switch
+            value={openInNewTab}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const { checked } = e.currentTarget;
+              onChange({
+                ...value,
+                targetBlank: checked,
+              });
+              setOpenInNewTab(checked);
+            }}
+          />
+        </Field>
       </div>
     </div>
   );

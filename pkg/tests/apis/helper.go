@@ -19,8 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -63,6 +64,14 @@ type K8sTestHelper struct {
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
+
+	// Use GRPC server when not configured
+	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
+		// TODO, this really should be gRPC, but sometimes fails in drone
+		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
+		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
+	}
+
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
@@ -206,6 +215,9 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
+
+	// remove generation
+	delete(meta, "generation")
 
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
@@ -394,12 +406,18 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 // Read local JSON or YAML file into a resource
 func (c *K8sTestHelper) LoadYAMLOrJSONFile(fpath string) *unstructured.Unstructured {
 	c.t.Helper()
+	return c.LoadYAMLOrJSON(string(c.LoadFile(fpath)))
+}
+
+// Read local file into a byte slice. Does not need to be a resource.
+func (c *K8sTestHelper) LoadFile(fpath string) []byte {
+	c.t.Helper()
 
 	//nolint:gosec
 	raw, err := os.ReadFile(fpath)
 	require.NoError(c.t, err)
 	require.NotEmpty(c.t, raw)
-	return c.LoadYAMLOrJSON(string(raw))
+	return raw
 }
 
 // Read local JSON or YAML file into a resource
@@ -636,4 +654,88 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	team, err := c.env.Server.HTTPServer.TeamService.CreateTeam(context.Background(), name, email, orgID)
 	require.NoError(c.t, err)
 	return team
+}
+
+// TypedClient is the struct that implements a typed interface for resource operations
+type TypedClient[T any, L any] struct {
+	Client dynamic.ResourceInterface
+}
+
+func (c *TypedClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
+	if err != nil {
+		return nil, err
+	}
+	u := &unstructured.Unstructured{Object: unstructuredObj}
+	result, err := c.Client.Create(ctx, u, opts)
+	if err != nil {
+		return nil, err
+	}
+	createdObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, createdObj)
+	if err != nil {
+		return nil, err
+	}
+	return createdObj, nil
+}
+
+func (c *TypedClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
+	if err != nil {
+		return nil, err
+	}
+	u := &unstructured.Unstructured{Object: unstructuredObj}
+	result, err := c.Client.Update(ctx, u, opts)
+	if err != nil {
+		return nil, err
+	}
+	updatedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, updatedObj)
+	if err != nil {
+		return nil, err
+	}
+	return updatedObj, nil
+}
+
+func (c *TypedClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	return c.Client.Delete(ctx, name, opts)
+}
+
+func (c *TypedClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
+	result, err := c.Client.Get(ctx, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	retrievedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, retrievedObj)
+	if err != nil {
+		return nil, err
+	}
+	return retrievedObj, nil
+}
+
+func (c *TypedClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
+	result, err := c.Client.List(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	listObj := new(L)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.UnstructuredContent(), listObj)
+	if err != nil {
+		return nil, err
+	}
+	return listObj, nil
+}
+
+func (c *TypedClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
+	result, err := c.Client.Patch(ctx, name, pt, data, opts, subresources...)
+	if err != nil {
+		return nil, err
+	}
+	patchedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, patchedObj)
+	if err != nil {
+		return nil, err
+	}
+	return patchedObj, nil
 }

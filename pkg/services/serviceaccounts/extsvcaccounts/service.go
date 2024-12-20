@@ -94,7 +94,7 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.RetrieveExtSvcAccount")
 	defer span.End()
 
-	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
+	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, &sa.GetServiceAccountQuery{OrgID: orgID, ID: saID})
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { SQLQuery, SqlQueryEditor, applyQueryDefaults } from '@grafana/sql';
+import { SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
 import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
 
 import InfluxDatasource from '../../../../datasource';
@@ -89,7 +89,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <SqlQueryEditor
+        <SqlQueryEditorLazy
           datasource={this.datasource}
           query={this.transformQuery(query)}
           onRunQuery={onRunSQLQuery}

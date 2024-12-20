@@ -110,7 +110,7 @@ export default class InfluxSeries {
       let titleCol: any = null;
       let timeCol: any = null;
       let timeEndCol: any = null;
-      const tagsCol: any = [];
+      const tagsCol: string[] = [];
       let textCol: any = null;
 
       each(series.columns, (column, index) => {
@@ -152,10 +152,10 @@ export default class InfluxSeries {
           // Remove empty values, then split in different tags for comma separated values
           tags: flatten(
             tagsCol
-              .filter((t: any) => {
+              .filter((t) => {
                 return value[t];
               })
-              .map((t: any) => {
+              .map((t) => {
                 return value[t].split(',');
               })
           ),

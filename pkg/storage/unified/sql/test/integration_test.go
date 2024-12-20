@@ -9,12 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -28,11 +30,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
+func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceServer) {
 	t.Helper()
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
 
 	dbstore := infraDB.InitTestDB(t)
-	cfg := setting.NewCfg()
 
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 	require.NoError(t, err)
@@ -59,9 +63,9 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
+	// if infraDB.IsTestDbSQLite() {
+	// 	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// }
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -75,7 +79,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := identity.WithRequester(context.Background(), testUserA)
-	backend, server := newServer(t)
+	backend, server := newServer(t, nil)
 
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
@@ -93,6 +97,12 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
+
+		stats, err := backend.GetResourceStats(ctx, "", 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, int64(3), stats[0].Count)
+		require.Equal(t, rv3, stats[0].ResourceVersion)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
@@ -112,6 +122,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Nil(t, resp.Error)
 		require.Equal(t, rv4, resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
+		require.Equal(t, "folderuid", resp.Folder)
 	})
 
 	t.Run("Read early version of item2", func(t *testing.T) {
@@ -147,10 +158,13 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Equal(t, "item1", event.Key.Name)
 		require.Equal(t, rv1, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		require.Equal(t, "folderuid", event.Folder)
+
 		event = <-stream
 		require.Equal(t, "item2", event.Key.Name)
 		require.Equal(t, rv2, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		require.Equal(t, "folderuid", event.Folder)
 
 		event = <-stream
 		require.Equal(t, "item3", event.Key.Name)
@@ -178,7 +192,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, _ := newServer(t)
+	backend, _ := newServer(t, nil)
 
 	// Create a few resources before initing the watch
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -203,7 +217,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, server := newServer(t)
+	backend, server := newServer(t, nil)
 
 	// Create a few resources before starting the watch
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -347,12 +361,12 @@ func TestClientServer(t *testing.T) {
 	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServerAddress = "localhost:0" // get a free address
-	cfg.GRPCServerNetwork = "tcp"
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry())
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil)
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 
@@ -375,7 +389,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client, err = resource.NewGRPCResourceClient(conn)
+		client, err = resource.NewGRPCResourceClient(tracing.NewNoopTracerService(), conn)
 		require.NoError(t, err)
 	})
 
@@ -414,6 +428,14 @@ func TestClientServer(t *testing.T) {
 }
 
 func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
+	res := &unstructured.Unstructured{
+		Object: map[string]any{},
+	}
+	meta, err := utils.MetaAccessor(res)
+	if err != nil {
+		return 0, err
+	}
+	meta.SetFolder("folderuid")
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
 		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
@@ -423,6 +445,7 @@ func writeEvent(ctx context.Context, store sql.Backend, name string, action reso
 			Resource:  "resource",
 			Name:      name,
 		},
+		Object: meta,
 	})
 }
 

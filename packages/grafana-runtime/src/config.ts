@@ -140,7 +140,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
-  customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
@@ -183,6 +182,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
   rudderstackIntegrationsUrl: undefined;
+  analyticsConsoleReporting = false;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,

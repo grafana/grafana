@@ -1,5 +1,17 @@
-import { AdHocVariableFilter, GetTagResponse, MetricFindValue, urlUtil } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
+
+import {
+  AdHocVariableFilter,
+  GetTagResponse,
+  MetricFindValue,
+  RawTimeRange,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
+  urlUtil,
+} from '@grafana/data';
+import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { config, FetchResponse, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   sceneGraph,
@@ -11,6 +23,7 @@ import {
   SceneVariable,
   SceneVariableState,
 } from '@grafana/scenes';
+import { getClosestScopesFacade } from 'app/features/scopes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -70,7 +83,7 @@ export function getDataSourceName(dataSourceUid: string) {
 
 export function getMetricName(metric?: string) {
   if (!metric) {
-    return 'Select metric';
+    return 'All metrics';
   }
 
   if (metric === LOGS_METRIC) {
@@ -84,13 +97,15 @@ export function getDatasourceForNewTrail(): string | undefined {
   const prevTrail = getTrailStore().recent[0];
   if (prevTrail) {
     const prevDataSource = sceneGraph.interpolate(prevTrail.resolve(), VAR_DATASOURCE_EXPR);
-    if (typeof prevDataSource === 'string' && prevDataSource.length > 0) {
+    if (prevDataSource.length > 0) {
       return prevDataSource;
     }
   }
   const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
   if (promDatasources.length > 0) {
-    return promDatasources.find((mds) => mds.uid === config.defaultDatasource)?.uid ?? promDatasources[0].uid;
+    const defaultDatasource = promDatasources.find((mds) => mds.isDefault);
+
+    return defaultDatasource?.uid ?? promDatasources[0].uid;
   }
   return undefined;
 }
@@ -129,10 +144,12 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
  * The current provider functions for adhoc filter variables are the functions getTagKeys and getTagValues in the data source.
  * This function still uses these functions from inside the data source helper.
  *
+ * @param dataTrail
  * @param filtersVariable
  * @param datasourceHelper
  */
 export function limitAdhocProviders(
+  dataTrail: DataTrail,
   filtersVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
 ) {
@@ -155,7 +172,22 @@ export function limitAdhocProviders(
       // as the series match[] parameter in Prometheus labels endpoint
       const filters = filtersVariable.state.filters;
       // call getTagKeys and truncate the response
-      const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      // we're passing the queries so we get the labels that adhere to the queries
+      // we're also passing the scopes so we get the labels that adhere to the scopes filters
+
+      const opts = {
+        filters,
+        scopes: getClosestScopesFacade(variable)?.value,
+        queries: dataTrail.getQueries(),
+      };
+
+      // if there are too many queries it takes to much time to process the requests.
+      // In this case we favour responsiveness over reducing the number of options.
+      if (opts.queries.length > 20) {
+        opts.queries = [];
+      }
+
+      const values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
@@ -175,12 +207,73 @@ export function limitAdhocProviders(
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response
-      const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
-        0,
-        MAX_ADHOC_VARIABLE_OPTIONS
-      );
+      // we're passing the queries so we get the label values that adhere to the queries
+      // we're also passing the scopes so we get the label values that adhere to the scopes filters
+
+      const opts = {
+        key: filter.key,
+        filters,
+        scopes: getClosestScopesFacade(variable)?.value,
+        queries: dataTrail.getQueries(),
+      };
+
+      // if there are too many queries it takes to much time to process the requests.
+      // In this case we favour responsiveness over reducing the number of options.
+      if (opts.queries.length > 20) {
+        opts.queries = [];
+      }
+
+      const values = (await datasourceHelper.getTagValues(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
   });
+}
+
+export type SuggestionsResponse = {
+  data: string[];
+  status: 'success' | 'error';
+  error?: 'string';
+  warnings?: string[];
+};
+
+// Suggestions API is an API that receives adhoc filters, scopes and queries and returns the labels or label values that match the provided parameters
+// Under the hood it does exactly what the label and label values API where doing but the processing is done in the BE rather than in the FE
+export async function callSuggestionsApi(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  scopes: Scope[],
+  adHocVariableFilters: AdHocVariableFilter[],
+  labelName: string | undefined,
+  limit: number | undefined,
+  requestId: string
+): Promise<FetchResponse<SuggestionsResponse>> {
+  return await lastValueFrom(
+    getBackendSrv().fetch<SuggestionsResponse>({
+      url: `/api/datasources/uid/${dataSourceUid}/resources/suggestions`,
+      data: {
+        labelName,
+        queries: [],
+        scopes: scopes.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adHocVariableFilters.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        start: getPrometheusTime(timeRange.from, false).toString(),
+        end: getPrometheusTime(timeRange.to, true).toString(),
+        limit,
+      },
+      requestId,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  );
 }

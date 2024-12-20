@@ -9,6 +9,7 @@ import {
   PanelPluginMeta,
   restoreCustomOverrideRules,
   PluginType,
+  SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -21,7 +22,16 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  FilterInput,
+  RadioButtonGroup,
+  ScrollContainer,
+  Stack,
+  ToolbarButton,
+  useStyles2,
+} from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
@@ -104,6 +114,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     });
   };
 
+  getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
+    return [
+      { label: OptionFilter.All, value: OptionFilter.All },
+      { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
+    ];
+  }
+
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
     const panel = panelRef.resolve();
@@ -111,6 +128,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { data } = sceneGraph.getData(panel).useState();
     const styles = useStyles2(getStyles);
     const isAngularPanel = isUsingAngularPanelPlugin(panel);
+    const isSearching = searchQuery.length > 0;
+    const showSearchRadioButtons = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
     return (
       <>
         {!isVizPickerOpen && (
@@ -123,6 +142,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 placeholder="Search options"
                 onChange={model.onSetSearchQuery}
               />
+              {showSearchRadioButtons && (
+                <RadioButtonGroup
+                  options={model.getOptionRadioFilters()}
+                  value={listMode}
+                  fullWidth
+                  onChange={model.onSetListMode}
+                />
+              )}
             </div>
             {isAngularPanel && (
               <div className={styles.angularDeprecationContainer}>
@@ -157,9 +184,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 </AngularDeprecationPluginNotice>
               </div>
             )}
-            <div className={styles.listOfOptions}>
+            <ScrollContainer>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
-            </div>
+            </ScrollContainer>
           </>
         )}
         {isVizPickerOpen && (
@@ -182,12 +209,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       padding: theme.spacing(2, 1),
       gap: theme.spacing(2),
-    }),
-    listOfOptions: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: '1',
-      overflow: 'auto',
     }),
     searchOptions: css({
       minHeight: theme.spacing(4),

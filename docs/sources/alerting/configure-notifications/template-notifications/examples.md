@@ -50,6 +50,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+  group-alert-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
 # Notification template examples
@@ -59,7 +64,7 @@ Notification templates allows you to change the default notification messages.
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
 {{% admonition type="note" %}}
-Avoid adding extra information about alert instances in notification templates, as this information is only be visible in the notification message.
+Avoid adding extra information about alert instances in notification templates, as this information is only visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{% /admonition %}}
@@ -320,4 +325,38 @@ The output of this template looks like this:
 - AlertGenerator: ?orgId=1
 - Silence: https://example.com/alerting/silence/new
 - RunbookURL: https://example.com/on-call/web_server_http_errors
+```
+
+## Print a notification title or subject
+
+A title or subject provides a one-line summary of the notification content.
+
+Here’s a basic example that displays the number of firing and resolved alerts in the notification.
+
+```go
+{{ define "custom_title" -}}
+{{ if gt (.Alerts.Firing | len) 0 }}🚨 {{ .Alerts.Firing | len }} firing alerts. {{ end }}{{ if gt (.Alerts.Resolved | len) 0 }}✅ {{ .Alerts.Resolved | len }} resolved alerts.{{ end }}
+{{ end -}}
+```
+
+```template_output
+🚨 1 firing alerts. ✅ 1 resolved alerts.
+```
+
+The next example is a copy of the default title/subject template used in Grafana.
+
+```go
+{{ define "copy_of_default_title" -}}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+```
+
+This is a more advanced example:
+
+- Prints the number of firing and resolved alerts in the notification.
+- Outputs `.GroupLabels`, the labels used to [group multiple alerts in one notification](ref:group-alert-notifications).
+- Prints `CommonLabels`, excluding labels in `.GroupLabels`.
+
+```template_output
+[FIRING:1, RESOLVED:1] api warning (sql_db)
 ```

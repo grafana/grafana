@@ -20,8 +20,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginExtensionsHook } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
@@ -427,6 +426,22 @@ describe('PanelDataQueriesTab', () => {
           expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
         });
 
+        it('should update hoverHeader', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ title: '', hoverHeader: true });
+
+          panel.state.$data?.activate();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          expect(panel.state.hoverHeader).toBe(false);
+        });
+
         it('should update PanelTimeRange object on time options update', async () => {
           const { queriesTab, panel } = await setupScene('panel-1');
 
@@ -503,6 +518,27 @@ describe('PanelDataQueriesTab', () => {
             minInterval: '1s',
           });
           expect(dataObj.state.minInterval).toBe('1s');
+        });
+
+        it('should update min interval to undefined if empty input', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          expect(dataObj.state.maxDataPoints).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: '1s',
+          });
+          expect(dataObj.state.minInterval).toBe('1s');
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: null,
+          });
+          expect(dataObj.state.minInterval).toBe(undefined);
         });
       });
 

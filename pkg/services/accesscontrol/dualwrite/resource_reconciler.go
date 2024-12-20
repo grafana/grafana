@@ -4,15 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 // legacyTupleCollector collects tuples groupd by object and tupleKey
-type legacyTupleCollector func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error)
+type legacyTupleCollector func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error)
 
 // zanzanaTupleCollector collects tuples from zanzana for given object
-type zanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error)
+type zanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error)
 
 type resourceReconciler struct {
 	name    string
@@ -25,9 +28,14 @@ func newResourceReconciler(name string, legacy legacyTupleCollector, zanzana zan
 	return resourceReconciler{name, legacy, zanzana, client}
 }
 
-func (r resourceReconciler) reconcile(ctx context.Context) error {
+func (r resourceReconciler) reconcile(ctx context.Context, namespace string) error {
+	info, err := claims.ParseNamespace(namespace)
+	if err != nil {
+		return err
+	}
+
 	// 1. Fetch grafana resources stored in grafana db.
-	res, err := r.legacy(ctx)
+	res, err := r.legacy(ctx, info.OrgID)
 	if err != nil {
 		return fmt.Errorf("failed to collect legacy tuples for %s: %w", r.name, err)
 	}
@@ -40,20 +48,32 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 	for object, tuples := range res {
 		// 2. Fetch all tuples for given object.
 		// Due to limitations in open fga api we need to collect tuples per object
-		zanzanaTuples, err := r.zanzana(ctx, r.client, object)
+		zanzanaTuples, err := r.zanzana(ctx, r.client, object, namespace)
 		if err != nil {
 			return fmt.Errorf("failed to collect zanzanaa tuples for %s: %w", r.name, err)
 		}
 
 		// 3. Check if tuples from grafana db exists in zanzana and if not add them to writes
 		for key, t := range tuples {
-			_, ok := zanzanaTuples[key]
+			stored, ok := zanzanaTuples[key]
 			if !ok {
+				writes = append(writes, t)
+				continue
+			}
+
+			// 4. For folder resource tuples we also need to compare the stored group_resources
+			if zanzana.IsFolderResourceTuple(t) && t.String() != stored.String() {
+				deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
+					User:     t.User,
+					Relation: t.Relation,
+					Object:   t.Object,
+				})
+
 				writes = append(writes, t)
 			}
 		}
 
-		// 4. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
+		// 5. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
 		for key, tuple := range zanzanaTuples {
 			_, ok := tuples[key]
 			if !ok {
@@ -70,11 +90,11 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		return nil
 	}
 
-	// FIXME: batch them together
-	if len(writes) > 0 {
-		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
-			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
+	if len(deletes) > 0 {
+		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
+			return r.client.Write(ctx, &authzextv1.WriteRequest{
+				Namespace: namespace,
+				Deletes:   &authzextv1.WriteRequestDeletes{TupleKeys: zanzana.ToAuthzExtTupleKeysWithoutCondition(items)},
 			})
 		})
 
@@ -83,10 +103,11 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		}
 	}
 
-	if len(deletes) > 0 {
-		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
-			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
+	if len(writes) > 0 {
+		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
+			return r.client.Write(ctx, &authzextv1.WriteRequest{
+				Namespace: namespace,
+				Writes:    &authzextv1.WriteRequestWrites{TupleKeys: zanzana.ToAuthzExtTupleKeys(items)},
 			})
 		})
 

@@ -21,14 +21,14 @@ export const tablesResponse = {
   },
 };
 
-export const fieldsResponse = {
+export const fieldsResponse = (refId: string) => ({
   results: {
-    fields: {
+    [refId]: {
       status: 200,
       frames: [
         {
           schema: {
-            refId: 'fields',
+            refId,
             meta: {
               executedQueryString:
                 "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'DataMaker' AND table_name = 'RandomIntsWithTimes' ORDER BY column_name",
@@ -48,7 +48,7 @@ export const fieldsResponse = {
       ],
     },
   },
-};
+});
 
 export const datasetResponse = {
   results: {

@@ -6,6 +6,17 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -14,11 +25,13 @@ import (
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	servicetracing "github.com/grafana/grafana/pkg/modules/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -36,16 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/responsewriter"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 )
 
 var (
@@ -65,6 +68,8 @@ var (
 		&metav1.APIGroupList{},
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
 	}
 )
 
@@ -81,12 +86,12 @@ type Service interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig() *clientrest.Config
+	GetRestConfig(context.Context) *clientrest.Config
 }
 
 type DirectRestConfigProvider interface {
 	// GetDirectRestConfig returns a k8s client configuration that will use the same
-	// logged logged in user as the current request context.  This is useful when
+	// logged in user as the current request context.  This is useful when
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 
@@ -95,15 +100,15 @@ type DirectRestConfigProvider interface {
 }
 
 type service struct {
-	*services.BasicService
+	services.NamedService
 
 	options    *grafanaapiserveroptions.Options
 	restConfig *clientrest.Config
 
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
+	log      log.Logger
 
-	startedCh chan struct{}
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -142,10 +147,10 @@ func ProvideService(
 	unified resource.ResourceClient,
 ) (*service, error) {
 	s := &service{
+		log:               log.New(modules.GrafanaAPIServer),
 		cfg:               cfg,
 		features:          features,
 		rr:                rr,
-		startedCh:         make(chan struct{}),
 		stopCh:            make(chan struct{}),
 		builders:          []builder.APIGroupBuilder{},
 		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
@@ -161,17 +166,23 @@ func ProvideService(
 		unified:           unified,
 	}
 	// This will be used when running as a dskit service
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+	s.NamedService = servicetracing.NewServiceTracer(tracing.GetTracerProvider(), service)
 
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
-			<-s.startedCh
+			if err := s.NamedService.AwaitRunning(c.Req.Context()); err != nil {
+				c.Resp.WriteHeader(http.StatusInternalServerError)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+				return
+			}
+
 			if s.handler == nil {
-				c.Resp.WriteHeader(404)
-				_, _ = c.Resp.Write([]byte("Not found"))
+				c.Resp.WriteHeader(http.StatusNotFound)
+				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusNotFound)))
 				return
 			}
 
@@ -202,7 +213,10 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *service) GetRestConfig() *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+		return nil
+	}
 	return s.restConfig
 }
 
@@ -212,10 +226,14 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.start(ctx); err != nil {
+	if err := s.NamedService.StartAsync(ctx); err != nil {
 		return err
 	}
-	return s.running(ctx)
+
+	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(ctx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
@@ -224,8 +242,6 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
-	defer close(s.startedCh)
-
 	// Get the list of groups the server will support
 	builders := s.builders
 
@@ -281,6 +297,8 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 
+	var optsregister apistore.StorageOptionsRegister
+
 	if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeEtcd {
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -289,14 +307,11 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		// This is needed as the apistore doesn't allow any core grafana dependencies.
-		features := make(map[string]any)
-		if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-			features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
-		}
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		optsregister = getter.RegisterOptions
+
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig, features)
+		serverConfig.Config.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -323,7 +338,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService, s.features,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		optsregister,
 	)
 	if err != nil {
 		return err
@@ -486,7 +503,9 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
-				<-s.startedCh
+				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
+					return nil, err
+				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
@@ -496,7 +515,9 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	<-s.startedCh
+	if err := s.NamedService.AwaitRunning(r.Context()); err != nil {
+		return
+	}
 	s.handler.ServeHTTP(w, r)
 }
 

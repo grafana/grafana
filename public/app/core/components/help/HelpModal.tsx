@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 const getShortcuts = (modKey: string) => {
@@ -165,8 +165,12 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
               </caption>
               <thead className="sr-only">
                 <tr>
-                  <th>Keys</th>
-                  <th>Description</th>
+                  <th>
+                    <Trans i18nKey="help-modal.column-headers.keys">Keys</Trans>
+                  </th>
+                  <th>
+                    <Trans i18nKey="help-modal.column-headers.description">Description</Trans>
+                  </th>
                 </tr>
               </thead>
               <tbody>

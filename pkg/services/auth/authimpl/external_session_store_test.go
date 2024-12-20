@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetExternalSession(t *testing.T) {
+func TestIntegrationGetExternalSession(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -39,7 +39,7 @@ func TestGetExternalSession(t *testing.T) {
 	})
 }
 
-func TestFindExternalSessions(t *testing.T) {
+func TestIntegrationListExternalSessions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -47,9 +47,7 @@ func TestFindExternalSessions(t *testing.T) {
 	t.Run("returns external sessions by ID", func(t *testing.T) {
 		store := setupTest(t)
 
-		extSession := &auth.ExternalSession{
-			AccessToken: "access-token",
-		}
+		extSession := &auth.ExternalSession{}
 
 		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
@@ -107,7 +105,7 @@ func TestFindExternalSessions(t *testing.T) {
 	})
 }
 
-func TestDeleteExternalSessionsByUserID(t *testing.T) {
+func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -148,7 +146,7 @@ func TestDeleteExternalSessionsByUserID(t *testing.T) {
 	})
 }
 
-func TestDeleteExternalSession(t *testing.T) {
+func TestIntegrationDeleteExternalSession(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -178,7 +176,7 @@ func TestDeleteExternalSession(t *testing.T) {
 	})
 }
 
-func TestBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
+func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

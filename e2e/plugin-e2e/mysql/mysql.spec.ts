@@ -1,29 +1,10 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { expect, test } from '@grafana/plugin-e2e';
 
-import {
-  tablesResponse,
-  fieldsResponse,
-  datasetResponse,
-  normalTableName,
-  tableNameWithSpecialCharacter,
-} from './mocks/mysql.mocks';
+import { normalTableName, tableNameWithSpecialCharacter } from './mocks/mysql.mocks';
+import { mockDataSourceRequest } from './utils';
 
-test.beforeEach(async ({ context, selectors, explorePage }) => {
-  await explorePage.datasource.set('gdev-mysql');
-  await context.route(selectors.apis.DataSource.queryPattern, async (route, request) => {
-    switch (request.postDataJSON().queries[0].refId) {
-      case 'tables':
-        return route.fulfill({ json: tablesResponse, status: 200 });
-      case 'fields':
-        return route.fulfill({ json: fieldsResponse, status: 200 });
-      case 'datasets':
-        return route.fulfill({ json: datasetResponse, status: 200 });
-      default:
-        return route.continue();
-    }
-  });
-});
+test.beforeEach(mockDataSourceRequest);
 
 test('code editor autocomplete should handle table name escaping/quoting', async ({ explorePage, selectors, page }) => {
   await page.getByLabel('Code').check();

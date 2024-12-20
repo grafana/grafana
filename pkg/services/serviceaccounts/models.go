@@ -73,6 +73,8 @@ type UpdateServiceAccountForm struct {
 // swagger: model
 type ServiceAccountDTO struct {
 	Id int64 `json:"id" xorm:"user_id"`
+	// example: fe1xejlha91xce
+	UID string `json:"uid" xorm:"uid"`
 	// example: grafana
 	Name string `json:"name" xorm:"name"`
 	// example: sa-grafana
@@ -98,6 +100,12 @@ type GetSATokensQuery struct {
 	ServiceAccountID *int64 // optional filtering by service account ID
 }
 
+type GetServiceAccountQuery struct {
+	OrgID int64  `json:"orgId"`
+	ID    int64  `json:"id"`
+	UID   string `json:"uid"`
+}
+
 type AddServiceAccountTokenCommand struct {
 	Name          string `json:"name" binding:"Required"`
 	OrgId         int64  `json:"-"`
@@ -112,6 +120,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Page         int
 	Limit        int
 	CountOnly    bool
+	CountTokens  bool
 	SignedInUser identity.Requester
 }
 
@@ -135,6 +144,8 @@ type SearchOrgServiceAccountsResult struct {
 type ServiceAccountProfileDTO struct {
 	// example: 2
 	Id int64 `json:"id" xorm:"user_id"`
+	// example: fe1xejlha91xce
+	UID string `json:"uid" xorm:"uid"`
 	// example: test
 	Name string `json:"name" xorm:"name"`
 	// example: sa-grafana

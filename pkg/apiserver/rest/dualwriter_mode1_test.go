@@ -734,7 +734,7 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
 
-			err := dw.(*DualWriterMode1).updateOnUnifiedStorage(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			err := dw.(*DualWriterMode1).updateOnUnifiedStorageMode1(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 			assert.NoError(t, err)
 		})
 	}

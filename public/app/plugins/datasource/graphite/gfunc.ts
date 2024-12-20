@@ -1112,7 +1112,7 @@ export class FuncInstance {
 function createFuncInstance(
   funcDef: FuncDef | string,
   options?: { withDefaultParams: boolean },
-  idx?: any
+  idx?: FuncDefs | null
 ): FuncInstance {
   if (isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
@@ -1120,14 +1120,14 @@ function createFuncInstance(
   return new FuncInstance(funcDef, options);
 }
 
-function getFuncDef(name: string, idx?: any): FuncDef {
+function getFuncDef(name: string, idx?: FuncDefs | null): FuncDef {
   if (!(idx || index)[name]) {
     return { name: name, params: [{ name: '', type: '', multiple: true }], defaultParams: [''], unknown: true };
   }
   return (idx || index)[name];
 }
 
-function getFuncDefs(graphiteVersion: string, idx?: any): FuncDefs {
+function getFuncDefs(graphiteVersion: string, idx?: FuncDefs | null): FuncDefs {
   const funcs: FuncDefs = {};
   forEach(idx || index, (funcDef: FuncDef) => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {

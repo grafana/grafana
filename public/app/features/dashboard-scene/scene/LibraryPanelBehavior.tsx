@@ -3,13 +3,13 @@ import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState 
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { PanelTimeRange } from './PanelTimeRange';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.

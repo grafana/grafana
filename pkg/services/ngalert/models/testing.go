@@ -197,9 +197,15 @@ func (a *AlertRuleMutators) WithUniqueID() AlertRuleMutator {
 	}
 }
 
-func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryAndExpressionsSection(mode bool) AlertRuleMutator {
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryAndExpressionsSection(enabled bool) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = mode
+		rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = enabled
+	}
+}
+
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedNotificationsSection(enabled bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.EditorSettings.SimplifiedNotificationsSection = enabled
 	}
 }
 
@@ -622,6 +628,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
 		Record:          r.Record,
+		IsPaused:        r.IsPaused,
 	}
 
 	if r.DashboardUID != nil {

@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { Observable, ReplaySubject } from 'rxjs';
 
 import { Labels, LogLevel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 export type ExtensionsLogItem = {
   level: LogLevel;
@@ -32,7 +33,7 @@ export class ExtensionsLog {
   }
 
   warning(message: string, labels?: Labels): void {
-    console.warn(message, { ...this.baseLabels, ...labels });
+    config.buildInfo.env === 'development' && console.warn(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.warning, message, labels);
   }
 

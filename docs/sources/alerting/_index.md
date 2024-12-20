@@ -27,10 +27,6 @@ cards:
       href: ./fundamentals/
       description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
       height: 24
-    - title: Set up
-      href: ./set-up/
-      description: Set up your implementation of Grafana Alerting.
-      height: 24
     - title: Configure alert rules
       href: ./alerting-rules/
       description: Create, manage, view, and adjust alert rules to alert on your metrics data or log entries from multiple data sources — no matter where your data is stored.
@@ -39,13 +35,13 @@ cards:
       href: ./configure-notifications/
       description: Choose how, when, and where to send your alert notifications.
       height: 24
-    - title: Detect and respond
-      href: ./manage-notifications/
+    - title: Monitor status
+      href: ./monitor-status/
       description: Monitor, respond to, and triage issues within your services.
       height: 24
-    - title: Monitor
-      href: ./monitor/
-      description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
+    - title: Additional configuration
+      href: ./set-up/
+      description: Use advanced configuration options to further tailor your alerting setup. These options can enhance security, scalability, and automation in complex environments.
       height: 24
 ---
 

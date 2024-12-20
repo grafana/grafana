@@ -61,6 +61,7 @@ const setup = (propOverrides: Partial<Props>) => {
 
 const getDefaultServiceAccount = (): ServiceAccountDTO => ({
   id: 42,
+  uid: 'aaaaa',
   name: 'Data source scavenger',
   login: 'sa-data-source-scavenger',
   orgId: 1,
@@ -164,6 +165,6 @@ describe('ServiceAccountPage tests', () => {
     await userEvent.click(screen.getByLabelText(/Delete service account token/));
     await user.click(screen.getByRole('button', { name: /^Delete$/ }));
 
-    expect(deleteServiceAccountTokenMock).toHaveBeenCalledWith(42, 142);
+    expect(deleteServiceAccountTokenMock).toHaveBeenCalledWith('aaaaa', 142);
   });
 });

@@ -7,7 +7,6 @@ type codeowner string
 const (
 	grafanaAppPlatformSquad                     codeowner = "@grafana/grafana-app-platform-squad"
 	grafanaDashboardsSquad                      codeowner = "@grafana/dashboards-squad"
-	grafanaExploreSquad                         codeowner = "@grafana/explore-squad"
 	grafanaDatavizSquad                         codeowner = "@grafana/dataviz-squad"
 	grafanaFrontendPlatformSquad                codeowner = "@grafana/grafana-frontend-platform"
 	grafanaBackendGroup                         codeowner = "@grafana/grafana-backend-group"
@@ -28,5 +27,6 @@ const (
 	enterpriseDatasourcesSquad                  codeowner = "@grafana/enterprise-datasources"
 	grafanaSharingSquad                         codeowner = "@grafana/sharing-squad"
 	grafanaDatabasesFrontend                    codeowner = "@grafana/databases-frontend"
+	grafanaOSSBigTent                           codeowner = "@grafana/oss-big-tent"
 	growthAndOnboarding                         codeowner = "@grafana/growth-and-onboarding"
 )

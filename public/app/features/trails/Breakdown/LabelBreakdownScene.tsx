@@ -1,8 +1,12 @@
+import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
+import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
+  ConstantVariable,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -22,23 +26,37 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
+import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
+import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
+import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef } from '../autoQuery/types';
 import { reportExploreMetrics } from '../interactions';
+import { updateOtelJoinWithGroupLeft } from '../otel/util';
+import { getSortByPreference } from '../services/store';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
-import { MDP_METRIC_PREVIEW, trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import {
+  MDP_METRIC_PREVIEW,
+  RefreshMetricsEvent,
+  trailDS,
+  VAR_FILTERS,
+  VAR_GROUP_BY,
+  VAR_GROUP_BY_EXP,
+  VAR_MISSING_OTEL_TARGETS,
+  VAR_OTEL_GROUP_LEFT,
+} from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
+import { SortByScene, SortCriteriaChanged } from './SortByScene';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -48,6 +66,7 @@ const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
   search: BreakdownSearchScene;
+  sortBy: SortByScene;
   labels: Array<SelectableValue<string>>;
   value?: string;
   loading?: boolean;
@@ -65,6 +84,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     super({
       ...state,
       labels: state.labels ?? [],
+      sortBy: new SortByScene({ target: 'labels' }),
       search: new BreakdownSearchScene('labels'),
     });
 
@@ -74,7 +94,18 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   private _query?: AutoQueryDef;
 
   private _onActivate() {
+    // eslint-disable-next-line no-console
+    init().then(() => console.debug('Grafana ML initialized'));
+
     const variable = this.getVariable();
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      this._subs.add(
+        this.subscribeToEvent(RefreshMetricsEvent, () => {
+          this.updateBody(this.getVariable());
+        })
+      );
+    }
 
     variable.subscribeToState((newState, oldState) => {
       if (
@@ -91,6 +122,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         this.state.search.clearValueFilter();
       })
     );
+    this._subs.add(this.subscribeToEvent(SortCriteriaChanged, this.handleSortByChange));
 
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const metric = metricScene.state.metric;
@@ -107,6 +139,27 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       // The change in time range will cause a refresh of panel values.
       this.clearBreakdownPanelAxisValues();
     });
+
+    // OTEL
+    this._subs.add(
+      trail.subscribeToState(({ useOtelExperience }, oldState) => {
+        // if otel changes
+        if (useOtelExperience !== oldState.useOtelExperience) {
+          this.updateBody(variable);
+        }
+      })
+    );
+
+    // OTEL
+    const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+    if (resourceAttributes instanceof ConstantVariable) {
+      resourceAttributes?.subscribeToState((newState, oldState) => {
+        // wait for the resource attributes to be loaded
+        if (newState.value !== oldState.value) {
+          this.updateBody(variable);
+        }
+      });
+    }
 
     this.updateBody(variable);
   }
@@ -172,6 +225,20 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     return variable;
   }
 
+  private handleSortByChange = (event: SortCriteriaChanged) => {
+    if (event.target !== 'labels') {
+      return;
+    }
+    if (this.state.body instanceof LayoutSwitcher) {
+      this.state.body.state.breakdownLayouts.forEach((layout) => {
+        if (layout instanceof ByFrameRepeater) {
+          layout.sort(event.sortBy);
+        }
+      });
+    }
+    reportExploreMetrics('sorting_changed', { sortBy: event.sortBy });
+  };
+
   private onReferencedVariableValueChanged() {
     const variable = this.getVariable();
     variable.changeValueTo(ALL_VARIABLE_VALUE);
@@ -181,17 +248,24 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   private updateBody(variable: QueryVariable) {
     const options = getLabelOptions(this, variable);
 
+    const trail = getTrailFor(this);
+
+    let allLabelOptions = options;
+    if (trail.state.useOtelExperience) {
+      allLabelOptions = this.updateLabelOptions(trail, allLabelOptions);
+    }
+
     const stateUpdate: Partial<LabelBreakdownSceneState> = {
       loading: variable.state.loading,
       value: String(variable.state.value),
-      labels: options,
+      labels: allLabelOptions,
       error: variable.state.error,
       blockingMessage: undefined,
     };
 
     if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
-        ? buildAllLayout(options, this._query!, this.onBreakdownLayoutChange)
+        ? buildAllLayout(allLabelOptions, this._query!, this.onBreakdownLayoutChange, trail.state.useOtelExperience)
         : buildNormalLayout(this._query!, this.onBreakdownLayoutChange, this.state.search);
     } else if (!variable.state.loading) {
       stateUpdate.body = undefined;
@@ -218,26 +292,85 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     variable.changeValueTo(value);
   };
 
+  private async updateOtelGroupLeft() {
+    const trail = getTrailFor(this);
+
+    if (trail.state.useOtelExperience) {
+      await updateOtelJoinWithGroupLeft(trail, trail.state.metric ?? '');
+    }
+  }
+
+  /**
+   * supplement normal label options with resource attributes
+   * @param trail
+   * @param allLabelOptions
+   * @returns
+   */
+  private updateLabelOptions(trail: DataTrail, allLabelOptions: SelectableValue[]): Array<SelectableValue<string>> {
+    // when the group left variable is changed we should get all the resource attributes + labels
+    const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
+    if (typeof resourceAttributes !== 'string') {
+      return [];
+    }
+
+    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => ({ label: el, value: el }));
+    // shift ALL value to the front
+    const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
+    const firstGroup = all.concat(attributeArray);
+
+    // remove duplicates of ALL option
+    allLabelOptions = allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE);
+    allLabelOptions = firstGroup.concat(allLabelOptions);
+
+    return allLabelOptions;
+  }
+
   public static Component = ({ model }: SceneComponentProps<LabelBreakdownScene>) => {
-    const { labels, body, search, loading, value, blockingMessage } = model.useState();
+    const { labels, body, search, sortBy, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
-    const { useOtelExperience } = getTrailFor(model).useState();
+    const trail = getTrailFor(model);
+    const { useOtelExperience } = trail.useState();
+
+    let allLabelOptions = labels;
+    if (trail.state.useOtelExperience) {
+      // All value moves to the middle because it is part of the label options variable
+      const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
+      allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE).unshift(all);
+    }
+
+    const [dismissOtelWarning, updateDismissOtelWarning] = useState(false);
+    const missingOtelTargets = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail)?.getValue();
+    if (missingOtelTargets && !dismissOtelWarning) {
+      reportExploreMetrics('missing_otel_labels_by_truncating_job_and_instance', {
+        metric: trail.state.metric,
+      });
+    }
+
+    useEffect(() => {
+      if (useOtelExperience) {
+        // this will update the group left variable
+        model.updateOtelGroupLeft();
+      }
+    }, [model, useOtelExperience]);
 
     return (
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
-            {!loading && Boolean(labels.length) && (
-              <Field label={useOtelExperience ? 'By metric attribute' : 'By label'}>
-                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+            {!loading && labels.length && (
+              <Field label={useOtelExperience ? 'By attribute' : 'By label'}>
+                <BreakdownLabelSelector options={allLabelOptions} value={value} onChange={model.onChange} />
               </Field>
             )}
 
             {value !== ALL_VARIABLE_VALUE && (
-              <Field label="Search" className={styles.searchField}>
-                <search.Component model={search} />
-              </Field>
+              <>
+                <Field label="Search" className={styles.searchField}>
+                  <search.Component model={search} />
+                </Field>
+                <sortBy.Component model={sortBy} />
+              </>
             )}
             {body instanceof LayoutSwitcher && (
               <Field label="View">
@@ -245,6 +378,22 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               </Field>
             )}
           </div>
+          {missingOtelTargets && !dismissOtelWarning && (
+            <Alert
+              title={`Warning: There may be missing Open Telemetry resource attributes.`}
+              severity={'warning'}
+              key={'warning'}
+              onRemove={() => updateDismissOtelWarning(true)}
+              className={styles.truncatedOTelResources}
+            >
+              <Trans i18nKey={'explore-metrics.breakdown.missing-otel-labels'}>
+                This metric has too many job and instance label values to call the Prometheus label_values endpoint with
+                the match[] parameter. These label values are used to join the metric with target_info, which contains
+                the resource attributes. Please include more resource attributes filters.
+              </Trans>
+            </Alert>
+          )}
+
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
       </div>
@@ -276,13 +425,18 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       justifyContent: 'space-between',
     }),
+    truncatedOTelResources: css({
+      minWidth: '30vw',
+      flexGrow: 0,
+    }),
   };
 }
 
 export function buildAllLayout(
   options: Array<SelectableValue<string>>,
   queryDef: AutoQueryDef,
-  onBreakdownLayoutChange: BreakdownLayoutChangeCallback
+  onBreakdownLayoutChange: BreakdownLayoutChangeCallback,
+  useOtelExperience?: boolean
 ) {
   const children: SceneFlexItemLike[] = [];
 
@@ -315,7 +469,10 @@ export function buildAllLayout(
           ],
         })
       )
-      .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
+      .setHeaderActions([
+        new SelectLabelAction({ labelName: String(option.value) }),
+        new AddToExplorationButton({ labelName: String(option.value) }),
+      ])
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
@@ -366,7 +523,10 @@ function buildNormalLayout(
       .setTitle(getLabelValue(frame))
       .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
       .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-      .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+      .setHeaderActions([
+        new AddToFiltersGraphAction({ frame }),
+        new AddToExplorationButton({ labelName: getLabelValue(frame) }),
+      ])
       .setUnit(unit)
       .build();
 
@@ -382,6 +542,7 @@ function buildNormalLayout(
     return item;
   }
 
+  const { sortBy } = getSortByPreference('labels', 'outliers');
   const getFilter = () => searchScene.state.filter ?? '';
 
   return new LayoutSwitcher({
@@ -423,6 +584,7 @@ function buildNormalLayout(
           ],
         }),
         getLayoutChild,
+        sortBy,
         getFilter,
       }),
       new ByFrameRepeater({
@@ -432,6 +594,7 @@ function buildNormalLayout(
           children: [],
         }),
         getLayoutChild,
+        sortBy,
         getFilter,
       }),
     ],
@@ -460,7 +623,16 @@ interface SelectLabelActionState extends SceneObjectState {
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
     const label = this.state.labelName;
-    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel' });
+
+    // check that it is resource or label and update the rudderstack event
+    const trail = getTrailFor(this);
+    const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
+    let otel_resource_attribute = false;
+    if (typeof resourceAttributes === 'string') {
+      otel_resource_attribute = resourceAttributes?.split(',').includes(label);
+    }
+
+    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel', otel_resource_attribute });
     getBreakdownSceneFor(this).onChange(label);
   };
 

@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +23,8 @@ import (
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -103,6 +104,7 @@ func SetupConfig(
 	buildBranch string,
 	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
 ) error {
+	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
@@ -139,6 +141,10 @@ func SetupConfig(
 
 	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
 
+	if err := AddPostStartHooks(serverConfig, builders); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -166,12 +172,14 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
-	features featuremgmt.FeatureToggles,
+	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
+
+	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
@@ -180,12 +188,18 @@ func InstallAPIs(
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
 
-			var dualWriterPeriodicDataSyncJobEnabled bool
+			var (
+				dualWriterPeriodicDataSyncJobEnabled bool
+				dataSyncerInterval                   = time.Hour
+				dataSyncerRecordsLimit               = 1000
+			)
 
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dataSyncerInterval = resourceConfig.DataSyncerInterval
+				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
 
 			// Force using storage only -- regardless of internal synchronization state
@@ -199,7 +213,21 @@ func InstallAPIs(
 			// Moving from one version to the next can only happen after the previous step has
 			// successfully synchronized.
 			requestInfo := getRequestInfo(gr, namespaceMapper)
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, legacy, storage, key, mode, reg, serverLock, requestInfo)
+
+			syncerCfg := &grafanarest.SyncerConfig{
+				Kind:                   key,
+				RequestInfo:            requestInfo,
+				Mode:                   mode,
+				LegacyStorage:          legacy,
+				Storage:                storage,
+				ServerLockService:      serverLock,
+				DataSyncerInterval:     dataSyncerInterval,
+				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
+				Reg:                    reg,
+			}
+
+			// This also sets the currentMode on the syncer config.
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
 			if err != nil {
 				return nil, err
 			}
@@ -210,9 +238,12 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
-
 			if dualWriterPeriodicDataSyncJobEnabled {
-				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
+				// The mode might have changed in SetDualWritingMode, so apply current mode first.
+				syncerCfg.Mode = currentMode
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+					return nil, err
+				}
 			}
 
 			// when unable to use
@@ -242,6 +273,7 @@ func InstallAPIs(
 				OptsGetter:       optsGetter,
 				DualWriteBuilder: dualWrite,
 				MetricsRegister:  reg,
+				StorageOptions:   optsregister,
 			}); err != nil {
 				return err
 			}
@@ -256,5 +288,28 @@ func InstallAPIs(
 		}
 	}
 
+	return nil
+}
+
+// AddPostStartHooks adds post start hooks to a generic API server config
+func AddPostStartHooks(
+	config *genericapiserver.RecommendedConfig,
+	builders []APIGroupBuilder,
+) error {
+	for _, b := range builders {
+		hookProvider, ok := b.(APIGroupPostStartHookProvider)
+		if !ok {
+			continue
+		}
+		hooks, err := hookProvider.GetPostStartHooks()
+		if err != nil {
+			return err
+		}
+		for name, hook := range hooks {
+			if err := config.AddPostStartHook(name, hook); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }

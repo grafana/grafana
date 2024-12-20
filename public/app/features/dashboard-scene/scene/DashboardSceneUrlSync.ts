@@ -4,6 +4,7 @@ import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -37,8 +38,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? '' : undefined,
       shareView: state.shareView,
+      orgId: contextSrv.user.orgId.toString(),
     };
   }
 
@@ -164,8 +166,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.kiosk === 'string') {
       if (values.kiosk === 'true' || values.kiosk === '') {
         update.kioskMode = KioskMode.Full;
-      } else if (values.kiosk === 'tv') {
-        update.kioskMode = KioskMode.TV;
       }
     }
 

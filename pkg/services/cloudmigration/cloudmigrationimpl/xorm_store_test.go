@@ -25,7 +25,7 @@ func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("get all cloud_migration_session entries", func(t *testing.T) {
-		value, err := s.GetCloudMigrationSessionList(ctx)
+		value, err := s.GetCloudMigrationSessionList(ctx, 1)
 		require.NoError(t, err)
 		require.Equal(t, 3, len(value))
 		for _, m := range value {
@@ -54,6 +54,7 @@ func Test_CreateMigrationSession(t *testing.T) {
 		cm := cloudmigration.CloudMigrationSession{
 			AuthToken:   encodeToken("token"),
 			Slug:        "fake_stack",
+			OrgID:       3,
 			StackID:     1234,
 			RegionSlug:  "fake_slug",
 			ClusterSlug: "fake_cluster_slug",
@@ -63,7 +64,7 @@ func Test_CreateMigrationSession(t *testing.T) {
 		require.NotEmpty(t, sess.ID)
 		require.NotEmpty(t, sess.UID)
 
-		getRes, err := s.GetMigrationSessionByUID(ctx, sess.UID)
+		getRes, err := s.GetMigrationSessionByUID(ctx, 3, sess.UID)
 		require.NoError(t, err)
 		require.Equal(t, sess.ID, getRes.ID)
 		require.Equal(t, sess.UID, getRes.UID)
@@ -80,13 +81,15 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	ctx := context.Background()
 	t.Run("find session by uid", func(t *testing.T) {
 		uid := "qwerty"
-		mig, err := s.GetMigrationSessionByUID(ctx, uid)
+		orgId := int64(1)
+		mig, err := s.GetMigrationSessionByUID(ctx, orgId, uid)
 		require.NoError(t, err)
 		require.Equal(t, uid, mig.UID)
+		require.Equal(t, orgId, mig.OrgID)
 	})
 
 	t.Run("returns error if session is not found by uid", func(t *testing.T) {
-		_, err := s.GetMigrationSessionByUID(ctx, "fake_uid_1234")
+		_, err := s.GetMigrationSessionByUID(ctx, 1, "fake_uid_1234")
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
@@ -115,7 +118,10 @@ func Test_SnapshotManagement(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("tests the snapshot lifecycle", func(t *testing.T) {
-		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{})
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
+			OrgID:     1,
+			AuthToken: encodeToken("token"),
+		})
 		require.NoError(t, err)
 
 		// create a snapshot
@@ -129,7 +135,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
@@ -138,22 +144,22 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// lists snapshots and ensures it's in there
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: session.UID, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: session.UID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
 
 		// delete snapshot
-		err = s.DeleteSnapshot(ctx, snapshotUid)
+		err = s.deleteSnapshot(ctx, 1, snapshotUid)
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
-		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, 0, 0)
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
 	})
@@ -165,12 +171,12 @@ func Test_SnapshotResources(t *testing.T) {
 
 	t.Run("tests CRUD of snapshot resources", func(t *testing.T) {
 		// Get the default rows from the test
-		resources, err := s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err := s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 3)
 
 		// create a new resource and update an existing resource
-		err = s.CreateUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+		err = s.createUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
 				Type:   cloudmigration.DatasourceDataType,
 				RefID:  "mi39fj",
@@ -184,7 +190,7 @@ func Test_SnapshotResources(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Get resources again
-		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 4)
 		// ensure existing resource was updated
@@ -203,7 +209,7 @@ func Test_SnapshotResources(t *testing.T) {
 		}
 
 		// check stats
-		stats, err := s.GetSnapshotResourceStats(ctx, "poiuy")
+		stats, err := s.getSnapshotResourceStats(ctx, "poiuy")
 		assert.NoError(t, err)
 		assert.Equal(t, map[cloudmigration.MigrateDataType]int{
 			cloudmigration.DatasourceDataType: 2,
@@ -217,10 +223,10 @@ func Test_SnapshotResources(t *testing.T) {
 		assert.Equal(t, 4, stats.Total)
 
 		// delete snapshot resources
-		err = s.DeleteSnapshotResources(ctx, "poiuy")
+		err = s.deleteSnapshotResources(ctx, "poiuy")
 		assert.NoError(t, err)
 		// make sure they're gone
-		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		resources, err = s.getSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 0)
 	})
@@ -233,7 +239,7 @@ func TestGetSnapshotList(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns list of snapshots that belong to a session", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
 		ids := make([]string, 0)
@@ -246,7 +252,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("returns only one snapshot that belongs to a session", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 1})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 1})
 		require.NoError(t, err)
 		assert.Len(t, snapshots, 1)
 	})
@@ -258,7 +264,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("returns paginated snapshot that belongs to a session", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 2, Limit: 1})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 2, Limit: 1})
 		require.NoError(t, err)
 
 		ids := make([]string, 0)
@@ -271,7 +277,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("returns desc sorted list of snapshots that belong to a session", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100, Sort: "latest"})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100, Sort: "latest"})
 		require.NoError(t, err)
 
 		ids := make([]string, 0)
@@ -291,7 +297,7 @@ func TestGetSnapshotList(t *testing.T) {
 
 	t.Run("if the session is deleted, snapshots can't be retrieved anymore", func(t *testing.T) {
 		// Delete the session.
-		_, _, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
+		_, _, err := s.DeleteMigrationSessionByUID(ctx, 1, sessionUID)
 		require.NoError(t, err)
 
 		// Fetch the snapshots that belong to the deleted session.
@@ -363,15 +369,17 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+			cloud_migration_session (id, uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
 		VALUES
-			(1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(3,'zxcvbn', ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+			(1,'qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(2,'asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(3,'zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(4,'zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
 		encodeToken("777"),
+		encodeToken("0987"),
 	)
 	require.NoError(t, err)
 
@@ -380,9 +388,10 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 		INSERT INTO
 			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
 		VALUES
-			('qwerty', 'poiuy', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
 			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
 		`,
 	)
 	require.NoError(t, err)
@@ -400,7 +409,8 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
 			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
 			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
-			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', '');
+			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', ''),
+			('4fi9ee', 'mnbvvc_org2', 'DATASOURCE', 'fi39asd', 'OK', '');
 		`,
 	)
 	require.NoError(t, err)
