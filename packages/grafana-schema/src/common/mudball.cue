@@ -200,6 +200,9 @@ FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 // Controls the value alignment in the TimelineChart component
 TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 
+// Controls the name alignment in the TimelineChart component
+TimelineNameAlignment: "left" | "right" @cuetsy(kind="type")
+
 // TODO docs
 VizTextDisplayOptions: {
 	// Explicit title text size

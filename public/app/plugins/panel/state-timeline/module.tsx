@@ -109,6 +109,24 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
         defaultValue: defaultOptions.alignValue,
       })
+      .addRadio({
+        path: 'alignName',
+        name: 'Align name',
+        settings: {
+          options: [
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' },
+          ],
+        },
+        defaultValue: defaultOptions.alignName,
+      })
+      .addNumberInput({
+        path: 'yAxisWidth',
+        name: 'Y Axis Width',
+        settings: {
+          placeholder: 'Auto',
+        },
+      })
       .addSliderInput({
         path: 'rowHeight',
         name: 'Row height',
