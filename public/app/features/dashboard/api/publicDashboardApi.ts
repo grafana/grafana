@@ -2,9 +2,9 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, config, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   PublicDashboard,
   PublicDashboardSettings,

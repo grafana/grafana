@@ -6,7 +6,6 @@ import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, Grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -14,6 +13,7 @@ import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaCont
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

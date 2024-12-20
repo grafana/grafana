@@ -3,7 +3,6 @@ import memoizeOne from 'memoize-one';
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/urlBuilders';
@@ -11,6 +10,7 @@ import { dispatch } from 'app/store/store';
 
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 import { t } from '../internationalization';
+import { notifyApp } from '../reducers/appNotification';
 
 import { copyStringToClipboard } from './explore';
 

@@ -24,6 +24,7 @@ import {
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -51,7 +52,6 @@ import {
 } from 'app/types';
 import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
-import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
