@@ -297,8 +297,11 @@ export const LogRows = memo(
     );
 
     const setRenderDimensions = useCallback((rowHeight: number, logWidth: number) => {
+      if (rowDimensions && rowDimensions.rowHeight === rowHeight && rowDimensions.logWidth === logWidth) {
+        return;
+      }
       setRowDimensions({ rowHeight, logWidth });
-    }, []);
+    }, [rowDimensions]);
 
     const height = window.innerHeight * 0.75;
 
