@@ -847,9 +847,9 @@ const (
 	// Enables automatic updates for pre-installed plugins
 	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
-	// FlagPlaylistsWatcher
-	// Enables experimental watcher for playlists
-	FlagPlaylistsWatcher = "playlistsWatcher"
+	// FlagPlaylistsReconciler
+	// Enables experimental reconciler for playlists
+	FlagPlaylistsReconciler = "playlistsReconciler"
 
 	// FlagPasswordlessMagicLinkAuthentication
 	// Enable passwordless login via magic link authentication
