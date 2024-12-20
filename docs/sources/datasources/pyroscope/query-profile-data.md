@@ -50,14 +50,14 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
 ---
 
-
 https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
+
 # Query profile data
 
 You can query your profile data using the open source Grafana Explore Profiles app or the built-in Grafana Pyroscope data source query editor.
 
-* Explore Profiles provides a queryless experience for inspecting your profiling data with opinionated workflows to assist your investigation.
-* Data source query editor provides complete control over your data exploration and is recommended for experienced users.
+- Explore Profiles provides a queryless experience for inspecting your profiling data with opinionated workflows to assist your investigation.
+- Data source query editor provides complete control over your data exploration and is recommended for experienced users.
 
 In addition, you can embed flame graph panels in Grafana dashboards.
 Refer to the [Flame graph panel](ref:flame-graph-panel) documentation for details.
