@@ -387,7 +387,6 @@ export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
 };
-
 export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
   name: string;
@@ -493,8 +492,6 @@ export type GitHubRepositoryConfig = {
   pullRequestLinter?: boolean;
   repository?: string;
   token?: string;
-  webhookSecret?: string;
-  webhookURL?: string;
 };
 export type LocalRepositoryConfig = {
   path?: string;
@@ -529,9 +526,17 @@ export type SyncStatus = {
   started?: number;
   state: 'error' | 'pending' | 'success' | 'working';
 };
+export type WebhookStatus = {
+  id?: number;
+  secret?: string;
+  subscribedEvents?: string[];
+  url?: string;
+};
 export type RepositoryStatus = {
   health: HealthStatus;
+  observedGeneration: number;
   sync: SyncStatus;
+  webhook: WebhookStatus;
 };
 export type Repository = {
   apiVersion?: string;

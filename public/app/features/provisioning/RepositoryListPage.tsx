@@ -1,7 +1,9 @@
 import { ReactNode, useState } from 'react';
 
+import { locationService } from '@grafana/runtime';
 import {
-  Alert,
+  Badge,
+  BadgeColor,
   Card,
   EmptySearchResult,
   EmptyState,
@@ -10,12 +12,13 @@ import {
   IconName,
   LinkButton,
   Stack,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository } from './api';
+import { Repository, useGetRepositoryStatusQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -73,51 +76,37 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 if (spec?.branch) {
                   url += `tree/` + spec?.branch;
                 }
-                meta.push(<a href={url}>{url}</a>);
+                meta.push(
+                  <TextLink key={'link'} external style={{ color: 'inherit' }} href={url}>
+                    {url}
+                  </TextLink>
+                );
                 break;
 
               case 'local':
-                meta.push(item.spec.local?.path);
+                meta.push(<span key={'path'}>{item.spec.local?.path}</span>);
                 break;
             }
+
             return (
-              <Card key={item.metadata?.name}>
+              <Card key={name}>
                 <Card.Figure>
                   <Icon name={icon} width={40} height={40} />
                 </Card.Figure>
-                <Card.Heading>{item.spec?.title}</Card.Heading>
-                <Card.Description>
-                  {item.spec?.description}
-
-                  {item.status ? (
-                    <>
-                      {!healthy && (
-                        <Alert
-                          title="Repository is unhealthy"
-                          children={item.status?.health?.message?.map((v) => (
-                            <div>
-                              {v}
-                              <br />
-                              <br />
-                            </div>
-                          ))}
-                        ></Alert>
-                      )}
-                    </>
-                  ) : (
-                    <div>
-                      <Alert severity="warning" title="repository initializing" />
-                    </div>
-                  )}
-                </Card.Description>
+                <Card.Heading>
+                  <Stack>
+                    {item.spec?.title} {name && <StatusBadge name={name} />}
+                  </Stack>
+                </Card.Heading>
+                <Card.Description>{item.spec?.description}</Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
                   <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
                     Manage
                   </LinkButton>
                   {item.spec?.folder && (
-                    <LinkButton href={`/dashboards/f/${item.spec?.folder}/`} variant="secondary">
-                      View
+                    <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
+                      Edit
                     </LinkButton>
                   )}
                   {healthy && <SyncRepository repository={item} />}
@@ -135,5 +124,45 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         )}
       </Stack>
     </Stack>
+  );
+}
+
+function StatusBadge({ name }: { name: string }) {
+  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
+
+  const state = statusQuery.data?.status?.sync?.state;
+
+  if (!state) {
+    return null;
+  }
+
+  let color: BadgeColor = 'green';
+  let text = 'Synced';
+  let icon: IconName = 'check';
+  switch (state) {
+    case 'working':
+    case 'pending':
+      color = 'orange';
+      text = 'Syncing';
+      icon = 'spinner';
+      break;
+    case 'error':
+      color = 'red';
+      text = 'Error';
+      icon = 'exclamation-triangle';
+      break;
+    default:
+      break;
+  }
+  return (
+    <Badge
+      color={color}
+      icon={icon}
+      text={text}
+      style={{ cursor: 'pointer' }}
+      onClick={() => {
+        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
+      }}
+    />
   );
 }

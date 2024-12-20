@@ -23,6 +23,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { isNotFoundError } from '../alerting/unified/api/util';
+
 import { useGetRepositoryStatusQuery, useListJobQuery, useGetRepositoryFilesQuery, Repository } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -30,14 +32,13 @@ import { PROVISIONING_URL } from './constants';
 enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
-  Folder = 'folder', // the configured folder
-  Settings = 'settings',
+  Health = 'health',
 }
+
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files' },
-  { value: TabSelection.Jobs, label: 'Recent Events' },
-  { value: TabSelection.Folder, label: 'Folder' },
-  { value: TabSelection.Settings, label: 'Settings' },
+  { value: TabSelection.Jobs, label: 'Recent events' },
+  { value: TabSelection.Health, label: 'Repository health' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -48,8 +49,7 @@ export default function RepositoryStatusPage() {
   const [queryParams] = useQueryParams();
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Files;
 
-  //@ts-expect-error TODO add error types
-  const notFound = query.isError && query.error?.status === 404;
+  const notFound = query.isError && isNotFoundError(query.error);
   return (
     <Page
       navId="provisioning"
@@ -82,8 +82,7 @@ export default function RepositoryStatusPage() {
                 <TabContent>
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Folder && <FolderView repo={query.data} />}
-                  {tab === TabSelection.Settings && <SettingsView repo={query.data} />}
+                  {tab === TabSelection.Health && <RepositoryHealth name={name} />}
                 </TabContent>
               </>
             ) : (
@@ -98,31 +97,6 @@ export default function RepositoryStatusPage() {
 interface RepoProps {
   repo: Repository;
 }
-
-// function ErrorView({ repo }: RepoProps) {
-//   const name = repo.metadata.name;
-//   const status = useTestRepositoryQuery({ name });
-//   if (status.isLoading) {
-//     return (
-//       <div>
-//         <Spinner /> Testing configuration...
-//       </div>
-//     );
-//   }
-//   if (status.isError) {
-//     let response = (status.error as any)?.data as TestResponse;
-//     if (!response || !response.errors) {
-//       return <Alert title="Error testing configuration" severity="error" />;
-//     }
-//
-//     return (
-//       <Alert title="Error testing configuration" severity="error">
-//         <List items={response.errors} renderItem={(error) => <div>{error}</div>} />
-//       </Alert>
-//     );
-//   }
-//   return null; // don't show anything when it is OK?
-// }
 
 type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 
@@ -250,22 +224,39 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function FolderView({ repo }: RepoProps) {
-  return (
-    <div>
-      <h2>TODO, show folder: {repo.metadata?.name}</h2>
-      <br />
-      <a href={`/dashboards/f/${repo.spec?.folder}/`}>{repo.spec?.folder} </a>
-    </div>
-  );
-}
+function RepositoryHealth({ name }: { name: string }) {
+  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
 
-function SettingsView({ repo }: RepoProps) {
-  return (
-    <div>
-      <h2>TODO, show settings inline???: {repo.metadata?.name}</h2>
+  if (statusQuery.isLoading) {
+    return (
+      <>
+        Loading repository status <Spinner />
+      </>
+    );
+  }
 
-      <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/edit`}>Edit</LinkButton>
-    </div>
+  if (statusQuery.isError) {
+    return (
+      <Alert title="Error loading repository status">
+        <pre>{JSON.stringify(statusQuery.error)}</pre>
+      </Alert>
+    );
+  }
+
+  const status = statusQuery.data?.status;
+
+  if (!status?.health?.healthy) {
+    return (
+      <Alert title="Repository is unhealthy">
+        <Text>Details: </Text>
+        <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert title="Repository is healthy" severity="success">
+      No errors found
+    </Alert>
   );
 }
