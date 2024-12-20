@@ -98,6 +98,10 @@ export const LogRows = memo(
     renderPreview = false,
     enableLogDetails,
     permalinkedRowId,
+    showTime,
+    showLabels,
+    wrapLogMessage,
+    prettifyLogMessage,
     ...props
   }: Props) => {
     const [showLogDetails, setShowLogDetails] = useState<number[]>([]);
@@ -122,7 +126,8 @@ export const LogRows = memo(
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = useMemo(() => () => orderedRows, [orderedRows]);
     const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
-    const [rowDimensions, setRowDimensions] = useState<RowDimension | null>(null);
+    const rowDimensions = useRef<RowDimension | null>(null);
+    const [virtualListKey, setVirtualListKey] = useState(`${Math.random()}`);
 
     useEffect(() => {
       return () => {
@@ -274,6 +279,10 @@ export const LogRows = memo(
             showDetails={isRowExpanded(orderedRows[index])}
             onRowClick={onRowClick}
             enableLogDetails={enableLogDetails}
+            showLabels={showLabels}
+            showTime={showTime}
+            prettifyLogMessage={prettifyLogMessage}
+            wrapLogMessage={wrapLogMessage}
             {...props}
           />
         );
@@ -290,18 +299,38 @@ export const LogRows = memo(
         permalinkedRowId,
         pinnedLogs,
         popoverMenuSupported,
+        prettifyLogMessage,
         props,
         showDuplicates,
+        showLabels,
+        showTime,
         styles,
+        wrapLogMessage,
       ]
     );
 
-    const setRenderDimensions = useCallback((rowHeight: number, logWidth: number) => {
-      if (rowDimensions && rowDimensions.rowHeight === rowHeight && rowDimensions.logWidth === logWidth) {
-        return;
-      }
-      setRowDimensions({ rowHeight, logWidth });
-    }, [rowDimensions]);
+    const setRenderDimensions = useCallback(
+      (rowHeight: number, logWidth: number) => {
+        if (
+          rowDimensions.current &&
+          rowDimensions.current.rowHeight === rowHeight &&
+          rowDimensions.current.logWidth === logWidth
+        ) {
+          return;
+        }
+        rowDimensions.current = {
+          rowHeight,
+          logWidth,
+        };
+        setVirtualListKey(`${Math.random()}`);
+      },
+      [rowDimensions]
+    );
+
+    useEffect(() => {
+      // When one of these changes, we need to re-calculate and re-render.
+      setVirtualListKey(`${Math.random()}`);
+    }, [orderedRows, showTime, showLabels, prettifyLogMessage, wrapLogMessage]);
 
     const height = window.innerHeight * 0.75;
 
@@ -317,19 +346,20 @@ export const LogRows = memo(
             onClickFilterOutString={onClickFilterOutString}
           />
         )}
-        {rowDimensions && (
+        {rowDimensions.current && (
           <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
             <tbody>
               <VariableSizeList
+                key={virtualListKey}
                 height={height}
                 itemCount={orderedRows?.length || 0}
                 itemSize={estimateRowHeight.bind(
                   null,
                   orderedRows,
-                  rowDimensions,
+                  rowDimensions.current,
                   isRowExpanded,
-                  props.prettifyLogMessage,
-                  props.wrapLogMessage
+                  prettifyLogMessage,
+                  wrapLogMessage
                 )}
                 itemKey={(index: number) => index}
                 width={'100%'}
@@ -347,6 +377,10 @@ export const LogRows = memo(
           styles={styles}
           enableLogDetails={enableLogDetails}
           onCalculate={setRenderDimensions}
+          showLabels={showLabels}
+          showTime={showTime}
+          prettifyLogMessage={prettifyLogMessage}
+          wrapLogMessage={wrapLogMessage}
           {...props}
         />
       </div>
