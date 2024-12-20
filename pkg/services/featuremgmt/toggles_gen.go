@@ -926,4 +926,12 @@ const (
 	// FlagInvestigationsBackend
 	// Enable the investigations backend API
 	FlagInvestigationsBackend = "investigationsBackend"
+
+	// FlagFoldersCounts
+	// enable folders counts endpoint in app platform
+	FlagFoldersCounts = "foldersCounts"
+
+	// FlagFoldesMove
+	// enable folders move endpoint in app platform
+	FlagFoldesMove = "foldersMove"
 )
