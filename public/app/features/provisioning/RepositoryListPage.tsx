@@ -2,6 +2,8 @@ import { ReactNode, useState } from 'react';
 
 import {
   Alert,
+  Badge,
+  BadgeColor,
   Card,
   EmptySearchResult,
   EmptyState,
@@ -17,7 +19,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository } from './api';
+import { Repository, SyncStatus } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -92,7 +94,12 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 <Card.Figure>
                   <Icon name={icon} width={40} height={40} />
                 </Card.Figure>
-                <Card.Heading>{item.spec?.title}</Card.Heading>
+                <Card.Heading>
+                  <Stack>
+                    {item.spec?.title}{' '}
+                    <StatusBadge state={item.status?.observedGeneration === 0 ? 'working' : item.status?.sync?.state} />
+                  </Stack>
+                </Card.Heading>
                 <Card.Description>
                   {item.spec?.description}
                   {/*TODO move this elsewhere, the description is a p tag and cannot have div children*/}
@@ -135,4 +142,30 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
       </Stack>
     </Stack>
   );
+}
+
+function StatusBadge({ state }: { state?: SyncStatus['state'] }) {
+  if (!state) {
+    return null;
+  }
+
+  let color: BadgeColor = 'green';
+  let text = 'Synced';
+  let icon: IconName = 'check';
+  switch (state) {
+    case 'working':
+    case 'pending':
+      color = 'orange';
+      text = 'Syncing';
+      icon = 'spinner';
+      break;
+    case 'error':
+      color = 'red';
+      text = 'Error';
+      icon = 'exclamation-triangle';
+      break;
+    default:
+      break;
+  }
+  return <Badge color={color} icon={icon} text={text} />;
 }
