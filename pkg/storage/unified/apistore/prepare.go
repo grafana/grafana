@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -59,6 +60,19 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
+
+	// Check for legacy ID values after create
+	legacyID := int64(0)
+	access := legacysql.GetLegacyIDAccess(ctx)
+	if access != nil {
+		legacyID = access.ID
+	}
+	if s.opts.RequireLegacyID {
+		legacyID = time.Now().UnixMicro() // ULID???
+	}
+	if legacyID > 0 {
+		obj.SetAnnotation("xxx", fmt.Sprintf("%d", legacyID)) // label
+	}
 
 	// Read+write will verify that repository format is accurate
 	repo, err := obj.GetRepositoryInfo()

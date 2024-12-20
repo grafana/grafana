@@ -14,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type DualWriterMode3 struct {
@@ -49,7 +51,7 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 
-	ctx = klog.NewContext(ctx, log)
+	ctx = klog.NewContext(legacysql.WithLegacyIDAccess(ctx), log)
 
 	accIn, err := meta.Accessor(in)
 	if err != nil {

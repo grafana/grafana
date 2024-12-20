@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -183,6 +185,13 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	if err != nil {
 		return nil, err
 	}
+
+	// Expose the internal ID to context listeners
+	access := legacysql.GetLegacyIDAccess(ctx)
+	if access != nil {
+		access.ID = result.ID
+	}
+
 	return result, err
 }
 

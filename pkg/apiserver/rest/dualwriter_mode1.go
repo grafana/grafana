@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type DualWriterMode1 struct {
@@ -45,7 +47,7 @@ func (d *DualWriterMode1) Mode() DualWriterMode {
 func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
-	ctx = klog.NewContext(ctx, log)
+	ctx = klog.NewContext(legacysql.WithLegacyIDAccess(ctx), log)
 
 	accIn, err := meta.Accessor(in)
 	if err != nil {

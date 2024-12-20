@@ -45,6 +45,9 @@ var _ storage.Interface = (*Storage)(nil)
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
 	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
+
+	// Ensure that a legacy ID exists on create
+	RequireLegacyID bool
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
