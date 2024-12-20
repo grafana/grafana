@@ -8,19 +8,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Field, Icon, Input, LoadingBar, RadioButtonGroup, Space, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import {
-  skipToken,
-  useGetFolderQuery,
-  useNewFolderMutation,
-} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
-
-import { useAppNotification } from '../../copy/appNotification';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
@@ -93,9 +87,7 @@ export function NestedFolderPicker({
   const lastSearchTimestamp = useRef<number>(0);
   const [chooseExistingFolder, setChooseExistingFolder] = useState(true);
 
-  const notifyApp = useAppNotification();
   const [newFolderName, setNewFolderName] = useState('');
-  const [createNewFolder] = useNewFolderMutation();
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -131,6 +123,11 @@ export function NestedFolderPicker({
       }
     });
   }, [search, permission]);
+
+  useEffect(() => {
+    setSearch('');
+    setNewFolderName('');
+  }, [chooseExistingFolder]);
 
   // the order of middleware is important!
   const middleware = [
@@ -205,17 +202,6 @@ export function NestedFolderPicker({
     },
     [search, fetchFolderPage]
   );
-
-  const onCreateNewFolder = async () => {
-    const { data, error } = await createNewFolder({ title: newFolderName });
-
-    if (error) {
-      notifyApp.error('Failed to create folder');
-    } else if (data) {
-      notifyApp.success('Folder created');
-      // TODO: hand over to MoveModal: onCreate({ title: data.title });
-    }
-  };
 
   const flatTree = useMemo(() => {
     let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];

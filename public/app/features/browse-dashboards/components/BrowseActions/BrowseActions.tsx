@@ -14,6 +14,9 @@ import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
+import {
+  onValidateAndCreateNewFolder
+} from "../../../../core/components/NestedFolderPicker/onValidateAndCreateNewFolder";
 
 export interface Props {}
 
@@ -48,6 +51,8 @@ export function BrowseActions() {
   };
 
   const onMove = async (destinationUID: string) => {
+    console.log(destinationUID)
+    // await onValidateAndCreateNewFolder(folderName)
     await moveItems({ selectedItems, destinationUID });
     trackAction('move', selectedItems);
     onActionComplete();
