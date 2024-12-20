@@ -1,6 +1,5 @@
-import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
@@ -8,11 +7,6 @@ import DataSourcesResponse from './components/settings/__mocks__/api/datasources
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/__mocks__/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
 
 const server = setupMswServer();
 
