@@ -170,16 +170,14 @@ func getName(q *models.Query, field *data.Field) string {
 			legend = ""
 		}
 	} else if q.LegendFormat != "" {
-		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendFormat), func(in []byte) []byte {
-			labelName := strings.Replace(string(in), "{{", "", 1)
-			labelName = strings.Replace(labelName, "}}", "", 1)
-			labelName = strings.TrimSpace(labelName)
+		result := legendFormatRegexp.ReplaceAllStringFunc(q.LegendFormat, func(in string) string {
+			labelName := strings.TrimSuffix(strings.TrimPrefix(in, "{{"), "}}")
 			if val, exists := labels[labelName]; exists {
-				return []byte(val)
+				return val
 			}
-			return []byte{}
+			return ""
 		})
-		legend = string(result)
+		legend = result
 	}
 
 	// If legend is empty brackets, use query expression
