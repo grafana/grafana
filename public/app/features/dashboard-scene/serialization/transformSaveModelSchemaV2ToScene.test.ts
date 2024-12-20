@@ -45,7 +45,7 @@ const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
-    resourceVersion: '',
+    resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {
       'grafana.app/createdBy': 'user:createBy',
@@ -335,6 +335,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.updated).toBe('updatedTs');
         expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
         expect(scene.state.meta.folderUid).toBe('folder-uid');
+        expect(scene.state.meta.version).toBe(123);
       });
 
       it('handles access metadata values', () => {
@@ -370,6 +371,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canDelete).toBe(false);
         expect(scene.state.meta.canAdmin).toBe(false);
         expect(scene.state.meta.annotationsPermissions).toEqual(dashboard.access.annotationsPermissions);
+        expect(scene.state.meta.version).toBe(123);
       });
     });
 

@@ -144,6 +144,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
+    version: parseInt(metadata.resourceVersion, 10),
   };
 
   // Ref: DashboardModel.initMeta
@@ -161,9 +162,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     isDirty: false,
     links: dashboard.links,
     // TODO: Combine access and metadata to compose the V1 meta object
-    meta: {
-      version: parseInt(metadata.resourceVersion, 10),
-    },
+    meta,
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
