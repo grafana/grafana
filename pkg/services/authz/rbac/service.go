@@ -86,7 +86,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, checkReq.Namespace, checkReq.UserUID, checkReq.Action)
+	permissions, err := s.getUserPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return deny, err
@@ -112,7 +112,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.UserUID, listReq.Action)
+	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return nil, err
@@ -127,7 +127,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	userUID, err := s.validateSubject(ctx, req.GetSubject())
+	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +140,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	checkReq := &CheckRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
+		IdentityType: idType,
 		Action:       action,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
@@ -156,7 +157,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	userUID, err := s.validateSubject(ctx, req.GetSubject())
+	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +168,13 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 	}
 
 	listReq := &ListRequest{
-		Namespace: ns,
-		UserUID:   userUID,
-		Action:    action,
-		Group:     req.GetGroup(),
-		Resource:  req.GetResource(),
-		Verb:      req.GetVerb(),
+		Namespace:    ns,
+		UserUID:      userUID,
+		IdentityType: idType,
+		Action:       action,
+		Group:        req.GetGroup(),
+		Resource:     req.GetResource(),
+		Verb:         req.GetVerb(),
 	}
 	return listReq, nil
 }
@@ -196,21 +198,22 @@ func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceI
 	return ns, nil
 }
 
-func (s *Service) validateSubject(ctx context.Context, subject string) (string, error) {
+func (s *Service) validateSubject(ctx context.Context, subject string) (string, claims.IdentityType, error) {
 	if subject == "" {
-		return "", status.Error(codes.InvalidArgument, "subject is required")
+		return "", "", status.Error(codes.InvalidArgument, "subject is required")
 	}
 
 	ctxLogger := s.logger.FromContext(ctx)
 	identityType, userUID, err := claims.ParseTypeID(subject)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
-		ctxLogger.Warn("unsupported identity type", "type", identityType)
+	// Permission check currently only checks user, anonymous user and service account permissions
+	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount || identityType == claims.TypeAnonymous) {
+		ctxLogger.Error("unsupported identity type", "type", identityType)
+		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
-	return userUID, nil
+	return userUID, identityType, nil
 }
 
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
@@ -226,7 +229,11 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	return action, nil
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string) (map[string]bool, error) {
+func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
+	if idType == claims.TypeAnonymous {
+		return s.getAnonymousPermissions(ctx, ns, action)
+	}
+
 	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
 	if err != nil {
 		return nil, err
@@ -261,6 +268,21 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	}
 	scopeMap := getScopeMap(permissions)
 	s.permCache.Set(userPermKey, scopeMap, 0)
+	return scopeMap, nil
+}
+
+func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string) (map[string]bool, error) {
+	anonPermKey := anonymousPermCacheKey(ns.Value, action)
+	if cached, ok := s.permCache.Get(anonPermKey); ok {
+		return cached.(map[string]bool), nil
+	}
+
+	permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, Role: "Viewer"})
+	if err != nil {
+		return nil, err
+	}
+	scopeMap := getScopeMap(permissions)
+	s.permCache.Set(anonPermKey, scopeMap, 0)
 	return scopeMap, nil
 }
 
