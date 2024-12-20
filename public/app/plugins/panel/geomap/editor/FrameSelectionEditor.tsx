@@ -29,7 +29,9 @@ export const FrameSelectionEditor = ({ value, context, onChange }: Props) => {
   );
 };
 
-export const FrameMultiSelectionEditor = ({ value, context, onChange }: Props) => {
+type FrameMultiSelectionEditorProps = Omit<StandardEditorProps<MatcherConfig>, 'item'>;
+
+export const FrameMultiSelectionEditor = ({ value, context, onChange }: FrameMultiSelectionEditorProps) => {
   const onFilterChange = useCallback(
     (v: string[]) => {
       onChange(
@@ -43,8 +45,6 @@ export const FrameMultiSelectionEditor = ({ value, context, onChange }: Props) =
     },
     [onChange]
   );
-
-  console.log('context.data', context.data);
 
   return (
     <RefIDMultiPicker
