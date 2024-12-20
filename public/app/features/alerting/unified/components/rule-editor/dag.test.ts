@@ -35,30 +35,40 @@ describe('working with dag', () => {
           type: 'math',
         },
       },
+      {
+        refId: 'D',
+        model: {
+          refId: 'D',
+          // A non-math expression, that would trigger an error if not correctly handled
+          expression: 'vector(1)',
+        },
+      },
     ] as AlertQuery[];
 
     const dag = _createDagFromQueries(queries);
 
-    expect(Object.keys(dag.nodes)).toHaveLength(3);
+    expect(Object.keys(dag.nodes)).toHaveLength(4);
 
     expect(() => {
       dag.getNode('A');
       dag.getNode('B');
       dag.getNode('C');
+      dag.getNode('D');
     }).not.toThrow();
 
     expect(dag.getNode('A').inputEdges).toHaveLength(0);
-    expect(dag.getNode('A').outputEdges).toHaveLength(1);
-    expect(dag.getNode('A').outputEdges[0].outputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('A').outputEdges).toHaveLength(0);
 
-    expect(dag.getNode('B').inputEdges).toHaveLength(1);
+    expect(dag.getNode('B').inputEdges).toHaveLength(0);
     expect(dag.getNode('B').outputEdges).toHaveLength(1);
-    expect(dag.getNode('B').inputEdges[0].inputNode).toHaveProperty('name', 'A');
     expect(dag.getNode('B').outputEdges[0].outputNode).toHaveProperty('name', 'C');
 
     expect(dag.getNode('C').inputEdges).toHaveLength(1);
     expect(dag.getNode('C').outputEdges).toHaveLength(0);
     expect(dag.getNode('C').inputEdges[0].inputNode).toHaveProperty('name', 'B');
+
+    expect(dag.getNode('D').inputEdges).toHaveLength(0);
+    expect(dag.getNode('D').outputEdges).toHaveLength(0);
   });
 });
 
