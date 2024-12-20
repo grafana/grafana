@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,9 @@ import (
 
 func TestTransformMetricsResponse_EmptyResponse(t *testing.T) {
 	resp := tempopb.QueryRangeResponse{}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Empty(t, frames)
 }
 
@@ -29,13 +32,15 @@ func TestTransformMetricsResponse_SingleSeriesSingleLabel(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 1)
-	assert.Equal(t, "\"value1\"", frames[0].RefID)
-	assert.Equal(t, "Trace", frames[0].Name)
+	assert.Equal(t, "value1", frames[0].RefID)
+	assert.Equal(t, "value1", frames[0].Name)
 	assert.Len(t, frames[0].Fields, 2)
 	assert.Equal(t, "time", frames[0].Fields[0].Name)
-	assert.Equal(t, "\"value1\"", frames[0].Fields[1].Name)
+	assert.Equal(t, "value1", frames[0].Fields[1].Name)
 	assert.Equal(t, data.VisTypeGraph, frames[0].Meta.PreferredVisualization)
 	assert.Equal(t, time.UnixMilli(1638316800000), frames[0].Fields[0].At(0))
 	assert.Equal(t, 1.23, frames[0].Fields[1].At(0))
@@ -60,10 +65,12 @@ func TestTransformMetricsResponse_SingleSeriesMultipleLabels(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 1)
 	assert.Equal(t, "{label1=\"value1\", label2=123, label3=123.456, label4=true}", frames[0].RefID)
-	assert.Equal(t, "Trace", frames[0].Name)
+	assert.Equal(t, "{label1=\"value1\", label2=123, label3=123.456, label4=true}", frames[0].Name)
 	assert.Len(t, frames[0].Fields, 2)
 	assert.Equal(t, "time", frames[0].Fields[0].Name)
 	assert.Equal(t, "{label1=\"value1\", label2=123, label3=123.456, label4=true}", frames[0].Fields[1].Name)
@@ -93,19 +100,21 @@ func TestTransformMetricsResponse_MultipleSeries(t *testing.T) {
 			},
 		},
 	}
-	frames := TransformMetricsResponse(resp)
+	queryStr := ""
+	query := &dataquery.TempoQuery{Query: &queryStr}
+	frames := TransformMetricsResponse(query, resp)
 	assert.Len(t, frames, 2)
-	assert.Equal(t, "\"value1\"", frames[0].RefID)
-	assert.Equal(t, "Trace", frames[0].Name)
+	assert.Equal(t, "value1", frames[0].RefID)
+	assert.Equal(t, "value1", frames[0].Name)
 	assert.Len(t, frames[0].Fields, 2)
 	assert.Equal(t, "time", frames[0].Fields[0].Name)
-	assert.Equal(t, "\"value1\"", frames[0].Fields[1].Name)
+	assert.Equal(t, "value1", frames[0].Fields[1].Name)
 	assert.Equal(t, data.VisTypeGraph, frames[0].Meta.PreferredVisualization)
 	assert.Equal(t, time.UnixMilli(1638316800000), frames[0].Fields[0].At(0))
 	assert.Equal(t, 1.23, frames[0].Fields[1].At(0))
 
 	assert.Equal(t, "456", frames[1].RefID)
-	assert.Equal(t, "Trace", frames[1].Name)
+	assert.Equal(t, "456", frames[1].Name)
 	assert.Len(t, frames[1].Fields, 2)
 	assert.Equal(t, "time", frames[1].Fields[0].Name)
 	assert.Equal(t, "456", frames[1].Fields[1].Name)
