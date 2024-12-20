@@ -21,6 +21,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
   transformDataTopic,
@@ -171,8 +172,7 @@ export function ensureV1Response(
         description: spec.description,
         tags: spec.tags,
         schemaVersion: spec.schemaVersion,
-        // @ts-ignore TODO: Use transformers for these enums
-        //   graphTooltip: spec.cursorSync, // Assuming transformCursorSynctoEnum is reversible
+        graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
         preload: spec.preload,
         liveNow: spec.liveNow,
         editable: spec.editable,
@@ -191,8 +191,10 @@ export function ensureV1Response(
         fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
         weekStart: spec.timeSettings.weekStart,
         version: parseInt(dashboard.metadata.resourceVersion, 10),
-        links: spec.links, // Assuming transformDashboardLinksToEnums is reversible
+        links: spec.links,
         annotations: { list: [] }, // TODO
+        panels: [], // TODO
+        templating: { list: [] }, // TODO
       },
     };
   }
