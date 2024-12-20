@@ -1,0 +1,2 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/advisor/v0alpha1,DatasourceCheckStatus,Errors
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/advisor/v0alpha1,PluginCheckStatus,Errors
