@@ -170,7 +170,9 @@ func (s *keeperStorage) List(ctx context.Context, namespace xkube.Namespace, opt
 	keeperRows := make([]*Keeper, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if err := sess.Where("namespace = ?", namespace).Find(&keeperRows); err != nil {
+		cond := &Keeper{Namespace: namespace.String()}
+
+		if err := sess.Find(&keeperRows, cond); err != nil {
 			return fmt.Errorf("failed to find rows: %w", err)
 		}
 

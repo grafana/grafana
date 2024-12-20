@@ -80,6 +80,22 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 	})
 
+	t.Run("`audiences` must have unique items", func(t *testing.T) {
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Audiences: []string{
+					"my.grafana.app/app-1",
+					"my.grafana.app/app-1",
+					"my.grafana.app/app-2",
+				},
+			},
+		}
+
+		errs := ValidateSecureValue(sv, admission.Update)
+		require.Len(t, errs, 1)
+		require.Equal(t, "spec.audiences.[1]", errs[0].Field)
+	})
+
 	t.Run("`audiences` must match the expected format", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{

@@ -14,7 +14,9 @@ type Keeper struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// This is the actual keeper schema.
-	Spec KeeperSpec `json:"spec,omitempty"`
+	// +patchStrategy=replace
+	// +patchMergeKey=name
+	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
 type KeeperSpec struct {
@@ -101,12 +103,15 @@ type CredentialValue struct {
 type AWSKeeper struct {
 	AWSCredentials `json:",inline"`
 }
+
 type AzureKeeper struct {
 	AzureCredentials `json:",inline"`
 }
+
 type GCPKeeper struct {
 	GCPCredentials `json:",inline"`
 }
+
 type HashiCorpKeeper struct {
 	HashiCorpCredentials `json:",inline"`
 }

@@ -16,7 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -110,7 +110,7 @@ func (s *SecureValueRest) Create(
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	sv, ok := obj.(*secret.SecureValue)
+	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
 		return nil, fmt.Errorf("expected SecureValue for create")
 	}
@@ -138,23 +138,23 @@ func (s *SecureValueRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("get securevalue: %w", err)
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.
 	// TODO: this also makes it so the labels and annotations are additive, unless we check and remove manually.
-	tmp, err := objInfo.UpdatedObject(ctx, old)
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
 	if err != nil {
 		return nil, false, fmt.Errorf("k8s updated object: %w", err)
 	}
 
-	if err := updateValidation(ctx, tmp, old); err != nil {
+	if err := updateValidation(ctx, newObj, oldObj); err != nil {
 		return nil, false, fmt.Errorf("update validation failed: %w", err)
 	}
 
-	newSecureValue, ok := tmp.(*secret.SecureValue)
+	newSecureValue, ok := newObj.(*secretv0alpha1.SecureValue)
 	if !ok {
 		return nil, false, fmt.Errorf("expected SecureValue for update")
 	}
@@ -187,7 +187,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
-func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) field.ErrorList {
+func ValidateSecureValue(sv *secretv0alpha1.SecureValue, operation admission.Operation) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
@@ -225,8 +225,23 @@ func ValidateSecureValue(sv *secret.SecureValue, operation admission.Operation) 
 
 	// General validations.
 
-	// Audience should match "{group}/{name OR *}"
+	// Audience should have unique items in the list.
+	uniqueAudiences := make(map[string]int, 0)
 	for i, audience := range sv.Spec.Audiences {
+		if _, exists := uniqueAudiences[audience]; exists {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "audiences", "["+strconv.Itoa(i)+"]"), audience, "the same audience already exists and must be unique"),
+			)
+
+			continue
+		}
+
+		uniqueAudiences[audience] = i
+	}
+
+	// Audience should match "{group}/{name OR *}"
+	for audience, i := range uniqueAudiences {
 		group, name, found := strings.Cut(audience, "/")
 		if !found {
 			errs = append(

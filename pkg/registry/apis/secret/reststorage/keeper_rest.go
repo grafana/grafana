@@ -135,23 +135,26 @@ func (s *KeeperRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("get securevalue: %w", err)
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.
 	// TODO: this also makes it so the labels and annotations are additive, unless we check and remove manually.
-	tmp, err := objInfo.UpdatedObject(ctx, old)
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
 	if err != nil {
 		return nil, false, fmt.Errorf("k8s updated object: %w", err)
 	}
 
-	if err := updateValidation(ctx, tmp, old); err != nil {
+	// The current supported behavior for `Update` is to replace the entire `spec` with the new one.
+	// Each provider-specific setting of a keeper lives at the top-level, so it makes it possible to change a provider
+	// during an update. Otherwise both old and new providers would be merged in the `newObj` which is not allowed.
+	if err := updateValidation(ctx, newObj, oldObj); err != nil {
 		return nil, false, fmt.Errorf("update validation failed: %w", err)
 	}
 
-	newKeeper, ok := tmp.(*secretv0alpha1.Keeper)
+	newKeeper, ok := newObj.(*secretv0alpha1.Keeper)
 	if !ok {
 		return nil, false, fmt.Errorf("expected Keeper for update")
 	}
@@ -185,22 +188,16 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 
 // ValidateKeeper does basic spec validation of a keeper.
 func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation) field.ErrorList {
-	errs := make(field.ErrorList, 0)
-
-	// Operation-specific field validation.
-	switch operation {
-	case admission.Create:
-		if keeper.Spec.Title == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
-		}
-
-	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
-	case admission.Update:
-	case admission.Delete:
-	case admission.Connect:
+	// Only validate Create and Update for now.
+	if operation != admission.Create && operation != admission.Update {
+		return nil
 	}
 
-	// General validations.
+	errs := make(field.ErrorList, 0)
+
+	if keeper.Spec.Title == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+	}
 
 	// Only one keeper type can be configured. Return early and don't validate the specific keeper fields.
 	if err := validateKeepers(keeper); err != nil {
