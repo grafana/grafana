@@ -229,3 +229,5 @@ elasticsearchCrossClusterSearch,preview,@grafana/aws-datasources,false,false,fal
 unifiedHistory,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
 investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false
+folderCounts,experimental,@grafana/search-and-storage,false,false,false
+folderMove,experimental,@grafana/search-and-storage,false,false,false
