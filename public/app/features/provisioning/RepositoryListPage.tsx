@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react';
 
+import { locationService } from '@grafana/runtime';
 import {
   Badge,
   BadgeColor,
@@ -153,5 +154,15 @@ function StatusBadge({ name }: { name: string }) {
     default:
       break;
   }
-  return <Badge color={color} icon={icon} text={text} />;
+  return (
+    <Badge
+      color={color}
+      icon={icon}
+      text={text}
+      style={{ cursor: 'pointer' }}
+      onClick={() => {
+        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
+      }}
+    />
+  );
 }
