@@ -50,9 +50,11 @@ export function BrowseActions() {
     onActionComplete();
   };
 
-  const onMove = async (destinationUID: string) => {
-    console.log(destinationUID)
-    // await onValidateAndCreateNewFolder(folderName)
+  const onMove = async (folderData: string) => {
+    // TODO: distinguish whether folderData is a uid (then move items straight away) or a new folder name (then create folder first and then move items)
+    // if (folderName) {
+    //   await onValidateAndCreateNewFolder(folderName);
+    // }
     await moveItems({ selectedItems, destinationUID });
     trackAction('move', selectedItems);
     onActionComplete();

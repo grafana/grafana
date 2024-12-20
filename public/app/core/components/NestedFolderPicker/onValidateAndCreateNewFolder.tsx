@@ -31,6 +31,5 @@ export const onValidateAndCreateNewFolder = async (folderName: string): Promise<
         notifyApp.error('The folder could not be created.');
       }
     }
-    // TODO: hand over to MoveModal: onCreate({ title: data.title });
   }
 };
