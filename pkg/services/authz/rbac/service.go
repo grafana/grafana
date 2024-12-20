@@ -254,7 +254,7 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	}
 	action, ok := s.actionMapper.Action(group, resource, verb)
 	if !ok {
-		ctxLogger.Error("could not find associated rbac action", "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb())
+		ctxLogger.Error("could not find associated rbac action", "group", group, "resource", resource, "verb", verb)
 		return "", status.Error(codes.NotFound, "could not find associated rbac action")
 	}
 	return action, nil
