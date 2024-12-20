@@ -11,6 +11,7 @@ import {
   LinkButton,
   Stack,
   Text,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -74,11 +75,15 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 if (spec?.branch) {
                   url += `tree/` + spec?.branch;
                 }
-                meta.push(<a href={url}>{url}</a>);
+                meta.push(
+                  <TextLink key={'link'} external style={{ color: 'inherit' }} href={url}>
+                    {url}
+                  </TextLink>
+                );
                 break;
 
               case 'local':
-                meta.push(item.spec.local?.path);
+                meta.push(<span key={'path'}>item.spec.local?.path</span>);
                 break;
             }
 
