@@ -154,6 +154,28 @@ func TestMetaAccessor(t *testing.T) {
 		require.NoError(t, err) // Must be a pointer
 	})
 
+	t.Run("get and set grafana labels (unstructured)", func(t *testing.T) {
+		res := &unstructured.Unstructured{
+			Object: map[string]any{},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		// should return 0 when not set
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(0))
+
+		// 0 is not allowed
+		meta.SetDeprecatedInternalID(0)
+		require.Equal(t, map[string]string(nil), res.GetLabels())
+
+		// should be able to set and get
+		meta.SetDeprecatedInternalID(1)
+		require.Equal(t, map[string]string{
+			"grafana.app/deprecatedInternalID": "1",
+		}, res.GetLabels())
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1))
+	})
+
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
 		// Error reading spec+status when missing
 		res := &unstructured.Unstructured{

@@ -34,6 +34,9 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// Deprecated: will be removed in grafana 13
+const labelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
+
 // These can be removed once we verify that non of the dual-write sources
 // (for dashboards/playlists/etc) depend on the saved internal ID in SQL
 const oldAnnoKeyOriginName = "grafana.app/originName"
@@ -101,6 +104,12 @@ type GrafanaMetaAccessor interface {
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
+
+	// Deprecated: This will be removed in Grafana 13
+	GetDeprecatedInternalID() int64
+
+	// Deprecated: This will be removed in Grafana 13
+	SetDeprecatedInternalID(id int64)
 
 	GetRepositoryInfo() (*ResourceRepositoryInfo, error)
 	SetRepositoryInfo(info *ResourceRepositoryInfo)
@@ -281,6 +290,44 @@ func (m *grafanaMetaAccessor) GetSlug() string {
 
 func (m *grafanaMetaAccessor) SetSlug(v string) {
 	m.SetAnnotation(AnnoKeySlug, v)
+}
+
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) GetDeprecatedInternalID() int64 {
+	labels := m.obj.GetLabels()
+	if labels == nil {
+		return 0
+	}
+
+	if internalID, ok := labels[labelKeyDeprecatedInternalID]; ok {
+		id, err := strconv.ParseInt(internalID, 10, 64)
+		if err == nil {
+			return id
+		}
+	}
+
+	return 0
+}
+
+// This will be removed in Grafana 13. Do not add any new usage of it.
+func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
+	labels := m.obj.GetLabels()
+
+	// disallow setting it to 0
+	if id == 0 {
+		if labels != nil {
+			delete(labels, labelKeyDeprecatedInternalID)
+			m.obj.SetLabels(labels)
+		}
+		return
+	}
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	labels[labelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
+	m.obj.SetLabels(labels)
 }
 
 // This allows looking up a primary and secondary key -- if either exist the value will be returned
