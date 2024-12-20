@@ -183,7 +183,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 	t.Run("will enforce a minInterval of 1 millisecond", func(t *testing.T) {
 		json := `
       {
-        "query": "RawDummyQuery",
+        "query": "SELECT \"value\" FROM \"measurement\"",
         "rawQuery": true,
         "resultFormat": "time_series"
       }
