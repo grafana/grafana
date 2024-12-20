@@ -1,7 +1,6 @@
 import { ReactNode, useState } from 'react';
 
 import {
-  Alert,
   Badge,
   BadgeColor,
   Card,
@@ -12,14 +11,13 @@ import {
   IconName,
   LinkButton,
   Stack,
-  Text,
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository, SyncStatus } from './api';
+import { Repository, useGetRepositoryStatusQuery } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -85,37 +83,21 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 break;
 
               case 'local':
-                meta.push(<span key={'path'}>item.spec.local?.path</span>);
+                meta.push(<span key={'path'}>{item.spec.local?.path}</span>);
                 break;
             }
 
             return (
-              <Card key={item.metadata?.name}>
+              <Card key={name}>
                 <Card.Figure>
                   <Icon name={icon} width={40} height={40} />
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title}{' '}
-                    <StatusBadge state={item.status?.observedGeneration === 0 ? 'working' : item.status?.sync?.state} />
+                    {item.spec?.title} {name && <StatusBadge name={name} />}
                   </Stack>
                 </Card.Heading>
-                <Card.Description>
-                  {item.spec?.description}
-                  {/*TODO move this elsewhere, the description is a p tag and cannot have div children*/}
-                  {item.status ? (
-                    !healthy && (
-                      <Alert
-                        title="Repository is unhealthy"
-                        children={item.status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}
-                      />
-                    )
-                  ) : (
-                    <div>
-                      <Alert severity="warning" title="Repository initializing" />
-                    </div>
-                  )}
-                </Card.Description>
+                <Card.Description>{item.spec?.description}</Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
                   <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
@@ -144,7 +126,11 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   );
 }
 
-function StatusBadge({ state }: { state?: SyncStatus['state'] }) {
+function StatusBadge({ name }: { name: string }) {
+  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
+
+  const state = statusQuery.data?.status?.sync?.state;
+
   if (!state) {
     return null;
   }

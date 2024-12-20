@@ -32,10 +32,13 @@ import { PROVISIONING_URL } from './constants';
 enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
+  Health = 'health',
 }
+
 const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files' },
-  { value: TabSelection.Jobs, label: 'Recent Events' },
+  { value: TabSelection.Jobs, label: 'Recent events' },
+  { value: TabSelection.Health, label: 'Repository health' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -79,6 +82,7 @@ export default function RepositoryStatusPage() {
                 <TabContent>
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
+                  {tab === TabSelection.Health && <RepositoryHealth name={name} />}
                 </TabContent>
               </>
             ) : (
@@ -242,5 +246,26 @@ function JobsView({ repo }: RepoProps) {
         );
       })}
     </div>
+  );
+}
+
+function RepositoryHealth({ name }: { name: string }) {
+  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
+
+  const status = statusQuery.data?.status;
+
+  if (!status?.health?.healthy) {
+    return (
+      <Alert title="Repository is unhealthy">
+        <Text>Details: </Text>
+        <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert title="Repository is healthy" severity="success">
+      No errors found
+    </Alert>
   );
 }
