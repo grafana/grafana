@@ -410,6 +410,12 @@ func schema_pkg_apis_secret_v0alpha1_Keeper(ref common.ReferenceCallback) common
 						},
 					},
 					"spec": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-patch-merge-key": "name",
+								"x-kubernetes-patch-strategy":  "replace",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "This is the actual keeper schema.",
 							Default:     map[string]interface{}{},
