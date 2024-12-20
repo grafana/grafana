@@ -832,7 +832,7 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 	var ctx = c.Req.Context()
 
 	cmd := &folder.UpdateFolderCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	if err := web.Bind(c.Req, cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
