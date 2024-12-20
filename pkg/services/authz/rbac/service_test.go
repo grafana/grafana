@@ -370,7 +370,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 			}
 
-			perms, err := s.getUserPermissions(ctx, ns, userID.UID, action)
+			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
