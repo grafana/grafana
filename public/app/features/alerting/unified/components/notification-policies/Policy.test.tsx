@@ -1,7 +1,7 @@
 import { renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
@@ -15,7 +15,7 @@ import {
 import { ReceiversState } from 'app/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
-import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
+import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -57,7 +57,8 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        receivers={[{ name: 'grafana-default-email' }]}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -165,7 +166,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -203,7 +204,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -240,7 +241,7 @@ describe('Policy', () => {
 
     renderPolicy(
       <Policy
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
@@ -263,7 +264,6 @@ describe('Policy', () => {
     renderPolicy(
       <Policy
         readOnly
-        routeTree={routeTree}
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
@@ -282,22 +282,10 @@ describe('Policy', () => {
       routes: [{ id: '1', object_matchers: [['foo', eq, 'bar']] }],
     };
 
-    const matchingGroups: AlertmanagerGroup[] = [
-      mockAlertGroup({
-        labels: {},
-        alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } }), mockAlertmanagerAlert({ labels: { foo: 'bar' } })],
-      }),
-      mockAlertGroup({
-        labels: {},
-        alerts: [mockAlertmanagerAlert({ labels: { bar: 'baz' } })],
-      }),
-    ];
-
     renderPolicy(
       <Policy
         readOnly
-        alertGroups={matchingGroups}
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
@@ -325,7 +313,7 @@ describe('Policy', () => {
     renderPolicy(
       <Policy
         readOnly
-        routeTree={routeTree}
+        isDefaultPolicy
         currentRoute={routeTree}
         contactPointsState={receiversState}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}

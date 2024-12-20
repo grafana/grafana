@@ -152,7 +152,7 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 ### max_attachment_size_mb
 
-Set the maximum file size in megabytes for the CSV attachments.
+Set the maximum file size in megabytes for the report email attachments.
 
 ### fonts_path
 
@@ -173,6 +173,10 @@ Name of the TrueType font file with italic style.
 ### max_retries_per_panel
 
 Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+
+### allowed_domains
+
+Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 
 ## [auditing]
 

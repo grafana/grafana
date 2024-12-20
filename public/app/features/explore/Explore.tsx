@@ -20,9 +20,15 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { AdHocFilterItem, ErrorBoundaryAlert, PanelContainer, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  AdHocFilterItem,
+  ErrorBoundaryAlert,
+  PanelContainer,
+  ScrollContainer,
+  Themeable2,
+  withTheme2,
+} from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
@@ -317,6 +323,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
   };
 
+  onPinLineCallback = () => {
+    this.setState({ contentOutlineVisible: true });
+  };
+
   renderEmptyState(exploreContainerStyles: string) {
     return (
       <div className={cx(exploreContainerStyles)}>
@@ -408,6 +418,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     );
   }
 
+  splitOpenFnLogs = this.onSplitOpen('logs');
+
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -429,14 +441,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onStartScanning={this.onStartScanning}
           onStopScanning={this.onStopScanning}
           eventBus={this.logsEventBus}
-          splitOpenFn={this.onSplitOpen('logs')}
+          splitOpenFn={this.splitOpenFnLogs}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
-          onPinLineCallback={() => {
-            this.setState({ contentOutlineVisible: true });
-          }}
+          onPinLineCallback={this.onPinLineCallback}
         />
       </ContentOutlineItem>
     );

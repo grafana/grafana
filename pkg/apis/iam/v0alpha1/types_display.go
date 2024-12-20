@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,5 +46,5 @@ type IdentityRef struct {
 }
 
 func (i *IdentityRef) String() string {
-	return identity.NewTypedIDString(i.Type, i.Name)
+	return claims.NewTypeID(i.Type, i.Name)
 }

@@ -2,11 +2,12 @@ import { Graph } from 'app/core/utils/dag';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  _getOriginsOfRefId,
-  parseRefsFromMathExpression,
   _createDagFromQueries,
-  fingerprintGraph,
+  _getDescendants,
+  _getOriginsOfRefId,
   fingerPrintQueries,
+  fingerprintGraph,
+  parseRefsFromMathExpression,
 } from './dag';
 
 describe('working with dag', () => {
@@ -81,6 +82,20 @@ describe('getOriginsOfRefId', () => {
 
     expect(_getOriginsOfRefId('C', graph)).toEqual(['A']);
     expect(_getOriginsOfRefId('D', graph)).toEqual(['A']);
+  });
+});
+
+describe('getDescendants', () => {
+  test('with multiple generations', () => {
+    const graph = new Graph();
+    graph.createNodes(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+    graph.link('A', 'B');
+    graph.link('B', 'G');
+    graph.link('A', 'C');
+    graph.link('C', 'D');
+    graph.link('E', 'F');
+
+    expect(_getDescendants('A', graph)).toEqual(['B', 'G', 'C', 'D']);
   });
 });
 

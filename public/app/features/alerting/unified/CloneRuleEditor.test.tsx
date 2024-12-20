@@ -3,9 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors/src';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -16,13 +14,12 @@ import {
   RulerRuleDTO,
 } from '../../../types/unified-alerting-dto';
 
-import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
+import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockFeatureDiscoveryApi, mockSearchApi, setupMswServer } from './mockApi';
+import { setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
@@ -31,7 +28,6 @@ import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';
-import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
 import { getDefaultFormValues } from './utils/rule-form';
@@ -44,12 +40,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-// For simplicity of the test we mock the NotificationPreview component
-// Otherwise we would need to mock a few more HTTP api calls which are not relevant for these tests
-jest.mock('./components/rule-editor/notificaton-preview/NotificationPreview', () => ({
-  NotificationPreview: () => <div />,
-}));
-
 jest.spyOn(AlertingQueryRunner.prototype, 'run').mockImplementation(() => Promise.resolve());
 
 const server = setupMswServer();
@@ -58,7 +48,7 @@ const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
-    folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
+    folderContainer: byTestId('folder-picker'),
     namespace: byTestId('namespace-picker'),
     group: byTestId('group-picker'),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
@@ -82,15 +72,7 @@ describe('CloneRuleEditor', function () {
 
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
-      setDataSourceSrv(new MockDataSourceSrv({}));
-
-      mockSearchApi(server).search([
-        mockDashboardSearchItem({
-          title: 'folder-one',
-          uid: grafanaRulerRule.grafana_alert.namespace_uid,
-          type: DashboardSearchItemType.DashDB,
-        }),
-      ]);
+      setupDataSources();
 
       render(
         <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
@@ -105,7 +87,7 @@ describe('CloneRuleEditor', function () {
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue(`${grafanaRulerRule.grafana_alert.title} (copy)`);
       });
-      expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
+      expect(ui.inputs.folderContainer.get()).toHaveTextContent('Folder A');
       expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
       expect(
         byRole('listitem', {
@@ -125,10 +107,10 @@ describe('CloneRuleEditor', function () {
     it('should populate form values from the existing alert rule', async function () {
       const dsSettings = mockDataSource({
         name: 'my-prom-ds',
-        uid: 'my-prom-ds',
+        uid: MIMIR_DATASOURCE_UID,
       });
       setupDataSources(dsSettings);
-      mockFeatureDiscoveryApi(server).discoverDsFeatures(dsSettings, buildInfoResponse.mimir);
+
       const originRule = mockRulerAlertingRule({
         for: '1m',
         alert: 'First Ruler Rule',
@@ -137,25 +119,15 @@ describe('CloneRuleEditor', function () {
         annotations: { [Annotation.summary]: 'This is a very important alert rule' },
       });
 
-      mockRulerRulesApiResponse(server, 'my-prom-ds', {
+      mockRulerRulesApiResponse(server, MIMIR_DATASOURCE_UID, {
         'namespace-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
       });
 
-      mockRulerRulesGroupApiResponse(server, 'my-prom-ds', 'namespace-one', 'group1', {
+      mockRulerRulesGroupApiResponse(server, MIMIR_DATASOURCE_UID, 'namespace-one', 'group1', {
         name: 'group1',
         interval: '20s',
         rules: [originRule],
       });
-
-      mockSearchApi(server).search([
-        mockDashboardSearchItem({
-          title: 'folder-one',
-          uid: '123',
-          type: DashboardSearchItemType.DashDB,
-          folderTitle: 'folder-one',
-          folderUid: '123',
-        }),
-      ]);
 
       render(
         <CloneRuleEditor
@@ -313,18 +285,3 @@ describe('CloneRuleEditor', function () {
     });
   });
 });
-
-function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
-  return {
-    title: '',
-    uid: '',
-    type: DashboardSearchItemType.DashDB,
-    url: '',
-    uri: '',
-    items: [],
-    tags: [],
-    slug: '',
-    isStarred: false,
-    ...searchItem,
-  };
-}

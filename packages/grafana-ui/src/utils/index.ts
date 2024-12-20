@@ -18,5 +18,6 @@ export { createLogger } from './logger';
 export { attachDebugger } from './debug';
 export * from './nodeGraph';
 export { fuzzyMatch } from './fuzzy';
+export { logOptions } from './logOptions';
 
 export { ReactUtils };

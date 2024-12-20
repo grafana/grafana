@@ -120,6 +120,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Page         int
 	Limit        int
 	CountOnly    bool
+	CountTokens  bool
 	SignedInUser identity.Requester
 }
 

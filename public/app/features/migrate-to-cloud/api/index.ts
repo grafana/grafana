@@ -1,5 +1,5 @@
 export * from './endpoints.gen';
-import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
+import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
 
 import { getLocalPlugins } from 'app/features/plugins/admin/api';
 import { LocalPlugin } from 'app/features/plugins/admin/types';

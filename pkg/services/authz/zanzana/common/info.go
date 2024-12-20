@@ -7,35 +7,40 @@ import (
 )
 
 type TypeInfo struct {
-	Type string
+	Type      string
+	Relations []string
+}
+
+func (t TypeInfo) IsValidRelation(relation string) bool {
+	return isValidRelation(relation, t.Relations)
 }
 
 var typedResources = map[string]TypeInfo{
-	NewNamespaceResourceIdent(
+	FormatGroupResource(
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
-	): {Type: "folder"},
+	): {Type: "folder", Relations: RelationsFolder},
 }
 
 func GetTypeInfo(group, resource string) (TypeInfo, bool) {
-	info, ok := typedResources[NewNamespaceResourceIdent(group, resource)]
+	info, ok := typedResources[FormatGroupResource(group, resource)]
 	return info, ok
 }
 
 var VerbMapping = map[string]string{
-	utils.VerbGet:              RelationRead,
-	utils.VerbList:             RelationRead,
-	utils.VerbWatch:            RelationRead,
+	utils.VerbGet:              RelationGet,
+	utils.VerbList:             RelationGet,
+	utils.VerbWatch:            RelationGet,
 	utils.VerbCreate:           RelationCreate,
-	utils.VerbUpdate:           RelationWrite,
-	utils.VerbPatch:            RelationWrite,
+	utils.VerbUpdate:           RelationUpdate,
+	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
 }
 
 var RelationToVerbMapping = map[string]string{
-	RelationRead:   utils.VerbGet,
+	RelationGet:    utils.VerbGet,
 	RelationCreate: utils.VerbCreate,
-	RelationWrite:  utils.VerbUpdate,
+	RelationUpdate: utils.VerbUpdate,
 	RelationDelete: utils.VerbDelete,
 }

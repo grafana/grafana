@@ -14,6 +14,8 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
+import { PasswordlessConfirmation } from './PasswordlessConfirmationForm';
+import { PasswordlessLoginForm } from './PasswordlessLoginForm';
 import { UserSignup } from './UserSignup';
 
 const LoginPage = () => {
@@ -28,6 +30,9 @@ const LoginPage = () => {
         disableLoginForm,
         disableUserSignUp,
         login,
+        passwordlessStart,
+        passwordlessConfirm,
+        showPasswordlessConfirmation,
         isLoggingIn,
         changePassword,
         skipPasswordChange,
@@ -36,7 +41,7 @@ const LoginPage = () => {
         loginErrorMessage,
       }) => (
         <LoginLayout isChangingPassword={isChangingPassword}>
-          {!isChangingPassword && (
+          {!isChangingPassword && !showPasswordlessConfirmation && (
             <InnerBox>
               {loginErrorMessage && (
                 <Alert className={styles.alert} severity="error" title={t('login.error.title', 'Login failed')}>
@@ -44,7 +49,7 @@ const LoginPage = () => {
                 </Alert>
               )}
 
-              {!disableLoginForm && (
+              {!disableLoginForm && !config.auth.passwordlessEnabled && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <Stack justifyContent="flex-end">
                     {!config.auth.disableLogin && (
@@ -59,12 +64,24 @@ const LoginPage = () => {
                   </Stack>
                 </LoginForm>
               )}
+              {config.auth.passwordlessEnabled && (
+                <PasswordlessLoginForm onSubmit={passwordlessStart} isLoggingIn={isLoggingIn}></PasswordlessLoginForm>
+              )}
               <LoginServiceButtons />
               {!disableUserSignUp && <UserSignup />}
             </InnerBox>
           )}
 
-          {isChangingPassword && (
+          {config.auth.passwordlessEnabled && showPasswordlessConfirmation && (
+            <InnerBox>
+              <PasswordlessConfirmation
+                onSubmit={passwordlessConfirm}
+                isLoggingIn={isLoggingIn}
+              ></PasswordlessConfirmation>
+            </InnerBox>
+          )}
+
+          {isChangingPassword && !config.auth.passwordlessEnabled && (
             <InnerBox>
               <ChangePassword
                 showDefaultPasswordWarning={showDefaultPasswordWarning}

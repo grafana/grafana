@@ -1,4 +1,4 @@
-import { BuildInfo } from '@grafana/data';
+import { BuildInfo, escapeRegex } from '@grafana/data';
 import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
 import {
   initializeFaro,
@@ -37,9 +37,8 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   ignoreUrls: RegExp[];
 }
 
-const TRACKING_URLS = [
-  /.*.google-analytics.com*.*/,
-  /.*.googletagmanager.com*.*/,
+export const TRACKING_URLS = [
+  /\.(google-analytics|googletagmanager)\.com/,
   /frontend-metrics/,
   /\/collect(?:\/[\w]*)?$/,
 ];
@@ -53,7 +52,12 @@ export class GrafanaJavascriptAgentBackend
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
     const instrumentations: Instrumentation[] = [];
-    const ignoreUrls = [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls];
+
+    const ignoreUrls = [
+      new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`),
+      ...TRACKING_URLS,
+      ...options.ignoreUrls,
+    ];
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 

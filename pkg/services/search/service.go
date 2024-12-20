@@ -82,8 +82,8 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 
 	// filter by starred dashboard IDs when starred dashboards are requested and no UID or ID filters are specified to improve query performance
 	if query.IsStarred && len(query.DashboardIds) == 0 && len(query.DashboardUIDs) == 0 {
-		for id := range staredDashIDs.UserStars {
-			query.DashboardIds = append(query.DashboardIds, id)
+		for uid := range staredDashIDs.UserStars {
+			query.DashboardUIDs = append(query.DashboardUIDs, uid)
 		}
 	}
 
@@ -118,7 +118,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 
 	// set starred dashboards
 	for _, dashboard := range hits {
-		if _, ok := staredDashIDs.UserStars[dashboard.ID]; ok {
+		if _, ok := staredDashIDs.UserStars[dashboard.UID]; ok {
 			dashboard.IsStarred = true
 		}
 	}

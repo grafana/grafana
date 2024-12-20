@@ -161,8 +161,8 @@ By default, service account tokens don't have an expiration date, meaning they w
 
 ## Assign roles to a service account in Grafana
 
-You can assign roles to a Grafana service account to control access for the associated service account tokens.
-You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API](ref:api-update-service-account).
+You can assign organization roles (`Viewer`, `Editor`, `Admin`) to a Grafana service account to control access for the associated service account tokens.
+You can assign organization roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API](ref:api-update-service-account).
 
 In [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also [assign RBAC roles](ref:rbac-assign-rbac-roles) to grant very specific permissions to applications that interact with Grafana.
 

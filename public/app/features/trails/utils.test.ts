@@ -1,8 +1,19 @@
-import { AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, SceneObjectRef } from '@grafana/scenes';
+
+import { getDatasourceSrv } from '../plugins/datasource_srv';
 
 import { DataTrail } from './DataTrail';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
-import { limitAdhocProviders } from './utils';
+import { getDatasourceForNewTrail, limitAdhocProviders } from './utils';
+
+jest.mock('./TrailStore/TrailStore', () => ({
+  getTrailStore: jest.fn(),
+}));
+
+jest.mock('../plugins/datasource_srv', () => ({
+  getDatasourceSrv: jest.fn(),
+}));
 
 describe('limitAdhocProviders', () => {
   let filtersVariable: AdHocFiltersVariable;
@@ -58,5 +69,48 @@ describe('limitAdhocProviders', () => {
       expect(result.values).toHaveLength(10000);
       expect(result.replace).toBe(true);
     }
+  });
+});
+
+describe('getDatasourceForNewTrail', () => {
+  beforeEach(() => {
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [],
+      recent: [],
+    }));
+    (getDatasourceSrv as jest.Mock).mockImplementation(() => ({
+      getList: jest.fn().mockReturnValue([
+        { uid: 'prom1', isDefault: true },
+        { uid: 'prom2', isDefault: false },
+      ]),
+    }));
+  });
+
+  it('should return the most recent exploration data source', () => {
+    const trail = new DataTrail({ key: '1', metric: 'select me', initialDS: 'prom2' });
+    const trailWithResolveMethod = new SceneObjectRef(trail);
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [],
+      recent: [trailWithResolveMethod],
+    }));
+    const result = getDatasourceForNewTrail();
+    expect(result).toBe('prom2');
+  });
+
+  it('should return the default Prometheus data source if no previous exploration exists', () => {
+    const result = getDatasourceForNewTrail();
+    expect(result).toBe('prom1');
+  });
+
+  it('should return the most recently added Prom data source if no default exists and no recent exploration', () => {
+    (getDatasourceSrv as jest.Mock).mockImplementation(() => ({
+      getList: jest.fn().mockReturnValue([
+        { uid: 'newProm', isDefault: false },
+        { uid: 'prom1', isDefault: false },
+        { uid: 'prom2', isDefault: false },
+      ]),
+    }));
+    const result = getDatasourceForNewTrail();
+    expect(result).toBe('newProm');
   });
 });

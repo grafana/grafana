@@ -25,14 +25,14 @@ func (nc *NoopClient) Compile(ctx context.Context, id claims.AuthInfo, req authz
 	return nil, nil
 }
 
-func (nc *NoopClient) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
-	return nil, nil
-}
-
 func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
+}
+
+func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	return nil, nil
 }

@@ -172,7 +172,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
@@ -189,7 +189,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Preference) *navtree.NavLink {
 	homeUrl := s.cfg.AppSubURL + "/"
-	if !c.IsSignedIn && !s.cfg.AnonymousEnabled {
+	if !c.IsSignedIn && !s.cfg.Anonymous.Enabled {
 		homeUrl = s.cfg.AppSubURL + "/login"
 	} else {
 		homePage := s.cfg.HomePage
@@ -262,7 +262,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
+	if c.SignedInUser.GetLogin() != c.SignedInUser.GetName() {
 		login = c.SignedInUser.GetLogin()
 	}
 	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
@@ -297,7 +297,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.GetDisplayName(),
+		Text:       c.SignedInUser.GetName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -322,11 +322,11 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 	}
 
 	if len(starredDashboardResult.UserStars) > 0 {
-		var ids []int64
-		for id := range starredDashboardResult.UserStars {
-			ids = append(ids, id)
+		var uids []string
+		for uid := range starredDashboardResult.UserStars {
+			uids = append(uids, uid)
 		}
-		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +362,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.SnapshotEnabled {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -380,7 +380,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
+		if s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -435,12 +435,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			ac.EvalPermission(ac.ActionAlertingReceiversRead),
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 		)
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
 	}
@@ -448,6 +452,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if hasAccess(ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}

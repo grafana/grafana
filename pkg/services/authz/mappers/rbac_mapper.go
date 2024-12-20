@@ -2,10 +2,10 @@ package mappers
 
 type VerbToAction map[string]string                            // e.g. "get" -> "read"
 type ResourceVerbToAction map[string]VerbToAction              // e.g. "dashboards" -> VerbToAction
-type GroupResourceVerbToAction map[string]ResourceVerbToAction // e.g. "dashboards.grafana.app" -> ResourceVerbToAction
+type GroupResourceVerbToAction map[string]ResourceVerbToAction // e.g. "dashboard.grafana.app" -> ResourceVerbToAction
 
 type ResourceToAttribute map[string]string                   // e.g. "dashboards" -> "uid"
-type GroupResourceToAttribute map[string]ResourceToAttribute // e.g. "dashboards.grafana.app" -> ResourceToAttribute
+type GroupResourceToAttribute map[string]ResourceToAttribute // e.g. "dashboard.grafana.app" -> ResourceToAttribute
 
 type K8sRbacMapper struct {
 	DefaultActions   VerbToAction
@@ -28,8 +28,8 @@ func NewK8sRbacMapper() *K8sRbacMapper {
 		},
 		DefaultAttribute: "uid",
 		Actions: GroupResourceVerbToAction{
-			"dashboards.grafana.app": ResourceVerbToAction{"dashboards": VerbToAction{}},
-			"folders.grafana.app":    ResourceVerbToAction{"folders": VerbToAction{}},
+			"dashboard.grafana.app": ResourceVerbToAction{"dashboards": VerbToAction{}},
+			"folder.grafana.app":    ResourceVerbToAction{"folders": VerbToAction{}},
 		},
 	}
 }

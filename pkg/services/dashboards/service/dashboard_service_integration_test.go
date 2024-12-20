@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -883,6 +884,9 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			foldertest.NewFakeService(),
 			folder.NewFakeStore(),
 			nil,
+			zanzana.NewNoopClient(),
+			nil,
+			nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -949,6 +953,9 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
+		zanzana.NewNoopClient(),
+		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -973,6 +980,9 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
+		nil,
+		zanzana.NewNoopClient(),
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1017,6 +1027,9 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
+		nil,
+		zanzana.NewNoopClient(),
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1068,6 +1081,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
+		nil,
+		zanzana.NewNoopClient(),
+		nil,
 		nil,
 	)
 	require.NoError(t, err)

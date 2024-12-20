@@ -24,7 +24,7 @@ export interface ObjectMeta {
   // The first time this was saved
   creationTimestamp: string;
   // General resource annotations -- including the common grafana.app values
-  annotations?: GrafanaAnnotations;
+  annotations?: GrafanaAnnotations & GrafanaClientAnnotations;
   // General application level key+value pairs
   labels?: Record<string, string>;
 }
@@ -33,15 +33,21 @@ export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
 export const AnnoKeyFolder = 'grafana.app/folder';
+export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
+export const AnnoKeyFolderId = 'grafana.app/folderId';
+export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
-export const AnnoKeyOriginName = 'grafana.app/originName';
-export const AnnoKeyOriginPath = 'grafana.app/originPath';
-export const AnnoKeyOriginHash = 'grafana.app/originHash';
-const AnnoKeyOriginTimestamp = 'grafana.app/originTimestamp';
+export const AnnoKeyRepoName = 'grafana.app/repoName';
+export const AnnoKeyRepoPath = 'grafana.app/repoPath';
+export const AnnoKeyRepoHash = 'grafana.app/repoHash';
+export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
+export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
+
+// Annotations provided by the API
 type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
   [AnnoKeyUpdatedTimestamp]?: string;
@@ -49,13 +55,20 @@ type GrafanaAnnotations = {
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
 
-  [AnnoKeyOriginName]?: string;
-  [AnnoKeyOriginPath]?: string;
-  [AnnoKeyOriginHash]?: string;
-  [AnnoKeyOriginTimestamp]?: string;
+  [AnnoKeyRepoName]?: string;
+  [AnnoKeyRepoPath]?: string;
+  [AnnoKeyRepoHash]?: string;
+  [AnnoKeyRepoTimestamp]?: string;
+};
 
-  // Any key value
-  [key: string]: string | undefined;
+// Annotations provided by the front-end client
+type GrafanaClientAnnotations = {
+  [AnnoKeyMessage]?: string;
+  [AnnoKeyFolderTitle]?: string;
+  [AnnoKeyFolderUrl]?: string;
+  [AnnoKeyFolderId]?: number;
+  [AnnoKeyFolderId]?: number;
+  [AnnoKeySavedFromUI]?: string;
 };
 
 export interface Resource<T = object, K = string> extends TypeMeta<K> {

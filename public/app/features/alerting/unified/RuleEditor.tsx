@@ -1,10 +1,8 @@
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { withErrorBoundary } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';
@@ -13,7 +11,6 @@ import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
@@ -47,7 +44,6 @@ const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['ty
 };
 
 const RuleEditor = () => {
-  const dispatch = useDispatch();
   const [searchParams] = useURLSearchParams();
   const params = useParams<RuleEditorPathParams>();
   const { type } = params;
@@ -57,22 +53,9 @@ const RuleEditor = () => {
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
   const copyFromIdentifier = ruleId.tryParse(copyFromId);
 
-  const { loading = true } = useAsync(async () => {
-    if (identifier) {
-      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
-    }
-    if (copyFromIdentifier) {
-      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: copyFromIdentifier.ruleSourceName }));
-    }
-  }, [dispatch]);
-
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
   const getContent = useCallback(() => {
-    if (loading) {
-      return;
-    }
-
     if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
       return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
     }
@@ -90,10 +73,10 @@ const RuleEditor = () => {
     }
     // new alert rule
     return <AlertRuleForm />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
+  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier]);
 
   return (
-    <AlertingPageWrapper isLoading={loading} navId="alert-list" pageNav={getPageNav(identifier, type)}>
+    <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
       {getContent()}
     </AlertingPageWrapper>
   );

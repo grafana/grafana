@@ -392,24 +392,23 @@ To begin, let's set up a webhook contact point. Once we have a usable endpoint, 
 
 ### Create a contact point for Grafana-managed alert rules
 
-In this step, we set up a new contact point. This contact point uses the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We can use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
+In this step, we set up a new contact point. This contact point uses the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We can use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
 
-1. Browse to [requestbin.com](https://requestbin.com).
-1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
-1. From Request Bin, copy the endpoint URL.
+1. Browse to [Webhook.site](https://webhook.site/).
+1. Copy Your unique URL.
 
-Your Request Bin is now waiting for the first request.
+Your webhook endpoint is now waiting for the first request.
 
-Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
+Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Manage Contact points**.
 1. Click **+ Add contact point**.
-1. In **Name**, write **RequestBin**.
+1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
-1. In **URL**, paste the endpoint to your request bin.
+1. In **URL**, paste the endpoint to your webhook endpoint.
 
-1. Click **Test**, and then click **Send test notification** to send a test alert notification to your request bin.
-1. Navigate back to the Request Bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+1. Click **Test**, and then click **Send test notification** to send a test alert notification to your webhook endpoint.
+1. Navigate back to the webhook endpoint you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 1. Return to Grafana and click **Save contact point**.
 
 We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
@@ -424,24 +423,25 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 
-   In this tutorial, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+   In this tutorial, we use the advanced options for Grafana-managed alert rule creation. The advanced options let us define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered (the default condition is the threshold).
 
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`.
-1. For **Section 2**, Find the **query A** box, and choose your Prometheus data source.
+1. For **Section 2**, toggle the **Advanced options** button.
+1. Find the **query A** box, and choose your Prometheus data source.
 1. Enter the same Prometheus query that we used in our earlier panel:
 
    ```
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
-1. Scroll down to bottom of section #2 and click the **Preview alert rule condition** button. You should see some data returned.
-1. Keep `Last` as the value for the reducer function (`WHEN`), and `0.2` as the threshold value. This is the value above which the alert rule should trigger. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Keep expressions **B** and **C** as they are. These expressions (Reduce and Threshold, respectively) are included by default when creating a new rule. Enter `0.2` as threshold value. You can read more about queries and conditions [here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Scroll down to bottom of section #2 and click the **Preview** button. You should see some data returned.
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder contains our alert rules. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. Name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert rule are evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert instance enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert instance has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, choose **RequestBin** as the **Contact point**.
+1. In **Section 4**, choose **Webhook** as the **Contact point**.
 1. Click **Save rule and exit** at the top of the page.
 
 ### Trigger a Grafana-managed alert rule
@@ -451,7 +451,7 @@ We have now configured an alert rule and a contact point. Now let's see if we ca
 1. Browse to [localhost:8081](http://localhost:8081).
 1. Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
 
-Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana triggers our alert rule. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
+Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana triggers our alert rule. Browse to the webhook endpoint we created earlier and find the sent Grafana alert notification with details and metadata.
 
 <!-- INTERACTIVE ignore START -->
 

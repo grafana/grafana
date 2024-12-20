@@ -236,6 +236,11 @@ export const Examples = () => {
             title: 'Default title',
             collapsible: true,
           })}
+          {renderPanel('Menu always visible', {
+            title: 'Menu always visible',
+            showMenuAlways: true,
+            menu,
+          })}
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',
             actions: (
