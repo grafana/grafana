@@ -192,6 +192,7 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
+//nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
