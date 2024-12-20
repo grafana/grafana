@@ -8,6 +8,8 @@ import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
+import { SearchProps } from '../../../features/explore/TraceView/useSearch';
+
 const styles = {
   wrapper: css({
     height: '100%',
@@ -19,6 +21,7 @@ export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  spanFilters?: SearchProps;
 }
 
 export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
@@ -48,6 +51,7 @@ export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) =
         createSpanLink={options.createSpanLink}
         focusedSpanId={options.focusedSpanId}
         createFocusSpanLink={options.createFocusSpanLink}
+        spanFilters={options.spanFilters}
       />
     </div>
   );

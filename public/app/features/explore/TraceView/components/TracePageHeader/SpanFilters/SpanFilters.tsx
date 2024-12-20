@@ -45,11 +45,7 @@ export type SpanFilterProps = {
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  showSpanFilterMatchesOnly: boolean;
-  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
-  showCriticalPathSpansOnly: boolean;
-  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
 };
@@ -61,10 +57,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setSearch,
     showSpanFilters,
     setShowSpanFilters,
-    showSpanFilterMatchesOnly,
-    setShowSpanFilterMatchesOnly,
-    showCriticalPathSpansOnly,
-    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -84,12 +76,25 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setTagKeys(undefined);
     setTagValues({});
     setSearch(defaultFilters);
-    setShowSpanFilterMatchesOnly(false);
-  }, [setSearch, setShowSpanFilterMatchesOnly]);
+  }, [setSearch]);
 
   useEffect(() => {
     clear();
   }, [clear, trace]);
+
+  const setShowSpanFilterMatchesOnly = useCallback(
+    (showMatchesOnly: boolean) => {
+      setSearch({ ...search, matchesOnly: showMatchesOnly });
+    },
+    [search, setSearch]
+  );
+
+  const setShowCriticalPathSpansOnly = useCallback(
+    (showCriticalPathSpansOnly: boolean) => {
+      setSearch({ ...search, criticalPathOnly: showCriticalPathSpansOnly });
+    },
+    [search, setSearch]
+  );
 
   if (!trace) {
     return null;
@@ -498,9 +503,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
-          showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-          showCriticalPathSpansOnly={showCriticalPathSpansOnly}
           setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           focusedSpanIndexForSearch={focusedSpanIndexForSearch}

@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,6 +15,8 @@ export interface SearchProps {
   toOperator: string;
   tags: Tag[];
   query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
 }
 
 export interface Tag {
@@ -36,14 +39,16 @@ export const defaultFilters = {
   fromOperator: '>',
   toOperator: '<',
   tags: [defaultTagFilter],
+  matchesOnly: false,
+  criticalPathOnly: false,
 };
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
-export function useSearch(spans?: TraceSpan[]) {
-  const [search, setSearch] = useState<SearchProps>(defaultFilters);
+export function useSearch(spans?: TraceSpan[], initialFilters?: SearchProps) {
+  const [search, setSearch] = useState<SearchProps>(merge(defaultFilters, initialFilters ?? {}));
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
     return spans && filterSpans(search, spans);
   }, [search, spans]);
