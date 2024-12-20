@@ -205,19 +205,24 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	// Initialize the blob storage
 	blobstore := opts.Blob.Backend
-	if blobstore == nil && opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
+	if blobstore == nil {
+		if opts.Blob.URL != "" {
+			ctx := context.Background()
+			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+			if err != nil {
+				return nil, err
+			}
 
-		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Tracer: opts.Tracer,
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
-		})
-		if err != nil {
-			return nil, err
+			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+				Tracer: opts.Tracer,
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Check if the backend supports blob storage
+			blobstore, _ = opts.Backend.(BlobSupport)
 		}
 	}
 
