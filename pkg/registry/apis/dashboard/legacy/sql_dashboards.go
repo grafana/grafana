@@ -11,7 +11,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
@@ -262,6 +261,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
+		meta.SetDeprecatedInternalID(dashboard_id)
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -306,8 +306,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return row, err
 			}
 		}
-		// add it so we can get it from the body later
-		dash.Spec.Set("id", dashboard_id)
+		dash.Spec.Remove("id")
 	}
 	return row, err
 }
@@ -410,12 +409,13 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 
 	// stash the raw value in context (if requested)
+	finalMeta, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, false, err
+	}
 	access := GetLegacyAccess(ctx)
 	if access != nil {
-		id, ok, _ := unstructured.NestedInt64(dash.Spec.Object, "id")
-		if ok {
-			access.DashboardID = id
-		}
+		access.DashboardID = finalMeta.GetDeprecatedInternalID()
 	}
 	return dash, created, err
 }
