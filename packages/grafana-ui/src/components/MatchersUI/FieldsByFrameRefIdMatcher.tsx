@@ -129,6 +129,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
         } catch {
           extractedRefIds.add(value);
         }
+      } else if (value.includes('|')) {
+        // old format that was simply unescaped pipe-joined strings -> regexp
+        extractedRefIds = new Set(value.split('|'));
       } else {
         extractedRefIds.add(value);
       }
