@@ -1,12 +1,11 @@
 import { MetricFindValue } from '@grafana/data';
-import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
 import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
   VAR_MISSING_OTEL_TARGETS,
-  VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
@@ -97,31 +96,14 @@ export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject, scene
  */
 export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: string): OtelResourcesObject {
   const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
-  // add deployment env to otel resource filters
-  const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
-
   let otelResourcesObject = { labels: '', filters: '' };
 
-  if (otelResources instanceof AdHocFiltersVariable && otelDepEnv instanceof CustomVariable) {
+  if (otelResources instanceof AdHocFiltersVariable) {
     // get the collection of adhoc filters
     const otelFilters = otelResources.state.filters;
 
-    // get the value for deployment_environment variable
-    let otelDepEnvValue = String(otelDepEnv.getValue());
-    // check if there are multiple environments
-    const isMulti = otelDepEnvValue.includes(',');
-    // start with the default label filters for deployment_environment
-    let op = '=';
-    let val = firstQueryVal ? firstQueryVal : otelDepEnvValue;
-    // update the filters if multiple deployment environments selected
-    if (isMulti) {
-      op = '=~';
-      val = val.split(',').join('|');
-    }
-
-    // start with the deployment environment
-    let allFilters = `deployment_environment${op}"${val}"`;
-    let allLabels = 'deployment_environment';
+    let allFilters = '';
+    let allLabels = '';
 
     // add the other OTEL resource filters
     for (let i = 0; i < otelFilters?.length; i++) {
@@ -129,12 +111,12 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
-      allFilters += `,${labelName}${op}"${labelValue}"`;
+      allFilters += `${labelName}${op}"${labelValue}"`;
 
       const addLabelToGroupLeft = labelName !== 'job' && labelName !== 'instance';
 
       if (addLabelToGroupLeft) {
-        allLabels += `,${labelName}`;
+        allLabels += `${labelName}`;
       }
     }
 
