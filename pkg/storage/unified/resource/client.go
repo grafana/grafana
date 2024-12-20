@@ -8,11 +8,11 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -141,87 +141,4 @@ func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
 	return append(opts, authnlib.WithTokenClientOption(tokenClient))
-}
-
-var (
-	_ ResourceClient = (*directResourceClient)(nil)
-)
-
-// The direct client passes requests directly to the server using the *same* context
-func NewDirectResourceClient(server ResourceServer) ResourceClient {
-	return &directResourceClient{server}
-}
-
-type directResourceClient struct {
-	server ResourceServer
-}
-
-// Create implements ResourceClient.
-func (d *directResourceClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
-	return d.server.Create(ctx, in)
-}
-
-// Delete implements ResourceClient.
-func (d *directResourceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	return d.server.Delete(ctx, in)
-}
-
-// GetBlob implements ResourceClient.
-func (d *directResourceClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error) {
-	return d.server.GetBlob(ctx, in)
-}
-
-// GetStats implements ResourceClient.
-func (d *directResourceClient) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
-	return d.server.GetStats(ctx, in)
-}
-
-// History implements ResourceClient.
-func (d *directResourceClient) History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
-	return d.server.History(ctx, in)
-}
-
-// IsHealthy implements ResourceClient.
-func (d *directResourceClient) IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
-	return d.server.IsHealthy(ctx, in)
-}
-
-// List implements ResourceClient.
-func (d *directResourceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	return d.server.List(ctx, in)
-}
-
-// Origin implements ResourceClient.
-func (d *directResourceClient) Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error) {
-	return d.server.Origin(ctx, in)
-}
-
-// PutBlob implements ResourceClient.
-func (d *directResourceClient) PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error) {
-	return d.server.PutBlob(ctx, in)
-}
-
-// Read implements ResourceClient.
-func (d *directResourceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
-	return d.server.Read(ctx, in)
-}
-
-// Restore implements ResourceClient.
-func (d *directResourceClient) Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error) {
-	return d.server.Restore(ctx, in)
-}
-
-// Search implements ResourceClient.
-func (d *directResourceClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
-	return d.server.Search(ctx, in)
-}
-
-// Update implements ResourceClient.
-func (d *directResourceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
-	return d.server.Update(ctx, in)
-}
-
-// Watch implements ResourceClient.
-func (d *directResourceClient) Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchEvent], error) {
-	return nil, fmt.Errorf("watch not yet supported with direct resource client")
 }
