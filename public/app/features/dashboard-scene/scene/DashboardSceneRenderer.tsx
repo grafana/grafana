@@ -64,7 +64,17 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     if (panelSearch || panelsPerRow) {
-      return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
+      // By keeping the bodyToRender.Component hidden but still rendered,
+      // the associated scene object tree stays activated, and so changes to
+      // variables will still cause a refresh
+      return (
+        <>
+          <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />
+          <div style={{ visibility: 'hidden' }}>
+            <bodyToRender.Component model={bodyToRender} />
+          </div>
+        </>
+      );
     }
 
     return (
