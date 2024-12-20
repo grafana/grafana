@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/hashicorp/go-plugin"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,6 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+)
+
+const (
+	errorSourceMetadataKey = "errorSource"
+)
+
+var (
+	logger = log.New("plugins.clientv2")
 )
 
 type ClientV2 struct {
@@ -186,7 +195,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, plugins.ErrMethodNotImplemented
 		}
 
-		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
+		return nil, handleGrpcStatusError(ctx, err)
 	}
 
 	return backend.FromProto().QueryDataResponse(protoResp)
@@ -337,4 +346,40 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 	}
 
 	return backend.FromProto().ConversionResponse(protoResp), nil
+}
+
+// handleGrpcStatusError handles gRPC status errors and sets the error source via context based on the error metadata
+// returned from the plugin. Regardless of the error source, a plugin downstream error is returned as both plugin and
+// downstream errors are treated the same in Grafana.
+func handleGrpcStatusError(ctx context.Context, err error) error {
+	st := status.Convert(err)
+	if st == nil {
+		return fmt.Errorf("%v: %w", "Failed to query data", err)
+	}
+	for _, detail := range st.Details() {
+		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+			errorSource, exists := errorInfo.Metadata[errorSourceMetadataKey]
+			if !exists {
+				break
+			}
+
+			switch errorSource {
+			case string(backend.ErrorSourceDownstream):
+				innerErr := backend.WithErrorSource(ctx, backend.ErrorSourceDownstream)
+				if innerErr != nil {
+					logger.Error("Could not set downstream error source", "error", innerErr)
+				}
+				return plugins.ErrPluginDownstreamErrorBase.Errorf("%v", err)
+			case string(backend.ErrorSourcePlugin):
+				errorSourceErr := backend.WithErrorSource(ctx, backend.ErrorSourcePlugin)
+				if errorSourceErr != nil {
+					logger.Error("Could not set plugin error source", "error", errorSourceErr)
+				}
+				// a downstream error is returned here as plugin errors are considered as downstream errors in the
+				// context of the Grafana server.
+				return plugins.ErrPluginDownstreamErrorBase.Errorf("%v", err)
+			}
+		}
+	}
+	return fmt.Errorf("%v: %w", "Failed to query data", err)
 }
