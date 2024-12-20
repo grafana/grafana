@@ -1,5 +1,8 @@
+import { merge } from 'lodash';
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+
+import { InterpolateFunction } from '@grafana/data';
 
 import { filterSpans, TraceSpan } from './components';
 
@@ -14,6 +17,8 @@ export interface SearchProps {
   toOperator: string;
   tags: Tag[];
   query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
 }
 
 export interface Tag {
@@ -30,23 +35,67 @@ export const defaultTagFilter = {
   operator: '=',
 };
 
+export const newTagFilter = () => ({
+  id: randomId(),
+  operator: '=',
+});
+
 export const defaultFilters = {
   spanNameOperator: '=',
   serviceNameOperator: '=',
   fromOperator: '>',
   toOperator: '<',
   tags: [defaultTagFilter],
+  matchesOnly: false,
+  criticalPathOnly: false,
 };
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
-export function useSearch(spans?: TraceSpan[]) {
-  const [search, setSearch] = useState<SearchProps>(defaultFilters);
+export function useSearch(spans?: TraceSpan[], initialFilters?: SearchProps) {
+  const [search, setSearch] = useState<SearchProps>(merge(defaultFilters, initialFilters ?? {}));
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
     return spans && filterSpans(search, spans);
   }, [search, spans]);
 
   return { search, setSearch, spanFilterMatches };
+}
+
+export function replaceSearchVariables(replaceVariables: InterpolateFunction, search?: SearchProps) {
+  if (!search) {
+    return search;
+  }
+
+  const newSearch = { ...search };
+  if (newSearch.query) {
+    newSearch.query = replaceVariables(newSearch.query);
+  }
+  if (newSearch.serviceNameOperator) {
+    newSearch.serviceNameOperator = replaceVariables(newSearch.serviceNameOperator);
+  }
+  if (newSearch.serviceName) {
+    newSearch.serviceName = replaceVariables(newSearch.serviceName);
+  }
+  if (newSearch.spanNameOperator) {
+    newSearch.spanNameOperator = replaceVariables(newSearch.spanNameOperator);
+  }
+  if (newSearch.spanName) {
+    newSearch.spanName = replaceVariables(newSearch.spanName);
+  }
+  if (newSearch.from) {
+    newSearch.from = replaceVariables(newSearch.from);
+  }
+  if (newSearch.to) {
+    newSearch.to = replaceVariables(newSearch.to);
+  }
+  newSearch.tags = newSearch.tags.map((tag) => {
+    return {
+      ...tag,
+      key: replaceVariables(tag.key ?? ''),
+      value: replaceVariables(tag.value ?? ''),
+    };
+  });
+  return newSearch;
 }
