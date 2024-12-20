@@ -14,7 +14,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -132,7 +131,7 @@ type rowsWrapper struct {
 	err error
 }
 
-func (a *dashboardSqlAccess) Namespaces(ctx context.Context) ([]string, error) {
+func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -382,10 +381,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 
 	var userID int64
-	idClaims := user.GetIdentity()
-	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
 		var err error
-		userID, err = identity.UserIdentifier(idClaims.Subject())
+		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
 			return nil, false, err
 		}

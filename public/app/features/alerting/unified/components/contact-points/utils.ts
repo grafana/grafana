@@ -17,7 +17,7 @@ import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
-import { getOnCallMetadata, ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
+import { ReceiverPluginMetadata, getOnCallMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
 

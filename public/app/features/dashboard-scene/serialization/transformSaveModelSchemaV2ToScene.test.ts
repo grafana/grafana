@@ -1,15 +1,40 @@
 import { cloneDeep } from 'lodash';
 
 import { config } from '@grafana/runtime';
-import { behaviors, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  behaviors,
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  IntervalVariable,
+  QueryVariable,
+  TextBoxVariable,
+  sceneGraph,
+  GroupByVariable,
+  AdHocFiltersVariable,
+  SceneDataTransformer,
+} from '@grafana/scenes';
+import {
+  AdhocVariableKind,
+  ConstantVariableKind,
+  CustomVariableKind,
+  DashboardV2Spec,
+  DatasourceVariableKind,
+  GroupByVariableKind,
+  IntervalVariableKind,
+  QueryVariableKind,
+  TextVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
+import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -85,14 +110,96 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(time.autoRefreshIntervals);
     expect(dashboardControls.state.hideTimeControls).toBe(time.hideTimepicker);
 
-    // TODO: Variables
-    // expect(scene.state?.$variables?.state.variables).toHaveLength(dash.variables.length);
-    // expect(scene.state?.$variables?.getByName(dash.variables[0].spec.name)).toBeInstanceOf(QueryVariable);
-    // expect(scene.state?.$variables?.getByName(dash.variables[1].spec.name)).toBeInstanceOf(TextBoxVariable); ...
+    // Variables
+    const variables = scene.state?.$variables;
+    expect(variables?.state.variables).toHaveLength(dash.variables.length);
+    validateVariable({
+      sceneVariable: variables?.state.variables[0],
+      variableKind: dash.variables[0] as QueryVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: QueryVariable,
+      index: 0,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[1],
+      variableKind: dash.variables[1] as CustomVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: CustomVariable,
+      index: 1,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[2],
+      variableKind: dash.variables[2] as DatasourceVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: DataSourceVariable,
+      index: 2,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[3],
+      variableKind: dash.variables[3] as ConstantVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: ConstantVariable,
+      index: 3,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[4],
+      variableKind: dash.variables[4] as IntervalVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: IntervalVariable,
+      index: 4,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[5],
+      variableKind: dash.variables[5] as TextVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: TextBoxVariable,
+      index: 5,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[6],
+      variableKind: dash.variables[6] as GroupByVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: GroupByVariable,
+      index: 6,
+    });
+    validateVariable({
+      sceneVariable: variables?.state.variables[7],
+      variableKind: dash.variables[7] as AdhocVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: AdHocFiltersVariable,
+      index: 7,
+    });
 
-    // TODO: Annotations
-    // expect(scene.state.annotations).toHaveLength(dash.annotations.length);
-    // expect(scene.state.annotations[0].text).toBe(dash.annotations[0].text); ...
+    // Annotations
+    expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
+    const dataLayers = scene.state.$data as DashboardDataLayerSet;
+    expect(dataLayers.state.annotationLayers).toHaveLength(dash.annotations.length);
+    expect(dataLayers.state.annotationLayers[0].state.name).toBe(dash.annotations[0].spec.name);
+    expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(dash.annotations[0].spec.enable);
+    expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(dash.annotations[0].spec.hide);
+
+    // Enabled
+    expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
+    expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
+    expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
+
+    // Disabled
+    expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
+    expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
+    expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
+
+    // Hidden
+    expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
+    expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
+    expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
 
     // To be implemented
     // expect(timePicker.state.ranges).toEqual(dash.timeSettings.quickRanges);
@@ -101,38 +208,27 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(1);
     const vizPanel = vizPanels[0];
-    expect(vizPanel.state.title).toBe(dash.elements['test-panel-uid'].spec.title);
-    expect(vizPanel.state.description).toBe(dash.elements['test-panel-uid'].spec.description);
-    expect(vizPanel.state.pluginId).toBe(dash.elements['test-panel-uid'].spec.vizConfig.kind);
-    expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
-    expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
-    expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
+    validateVizPanel(vizPanel, dash);
 
-    // FIXME: There is an error of data being undefined
-    // expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
-    // const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-    // expect(dataTransformer.state.transformations).toEqual([{ id: 'transform1', options: {} }]);
+    // Layout
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    expect(layout.state.grid.state.children.length).toBe(1);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+    const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
+    expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
 
-    // expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
-    const queryRunner = getQueryRunnerFor(vizPanel);
-    expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
-    expect(queryRunner?.state.datasource).toBeUndefined();
-    // expect(queryRunner.state.queries).toEqual([{ query: 'test-query', datasource: { uid: 'datasource1', type: 'prometheus' } }]);
-    // expect(queryRunner.state.maxDataPoints).toBe(100);
-    // expect(queryRunner.state.cacheTimeout).toBe('1m');
-    // expect(queryRunner.state.queryCachingTTL).toBe(60);
-    // expect(queryRunner.state.minInterval).toBe('1m');
-    // expect(queryRunner.state.dataLayerFilter?.panelId).toBe(1);
-
-    // FIXME: Fix the key incompatibility since panel is not numeric anymore
-    // expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
-
-    // FIXME: Tests for layout
+    // Transformations
+    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -160,7 +256,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -188,7 +284,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',

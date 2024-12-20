@@ -120,12 +120,12 @@ func Test_readPluginSettings(t *testing.T) {
 			{
 				name:     "should add the default preinstalled plugin and the one defined",
 				rawInput: "plugin1",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", ""}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
 			},
 			{
 				name:     "should add the default preinstalled plugin and the one defined with version",
 				rawInput: "plugin1@1.0.0",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.0"}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.0", ""}),
 			},
 			{
 				name:           "it should remove the disabled plugin",
@@ -149,7 +149,17 @@ func Test_readPluginSettings(t *testing.T) {
 				name:         "should mark preinstall as sync",
 				rawInput:     "plugin1",
 				disableAsync: true,
-				expected:     append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", ""}),
+				expected:     append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
+			},
+			{
+				name:     "should parse a plugin with version and URL",
+				rawInput: "plugin1@1.0.1@https://example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.1", "https://example.com/plugin1.tar.gz"}),
+			},
+			{
+				name:     "should parse a plugin with URL",
+				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://example.com/plugin1.tar.gz"}),
 			},
 		}
 		for _, tc := range tests {

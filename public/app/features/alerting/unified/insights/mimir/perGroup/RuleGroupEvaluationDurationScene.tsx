@@ -2,7 +2,7 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes'
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsRatingModal } from '../../RatingModal';
+import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -37,7 +37,7 @@ export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, p
           fixedColor: 'blue',
         })
       )
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

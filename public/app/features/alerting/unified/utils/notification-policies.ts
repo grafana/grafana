@@ -3,7 +3,7 @@ import { isArray, pick, reduce } from 'lodash';
 import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { isLabelMatch, Label, matchLabelsSet, normalizeMatchers, unquoteWithUnescape } from './matchers';
+import { Label, isLabelMatch, matchLabelsSet, normalizeMatchers, unquoteWithUnescape } from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match

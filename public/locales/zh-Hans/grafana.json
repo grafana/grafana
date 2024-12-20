@@ -241,10 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -324,8 +327,18 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
@@ -338,6 +351,7 @@
         "warning-1": "",
         "warning-2": ""
       },
+      "filter-description": "",
       "generated-policies": "",
       "matchers": "",
       "metadata": {
@@ -466,6 +480,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -1243,6 +1261,8 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "浏览 工具栏",
       "copy-link": "复制网址",
       "copy-link-abs-time": "",
@@ -1266,6 +1286,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1684,7 +1705,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -1732,6 +1756,12 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": ""
+    },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
     },
     "log-row-message": {
       "ellipsis": "",
@@ -2136,6 +2166,16 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "首页"
     },
@@ -2181,9 +2221,6 @@
     },
     "new-folder": {
       "title": "新建文件夹"
-    },
-    "observability": {
-      "title": "可观测性"
     },
     "oncall": {
       "title": "OnCall"
@@ -2313,12 +2350,6 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    },
-    "toolbar": {
-      "close-menu": "关闭菜单",
-      "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "打开菜单",
-      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -2892,6 +2923,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -2923,8 +2955,7 @@
       "loading": "",
       "save-button": "保存至文件",
       "share-externally-label": "导出以供外部分享",
-      "view-button": "查看 JSON",
-      "view-button-schemav2": ""
+      "view-button": "查看 JSON"
     },
     "library": {
       "info": "创建库面板。"
@@ -3001,6 +3032,27 @@
       "create-button": ""
     }
   },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "将调整面板高度以适应屏幕大小",
     "checkbox-label": "自动调整",
@@ -3009,7 +3061,6 @@
     "mode": "模式",
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
-    "mode-tv": "电视",
     "title": "共享播放列表"
   },
   "shared": {
@@ -3207,9 +3258,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",
@@ -3316,6 +3365,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

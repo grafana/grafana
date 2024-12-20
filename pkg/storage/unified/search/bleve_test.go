@@ -7,16 +7,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestBleveBackend(t *testing.T) {
-	t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
-
 	dashboardskey := &resource.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -27,17 +27,17 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.CreateTemp("", "bleve-test")
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
-	backend := NewBleveBackend(
-		BleveOptions{
-			Root:          tmpdir.Name(),
-			FileThreshold: 5, // with more than 5 items we create a file on disk
-		},
-		tracing.NewNoopTracerService(),
-		nil,
-	)
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5, // with more than 5 items we create a file on disk
+	}, tracing.NewNoopTracerService())
+	require.NoError(t, err)
+
+	// AVOID NPE in test
+	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
 	ctx := context.Background()
@@ -50,7 +50,7 @@ func TestBleveBackend(t *testing.T) {
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
-				Stats:            NewDashboardStatsLookup(nil), // empty stats
+				Stats:            make(map[string]map[string]int64), // empty stats
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
 			}, nil
 		})
@@ -66,11 +66,12 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "aaa",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "bbb (dash)",
-				Folder: "xxx",
+				Title:     "aaa (dash)",
+				TitleSort: "aaa (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
@@ -83,11 +84,12 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "bbb",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "aaa (dash)",
-				Folder: "xxx",
+				Title:     "bbb (dash)",
+				TitleSort: "bbb (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
@@ -103,11 +105,15 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "ccc",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "ccc (dash)",
-				Folder: "xxx",
+				Title:     "ccc (dash)",
+				TitleSort: "ccc (dash)",
+				Folder:    "zzz",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name: "r0",
+				},
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID: 12,
 				},
@@ -128,7 +134,7 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit: 100000,
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: true}, // ccc,bbb,aaa
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
@@ -142,7 +148,6 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		// Match the results
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 
 		// Get the tags facets
@@ -165,6 +170,12 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
+
+		count, _ := index.DocCount(ctx, "")
+		assert.Equal(t, int64(3), count)
+
+		count, _ = index.DocCount(ctx, "zzz")
+		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -181,20 +192,22 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "zzz",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "zzz (folder)",
+				Title:     "zzz (folder)",
+				TitleSort: "zzz (folder)",
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
 				Key: &resource.ResourceKey{
 					Name:      "yyy",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "yyy (folder)",
+				Title:     "yyy (folder)",
+				TitleSort: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},

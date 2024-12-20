@@ -199,12 +199,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "mysqlParseTime",
-			Description: "Ensure the parseTime flag is set for MySQL driver",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
 			Stage:             FeatureStageGeneralAvailability,
@@ -720,11 +714,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "kubernetesDashboardsAPI",
-			Description:     "Use the kubernetes API in the backend for dashboards",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
+			Name:        "kubernetesCliDashboards",
+			Description: "Use the k8s client to retrieve dashboards internally",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "kubernetesFolders",
@@ -1052,12 +1045,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "onPremToCloudMigrationsAlerts",
-			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
 			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
 			Stage:       FeatureStageExperimental,
@@ -1248,7 +1235,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false", // disabled by default
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1436,8 +1423,9 @@ var (
 		{
 			Name:        "newFiltersUI",
 			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
@@ -1451,14 +1439,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
@@ -1527,8 +1507,9 @@ var (
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1539,6 +1520,14 @@ var (
 		{
 			Name:              "unifiedStorageSearch",
 			Description:       "Enable unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1589,15 +1578,8 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "dashboardSchemaV2",
-			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: true,
-		},
-		{
-			Name:            "playlistsWatcher",
-			Description:     "Enables experimental watcher for playlists",
+			Name:            "playlistsReconciler",
+			Description:     "Enables experimental reconciler for playlists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
@@ -1620,6 +1602,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "prometheusSpecialCharsInLabelValues",
+			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:            "enableExtensionsAdminPage",
 			Description:     "Enables the extension admin page regardless of development mode",
 			Stage:           FeatureStageExperimental,
@@ -1629,8 +1618,9 @@ var (
 		{
 			Name:        "zipkinBackendMigration",
 			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",
@@ -1679,6 +1669,55 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "unifiedStorageSearchUI",
+			Description:       "Enable unified storage search UI",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:        "elasticsearchCrossClusterSearch",
+			Description: "Enables cross cluster search in the Elasticsearch datasource",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:         "unifiedHistory",
+			Description:  "Displays the navigation history so the user can navigate back to previous pages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "lokiLabelNamesQueryApi",
+			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true",
+		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
 		},
 	}
 )

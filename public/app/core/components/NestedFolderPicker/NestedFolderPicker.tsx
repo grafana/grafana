@@ -14,7 +14,8 @@ import {
   useNewFolderMutation,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';

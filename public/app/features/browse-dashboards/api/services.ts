@@ -1,6 +1,7 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { NestedFolderDTO } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
@@ -22,6 +23,7 @@ export async function listFolders(
 
   const backendSrv = getBackendSrv();
 
+  // TODO: what to do here for unified search?
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
