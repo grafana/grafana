@@ -261,7 +261,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
-		meta.SetDeprecatedInternalID(dashboard_id)
+		meta.SetDeprecatedInternalID(dashboard_id) //nolint:staticcheck
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -407,6 +407,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
+	if err != nil {
+		return nil, false, err
+	}
 
 	// stash the raw value in context (if requested)
 	finalMeta, err := utils.MetaAccessor(dash)
@@ -415,7 +418,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	access := GetLegacyAccess(ctx)
 	if access != nil {
-		access.DashboardID = finalMeta.GetDeprecatedInternalID()
+		access.DashboardID = finalMeta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 	return dash, created, err
 }

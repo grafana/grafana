@@ -120,7 +120,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// avoid setting it back to 0
 	previousInternalID := previous.GetDeprecatedInternalID() // nolint:staticcheck
 	if previousInternalID != 0 {
-		obj.SetDeprecatedInternalID(previousInternalID)
+		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
 	// Read+write will verify that origin format is accurate

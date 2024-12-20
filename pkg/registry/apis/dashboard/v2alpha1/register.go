@@ -229,7 +229,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				if err != nil {
 					return err
 				}
-				meta.SetDeprecatedInternalID(int64(id))
+				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
 			}
 		}
 	}
