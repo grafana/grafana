@@ -23,144 +23,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ListRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Subject   string `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
-	Group     string `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
-	Verb      string `protobuf:"bytes,3,opt,name=verb,proto3" json:"verb,omitempty"`
-	Resource  string `protobuf:"bytes,4,opt,name=resource,proto3" json:"resource,omitempty"`
-	Namespace string `protobuf:"bytes,5,opt,name=namespace,proto3" json:"namespace,omitempty"`
-}
-
-func (x *ListRequest) Reset() {
-	*x = ListRequest{}
-	mi := &file_extention_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListRequest) ProtoMessage() {}
-
-func (x *ListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
-func (*ListRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *ListRequest) GetSubject() string {
-	if x != nil {
-		return x.Subject
-	}
-	return ""
-}
-
-func (x *ListRequest) GetGroup() string {
-	if x != nil {
-		return x.Group
-	}
-	return ""
-}
-
-func (x *ListRequest) GetVerb() string {
-	if x != nil {
-		return x.Verb
-	}
-	return ""
-}
-
-func (x *ListRequest) GetResource() string {
-	if x != nil {
-		return x.Resource
-	}
-	return ""
-}
-
-func (x *ListRequest) GetNamespace() string {
-	if x != nil {
-		return x.Namespace
-	}
-	return ""
-}
-
-type ListResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	All     bool     `protobuf:"varint,1,opt,name=all,proto3" json:"all,omitempty"`
-	Folders []string `protobuf:"bytes,2,rep,name=folders,proto3" json:"folders,omitempty"`
-	Items   []string `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
-}
-
-func (x *ListResponse) Reset() {
-	*x = ListResponse{}
-	mi := &file_extention_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListResponse) ProtoMessage() {}
-
-func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
-func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ListResponse) GetAll() bool {
-	if x != nil {
-		return x.All
-	}
-	return false
-}
-
-func (x *ListResponse) GetFolders() []string {
-	if x != nil {
-		return x.Folders
-	}
-	return nil
-}
-
-func (x *ListResponse) GetItems() []string {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
 type TupleKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -174,7 +36,7 @@ type TupleKey struct {
 
 func (x *TupleKey) Reset() {
 	*x = TupleKey{}
-	mi := &file_extention_proto_msgTypes[2]
+	mi := &file_extention_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -186,7 +48,7 @@ func (x *TupleKey) String() string {
 func (*TupleKey) ProtoMessage() {}
 
 func (x *TupleKey) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[2]
+	mi := &file_extention_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -199,7 +61,7 @@ func (x *TupleKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TupleKey.ProtoReflect.Descriptor instead.
 func (*TupleKey) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{2}
+	return file_extention_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TupleKey) GetUser() string {
@@ -241,7 +103,7 @@ type Tuple struct {
 
 func (x *Tuple) Reset() {
 	*x = Tuple{}
-	mi := &file_extention_proto_msgTypes[3]
+	mi := &file_extention_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -253,7 +115,7 @@ func (x *Tuple) String() string {
 func (*Tuple) ProtoMessage() {}
 
 func (x *Tuple) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[3]
+	mi := &file_extention_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -266,7 +128,7 @@ func (x *Tuple) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tuple.ProtoReflect.Descriptor instead.
 func (*Tuple) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{3}
+	return file_extention_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Tuple) GetKey() *TupleKey {
@@ -295,7 +157,7 @@ type TupleKeyWithoutCondition struct {
 
 func (x *TupleKeyWithoutCondition) Reset() {
 	*x = TupleKeyWithoutCondition{}
-	mi := &file_extention_proto_msgTypes[4]
+	mi := &file_extention_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +169,7 @@ func (x *TupleKeyWithoutCondition) String() string {
 func (*TupleKeyWithoutCondition) ProtoMessage() {}
 
 func (x *TupleKeyWithoutCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[4]
+	mi := &file_extention_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +182,7 @@ func (x *TupleKeyWithoutCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TupleKeyWithoutCondition.ProtoReflect.Descriptor instead.
 func (*TupleKeyWithoutCondition) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{4}
+	return file_extention_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TupleKeyWithoutCondition) GetUser() string {
@@ -355,7 +217,7 @@ type RelationshipCondition struct {
 
 func (x *RelationshipCondition) Reset() {
 	*x = RelationshipCondition{}
-	mi := &file_extention_proto_msgTypes[5]
+	mi := &file_extention_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +229,7 @@ func (x *RelationshipCondition) String() string {
 func (*RelationshipCondition) ProtoMessage() {}
 
 func (x *RelationshipCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[5]
+	mi := &file_extention_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +242,7 @@ func (x *RelationshipCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RelationshipCondition.ProtoReflect.Descriptor instead.
 func (*RelationshipCondition) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{5}
+	return file_extention_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RelationshipCondition) GetName() string {
@@ -410,7 +272,7 @@ type ReadRequest struct {
 
 func (x *ReadRequest) Reset() {
 	*x = ReadRequest{}
-	mi := &file_extention_proto_msgTypes[6]
+	mi := &file_extention_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -422,7 +284,7 @@ func (x *ReadRequest) String() string {
 func (*ReadRequest) ProtoMessage() {}
 
 func (x *ReadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[6]
+	mi := &file_extention_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +297,7 @@ func (x *ReadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadRequest.ProtoReflect.Descriptor instead.
 func (*ReadRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{6}
+	return file_extention_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ReadRequest) GetNamespace() string {
@@ -478,7 +340,7 @@ type ReadRequestTupleKey struct {
 
 func (x *ReadRequestTupleKey) Reset() {
 	*x = ReadRequestTupleKey{}
-	mi := &file_extention_proto_msgTypes[7]
+	mi := &file_extention_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +352,7 @@ func (x *ReadRequestTupleKey) String() string {
 func (*ReadRequestTupleKey) ProtoMessage() {}
 
 func (x *ReadRequestTupleKey) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[7]
+	mi := &file_extention_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +365,7 @@ func (x *ReadRequestTupleKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadRequestTupleKey.ProtoReflect.Descriptor instead.
 func (*ReadRequestTupleKey) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{7}
+	return file_extention_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ReadRequestTupleKey) GetUser() string {
@@ -538,7 +400,7 @@ type ReadResponse struct {
 
 func (x *ReadResponse) Reset() {
 	*x = ReadResponse{}
-	mi := &file_extention_proto_msgTypes[8]
+	mi := &file_extention_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -550,7 +412,7 @@ func (x *ReadResponse) String() string {
 func (*ReadResponse) ProtoMessage() {}
 
 func (x *ReadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[8]
+	mi := &file_extention_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -563,7 +425,7 @@ func (x *ReadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadResponse.ProtoReflect.Descriptor instead.
 func (*ReadResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{8}
+	return file_extention_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ReadResponse) GetTuples() []*Tuple {
@@ -590,7 +452,7 @@ type WriteRequestWrites struct {
 
 func (x *WriteRequestWrites) Reset() {
 	*x = WriteRequestWrites{}
-	mi := &file_extention_proto_msgTypes[9]
+	mi := &file_extention_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +464,7 @@ func (x *WriteRequestWrites) String() string {
 func (*WriteRequestWrites) ProtoMessage() {}
 
 func (x *WriteRequestWrites) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[9]
+	mi := &file_extention_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +477,7 @@ func (x *WriteRequestWrites) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequestWrites.ProtoReflect.Descriptor instead.
 func (*WriteRequestWrites) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{9}
+	return file_extention_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *WriteRequestWrites) GetTupleKeys() []*TupleKey {
@@ -635,7 +497,7 @@ type WriteRequestDeletes struct {
 
 func (x *WriteRequestDeletes) Reset() {
 	*x = WriteRequestDeletes{}
-	mi := &file_extention_proto_msgTypes[10]
+	mi := &file_extention_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -647,7 +509,7 @@ func (x *WriteRequestDeletes) String() string {
 func (*WriteRequestDeletes) ProtoMessage() {}
 
 func (x *WriteRequestDeletes) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[10]
+	mi := &file_extention_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -660,7 +522,7 @@ func (x *WriteRequestDeletes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequestDeletes.ProtoReflect.Descriptor instead.
 func (*WriteRequestDeletes) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{10}
+	return file_extention_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *WriteRequestDeletes) GetTupleKeys() []*TupleKeyWithoutCondition {
@@ -682,7 +544,7 @@ type WriteRequest struct {
 
 func (x *WriteRequest) Reset() {
 	*x = WriteRequest{}
-	mi := &file_extention_proto_msgTypes[11]
+	mi := &file_extention_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -694,7 +556,7 @@ func (x *WriteRequest) String() string {
 func (*WriteRequest) ProtoMessage() {}
 
 func (x *WriteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[11]
+	mi := &file_extention_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -707,7 +569,7 @@ func (x *WriteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequest.ProtoReflect.Descriptor instead.
 func (*WriteRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{11}
+	return file_extention_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *WriteRequest) GetNamespace() string {
@@ -739,7 +601,7 @@ type WriteResponse struct {
 
 func (x *WriteResponse) Reset() {
 	*x = WriteResponse{}
-	mi := &file_extention_proto_msgTypes[12]
+	mi := &file_extention_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -751,7 +613,7 @@ func (x *WriteResponse) String() string {
 func (*WriteResponse) ProtoMessage() {}
 
 func (x *WriteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[12]
+	mi := &file_extention_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -764,7 +626,7 @@ func (x *WriteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteResponse.ProtoReflect.Descriptor instead.
 func (*WriteResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{12}
+	return file_extention_proto_rawDescGZIP(), []int{10}
 }
 
 type BatchCheckRequest struct {
@@ -779,7 +641,7 @@ type BatchCheckRequest struct {
 
 func (x *BatchCheckRequest) Reset() {
 	*x = BatchCheckRequest{}
-	mi := &file_extention_proto_msgTypes[13]
+	mi := &file_extention_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -791,7 +653,7 @@ func (x *BatchCheckRequest) String() string {
 func (*BatchCheckRequest) ProtoMessage() {}
 
 func (x *BatchCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[13]
+	mi := &file_extention_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -804,7 +666,7 @@ func (x *BatchCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckRequest.ProtoReflect.Descriptor instead.
 func (*BatchCheckRequest) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{13}
+	return file_extention_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *BatchCheckRequest) GetSubject() string {
@@ -843,7 +705,7 @@ type BatchCheckItem struct {
 
 func (x *BatchCheckItem) Reset() {
 	*x = BatchCheckItem{}
-	mi := &file_extention_proto_msgTypes[14]
+	mi := &file_extention_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -855,7 +717,7 @@ func (x *BatchCheckItem) String() string {
 func (*BatchCheckItem) ProtoMessage() {}
 
 func (x *BatchCheckItem) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[14]
+	mi := &file_extention_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -868,7 +730,7 @@ func (x *BatchCheckItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckItem.ProtoReflect.Descriptor instead.
 func (*BatchCheckItem) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{14}
+	return file_extention_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BatchCheckItem) GetVerb() string {
@@ -923,7 +785,7 @@ type BatchCheckResponse struct {
 
 func (x *BatchCheckResponse) Reset() {
 	*x = BatchCheckResponse{}
-	mi := &file_extention_proto_msgTypes[15]
+	mi := &file_extention_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -935,7 +797,7 @@ func (x *BatchCheckResponse) String() string {
 func (*BatchCheckResponse) ProtoMessage() {}
 
 func (x *BatchCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[15]
+	mi := &file_extention_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -948,7 +810,7 @@ func (x *BatchCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckResponse.ProtoReflect.Descriptor instead.
 func (*BatchCheckResponse) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{15}
+	return file_extention_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *BatchCheckResponse) GetGroups() map[string]*BatchCheckGroupResource {
@@ -968,7 +830,7 @@ type BatchCheckGroupResource struct {
 
 func (x *BatchCheckGroupResource) Reset() {
 	*x = BatchCheckGroupResource{}
-	mi := &file_extention_proto_msgTypes[16]
+	mi := &file_extention_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +842,7 @@ func (x *BatchCheckGroupResource) String() string {
 func (*BatchCheckGroupResource) ProtoMessage() {}
 
 func (x *BatchCheckGroupResource) ProtoReflect() protoreflect.Message {
-	mi := &file_extention_proto_msgTypes[16]
+	mi := &file_extention_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +855,7 @@ func (x *BatchCheckGroupResource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCheckGroupResource.ProtoReflect.Descriptor instead.
 func (*BatchCheckGroupResource) Descriptor() ([]byte, []int) {
-	return file_extention_proto_rawDescGZIP(), []int{16}
+	return file_extention_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *BatchCheckGroupResource) GetItems() map[string]bool {
@@ -1014,21 +876,7 @@ var file_extention_proto_rawDesc = []byte{
 	0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x77, 0x72, 0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x8b, 0x01, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x14,
-	0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67,
-	0x72, 0x6f, 0x75, 0x70, 0x12, 0x12, 0x0a, 0x04, 0x76, 0x65, 0x72, 0x62, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x76, 0x65, 0x72, 0x62, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63,
-	0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x22, 0x50, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x61, 0x6c, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x03, 0x61, 0x6c, 0x6c, 0x12, 0x18, 0x0a, 0x07, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x73, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x66, 0x6f, 0x6c, 0x64, 0x65, 0x72, 0x73, 0x12, 0x14,
-	0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x69,
-	0x74, 0x65, 0x6d, 0x73, 0x22, 0x9b, 0x01, 0x0a, 0x08, 0x54, 0x75, 0x70, 0x6c, 0x65, 0x4b, 0x65,
+	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9b, 0x01, 0x0a, 0x08, 0x54, 0x75, 0x70, 0x6c, 0x65, 0x4b, 0x65,
 	0x79, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f,
@@ -1150,32 +998,28 @@ var file_extention_proto_rawDesc = []byte{
 	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x32,
-	0xd8, 0x02, 0x0a, 0x15, 0x41, 0x75, 0x74, 0x68, 0x7a, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69,
-	0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x49, 0x0a, 0x04, 0x4c, 0x69, 0x73,
-	0x74, 0x12, 0x1f, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74,
-	0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x20, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x0a, 0x42, 0x61, 0x74, 0x63, 0x68, 0x43, 0x68, 0x65,
-	0x63, 0x6b, 0x12, 0x25, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x43, 0x68, 0x65,
-	0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x61, 0x75, 0x74, 0x68,
-	0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x42,
-	0x61, 0x74, 0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x49, 0x0a, 0x04, 0x52, 0x65, 0x61, 0x64, 0x12, 0x1f, 0x2e, 0x61, 0x75, 0x74, 0x68,
-	0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52,
-	0x65, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x61, 0x75, 0x74,
+	0x8d, 0x02, 0x0a, 0x15, 0x41, 0x75, 0x74, 0x68, 0x7a, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69,
+	0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x5b, 0x0a, 0x0a, 0x42, 0x61, 0x74,
+	0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x12, 0x25, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e,
+	0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x61, 0x74,
+	0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26,
+	0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x76, 0x31, 0x2e, 0x42, 0x61, 0x74, 0x63, 0x68, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x49, 0x0a, 0x04, 0x52, 0x65, 0x61, 0x64, 0x12, 0x1f,
+	0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x20, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f,
+	0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x4c, 0x0a, 0x05, 0x57, 0x72, 0x69, 0x74, 0x65, 0x12, 0x20, 0x2e, 0x61, 0x75, 0x74,
 	0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e,
-	0x52, 0x65, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4c, 0x0a, 0x05,
-	0x57, 0x72, 0x69, 0x74, 0x65, 0x12, 0x20, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78,
-	0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x72, 0x69, 0x74, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2e,
-	0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x72, 0x69,
-	0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x72, 0x61, 0x66, 0x61, 0x6e, 0x61,
-	0x2f, 0x67, 0x72, 0x61, 0x66, 0x61, 0x6e, 0x61, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x73, 0x65, 0x72,
-	0x76, 0x69, 0x63, 0x65, 0x73, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x7a, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x57, 0x72, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x61,
+	0x75, 0x74, 0x68, 0x7a, 0x2e, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76,
+	0x31, 0x2e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42,
+	0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x72,
+	0x61, 0x66, 0x61, 0x6e, 0x61, 0x2f, 0x67, 0x72, 0x61, 0x66, 0x61, 0x6e, 0x61, 0x2f, 0x70, 0x6b,
+	0x67, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x7a,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -1190,57 +1034,53 @@ func file_extention_proto_rawDescGZIP() []byte {
 	return file_extention_proto_rawDescData
 }
 
-var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_extention_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_extention_proto_goTypes = []any{
-	(*ListRequest)(nil),              // 0: authz.extention.v1.ListRequest
-	(*ListResponse)(nil),             // 1: authz.extention.v1.ListResponse
-	(*TupleKey)(nil),                 // 2: authz.extention.v1.TupleKey
-	(*Tuple)(nil),                    // 3: authz.extention.v1.Tuple
-	(*TupleKeyWithoutCondition)(nil), // 4: authz.extention.v1.TupleKeyWithoutCondition
-	(*RelationshipCondition)(nil),    // 5: authz.extention.v1.RelationshipCondition
-	(*ReadRequest)(nil),              // 6: authz.extention.v1.ReadRequest
-	(*ReadRequestTupleKey)(nil),      // 7: authz.extention.v1.ReadRequestTupleKey
-	(*ReadResponse)(nil),             // 8: authz.extention.v1.ReadResponse
-	(*WriteRequestWrites)(nil),       // 9: authz.extention.v1.WriteRequestWrites
-	(*WriteRequestDeletes)(nil),      // 10: authz.extention.v1.WriteRequestDeletes
-	(*WriteRequest)(nil),             // 11: authz.extention.v1.WriteRequest
-	(*WriteResponse)(nil),            // 12: authz.extention.v1.WriteResponse
-	(*BatchCheckRequest)(nil),        // 13: authz.extention.v1.BatchCheckRequest
-	(*BatchCheckItem)(nil),           // 14: authz.extention.v1.BatchCheckItem
-	(*BatchCheckResponse)(nil),       // 15: authz.extention.v1.BatchCheckResponse
-	(*BatchCheckGroupResource)(nil),  // 16: authz.extention.v1.BatchCheckGroupResource
-	nil,                              // 17: authz.extention.v1.BatchCheckResponse.GroupsEntry
-	nil,                              // 18: authz.extention.v1.BatchCheckGroupResource.ItemsEntry
-	(*timestamppb.Timestamp)(nil),    // 19: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),          // 20: google.protobuf.Struct
-	(*wrapperspb.Int32Value)(nil),    // 21: google.protobuf.Int32Value
+	(*TupleKey)(nil),                 // 0: authz.extention.v1.TupleKey
+	(*Tuple)(nil),                    // 1: authz.extention.v1.Tuple
+	(*TupleKeyWithoutCondition)(nil), // 2: authz.extention.v1.TupleKeyWithoutCondition
+	(*RelationshipCondition)(nil),    // 3: authz.extention.v1.RelationshipCondition
+	(*ReadRequest)(nil),              // 4: authz.extention.v1.ReadRequest
+	(*ReadRequestTupleKey)(nil),      // 5: authz.extention.v1.ReadRequestTupleKey
+	(*ReadResponse)(nil),             // 6: authz.extention.v1.ReadResponse
+	(*WriteRequestWrites)(nil),       // 7: authz.extention.v1.WriteRequestWrites
+	(*WriteRequestDeletes)(nil),      // 8: authz.extention.v1.WriteRequestDeletes
+	(*WriteRequest)(nil),             // 9: authz.extention.v1.WriteRequest
+	(*WriteResponse)(nil),            // 10: authz.extention.v1.WriteResponse
+	(*BatchCheckRequest)(nil),        // 11: authz.extention.v1.BatchCheckRequest
+	(*BatchCheckItem)(nil),           // 12: authz.extention.v1.BatchCheckItem
+	(*BatchCheckResponse)(nil),       // 13: authz.extention.v1.BatchCheckResponse
+	(*BatchCheckGroupResource)(nil),  // 14: authz.extention.v1.BatchCheckGroupResource
+	nil,                              // 15: authz.extention.v1.BatchCheckResponse.GroupsEntry
+	nil,                              // 16: authz.extention.v1.BatchCheckGroupResource.ItemsEntry
+	(*timestamppb.Timestamp)(nil),    // 17: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),          // 18: google.protobuf.Struct
+	(*wrapperspb.Int32Value)(nil),    // 19: google.protobuf.Int32Value
 }
 var file_extention_proto_depIdxs = []int32{
-	5,  // 0: authz.extention.v1.TupleKey.condition:type_name -> authz.extention.v1.RelationshipCondition
-	2,  // 1: authz.extention.v1.Tuple.key:type_name -> authz.extention.v1.TupleKey
-	19, // 2: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
-	20, // 3: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
-	7,  // 4: authz.extention.v1.ReadRequest.tuple_key:type_name -> authz.extention.v1.ReadRequestTupleKey
-	21, // 5: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
-	3,  // 6: authz.extention.v1.ReadResponse.tuples:type_name -> authz.extention.v1.Tuple
-	2,  // 7: authz.extention.v1.WriteRequestWrites.tuple_keys:type_name -> authz.extention.v1.TupleKey
-	4,  // 8: authz.extention.v1.WriteRequestDeletes.tuple_keys:type_name -> authz.extention.v1.TupleKeyWithoutCondition
-	9,  // 9: authz.extention.v1.WriteRequest.writes:type_name -> authz.extention.v1.WriteRequestWrites
-	10, // 10: authz.extention.v1.WriteRequest.deletes:type_name -> authz.extention.v1.WriteRequestDeletes
-	14, // 11: authz.extention.v1.BatchCheckRequest.items:type_name -> authz.extention.v1.BatchCheckItem
-	17, // 12: authz.extention.v1.BatchCheckResponse.groups:type_name -> authz.extention.v1.BatchCheckResponse.GroupsEntry
-	18, // 13: authz.extention.v1.BatchCheckGroupResource.items:type_name -> authz.extention.v1.BatchCheckGroupResource.ItemsEntry
-	16, // 14: authz.extention.v1.BatchCheckResponse.GroupsEntry.value:type_name -> authz.extention.v1.BatchCheckGroupResource
-	0,  // 15: authz.extention.v1.AuthzExtentionService.List:input_type -> authz.extention.v1.ListRequest
-	13, // 16: authz.extention.v1.AuthzExtentionService.BatchCheck:input_type -> authz.extention.v1.BatchCheckRequest
-	6,  // 17: authz.extention.v1.AuthzExtentionService.Read:input_type -> authz.extention.v1.ReadRequest
-	11, // 18: authz.extention.v1.AuthzExtentionService.Write:input_type -> authz.extention.v1.WriteRequest
-	1,  // 19: authz.extention.v1.AuthzExtentionService.List:output_type -> authz.extention.v1.ListResponse
-	15, // 20: authz.extention.v1.AuthzExtentionService.BatchCheck:output_type -> authz.extention.v1.BatchCheckResponse
-	8,  // 21: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
-	12, // 22: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
-	19, // [19:23] is the sub-list for method output_type
-	15, // [15:19] is the sub-list for method input_type
+	3,  // 0: authz.extention.v1.TupleKey.condition:type_name -> authz.extention.v1.RelationshipCondition
+	0,  // 1: authz.extention.v1.Tuple.key:type_name -> authz.extention.v1.TupleKey
+	17, // 2: authz.extention.v1.Tuple.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 3: authz.extention.v1.RelationshipCondition.context:type_name -> google.protobuf.Struct
+	5,  // 4: authz.extention.v1.ReadRequest.tuple_key:type_name -> authz.extention.v1.ReadRequestTupleKey
+	19, // 5: authz.extention.v1.ReadRequest.page_size:type_name -> google.protobuf.Int32Value
+	1,  // 6: authz.extention.v1.ReadResponse.tuples:type_name -> authz.extention.v1.Tuple
+	0,  // 7: authz.extention.v1.WriteRequestWrites.tuple_keys:type_name -> authz.extention.v1.TupleKey
+	2,  // 8: authz.extention.v1.WriteRequestDeletes.tuple_keys:type_name -> authz.extention.v1.TupleKeyWithoutCondition
+	7,  // 9: authz.extention.v1.WriteRequest.writes:type_name -> authz.extention.v1.WriteRequestWrites
+	8,  // 10: authz.extention.v1.WriteRequest.deletes:type_name -> authz.extention.v1.WriteRequestDeletes
+	12, // 11: authz.extention.v1.BatchCheckRequest.items:type_name -> authz.extention.v1.BatchCheckItem
+	15, // 12: authz.extention.v1.BatchCheckResponse.groups:type_name -> authz.extention.v1.BatchCheckResponse.GroupsEntry
+	16, // 13: authz.extention.v1.BatchCheckGroupResource.items:type_name -> authz.extention.v1.BatchCheckGroupResource.ItemsEntry
+	14, // 14: authz.extention.v1.BatchCheckResponse.GroupsEntry.value:type_name -> authz.extention.v1.BatchCheckGroupResource
+	11, // 15: authz.extention.v1.AuthzExtentionService.BatchCheck:input_type -> authz.extention.v1.BatchCheckRequest
+	4,  // 16: authz.extention.v1.AuthzExtentionService.Read:input_type -> authz.extention.v1.ReadRequest
+	9,  // 17: authz.extention.v1.AuthzExtentionService.Write:input_type -> authz.extention.v1.WriteRequest
+	13, // 18: authz.extention.v1.AuthzExtentionService.BatchCheck:output_type -> authz.extention.v1.BatchCheckResponse
+	6,  // 19: authz.extention.v1.AuthzExtentionService.Read:output_type -> authz.extention.v1.ReadResponse
+	10, // 20: authz.extention.v1.AuthzExtentionService.Write:output_type -> authz.extention.v1.WriteResponse
+	18, // [18:21] is the sub-list for method output_type
+	15, // [15:18] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
 	15, // [15:15] is the sub-list for extension extendee
 	0,  // [0:15] is the sub-list for field type_name
@@ -1257,7 +1097,7 @@ func file_extention_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_extention_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

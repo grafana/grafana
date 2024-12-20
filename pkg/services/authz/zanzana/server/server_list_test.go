@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 func testList(t *testing.T, server *Server) {
-	newList := func(subject, group, resource string) *authzextv1.ListRequest {
-		return &authzextv1.ListRequest{
+	newList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
 			Namespace: namespace,
 			Verb:      utils.VerbList,
 			Subject:   subject,

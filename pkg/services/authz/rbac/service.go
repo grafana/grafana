@@ -100,7 +100,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
-func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.List")
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
@@ -108,7 +108,7 @@ func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authz
 	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
-		return &authzextv1.ListResponse{}, err
+		return &authzv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
@@ -150,7 +150,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	return checkReq, nil
 }
 
-func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListRequest) (*ListRequest, error) {
+func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*ListRequest, error) {
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
@@ -458,9 +458,9 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	return res.(map[string]FolderNode), nil
 }
 
-func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzextv1.ListResponse, error) {
+func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
 	if scopeMap["*"] {
-		return &authzextv1.ListResponse{All: true}, nil
+		return &authzv1.ListResponse{All: true}, nil
 	}
 
 	ctxLogger := s.logger.FromContext(ctx)
@@ -497,7 +497,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		dashList = append(dashList, dash)
 	}
 
-	return &authzextv1.ListResponse{Folders: folderList, Items: dashList}, nil
+	return &authzv1.ListResponse{Folders: folderList, Items: dashList}, nil
 }
 
 func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
