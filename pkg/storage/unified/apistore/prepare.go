@@ -56,6 +56,15 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
+	if s.opts.RequireDeprecatedInternalID {
+		// nolint:staticcheck
+		id := obj.GetDeprecatedInternalID()
+		if id < 1 {
+			// nolint:staticcheck
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+		}
+	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
