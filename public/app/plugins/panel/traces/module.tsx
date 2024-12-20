@@ -1,7 +1,6 @@
-import { useMemo } from 'react';
+import { PanelPlugin, toOption } from '@grafana/data';
 
-import { PanelPlugin } from '@grafana/data';
-
+import { getTraceServiceNames, getTraceSpanNames } from '../../../features/explore/TraceView/utils/tags';
 import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
 
 import { TagsEditor } from './TagsEditor';
@@ -11,9 +10,7 @@ import { TracesSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin(TracesPanel)
   .setPanelOptions((builder, context) => {
     const category = ['Span filters'];
-    console.log(context);
-
-    const traceProp = useMemo(() => transformDataFrames(context.data[0]), [context.data]);
+    const trace = transformDataFrames(context.data[0]);
 
     // Find
     builder
@@ -37,10 +34,14 @@ export const plugin = new PanelPlugin(TracesPanel)
 
     // Service name
     builder
-      .addTextInput({
+      .addSelect({
         path: 'spanFilters.serviceName',
         name: 'Service name',
         category,
+        settings: {
+          options: trace ? getTraceServiceNames(trace).map(toOption) : [],
+          allowCustomValue: true,
+        },
       })
       .addRadio({
         path: 'spanFilters.serviceNameOperator',
@@ -57,10 +58,14 @@ export const plugin = new PanelPlugin(TracesPanel)
 
     // Span name
     builder
-      .addTextInput({
+      .addSelect({
         path: 'spanFilters.spanName',
         name: 'Span name',
         category,
+        settings: {
+          options: trace ? getTraceSpanNames(trace).map(toOption) : [],
+          allowCustomValue: true,
+        },
       })
       .addRadio({
         path: 'spanFilters.spanNameOperator',
@@ -91,7 +96,7 @@ export const plugin = new PanelPlugin(TracesPanel)
     builder.addCustomEditor({
       id: 'tags',
       name: 'Tags',
-      path: 'tags',
+      path: 'spanFilters.tags',
       category,
       editor: TagsEditor,
       defaultValue: undefined,

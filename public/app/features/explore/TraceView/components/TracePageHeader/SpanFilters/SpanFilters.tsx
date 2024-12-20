@@ -13,8 +13,6 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { SpanStatusCode } from '@opentelemetry/api';
-import { uniq } from 'lodash';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
@@ -33,8 +31,8 @@ import {
 } from '@grafana/ui';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
+import { getTraceServiceNames, getTraceSpanNames, getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
@@ -108,130 +106,24 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
   const getServiceNames = () => {
     if (!serviceNames) {
-      const serviceNames = trace.spans.map((span) => {
-        return span.process.serviceName;
-      });
-      setServiceNames(uniq(serviceNames).sort().map(toOption));
+      setServiceNames(getTraceServiceNames(trace).map(toOption));
     }
   };
 
   const getSpanNames = () => {
     if (!spanNames) {
-      const spanNames = trace.spans.map((span) => {
-        return span.operationName;
-      });
-      setSpanNames(uniq(spanNames).sort().map(toOption));
+      setSpanNames(getTraceSpanNames(trace).map(toOption));
     }
   };
 
   const getTagKeys = () => {
     if (!tagKeys) {
-      let keys: string[] = [];
-      let logKeys: string[] = [];
-
-      trace.spans.forEach((span) => {
-        span.tags.forEach((tag) => {
-          keys.push(tag.key);
-        });
-        span.process.tags.forEach((tag) => {
-          keys.push(tag.key);
-        });
-        if (span.logs !== null) {
-          span.logs.forEach((log) => {
-            log.fields.forEach((field) => {
-              logKeys.push(field.key);
-            });
-          });
-        }
-
-        if (span.kind) {
-          keys.push(KIND);
-        }
-        if (span.statusCode !== undefined) {
-          keys.push(STATUS);
-        }
-        if (span.statusMessage) {
-          keys.push(STATUS_MESSAGE);
-        }
-        if (span.instrumentationLibraryName) {
-          keys.push(LIBRARY_NAME);
-        }
-        if (span.instrumentationLibraryVersion) {
-          keys.push(LIBRARY_VERSION);
-        }
-        if (span.traceState) {
-          keys.push(TRACE_STATE);
-        }
-        keys.push(ID);
-      });
-      keys = uniq(keys).sort();
-      logKeys = uniq(logKeys).sort();
-
-      setTagKeys([...keys, ...logKeys].map(toOption));
+      setTagKeys(getTraceTagKeys(trace).map(toOption));
     }
   };
 
-  const getTagValues = async (key: string) => {
-    const values: string[] = [];
-
-    trace.spans.forEach((span) => {
-      const tagValue = span.tags.find((t) => t.key === key)?.value;
-      if (tagValue) {
-        values.push(tagValue.toString());
-      }
-      const processTagValue = span.process.tags.find((t) => t.key === key)?.value;
-      if (processTagValue) {
-        values.push(processTagValue.toString());
-      }
-      if (span.logs !== null) {
-        span.logs.forEach((log) => {
-          const logsTagValue = log.fields.find((t) => t.key === key)?.value;
-          if (logsTagValue) {
-            values.push(logsTagValue.toString());
-          }
-        });
-      }
-
-      switch (key) {
-        case KIND:
-          if (span.kind) {
-            values.push(span.kind);
-          }
-          break;
-        case STATUS:
-          if (span.statusCode !== undefined) {
-            values.push(SpanStatusCode[span.statusCode].toLowerCase());
-          }
-          break;
-        case STATUS_MESSAGE:
-          if (span.statusMessage) {
-            values.push(span.statusMessage);
-          }
-          break;
-        case LIBRARY_NAME:
-          if (span.instrumentationLibraryName) {
-            values.push(span.instrumentationLibraryName);
-          }
-          break;
-        case LIBRARY_VERSION:
-          if (span.instrumentationLibraryVersion) {
-            values.push(span.instrumentationLibraryVersion);
-          }
-          break;
-        case TRACE_STATE:
-          if (span.traceState) {
-            values.push(span.traceState);
-          }
-          break;
-        case ID:
-          values.push(span.spanID);
-          break;
-        default:
-          break;
-      }
-    });
-
-    return uniq(values).sort().map(toOption);
+  const getTagValues = (key: string) => {
+    return getTraceTagValues(trace, key).map(toOption);
   };
 
   const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
@@ -246,7 +138,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       if (v?.value) {
         setTagValues({
           ...tagValues,
-          [tag.id]: await getTagValues(v.value),
+          [tag.id]: getTagValues(v.value),
         });
       } else {
         // removed value
