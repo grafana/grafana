@@ -344,7 +344,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 		return cached.(map[string]FolderNode), nil
 	}
 
-	res, err, _ := s.sf.Do(key, func() (interface{}, error) {
+	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
 		folders, err := s.store.GetFolders(ctx, ns)
 		if err != nil {
 			return nil, fmt.Errorf("could not get folders: %w", err)
