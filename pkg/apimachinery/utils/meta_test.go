@@ -162,7 +162,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.NoError(t, err)
 
 		// should return 0 when not set
-		require.Equal(t, meta.GetDepreactedInternalID(), int64(0))
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(0))
 
 		// 0 is not allowed
 		meta.SetDeprecatedInternalID(0)
@@ -173,7 +173,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/deprecatedInternalID": "1",
 		}, res.GetLabels())
-		require.Equal(t, meta.GetDepreactedInternalID(), int64(1))
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1))
 	})
 
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
