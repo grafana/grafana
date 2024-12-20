@@ -211,7 +211,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
     }
 
-    if (query?.tags?.length && query?.tags?.length > 0) {
+    if (query.tags?.length) {
       uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }
 
