@@ -22,6 +22,7 @@ message ListRequest {
   string verb = 3;
   string resource = 4;
   string namespace = 5;
+  string subresource = 6;
 }
 
 message ListResponse {

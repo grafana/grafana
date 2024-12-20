@@ -21,8 +21,9 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
+	resource := common.NewResourceInfoFromList(r)
 
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
 		return nil, err
 	}
@@ -31,11 +32,11 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 		return &authzextv1.ListResponse{All: true}, nil
 	}
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.listTyped(ctx, r.GetSubject(), relation, info, store)
+	if resource.IsGeneric() {
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, store)
 	}
 
-	return s.listGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
+	return s.listTyped(ctx, r.GetSubject(), relation, resource, store)
 }
 
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
@@ -45,8 +46,8 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 	return s.openfga.ListObjects(ctx, req)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, info common.TypeInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
-	if !info.IsValidRelation(relation) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
+	if !resource.IsValidRelation(relation) {
 		return &authzextv1.ListResponse{}, nil
 	}
 
@@ -54,7 +55,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, info c
 	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
-		Type:                 info.Type,
+		Type:                 resource.Type(),
 		Relation:             relation,
 		User:                 subject,
 	})
@@ -63,14 +64,14 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, info c
 	}
 
 	return &authzextv1.ListResponse{
-		Items: typedObjects(info.Type, res.GetObjects()),
+		Items: typedObjects(resource.Type(), res.GetObjects()),
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzextv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
 	var (
-		resourceCtx    = common.NewResourceContext(group, resource)
 		folderRelation = common.FolderResourceRelation(relation)
+		resourceCtx    = resource.Context()
 	)
 
 	// 1. List all folders subject has access to resource type in
@@ -93,8 +94,8 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 	}
 
 	// 2. List all resource directly assigned to subject
-	var resources []string
-	if common.IsResourceRelation(relation) {
+	var objects []string
+	if resource.IsValidRelation(relation) {
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
@@ -107,12 +108,12 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 			return nil, err
 		}
 
-		resources = res.GetObjects()
+		objects = res.GetObjects()
 	}
 
 	return &authzextv1.ListResponse{
 		Folders: folderObject(folders),
-		Items:   directObjects(group, resource, resources),
+		Items:   directObjects(resource.GroupResource(), objects),
 	}, nil
 }
 
@@ -124,8 +125,8 @@ func typedObjects(typ string, objects []string) []string {
 	return objects
 }
 
-func directObjects(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:%s/%s/", resourceType, group, resource)
+func directObjects(gr string, objects []string) []string {
+	prefix := fmt.Sprintf("%s:%s/", resourceType, gr)
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
