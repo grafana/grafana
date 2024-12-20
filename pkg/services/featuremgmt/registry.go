@@ -1719,6 +1719,20 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "folderCounts",
+			Description: "Enable folder's api server counts",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "folderMove",
+			Description: "Enable folder's api server move",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+		},
 	}
 )
 
