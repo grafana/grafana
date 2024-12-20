@@ -308,9 +308,13 @@ export async function callSuggestionsApi(
  *     - these are the non promoted resources
  *     - [x] if it is a resource attribute, it should be stored as such so it can be filtered in the join
  *   d. [x] Add selected otel resources to the hidden variable
+ *   e. [x] when a filter is changed, change the correct filter
  * 4. Remove special the deployment environment variable totally
- *   a. automatically select deployment_environment OR environment if it exists
- *   b. if deployment environment is promoted, this is fine and we can support more otel data sources
+ *   a. [x] automatically select deployment_environment OR environment if it exists
+ *   b. [ ] everywhere that the deployment environment is used remove it
+ *        - [ ] confirm removal of otel dep env in historyy
+ *   c. if deployment environment is promoted, this is fine and we can support more otel data sources
+ *   d. update definition of isStandard OTel and check for job and instance instead
  *      - we did not support those that did not have them on target_info before
  * 5. Migrate any variable url values to adhoc to show them in the new filter
  *   a. otel filter
