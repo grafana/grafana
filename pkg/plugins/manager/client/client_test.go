@@ -73,6 +73,31 @@ func TestQueryData(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("QueryData panic should be recovered", func(t *testing.T) {
+		registry := fakes.NewFakePluginRegistry()
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "grafana",
+			},
+		}
+		p.RegisterClient(&fakePluginBackend{
+			qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				panic("QueryData panicking")
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry)
+		_, err = client.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "grafana",
+			},
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "QueryData panicking")
+	})
 }
 
 func TestCheckHealth(t *testing.T) {
@@ -134,6 +159,31 @@ func TestCheckHealth(t *testing.T) {
 				require.ErrorIs(t, err, tc.expectedError)
 			})
 		}
+	})
+
+	t.Run("CheckHealth panic should be recovered", func(t *testing.T) {
+		registry := fakes.NewFakePluginRegistry()
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "grafana",
+			},
+		}
+		p.RegisterClient(&fakePluginBackend{
+			chr: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+				panic("CheckHealth panicking")
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry)
+		_, err = client.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "grafana",
+			},
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "CheckHealth panicking")
 	})
 }
 
@@ -422,6 +472,37 @@ func TestCallResource(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("CallResource panic should be recovered", func(t *testing.T) {
+		registry := fakes.NewFakePluginRegistry()
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "grafana",
+			},
+		}
+
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "grafana",
+			},
+		}
+		sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+			return nil
+		})
+
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				panic("CallResource panicking")
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry)
+		err = client.CallResource(context.Background(), req, sender)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "CallResource panicking")
 	})
 }
 
