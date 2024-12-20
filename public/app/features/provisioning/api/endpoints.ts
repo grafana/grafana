@@ -387,7 +387,6 @@ export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
 };
-
 export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
   name: string;
@@ -517,6 +516,7 @@ export type RepositorySpec = {
 };
 export type HealthStatus = {
   checked?: number;
+  generation?: number;
   healthy: boolean;
   message?: string[];
 };
