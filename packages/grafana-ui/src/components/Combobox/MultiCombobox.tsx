@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
@@ -42,7 +42,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
 
-  const [items, _baseSetItems] = useState(isAsync ? [] : options);
+  const [items, baseSetItems] = useState(isAsync ? [] : options);
+
+  // TODO: Improve this with async
+  useEffect(() => {
+    baseSetItems(isAsync ? [] : options);
+  }, [options, isAsync]);
+
   const [isOpen, setIsOpen] = useState(false);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
