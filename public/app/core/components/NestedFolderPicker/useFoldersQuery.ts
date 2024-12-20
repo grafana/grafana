@@ -7,6 +7,7 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { useRepositoryList } from 'app/features/provisioning/hooks';
 import { RootState } from 'app/store/configureStore';
 import { FolderListItemDTO, PermissionLevelString } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -101,6 +102,8 @@ export function useFoldersQuery(
     return listAllFoldersSelector(rootState, requestsRef.current);
   });
 
+  const [repositoryConfigs] = useRepositoryList();
+
   // Loads the next page of folders for the given parent UID by inspecting the
   // state to determine what the next page is
   const requestNextPage = useCallback(
@@ -146,7 +149,7 @@ export function useFoldersQuery(
 
         return pageItems.flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
-
+          const repo = repositoryConfigs?.find((repo) => repo.spec?.folder === item.uid);
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),
             level: level,
@@ -154,6 +157,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
+              repository: repo?.metadata?.name,
             },
           };
 
@@ -179,7 +183,7 @@ export function useFoldersQuery(
     rootFlatTree.unshift(ROOT_FOLDER_ITEM);
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, repositoryConfigs]);
 
   return {
     items: treeList,

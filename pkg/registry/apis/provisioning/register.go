@@ -177,16 +177,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	b.jobs.Register(jobs.NewJobWorker(
-		b,
-		b.parsers,
-		b.identities,
-		b.logger.With("worker", "github"),
-		b.render,
-		b.blobstore,
-		b.urlProvider,
-	))
-
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
@@ -402,6 +392,17 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				client:        c.ProvisioningV0alpha1(),
 				logger:        slog.Default().With("logger", "provisioning-repository-tester"),
 			}
+
+			b.jobs.Register(jobs.NewJobWorker(
+				b,
+				b.parsers,
+				c.ProvisioningV0alpha1(),
+				b.identities,
+				b.logger.With("worker", "github"),
+				b.render,
+				b.blobstore,
+				b.urlProvider,
+			))
 
 			repoController, err := NewRepositoryController(
 				c.ProvisioningV0alpha1(),
