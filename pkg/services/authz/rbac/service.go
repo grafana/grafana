@@ -8,6 +8,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -48,6 +49,10 @@ type Service struct {
 	permCache      *localcache.CacheService
 	teamCache      *localcache.CacheService
 	basicRoleCache *localcache.CacheService
+	folderCache    *localcache.CacheService
+
+	// Deduplication of concurrent requests
+	sf *singleflight.Group
 }
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
@@ -61,6 +66,8 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
+		sf:             new(singleflight.Group),
 	}
 }
 
@@ -332,36 +339,50 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 }
 
 func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
-	folders, err := s.store.GetFolders(ctx, ns)
+	key := folderCacheKey(ns.Value)
+	if cached, ok := s.folderCache.Get(key); ok {
+		return cached.(map[string]FolderNode), nil
+	}
+
+	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
+		folders, err := s.store.GetFolders(ctx, ns)
+		if err != nil {
+			return nil, fmt.Errorf("could not get folders: %w", err)
+		}
+
+		folderMap := make(map[string]FolderNode, len(folders))
+		for _, folder := range folders {
+			if node, has := folderMap[folder.UID]; !has {
+				folderMap[folder.UID] = FolderNode{
+					uid:       folder.UID,
+					parentUID: folder.ParentUID,
+				}
+			} else {
+				node.parentUID = folder.ParentUID
+				folderMap[folder.UID] = node
+			}
+			// Register that the parent has this child node
+			if folder.ParentUID == nil {
+				continue
+			}
+			if parent, has := folderMap[*folder.ParentUID]; has {
+				parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
+				folderMap[*folder.ParentUID] = parent
+			} else {
+				folderMap[*folder.ParentUID] = FolderNode{
+					uid:          *folder.ParentUID,
+					childrenUIDs: []string{folder.UID},
+				}
+			}
+		}
+
+		s.folderCache.Set(key, folderMap, 0)
+		return folderMap, nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("could not get folders: %w", err)
+		return nil, err
 	}
 
-	folderMap := make(map[string]FolderNode, len(folders))
-	for _, folder := range folders {
-		if node, has := folderMap[folder.UID]; !has {
-			folderMap[folder.UID] = FolderNode{
-				uid:       folder.UID,
-				parentUID: folder.ParentUID,
-			}
-		} else {
-			node.parentUID = folder.ParentUID
-			folderMap[folder.UID] = node
-		}
-		// Register that the parent has this child node
-		if folder.ParentUID == nil {
-			continue
-		}
-		if parent, has := folderMap[*folder.ParentUID]; has {
-			parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
-			folderMap[*folder.ParentUID] = parent
-		} else {
-			folderMap[*folder.ParentUID] = FolderNode{
-				uid:          *folder.ParentUID,
-				childrenUIDs: []string{folder.UID},
-			}
-		}
-	}
-
-	return folderMap, nil
+	return res.(map[string]FolderNode), nil
 }

@@ -39,7 +39,7 @@ export function ensureV2Response(
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
-    tags: dashboard.tags,
+    tags: dashboard.tags ?? [],
     schemaVersion: dashboard.schemaVersion,
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
@@ -118,6 +118,7 @@ export function ensureV1Response(
         isFolder: false,
         uid: dashboard.metadata.name,
         k8s: dashboard.metadata,
+        version: parseInt(dashboard.metadata.resourceVersion, 10),
       },
       dashboard: spec,
     };
