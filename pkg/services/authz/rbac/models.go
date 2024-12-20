@@ -13,6 +13,15 @@ type CheckRequest struct {
 	ParentFolder string
 }
 
+type ListRequest struct {
+	Namespace claims.NamespaceInfo
+	UserUID   string
+	Group     string
+	Resource  string
+	Verb      string
+	Action    string
+}
+
 type FolderNode struct {
 	uid          string
 	parentUID    *string

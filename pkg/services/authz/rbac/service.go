@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -78,14 +79,14 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 
 	deny := &authzv1.CheckResponse{Allowed: false}
 
-	checkReq, err := s.validateRequest(ctx, req)
+	checkReq, err := s.validateCheckRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
 		return deny, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, checkReq)
+	permissions, err := s.getUserPermissions(ctx, checkReq.Namespace, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return deny, err
@@ -99,47 +100,41 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
-func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
+func (s *Service) List(ctx context.Context, req *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.List")
+	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	if req.GetNamespace() == "" {
-		return nil, status.Error(codes.InvalidArgument, "namespace is required")
-	}
-	authInfo, has := claims.From(ctx)
-	if !has {
-		return nil, status.Error(codes.Internal, "could not get auth info from context")
-	}
-	if !claims.NamespaceMatches(authInfo.GetNamespace(), req.GetNamespace()) {
-		return nil, status.Error(codes.PermissionDenied, "namespace does not match")
-	}
-
-	ns, err := claims.ParseNamespace(req.GetNamespace())
+	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
-		ctxLogger.Error("could not parse namespace", "namespace", req.GetNamespace(), "error", err)
+		ctxLogger.Error("invalid request", "error", err)
+		return &authzextv1.ListResponse{}, err
+	}
+	ctx = request.WithNamespace(ctx, req.GetNamespace())
+
+	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.UserUID, listReq.Action)
+	if err != nil {
+		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return nil, err
 	}
 
-	if req.GetSubject() == "" {
-		return nil, status.Error(codes.InvalidArgument, "subject is required")
-	}
-	user := req.GetSubject()
-	identityType, userUID, err := claims.ParseTypeID(user)
+	return s.listPermission(ctx, permissions, listReq)
+}
+
+func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
+	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
-		ctxLogger.Error("could not parse subject", "subject", user, "error", err)
 		return nil, err
 	}
-	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
-		ctxLogger.Warn("unsupported identity type", "type", identityType)
+
+	userUID, err := s.validateSubject(ctx, req.GetSubject())
+	if err != nil {
+		return nil, err
 	}
 
-	if req.GetGroup() == "" || req.GetResource() == "" || req.GetVerb() == "" {
-		return nil, status.Error(codes.InvalidArgument, "group, resource and verb are required")
-	}
-	action, ok := s.actionMapper.Action(req.GetGroup(), req.GetResource(), req.GetVerb())
-	if !ok {
-		ctxLogger.Error("could not find associated rbac action", "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb())
-		return nil, status.Error(codes.NotFound, "could not find associated rbac action")
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	if err != nil {
+		return nil, err
 	}
 
 	checkReq := &CheckRequest{
@@ -155,36 +150,112 @@ func (s *Service) validateRequest(ctx context.Context, req *authzv1.CheckRequest
 	return checkReq, nil
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (map[string]bool, error) {
-	userIdentifiers, err := s.GetUserIdentifiers(ctx, req)
+func (s *Service) validateListRequest(ctx context.Context, req *authzextv1.ListRequest) (*ListRequest, error) {
+	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
-	userPermKey := userPermCacheKey(req.Namespace.Value, userIdentifiers.UID, req.Action)
+	userUID, err := s.validateSubject(ctx, req.GetSubject())
+	if err != nil {
+		return nil, err
+	}
+
+	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	if err != nil {
+		return nil, err
+	}
+
+	listReq := &ListRequest{
+		Namespace: ns,
+		UserUID:   userUID,
+		Action:    action,
+		Group:     req.GetGroup(),
+		Resource:  req.GetResource(),
+		Verb:      req.GetVerb(),
+	}
+	return listReq, nil
+}
+
+func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
+	if nameSpace == "" {
+		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
+	}
+	authInfo, has := claims.From(ctx)
+	if !has {
+		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
+	}
+	if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
+		return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
+	}
+
+	ns, err := claims.ParseNamespace(nameSpace)
+	if err != nil {
+		return claims.NamespaceInfo{}, err
+	}
+	return ns, nil
+}
+
+func (s *Service) validateSubject(ctx context.Context, subject string) (string, error) {
+	if subject == "" {
+		return "", status.Error(codes.InvalidArgument, "subject is required")
+	}
+
+	ctxLogger := s.logger.FromContext(ctx)
+	identityType, userUID, err := claims.ParseTypeID(subject)
+	if err != nil {
+		return "", err
+	}
+	// Permission check currently only checks user and service account permissions, so might return a false negative for other types
+	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount) {
+		ctxLogger.Warn("unsupported identity type", "type", identityType)
+	}
+	return userUID, nil
+}
+
+func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+	if group == "" || resource == "" || verb == "" {
+		return "", status.Error(codes.InvalidArgument, "group, resource and verb are required")
+	}
+	action, ok := s.actionMapper.Action(group, resource, verb)
+	if !ok {
+		ctxLogger.Error("could not find associated rbac action", "group", group, "resource", resource, "verb", verb)
+		return "", status.Error(codes.NotFound, "could not find associated rbac action")
+	}
+	return action, nil
+}
+
+func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string) (map[string]bool, error) {
+	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
 	if cached, ok := s.permCache.Get(userPermKey); ok {
 		return cached.(map[string]bool), nil
 	}
 
-	basicRoles, err := s.getUserBasicRole(ctx, req, userIdentifiers)
+	basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
 	if err != nil {
 		return nil, err
 	}
 
-	teamIDs, err := s.getUserTeams(ctx, req, userIdentifiers)
+	teamIDs, err := s.getUserTeams(ctx, ns, userIdentifiers)
 	if err != nil {
 		return nil, err
 	}
 
 	userPermQuery := store.PermissionsQuery{
 		UserID:        userIdentifiers.ID,
-		Action:        req.Action,
+		Action:        action,
 		TeamIDs:       teamIDs,
 		Role:          basicRoles.Role,
 		IsServerAdmin: basicRoles.IsAdmin,
 	}
 
-	permissions, err := s.store.GetUserPermissions(ctx, req.Namespace, userPermQuery)
+	permissions, err := s.store.GetUserPermissions(ctx, ns, userPermQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -193,23 +264,23 @@ func (s *Service) getUserPermissions(ctx context.Context, req *CheckRequest) (ma
 	return scopeMap, nil
 }
 
-func (s *Service) GetUserIdentifiers(ctx context.Context, req *CheckRequest) (*store.UserIdentifiers, error) {
-	uidCacheKey := userIdentifierCacheKey(req.Namespace.Value, req.UserUID)
+func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
+	uidCacheKey := userIdentifierCacheKey(ns.Value, userUID)
 	if cached, ok := s.idCache.Get(uidCacheKey); ok {
 		return cached.(*store.UserIdentifiers), nil
 	}
 
-	idCacheKey := userIdentifierCacheKeyById(req.Namespace.Value, req.UserUID)
+	idCacheKey := userIdentifierCacheKeyById(ns.Value, userUID)
 	if cached, ok := s.idCache.Get(idCacheKey); ok {
 		return cached.(*store.UserIdentifiers), nil
 	}
 
 	var userIDQuery store.UserIdentifierQuery
 	// Assume that numeric UID is user ID
-	if userID, err := strconv.Atoi(req.UserUID); err == nil {
+	if userID, err := strconv.Atoi(userUID); err == nil {
 		userIDQuery = store.UserIdentifierQuery{UserID: int64(userID)}
 	} else {
-		userIDQuery = store.UserIdentifierQuery{UserUID: req.UserUID}
+		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
 	}
 	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
 	if err != nil {
@@ -222,9 +293,9 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, req *CheckRequest) (*s
 	return userIdentifiers, nil
 }
 
-func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
 	teamIDs := make([]int64, 0, 50)
-	teamsCacheKey := userTeamCacheKey(req.Namespace.Value, userIdentifiers.UID)
+	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
 	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
 		return cached.([]int64), nil
 	}
@@ -235,7 +306,7 @@ func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdent
 	}
 
 	for {
-		teams, err := s.identityStore.ListUserTeams(ctx, req.Namespace, teamQuery)
+		teams, err := s.identityStore.ListUserTeams(ctx, ns, teamQuery)
 		if err != nil {
 			return nil, fmt.Errorf("could not get user teams: %w", err)
 		}
@@ -252,13 +323,13 @@ func (s *Service) getUserTeams(ctx context.Context, req *CheckRequest, userIdent
 	return teamIDs, nil
 }
 
-func (s *Service) getUserBasicRole(ctx context.Context, req *CheckRequest, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
-	basicRoleKey := userBasicRoleCacheKey(req.Namespace.Value, userIdentifiers.UID)
+func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+	basicRoleKey := userBasicRoleCacheKey(ns.Value, userIdentifiers.UID)
 	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
 		return cached.(store.BasicRole), nil
 	}
 
-	basicRole, err := s.store.GetBasicRoles(ctx, req.Namespace, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
 	if err != nil {
 		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
 	}
@@ -385,4 +456,61 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	}
 
 	return res.(map[string]FolderNode), nil
+}
+
+func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzextv1.ListResponse, error) {
+	if scopeMap["*"] {
+		return &authzextv1.ListResponse{All: true}, nil
+	}
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
+	if err != nil {
+		ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+		return nil, err
+	}
+
+	folderSet := make(map[string]struct{}, len(scopeMap))
+	dashSet := make(map[string]struct{}, len(scopeMap))
+	for scope := range scopeMap {
+		if strings.HasPrefix(scope, "folders:uid:") {
+			identifier := scope[len("folders:uid:"):]
+			if _, ok := folderSet[identifier]; ok {
+				continue
+			}
+			folderSet[identifier] = struct{}{}
+			getChildren(folderMap, identifier, folderSet)
+		} else if strings.HasPrefix(scope, "dashboards:uid:") {
+			identifier := scope[len("dashboards:uid:"):]
+			dashSet[identifier] = struct{}{}
+		}
+	}
+
+	folderList := make([]string, 0, len(folderSet))
+	for folder := range folderSet {
+		folderList = append(folderList, folder)
+	}
+
+	dashList := make([]string, 0, len(dashSet))
+	for dash := range dashSet {
+		dashList = append(dashList, dash)
+	}
+
+	return &authzextv1.ListResponse{Folders: folderList, Items: dashList}, nil
+}
+
+func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
+	folder, has := folderMap[folderUID]
+	if !has {
+		return
+	}
+	for _, child := range folder.childrenUIDs {
+		// We have already processed all the children of this folder
+		if _, ok := folderSet[child]; ok {
+			return
+		}
+		folderSet[child] = struct{}{}
+		getChildren(folderMap, child, folderSet)
+	}
 }
