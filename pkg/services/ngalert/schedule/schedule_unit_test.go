@@ -798,6 +798,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		alertRule1 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(true),
 		).GenerateRef()
 
 		t.Run("it should show one rule in a single org", func(t *testing.T) {
@@ -806,6 +807,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
 								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_notifications_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
 				`, alertRule1.OrgID)
 
@@ -824,6 +826,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
 								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_notifications_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[2]d",setting="simplified_query_and_expressions_section"} 1
 				`, alertRule1.OrgID, alertRule2.OrgID)
