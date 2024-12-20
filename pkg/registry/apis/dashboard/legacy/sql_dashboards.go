@@ -338,14 +338,9 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return dash, false, err
 	}
 
-	id := dash.Spec.GetNestedInt64("id")
-	if id == 0 {
-		return nil, false, fmt.Errorf("could not find id in saved body")
-	}
-
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 		OrgID: orgId,
-		ID:    id,
+		UID:   dash.Name,
 	})
 	if err != nil {
 		return nil, false, err
