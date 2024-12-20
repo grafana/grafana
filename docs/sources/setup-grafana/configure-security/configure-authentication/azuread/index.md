@@ -70,7 +70,11 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
         - Description: Grafana OAuth.
         - Audience: The audience value that must appear in the external token. For Public cloud, it would be `api://AzureADTokenExchange`. See mentioned documentation for the full list of available audiences.
 
-     2. Click **Add**, and then copy the Managed Identity Client ID and the federated credential Audience values. This is your OAuth federated credential.
+     2. Click **Add** then copy the key **Value**. This is the OAuth client secret.
+
+     {{% admonition type="note" %}}
+     Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
+     {{% /admonition %}}
 
      3. The setting `client_authentication` under `[auth.azuread]` must be set to `managed_identity` for this to work.
 
