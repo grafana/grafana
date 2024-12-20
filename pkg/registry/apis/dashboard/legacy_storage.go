@@ -66,8 +66,8 @@ func (s *storeWrapper) Create(ctx context.Context, obj runtime.Object, createVal
 	if access != nil && access.DashboardID > 0 {
 		meta, _ := utils.MetaAccessor(obj)
 		if meta != nil {
-			// nolint:staticcheck
-			meta.SetDeprecatedInternalID(access.DashboardID)
+			// skip the linter error for deprecated function
+			meta.SetDeprecatedInternalID(access.DashboardID) //nolint:staticcheck
 		}
 	}
 	return obj, err
@@ -81,7 +81,8 @@ func (s *storeWrapper) Update(ctx context.Context, name string, objInfo rest.Upd
 	if access != nil && access.DashboardID > 0 {
 		meta, _ := utils.MetaAccessor(obj)
 		if meta != nil {
-			meta.SetDeprecatedInternalID(access.DashboardID)
+			// skip the linter error for deprecated function
+			meta.SetDeprecatedInternalID(access.DashboardID) //nolint:staticcheck
 		}
 	}
 	return obj, created, err
