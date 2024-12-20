@@ -9,7 +9,6 @@ import { areQueriesTransformableToSimpleCondition } from '../../../rule-editor/f
 
 import { SimpleCondition, getSimpleConditionFromExpressions } from './SimpleCondition';
 
-
 function initializeSimpleCondition(
   isGrafanaAlertingType: boolean,
   dataQueries: Array<AlertQuery<AlertDataQuery>>,

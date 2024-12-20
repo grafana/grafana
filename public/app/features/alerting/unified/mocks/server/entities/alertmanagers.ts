@@ -1,7 +1,7 @@
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import {
-    getUserDefinedRoutingTree,
-    setRoutingTree,
+  getUserDefinedRoutingTree,
+  setRoutingTree,
 } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
