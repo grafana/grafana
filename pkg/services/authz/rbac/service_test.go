@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -438,6 +439,7 @@ func TestService_buildFolderTree(t *testing.T) {
 				store:       store,
 				folderCache: cacheService,
 				logger:      log.New("test"),
+				sf:          new(singleflight.Group),
 			}
 
 			tree, err := s.buildFolderTree(ctx, ns)
