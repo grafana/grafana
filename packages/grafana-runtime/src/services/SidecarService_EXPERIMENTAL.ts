@@ -224,8 +224,8 @@ export class SidecarService_EXPERIMENTAL {
     this._initialContext.next(undefined);
 
     // Do both just to be sure some state does not linger
-    this.secondaryMemoryLocationService.replace({ pathname: '/' });
-    this.secondaryLocationService.replace({ pathname: '/' });
+    this.secondaryMemoryLocationService.replace({ pathname: undefined });
+    this.secondaryLocationService.replace({ pathname: undefined });
 
     reportInteraction('sidecar_service_close_app');
   }

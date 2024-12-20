@@ -156,24 +156,36 @@ export function locationSearchToObject(search: string | number): UrlQueryMap {
 }
 
 const history = H.createBrowserHistory({ basename: config.appSubUrl ?? '/' });
+
+// Setup for having 2 sub URLs at the same time in a single main URL. This is used for the app sidecar feature and so
+// won't work without a feature flag. Without the feature flag there should be no functional change.
+
+// Name of the query param under which the secondary URL is stored. Should be something that is unlikely to be used
+// for normally.
+const secondaryUrlParam = '__sc';
+const mainHistory = config.featureToggles.appSidecar
+  ? createAggregateHistory({
+      actualHistory: history,
+      isMain: true,
+      param: secondaryUrlParam,
+    })
+  : history;
+const secondaryHistory = createAggregateHistory({
+  actualHistory: history,
+  isMain: false,
+  param: secondaryUrlParam,
+});
+
 /**
  * @public
  */
-export let locationService: LocationService = new HistoryWrapper(
-  createAggregateHistory({
-    actualHistory: history,
-    isMain: true,
-    param: '__sc',
-  })
-);
+export let locationService: LocationService = new HistoryWrapper(mainHistory);
 
-export let locationServiceSecondary: LocationService = new HistoryWrapper(
-  createAggregateHistory({
-    actualHistory: history,
-    isMain: false,
-    param: '__sc',
-  })
-);
+export let locationServiceSecondary: LocationService = config.featureToggles.appSidecar
+  ? new HistoryWrapper(secondaryHistory)
+  : // Could be undefined but that would mess up the typing a bit and could lead to errors, so making this the same
+    // as mainLocationService seems like a safer bet
+    locationService;
 
 /**
  * Used for tests only
