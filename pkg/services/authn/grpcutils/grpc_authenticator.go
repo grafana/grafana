@@ -3,68 +3,88 @@ package grpcutils
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 
-	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var errMissingMetadata = errors.New("missing metadata")
+
 var once sync.Once
 
-func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
-	// In proc grpc ID token signature verification can be skipped
-	return authnlib.NewUnsafeGrpcAuthenticator(
-		&authnlib.GrpcAuthenticatorConfig{},
-		authnlib.WithDisableAccessTokenAuthOption(),
-		authnlib.WithIDTokenAuthOption(false),
+func NewInProcGrpcAuthenticator() interceptors.Authenticator {
+	auth := authn.NewIDTokenAuthenticator(
+		authn.NewUnsafeIDTokenVerifier(authn.VerifierConfig{}),
 	)
+
+	return interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, errMissingMetadata
+		}
+
+		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		if err != nil {
+			// for now we return empty AuthInfo because this is how it worked before
+			// but this is wrong, we need to be able to call resource store as grafana somehow
+			return claims.WithClaims(ctx, &authn.AuthInfo{}), nil
+		}
+
+		return claims.WithClaims(ctx, info), nil
+	})
 }
 
-func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
-		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
-			SigningKeysURL: authCfg.SigningKeysURL,
-		},
-		VerifierConfig: authnlib.VerifierConfig{
-			AllowedAudiences: authCfg.AllowedAudiences,
-		},
-	}
-
-	client := http.DefaultClient
-	if authCfg.AllowInsecure {
-		// allow insecure connections in development mode to facilitate testing
-		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	}
-	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
-
-	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithKeyRetrieverOption(keyRetriever),
-		authnlib.WithTracerAuthOption(tracer),
-		authnlib.WithIDTokenAuthOption(false),
-	}
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (interceptors.Authenticator, error) {
 	if authCfg.Mode == ModeOnPrem {
-		grpcOpts = append(grpcOpts,
-			// Access token are not yet available on-prem
-			authnlib.WithDisableAccessTokenAuthOption(),
-		)
+		return NewInProcGrpcAuthenticator(), nil
 	}
-	return authnlib.NewGrpcAuthenticator(
-		&grpcAuthCfg,
-		grpcOpts...,
+
+	opts := []authn.DefaultKeyRetrieverOption{}
+	if authCfg.AllowInsecure {
+		opts = append(opts, authn.WithHTTPClientKeyRetrieverOpt(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+	}
+
+	keys := authn.NewKeyRetriever(authn.KeyRetrieverConfig{SigningKeysURL: authCfg.SigningKeysURL}, opts...)
+
+	auth := authn.NewDefaultAuthenticator(
+		authn.NewAccessTokenVerifier(authn.VerifierConfig{AllowedAudiences: authCfg.AllowedAudiences}, keys),
+		authn.NewIDTokenVerifier(authn.VerifierConfig{}, keys),
 	)
+
+	return interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		spanCtx, span := tracer.Start(ctx, "GrpcAuthenticator.Authenticate")
+		defer span.End()
+
+		md, ok := metadata.FromIncomingContext(spanCtx)
+		if !ok {
+			return nil, errMissingMetadata
+		}
+
+		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		if err != nil {
+			span.RecordError(err)
+			return nil, fmt.Errorf("failed to authenticate grpc request: %w", err)
+		}
+
+		return claims.WithClaims(ctx, info), nil
+	}), nil
 }
 
 type contextFallbackKey struct{}
 
 type AuthenticatorWithFallback struct {
-	authenticator *authnlib.GrpcAuthenticator
+	authenticator interceptors.Authenticator
 	fallback      interceptors.Authenticator
 	metrics       *metrics
 	tracer        tracing.Tracer
