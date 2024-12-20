@@ -35,6 +35,10 @@ load(
     "yarn_install_step",
 )
 load(
+    "scripts/drone/steps/prometheus.star",
+    "prometheus_devenv_step",
+)
+load(
     "scripts/drone/steps/rgm.star",
     "rgm_artifacts_step",
 )
@@ -135,6 +139,7 @@ def build_e2e(trigger, ver_mode):
                 cloud = "azure",
                 trigger = trigger_oss,
             ),
+            prometheus_devenv_step(),
             playwright_e2e_tests_step(),
             playwright_e2e_report_upload(),
             playwright_e2e_report_post_link(),
