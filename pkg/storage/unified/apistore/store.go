@@ -227,9 +227,10 @@ func (s *Storage) Delete(
 		}
 	}
 
-	// ?? this was after delete before
-	if err := validateDeletion(ctx, out); err != nil {
-		return err
+	if validateDeletion != nil {
+		if err := validateDeletion(ctx, out); err != nil {
+			return err
+		}
 	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {

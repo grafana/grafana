@@ -407,6 +407,12 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
+
+	// stash the raw value in context (if requrested)
+	access := GetLegacyAccess(ctx)
+	if access != nil {
+		access.Dashboard = dash
+	}
 	return dash, created, err
 }
 

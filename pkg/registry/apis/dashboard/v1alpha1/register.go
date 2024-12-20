@@ -1,9 +1,15 @@
 package v1alpha1
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -42,6 +48,7 @@ type DashboardsAPIBuilder struct {
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
 	unified       resource.ResourceClient
+	snowflake     *snowflake.Node
 
 	log log.Logger
 	reg prometheus.Registerer
@@ -57,16 +64,21 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
-) *DashboardsAPIBuilder {
+) (*DashboardsAPIBuilder, error) {
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
+	node, err := snowflake.NewNode(rand.Int63n(1024))
+	if err != nil {
+		return nil, err
+	}
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v1alpha1"),
 
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
+		snowflake:        node,
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv1alpha1.DashboardResourceInfo,
@@ -77,7 +89,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -205,4 +217,19 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
 	return oas, nil
+}
+
+func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	op := a.GetOperation()
+	if op == admission.Create || op == admission.Update {
+		dash, ok := a.GetObject().(*dashboardv1alpha1.Dashboard)
+		if !ok {
+			return fmt.Errorf("expected v1alpha1 dashboard")
+		}
+		id := dash.Spec.GetNestedInt64("id")
+		if id < 1 {
+			dash.Spec.SetNestedField(b.snowflake.Generate().Int64(), "id")
+		}
+	}
+	return nil
 }
