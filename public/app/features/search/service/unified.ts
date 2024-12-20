@@ -33,6 +33,7 @@ type SearchHit = {
 };
 
 type SearchAPIResponse = {
+  totalHits: number;
   hits: SearchHit[];
   facets?: {
     tags?: {
@@ -111,32 +112,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-    query = await replaceCurrentFolderQuery(query);
-    const req = {
-      ...query,
-      query: query.query ?? '*',
-      limit: query.limit ?? firstPageSize,
-    };
-
-    let uri = searchURI;
-    const qry = req.query || '*';
-    uri += `?query=${encodeURIComponent(qry)}`;
-    if (req.limit) {
-      uri += `&limit=${req.limit}`;
-    }
-
-    if (req.kind) {
-      // filter resource types
-      uri += '&' + req.kind.map((kind) => `type=${kind}`).join('&');
-    }
-
-    if (req.tags) {
-      uri += '&' + req.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
-    }
-
+    const uri = await this.newRequest(query);
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
-    const first = toDashboardResults(rsp.hits);
+    const first = toDashboardResults(rsp);
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
     }
@@ -165,16 +144,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const getNextPage = async () => {
       // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
-        const from = view.dataFrame.length;
-        if (from >= meta.count) {
+        const offset = view.dataFrame.length;
+        if (offset >= meta.count) {
           return;
         }
-        const resp = await getBackendSrv().post<SearchAPIResponse>(searchURI, {
-          ...(req ?? {}),
-          from,
-          limit: nextPageSizes,
-        });
-        const frame = toDashboardResults(resp.hits);
+        const nextPageUrl = `${uri}&offset=${offset}`;
+        const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
+        const frame = toDashboardResults(resp);
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -186,10 +162,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
         // Append the raw values to the same array buffer
         const length = frame.length + view.dataFrame.length;
-        for (let i = 0; i < frame.fields.length; i++) {
-          const values = view.dataFrame.fields[i].values;
-          values.push(...frame.fields[i].values);
-        }
+        frame.fields.forEach((f) => {
+          const field = view.dataFrame.fields.find((vf) => vf.name === f.name);
+          if (field) {
+            field.values.push(...f.values);
+          }
+        });
+
         view.dataFrame.length = length;
 
         // Add all the location lookup info
@@ -220,13 +199,35 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
   }
 
+  private async newRequest(query: SearchQuery): Promise<string> {
+    query = await replaceCurrentFolderQuery(query);
+
+    let uri = searchURI;
+    uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
+    uri += `&limit=${query.limit ?? pageSize}`;
+
+    if (query.kind) {
+      // filter resource types
+      uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
+    }
+
+    if (query.tags?.length) {
+      uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
+    }
+
+    if (query.sort) {
+      const sort = query.sort.replace('_sort', '').replace('name', 'title');
+      uri += `&sort=${sort}`;
+    }
+    return uri;
+  }
+
   getFolderViewSort(): string {
     return 'name_sort';
   }
 }
 
-const firstPageSize = 50;
-const nextPageSizes = 100;
+const pageSize = 50;
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
@@ -270,7 +271,8 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-function toDashboardResults(hits: SearchHit[]): DataFrame {
+function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
+  const hits = rsp.hits;
   if (hits.length < 1) {
     return { fields: [], length: 0 };
   }
@@ -282,6 +284,7 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
 
     return {
       ...hit,
+      uid: hit.name,
       url: toURL(hit.resource, hit.name),
       tags: hit.tags || [],
       folder: hit.folder || 'general',
@@ -293,7 +296,7 @@ function toDashboardResults(hits: SearchHit[]): DataFrame {
   const frame = toDataFrame(dashboardHits);
   frame.meta = {
     custom: {
-      count: hits.length,
+      count: rsp.totalHits,
       max_score: 1,
     },
   };
