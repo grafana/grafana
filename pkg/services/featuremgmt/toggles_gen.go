@@ -815,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagUnifiedStorageSearchSprinkles
+	// Enable sprinkles on unified storage search
+	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -843,13 +847,9 @@ const (
 	// Enables automatic updates for pre-installed plugins
 	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
-	// FlagDashboardSchemaV2
-	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
-	FlagDashboardSchemaV2 = "dashboardSchemaV2"
-
-	// FlagPlaylistsWatcher
-	// Enables experimental watcher for playlists
-	FlagPlaylistsWatcher = "playlistsWatcher"
+	// FlagPlaylistsReconciler
+	// Enables experimental reconciler for playlists
+	FlagPlaylistsReconciler = "playlistsReconciler"
 
 	// FlagPasswordlessMagicLinkAuthentication
 	// Enable passwordless login via magic link authentication
@@ -858,6 +858,10 @@ const (
 	// FlagExploreMetricsRelatedLogs
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagPrometheusSpecialCharsInLabelValues
+	// Adds support for quotes and special characters in label values for Prometheus queries
+	FlagPrometheusSpecialCharsInLabelValues = "prometheusSpecialCharsInLabelValues"
 
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
@@ -902,6 +906,10 @@ const (
 	// FlagFeedbackButton
 	// Enables a button to send feedback from the Grafana UI
 	FlagFeedbackButton = "feedbackButton"
+
+	// FlagUnifiedStorageSearchUI
+	// Enable unified storage search UI
+	FlagUnifiedStorageSearchUI = "unifiedStorageSearchUI"
 
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch datasource

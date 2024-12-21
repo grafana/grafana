@@ -241,11 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
       "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -327,6 +329,8 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
     },
@@ -349,6 +353,7 @@
         "warning-1": "",
         "warning-2": ""
       },
+      "filter-description": "",
       "generated-policies": "",
       "matchers": "",
       "metadata": {
@@ -1710,7 +1715,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -2168,6 +2176,16 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "Accueil"
     },
@@ -2919,6 +2937,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -3025,6 +3044,27 @@
     "new-library-panel": {
       "cancel-button": "",
       "create-button": ""
+    }
+  },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
     }
   },
   "share-playlist": {
