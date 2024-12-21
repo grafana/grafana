@@ -12,4 +12,5 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(DirectRestConfigProvider), new(*service)),
 	wire.Bind(new(builder.APIRegistrar), new(*service)),
+	wire.Bind(new(BuildersProvider), new(*service)),
 )

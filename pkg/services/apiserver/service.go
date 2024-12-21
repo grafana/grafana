@@ -56,6 +56,7 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
+	_ BuildersProvider           = (*service)(nil)
 
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
@@ -112,6 +113,10 @@ type DirectRestConfigProvider interface {
 
 	// This can be used to rewrite incoming requests to path now supported under /apis
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
+}
+
+type BuildersProvider interface {
+	GetBuilders() []builder.APIGroupBuilder
 }
 
 type service struct {
@@ -263,6 +268,10 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
+}
+
+func (s *service) GetBuilders() []builder.APIGroupBuilder {
+	return s.builders
 }
 
 // nolint:gocyclo

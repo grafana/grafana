@@ -224,11 +224,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = GetDefaultBuildHandlerChainFunc(builders)
-
-	if buildHandlerChainFunc != nil {
-		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
-	}
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 
 	v := utilversion.DefaultKubeEffectiveVersion()
 	patchver := 0 // required for semver
