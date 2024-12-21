@@ -2,7 +2,7 @@
 apiVersion: service.grafana.app/v0alpha1
 kind: ExternalName
 metadata:
-  name: example-apiserver
+  name: cloudconfig-apiserver
   namespace: grafana
 spec:
   host: localhost

@@ -78,7 +78,7 @@ func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	return io.ReadAll(f)
 }
 
-func readRemoteServices(path string) ([]RemoteService, error) {
+func ReadRemoteServices(path string) ([]RemoteService, error) {
 	// We can ignore the gosec G304 warning on this one because `path` comes
 	// from Grafana configuration (commandOptions.AggregatorOptions.RemoteServicesFile)
 	//nolint:gosec
@@ -156,7 +156,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	if err != nil {
 		return nil, err
 	}
-	remoteServices, err := readRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
+	remoteServices, err := ReadRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
 	}
