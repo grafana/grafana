@@ -36,10 +36,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
+type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder) BuildHandlerChainFunc
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
-func ProvideDefaultBuildHandlerChainFunc() BuildHandlerChainFunc {
-	return nil
+func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFromBuilders {
+	return GetDefaultBuildHandlerChainFunc
 }
 
 // PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
@@ -104,7 +105,7 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	buildHandlerChainFunc BuildHandlerChainFunc,
+	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders)
@@ -224,7 +225,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
 	v := utilversion.DefaultKubeEffectiveVersion()
 	patchver := 0 // required for semver
