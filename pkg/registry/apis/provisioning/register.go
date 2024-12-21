@@ -30,6 +30,7 @@ import (
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -66,6 +67,7 @@ type ProvisioningAPIBuilder struct {
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
+	legacyExporter    legacy.LegacyExporter
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	lister            resources.ResourceLister
@@ -84,6 +86,7 @@ func NewProvisioningAPIBuilder(
 	index resource.RepositoryIndexClient,
 	blobstore blob.PublicBlobStore,
 	configProvider apiserver.RestConfigProvider,
+	legacyExporter legacy.LegacyExporter,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	clientFactory := resources.NewFactory(identities)
@@ -95,6 +98,7 @@ func NewProvisioningAPIBuilder(
 		ghFactory:         ghFactory,
 		identities:        identities,
 		client:            clientFactory,
+		legacyExporter:    legacyExporter,
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
 		},
@@ -116,6 +120,7 @@ func RegisterAPIService(
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
+	legacyExporter legacy.LegacyExporter,
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
@@ -140,7 +145,7 @@ func RegisterAPIService(
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
+	}, cfg.SecretKey, identities, features, render, client, store, configProvider, legacyExporter, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
