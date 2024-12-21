@@ -72,15 +72,26 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
               case 'github':
                 icon = 'github';
                 const spec = item.spec.github;
-                let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+                const url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+                let branch = url;
                 if (spec?.branch) {
-                  url += `tree/` + spec?.branch;
+                  branch += `tree/` + spec?.branch;
                 }
                 meta.push(
-                  <TextLink key={'link'} external style={{ color: 'inherit' }} href={url}>
-                    {url}
+                  <TextLink key={'link'} external style={{ color: 'inherit' }} href={branch}>
+                    {branch}
                   </TextLink>
                 );
+
+                if (item.status?.webhook?.id) {
+                  const hook = url + `/settings/hooks/${item.status?.webhook?.id}`;
+                  meta.push(
+                    <TextLink key={'webhook'} style={{ color: 'inherit' }} href={hook}>
+                      Webhook <Icon name={'check'} />
+                    </TextLink>
+                  );
+                }
+
                 break;
 
               case 'local':
@@ -104,11 +115,9 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
                     Manage
                   </LinkButton>
-                  {item.spec?.folder && (
-                    <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
-                      Edit
-                    </LinkButton>
-                  )}
+                  <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
+                    Edit
+                  </LinkButton>
                   {healthy && <SyncRepository repository={item} />}
                 </Card.Actions>
                 <Card.SecondaryActions>
