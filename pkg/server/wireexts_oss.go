@@ -111,7 +111,7 @@ var wireExtsBasicSet = wire.NewSet(
 	search2.ProvideDashboardStats,
 	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
-	builder.ProvideDefaultBuildHandlerChainFunc,
+	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 )
 
 var wireExtsSet = wire.NewSet(

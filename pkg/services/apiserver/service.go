@@ -56,7 +56,6 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-	_ BuildersProvider           = (*service)(nil)
 
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
@@ -100,10 +99,6 @@ type DirectRestConfigProvider interface {
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
-type BuildersProvider interface {
-	GetBuilders() []builder.APIGroupBuilder
-}
-
 type service struct {
 	services.NamedService
 
@@ -135,7 +130,7 @@ type service struct {
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
 
-	buildHandlerChainFunc builder.BuildHandlerChainFunc
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
 
 func ProvideService(
@@ -152,27 +147,27 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	unified resource.ResourceClient,
-	buildHandlerChainFunc builder.BuildHandlerChainFunc,
+	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 ) (*service, error) {
 	s := &service{
-		log:                   log.New(modules.GrafanaAPIServer),
-		cfg:                   cfg,
-		features:              features,
-		rr:                    rr,
-		stopCh:                make(chan struct{}),
-		builders:              []builder.APIGroupBuilder{},
-		authorizer:            authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:               tracing,
-		db:                    db, // For Unified storage
-		metrics:               metrics.ProvideRegisterer(),
-		kvStore:               kvStore,
-		pluginClient:          pluginClient,
-		datasources:           datasources,
-		contextProvider:       contextProvider,
-		pluginStore:           pluginStore,
-		serverLockService:     serverLockService,
-		unified:               unified,
-		buildHandlerChainFunc: buildHandlerChainFunc,
+		log:                               log.New(modules.GrafanaAPIServer),
+		cfg:                               cfg,
+		features:                          features,
+		rr:                                rr,
+		stopCh:                            make(chan struct{}),
+		builders:                          []builder.APIGroupBuilder{},
+		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:                           tracing,
+		db:                                db, // For Unified storage
+		metrics:                           metrics.ProvideRegisterer(),
+		kvStore:                           kvStore,
+		pluginClient:                      pluginClient,
+		datasources:                       datasources,
+		contextProvider:                   contextProvider,
+		pluginStore:                       pluginStore,
+		serverLockService:                 serverLockService,
+		unified:                           unified,
+		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -247,10 +242,6 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
-}
-
-func (s *service) GetBuilders() []builder.APIGroupBuilder {
-	return s.builders
 }
 
 // nolint:gocyclo
@@ -336,7 +327,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
-		s.buildHandlerChainFunc,
+		s.buildHandlerChainFuncFromBuilders,
 	)
 	if err != nil {
 		return err
