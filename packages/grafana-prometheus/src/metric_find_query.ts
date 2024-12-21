@@ -8,6 +8,7 @@ import { getPrometheusTime } from './language_utils';
 import {
   PrometheusLabelNamesRegex,
   PrometheusLabelNamesRegexWithMatch,
+  PrometheusLabelValuesRegex,
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
@@ -29,7 +30,7 @@ export class PrometheusMetricFindQuery {
     this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?(.+)\)\s*$/;
+    const labelValuesRegex = PrometheusLabelValuesRegex;
     const metricNamesRegex = PrometheusMetricNamesRegex;
     const queryResultRegex = PrometheusQueryResultRegex;
     const labelNamesQuery = this.query.match(labelNamesRegex);
