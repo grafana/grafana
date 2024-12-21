@@ -127,8 +127,9 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 			ClientConfig:          sharedConfig.LoopbackClientConfig,
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
-			ProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
-			ProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
+			DisableRemoteAvailableConditionController: true,
+			ProxyClientCertFile:                       commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
+			ProxyClientKeyFile:                        commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
 			ProxyTransport:  createProxyTransport(),
