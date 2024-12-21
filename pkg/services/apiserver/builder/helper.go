@@ -137,11 +137,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = GetDefaultBuildHandlerChainFunc(builders)
-
-	if buildHandlerChainFunc != nil {
-		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
-	}
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 
 	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
 
