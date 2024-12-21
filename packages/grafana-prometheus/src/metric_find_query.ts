@@ -11,6 +11,7 @@ import {
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
+import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 export class PrometheusMetricFindQuery {
   range: TimeRange;
@@ -28,7 +29,7 @@ export class PrometheusMetricFindQuery {
     this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?(.+)\)\s*$/;
     const metricNamesRegex = PrometheusMetricNamesRegex;
     const queryResultRegex = PrometheusQueryResultRegex;
     const labelNamesQuery = this.query.match(labelNamesRegex);
@@ -49,9 +50,15 @@ export class PrometheusMetricFindQuery {
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
     if (labelValuesQuery) {
-      const filter = labelValuesQuery[1];
-      const label = labelValuesQuery[2];
+      let filter = labelValuesQuery[1];
+      let label = labelValuesQuery[2];
+      if (!isValidLegacyName(label)) {
+        label = escapeForUtf8Support(label);
+      }
       if (isFilterDefined(filter)) {
+        if (!isValidLegacyName(filter)) {
+          filter = escapeForUtf8Support(filter);
+        }
         return this.labelValuesQuery(label, filter);
       } else {
         // Exclude the filter part of the expression because it is blank or empty
