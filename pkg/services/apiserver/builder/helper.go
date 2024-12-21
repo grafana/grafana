@@ -38,11 +38,8 @@ import (
 
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
-// ProvideDefaultBuildHandlerChainFunc is the default noop wrapper, it simply returns the passed delegatedHandler
 func ProvideDefaultBuildHandlerChainFunc() BuildHandlerChainFunc {
-	return func(delegateHandler http.Handler, _ *genericapiserver.Config) http.Handler {
-		return delegateHandler
-	}
+	return nil
 }
 
 // PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
@@ -67,7 +64,7 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
@@ -227,7 +224,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders)
+	serverConfig.BuildHandlerChainFunc = GetDefaultBuildHandlerChainFunc(builders)
 
 	if buildHandlerChainFunc != nil {
 		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
