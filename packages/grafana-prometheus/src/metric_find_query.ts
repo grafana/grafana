@@ -57,9 +57,6 @@ export class PrometheusMetricFindQuery {
         label = escapeForUtf8Support(label);
       }
       if (isFilterDefined(filter)) {
-        if (!isValidLegacyName(filter)) {
-          filter = escapeForUtf8Support(filter);
-        }
         return this.labelValuesQuery(label, filter);
       } else {
         // Exclude the filter part of the expression because it is blank or empty
