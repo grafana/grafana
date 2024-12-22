@@ -72,12 +72,12 @@ func TestBleveBackend(t *testing.T) {
 				Title:     "aaa (dash)",
 				TitleSort: "aaa (dash)",
 				Folder:    "xxx",
+				Tags:      []string{"aa", "bb"},
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY: 25,
 				},
-				Tags: []string{"aa", "bb"},
+				DeprecatedInternalID: 12,
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -91,7 +91,6 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "bbb (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
 					DASHBOARD_ERRORS_TODAY: 40,
 				},
@@ -99,6 +98,7 @@ func TestBleveBackend(t *testing.T) {
 				Labels: map[string]string{
 					"region": "east",
 				},
+				DeprecatedInternalID: 14,
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 3,
@@ -114,10 +114,8 @@ func TestBleveBackend(t *testing.T) {
 				RepoInfo: &utils.ResourceRepositoryInfo{
 					Name: "r0",
 				},
-				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
-				},
-				Tags: []string{"aa"},
+				DeprecatedInternalID: 15,
+				Tags:                 []string{"aa"},
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -176,6 +174,30 @@ func TestBleveBackend(t *testing.T) {
 
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
+
+		// Find by Legacy Document ID
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+				Fields: []*resource.Requirement{{ // Moved from "labels" to fields so it has special faster handling (numeric)
+					Key:      resource.SEARCH_FIELD_DEPRECATED_INTERNAL_ID,
+					Operator: "=",
+					Values:   []string{"14"},
+				}},
+			},
+			Limit: 1,
+			Fields: []string{
+				resource.SEARCH_FIELD_ID,
+				resource.SEARCH_FIELD_NAME,
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 1, rsp.TotalHits)
+		require.Equal(t, 1, rsp.Results.Rows)
+
+		table, err := rsp.Results.ToK8s()
+		require.NoError(t, err)
+		require.Equal(t, []any{}, table.Rows[0])
 	})
 
 	t.Run("build folders", func(t *testing.T) {

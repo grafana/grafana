@@ -358,7 +358,7 @@ func StandardSearchFields() SearchableDocumentFields {
 			},
 			{
 				Name:        SEARCH_FIELD_DEPRECATED_INTERNAL_ID,
-				Type:        ResourceTableColumnDefinition_INT64,
+				Type:        ResourceTableColumnDefinition_STRING, // NUMBER!!!
 				Description: "Internal ID (legacy/deprecated)",
 				Properties: &ResourceTableColumnDefinition_Properties{
 					UniqueValues: true,
