@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -45,6 +48,8 @@ var _ storage.Interface = (*Storage)(nil)
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
 	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
+
+	RequireDeprecatedInternalID bool
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -58,8 +63,9 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store  resource.ResourceClient
-	getKey func(string) (*resource.ResourceKey, error)
+	store     resource.ResourceClient
+	getKey    func(string) (*resource.ResourceKey, error)
+	snowflake *snowflake.Node // used to enforce internal ids
 
 	versioner storage.Versioner
 
@@ -102,6 +108,14 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if opts.RequireDeprecatedInternalID {
+		node, err := snowflake.NewNode(rand.Int63n(1024))
+		if err != nil {
+			return nil, nil, err
+		}
+		s.snowflake = node
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -227,9 +241,10 @@ func (s *Storage) Delete(
 		}
 	}
 
-	// ?? this was after delete before
-	if err := validateDeletion(ctx, out); err != nil {
-		return err
+	if validateDeletion != nil {
+		if err := validateDeletion(ctx, out); err != nil {
+			return err
+		}
 	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
