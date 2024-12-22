@@ -266,7 +266,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       const data = await this.getSeries(selector);
-      return data[labelName] ?? [];
+      return data[removeQuotesIfExist(labelName)] ?? [];
     }
     return await this.fetchSeriesValuesWithMatch(labelName, selector);
   };
