@@ -57,11 +57,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 
 	if s.opts.RequireDeprecatedInternalID {
-		// nolint:staticcheck
-		id := obj.GetDeprecatedInternalID()
+		id := obj.GetDeprecatedInternalID() // nolint:staticcheck
 		if id < 1 {
-			// nolint:staticcheck
-			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64()) // nolint:staticcheck
 		}
 	}
 

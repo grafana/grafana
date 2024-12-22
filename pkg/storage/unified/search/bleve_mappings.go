@@ -76,6 +76,15 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
 
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DEPRECATED_INTERNAL_ID, &mapping.FieldMapping{
+		Name:         resource.SEARCH_FIELD_DEPRECATED_INTERNAL_ID,
+		Type:         "number",
+		Store:        true,
+		Index:        true,
+		IncludeInAll: true,
+		DocValues:    true,
+	})
+
 	// TODO: we use the static mapper. why set dynamic to true?
 	mapper.Dynamic = true
 

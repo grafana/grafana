@@ -103,6 +103,9 @@ type IndexableDocument struct {
 
 	// When the resource is managed by an upstream repository
 	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
+
+	// Support direct lookup by legacy internal ids
+	DeprecatedInternalID int64 `json:"deprecatedInternalID,omitempty"`
 }
 
 func (m *IndexableDocument) Type() string {
@@ -182,6 +185,15 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
+
+	if doc.Labels != nil {
+		id := obj.GetDeprecatedInternalID() // nolint:staticcheck
+		if id > 0 {
+			doc.DeprecatedInternalID = id
+			delete(doc.Labels, utils.LabelKeyDeprecatedInternalID) // nolint:staticcheck
+		}
+	}
+
 	return doc
 }
 
@@ -263,6 +275,7 @@ const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
 const SEARCH_FIELD_REPOSITORY = "repository"
 const SEARCH_FIELD_REPOSITORY_HASH = "repository_hash"
+const SEARCH_FIELD_DEPRECATED_INTERNAL_ID = "deprecatedInternalID"
 
 const SEARCH_FIELD_SCORE = "_score"     // the match score
 const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object
@@ -342,6 +355,14 @@ func StandardSearchFields() SearchableDocumentFields {
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        ResourceTableColumnDefinition_INT64,
 				Description: "created timestamp", // date?
+			},
+			{
+				Name:        SEARCH_FIELD_DEPRECATED_INTERNAL_ID,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "Internal ID (legacy/deprecated)",
+				Properties: &ResourceTableColumnDefinition_Properties{
+					UniqueValues: true,
+				},
 			},
 		})
 		if err != nil {
