@@ -17,7 +17,6 @@ import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
-import { utf8Support } from './utf8_support';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -40,19 +39,17 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
     const { __name__, ...rest } = label;
     if (withName) {
       valueSet['__name__'] = valueSet['__name__'] || new Set();
-      const utf8SupportedValue = utf8Support(__name__);
-      if (!valueSet['__name__'].has(utf8SupportedValue)) {
-        valueSet['__name__'].add(utf8SupportedValue);
+      if (!valueSet['__name__'].has(__name__)) {
+        valueSet['__name__'].add(__name__);
       }
     }
 
     Object.keys(rest).forEach((key) => {
-      const utf8SupportedKey = utf8Support(key);
-      if (!valueSet[utf8SupportedKey]) {
-        valueSet[utf8SupportedKey] = new Set();
+      if (!valueSet[key]) {
+        valueSet[key] = new Set();
       }
-      if (!valueSet[utf8SupportedKey].has(rest[key])) {
-        valueSet[utf8SupportedKey].add(utf8Support(rest[key]));
+      if (!valueSet[key].has(rest[key])) {
+        valueSet[key].add(rest[key]);
       }
     });
   });
@@ -458,7 +455,7 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
               break;
             case 'label-value':
               labelValue = getMaybeTokenStringContent(currentToken);
-              labelValue = labelValue.slice(1, -1);
+              labelValue = labelValue.substring(1, labelValue.length - 1);
               const labelComparator = FromPromLikeMap[labelOperator];
               if (labelComparator) {
                 labelMatchers.push({ name: labelKey, operator: labelComparator, value: labelValue });
