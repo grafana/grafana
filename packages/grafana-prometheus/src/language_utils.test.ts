@@ -583,7 +583,7 @@ describe('processLabels', () => {
     });
   });
 
-  it('wrap utf8 label values with quotes', () => {
+  it('dont wrap utf8 label values with quotes', () => {
     const labels: Array<{ [key: string]: string }> = [
       { label1: 'value1' },
       { label2: 'value2' },
@@ -596,23 +596,23 @@ describe('processLabels', () => {
       values: {
         label1: ['value1'],
         label2: ['value2'],
-        label3: [`\"value3 with space\"`],
-        label4: [`\"value4.with.dot\"`],
+        label3: [`value3 with space`],
+        label4: [`value4.with.dot`],
       },
     });
   });
 
-  it('wrap utf8 labels with quotes', () => {
+  it('dont wrap utf8 labels with quotes', () => {
     const labels: Array<{ [key: string]: string }> = [
       { 'label1 with space': 'value1' },
       { 'label2.with.dot': 'value2' },
     ];
 
     expect(processLabels(labels)).toEqual({
-      keys: ['"label1 with space"', '"label2.with.dot"'],
+      keys: ['label1 with space', 'label2.with.dot'],
       values: {
-        '"label1 with space"': ['value1'],
-        '"label2.with.dot"': ['value2'],
+        'label1 with space': ['value1'],
+        'label2.with.dot': ['value2'],
       },
     });
   });
