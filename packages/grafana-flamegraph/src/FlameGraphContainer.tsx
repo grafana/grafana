@@ -73,6 +73,10 @@ export type Props = {
    * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
   disableCollapsing?: boolean;
+  /**
+   * Whether or not to keep any focused item when the profile data changes.
+   */
+  keepFocusOnDataChange?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -87,6 +91,7 @@ const FlameGraphContainer = ({
   vertical,
   showFlameGraphOnly,
   disableCollapsing,
+  keepFocusOnDataChange,
   getExtraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
@@ -138,9 +143,11 @@ const FlameGraphContainer = ({
   }
 
   useEffect(() => {
-    resetFocus();
-    resetSandwich();
-  }, [data, resetFocus]);
+    if (!keepFocusOnDataChange) {
+      resetFocus();
+      resetSandwich();
+    }
+  }, [data, keepFocusOnDataChange, resetFocus]);
 
   const onSymbolClick = useCallback(
     (symbol: string) => {
