@@ -39,9 +39,7 @@ refs:
 
 Grafana includes built-in support for Alertmanager implementations in Prometheus and Mimir.
 
-Once you add an Alertmanager as a data source, you can use [Grafana Alerting](ref:alerting) to view and manage Alertmanager resources, such as silences or notification policies, and enable the Alertmanager to receive Grafana-managed alerts.
-
-To switch between the Grafana built-in Alertmanager and other Alertmanager data sources, use the `Choose Alertmanager` drop-down on Grafana Alerting pages.
+Once you add an Alertmanager as a data source, you can use the `Choose Alertmanager` drop-down on [Grafana Alerting](ref:alerting) to view and manage Alertmanager resources, such as silences, contact points, and notification policies. Additionally, you can enable the Alertmanager to receive Grafana-managed alerts.
 
 For more details about using other Alertmanagers, refer to [Alertmanagers in the Grafana Alerting documentation](ref:configure-alertmanager).
 
