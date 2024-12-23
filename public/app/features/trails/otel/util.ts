@@ -79,10 +79,9 @@ export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject, scene
   }
 
   let otelResourcesJoinQuery = '';
-  if (otelResourcesObject.filters && otelResourcesObject.labels) {
-    // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
-    otelResourcesJoinQuery = `* on (job, instance) group_left(${groupLeft}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
-  }
+  // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
+  // target_info does not have to be filtered by deployment environment
+  otelResourcesJoinQuery = `* on (job, instance) group_left(${groupLeft}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
 
   return otelResourcesJoinQuery;
 }
