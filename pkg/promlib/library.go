@@ -27,7 +27,6 @@ type Service struct {
 type instance struct {
 	queryData *querydata.QueryData
 	resource  *resource.Resource
-	// versionCache *cache.Cache
 }
 
 type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
@@ -77,7 +76,6 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 		return instance{
 			queryData: qd,
 			resource:  r,
-			// versionCache: cache.New(time.Minute*1, time.Minute*5),
 		}, nil
 	}
 }
