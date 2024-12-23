@@ -34,7 +34,7 @@ export class MetricDatasourceHelper {
     return ds;
   }
 
-  private _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
+  _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
 
   private async _getMetricsMetadata() {
     const ds = await this.getDatasource();
