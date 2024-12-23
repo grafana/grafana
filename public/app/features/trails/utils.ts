@@ -316,7 +316,15 @@ export async function callSuggestionsApi(
  *   c. if deployment environment is promoted, this is fine and we can support more otel data sources
  *   d. update definition of isStandard OTel and check for job and instance instead
  *      - we did not support those that did not have them on target_info before
- * 5. Migrate any variable url values to adhoc to show them in the new filter
+ * 5. Handle all starting user behavior cases where
+ *   a. toggling the otel experience on and off 
+ *   b. useOtelExperience is selected and a previous dep env has been selected
+ *   c. useOtelExperience is disabled by local storage
+ *   d. All previous var filters are migrated to the new adhoc filter
+ * 6. Handle metric graph scene/label breakdown behavior
+ *   a. select a label in breakdown, apply it to otelmetricsvar and it will be applied to the correct filter
+ *   b. duplicate labels are found in the label breakdown between otel resources and metric resources
+ * 7. Migrate any variable url values to adhoc to show them in the new filter
  *   a. otel filter
  *   b. deployment environment
  *   c. var filters get placed in the new otel metric filter
