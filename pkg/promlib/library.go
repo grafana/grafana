@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/patrickmn/go-cache"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -27,9 +25,8 @@ type Service struct {
 }
 
 type instance struct {
-	queryData    *querydata.QueryData
-	resource     *resource.Resource
-	versionCache *cache.Cache
+	queryData *querydata.QueryData
+	resource  *resource.Resource
 }
 
 type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
@@ -77,9 +74,8 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 		}
 
 		return instance{
-			queryData:    qd,
-			resource:     r,
-			versionCache: cache.New(time.Minute*1, time.Minute*5),
+			queryData: qd,
+			resource:  r,
 		}, nil
 	}
 }
@@ -110,19 +106,6 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	switch {
-	case strings.EqualFold(req.Path, "version-detect"):
-		versionObj, found := i.versionCache.Get("version")
-		if found {
-			return sender.Send(versionObj.(*backend.CallResourceResponse))
-		}
-
-		vResp, err := i.resource.DetectVersion(ctx, req)
-		if err != nil {
-			return err
-		}
-		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
-		return sender.Send(vResp)
-
 	case strings.EqualFold(req.Path, "suggestions"):
 		resp, err := i.resource.GetSuggestions(ctx, req)
 		if err != nil {
