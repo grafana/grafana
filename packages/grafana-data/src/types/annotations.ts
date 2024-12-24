@@ -33,6 +33,8 @@ export interface AnnotationEvent {
   login?: string;
   email?: string;
   avatarUrl?: string;
+  created?: number;
+  updated?: number;
   time?: number;
   timeEnd?: number;
   isRegion?: boolean;
@@ -43,6 +45,7 @@ export interface AnnotationEvent {
   color?: string;
   alertId?: number;
   newState?: string;
+  data?: any;
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard' -- should be AnnotationQuery
