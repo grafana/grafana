@@ -32,7 +32,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/timeintervals`,
           method: 'POST',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -49,7 +49,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/timeintervals/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
+          body: queryArg.comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -82,7 +82,7 @@ const injectedRtkApi = api
   });
 export { injectedRtkApi as generatedTimeIntervalsApi };
 export type ListNamespacedTimeIntervalApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeIntervalList;
+  /** status 200 OK */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeIntervalList;
 export type ListNamespacedTimeIntervalApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -130,9 +130,9 @@ export type ListNamespacedTimeIntervalApiArg = {
   watch?: boolean;
 };
 export type CreateNamespacedTimeIntervalApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval
-  | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval
+  | /** status 202 Accepted */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval;
 export type CreateNamespacedTimeIntervalApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
@@ -144,11 +144,11 @@ export type CreateNamespacedTimeIntervalApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval;
 };
 export type ReplaceNamespacedTimeIntervalApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+  | ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval
+  | /** status 201 Created */ ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval;
 export type ReplaceNamespacedTimeIntervalApiArg = {
   /** name of the TimeInterval */
   name: string;
@@ -162,7 +162,7 @@ export type ReplaceNamespacedTimeIntervalApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+  comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval;
 };
 export type DeleteNamespacedTimeIntervalApiResponse = /** status 200 OK */
   | IoK8SApimachineryPkgApisMetaV1Status
@@ -266,29 +266,54 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeRange = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeRange = {
   end_time: string;
   start_time: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Interval = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Interval = {
   days_of_month?: string[];
   location?: string;
   months?: string[];
-  times?: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeRange[];
+  times?: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeRange[];
   weekdays?: string[];
   years?: string[];
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeIntervalSpec = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Spec = {
   name: string;
-  time_intervals: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Interval[];
+  time_intervals: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Interval[];
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1StatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Status = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [
+      key: string
+    ]: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1StatusOperatorState;
+  };
+};
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeIntervalSpec;
+  spec: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Spec;
+  status: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1Status;
 };
 export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -300,10 +325,10 @@ export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeIntervalList = {
+export type ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeIntervalList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval[];
+  items: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ListMeta;
