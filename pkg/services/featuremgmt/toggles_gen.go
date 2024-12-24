@@ -926,4 +926,8 @@ const (
 	// FlagInvestigationsBackend
 	// Enable the investigations backend API
 	FlagInvestigationsBackend = "investigationsBackend"
+
+	// FlagTemplateVariablesUsesCombobox
+	// Use new combobox component for template variables
+	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
 )
