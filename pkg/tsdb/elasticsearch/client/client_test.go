@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -283,6 +284,129 @@ func TestClient_Index(t *testing.T) {
 
 			assert.Equal(t, test.indexInRequest, jHeader.Get("index").MustString())
 		})
+	}
+}
+
+func TestStreamMultiSearchResponse_Success(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": [] } },
+            { "hits": { "hits": [] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 2 {
+		t.Errorf("expected 2 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_MalformedJSON(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": [] } }
+    ` // Missing closing braces
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error, got none")
+	}
+}
+
+func TestStreamMultiSearchResponse_MissingResponses(t *testing.T) {
+	jsonBody := `
+    {
+        "something_else": [
+            { "hits": { "hits": [] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 0 {
+		t.Errorf("expected 0 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_EmptyBody(t *testing.T) {
+	jsonBody := `{}`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 0 {
+		t.Errorf("expected 0 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidJSONStart(t *testing.T) {
+	jsonBody := `invalid_json`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid JSON, got none")
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidHitsField(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": "invalid_string_value" }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid 'hits' field, got none")
+	}
+
+	if err.Error() != "expected '{' for hits object, got invalid_string_value" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidHitElement(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": ["invalid_element"] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid element in 'hits' array, got none")
+	}
+
+	expected := "json: cannot unmarshal string into Go value of type map[string]interface {}"
+	if err.Error() != expected {
+		t.Errorf("unexpected error message: expected %v, got %v", expected, err)
 	}
 }
 
