@@ -929,12 +929,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/core/actions/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`updateNavIndex\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`updateConfigurationSubtitle\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`notifyApp\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`hideAppNotification\`)", "3"]
-    ],
     "public/app/core/components/AccessControl/AddPermission.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
