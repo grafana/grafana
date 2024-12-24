@@ -1,12 +1,12 @@
 import { MetricFindValue } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, ConstantVariable, sceneGraph } from '@grafana/scenes';
+import { ConstantVariable, sceneGraph } from '@grafana/scenes';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DataTrail } from '../DataTrail';
-import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
+import { VAR_OTEL_JOIN_QUERY } from '../shared';
 
 import {
   sortResources,
