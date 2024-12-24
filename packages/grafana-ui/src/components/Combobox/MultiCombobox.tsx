@@ -1,10 +1,12 @@
 import { cx } from '@emotion/css';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
 import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
@@ -13,7 +15,7 @@ import { Tooltip } from '../Tooltip';
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { getComboboxStyles } from './getComboboxStyles';
+import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
@@ -40,7 +42,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
 
-  const [items, _baseSetItems] = useState(isAsync ? [] : options);
+  const [items, baseSetItems] = useState(isAsync ? [] : options);
+
+  // TODO: Improve this with async
+  useEffect(() => {
+    baseSetItems(isAsync ? [] : options);
+  }, [options, isAsync]);
+
   const [isOpen, setIsOpen] = useState(false);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
@@ -96,8 +104,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           return {
             ...changes,
             isOpen: true,
-            defaultHighlightedIndex: 0,
+            highlightedIndex: state.highlightedIndex,
           };
+        case useCombobox.stateChangeTypes.InputBlur:
+          setInputValue('');
+          setIsOpen(false);
+          return changes;
         default:
           return changes;
       }
@@ -115,10 +127,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             removeSelectedItem(newSelectedItem); // onChange is handled by multiselect here
           }
           break;
-        case useCombobox.stateChangeTypes.InputBlur:
-          setIsOpen(false);
-          setInputValue('');
-          break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
           break;
@@ -127,6 +135,15 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       }
     },
   });
+
+  const virtualizerOptions = {
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => MENU_OPTION_HEIGHT,
+    overscan: 4,
+  };
+
+  const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
   const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
 
@@ -190,21 +207,32 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         >
           {isOpen && (
             <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
-              <ul>
-                {items.map((item, index) => {
+              <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = items[virtualRow.index];
+                  const index = virtualRow.index;
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
                   return (
                     <li
-                      key={item.value}
+                      key={`${item.value}-${index}`}
+                      data-index={index}
                       {...itemProps}
-                      style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
+                      className={cx(styles.option, highlightedIndex === index && styles.optionFocused)}
+                      style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
                     >
-                      {' '}
-                      {/* Add styling with virtualization */}
-                      <Checkbox key={id} value={isSelected} aria-labelledby={id} />
-                      <OptionListItem option={item} id={id} />
+                      <Stack direction="row" alignItems="center">
+                        <Checkbox
+                          key={id}
+                          value={isSelected}
+                          aria-labelledby={id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        />
+                        <OptionListItem option={item} id={id} />
+                      </Stack>
                     </li>
                   );
                 })}
