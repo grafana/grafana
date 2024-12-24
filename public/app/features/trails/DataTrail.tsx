@@ -678,8 +678,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     useEffect(() => {
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+      const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, model);
+      const limitedFilterVariable = useOtelExperience ? otelAndMetricsFiltersVariable : filtersVariable;
       const datasourceHelper = model.datasourceHelper;
-      limitAdhocProviders(model, filtersVariable, datasourceHelper, useOtelExperience);
+      limitAdhocProviders(model, limitedFilterVariable, datasourceHelper);
     }, [model, useOtelExperience]);
 
     return (

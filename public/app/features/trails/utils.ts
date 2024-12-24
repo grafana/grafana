@@ -33,7 +33,7 @@ import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { sortResources } from './otel/util';
-import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_OTEL_AND_METRIC_FILTERS } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -146,20 +146,19 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
  * This function still uses these functions from inside the data source helper.
  *
  * @param dataTrail
- * @param filtersVariable
+ * @param limitedFilterVariable Depending on otel experience flag, either filtersVar or otelAndMetricsVar
  * @param datasourceHelper
  */
 export function limitAdhocProviders(
   dataTrail: DataTrail,
-  filtersVariable: SceneVariable<SceneVariableState> | null,
+  limitedFilterVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper,
-  useOtelExperience?: boolean,
 ) {
-  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+  if (!(limitedFilterVariable instanceof AdHocFiltersVariable)) {
     return;
   }
 
-  filtersVariable.setState({
+  limitedFilterVariable.setState({
     getTagKeysProvider: async (
       variable: AdHocFiltersVariable,
       currentKey: string | null
@@ -172,7 +171,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus labels endpoint
-      const filters = filtersVariable.state.filters;
+      const filters = limitedFilterVariable.state.filters;
       // call getTagKeys and truncate the response
       // we're passing the queries so we get the labels that adhere to the queries
       // we're also passing the scopes so we get the labels that adhere to the scopes filters
@@ -190,13 +189,12 @@ export function limitAdhocProviders(
       }
 
       let values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
-      // use replace: true to override the default lookup in adhoc filter variable
-
-      if (useOtelExperience) {
-        // sort the values for showing otel resources at the top
+      
+      // sort the values for otel resources at the top
+      if (limitedFilterVariable.state.name === VAR_OTEL_AND_METRIC_FILTERS) {        
         values = sortResources(values, filters.map((f) => f.key));
       }
-
+      // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
     getTagValuesProvider: async (
@@ -211,7 +209,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus label values endpoint
-      const filtersValues = filtersVariable.state.filters;
+      const filtersValues = limitedFilterVariable.state.filters;
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response
