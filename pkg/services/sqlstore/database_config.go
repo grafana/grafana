@@ -196,11 +196,19 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			return err
 		}
 
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
+		sqliteConnParams := make(url.Values)
+		sqliteConnParams.Add("_txlock", "immediate")
+		sqliteConnParams.Add("_busy_timeout", "5000")
+		sqliteConnParams.Add("_synchronous", "NORMAL")
+		sqliteConnParams.Add("_cache_size", "2000")
+		sqliteConnParams.Add("cache", dbCfg.CacheMode)
+		sqliteConnParams.Add("mode", "rwc")
 
 		if dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
+			sqliteConnParams.Add("_journal_mode", "WAL")
 		}
+
+		cnnstr = fmt.Sprintf("file:%s?%s", sqliteConnParams.Encode())
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	default:
