@@ -30,6 +30,7 @@ func TestDocumentMapping(t *testing.T) {
 			Path: "ppp",
 			Hash: "hhh",
 		},
+		DeprecatedInternalID: 1234,
 	}
 
 	doc := document.NewDocument("id")
@@ -42,5 +43,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 17, len(doc.Fields))
+	require.Equal(t, 18, len(doc.Fields))
 }

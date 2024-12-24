@@ -35,7 +35,7 @@ const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
 // Deprecated: will be removed in grafana 13
-const labelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
+const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // These can be removed once we verify that non of the dual-write sources
 // (for dashboards/playlists/etc) depend on the saved internal ID in SQL
@@ -299,7 +299,7 @@ func (m *grafanaMetaAccessor) GetDeprecatedInternalID() int64 {
 		return 0
 	}
 
-	if internalID, ok := labels[labelKeyDeprecatedInternalID]; ok {
+	if internalID, ok := labels[LabelKeyDeprecatedInternalID]; ok {
 		id, err := strconv.ParseInt(internalID, 10, 64)
 		if err == nil {
 			return id
@@ -316,7 +316,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 	// disallow setting it to 0
 	if id == 0 {
 		if labels != nil {
-			delete(labels, labelKeyDeprecatedInternalID)
+			delete(labels, LabelKeyDeprecatedInternalID)
 			m.obj.SetLabels(labels)
 		}
 		return
@@ -326,7 +326,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 		labels = make(map[string]string)
 	}
 
-	labels[labelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
+	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
 }
 
