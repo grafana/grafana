@@ -116,7 +116,7 @@ func TestPostableGrafanaReceiverToEmbeddedContactPoint(t *testing.T) {
 				decrypted = append(decrypted, s)
 				return s
 			}
-			embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(&tt.input, expectedProvenance, decrypt)
+			embeddedContactPoint, _, err := PostableGrafanaReceiverToEmbeddedContactPoint(&tt.input, expectedProvenance, decrypt)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, embeddedContactPoint)
 			assert.ElementsMatch(t, maps.Values(tt.input.SecureSettings), decrypted)
