@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, folderStore folder.Store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
@@ -27,7 +27,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 	}
 
 	l.registerAPIEndpoints()
-	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, folderStore))
+	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
 
 	return l
 }

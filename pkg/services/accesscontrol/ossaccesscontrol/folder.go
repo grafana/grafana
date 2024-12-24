@@ -84,7 +84,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
@@ -111,7 +111,7 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderStore)
+			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
