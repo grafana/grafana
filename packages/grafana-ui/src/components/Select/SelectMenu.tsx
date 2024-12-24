@@ -287,7 +287,7 @@ export const SelectMenuOptions = ({
       {icon && <Icon name={icon} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || String(data.value)} />}
       <div className={styles.optionBody}>
-        <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
+        <span>{renderOptionLabel ? renderOptionLabel(data) : children === "" ? "\u200B" : children}</span>
         {data.description && <div className={styles.optionDescription}>{data.description}</div>}
         {data.component && <data.component />}
       </div>
