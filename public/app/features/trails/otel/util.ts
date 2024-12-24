@@ -102,7 +102,6 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
     // get the collection of adhoc filters
     const otelFilters = otelResources.state.filters;
 
-
     let allFilters = '';
     let allLabels = '';
 

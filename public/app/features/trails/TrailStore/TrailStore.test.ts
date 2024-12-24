@@ -512,7 +512,7 @@ describe('TrailStore', () => {
               'var-ds': 'prom-mock',
               'var-otel_resources': [''],
               'var-filters': [],
-              'var-otel_and_metric_filters':[''],
+              'var-otel_and_metric_filters': [''],
               refresh: '',
             },
             type: 'time',

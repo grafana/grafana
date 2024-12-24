@@ -92,7 +92,7 @@ describe('OTEL API', () => {
   describe('getOtelResources', () => {
     it('should fetch and filter OTEL resources', async () => {
       const resources = await getOtelResources(dataSourceUid, timeRange);
-      // include deployment environment as we are adding this into otel and metrics variable 
+      // include deployment environment as we are adding this into otel and metrics variable
       // and removing the custom variable
       expect(resources).toEqual(['job', 'instance', 'deployment_environment']);
     });

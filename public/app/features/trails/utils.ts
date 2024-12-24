@@ -152,7 +152,7 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
 export function limitAdhocProviders(
   dataTrail: DataTrail,
   limitedFilterVariable: SceneVariable<SceneVariableState> | null,
-  datasourceHelper: MetricDatasourceHelper,
+  datasourceHelper: MetricDatasourceHelper
 ) {
   if (!(limitedFilterVariable instanceof AdHocFiltersVariable)) {
     return;
@@ -189,10 +189,13 @@ export function limitAdhocProviders(
       }
 
       let values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
-      
+
       // sort the values for otel resources at the top
-      if (limitedFilterVariable.state.name === VAR_OTEL_AND_METRIC_FILTERS) {        
-        values = sortResources(values, filters.map((f) => f.key));
+      if (limitedFilterVariable.state.name === VAR_OTEL_AND_METRIC_FILTERS) {
+        values = sortResources(
+          values,
+          filters.map((f) => f.key)
+        );
       }
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
@@ -284,7 +287,6 @@ export async function callSuggestionsApi(
   );
 }
 
-
 /**
  * Consolidate OTel resources into label filters
  *  - hide the adhoc filter and hide the otel resource filter
@@ -315,7 +317,7 @@ export async function callSuggestionsApi(
  *   d. update definition of isStandard OTel and check for job and instance instead
  *      - we did not support those that did not have them on target_info before
  * 5. Handle all starting user behavior cases where
- *   a. toggling the otel experience on and off 
+ *   a. toggling the otel experience on and off
  *   b. useOtelExperience is selected and a previous dep env has been selected
  *   c. useOtelExperience is disabled by local storage
  *   d. All previous var filters are migrated to the new adhoc filter

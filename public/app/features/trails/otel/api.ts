@@ -52,11 +52,11 @@ export async function getOtelResources(
 }
 
 /**
- * Get the total amount of job/instance for target_info or for a metric. 
- * 
- * If used for target_info, this is the metric preview scene with many panels and 
+ * Get the total amount of job/instance for target_info or for a metric.
+ *
+ * If used for target_info, this is the metric preview scene with many panels and
  * the job/instance pairs will be used to filter the metric list.
- * 
+ *
  * If used for a metric, this is the metric preview scene with a single panel and
  * the job/instance pairs will be used to identify otel resource attributes for the metric
  * and distinguish between resource attributes and promoted attributes.
@@ -232,7 +232,7 @@ export async function getDeploymentEnvironmentsWithScopes(
 /**
  * For OTel, get the resource attributes for a metric.
  * Handle filtering on both OTel resources as well as metric labels.
- * 
+ *
  * 1. Does not include resources promoted to metrics
  * 2. Does not include __name__ or previously chosen filters
  * 3. Sorts the resources, surfacing the blessedlist on top
@@ -328,14 +328,11 @@ export async function getFilteredResourceAttributes(
 /**
  * This function gets otel resources that only exist in target_info and
  * do not exist on metrics as promoted labels.
- * 
+ *
  * This is used when selecting a label from the list that includes both otel resources and metric labels.
  * This list helps identify that a selected lbel/resource must be stored in VAR_OTEL_RESOURCES or VAR_FILTERS to be interpolated correctly in the queries.
  */
-export async function getNonPromotedOtelResources(
-  datasourceUid: string,
-  timeRange: RawTimeRange,
-) {
+export async function getNonPromotedOtelResources(datasourceUid: string, timeRange: RawTimeRange) {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
   // The URL for the labels endpoint
@@ -382,7 +379,7 @@ export async function getNonPromotedOtelResources(
   const metricLabels = metricResponse.data ?? [];
 
   // get all the resource attributes that are not present on metrics (have been promoted to metrics)
-  const nonPromotedResources = targetInfoLabels.filter(item => !metricLabels.includes(item));
+  const nonPromotedResources = targetInfoLabels.filter((item) => !metricLabels.includes(item));
 
   return nonPromotedResources;
 }

@@ -528,7 +528,7 @@ describe('DataTrail', () => {
     beforeEach(() => {
       trail = new DataTrail({
         useOtelExperience: true,
-        nonPromotedOtelResources
+        nonPromotedOtelResources,
       });
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
@@ -547,18 +547,22 @@ describe('DataTrail', () => {
       expect(joinQueryVarHide).toBe(VariableHide.hideVariable);
     });
 
-    it('should automatically update the otel resources var when a non promoted resource has been selected from VAR_OTEL_AND_METRICS', () =>{
-      getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }] });
+    it('should automatically update the otel resources var when a non promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
+      getOtelAndMetricsVar(trail).setState({
+        filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
+      });
       const otelResourcesFilter = getOtelResourcesVar(trail).state.filters[0];
       expect(otelResourcesFilter.key).toBe('deployment_environment');
       expect(otelResourcesFilter.value).toBe('production');
     });
     it('should add history step of type "resource" when adding a non promoted otel resource', () => {
-      getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }] });
+      getOtelAndMetricsVar(trail).setState({
+        filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
+      });
       expect(trail.state.history.state.steps[2].type).toBe('resource');
     });
 
-    it('should automatically update the var filters when a promoted resource has been selected from VAR_OTEL_AND_METRICS', () =>{
+    it('should automatically update the var filters when a promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
       getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
       const varFilters = getFilterVar().state.filters[0];
       expect(varFilters.key).toBe('promoted');
@@ -573,10 +577,10 @@ describe('DataTrail', () => {
       expect(getOtelGroupLeftVar(trail).state.value).toBe('attribute1,attribute2');
     });
 
-    it('should display with hideLabel var filters and hide VAR_OTEL_AND_METRIC_FILTERS when resetting otel experience', ()=>{
+    it('should display with hideLabel var filters and hide VAR_OTEL_AND_METRIC_FILTERS when resetting otel experience', () => {
       trail.resetOtelExperience();
       expect(getFilterVar().state.hide).toBe(VariableHide.hideLabel);
       expect(getOtelAndMetricsVar(trail).state.hide).toBe(VariableHide.hideVariable);
-    })
+    });
   });
 });

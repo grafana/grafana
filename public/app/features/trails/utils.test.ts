@@ -90,7 +90,7 @@ describe('limitAdhocProviders', () => {
       await otelAndMetricsVariable.state.getTagKeysProvider(otelAndMetricsVariable, null);
     }
     expect(sortResources).toHaveBeenCalled();
-  })
+  });
 });
 
 describe('getDatasourceForNewTrail', () => {
