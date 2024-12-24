@@ -24,35 +24,35 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
 	return &DataSourceProxyService{
-		DataSourceCache:        dataSourceCache,
-		PluginRequestValidator: plugReqValidator,
-		pluginStore:            pluginStore,
-		Cfg:                    cfg,
-		HTTPClientProvider:     httpClientProvider,
-		OAuthTokenService:      oauthTokenService,
-		DataSourcesService:     dsService,
-		tracer:                 tracer,
-		secretsService:         secretsService,
-		features:               features,
+		DataSourceCache:            dataSourceCache,
+		DataSourceRequestValidator: datasourceReqValidator,
+		pluginStore:                pluginStore,
+		Cfg:                        cfg,
+		HTTPClientProvider:         httpClientProvider,
+		OAuthTokenService:          oauthTokenService,
+		DataSourcesService:         dsService,
+		tracer:                     tracer,
+		secretsService:             secretsService,
+		features:                   features,
 	}
 }
 
 type DataSourceProxyService struct {
-	DataSourceCache        datasources.CacheService
-	PluginRequestValidator validations.PluginRequestValidator
-	pluginStore            pluginstore.Store
-	Cfg                    *setting.Cfg
-	HTTPClientProvider     httpclient.Provider
-	OAuthTokenService      *oauthtoken.Service
-	DataSourcesService     datasources.DataSourceService
-	tracer                 tracing.Tracer
-	secretsService         secrets.Service
-	features               featuremgmt.FeatureToggles
+	DataSourceCache            datasources.CacheService
+	DataSourceRequestValidator validations.DataSourceRequestValidator
+	pluginStore                pluginstore.Store
+	Cfg                        *setting.Cfg
+	HTTPClientProvider         httpclient.Provider
+	OAuthTokenService          *oauthtoken.Service
+	DataSourcesService         datasources.DataSourceService
+	tracer                     tracing.Tracer
+	secretsService             secrets.Service
+	features                   featuremgmt.FeatureToggles
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -108,7 +108,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.PluginRequestValidator.Validate(ds.URL, c.Req)
+	err := p.DataSourceRequestValidator.Validate(ds, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
