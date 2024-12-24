@@ -38,11 +38,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
