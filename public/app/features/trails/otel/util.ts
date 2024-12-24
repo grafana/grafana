@@ -1,13 +1,12 @@
 import { MetricFindValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
 import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
   VAR_MISSING_OTEL_TARGETS,
-  VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
@@ -81,10 +80,9 @@ export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject, scene
   }
 
   let otelResourcesJoinQuery = '';
-  if (otelResourcesObject.filters && otelResourcesObject.labels) {
-    // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
-    otelResourcesJoinQuery = `* on (job, instance) group_left(${groupLeft}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
-  }
+  // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
+  // target_info does not have to be filtered by deployment environment
+  otelResourcesJoinQuery = `* on (job, instance) group_left(${groupLeft}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
 
   return otelResourcesJoinQuery;
 }
@@ -98,34 +96,14 @@ export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject, scene
  */
 export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: string): OtelResourcesObject {
   const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
-  // add deployment env to otel resource filters
-  const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
-
   let otelResourcesObject = { labels: '', filters: '' };
 
-  if (otelResources instanceof AdHocFiltersVariable && otelDepEnv instanceof CustomVariable) {
+  if (otelResources instanceof AdHocFiltersVariable) {
     // get the collection of adhoc filters
     const otelFilters = otelResources.state.filters;
 
-    // get the value for deployment_environment variable
-    let otelDepEnvValue = String(otelDepEnv.getValue());
-    // check if there are multiple environments
-    const isMulti = otelDepEnvValue.includes(',');
-    // start with the default label filters for deployment_environment
-    let op = '=';
-    let val = firstQueryVal ? firstQueryVal : otelDepEnvValue;
-    // update the filters if multiple deployment environments selected
-    if (isMulti) {
-      op = '=~';
-      val = val.split(',').join('|');
-    }
-
-    // start with the deployment environment
-    let allFilters = `deployment_environment${op}"${val}"`;
-    if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-      allFilters = `deployment_environment${op}'${val}'`;
-    }
-    let allLabels = 'deployment_environment';
+    let allFilters = '';
+    let allLabels = '';
 
     // add the other OTEL resource filters
     for (let i = 0; i < otelFilters?.length; i++) {
@@ -134,15 +112,15 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const labelValue = otelFilters[i].value;
 
       if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-        allFilters += `,${labelName}${op}'${labelValue}'`;
+        allFilters += `${labelName}${op}'${labelValue}'`;
       } else {
-        allFilters += `,${labelName}${op}"${labelValue}"`;
+        allFilters += `${labelName}${op}"${labelValue}"`;
       }
 
       const addLabelToGroupLeft = labelName !== 'job' && labelName !== 'instance';
 
       if (addLabelToGroupLeft) {
-        allLabels += `,${labelName}`;
+        allLabels += `${labelName}`;
       }
     }
 
@@ -262,17 +240,14 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     return;
   }
   // Remove the group left
-  if (!metric) {
+  // if the metric is target_info, it already has all resource attributes
+  if (!metric || metric === 'target_info') {
     // if the metric is not present, that means we are in the metric select scene
     // and that should have no group left because it may interfere with queries.
     otelGroupLeft.setState({ value: '' });
     const resourceObject = getOtelResourcesObject(trail);
     const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
-    return;
-  }
-  // if the metric is target_info, it already has all resource attributes
-  if (metric === 'target_info') {
     return;
   }
 

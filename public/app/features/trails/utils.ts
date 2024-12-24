@@ -32,7 +32,8 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
-import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { sortResources } from './otel/util';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_OTEL_AND_METRIC_FILTERS } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -145,19 +146,19 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
  * This function still uses these functions from inside the data source helper.
  *
  * @param dataTrail
- * @param filtersVariable
+ * @param limitedFilterVariable Depending on otel experience flag, either filtersVar or otelAndMetricsVar
  * @param datasourceHelper
  */
 export function limitAdhocProviders(
   dataTrail: DataTrail,
-  filtersVariable: SceneVariable<SceneVariableState> | null,
+  limitedFilterVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
 ) {
-  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+  if (!(limitedFilterVariable instanceof AdHocFiltersVariable)) {
     return;
   }
 
-  filtersVariable.setState({
+  limitedFilterVariable.setState({
     getTagKeysProvider: async (
       variable: AdHocFiltersVariable,
       currentKey: string | null
@@ -170,7 +171,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus labels endpoint
-      const filters = filtersVariable.state.filters;
+      const filters = limitedFilterVariable.state.filters;
       // call getTagKeys and truncate the response
       // we're passing the queries so we get the labels that adhere to the queries
       // we're also passing the scopes so we get the labels that adhere to the scopes filters
@@ -187,7 +188,15 @@ export function limitAdhocProviders(
         opts.queries = [];
       }
 
-      const values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      let values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+
+      // sort the values for otel resources at the top
+      if (limitedFilterVariable.state.name === VAR_OTEL_AND_METRIC_FILTERS) {
+        values = sortResources(
+          values,
+          filters.map((f) => f.key)
+        );
+      }
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
@@ -203,7 +212,7 @@ export function limitAdhocProviders(
       // to use in the query to filter the response
       // using filters, e.g. {previously_selected_label:"value"},
       // as the series match[] parameter in Prometheus label values endpoint
-      const filtersValues = filtersVariable.state.filters;
+      const filtersValues = limitedFilterVariable.state.filters;
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response
@@ -277,3 +286,46 @@ export async function callSuggestionsApi(
     })
   );
 }
+
+/**
+ * Consolidate OTel resources into label filters
+ *  - hide the adhoc filter and hide the otel resource filter
+ *  - create an new overlaping adhoc filter, super filter that includes all attributes, resource and metric
+ *  - identify the difference when selecting an attribute
+ *  - place the attribute in the appropriate filter so that the query is interpolated with the correct filter in the correct place
+ *
+ * 1. The adhoc filters will contain all the otel resources (happens by default because list contains target_info)
+ *   [x] the filter list will sort otel resources to the top
+ * 2. Hide the otel resources variable
+ *   a. [x] remove the updates when it is changed
+ * 3. When a filter is selected, we need to identify the following
+ *   a. [x] an otel resource (on target_info)
+ *   b. [x] It is not promoted as a label on metric
+ *     - [x] How to identify otel resource? Add function to make a collection
+ *     - [x] Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
+ *     - [x] call for list of target_info labels and list of labels minut target info
+ *     - [x] find the otel resources that do not exist in the labels
+ *     - these are the non promoted resources
+ *     - [x] if it is a resource attribute, it should be stored as such so it can be filtered in the join
+ *   d. [x] Add selected otel resources to the hidden variable
+ *   e. [x] when a filter is changed, change the correct filter
+ * 4. Remove special the deployment environment variable totally
+ *   a. [x] automatically select deployment_environment OR environment if it exists
+ *   b. [ ] everywhere that the deployment environment is used remove it
+ *        - [ ] confirm removal of otel dep env in historyy
+ *   c. if deployment environment is promoted, this is fine and we can support more otel data sources
+ *   d. update definition of isStandard OTel and check for job and instance instead
+ *      - we did not support those that did not have them on target_info before
+ * 5. Handle all starting user behavior cases where
+ *   a. toggling the otel experience on and off
+ *   b. useOtelExperience is selected and a previous dep env has been selected
+ *   c. useOtelExperience is disabled by local storage
+ *   d. All previous var filters are migrated to the new adhoc filter
+ * 6. Handle metric graph scene/label breakdown behavior
+ *   a. select a label in breakdown, apply it to otelmetricsvar and it will be applied to the correct filter
+ *   b. duplicate labels are found in the label breakdown between otel resources and metric resources
+ * 7. Migrate any variable url values to adhoc to show them in the new filter
+ *   a. otel filter
+ *   b. deployment environment
+ *   c. var filters get placed in the new otel metric filter
+ */
