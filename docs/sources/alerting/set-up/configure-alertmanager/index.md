@@ -76,9 +76,13 @@ Alertmanagers should be configured as data sources using Grafana Configuration f
 
 For provisioning instructions, refer to the [Alertmanager data source documentation](ref:alertmanager-data-source).
 
-After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, and other alerting resources from within Grafana. While you can edit silences for Prometheus Alertmanagers, other resources are read-only because the Prometheus Alertmanager HTTP API does not support updates.
+After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, silences, and other alerting resources from within Grafana.
 
-When having multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
+{{% admonition type="note" %}}
+When using Prometheus, you can manage silences in the Grafana Alerting UI. However, other Alertmanager resources such as contact points, notification policies, and templates are read-only because the Prometheus Alertmanager HTTP API does not support updates for these resources.
+{{% /admonition %}}
+
+When configuring multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
 
 ## Enable an Alertmanager to receive Grafana-managed alerts
 
