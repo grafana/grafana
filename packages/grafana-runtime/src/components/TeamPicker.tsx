@@ -1,11 +1,10 @@
 import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
 import { Component } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { SelectableValue, Team } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
-import { Team } from 'app/types';
 
+import { getBackendSrv } from '../services/backendSrv';
 export interface Props {
   onSelected: (team: SelectableValue<Team>) => void;
   className?: string;
