@@ -549,9 +549,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         otelTargets,
         otelJoinQuery,
         hasOtelResources,
-        // we can now support the otel experience for data sources that do not have deployment environments
-        // switch this to nonPromotedOtelResources.length > 0
-        isStandardOtel: deploymentEnvironments.length > 0,
+        // Previously checking standardization for having deployment environments
+        // Now we check that there are target_info labels that are not promoted
+        isStandardOtel: (nonPromotedOtelResources ?? []).length > 0,
         useOtelExperience: isEnabledInLocalStorage,
         nonPromotedOtelResources,
       });
