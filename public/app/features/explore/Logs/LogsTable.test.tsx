@@ -57,6 +57,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
   const logsFrame = parseLogsFrame(testDataFrame);
   return (
     <LogsTable
+      wrapLogsMessage={false}
       logsFrame={logsFrame}
       height={400}
       columnsWithMeta={{
