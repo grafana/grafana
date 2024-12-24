@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -54,7 +55,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
-		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgQuery := &org.CreateOrgCommand{Name: setting.DefaultMainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
 		serviceAccountOrgId := orgResult.ID
@@ -88,7 +89,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 
 	t.Run("create service account twice same org, error", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
-		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgQuery := &org.CreateOrgCommand{Name: setting.DefaultMainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
 		serviceAccountOrgId := orgResult.ID
@@ -126,7 +127,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 
 	t.Run("create service account twice different orgs should work", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
-		orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+		orgQuery := &org.CreateOrgCommand{Name: setting.DefaultMainOrgName}
 		orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 		require.NoError(t, err)
 		serviceAccountOrgId := orgResult.ID
@@ -175,7 +176,7 @@ func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
 	}
 
 	_, store := setupTestDatabase(t)
-	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+	orgQuery := &org.CreateOrgCommand{Name: setting.DefaultMainOrgName}
 	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 	require.NoError(t, err)
 
