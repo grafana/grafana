@@ -82,7 +82,7 @@ After adding an Alertmanager, you can use the Grafana Alerting UI to manage noti
 When using Prometheus, you can manage silences in the Grafana Alerting UI. However, other Alertmanager resources such as contact points, notification policies, and templates are read-only because the Prometheus Alertmanager HTTP API does not support updates for these resources.
 {{% /admonition %}}
 
-When configuring multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
+When using multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
 
 ## Enable an Alertmanager to receive Grafana-managed alerts
 
@@ -94,8 +94,10 @@ After enabling **Receive Grafana Alerts** in the Data Source Settings, you must 
 
 {{< figure src="/media/docs/alerting/grafana-alerting-settings.png" max-width="750px" alt="Grafana Alerting Settings page" >}}
 
+All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving Grafana-managed alerts`.
+
 {{% admonition type="note" %}}
-Grafana Alerting does not support sending Grafana-managed alerts to the AlertManager in AWS Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
+Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
 {{% /admonition %}}
 
 ## Manage Alertmanager configurations
