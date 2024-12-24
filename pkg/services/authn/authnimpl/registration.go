@@ -81,8 +81,20 @@ func ProvideRegistration(
 	}
 
 	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
-		authnSvc.RegisterClient(passwordless)
+		oauthInfos := socialService.GetOAuthInfoProviders()
+		enabledProvidersLen := 0
+		for _, provider := range oauthInfos {
+			if provider.Enabled {
+				enabledProvidersLen++
+			}
+		}
+
+		if cfg.SAMLAuthEnabled || enabledProvidersLen > 0 {
+			logger.Error("Failed to configure passwordless magic link auth: cannot enable both passwordless magic link auth & SSO")
+		} else {
+			passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
+			authnSvc.RegisterClient(passwordless)
+		}
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
