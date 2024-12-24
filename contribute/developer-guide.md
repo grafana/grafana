@@ -361,6 +361,42 @@ ulimit: open files: cannot modify limit: Operation not permitted
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (`~/.bashrc`, typically), to see if there's already an `ulimit` command that you can tweak.
 
+### System limit for number of file watchers reached while running `yarn start`
+
+Depending on your environment, you may have to increase the number of file watchers allowed by inotify package to watch the filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
+
+Edit the system config file to insert the new value for file watchers limit:
+
+```bash
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+```
+
+Check if the new value was applied. It must output `524288`:
+
+```bash
+cat /proc/sys/fs/inotify/max_user_watches
+```
+
+### JavaScript heap out of memory while running `yarn start`
+
+Running `yarn start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
+
+```bash
+node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'
+```
+
+Increase the default heap memory to something greater than the currently allocated memory. Make sure the value is a multiple of `1024`.
+
+```bash
+export NODE_OPTIONS="--max-old-space-size=8192"
+```
+
+Or on Windows:
+
+```
+Set NODE_OPTIONS="--max-old-space-size=8192"
+```
+
 ### Getting `AggregateError` when building frontend tests
 
 If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
