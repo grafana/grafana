@@ -235,17 +235,14 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     return;
   }
   // Remove the group left
-  if (!metric) {
+  // if the metric is target_info, it already has all resource attributes
+  if (!metric || metric === 'target_info') {
     // if the metric is not present, that means we are in the metric select scene
     // and that should have no group left because it may interfere with queries.
     otelGroupLeft.setState({ value: '' });
     const resourceObject = getOtelResourcesObject(trail);
     const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
-    return;
-  }
-  // if the metric is target_info, it already has all resource attributes
-  if (metric === 'target_info') {
     return;
   }
 

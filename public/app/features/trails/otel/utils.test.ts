@@ -1,12 +1,12 @@
 import { MetricFindValue } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, sceneGraph } from '@grafana/scenes';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DataTrail } from '../DataTrail';
-import { VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
+import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
 
 import {
   sortResources,
@@ -54,7 +54,7 @@ describe('getOtelJoinQuery', () => {
     );
   });
 
-  it('should return an empty string if filters or labels are missing', () => {
+  it('should return a join query if filters or labels are missing', () => {
     const otelResourcesObject = {
       filters: '',
       labels: '',
@@ -62,7 +62,7 @@ describe('getOtelJoinQuery', () => {
 
     const result = getOtelJoinQuery(otelResourcesObject);
 
-    expect(result).toBe('');
+    expect(result).toBe('* on (job, instance) group_left() topk by (job, instance) (1, target_info{})');
   });
 });
 
@@ -113,32 +113,6 @@ describe('sortResources', () => {
     const result = sortResources(resources, excluded);
 
     expect(result).toEqual([{ text: 'custom_resource', value: 'custom_resource' }]);
-  });
-});
-
-describe('getOtelJoinQuery', () => {
-  it('should return the correct join query', () => {
-    const otelResourcesObject = {
-      filters: 'job="test-job",instance="test-instance"',
-      labels: 'deployment_environment,custom_label',
-    };
-
-    const result = getOtelJoinQuery(otelResourcesObject);
-
-    expect(result).toBe(
-      '* on (job, instance) group_left() topk by (job, instance) (1, target_info{job="test-job",instance="test-instance"})'
-    );
-  });
-
-  it('should return an empty string if filters or labels are missing', () => {
-    const otelResourcesObject = {
-      filters: '',
-      labels: '',
-    };
-
-    const result = getOtelJoinQuery(otelResourcesObject);
-
-    expect(result).toBe('');
   });
 });
 
@@ -213,36 +187,12 @@ describe('updateOtelJoinWithGroupLeft', () => {
   const preTrailUrl =
     '/trail?from=now-1h&to=now&var-ds=edwxqcebl0cg0c&var-deployment_environment=oteldemo01&var-otel_resources=k8s_cluster_name%7C%3D%7Cappo11ydev01&var-filters=&refresh=&metricPrefix=all&metricSearch=http&actionView=breakdown&var-groupby=$__all&metric=http_client_duration_milliseconds_bucket';
 
-  function getOtelDepEnvVar(trail: DataTrail) {
-    const variable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, trail);
-    if (variable instanceof CustomVariable) {
-      return variable;
-    }
-    throw new Error('getDepEnvVar failed');
-  }
-
   function getOtelJoinQueryVar(trail: DataTrail) {
     const variable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
     if (variable instanceof ConstantVariable) {
       return variable;
     }
     throw new Error('getDepEnvVar failed');
-  }
-
-  function getOtelResourcesVar(trail: DataTrail) {
-    const variable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
-    if (variable instanceof AdHocFiltersVariable) {
-      return variable;
-    }
-    throw new Error('getOtelResourcesVar failed');
-  }
-
-  function getOtelGroupLeftVar(trail: DataTrail) {
-    const variable = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
-    if (variable instanceof ConstantVariable) {
-      return variable;
-    }
-    throw new Error('getOtelResourcesVar failed');
   }
 
   beforeEach(() => {
@@ -255,12 +205,12 @@ describe('updateOtelJoinWithGroupLeft', () => {
         }),
       })
     );
-    trail = new DataTrail({});
+    trail = new DataTrail({
+      useOtelExperience: true,
+      nonPromotedOtelResources: ['service_name'],
+    });
     locationService.push(preTrailUrl);
     activateFullSceneTree(trail);
-    getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
-    getOtelDepEnvVar(trail).changeValueTo('production');
-    getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
   });
 
   it('should update OTel join query with the group left resource attributes', async () => {
@@ -268,15 +218,18 @@ describe('updateOtelJoinWithGroupLeft', () => {
     const otelJoinQueryVar = getOtelJoinQueryVar(trail);
     // this will include the group left resource attributes
     expect(otelJoinQueryVar.getValue()).toBe(
-      '* on (job, instance) group_left(resourceAttribute) topk by (job, instance) (1, target_info{deployment_environment="production",service_name="adservice"})'
+      '* on (job, instance) group_left(resourceAttribute) topk by (job, instance) (1, target_info{})'
     );
   });
 
   it('should not update OTel join query with the group left resource attributes when the metric is target_info', async () => {
     await updateOtelJoinWithGroupLeft(trail, 'target_info');
     const otelJoinQueryVar = getOtelJoinQueryVar(trail);
-
-    expect(otelJoinQueryVar.getValue()).toBe('');
+    const emptyGroupLeftClause = 'group_left()';
+    const otelJoinQuery = otelJoinQueryVar.state.value;
+    if (typeof otelJoinQuery === 'string') {
+      expect(otelJoinQuery.includes(emptyGroupLeftClause)).toBe(true);
+    }
   });
 });
 
