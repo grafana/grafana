@@ -1,7 +1,7 @@
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -58,11 +58,6 @@ const getMenuContents = async () => {
 
   return [...allMenuItems, ...allLinkItems];
 };
-
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
 
 const mimirDs = mockDataSource({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' });
 const prometheusDs = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });

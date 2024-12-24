@@ -6,11 +6,6 @@ import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
-
 describe('Alertmanager card', () => {
   it('should show metadata', () => {
     render(
