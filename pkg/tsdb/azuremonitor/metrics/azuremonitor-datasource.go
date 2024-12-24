@@ -607,59 +607,56 @@ func formatAzureMonitorLegendKey(query *types.AzureMonitorQuery, resourceId stri
 	}
 	sort.Strings(keys)
 
-	result := types.LegendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
-		metaPartName := strings.Replace(string(in), "{{", "", 1)
-		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
-		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
-
+	result := types.LegendKeyFormat.ReplaceAllStringFunc(alias, func(in string) string {
+		metaPartName := strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(in, "{{"), "}}"))
 		if metaPartName == "subscriptionid" {
-			return []byte(subscriptionId)
+			return subscriptionId
 		}
 
 		if metaPartName == "subscription" {
 			if subscription == "" {
-				return []byte{}
+				return ""
 			}
-			return []byte(subscription)
+			return subscription
 		}
 
 		if metaPartName == "resourcegroup" && resource.ResourceGroup != nil {
-			return []byte(*resource.ResourceGroup)
+			return *resource.ResourceGroup
 		}
 
 		if metaPartName == "namespace" {
-			return []byte(namespace)
+			return namespace
 		}
 
 		if metaPartName == "resourcename" && resource.ResourceName != nil {
-			return []byte(*resource.ResourceName)
+			return *resource.ResourceName
 		}
 
 		if metaPartName == "metric" {
-			return []byte(metricName)
+			return metricName
 		}
 
 		if metaPartName == "dimensionname" {
 			if len(keys) == 0 {
-				return []byte{}
+				return ""
 			}
-			return []byte(keys[0])
+			return keys[0]
 		}
 
 		if metaPartName == "dimensionvalue" {
 			if len(keys) == 0 {
-				return []byte{}
+				return ""
 			}
-			return []byte(lowerLabels[keys[0]])
+			return lowerLabels[keys[0]]
 		}
 
 		if v, ok := lowerLabels[metaPartName]; ok {
-			return []byte(v)
+			return v
 		}
 		return in
 	})
 
-	return string(result)
+	return result
 }
 
 // Map values from:
