@@ -81,16 +81,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
-  external-alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
   mqtt:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
+  alertmanager-architecture:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  external-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
   manage-notification-templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
@@ -112,6 +117,10 @@ On the **Contact Points** tab, you can:
 - View the status of notification deliveries.
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
+
+{{% admonition type="note" %}}
+Contact points are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and cannot be used by notification policies in other Alertmanagers.
+{{% /admonition %}}
 
 ## Add a contact point
 
@@ -150,6 +159,16 @@ Testing a contact point is only available for Grafana Alertmanager. Complete the
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
 
+## Customize notification messages
+
+In contact points, you can also customize notification messages. For example, when setting up an email contact point integration, click **Message** or **Subject** to modify it.
+
+By default, notification messages include common alert details, which are usually sufficient for most cases.
+
+If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
+
+On the **Notification templates** tab, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
+
 ## List of supported integrations
 
 Each contact point integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
@@ -182,13 +201,3 @@ The following table lists the contact point integrations supported by Grafana.
 | WeCom                        | `wecom`                   |
 
 Some of these integrations are not compatible with [external Alertmanagers](ref:external-alertmanager). For the list of Prometheus Alertmanager integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).
-
-## Customize notification messages
-
-In contact points, you can also customize notification messages. For example, when setting up an email contact point integration, click **Message** or **Subject** to modify it.
-
-By default, notification messages include common alert details, which are usually sufficient for most cases.
-
-If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
-
-On the **Notification templates** tab, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.

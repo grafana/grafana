@@ -70,7 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters && !isEditing;
+  const showScopesSelector = config.featureToggles.scopeFilters && !isEditing;
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   if (!isEditingPanel) {
@@ -141,10 +141,7 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
-      <GoToSnapshotOriginButton
-        key="go-to-snapshot-origin"
-        originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
-      />
+      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
   });
 
@@ -640,10 +637,10 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Will open a schema v2 editor drawer. Only available with dashboardSchemaV2 feature toggle on.
+  // Will open a schema v2 editor drawer. Only available with useV2DashboardsAPI feature toggle on.
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && config.featureToggles.dashboardSchemaV2,
+    condition: uid && config.featureToggles.useV2DashboardsAPI,
     render: () => {
       return (
         <ToolbarButton

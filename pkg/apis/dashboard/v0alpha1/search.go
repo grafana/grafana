@@ -51,26 +51,16 @@ type SortableField struct {
 	Type    string `json:"type,omitempty"` // string or number
 }
 
-// Dashboard or folder hit
-// +enum
-type HitKind string
-
-// PluginType values
-const (
-	HitTypeDash   HitKind = "Dashboard"
-	HitTypeFolder HitKind = "Folder"
-)
-
 type DashboardHit struct {
 	// Dashboard or folder
-	Kind HitKind `json:"kind"`
+	Resource string `json:"resource"` // dashboards | folders
 	// The k8s "name" (eg, grafana UID)
 	Name string `json:"name"`
 	// The display nam
 	Title string `json:"title"`
 	// Filter tags
 	Tags []string `json:"tags,omitempty"`
-	// The UID/name for the folder
+	// The k8s name (eg, grafana UID) for the parent folder
 	Folder string `json:"folder,omitempty"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitempty"`

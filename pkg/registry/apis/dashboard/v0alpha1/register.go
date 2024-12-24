@@ -113,6 +113,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 	storageOpts := apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
 			internal := &dashboardinternal.Dashboard{}
 			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
@@ -155,6 +156,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	}
+
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+	)
+
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+		scheme,
+	)
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(

@@ -157,7 +157,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 	}
 
-	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
 	commitShort := getShortCommitHash(setting.BuildCommit, 10)
@@ -266,8 +266,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   featureToggles,
-		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
-		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
+		AnonymousEnabled:                 hs.Cfg.Anonymous.Enabled,
+		AnonymousDeviceLimit:             hs.Cfg.Anonymous.DeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
@@ -721,6 +721,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			OrgID:         orgID,
 			Enabled:       plugin.AutoEnabled,
 			Pinned:        plugin.AutoEnabled,
+			AutoEnabled:   plugin.AutoEnabled,
 			PluginVersion: plugin.Info.Version,
 		}
 
