@@ -45,6 +45,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 			},
 		}
 		obj.SetGenerateName("aa")
+		obj.SetAPIVersion("dashboard.grafana.app/v0alpha1")
+		obj.SetKind("Dashboard")
 		obj, err = client.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		created := obj.GetName()

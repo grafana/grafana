@@ -9,7 +9,9 @@ import (
 )
 
 func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
-	strategy := NewStrategy(scheme, resourceInfo.GroupVersion())
+	gv := resourceInfo.GroupVersion()
+	gv.Version = runtime.APIVersionInternal
+	strategy := NewStrategy(scheme, gv)
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -28,4 +30,10 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 		return nil, err
 	}
 	return store, nil
+}
+
+func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store) *StatusREST {
+	gv := specStore.New().GetObjectKind().GroupVersionKind().GroupVersion()
+	strategy := NewStatusStrategy(scheme, gv)
+	return NewStatusREST(specStore, strategy)
 }
