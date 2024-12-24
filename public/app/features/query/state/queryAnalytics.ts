@@ -77,7 +77,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
 function enrichWithErrorData(eventData: DataRequestEventPayload, data: PanelData) {
   if (data.errors?.length) {
-    eventData.error = data.errors.join(', ');
+    eventData.error = data.errors.map((e) => e.message).join(', ');
   } else if (data.error) {
     eventData.error = data.error.message;
   }
