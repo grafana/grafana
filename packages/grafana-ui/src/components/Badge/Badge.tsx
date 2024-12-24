@@ -19,9 +19,10 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: string;
+  html?: boolean;
 }
 
-const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
+const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, html, className, ...otherProps }) => {
   const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
@@ -31,7 +32,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
   );
 
   return tooltip ? (
-    <Tooltip content={tooltip} placement="auto">
+    <Tooltip content={tooltip} placement="auto" html={html}>
       {badge}
     </Tooltip>
   ) : (

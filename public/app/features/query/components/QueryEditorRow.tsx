@@ -409,7 +409,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
-    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+    let serializedWarnings, hasMultipleWarnings;
+    if (uniqueWarnings.length > 1) {
+      serializedWarnings = '<ul>' + uniqueWarnings.map((warning) => '<li>' + warning.text + '</li>').join('') + '</ul>';
+      hasMultipleWarnings = true;
+    } else {
+      serializedWarnings = uniqueWarnings[0].text;
+      hasMultipleWarnings = false;
+    }
 
     return (
       <Badge
@@ -422,6 +429,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           </>
         }
         tooltip={serializedWarnings}
+        html={hasMultipleWarnings}
       />
     );
   };
