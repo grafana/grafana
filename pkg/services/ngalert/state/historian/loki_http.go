@@ -91,6 +91,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 			TLSSkipVerify: cfg.OtelTLSSkipVerify,
 			ApiKey:        cfg.OtelApiKey,
 			MaxQuerySize:  cfg.LokiMaxQuerySize,
+			WriteTimeout:  cfg.OtelWriteTimeout,
 		},
 	}, nil
 }

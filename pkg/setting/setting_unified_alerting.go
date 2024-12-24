@@ -183,6 +183,7 @@ type UnifiedAlertingStateHistorySettings struct {
 	OtelEnableTLS         bool
 	OtelTLSSkipVerify     bool
 	OtelApiKey            string
+	OtelWriteTimeout      time.Duration
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -441,6 +442,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		OtelEndpoint:          stateHistory.Key("otel_endpoint").MustString(""),
 		OtelEnableTLS:         stateHistory.Key("otel_enable_tls").MustBool(false),
 		OtelTLSSkipVerify:     stateHistory.Key("otel_tls_skip_verify").MustBool(false),
+		OtelWriteTimeout:      stateHistory.Key("otel_write_timeout").MustDuration(0),
 		OtelApiKey:            os.Getenv("API_KEY"),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory

@@ -290,23 +290,28 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 
 		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := LokiEntry{
-			SchemaVersion:  1,
-			Previous:       state.PreviousFormatted(),
-			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
-			Condition:      rule.Condition,
-			DashboardUID:   rule.DashboardUID,
-			PanelID:        rule.PanelID,
-			Fingerprint:    calculateFingerprint(state.Labels),
-			RuleTitle:      rule.Title,
-			RuleID:         rule.ID,
-			RuleUID:        rule.UID,
-			InstanceLabels: sanitizedLabels,
-			Annotations:    cleanAnnotations(state.Annotations, annotationsToDelete),
-		}
+		var errMsg string
 		if state.State.State == eval.Error {
-			entry.Error = state.Error.Error()
+			errMsg = state.Error.Error()
+			state.State.Values = map[string]float64{}
+		}
+
+		entry := LokiEntry{
+			SchemaVersion:             1,
+			Previous:                  state.PreviousFormatted(),
+			Current:                   state.Formatted(),
+			Values:                    valuesAsDataBlob(state.State),
+			Condition:                 rule.Condition,
+			DashboardUID:              rule.DashboardUID,
+			PanelID:                   rule.PanelID,
+			Fingerprint:               calculateFingerprint(state.Labels),
+			RuleTitle:                 rule.Title,
+			RuleID:                    rule.ID,
+			RuleUID:                   rule.UID,
+			InstanceLabels:            sanitizedLabels,
+			Annotations:               cleanAnnotations(state.Annotations, annotationsToDelete),
+			Error:                     errMsg,
+			EvaluationDurationSeconds: state.EvaluationDuration.Seconds(),
 		}
 
 		jsn, err := json.Marshal(entry)
@@ -365,8 +370,9 @@ type LokiEntry struct {
 	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
-	InstanceLabels map[string]string `json:"labels"`
-	Annotations    map[string]string `json:"annotations"`
+	InstanceLabels            map[string]string `json:"labels"`
+	Annotations               map[string]string `json:"annotations"`
+	EvaluationDurationSeconds float64           `json:"evaluationDurationSeconds"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
