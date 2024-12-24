@@ -2,7 +2,11 @@ import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { getV1SchemaPanelCounts, getV1SchemaVariables } from 'app/features/dashboard/utils/tracking';
+import {
+  getPanelPluginCounts,
+  getV1SchemaVariables,
+  getV2SchemaVariables,
+} from 'app/features/dashboard/utils/tracking';
 import { SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
@@ -28,7 +32,7 @@ export interface DashboardSceneSerializerLike<T> {
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: () => DashboardTrackingInfo | undefined;
+  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
 }
 
@@ -36,7 +40,7 @@ interface DashboardTrackingInfo {
   uid?: string;
   title?: string;
   schemaVersion: number;
-  version_before_migration?: number;
+  version_before_migration?: number | string;
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
@@ -94,7 +98,8 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
-    const panels = getV1SchemaPanelCounts(this.initialSaveModel?.panels || []);
+    const panelTypes = this.initialSaveModel?.panels?.map((p) => p.type) || [];
+    const panels = getPanelPluginCounts(panelTypes);
     const variables = getV1SchemaVariables(this.initialSaveModel?.templating?.list || []);
 
     if (this.initialSaveModel) {
@@ -159,8 +164,31 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     throw new Error('v2 schema: Method not implemented.');
   }
 
-  getTrackingInformation() {
-    throw new Error('v2 schema: Method not implemented.');
+  getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
+    const panelPluginIds =
+      Object.values(this.initialSaveModel?.elements ?? [])
+        .filter((e) => e.kind === 'Panel')
+        .map((p) => p.spec.vizConfig.kind) || [];
+    const panels = getPanelPluginCounts(panelPluginIds);
+    const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
+
+    if (this.initialSaveModel && s) {
+      return {
+        // TODO: schemaVersion and version_before_migration are not stored anywhere in the v2 schema
+        // version_before_migration need to be stored in the serializer to be used for tracking purposes
+        // schemaVersion needs to be stored in the dashboard model to be used for the migration strategy too
+        schemaVersion: 1, // placeholder value
+        version_before_migration: undefined, // placeholder value
+        uid: s.state.uid,
+        title: this.initialSaveModel.title,
+        panels_count: panelPluginIds.length || 0,
+        settings_nowdelay: undefined,
+        settings_livenow: !!this.initialSaveModel.liveNow,
+        ...panels,
+        ...variables,
+      };
+    }
+
     return undefined;
   }
 
