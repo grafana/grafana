@@ -12,7 +12,6 @@ function getTestFolder(): FolderDTO {
     url: 'url',
     canSave: true,
     canEdit: true,
-    canAdmin: true,
     canDelete: true,
     version: 0,
     created: '',
