@@ -906,6 +906,7 @@ def playwright_e2e_tests_step():
         "depends_on": [
             "grafana-server",
             "build-test-plugins",
+            "setup-prometheus-devenv",
         ],
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
