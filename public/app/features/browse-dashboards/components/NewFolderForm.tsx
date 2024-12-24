@@ -46,7 +46,9 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) => onConfirm(form.folderName))}
+      onSubmit={handleSubmit((form, event) => {
+        onConfirm(form.folderName);
+      })}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
       <Field
