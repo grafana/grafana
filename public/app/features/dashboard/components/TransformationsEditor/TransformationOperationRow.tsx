@@ -162,7 +162,13 @@ export const TransformationOperationRow = ({
         }}
       >
         {showFilterEditor && (
-          <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+          <TransformationFilter
+            index={index}
+            config={configs[index].transformation}
+            configs={configs}
+            data={data}
+            onChange={onChange}
+          />
         )}
 
         <TransformationEditor
