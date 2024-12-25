@@ -625,7 +625,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     const { controls, topScene, history, settings, useOtelExperience, hasOtelResources, embedded } = model.useState();
 
     const chromeHeaderHeight = useChromeHeaderHeight();
-    const styles = useStyles2(getStyles, embedded ? 0 : chromeHeaderHeight ?? 0);
+    const styles = useStyles2(getStyles, embedded ? 0 : (chromeHeaderHeight ?? 0));
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     useEffect(() => {
