@@ -18,7 +18,7 @@ labels:
 title: Alert rules
 weight: 100
 refs:
-  configure-prometheus-data-source-alerting:
+  shared-configure-prometheus-data-source-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure-prometheus-data-source/#alerting
     - pattern: /docs/grafana-cloud/
@@ -99,7 +99,7 @@ Data source-managed alert rules can only be created using Grafana Mimir or Grafa
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine within the data source.
 1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
-> Rules from a Prometheus data source are visible in the data source-managed rules list when [Manage alerts via Alerting UI](ref:configure-prometheus-data-source-alerting) is enabled. However, you can only create data source-managed rules for Mimir and Loki from Grafana, not for a Prometheus instance.
+{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Comparison between alert rule types
 
@@ -109,7 +109,7 @@ The table below compares Grafana-managed and data source-managed alert rules.
 
 | <div style="width:200px">Feature</div>                                                                                  | <div style="width:200px">Grafana-managed alert rule</div>                                                         | <div style="width:200px">Data source-managed alert rule                         |
 | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Create alert rules<wbr /> that query [data sources supporting Alerting](#supported-data-sources)                        | Yes                                                                                                               | No. Only support creating rules for Mimir and Loki.                             |
+| Create alert rules<wbr /> that query [data sources supporting Alerting](#supported-data-sources)                        | Yes                                                                                                               | Only supports creating rules for Mimir and Loki.                                |
 | Mix and match data sources                                                                                              | Yes                                                                                                               | No                                                                              |
 | Add [expressions](ref:expression-queries) to transform<wbr /> your data and set [alert conditions](ref:alert-condition) | Yes                                                                                                               | No                                                                              |
 | Use [images in alert notifications](ref:notification-images)                                                            | Yes                                                                                                               | No                                                                              |
