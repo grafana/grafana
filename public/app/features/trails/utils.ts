@@ -43,11 +43,12 @@ export function getTrailSettings(model: SceneObject): DataTrailSettings {
   return sceneGraph.getAncestor(model, DataTrail).state.settings;
 }
 
-export function newMetricsTrail(initialDS?: string): DataTrail {
+export function newMetricsTrail(initialDS?: string, fromStart?: boolean): DataTrail {
   return new DataTrail({
     initialDS,
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     embedded: false,
+    fromStart,
   });
 }
 
@@ -312,20 +313,31 @@ export async function callSuggestionsApi(
  * 4. Remove special the deployment environment variable totally
  *   a. [x] automatically select deployment_environment OR environment if it exists
  *   b. [ ] everywhere that the deployment environment is used remove it
- *        - [ ] confirm removal of otel dep env in historyy
- *   c. if deployment environment is promoted, this is fine and we can support more otel data sources
- *   d. update definition of isStandard OTel and check for job and instance instead
+ *        - [x] removed from most spots
+ *        - [ ] removal of otel dep env in history
+ *   c. [x] if deployment environment is promoted, this is fine and we can support more otel data sources
+ *   d. [ ] update definition of isStandard OTel and check for job and instance instead
  *      - we did not support those that did not have them on target_info before
  * 5. Handle all starting user behavior cases where
- *   a. toggling the otel experience on and off
- *   b. useOtelExperience is selected and a previous dep env has been selected
- *   c. useOtelExperience is disabled by local storage
- *   d. All previous var filters are migrated to the new adhoc filter
+ *   a. [x] on start, on url load, switching from data source
+ *   a. [x] toggling the otel experience on and off
+ *   b. [x] useOtelExperience is selected and a previous dep env has been selected
+ *   c. [x] useOtelExperience is disabled by local storage
+ *   d. [x] load all filters from url
+ *   e. [x] auto load dep env from start
+ *   f. [x] do not auto load dep from url unless present
  * 6. Handle metric graph scene/label breakdown behavior
- *   a. select a label in breakdown, apply it to otelmetricsvar and it will be applied to the correct filter
- *   b. duplicate labels are found in the label breakdown between otel resources and metric resources
- * 7. Migrate any variable url values to adhoc to show them in the new filter
- *   a. otel filter
- *   b. deployment environment
- *   c. var filters get placed in the new otel metric filter
+ *   a. [ ] select a label in breakdown, apply it to otelmetricsvar and it will be applied to the correct filter
+ *   b. [ ] duplicate labels are found in the label breakdown between otel resources and metric resources
+ * 7. [ ] All previous variable filters are migrated to the new adhoc filter
+ *      - [ ] otel resources
+ *      - [ ] deployment environment
+ *      - [ ] var filters
+ * 8. Identify change points for the entire flow
+ *   a. from start
+ *   b. from url
+ *   c. from previous trail
+ *   d. from bookmark
+ *   e. from changing a data source
+ *   f. changing a filter
  */

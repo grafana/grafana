@@ -83,6 +83,8 @@ export interface DataTrailState extends SceneObjectState {
   otelJoinQuery?: string;
   isStandardOtel?: boolean;
   nonPromotedOtelResources?: string[];
+  initialCheckComplete?: boolean; // updated after the first otel check
+  fromStart?: boolean; // 
 
   // moved into settings
   showPreviews?: boolean;
@@ -207,6 +209,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
         const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
         if (timeRange) {
+
           this.updateOtelData(datasourceUid, timeRange);
         }
       }
@@ -459,17 +462,29 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         hide: VariableHide.hideLabel,
       });
     } else {
+      // 1. switching data source
       // THE PREVIOUS VAR FILTERS ARE NOT RESET SO EVEN IF THEY DON'T APPLY TO THE NEW DATA SOURCE WE WANT TO KEEP THEM
       // double check this in testing!!!
-      let prevVarFilters = filtersVariable.state.filters;
-      const isInitialOtelCheck =
-        otelAndMetricsFiltersVariable.state.hide === VariableHide.hideVariable || fromDataSourceChanged;
+      // 2. on load with url values, check isInitial CheckComplete
+      // Set otelmetrics var, distinguish if these are var filters or otel resources, then place in correct filter
+      let prevVarFilters = this.state.initialCheckComplete ? filtersVariable.state.filters : []; 
+      // only look at url values for otelmetricsvar if the initial check is NOT YET complete
+      const urlOtelAndMetricsFilters = this.state.initialCheckComplete ? [] : otelAndMetricsFiltersVariable.state.filters;
+      // url vars should overrid the deployment environment variable
+      const urlVarsObject = checkLabelPromotion(urlOtelAndMetricsFilters, nonPromotedOtelResources);
+      const urlOtelResources = this.state.initialCheckComplete ? [] : urlVarsObject.nonPromoted;
+      const urlVarFilters = this.state.initialCheckComplete ? [] : urlVarsObject.promoted;
       // CHECK URL FOR THIS CONDITION TOO
-      if (isInitialOtelCheck && depEnvFromOtelMetricVarFilters.length === 0) {
-        // if the default dep env is missing,
-        const noDefaultDepEvValue = defaultDepEnv === '';
+      if (fromDataSourceChanged && depEnvFromOtelMetricVarFilters.length === 0) {
+        // if the default dep env value like 'prod' is missing OR
+        // if we are loading from the url and the default dep env is missing
+        // there are no prev deployment environments from url
+        // HOW DO WE DISTINGUISH BETWEEN A INITIAL AND A URL LOAD TO SEE
+        // MAYBE THEY REMOVED THE DEP ENV?
+        const hasUrlDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
+        const doNotSetDepEvValue = defaultDepEnv === '' || (!this.state.initialCheckComplete && (hasUrlDepEnv || !this.state.fromStart));
         // we do not have to set the dep env value if the default is missing
-        const defaultDepEnvFilter = noDefaultDepEvValue
+        const defaultDepEnvFilter = doNotSetDepEvValue
           ? []
           : [
               {
@@ -478,7 +493,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
                 operator: defaultDepEnv.includes(',') ? '=~' : '=',
               },
             ];
-
+        
         const notPromoted = nonPromotedOtelResources?.includes('deployment_environment');
         // Next, the previous data source filters may include the default dep env but in the wrong filter
         // i.e., dep env is not promoted to metrics but in the previous DS, it was, so it will exist in the VAR FILTERS
@@ -487,14 +502,20 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         prevVarFilters = notPromoted
           ? prevVarFilters.filter((f) => f.key !== 'deployment_environment')
           : prevVarFilters;
-
+        
+        // previous var filters are handled but what about previous otel resources filters?
+        // need to add the prev otel resources to the otelmetricsvar filters
+        // in the following cases
+        // on load with url values
+        // how do we distinguish between switching data sources and the initial check with possible load from url values
         otelAndMetricsFiltersVariable?.setState({
-          filters: [...defaultDepEnvFilter, ...prevVarFilters],
+          filters: [...defaultDepEnvFilter, ...prevVarFilters, ...urlOtelAndMetricsFilters],
           hide: VariableHide.hideLabel,
         });
 
         // update the otel resources if the dep env has not been promoted
-        const otelFilters = notPromoted ? defaultDepEnvFilter : [];
+        const otelDepEnvFilters = notPromoted ? defaultDepEnvFilter : [];
+        const otelFilters = [...otelDepEnvFilters, ...urlOtelResources];
         otelResourcesVariable.setState({
           filters: otelFilters,
           hide: VariableHide.hideVariable,
@@ -511,6 +532,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         if (isPromoted && depEnvFromVarFilters.length === 0) {
           prevVarFilters = [...prevVarFilters, ...defaultDepEnvFilter];
         }
+
+        prevVarFilters = [...prevVarFilters, ...urlVarFilters];
+
         filtersVariable.setState({
           filters: prevVarFilters,
           hide: VariableHide.hideVariable,
@@ -551,6 +575,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         isStandardOtel: (nonPromotedOtelResources ?? []).length > 0,
         useOtelExperience: isEnabledInLocalStorage,
         nonPromotedOtelResources,
+        initialCheckComplete: true,
       });
     } else {
       // we are updating on variable changes
@@ -909,4 +934,14 @@ function manageOtelAndMetricFilters(
       });
     }
   }
+}
+
+function checkLabelPromotion(filters: AdHocVariableFilter[], nonPromotedOtelResources: string[] = []) {
+  const nonPromoted = filters.filter((f) => nonPromotedOtelResources.includes(f.key));
+  const promoted = filters.filter((f) => !nonPromotedOtelResources.includes(f.key));
+  
+  return { 
+    nonPromoted,
+    promoted
+  };
 }
