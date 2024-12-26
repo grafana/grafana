@@ -223,14 +223,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
    */
   public addFilterWithoutReportingInteraction(filter: AdHocVariableFilter) {
     const variable = sceneGraph.lookupVariable('filters', this);
-    if (!(variable instanceof AdHocFiltersVariable)) {
+    const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
+    if (!(variable instanceof AdHocFiltersVariable) || !(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
       return;
     }
 
     this._addingFilterWithoutReportingInteraction = true;
-
-    variable.setState({ filters: [...variable.state.filters, filter] });
-
+    if (this.state.useOtelExperience) {
+      otelAndMetricsFiltersVariable.setState({ filters: [...otelAndMetricsFiltersVariable.state.filters, filter] });
+    } else {
+      variable.setState({ filters: [...variable.state.filters, filter] });
+    }
     this._addingFilterWithoutReportingInteraction = false;
   }
 
