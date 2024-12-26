@@ -3,6 +3,7 @@ import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Checkbox } from '../Forms/Checkbox';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
@@ -41,7 +42,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const styles = useStyles2(getComboboxStyles);
 
   const allOption: ComboboxOption<T> = {
-    label: 'All',
+    label: t('multicombobox.all.title', 'All'),
     // Type casting needed to make this work when T is a number
     value: 'all' as unknown as T,
   };

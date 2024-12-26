@@ -2007,6 +2007,11 @@
       "title": "Why host with Grafana?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "All"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
