@@ -40,7 +40,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
 
-  const [items, _baseSetItems] = useState(isAsync ? [] : options);
+  const allOption: ComboboxOption<T> = {
+    label: 'All',
+    // Type casting needed to make this work when T is a number
+    value: 'all' as unknown as T,
+  };
+
+  const [items, _baseSetItems] = useState(isAsync ? [] : [allOption, ...options]);
   const [isOpen, setIsOpen] = useState(false);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
@@ -107,6 +113,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          if (newSelectedItem?.value === 'all') {
+            const allSelected = selectedItems.length === items.length - 1;
+            onChange(getComboboxOptionsValues(allSelected ? [] : items.slice(1)));
+            break;
+          }
           if (newSelectedItem) {
             if (!isOptionSelected(newSelectedItem)) {
               onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
@@ -195,6 +206,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
+                  const isAll = item.value === 'all';
+                  const isEverythingSelected = selectedItems.length === items.length - 1;
                   return (
                     <li
                       key={item.value}
@@ -203,7 +216,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                     >
                       {' '}
                       {/* Add styling with virtualization */}
-                      <Checkbox key={id} value={isSelected} aria-labelledby={id} />
+                      <Checkbox
+                        key={id}
+                        value={isAll ? isEverythingSelected : isSelected}
+                        indeterminate={isAll && !isEverythingSelected && selectedItems.length > 0}
+                        aria-labelledby={id}
+                      />
                       <OptionListItem option={item} id={id} />
                     </li>
                   );
