@@ -75,7 +75,6 @@ export const SingleTopBar = memo(function SingleTopBar({
         <TopSearchBarCommandPaletteTrigger />
         {unifiedHistoryEnabled && <HistoryContainer />}
         <QuickAdd />
-        {unifiedHistoryEnabled && <HistoryContainer />}
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
@@ -116,7 +115,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(50%, 1fr)',
+      gridTemplateColumns: '2fr minmax(550px, 1fr)',
       display: 'grid',
       justifyContent: 'flex-start',
       ...(menuDockedAndOpen && {
