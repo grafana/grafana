@@ -18,12 +18,14 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -41,12 +44,14 @@ const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
 	store                folder.Store
+	unifiedStore         folder.Store
 	db                   db.DB
 	log                  *slog.Logger
 	dashboardStore       dashboards.Store
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
+	k8sclient            folderK8sHandler
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
@@ -66,14 +71,24 @@ func ProvideService(
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
+	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) *Service {
+	k8sHandler := &foldk8sHandler{
+		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer: request.GetNamespaceMapper(cfg),
+		cfg:        cfg,
+	}
+
+	unifiedStore := ProvideUnifiedStore(cfg)
+
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
+		unifiedStore:         unifiedStore,
 		features:             features,
 		accessControl:        ac,
 		bus:                  bus,
@@ -81,6 +96,7 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
 		tracer:               tracer,
+		k8sclient:            k8sHandler,
 	}
 	srv.DBMigration(db)
 
@@ -138,6 +154,14 @@ func (s *Service) DBMigration(db db.DB) {
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	return s.getFolders(ctx, q, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	return s.getFolders(ctx, q, false)
+}
+
+func (s *Service) getFolders(ctx context.Context, q folder.GetFoldersQuery, unifiedStorage bool) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -168,7 +192,15 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		qry.WithFullpathUIDs = false
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, qry)
+	var dashFolders []*folder.Folder
+	var err error
+
+	if unifiedStorage {
+		ctx = identity.WithRequester(ctx, q.SignedInUser)
+		dashFolders, err = s.unifiedStore.GetFolders(ctx, qry)
+	} else {
+		dashFolders, err = s.store.GetFolders(ctx, qry)
+	}
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}
@@ -190,6 +222,14 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	return s.get(ctx, q, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	return s.get(ctx, q, false)
+}
+
+func (s *Service) get(ctx context.Context, q *folder.GetFolderQuery, unifiedStorage bool) (*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -209,21 +249,36 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		if *q.UID == "" {
 			return &folder.GeneralFolder, nil
 		}
-		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
-		if err != nil {
-			return nil, err
+		if unifiedStorage {
+			dashFolder, err = s.unifiedStore.Get(ctx, *q)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
+			if err != nil {
+				return nil, err
+			}
 		}
 	// nolint:staticcheck
 	case q.ID != nil:
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		dashFolder, err = s.getFolderByID(ctx, *q.ID, q.OrgID)
-		if err != nil {
-			return nil, err
+		if unifiedStorage {
+
+		} else {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+			dashFolder, err = s.getFolderByID(ctx, *q.ID, q.OrgID)
+			if err != nil {
+				return nil, err
+			}
 		}
 	case q.Title != nil:
-		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
-		if err != nil {
-			return nil, err
+		if unifiedStorage {
+
+		} else {
+			dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
+			if err != nil {
+				return nil, err
+			}
 		}
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
@@ -261,9 +316,14 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		q.UID = &dashFolder.UID
 	}
 
-	f, err := s.store.Get(ctx, *q)
-	if err != nil {
-		return nil, err
+	var f *folder.Folder
+	if unifiedStorage {
+		f = dashFolder
+	} else {
+		f, err = s.store.Get(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// always expose the dashboard store sequential ID
@@ -277,7 +337,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) || s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFoldersServiceV2) {
 		f, err = s.setFullpath(ctx, f, q.SignedInUser)
 	}
 
@@ -319,6 +379,14 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	return s.getChildren(ctx, q, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	return s.getChildren(ctx, q, false)
+}
+
+func (s *Service) getChildren(ctx context.Context, q *folder.GetChildrenQuery, unifiedStorage bool) ([]*folder.Folder, error) {
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -336,62 +404,77 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 	}
 
 	if q.UID == "" {
-		return s.getRootFolders(ctx, q)
+		return s.getRootFolders(ctx, q, unifiedStorage)
 	}
 
-	// we only need to check access to the folder
-	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	guardianFunc := g.CanView
-	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanEdit
-	}
-
-	hasAccess, err := guardianFunc()
-	if err != nil {
-		return nil, err
-	}
-	if !hasAccess {
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	children, err := s.store.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
-	}
-
-	childrenUIDs := make([]string, 0, len(children))
-	for _, f := range children {
-		childrenUIDs = append(childrenUIDs, f.UID)
-	}
-
-	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	for _, f := range children {
-		// fetch folder from dashboard store
-		dashFolder, ok := dashFolders[f.UID]
-		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
-			continue
+	var err error
+	if unifiedStorage {
+		// TODO: figure out what to do with Guardian
+	} else {
+		// we only need to check access to the folder
+		// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
+		g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
+		if err != nil {
+			return nil, err
 		}
 
-		// always expose the dashboard store sequential ID
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		f.ID = dashFolder.ID
+		guardianFunc := g.CanView
+		if q.Permission == dashboardaccess.PERMISSION_EDIT {
+			guardianFunc = g.CanEdit
+		}
+
+		hasAccess, err := guardianFunc()
+		if err != nil {
+			return nil, err
+		}
+		if !hasAccess {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	}
+
+	var children []*folder.Folder
+	if unifiedStorage {
+		children, err = s.unifiedStore.GetChildren(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		children, err = s.store.GetChildren(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !unifiedStorage {
+		childrenUIDs := make([]string, 0, len(children))
+		for _, f := range children {
+			childrenUIDs = append(childrenUIDs, f.UID)
+		}
+
+		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
+		if err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+		}
+
+		for _, f := range children {
+			// fetch folder from dashboard store
+			dashFolder, ok := dashFolders[f.UID]
+			if !ok {
+				s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
+				continue
+			}
+
+			// always expose the dashboard store sequential ID
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+			// nolint:staticcheck
+			f.ID = dashFolder.ID
+		}
 	}
 
 	return children, nil
 }
 
-func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery, unifiedStorage bool) ([]*folder.Folder, error) {
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -419,9 +502,18 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		}
 	}
 
-	children, err := s.store.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
+	var children []*folder.Folder
+	var err error
+	if unifiedStorage {
+		children, err = s.unifiedStore.GetChildren(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		children, err = s.store.GetChildren(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	childrenUIDs := make([]string, 0, len(children))
@@ -429,26 +521,30 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		childrenUIDs = append(childrenUIDs, f.UID)
 	}
 
-	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		f := children[i]
-		// fetch folder from dashboard store
-		dashFolder, ok := dashFolders[f.UID]
-		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", f.OrgID, "uid", f.UID)
+	if unifiedStorage {
+		// todo: maicon
+	} else {
+		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
+		if err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 		}
-		// always expose the dashboard store sequential ID
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		f.ID = dashFolder.ID
 
-		return nil
-	}); err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to assign folder sequential ID: %w", err)
+		if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
+			f := children[i]
+			// fetch folder from dashboard store
+			dashFolder, ok := dashFolders[f.UID]
+			if !ok {
+				s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", f.OrgID, "uid", f.UID)
+			}
+			// always expose the dashboard store sequential ID
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+			// nolint:staticcheck
+			f.ID = dashFolder.ID
+
+			return nil
+		}); err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to assign folder sequential ID: %w", err)
+		}
 	}
 
 	// add "shared with me" folder on the 1st page
@@ -565,12 +661,25 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.getParents(ctx, q, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.getParents(ctx, q, false)
+}
+
+func (s *Service) getParents(ctx context.Context, q folder.GetParentsQuery, unifiedStorage bool) ([]*folder.Folder, error) {
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) || q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
 	if q.UID == folder.SharedWithMeFolderUID {
 		return []*folder.Folder{&folder.SharedWithMeFolder}, nil
 	}
+
+	if unifiedStorage {
+		return s.unifiedStore.GetParents(ctx, q)
+	}
+
 	return s.store.GetParents(ctx, q)
 }
 
@@ -591,6 +700,14 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	return s.create(ctx, cmd, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	return s.create(ctx, cmd, false)
+}
+
+func (s *Service) create(ctx context.Context, cmd *folder.CreateFolderCommand, unifiedStorage bool) (*folder.Folder, error) {
 	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -659,44 +776,64 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		User:      user,
 	}
 
-	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
-	if err != nil {
-		return nil, toFolderError(err)
-	}
-
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
 	var f *folder.Folder
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
-			return toFolderError(err)
-		}
-
+	var err error
+	if unifiedStorage {
 		cmd = &folder.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
-			UID:         dash.UID,
-			OrgID:       cmd.OrgID,
-			Title:       dashFolder.Title,
-			Description: cmd.Description,
-			ParentUID:   cmd.ParentUID,
+			UID:          dashFolder.UID,
+			OrgID:        cmd.OrgID,
+			Title:        dashFolder.Title,
+			Description:  cmd.Description,
+			ParentUID:    cmd.ParentUID,
+			SignedInUser: cmd.SignedInUser,
 		}
 
-		if nestedFolder, err = s.nestedFolderCreate(ctx, cmd); err != nil {
-			s.log.ErrorContext(ctx, "error saving folder to nested folder store", "error", err)
-			return err
+		f, err = s.unifiedStore.Create(ctx, *cmd)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
+		if err != nil {
+			return nil, toFolderError(err)
 		}
 
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
+		err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+			if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
+				return toFolderError(err)
+			}
 
-	f = dashboards.FromDashboard(dash)
-	if nestedFolder != nil && nestedFolder.ParentUID != "" {
-		f.ParentUID = nestedFolder.ParentUID
+			cmd = &folder.CreateFolderCommand{
+				// TODO: Today, if a UID isn't specified, the dashboard store
+				// generates a new UID. The new folder store will need to do this as
+				// well, but for now we take the UID from the newly created folder.
+				UID:         dash.UID,
+				OrgID:       cmd.OrgID,
+				Title:       dashFolder.Title,
+				Description: cmd.Description,
+				ParentUID:   cmd.ParentUID,
+			}
+
+			if nestedFolder, err = s.nestedFolderCreate(ctx, cmd); err != nil {
+				s.log.ErrorContext(ctx, "error saving folder to nested folder store", "error", err)
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		f = dashboards.FromDashboard(dash)
+		if nestedFolder != nil && nestedFolder.ParentUID != "" {
+			f.ParentUID = nestedFolder.ParentUID
+		}
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
@@ -707,6 +844,14 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	return s.update(ctx, cmd, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	return s.update(ctx, cmd, false)
+}
+
+func (s *Service) update(ctx context.Context, cmd *folder.UpdateFolderCommand, unifiedStorage bool) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Update")
 	defer span.End()
 
@@ -717,35 +862,60 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	var dashFolder, foldr *folder.Folder
 	var err error
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if dashFolder, err = s.legacyUpdate(ctx, cmd); err != nil {
-			return err
-		}
 
-		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
-			UID:            cmd.UID,
-			OrgID:          cmd.OrgID,
-			NewTitle:       &dashFolder.Title,
+	if unifiedStorage {
+		// prepareForUpdate(dashFolder, cmd.OrgID, userID, cmd)
+
+		if foldr, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+			UID:   cmd.UID,
+			OrgID: cmd.OrgID,
+			// TODO: maicon
+			// NewTitle:       &dashFolder.Title,
+			NewTitle:       cmd.NewTitle,
 			NewDescription: cmd.NewDescription,
 			SignedInUser:   user,
 		}); err != nil {
-			return err
+			return nil, err
 		}
 
 		if cmd.NewTitle != nil {
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-			if err := s.publishFolderFullPathUpdatedEvent(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
-				return err
+			if err := s.publishFolderFullPathUpdatedEvent(ctx, foldr.Updated, cmd.OrgID, cmd.UID, true); err != nil {
+				return nil, err
 			}
 		}
+	} else {
+		err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+			if dashFolder, err = s.legacyUpdate(ctx, cmd); err != nil {
+				return err
+			}
 
-		return nil
-	})
+			if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+				UID:            cmd.UID,
+				OrgID:          cmd.OrgID,
+				NewTitle:       &dashFolder.Title,
+				NewDescription: cmd.NewDescription,
+				SignedInUser:   user,
+			}); err != nil {
+				return err
+			}
 
-	if err != nil {
-		s.log.ErrorContext(ctx, "folder update failed", "folderUID", cmd.UID, "error", err)
-		return nil, err
+			if cmd.NewTitle != nil {
+				metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+
+				if err := s.publishFolderFullPathUpdatedEvent(ctx, foldr.Updated, cmd.OrgID, cmd.UID, false); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			s.log.ErrorContext(ctx, "folder update failed", "folderUID", cmd.UID, "error", err)
+			return nil, err
+		}
 	}
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
@@ -754,9 +924,12 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-	// nolint:staticcheck
-	foldr.ID = dashFolder.ID
-	foldr.Version = dashFolder.Version
+
+	if dashFolder != nil {
+		// nolint:staticcheck
+		foldr.ID = dashFolder.ID
+		foldr.Version = dashFolder.Version
+	}
 
 	return foldr, nil
 }
@@ -839,6 +1012,14 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	return s.delete(ctx, cmd, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	return s.delete(ctx, cmd, false)
+}
+
+func (s *Service) delete(ctx context.Context, cmd *folder.DeleteFolderCommand, unifiedStorage bool) error {
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -847,6 +1028,47 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	var err error
+	if unifiedStorage {
+		// TODO: maicon
+		// figure out what to do with Guardian
+		descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
+
+		folders := []string{cmd.UID}
+		for _, f := range descFolders {
+			folders = append(folders, f.UID)
+		}
+
+		if cmd.ForceDeleteRules {
+			if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+				return err
+			}
+		} else {
+			alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
+			if !ok {
+				return folder.ErrInternal.Errorf("no alert rule service found in registry")
+			}
+			alertRulesInFolder, err := alertRuleSrv.CountInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser)
+			if err != nil {
+				s.log.Error("failed to count alert rules in folder", "error", err)
+				return err
+			}
+			if alertRulesInFolder > 0 {
+				return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
+			}
+		}
+
+		err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	guard, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
@@ -922,6 +1144,14 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	return s.move(ctx, cmd, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) MoveLegacy(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	return s.move(ctx, cmd, false)
+}
+
+func (s *Service) move(ctx context.Context, cmd *folder.MoveFolderCommand, unifiedStorage bool) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Move")
 	defer span.End()
 
@@ -933,14 +1163,30 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if cmd.UID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
-	if f, err := s.store.Get(ctx, folder.GetFolderQuery{UID: &cmd.UID, OrgID: cmd.OrgID}); err != nil {
-		return nil, err
-	} else if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
+
+	var f *folder.Folder
+	var err error
+	if unifiedStorage {
+		f, err = s.unifiedStore.Get(ctx, folder.GetFolderQuery{
+			UID:          &cmd.UID,
+			OrgID:        cmd.OrgID,
+			SignedInUser: cmd.SignedInUser,
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		f, err = s.store.Get(ctx, folder.GetFolderQuery{UID: &cmd.UID, OrgID: cmd.OrgID})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
 	// Check that the user is allowed to move the folder to the destination folder
-	hasAccess, evalErr := s.canMove(ctx, cmd)
+	hasAccess, evalErr := s.canMove(ctx, cmd, unifiedStorage)
 	if evalErr != nil {
 		return nil, evalErr
 	}
@@ -950,13 +1196,26 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 
 	// here we get the folder, we need to get the height of current folder
 	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.store.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
+	var folderHeight int
+	var parents []*folder.Folder
+	if unifiedStorage {
+		folderHeight, err = s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
+		if err != nil {
+			return nil, err
+		}
+		parents, err = s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		folderHeight, err = s.store.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
+		if err != nil {
+			return nil, err
+		}
+		parents, err = s.store.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
@@ -971,48 +1230,76 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		}
 	}
 
-	var f *folder.Folder
-	if err := s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+	f = nil
+	if unifiedStorage {
+		if f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
 			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
-			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
+			return nil, folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
-		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
-			UID:          cmd.UID,
-			OrgID:        cmd.OrgID,
-			NewParentUID: &cmd.NewParentUID,
-			SignedInUser: cmd.SignedInUser,
-			// bypass optimistic locking used for dashboards
-			Overwrite: true,
+		// TODO: maicon
+		if err := s.publishFolderFullPathUpdatedEvent(ctx, f.Updated, cmd.OrgID, cmd.UID, true); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+			if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+				UID:          cmd.UID,
+				OrgID:        cmd.OrgID,
+				NewParentUID: &cmd.NewParentUID,
+				SignedInUser: cmd.SignedInUser,
+			}); err != nil {
+				return folder.ErrInternal.Errorf("failed to move folder: %w", err)
+			}
+
+			if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
+				UID:          cmd.UID,
+				OrgID:        cmd.OrgID,
+				NewParentUID: &cmd.NewParentUID,
+				SignedInUser: cmd.SignedInUser,
+				// bypass optimistic locking used for dashboards
+				Overwrite: true,
+			}); err != nil {
+				return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
+			}
+
+			// TODO: maicon
+			if err := s.publishFolderFullPathUpdatedEvent(ctx, f.Updated, cmd.OrgID, cmd.UID, false); err != nil {
+				return err
+			}
+
+			return nil
 		}); err != nil {
-			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
+			return nil, err
 		}
-
-		if err := s.publishFolderFullPathUpdatedEvent(ctx, f.Updated, cmd.OrgID, cmd.UID); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
 	}
 	return f, nil
 }
 
-func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
+func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string, unifiedStorage bool) error {
 	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEvent")
 	defer span.End()
 
-	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
-		return err
+	var err error
+	var descFolders []*folder.Folder
+	if unifiedStorage {
+		descFolders, err = s.unifiedStore.GetDescendants(ctx, orgID, folderUID)
+		if err != nil {
+			s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
+			return err
+		}
+	} else {
+		descFolders, err = s.store.GetDescendants(ctx, orgID, folderUID)
+		if err != nil {
+			s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
+			return err
+		}
 	}
+
 	uids := make([]string, 0, len(descFolders)+1)
 	uids = append(uids, folderUID)
 	for _, f := range descFolders {
@@ -1034,7 +1321,7 @@ func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timesta
 	return nil
 }
 
-func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
+func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand, unifiedStorage bool) (bool, error) {
 	// Check that the user is allowed to move the folder to the destination folder
 	var evaluator accesscontrol.Evaluator
 	parentUID := cmd.NewParentUID
@@ -1057,7 +1344,7 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	// This is needed for plugins, as different folders can have different plugin configs
 	// We do this by checking that there are no permissions that user has on the destination parent folder but not on the source folder
 	// We also need to look at the folder tree for the destination folder, as folder permissions are inherited
-	newFolderAndParentUIDs, err := s.getFolderAndParentUIDScopes(ctx, parentUID, cmd.OrgID)
+	newFolderAndParentUIDs, err := s.getFolderAndParentUIDScopes(ctx, parentUID, cmd.OrgID, unifiedStorage)
 	if err != nil {
 		return false, err
 	}
@@ -1088,14 +1375,23 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	return true, nil
 }
 
-func (s *Service) getFolderAndParentUIDScopes(ctx context.Context, folderUID string, orgID int64) ([]string, error) {
+func (s *Service) getFolderAndParentUIDScopes(ctx context.Context, folderUID string, orgID int64, unifiedStorage bool) ([]string, error) {
 	folderAndParentUIDScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
 	if folderUID == folder.GeneralFolderUID {
 		return folderAndParentUIDScopes, nil
 	}
-	folderParents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: folderUID, OrgID: orgID})
-	if err != nil {
-		return nil, err
+	var folderParents []*folder.Folder
+	var err error
+	if unifiedStorage {
+		folderParents, err = s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: folderUID, OrgID: orgID})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		folderParents, err = s.store.GetParents(ctx, folder.GetParentsQuery{UID: folderUID, OrgID: orgID})
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, newParent := range folderParents {
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(newParent.UID)
@@ -1142,6 +1438,14 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	return s.getDescendantCounts(ctx, q, s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2))
+}
+
+func (s *Service) GetDescendantCountsLegacy(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	return s.getDescendantCounts(ctx, q, false)
+}
+
+func (s *Service) getDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery, unifiedStorage bool) (folder.DescendantCounts, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
@@ -1155,11 +1459,22 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 	folders := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-			return nil, err
+		var descendantFolders []*folder.Folder
+		var err error
+		if unifiedStorage {
+			descendantFolders, err = s.unifiedStore.GetDescendants(ctx, q.OrgID, *q.UID)
+			if err != nil {
+				s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
+				return nil, err
+			}
+		} else {
+			descendantFolders, err = s.store.GetDescendants(ctx, q.OrgID, *q.UID)
+			if err != nil {
+				s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
+				return nil, err
+			}
 		}
+
 		for _, f := range descendantFolders {
 			folders = append(folders, f.UID)
 		}

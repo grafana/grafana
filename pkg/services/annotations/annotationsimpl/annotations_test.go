@@ -244,7 +244,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
 		require.NoError(t, err)
