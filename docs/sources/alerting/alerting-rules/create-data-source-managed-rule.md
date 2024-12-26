@@ -74,7 +74,7 @@ refs:
 
 # Configure data source-managed alert rules
 
-Data source-managed alert rules can only query Prometheus-based data sources, such as Prometheus, Grafana Mimir, or Grafana Loki. They are one of the two [alert rule types](ref:alert-rules) supported in Grafana.
+Data source-managed alert rules can only be created using Grafana Mimir or Grafana Loki data sources. They are one of the two [alert rule types](ref:alert-rules) supported in Grafana.
 
 Data source-managed alert rules are stored within the data source. In a distributed architecture, they can scale horizontally to provide high-availability.
 
@@ -84,7 +84,7 @@ To create or edit data source-managed alert rules, follow these instructions.
 
 ## Before you begin
 
-Verify that you have write permission to the Prometheus, Mimir, or Loki data source. Otherwise, you cannot create or update data source-managed alert rules.
+Verify that you have write permission to the Mimir or Loki data source. Otherwise, you cannot create or update data source-managed alert rules.
 
 ### Enable the Ruler API
 
@@ -96,7 +96,9 @@ For more information, refer to the [Mimir Ruler API](/docs/mimir/latest/referenc
 
 ### Permissions
 
-Alert rules for Prometheus, Mimir, or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
+Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
+
+> Rules from a Prometheus data source are visible in the data source-managed rules list when [Manage alerts via Alerting UI](ref:configure-prometheus-data-source-alerting) is enabled. However, you can only create data source-managed rules for Mimir and Loki from Grafana, not for a Prometheus instance.
 
 If you do not want to manage alert rules for a particular data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
