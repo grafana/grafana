@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -22,12 +22,13 @@ import { useMeasureMulti } from './useMeasureMulti';
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (items?: T[]) => void;
+  canToggleAll?: boolean;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width } = props;
+  const { options, placeholder, onChange, value, width, canToggleAll } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -41,14 +42,26 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
 
-  const allOption: ComboboxOption<T> = {
-    label: t('multicombobox.all.title', 'All'),
-    // Type casting needed to make this work when T is a number
-    value: 'all' as unknown as T,
-  };
+  const allOption = useMemo(() => {
+    return {
+      label: t('multicombobox.all.title', 'All'),
+      // Type casting needed to make this work when T is a number
+      value: 'all' as unknown as T,
+    };
+  }, []);
 
-  const [items, _baseSetItems] = useState(isAsync ? [] : [allOption, ...options]);
+  const [items, _baseSetItems] = useState(isAsync ? [] : canToggleAll ? [allOption, ...options] : options);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAsync) {
+      if (canToggleAll) {
+        _baseSetItems([allOption, ...options]);
+      } else {
+        _baseSetItems(options);
+      }
+    }
+  }, [options, canToggleAll, allOption, isAsync]);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
