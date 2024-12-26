@@ -115,7 +115,7 @@ Following are additional configuration options.
 
 ### Alerting
 
-- **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
+- **Manage alerts via Alerting UI** - Toggle to enable Grafana Alerting integration for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts.
 
 ### Interval behavior
 
