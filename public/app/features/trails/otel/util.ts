@@ -111,6 +111,10 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
+      if (i > 0) {
+        allFilters += ',';
+      }
+
       if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
         allFilters += `${labelName}${op}'${labelValue}'`;
       } else {
