@@ -243,6 +243,7 @@ func ldflags(opts BuildOpts) (string, error) {
 		buildBranch = v
 	}
 	var b bytes.Buffer
+	b.WriteString("-w")
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", opts.version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", commitSha))
 	if enterpriseCommitSha != "" {
