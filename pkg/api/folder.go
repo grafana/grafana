@@ -63,8 +63,16 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Put("/", handler.updateFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
-				folderUidRoute.Get("/counts", handler.countFolderContent)
-				folderUidRoute.Post("/move", handler.moveFolder)
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
+					folderUidRoute.Get("/counts", handler.countFolderContent)
+				} else {
+					folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+				}
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagK8SFolderMove) {
+					folderUidRoute.Post("/move", handler.moveFolder)
+				} else {
+					folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+				}
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
