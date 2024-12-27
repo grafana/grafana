@@ -9,7 +9,7 @@ import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
-import { AlertRuleLoader } from './AlertRuleLoader';
+import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -128,7 +128,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                 />
               );
             case 'datasource':
-              return <AlertRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
             default:
               return <UnknownRuleListItem key={key} rule={rule} groupIdentifier={groupIdentifier} />;
           }

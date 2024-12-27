@@ -6,7 +6,7 @@ import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier, RuleGroup
 
 import { hashRule } from '../utils/rule-id';
 
-import { AlertRuleLoader } from './AlertRuleLoader';
+import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
@@ -121,7 +121,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       }
     >
       {rulesWithGroupId.map(({ rule, groupIdentifier }) => (
-        <AlertRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />
+        <DataSourceRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />
       ))}
     </ListGroup>
   );
