@@ -1588,6 +1588,34 @@
     },
     {
       "metadata": {
+        "name": "folderCounts",
+        "resourceVersion": "1734702013658",
+        "creationTimestamp": "2024-12-20T13:40:13Z",
+        "deletionTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "folderMove",
+        "resourceVersion": "1734702013658",
+        "creationTimestamp": "2024-12-20T13:40:13Z",
+        "deletionTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server move",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "formatString",
         "resourceVersion": "1722290290367",
         "creationTimestamp": "2023-10-13T18:17:12Z",
@@ -1884,6 +1912,32 @@
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "k8SFolderCounts",
+        "resourceVersion": "1735294794086",
+        "creationTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "k8SFolderMove",
+        "resourceVersion": "1735294794086",
+        "creationTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server move",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
       }
     },
     {

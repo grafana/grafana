@@ -230,6 +230,8 @@ Experimental features might be changed or removed without prior notice.
 | `useV2DashboardsAPI`                          | Use the v2 kubernetes API in the frontend for dashboards                                                                                                                                                                                                                          |
 | `unifiedHistory`                              | Displays the navigation history so the user can navigate back to previous pages                                                                                                                                                                                                   |
 | `investigationsBackend`                       | Enable the investigations backend API                                                                                                                                                                                                                                             |
+| `k8SFolderCounts`                             | Enable folder's api server counts                                                                                                                                                                                                                                                 |
+| `k8SFolderMove`                               | Enable folder's api server move                                                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 

@@ -248,4 +248,6 @@ export interface FeatureToggles {
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
   investigationsBackend?: boolean;
+  k8SFolderCounts?: boolean;
+  k8SFolderMove?: boolean;
 }
