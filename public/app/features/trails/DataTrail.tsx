@@ -40,6 +40,7 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
+import { migrateOtelDeploymentEnvironment } from './migrations/otelDeploymentEnvironment';
 import { getDeploymentEnvironments, getNonPromotedOtelResources, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import {
@@ -126,6 +127,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   public _onActivate() {
+    migrateOtelDeploymentEnvironment(this);
+    
     if (!this.state.topScene) {
       this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
