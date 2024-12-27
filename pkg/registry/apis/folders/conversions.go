@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstructured.Unstructured, error) {
-	obj := unstructured.Unstructured{
+func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstructured.Unstructured, error) {
+	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
 				"title":       cmd.Title,
@@ -34,30 +34,23 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	}
 	obj.SetName(cmd.UID)
 
-	if err := setParentUID(&obj, cmd.ParentUID); err != nil {
-		return unstructured.Unstructured{}, err
+	if err := setParentUID(obj, cmd.ParentUID); err != nil {
+		return &unstructured.Unstructured{}, err
 	}
 
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
-	// #TODO add other fields ; do we support updating the UID/orgID?
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
-				"title":       cmd.NewTitle,
-				"description": cmd.NewDescription,
-			},
-		},
+func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
+	spec, ok := obj.Object["spec"].(map[string]any)
+	if !ok {
+		return &unstructured.Unstructured{}, fmt.Errorf("could not convert object to folder")
 	}
-	obj.SetName(cmd.UID)
-
-	if cmd.NewParentUID == nil {
-		return obj, nil
+	if cmd.NewTitle != nil {
+		spec["title"] = cmd.NewTitle
 	}
-	if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
-		return &unstructured.Unstructured{}, err
+	if cmd.NewDescription != nil {
+		spec["description"] = cmd.NewDescription
 	}
 
 	return obj, nil
