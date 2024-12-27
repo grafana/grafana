@@ -62,7 +62,7 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
  * @returns
  */
 export function docsTip(url?: string) {
-  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
+  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
 
   return (
     <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
