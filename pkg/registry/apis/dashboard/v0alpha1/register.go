@@ -16,7 +16,6 @@ import (
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -63,10 +62,6 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
-		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
-	}
-
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -98,11 +93,6 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return dashboard.GetAuthorizer(b.dashboardService, b.log)
 }
 
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return dashboardv0alpha1.AddToScheme(scheme)
 }
@@ -123,6 +113,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 	storageOpts := apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
 			internal := &dashboardinternal.Dashboard{}
 			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
@@ -165,6 +156,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 	}
+
+	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+	)
+
+	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+		b.unified,
+		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+		defaultOpts,
+		scheme,
+	)
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(

@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -43,14 +45,20 @@ type FolderInfoList struct {
 // FolderInfo briefly describes a folder -- unlike a folder resource,
 // this is a partial record of the folder metadata used for navigating parents and children
 type FolderInfo struct {
-	// UID is the unique identifier for a folder (and the k8s name)
-	UID string `json:"uid"`
+	// Name is the k8s name (eg, the unique identifier) for a folder
+	Name string `json:"name"`
 
 	// Title is the display value
 	Title string `json:"title"`
 
+	// The folder description
+	Description string `json:"description,omitempty"`
+
 	// The parent folder UID
 	Parent string `json:"parent,omitempty"`
+
+	// This folder does not resolve
+	Detached bool `json:"detached,omitempty"`
 }
 
 // Access control information for the current user
@@ -68,5 +76,17 @@ type FolderAccessInfo struct {
 type DescendantCounts struct {
 	metav1.TypeMeta `json:",inline"`
 
-	Counts map[string]int64 `json:"counts"`
+	Counts []ResourceStats `json:"counts"`
+}
+
+type ResourceStats struct {
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Count    int64  `json:"count"`
+}
+
+func UnstructuredToDescendantCounts(obj *unstructured.Unstructured) (*DescendantCounts, error) {
+	var res DescendantCounts
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &res)
+	return &res, err
 }

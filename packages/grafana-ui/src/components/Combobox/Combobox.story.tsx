@@ -26,7 +26,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
-    width: undefined,
+    width: 20,
     isClearable: false,
     placeholder: 'Select an option...',
     options: [

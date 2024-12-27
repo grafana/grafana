@@ -7,7 +7,7 @@ import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
-import { PanelModel } from '../../../dashboard/state';
+import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
 import { usePanelSave } from '../../utils/usePanelSave';
 

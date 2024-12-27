@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { PANEL_STYLES, overrideToFixedColor } from '../../home/Insights';
 
 export function getGrafanaEvalDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({

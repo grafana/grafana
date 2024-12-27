@@ -36,12 +36,12 @@ DashboardV2Spec: {
   links: [...DashboardLink]
 
   // Tags associated with dashboard.
-  tags?: [...string]
+  tags: [...string]
 
   timeSettings: TimeSettingsSpec
 
   // Configured template variables.
-  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind]
+  variables: [...VariableKind]
 
   elements: [ElementReference.name]: PanelKind // |* more element types in the future
 
@@ -121,6 +121,12 @@ DataTransformerConfig: {
   // Options to be passed to the transformer
   // Valid options depend on the transformer id
   options: _
+}
+
+DataLink: {
+  title: string
+  url: string
+  targetBlank?: bool
 }
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -473,12 +479,13 @@ GridLayoutKind: {
 }
 
 PanelSpec: {
-  uid: string
+  id: number
   title: string
   description: string
-  links: [...DashboardLink]
+  links: [...DataLink]
   data: QueryGroupKind
   vizConfig: VizConfigKind
+  transparent?: bool
 }
 
 PanelKind: {
@@ -540,6 +547,8 @@ VariableCustomFormatterFn: {
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
 			"system" | "snapshot"
+
+VariableKind: QueryVariableKind  | TextVariableKind  | ConstantVariableKind  | DatasourceVariableKind  | IntervalVariableKind  | CustomVariableKind  | GroupByVariableKind  | AdhocVariableKind
 
 // Sort variable options
 // Accepted values are:

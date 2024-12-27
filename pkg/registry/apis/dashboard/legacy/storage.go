@@ -333,3 +333,8 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
 	return nil, fmt.Errorf("not yet (origin)")
 }
+
+// GetStats implements ResourceServer.
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	return nil, fmt.Errorf("not yet (GetStats)")
+}

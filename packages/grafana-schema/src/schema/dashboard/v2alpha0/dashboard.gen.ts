@@ -27,10 +27,10 @@ export interface DashboardV2Spec {
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// Tags associated with dashboard.
-	tags?: string[];
+	tags: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
-	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind)[];
+	variables: VariableKind[];
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
@@ -49,6 +49,7 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	preload: false,
 	editable: true,
 	links: [],
+	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
 	variables: [],
 	elements: {},
@@ -143,6 +144,17 @@ export interface DataTransformerConfig {
 export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 	id: "",
 	options: {},
+});
+
+export interface DataLink {
+	title: string;
+	url: string;
+	targetBlank?: boolean;
+}
+
+export const defaultDataLink = (): DataLink => ({
+	title: "",
+	url: "",
 });
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -683,16 +695,17 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface PanelSpec {
-	uid: string;
+	id: number;
 	title: string;
 	description: string;
-	links: DashboardLink[];
+	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
+	transparent?: boolean;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
-	uid: "",
+	id: 0,
 	title: "",
 	description: "",
 	links: [],
@@ -788,6 +801,10 @@ export const defaultVariableCustomFormatterFn = (): VariableCustomFormatterFn =>
 export type VariableType = "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" | "snapshot";
 
 export const defaultVariableType = (): VariableType => ("query");
+
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+
+export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
 // Sort variable options
 // Accepted values are:
