@@ -1,4 +1,4 @@
-import { urlUtil, AdHocVariableFilter } from "@grafana/data";
+import { AdHocVariableFilter, UrlQueryValue, UrlQueryMap } from "@grafana/data";
 import { sceneGraph, AdHocFiltersVariable } from "@grafana/scenes";
 
 import { DataTrail } from "../DataTrail";
@@ -11,13 +11,16 @@ import { VAR_OTEL_AND_METRIC_FILTERS } from "../shared";
  * Migration for the otel deployment environment variable.
  * When the deployment environment is present in the url, "var-deployment_environment",
  * it is migrated to the new variable "var-otel_and_metric_filters."
+ * 
  * We check if the otel resources vars are also present in the url, "var-otel_resources" 
+ * and if the metric filters are present in the url, "var-filters".
+ * 
+ * Once all the variables are migrated to "var-otel_and_metric_filters", the rest is handled in trail.updateOtelData.
+ * 
  * @param trail 
  * @returns 
  */
-export function migrateOtelDeploymentEnvironment(trail: DataTrail) {
-  
-  const urlParams = urlUtil.getUrlSearchParams();
+export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: UrlQueryMap) {  
   const deploymentEnv = urlParams['var-deployment_environment'];
   // does not need to be migrated
   if (urlParams['var-otel_and_metric_filters']) {
@@ -27,46 +30,85 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail) {
   if (!deploymentEnv) {
     return;
   }
+
+  let filters: AdHocVariableFilter[] = [];
   // if there is a dep environment, we must also migrate the otel resources to the new variable
   const otelResources = urlParams['var-otel_resources'];
+  const metricVarfilters = urlParams['var-filters'];
   // both of these must be arrays
   if (
-    (typeof deploymentEnv === 'object' && deploymentEnv.length > 0) &&
-    (otelResources && typeof otelResources === 'object' && otelResources.length)
+    (
+      typeof deploymentEnv === 'object' && 
+      deploymentEnv.length > 0 && 
+      deploymentEnv[0] !== '' &&
+      deploymentEnv.every((r) => r && typeof r === 'string')
+    )
   ) {
-  
-    let otelFilters: AdHocVariableFilter[] = [];
+    // all the values are strings because they are prometheus labels
+    // so we can safely cast them to strings
+    const stringDepEnv = deploymentEnv.map((r) => r.toString());
+    const depEnvVals = reduceDepEnv(stringDepEnv);
 
-    // adhoc filter values are typed as any, but these will always be strings.
-    // to avoid the typescript error, we enforce they are strings
-    if (otelResources[0] !== '' && otelResources.every((r) => r && typeof r === 'string' )) {
-      otelFilters = otelResources.map((filter) => {
-        const parts = filter.toString().split('|');
-        return {
-          key: parts[0].toString(),
-          operator: parts[2].toString(),
-          value: parts[1].toString(),
-        };
-      })
-    }
-    // check if dep env has multi values
-    const filters = [
+    filters = [
       {
         key: 'deployment_environment',
-        value: deploymentEnv[0].toString(),
-        operator: deploymentEnv[0].toString().includes(',') ? '=~' : '=',
+        operator: deploymentEnv.length > 1 ? '=~' : '=',
+        value: depEnvVals,
       },
-      ...otelFilters
     ];
+  }
 
-    const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
+  const otelFilters = migrateAdHocFilters(otelResources);
+  const metricFilters = migrateAdHocFilters(metricVarfilters);
 
-    if (!(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
-      return
+  filters = [
+    ...filters,
+    ...otelFilters,
+    ...metricFilters
+  ];
+
+  const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
+
+  if (!(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
+    return
+  }
+
+  otelAndMetricsFiltersVariable?.setState({
+    filters
+  });
+}
+
+export function migrateAdHocFilters(urlFilter: UrlQueryValue) {
+  if (!(
+      urlFilter && // is present
+      typeof urlFilter === 'object' && // is an array
+      urlFilter.length > 0 && // has values
+      urlFilter[0] !== '' && // empty vars can contain ''
+      urlFilter.every((r) => r && typeof r === 'string' ) // vars are of any type but ours are all strings
+    )) {
+    return [];
+  }
+  
+    let filters: AdHocVariableFilter[] = [];
+
+    filters = urlFilter.map((filter) => {
+      const parts = filter.toString().split('|');
+      return {
+        key: parts[0].toString(),
+        operator: parts[1].toString(),
+        value: parts[2].toString(),
+      };
+    })
+ 
+    return filters
+}
+
+function reduceDepEnv(depEnv: string[]) {
+  return depEnv.reduce((acc: string, env: string, idx: number) => {
+    if (idx === 0) {
+      return env;
     }
 
-    otelAndMetricsFiltersVariable?.setState({
-      filters
-    });
-  }
+    return `${acc}|${env}`;
+  },'');
 }
