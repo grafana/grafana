@@ -927,11 +927,11 @@ const (
 	// Enable the investigations backend API
 	FlagInvestigationsBackend = "investigationsBackend"
 
-	// FlagFolderCounts
+	// FlagK8SFolderCounts
 	// Enable folder&#39;s api server counts
-	FlagFolderCounts = "folderCounts"
+	FlagK8SFolderCounts = "k8SFolderCounts"
 
-	// FlagFolderMove
+	// FlagK8SFolderMove
 	// Enable folder&#39;s api server move
-	FlagFolderMove = "folderMove"
+	FlagK8SFolderMove = "k8SFolderMove"
 )

@@ -1720,14 +1720,14 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "folderCounts",
+			Name:        "k8SFolderCounts",
 			Description: "Enable folder's api server counts",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 		},
 		{
-			Name:        "folderMove",
+			Name:        "k8SFolderMove",
 			Description: "Enable folder's api server move",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,

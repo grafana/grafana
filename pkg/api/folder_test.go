@@ -577,6 +577,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 	})
 	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
+		w.Header().Set("Allow", "*")
 		require.NoError(t, err)
 	})
 
@@ -726,6 +727,14 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 				req := server.NewRequest(http.MethodPut, fmt.Sprintf("/api/folders/%s", tc.folderUID), strings.NewReader(`{"title":"new title"}`))
 				req.Header.Set("Content-Type", "application/json")
+
+				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
+					}),
+				}})
+
 				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
