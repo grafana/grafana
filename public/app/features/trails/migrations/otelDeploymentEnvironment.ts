@@ -1,8 +1,8 @@
-import { AdHocVariableFilter, UrlQueryValue, UrlQueryMap } from "@grafana/data";
-import { sceneGraph, AdHocFiltersVariable } from "@grafana/scenes";
+import { AdHocVariableFilter, UrlQueryValue, UrlQueryMap } from '@grafana/data';
+import { sceneGraph, AdHocFiltersVariable } from '@grafana/scenes';
 
-import { DataTrail } from "../DataTrail";
-import { VAR_OTEL_AND_METRIC_FILTERS } from "../shared";
+import { DataTrail } from '../DataTrail';
+import { VAR_OTEL_AND_METRIC_FILTERS } from '../shared';
 
 // var-deployment_environment
 // var-otel_resources
@@ -11,16 +11,16 @@ import { VAR_OTEL_AND_METRIC_FILTERS } from "../shared";
  * Migration for the otel deployment environment variable.
  * When the deployment environment is present in the url, "var-deployment_environment",
  * it is migrated to the new variable "var-otel_and_metric_filters."
- * 
- * We check if the otel resources vars are also present in the url, "var-otel_resources" 
+ *
+ * We check if the otel resources vars are also present in the url, "var-otel_resources"
  * and if the metric filters are present in the url, "var-filters".
- * 
+ *
  * Once all the variables are migrated to "var-otel_and_metric_filters", the rest is handled in trail.updateOtelData.
- * 
- * @param trail 
- * @returns 
+ *
+ * @param trail
+ * @returns
  */
-export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: UrlQueryMap) {  
+export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: UrlQueryMap) {
   const deploymentEnv = urlParams['var-deployment_environment'];
   // does not need to be migrated
   if (urlParams['var-otel_and_metric_filters']) {
@@ -37,12 +37,10 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const metricVarfilters = urlParams['var-filters'];
   // both of these must be arrays
   if (
-    (
-      typeof deploymentEnv === 'object' && 
-      deploymentEnv.length > 0 && 
-      deploymentEnv[0] !== '' &&
-      deploymentEnv.every((r) => r && typeof r === 'string')
-    )
+    typeof deploymentEnv === 'object' &&
+    deploymentEnv.length > 0 &&
+    deploymentEnv[0] !== '' &&
+    deploymentEnv.every((r) => r && typeof r === 'string')
   ) {
     // all the values are strings because they are prometheus labels
     // so we can safely cast them to strings
@@ -61,46 +59,44 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const otelFilters = migrateAdHocFilters(otelResources);
   const metricFilters = migrateAdHocFilters(metricVarfilters);
 
-  filters = [
-    ...filters,
-    ...otelFilters,
-    ...metricFilters
-  ];
+  filters = [...filters, ...otelFilters, ...metricFilters];
 
   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
 
   if (!(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
-    return
+    return;
   }
 
   otelAndMetricsFiltersVariable?.setState({
-    filters
+    filters,
   });
 }
 
 export function migrateAdHocFilters(urlFilter: UrlQueryValue) {
-  if (!(
+  if (
+    !(
       urlFilter && // is present
       typeof urlFilter === 'object' && // is an array
       urlFilter.length > 0 && // has values
       urlFilter[0] !== '' && // empty vars can contain ''
-      urlFilter.every((r) => r && typeof r === 'string' ) // vars are of any type but ours are all strings
-    )) {
+      urlFilter.every((r) => r && typeof r === 'string') // vars are of any type but ours are all strings
+    )
+  ) {
     return [];
   }
-  
-    let filters: AdHocVariableFilter[] = [];
 
-    filters = urlFilter.map((filter) => {
-      const parts = filter.toString().split('|');
-      return {
-        key: parts[0].toString(),
-        operator: parts[1].toString(),
-        value: parts[2].toString(),
-      };
-    })
- 
-    return filters
+  let filters: AdHocVariableFilter[] = [];
+
+  filters = urlFilter.map((filter) => {
+    const parts = filter.toString().split('|');
+    return {
+      key: parts[0].toString(),
+      operator: parts[1].toString(),
+      value: parts[2].toString(),
+    };
+  });
+
+  return filters;
 }
 
 function reduceDepEnv(depEnv: string[]) {
@@ -110,5 +106,5 @@ function reduceDepEnv(depEnv: string[]) {
     }
 
     return `${acc}|${env}`;
-  },'');
+  }, '');
 }

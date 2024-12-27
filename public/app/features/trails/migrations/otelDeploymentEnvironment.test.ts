@@ -10,13 +10,11 @@ describe('migrate old dep env var to otel and metrics var', () => {
   describe('migrateOtelDeploymentEnvironment', () => {
     let trail = {} as DataTrail;
     beforeEach(() => {
-      
       trail = new DataTrail({
         useOtelExperience: true,
       });
     });
     it('should not migrate if var-otel_and_metric_filters is present', () => {
-      
       const urlParams: UrlQueryMap = {
         'var-otel_and_metric_filters': 'key|=|value',
       };

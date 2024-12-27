@@ -85,7 +85,7 @@ export interface DataTrailState extends SceneObjectState {
   isStandardOtel?: boolean;
   nonPromotedOtelResources?: string[];
   initialCheckComplete?: boolean; // updated after the first otel check
-  fromStart?: boolean; // 
+  fromStart?: boolean; //
 
   // moved into settings
   showPreviews?: boolean;
@@ -129,7 +129,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   public _onActivate() {
     const urlParams = urlUtil.getUrlSearchParams();
     migrateOtelDeploymentEnvironment(this, urlParams);
-    
+
     if (!this.state.topScene) {
       this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
@@ -213,7 +213,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
         const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
         if (timeRange) {
-
           this.updateOtelData(datasourceUid, timeRange);
         }
       }
@@ -228,7 +227,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   public addFilterWithoutReportingInteraction(filter: AdHocVariableFilter) {
     const variable = sceneGraph.lookupVariable('filters', this);
     const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
-    if (!(variable instanceof AdHocFiltersVariable) || !(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
+    if (
+      !(variable instanceof AdHocFiltersVariable) ||
+      !(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)
+    ) {
       return;
     }
 
@@ -474,9 +476,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // double check this in testing!!!
       // 2. on load with url values, check isInitial CheckComplete
       // Set otelmetrics var, distinguish if these are var filters or otel resources, then place in correct filter
-      let prevVarFilters = this.state.initialCheckComplete ? filtersVariable.state.filters : []; 
+      let prevVarFilters = this.state.initialCheckComplete ? filtersVariable.state.filters : [];
       // only look at url values for otelmetricsvar if the initial check is NOT YET complete
-      const urlOtelAndMetricsFilters = this.state.initialCheckComplete ? [] : otelAndMetricsFiltersVariable.state.filters;
+      const urlOtelAndMetricsFilters = this.state.initialCheckComplete
+        ? []
+        : otelAndMetricsFiltersVariable.state.filters;
       // url vars should overrid the deployment environment variable
       const urlVarsObject = checkLabelPromotion(urlOtelAndMetricsFilters, nonPromotedOtelResources);
       const urlOtelResources = this.state.initialCheckComplete ? [] : urlVarsObject.nonPromoted;
@@ -489,7 +493,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         // HOW DO WE DISTINGUISH BETWEEN A INITIAL AND A URL LOAD TO SEE
         // MAYBE THEY REMOVED THE DEP ENV?
         const hasUrlDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
-        const doNotSetDepEvValue = defaultDepEnv === '' || (!this.state.initialCheckComplete && (hasUrlDepEnv || !this.state.fromStart));
+        const doNotSetDepEvValue =
+          defaultDepEnv === '' || (!this.state.initialCheckComplete && (hasUrlDepEnv || !this.state.fromStart));
         // we do not have to set the dep env value if the default is missing
         const defaultDepEnvFilter = doNotSetDepEvValue
           ? []
@@ -500,7 +505,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
                 operator: defaultDepEnv.includes(',') ? '=~' : '=',
               },
             ];
-        
+
         const notPromoted = nonPromotedOtelResources?.includes('deployment_environment');
         // Next, the previous data source filters may include the default dep env but in the wrong filter
         // i.e., dep env is not promoted to metrics but in the previous DS, it was, so it will exist in the VAR FILTERS
@@ -509,7 +514,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         prevVarFilters = notPromoted
           ? prevVarFilters.filter((f) => f.key !== 'deployment_environment')
           : prevVarFilters;
-        
+
         // previous var filters are handled but what about previous otel resources filters?
         // need to add the prev otel resources to the otelmetricsvar filters
         // in the following cases
@@ -946,9 +951,9 @@ function manageOtelAndMetricFilters(
 function checkLabelPromotion(filters: AdHocVariableFilter[], nonPromotedOtelResources: string[] = []) {
   const nonPromoted = filters.filter((f) => nonPromotedOtelResources.includes(f.key));
   const promoted = filters.filter((f) => !nonPromotedOtelResources.includes(f.key));
-  
-  return { 
+
+  return {
     nonPromoted,
-    promoted
+    promoted,
   };
 }
