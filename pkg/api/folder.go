@@ -787,6 +787,7 @@ func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 				"spec": map[string]interface{}{
 					"title":       folder.RootFolder.Title,
 					"description": folder.RootFolder.Description,
+					"version":     int64(0),
 				},
 			},
 		}
