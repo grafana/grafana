@@ -9,7 +9,6 @@ import { activateFullSceneTree } from '../dashboard-scene/utils/test-utils';
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
-import { updateOtelData } from './otel/util';
 import {
   MetricSelectedEvent,
   VAR_FILTERS,
