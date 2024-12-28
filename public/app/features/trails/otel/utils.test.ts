@@ -1,12 +1,12 @@
-import { MetricFindValue } from '@grafana/data';
+import { AdHocVariableFilter, MetricFindValue } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { ConstantVariable, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, sceneGraph } from '@grafana/scenes';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DataTrail } from '../DataTrail';
-import { VAR_OTEL_JOIN_QUERY } from '../shared';
+import { VAR_FILTERS, VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
 
 import {
   sortResources,
@@ -15,6 +15,8 @@ import {
   limitOtelMatchTerms,
   updateOtelJoinWithGroupLeft,
   getProdOrDefaultEnv,
+  updateOtelData,
+  manageOtelAndMetricFilters,
 } from './util';
 
 jest.mock('./api', () => ({
@@ -261,4 +263,359 @@ describe('getProdOrDefaultEnv', () => {
     const options = ['test1'];
     expect(getProdOrDefaultEnv(options)).toBe('test1');
   });
+});
+
+describe('util functions that rely on trail and variable setup', () => {
+  beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
+    setDataSourceSrv(
+      new MockDataSourceSrv({
+        prom: mockDataSource({
+          name: 'Prometheus',
+          type: DataSourceType.Prometheus,
+        }),
+      })
+    );
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
+  let trail: DataTrail;
+  const defaultTimeRange = { from: 'now-1h', to: 'now' };
+  // selecting a non promoted resource from VAR_OTEL_AND_METRICS will automatically update the otel resources var
+  const nonPromotedOtelResources = ['deployment_environment'];
+  const preTrailUrl =
+    '/trail?from=now-1h&to=now&var-ds=edwxqcebl0cg0c&var-deployment_environment=oteldemo01&var-otel_resources=k8s_cluster_name%7C%3D%7Cappo11ydev01&var-filters=&refresh=&metricPrefix=all&metricSearch=http&actionView=breakdown&var-groupby=$__all&metric=http_client_duration_milliseconds_bucket';
+
+  function getOtelAndMetricsVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
+    if (variable instanceof AdHocFiltersVariable) {
+      return variable;
+    }
+    throw new Error('getOtelAndMetricsVar failed');
+  }
+
+  function getOtelResourcesVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
+    if (variable instanceof AdHocFiltersVariable) {
+      return variable;
+    }
+    throw new Error('getOtelResourcesVar failed');
+  }
+
+  function getOtelGroupLeftVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+    if (variable instanceof ConstantVariable) {
+      return variable;
+    }
+    throw new Error('getOtelGroupLeftVar failed');
+  }
+
+  function getFilterVar() {
+    const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+    if (variable instanceof AdHocFiltersVariable) {
+      return variable;
+    }
+    throw new Error('getFilterVar failed');
+  }
+
+  beforeEach(() => {
+    trail = new DataTrail({
+      useOtelExperience: true,
+      nonPromotedOtelResources,
+    });
+    locationService.push(preTrailUrl);
+    activateFullSceneTree(trail);
+    getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
+  });
+
+  afterEach(() => {
+    trail.setState({ initialCheckComplete: false });
+  });
+  describe('updateOtelData', () => {
+    it('should automatically add the deployment environment on loading a data trail from start', () => {
+      trail.setState({ fromStart: true });
+      const autoSelectedDepEnvValue = 'production';
+      const deploymentEnvironments = [autoSelectedDepEnvValue];
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+      const otelMetricsKey = otelMetricsVar.state.filters[0].key;
+      const otelMetricsValue = otelMetricsVar.state.filters[0].value;
+
+      const otelResourcesVar = getOtelResourcesVar(trail);
+      const otelResourcesKey = otelResourcesVar.state.filters[0].key;
+      const otelResourcesValue = otelResourcesVar.state.filters[0].value;
+
+      expect(otelMetricsKey).toBe('deployment_environment');
+      expect(otelMetricsValue).toBe(autoSelectedDepEnvValue);
+
+      expect(otelResourcesKey).toBe('deployment_environment');
+      expect(otelResourcesValue).toBe(autoSelectedDepEnvValue);
+    });
+
+    it('should use the deployment environment from url when loading a trail and not automatically load it', () => {
+      const autoSelectedDeploymentEnvironmentValue = 'production';
+      const deploymentEnvironments = [autoSelectedDeploymentEnvironmentValue];
+      // the url loads the deployment environment into otelmetricsvar
+      const prevUrlDepEnvValue = 'from_url';
+      getOtelAndMetricsVar(trail).setState({
+        filters: [{ key: 'deployment_environment', operator: '=', value: prevUrlDepEnvValue }],
+      });
+
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+      const otelMetricsKey = otelMetricsVar.state.filters[0].key;
+      const otelMetricsValue = otelMetricsVar.state.filters[0].value;
+
+      const otelResourcesVar = getOtelResourcesVar(trail);
+      const otelResourcesKey = otelResourcesVar.state.filters[0].key;
+      const otelResourcesValue = otelResourcesVar.state.filters[0].value;
+
+      expect(otelMetricsKey).toBe('deployment_environment');
+      expect(otelMetricsValue).toBe(prevUrlDepEnvValue);
+
+      expect(otelResourcesKey).toBe('deployment_environment');
+      expect(otelResourcesValue).toBe(prevUrlDepEnvValue);
+    });
+
+    it('should load all filters based on the url for VAR_OTEL_AND_METRICS_FILTERS on initial load', () => {
+      const nonPromotedOtelResources = ['deployment_environment', 'resource'];
+      const depEnvFilter = { key: 'deployment_environment', operator: '=', value: 'from_url' };
+      const otelResourceFilter = { key: 'resource', operator: '=', value: 'resource' };
+      const promotedFilter = { key: 'promoted', operator: '=', value: 'promoted' };
+      const metricFilter = { key: 'metric', operator: '=', value: 'metric' };
+
+      getOtelAndMetricsVar(trail).setState({
+        filters: [depEnvFilter, otelResourceFilter, promotedFilter, metricFilter],
+      });
+
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        ['production'],
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+      const otelResourcesVar = getOtelResourcesVar(trail);
+      const varFilters = getFilterVar();
+
+      // otelmetrics var will contain all three
+      expect(otelMetricsVar.state.filters).toEqual([depEnvFilter, otelResourceFilter, promotedFilter, metricFilter]);
+      // otel resources will contain only non promoted
+      expect(otelResourcesVar.state.filters).toEqual([depEnvFilter, otelResourceFilter]);
+      // var filters will contain promoted and metric labels
+      expect(varFilters.state.filters).toEqual([promotedFilter, metricFilter]);
+    });
+
+    it('should not automatically add the deployment environment on loading a data trail when there are no deployment environments in the data source', () => {
+      // no dep env values found in the data source
+      const deploymentEnvironments: string[] = [];
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+
+      const otelResourcesVar = getOtelResourcesVar(trail);
+
+      expect(otelMetricsVar.state.filters.length).toBe(0);
+      expect(otelResourcesVar.state.filters.length).toBe(0);
+    });
+
+    it('should not automatically add the deployment environment on loading a data trail when loading from url and no dep env are present in the filters', () => {
+      // not from start
+      // no dep env values found in the data source
+      const deploymentEnvironments: string[] = [];
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+
+      const otelResourcesVar = getOtelResourcesVar(trail);
+
+      expect(otelMetricsVar.state.filters.length).toBe(0);
+      expect(otelResourcesVar.state.filters.length).toBe(0);
+    });
+
+    it('should add the deployment environment to var filters if it has been promoted from start', () => {
+      trail.setState({ fromStart: true });
+      // the deployment environment has been promoted to a metric label
+      const deploymentEnvironments = ['production'];
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        [], //nonPromotedOtelResources
+        true // fromDataSourceChanged
+      );
+      const varFilters = getFilterVar().state.filters[0];
+      expect(varFilters.key).toBe('deployment_environment');
+      expect(varFilters.value).toBe('production');
+    });
+
+    it('should preserve var filters when switching a data source but not initial load', () => {
+      trail.setState({ initialCheckComplete: true });
+      const deploymentEnvironments = ['production'];
+      getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const varFilters = getFilterVar().state.filters[0];
+      expect(varFilters.key).toBe('zone');
+      expect(varFilters.value).toBe('a');
+    });
+
+    it('should not preserve otel resources when switching a data source but not initial load', () => {
+      trail.setState({ initialCheckComplete: true });
+      getOtelResourcesVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+      updateOtelData(
+        trail,
+        'datasourceUid',
+        defaultTimeRange,
+        [], //deploymentEnvironments,
+        true, // hasOtelResources
+        nonPromotedOtelResources,
+        true // fromDataSourceChanged
+      );
+      const otelResources = getOtelResourcesVar(trail).state.filters[0];
+      expect(otelResources).toBe(undefined);
+    });
+  });
+
+  describe('manageOtelAndMetricFilters', () => {
+    it('should add a new filter to otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator: '='}];
+      const prevStateFilters: AdHocVariableFilter[] = [];
+
+      const nonPromotedOtelResources = ['otel_key'];
+      
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+      
+      const filtersVariable = getFilterVar();
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      
+      expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
+    });
+
+    it('should add a new filter to metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator:'=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [];
+
+      const nonPromotedOtelResources = ['otel_key'];
+
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+
+      const filtersVariable = getFilterVar();
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+
+      expect(filtersVariable.state.filters).toEqual(newStateFilters);
+    });
+
+    it('should remove a filter from otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator:'=' }];
+      
+      const nonPromotedOtelResources = ['otel_key'];
+      
+      const otelFiltersVariable = getOtelResourcesVar(trail)
+      
+      const filtersVariable = getFilterVar()
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+
+      expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
+    });
+
+    it('should remove a filter from metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator:'=' }];
+
+      const nonPromotedOtelResources = ['otel_key'];
+      
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+
+      const filtersVariable = getFilterVar();
+      filtersVariable.setState({filters:[{ key: 'metric_key', value: 'value', operator:'=' }]});
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+
+      expect(filtersVariable.state.filters).toEqual(newStateFilters);
+    });
+
+    it('should update a filter in otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'new_value', operator:'=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'old_value', operator:'=' }];
+      
+      const nonPromotedOtelResources = ['otel_key'];
+      
+      const otelFiltersVariable = getOtelResourcesVar(trail)
+      otelFiltersVariable.setState({filters:[{ key: 'otel_key', value: 'old_value', operator:'=' }]});
+
+      const filtersVariable = getFilterVar();
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+
+      expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
+    });
+
+    it('should update a filter in metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'new_value', operator:'=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'old_value', operator:'=' }];
+
+      const nonPromotedOtelResources = ['otel_key'];
+      
+      const otelFiltersVariable = getOtelResourcesVar(trail)
+      
+      const filtersVariable = getFilterVar();
+      filtersVariable.setState({filters:[{ key: 'metric_key', value: 'old_value', operator:'=' }]});
+
+      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+
+      expect(filtersVariable.state.filters).toEqual(newStateFilters);
+    });
+  });
+
 });

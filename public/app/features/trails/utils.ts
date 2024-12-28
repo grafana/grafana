@@ -295,24 +295,23 @@ export async function callSuggestionsApi(
  *  - identify the difference when selecting an attribute
  *  - place the attribute in the appropriate filter so that the query is interpolated with the correct filter in the correct place
  *
- * 1. The adhoc filters will contain all the otel resources (happens by default because list contains target_info)
- *   [x] the filter list will sort otel resources to the top
+ * 1. The new adhoc filters will contain all the otel resources plus normal metric labels (happens by default because list contains target_info)
+ *   - [x] the filter list will sort otel resources to the top
  * 2. Hide the otel resources variable
- *   a. [x] remove the updates when it is changed
- * 3. When a filter is selected, we need to identify the following
+ *   a. [x] updated when the new adhoc filter is updated
+ * 3. When a new filter is selected, we need to identify the following
  *   a. [x] an otel resource (on target_info)
  *   b. [x] It is not promoted as a label on metric
- *     - [x] How to identify otel resource? Add function to make a collection
+ *     - [x] How to identify otel resource? Add function to make a collection of nonPromotedResources
  *     - [x] Do not need to identify excluded filters for this collection, they will be excluded by adhoc filter behavior
  *     - [x] call for list of target_info labels and list of labels minut target info
- *     - [x] find the otel resources that do not exist in the labels
- *     - these are the non promoted resources
- *     - [x] if it is a resource attribute, it should be stored as such so it can be filtered in the join
+ *     - [x] find the otel resources that do not exist in the labels, these are the non promoted resources
+ *     - [x] if it is a resource attribute, it should be stored in otel resources var so it can be filtered in the join
  *   d. [x] Add selected otel resources to the hidden variable
- *   e. [x] when a filter is changed, change the correct filter
- * 4. Remove special the deployment environment variable totally
+ *   e. [x] when a metrics filter is changed, add to the var filter
+ * 4. Remove special the deployment environment variable 
  *   a. [x] automatically select deployment_environment OR environment if it exists
- *   b. [ ] everywhere that the deployment environment is used remove it
+ *   b. [x] remove the deployment environment where it is used (unless needed for migration)
  *        - [x] removed from most spots
  *        - [x] keep otel dep env in history until we remove it based off rudderstack
  *   c. [x] if deployment environment is promoted, this is fine and we can support more otel data sources
@@ -343,7 +342,9 @@ export async function callSuggestionsApi(
  * 
  * Final cleanup:
  *   1. [x] keep dep env var for migrations but instrument with rudderstack "deployment_environment_migrated"
- *   2. [ ] cleanup comments
- *   3. [ ] refactor updateOtelData
- *   4. [ ] move updateOtelData & resetOtelExperience to otel/utils
+ *   2. [x] cleanup comments
+ *   3. [x] refactor updateOtelData
+ *     - refactor more in future work
+ *   4. [x] move updateOtelData and manageOtelAndMetricFilters to otel/utils
+ *   5. [x] update tests for updateOtelData and manageOtelAndMetricFilters
  */
