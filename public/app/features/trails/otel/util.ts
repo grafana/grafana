@@ -291,16 +291,16 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
 }
 
 /**
- * Returns the option value that is like 'prod'.
+ * Returns the environment that is like 'prod'.
  * If there are no options, returns null.
  *
  * @param options
  * @returns
  */
-export function getProdOrDefaultOption(options: Array<{ value: string; label: string }>): string | null {
-  if (options.length === 0) {
+export function getProdOrDefaultEnv(envs: string[]): string | null {
+  if (envs.length === 0) {
     return null;
   }
 
-  return options.find((option) => option.value.toLowerCase().indexOf('prod') > -1)?.value ?? options[0].value;
+  return envs.find((env) => env.toLowerCase().indexOf('prod') > -1) ?? envs[0];
 }

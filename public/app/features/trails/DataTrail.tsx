@@ -47,7 +47,7 @@ import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import {
   getOtelJoinQuery,
   getOtelResourcesObject,
-  getProdOrDefaultOption,
+  getProdOrDefaultEnv,
   updateOtelJoinWithGroupLeft,
 } from './otel/util';
 import { getOtelExperienceToggleState } from './services/store';
@@ -311,7 +311,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
   updateFromUrl(values: SceneObjectUrlValues) {
     const stateUpdate: Partial<DataTrailState> = {};
-    
+
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
@@ -428,18 +428,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       return;
     }
     // 1. set deployment variable as a new otel metric filter
-    let varQuery = '';
-    // do we need to create the options? probably not
-    const options =
-      deploymentEnvironments?.map((env) => {
-        varQuery += env + ',';
-        return { value: env, label: env };
-      }) ?? [];
     // We have to have a default value because custom variable requires it
     // we choose one default value to help filter metrics
     // The work flow for OTel begins with users selecting a deployment environment
     // default to production
-    let defaultDepEnv = getProdOrDefaultOption(options) ?? '';
+    let defaultDepEnv = getProdOrDefaultEnv(deploymentEnvironments ?? []) ?? '';
 
     // 1. Cases of how to add filters to the otelmetricsvar
     //  -- when we set these on instanciation, we need to check that we are not double setting them

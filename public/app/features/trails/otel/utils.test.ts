@@ -14,7 +14,7 @@ import {
   blessedList,
   limitOtelMatchTerms,
   updateOtelJoinWithGroupLeft,
-  getProdOrDefaultOption,
+  getProdOrDefaultEnv,
 } from './util';
 
 jest.mock('./api', () => ({
@@ -233,41 +233,32 @@ describe('updateOtelJoinWithGroupLeft', () => {
   });
 });
 
-describe('getProdOrDefaultOption', () => {
+describe('getProdOrDefaultEnv', () => {
   it('should return the value of the option containing "prod"', () => {
-    const options = [
-      { value: 'test1', label: 'Test 1' },
-      { value: 'prod2', label: 'Prod 2' },
-      { value: 'test3', label: 'Test 3' },
-    ];
-    expect(getProdOrDefaultOption(options)).toBe('prod2');
+    const options = ['test1','prod2','test3'];
+
+    expect(getProdOrDefaultEnv(options)).toBe('prod2');
   });
 
   it('should return the first option value if no option contains "prod"', () => {
-    const options = [
-      { value: 'test1', label: 'Test 1' },
-      { value: 'test2', label: 'Test 2' },
-      { value: 'test3', label: 'Test 3' },
-    ];
-    expect(getProdOrDefaultOption(options)).toBe('test1');
+    const options = ['test1','test2','test3'];
+
+    expect(getProdOrDefaultEnv(options)).toBe('test1');
   });
 
   it('should handle case insensitivity', () => {
-    const options = [
-      { value: 'test1', label: 'Test 1' },
-      { value: 'PROD2', label: 'Prod 2' },
-      { value: 'test3', label: 'Test 3' },
-    ];
-    expect(getProdOrDefaultOption(options)).toBe('PROD2');
+    const options = ['test1','PROD2','test3'];
+
+    expect(getProdOrDefaultEnv(options)).toBe('PROD2');
   });
 
   it('should return null if the options array is empty', () => {
-    const options: Array<{ value: string; label: string }> = [];
-    expect(getProdOrDefaultOption(options)).toBeNull();
+    const options: string[] = [];
+    expect(getProdOrDefaultEnv(options)).toBeNull();
   });
 
   it('should return the first option value if the options array has one element', () => {
-    const options = [{ value: 'test1', label: 'Test 1' }];
-    expect(getProdOrDefaultOption(options)).toBe('test1');
+    const options = ['test1'];
+    expect(getProdOrDefaultEnv(options)).toBe('test1');
   });
 });
