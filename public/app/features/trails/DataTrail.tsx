@@ -7,6 +7,7 @@ import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
+  CustomVariable,
   DataSourceVariable,
   SceneComponentProps,
   SceneControlsSpacer,
@@ -59,6 +60,7 @@ import {
   VAR_FILTERS,
   VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_AND_METRIC_FILTERS,
+  VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
@@ -85,7 +87,7 @@ export interface DataTrailState extends SceneObjectState {
   isStandardOtel?: boolean;
   nonPromotedOtelResources?: string[];
   initialCheckComplete?: boolean; // updated after the first otel check
-  fromStart?: boolean; //
+  fromStart?: boolean;
 
   // moved into settings
   showPreviews?: boolean;
@@ -309,7 +311,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
   updateFromUrl(values: SceneObjectUrlValues) {
     const stateUpdate: Partial<DataTrailState> = {};
-
+    
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
@@ -807,6 +809,17 @@ function getVariableSet(
         applyMode: 'manual',
         // since we only support prometheus datasources, this is always true
         supportsMultiValueOperators: true,
+      }),
+      // Legacy variable needed for bookmarking which is necessary because
+      // url sync method does not handle multiple dep env values  
+      // Remove this when the rudderstack event "deployment_environment_migrated" tapers off    
+      new CustomVariable({
+        name: VAR_OTEL_DEPLOYMENT_ENV,
+        label: 'Deployment environment',
+        hide: VariableHide.hideVariable,
+        value: undefined,
+        placeholder: 'Select',
+        isMulti: true,
       }),
     ],
   });

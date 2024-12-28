@@ -2,11 +2,9 @@ import { AdHocVariableFilter, UrlQueryValue, UrlQueryMap } from '@grafana/data';
 import { sceneGraph, AdHocFiltersVariable } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
+import { reportExploreMetrics } from '../interactions';
 import { VAR_OTEL_AND_METRIC_FILTERS } from '../shared';
 
-// var-deployment_environment
-// var-otel_resources
-// http://localhost:3000/extra/explore/metrics/trail?metric=asserts:kpi:latency:total:rate5m&from=now-1h&to=now&timezone=browser&var-ds=edwxqcebl0cg0c&var-deployment_environment=oteldemo01&var-otel_resources=&var-filters=&actionView=overview&var-groupby=$__all
 /**
  * Migration for the otel deployment environment variable.
  * When the deployment environment is present in the url, "var-deployment_environment",
@@ -23,10 +21,18 @@ import { VAR_OTEL_AND_METRIC_FILTERS } from '../shared';
 export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: UrlQueryMap) {
   const deploymentEnv = urlParams['var-deployment_environment'];
   // does not need to be migrated
-  if (urlParams['var-otel_and_metric_filters']) {
+  const otelMetricsVar = urlParams['var-otel_and_metric_filters'];
+
+  // this check is if it has already been migrated
+  if (
+    otelMetricsVar && 
+    typeof otelMetricsVar === 'object' &&
+    otelMetricsVar.length > 0 &&
+    otelMetricsVar[0] !== '' 
+  ) {
     return;
   }
-  // no dep env, does not need to be migrated
+  // if there is no dep env, does not need to be migrated
   if (!deploymentEnv) {
     return;
   }
@@ -35,23 +41,27 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   // if there is a dep environment, we must also migrate the otel resources to the new variable
   const otelResources = urlParams['var-otel_resources'];
   const metricVarfilters = urlParams['var-filters'];
-  // both of these must be arrays
+  reportExploreMetrics('deployment_environment_migrated', {});
   if (
-    typeof deploymentEnv === 'object' &&
-    deploymentEnv.length > 0 &&
-    deploymentEnv[0] !== '' &&
-    deploymentEnv.every((r) => r && typeof r === 'string')
+    (
+      Array.isArray(deploymentEnv) &&
+      deploymentEnv.length > 0 &&
+      deploymentEnv[0] !== '' &&
+      deploymentEnv.every((r) => r && typeof r === 'string')
+  )
   ) {
     // all the values are strings because they are prometheus labels
     // so we can safely cast them to strings
     const stringDepEnv = deploymentEnv.map((r) => r.toString());
-    const depEnvVals = reduceDepEnv(stringDepEnv);
+    const value = reduceDepEnv(stringDepEnv);
+    
+    
 
     filters = [
       {
         key: 'deployment_environment',
         operator: deploymentEnv.length > 1 ? '=~' : '=',
-        value: depEnvVals,
+        value
       },
     ];
   }
@@ -76,7 +86,7 @@ export function migrateAdHocFilters(urlFilter: UrlQueryValue) {
   if (
     !(
       urlFilter && // is present
-      typeof urlFilter === 'object' && // is an array
+      Array.isArray(urlFilter) && // is an array
       urlFilter.length > 0 && // has values
       urlFilter[0] !== '' && // empty vars can contain ''
       urlFilter.every((r) => r && typeof r === 'string') // vars are of any type but ours are all strings
