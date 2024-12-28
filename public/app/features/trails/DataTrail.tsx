@@ -434,27 +434,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     // default to production
     let defaultDepEnv = getProdOrDefaultEnv(deploymentEnvironments ?? []) ?? '';
 
-    // 1. Cases of how to add filters to the otelmetricsvar
-    //  -- when we set these on instanciation, we need to check that we are not double setting them
-    // 1.0. legacy, check url values for dep env and otel resources and migrate to otelmetricvar
-    //  -- do not duplicate
-    // 1.1. NONE If the otel metrics var has no filters, set the default value
-    // 1.2. VAR_FILTERS If the var filters has filters, add to otemetricsvar
-    //  -- do not duplicate when adding to otelmtricsvar
-    // 1.3. OTEL_FILTERS If the otel resources var has filters, add to otelmetricsvar
-    //  -- do not duplicate when adding to otelmtricsvar
-
-    // CHECK THE URL VALUES FOR PREVIOUS DEPLOYMENT ENVIRONMENT VALUES
-    // and check the previous otel metric filters var for dep env
-    // when data source is changed, clear out the deployment environment
-    const depEnvFromOtelMetricVarFilters = fromDataSourceChanged
-      ? []
-      : otelAndMetricsFiltersVariable.state.filters.filter((f) => f.key === 'deployment_environment');
-    // THERE ARE RACE CONDITIONS!!!!
-    // set up the datasource - when the ds is not set up we automatically get !useOtelExperience
-    // UPDATE ALL THREE VARS HERE WHEN IT IS THE FIRST CHECK
-    // the subscription listener is disabled when we check if the label starts out as hidden and switches to hideLabel (show)
-    // OPS CORTEX IS BEHAVING WEIRDLY, CHECKING OTEL RESOURCES TOO MUCH
     const isEnabledInLocalStorage = getOtelExperienceToggleState();
 
     // only update the variable state and hide if the otel experience is enabled
@@ -466,9 +445,18 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         hide: VariableHide.hideLabel,
       });
     } else {
+      // 1. Cases of how to add filters to the otelmetricsvar
+      //  -- when we set these on instantiation, we need to check that we are not double setting them
+      // 1.0. legacy, check url values for dep env and otel resources and migrate to otelmetricvar
+      //  -- do not duplicate
+      // 1.1. NONE If the otel metrics var has no filters, set the default value
+      // 1.2. VAR_FILTERS If the var filters has filters, add to otemetricsvar
+      //  -- do not duplicate when adding to otelmtricsvar
+      // 1.3. OTEL_FILTERS If the otel resources var has filters, add to otelmetricsvar
+      //  -- do not duplicate when adding to otelmtricsvar
+
       // 1. switching data source
-      // THE PREVIOUS VAR FILTERS ARE NOT RESET SO EVEN IF THEY DON'T APPLY TO THE NEW DATA SOURCE WE WANT TO KEEP THEM
-      // double check this in testing!!!
+      // the previous var filters are not reset so even if they don't apply to the new data source we want to keep them
       // 2. on load with url values, check isInitial CheckComplete
       // Set otelmetrics var, distinguish if these are var filters or otel resources, then place in correct filter
       let prevVarFilters = this.state.initialCheckComplete ? filtersVariable.state.filters : [];
@@ -481,12 +469,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const urlOtelResources = this.state.initialCheckComplete ? [] : urlVarsObject.nonPromoted;
       const urlVarFilters = this.state.initialCheckComplete ? [] : urlVarsObject.promoted;
       // CHECK URL FOR THIS CONDITION TOO
-      if (fromDataSourceChanged && depEnvFromOtelMetricVarFilters.length === 0) {
+      if (fromDataSourceChanged) {
         // if the default dep env value like 'prod' is missing OR
         // if we are loading from the url and the default dep env is missing
         // there are no prev deployment environments from url
-        // HOW DO WE DISTINGUISH BETWEEN A INITIAL AND A URL LOAD TO SEE
-        // MAYBE THEY REMOVED THE DEP ENV?
         const hasUrlDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
         const doNotSetDepEvValue =
           defaultDepEnv === '' || (!this.state.initialCheckComplete && (hasUrlDepEnv || !this.state.fromStart));
@@ -512,9 +498,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
         // previous var filters are handled but what about previous otel resources filters?
         // need to add the prev otel resources to the otelmetricsvar filters
-        // in the following cases
-        // on load with url values
-        // how do we distinguish between switching data sources and the initial check with possible load from url values
         otelAndMetricsFiltersVariable?.setState({
           filters: [...defaultDepEnvFilter, ...prevVarFilters, ...urlOtelAndMetricsFilters],
           hide: VariableHide.hideLabel,
@@ -530,7 +513,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
         const isPromoted = !notPromoted;
         // if the dep env IS PROMOTED
-        // does var filters already contain it?
+        // we need to ask, does var filters already contain it?
         // keep previous filters if they are there
         // add the dep env to var filters if not present and isPromoted
         const depEnvFromVarFilters = prevVarFilters.filter((f) => f.key === 'deployment_environment');
