@@ -309,7 +309,7 @@ export async function callSuggestionsApi(
  *     - [x] if it is a resource attribute, it should be stored in otel resources var so it can be filtered in the join
  *   d. [x] Add selected otel resources to the hidden variable
  *   e. [x] when a metrics filter is changed, add to the var filter
- * 4. Remove special the deployment environment variable 
+ * 4. Remove special the deployment environment variable
  *   a. [x] automatically select deployment_environment OR environment if it exists
  *   b. [x] remove the deployment environment where it is used (unless needed for migration)
  *        - [x] removed from most spots
@@ -339,7 +339,7 @@ export async function callSuggestionsApi(
  *   d. from bookmark
  *   e. from changing a data source
  *   f. changing a filter
- * 
+ *
  * Final cleanup:
  *   1. [x] keep dep env var for migrations but instrument with rudderstack "deployment_environment_migrated"
  *   2. [x] cleanup comments

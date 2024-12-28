@@ -24,12 +24,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const otelMetricsVar = urlParams['var-otel_and_metric_filters'];
 
   // this check is if it has already been migrated
-  if (
-    otelMetricsVar && 
-    typeof otelMetricsVar === 'object' &&
-    otelMetricsVar.length > 0 &&
-    otelMetricsVar[0] !== '' 
-  ) {
+  if (otelMetricsVar && typeof otelMetricsVar === 'object' && otelMetricsVar.length > 0 && otelMetricsVar[0] !== '') {
     return;
   }
   // if there is no dep env, does not need to be migrated
@@ -43,25 +38,21 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const metricVarfilters = urlParams['var-filters'];
   reportExploreMetrics('deployment_environment_migrated', {});
   if (
-    (
-      Array.isArray(deploymentEnv) &&
-      deploymentEnv.length > 0 &&
-      deploymentEnv[0] !== '' &&
-      deploymentEnv.every((r) => r && typeof r === 'string')
-  )
+    Array.isArray(deploymentEnv) &&
+    deploymentEnv.length > 0 &&
+    deploymentEnv[0] !== '' &&
+    deploymentEnv.every((r) => r && typeof r === 'string')
   ) {
     // all the values are strings because they are prometheus labels
     // so we can safely cast them to strings
     const stringDepEnv = deploymentEnv.map((r) => r.toString());
     const value = reduceDepEnv(stringDepEnv);
-    
-    
 
     filters = [
       {
         key: 'deployment_environment',
         operator: deploymentEnv.length > 1 ? '=~' : '=',
-        value
+        value,
       },
     ];
   }

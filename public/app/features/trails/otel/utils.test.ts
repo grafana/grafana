@@ -6,7 +6,13 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
 import { DataTrail } from '../DataTrail';
-import { VAR_FILTERS, VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
+import {
+  VAR_FILTERS,
+  VAR_OTEL_AND_METRIC_FILTERS,
+  VAR_OTEL_GROUP_LEFT,
+  VAR_OTEL_JOIN_QUERY,
+  VAR_OTEL_RESOURCES,
+} from '../shared';
 
 import {
   sortResources,
@@ -237,19 +243,19 @@ describe('updateOtelJoinWithGroupLeft', () => {
 
 describe('getProdOrDefaultEnv', () => {
   it('should return the value of the option containing "prod"', () => {
-    const options = ['test1','prod2','test3'];
+    const options = ['test1', 'prod2', 'test3'];
 
     expect(getProdOrDefaultEnv(options)).toBe('prod2');
   });
 
   it('should return the first option value if no option contains "prod"', () => {
-    const options = ['test1','test2','test3'];
+    const options = ['test1', 'test2', 'test3'];
 
     expect(getProdOrDefaultEnv(options)).toBe('test1');
   });
 
   it('should handle case insensitivity', () => {
-    const options = ['test1','PROD2','test3'];
+    const options = ['test1', 'PROD2', 'test3'];
 
     expect(getProdOrDefaultEnv(options)).toBe('PROD2');
   });
@@ -525,22 +531,28 @@ describe('util functions that rely on trail and variable setup', () => {
 
   describe('manageOtelAndMetricFilters', () => {
     it('should add a new filter to otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
-      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator: '='}];
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator: '=' }];
       const prevStateFilters: AdHocVariableFilter[] = [];
 
       const nonPromotedOtelResources = ['otel_key'];
-      
+
       const otelFiltersVariable = getOtelResourcesVar(trail);
-      
+
       const filtersVariable = getFilterVar();
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
-      
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
+
       expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
     });
 
     it('should add a new filter to metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
-      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator:'=' }];
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator: '=' }];
       const prevStateFilters: AdHocVariableFilter[] = [];
 
       const nonPromotedOtelResources = ['otel_key'];
@@ -549,73 +561,102 @@ describe('util functions that rely on trail and variable setup', () => {
 
       const filtersVariable = getFilterVar();
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
 
       expect(filtersVariable.state.filters).toEqual(newStateFilters);
     });
 
     it('should remove a filter from otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
       const newStateFilters: AdHocVariableFilter[] = [];
-      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator:'=' }];
-      
-      const nonPromotedOtelResources = ['otel_key'];
-      
-      const otelFiltersVariable = getOtelResourcesVar(trail)
-      
-      const filtersVariable = getFilterVar()
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'value', operator: '=' }];
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      const nonPromotedOtelResources = ['otel_key'];
+
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+
+      const filtersVariable = getFilterVar();
+
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
 
       expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
     });
 
     it('should remove a filter from metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
       const newStateFilters: AdHocVariableFilter[] = [];
-      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator:'=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'value', operator: '=' }];
 
       const nonPromotedOtelResources = ['otel_key'];
-      
+
       const otelFiltersVariable = getOtelResourcesVar(trail);
 
       const filtersVariable = getFilterVar();
-      filtersVariable.setState({filters:[{ key: 'metric_key', value: 'value', operator:'=' }]});
+      filtersVariable.setState({ filters: [{ key: 'metric_key', value: 'value', operator: '=' }] });
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
 
       expect(filtersVariable.state.filters).toEqual(newStateFilters);
     });
 
     it('should update a filter in otel filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
-      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'new_value', operator:'=' }];
-      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'old_value', operator:'=' }];
-      
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'new_value', operator: '=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'otel_key', value: 'old_value', operator: '=' }];
+
       const nonPromotedOtelResources = ['otel_key'];
-      
-      const otelFiltersVariable = getOtelResourcesVar(trail)
-      otelFiltersVariable.setState({filters:[{ key: 'otel_key', value: 'old_value', operator:'=' }]});
+
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+      otelFiltersVariable.setState({ filters: [{ key: 'otel_key', value: 'old_value', operator: '=' }] });
 
       const filtersVariable = getFilterVar();
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
 
       expect(otelFiltersVariable.state.filters).toEqual(newStateFilters);
     });
 
     it('should update a filter in metric filters when VAR_OTEL_AND_METRIC_FILTERS is updated', () => {
-      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'new_value', operator:'=' }];
-      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'old_value', operator:'=' }];
+      const newStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'new_value', operator: '=' }];
+      const prevStateFilters: AdHocVariableFilter[] = [{ key: 'metric_key', value: 'old_value', operator: '=' }];
 
       const nonPromotedOtelResources = ['otel_key'];
-      
-      const otelFiltersVariable = getOtelResourcesVar(trail)
-      
-      const filtersVariable = getFilterVar();
-      filtersVariable.setState({filters:[{ key: 'metric_key', value: 'old_value', operator:'=' }]});
 
-      manageOtelAndMetricFilters(newStateFilters, prevStateFilters, nonPromotedOtelResources, otelFiltersVariable, filtersVariable);
+      const otelFiltersVariable = getOtelResourcesVar(trail);
+
+      const filtersVariable = getFilterVar();
+      filtersVariable.setState({ filters: [{ key: 'metric_key', value: 'old_value', operator: '=' }] });
+
+      manageOtelAndMetricFilters(
+        newStateFilters,
+        prevStateFilters,
+        nonPromotedOtelResources,
+        otelFiltersVariable,
+        filtersVariable
+      );
 
       expect(filtersVariable.state.filters).toEqual(newStateFilters);
     });
   });
-
 });

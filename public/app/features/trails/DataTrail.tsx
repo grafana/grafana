@@ -44,11 +44,7 @@ import { reportChangeInLabelFilters } from './interactions';
 import { migrateOtelDeploymentEnvironment } from './migrations/otelDeploymentEnvironment';
 import { getDeploymentEnvironments, getNonPromotedOtelResources, totalOtelResources } from './otel/api';
 import { OtelTargetType } from './otel/types';
-import {
-  manageOtelAndMetricFilters,
-  updateOtelData,
-  updateOtelJoinWithGroupLeft,
-} from './otel/util';
+import { manageOtelAndMetricFilters, updateOtelData, updateOtelJoinWithGroupLeft } from './otel/util';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -590,8 +586,8 @@ function getVariableSet(
         supportsMultiValueOperators: true,
       }),
       // Legacy variable needed for bookmarking which is necessary because
-      // url sync method does not handle multiple dep env values  
-      // Remove this when the rudderstack event "deployment_environment_migrated" tapers off    
+      // url sync method does not handle multiple dep env values
+      // Remove this when the rudderstack event "deployment_environment_migrated" tapers off
       new CustomVariable({
         name: VAR_OTEL_DEPLOYMENT_ENV,
         label: 'Deployment environment',

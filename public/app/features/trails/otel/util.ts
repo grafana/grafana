@@ -420,9 +420,7 @@ export async function updateOtelData(
       // i.e., dep env is not promoted to metrics but in the previous DS, it was, so it will exist in the VAR FILTERS
       // and we will see a duplication in the OTELMETRICSVAR
       // remove the duplication
-      prevVarFilters = notPromoted
-        ? prevVarFilters.filter((f) => f.key !== 'deployment_environment')
-        : prevVarFilters;
+      prevVarFilters = notPromoted ? prevVarFilters.filter((f) => f.key !== 'deployment_environment') : prevVarFilters;
 
       // previous var filters are handled but what about previous otel resources filters?
       // need to add the prev otel resources to the otelmetricsvar filters
@@ -513,7 +511,6 @@ function checkLabelPromotion(filters: AdHocVariableFilter[], nonPromotedOtelReso
     promoted,
   };
 }
-
 
 /**
  * When a new filter is chosen from the consolidated filters, VAR_OTEL_AND_METRIC_FILTERS,
