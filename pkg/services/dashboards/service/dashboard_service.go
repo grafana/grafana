@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -1288,7 +1287,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 		return nil, err
 	}
 
-	response := dashboard.ParseResults(res, 0)
+	response := ParseResults(res, 0)
 	result := make([]*dashboards.Dashboard, len(response.Hits))
 	for i, hit := range response.Hits {
 		result[i] = &dashboards.Dashboard{
@@ -1301,6 +1300,68 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	}
 
 	return result, nil
+}
+
+func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alpha1.SearchResults {
+	if result == nil {
+		return nil
+	}
+
+	sr := &v0alpha1.SearchResults{
+		Offset:    offset,
+		TotalHits: result.TotalHits,
+		QueryCost: result.QueryCost,
+		MaxScore:  result.MaxScore,
+		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
+	}
+
+	titleRow := 0
+	folderRow := 1
+	tagsRow := -1
+	for i, row := range result.Results.GetColumns() {
+		if row.Name == "title" {
+			titleRow = i
+		} else if row.Name == "folder" {
+			folderRow = i
+		} else if row.Name == "tags" {
+			tagsRow = i
+		}
+	}
+
+	for i, row := range result.Results.Rows {
+		hit := &v0alpha1.DashboardHit{
+			Resource: row.Key.Resource, // folders | dashboards
+			Name:     row.Key.Name,     // The Grafana UID
+			Title:    string(row.Cells[titleRow]),
+			Folder:   string(row.Cells[folderRow]),
+		}
+		if tagsRow != -1 && row.Cells[tagsRow] != nil {
+			_ = json.Unmarshal(row.Cells[tagsRow], &hit.Tags)
+		}
+
+		sr.Hits[i] = *hit
+	}
+
+	// Add facet results
+	if result.Facet != nil {
+		sr.Facets = make(map[string]v0alpha1.FacetResult)
+		for k, v := range result.Facet {
+			sr.Facets[k] = v0alpha1.FacetResult{
+				Field:   v.Field,
+				Total:   v.Total,
+				Missing: v.Missing,
+				Terms:   make([]v0alpha1.TermFacet, len(v.Terms)),
+			}
+			for j, t := range v.Terms {
+				sr.Facets[k].Terms[j] = v0alpha1.TermFacet{
+					Term:  t.Term,
+					Count: t.Count,
+				}
+			}
+		}
+	}
+
+	return sr
 }
 
 func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {

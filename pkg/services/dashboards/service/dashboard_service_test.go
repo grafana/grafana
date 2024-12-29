@@ -652,7 +652,7 @@ func TestSearchDashboards(t *testing.T) {
 		dashboardStore: &fakeStore,
 	}
 
-	expectedResult := model.HitList(model.HitList{
+	expectedResult := model.HitList{
 		{
 			UID:   "uid1",
 			OrgID: 1,
@@ -671,7 +671,7 @@ func TestSearchDashboards(t *testing.T) {
 			URL:   "/d/uid2/dashboard-2",
 			Tags:  []string{},
 		},
-	})
+	}
 	query := dashboards.FindPersistedDashboardsQuery{
 		DashboardUIDs: []string{"uid1", "uid2"},
 	}
@@ -740,7 +740,6 @@ func TestSearchDashboards(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 		k8sClientMock.searcher.AssertExpectations(t)
-
 	})
 }
 

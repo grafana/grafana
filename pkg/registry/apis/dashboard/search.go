@@ -18,6 +18,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -308,71 +309,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.write(w, ParseResults(result, searchRequest.Offset))
-}
-
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) *dashboardv0alpha1.SearchResults {
-	if result == nil {
-		return nil
-	}
-
-	sr := &dashboardv0alpha1.SearchResults{
-		Offset:    offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
-	}
-
-	titleRow := 0
-	folderRow := 1
-	tagsRow := -1
-	for i, row := range result.Results.GetColumns() {
-		if row.Name == "title" {
-			titleRow = i
-		} else if row.Name == "folder" {
-			folderRow = i
-		} else if row.Name == "tags" {
-			tagsRow = i
-		}
-	}
-
-	for i, row := range result.Results.Rows {
-		// TODO:
-		// 1. Figure out how to do the fallback
-		hit := &dashboardv0alpha1.DashboardHit{
-			Resource: row.Key.Resource, // folders | dashboards
-			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[titleRow]),
-			Folder:   string(row.Cells[folderRow]),
-		}
-		if tagsRow != -1 && row.Cells[tagsRow] != nil {
-			_ = json.Unmarshal(row.Cells[tagsRow], &hit.Tags)
-		}
-
-		sr.Hits[i] = *hit
-	}
-
-	// Add facet results
-	if result.Facet != nil {
-		sr.Facets = make(map[string]dashboardv0alpha1.FacetResult)
-		for k, v := range result.Facet {
-			sr.Facets[k] = dashboardv0alpha1.FacetResult{
-				Field:   v.Field,
-				Total:   v.Total,
-				Missing: v.Missing,
-				Terms:   make([]dashboardv0alpha1.TermFacet, len(v.Terms)),
-			}
-			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = dashboardv0alpha1.TermFacet{
-					Term:  t.Term,
-					Count: t.Count,
-				}
-			}
-		}
-	}
-
-	return sr
+	s.write(w, dashboardsvc.ParseResults(result, searchRequest.Offset))
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
