@@ -14,48 +14,59 @@ type Requester interface {
 
 	// GetIdentityType returns the type for the requester
 	GetIdentityType() claims.IdentityType
+
 	// IsIdentityType returns true if identity type for requester matches any expected identity type
 	IsIdentityType(expected ...claims.IdentityType) bool
+
+	// FIXME: remove and use GetIdentifier instead.
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
-	// GetInternalID returns only the identifier part of the ID, excluding the type
-	GetInternalID() (int64, error)
+
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead
 	GetID() string
+
 	// GetEmail returns the email of the active entity.
 	// Can be empty.
 	GetEmail() string
-	// IsEmailVerified returns if email is verified for entity.
-	IsEmailVerified() bool
+
+	// GetInternalID returns only the identifier part of the ID, excluding the type
+	GetInternalID() (int64, error)
+
 	// GetIsGrafanaAdmin returns true if the user is a server admin
 	GetIsGrafanaAdmin() bool
+
+	// FIXME: remove and use GetUsername instead
 	// GetLogin returns the login of the active entity
 	// Can be empty.
 	GetLogin() string
+
 	// GetOrgID returns the ID of the active organization
 	GetOrgID() int64
+
 	// GetOrgRole returns the role of the active entity in the active organization.
 	GetOrgRole() RoleType
+
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
+
 	// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations.
 	GetGlobalPermissions() map[string][]string
+
 	// DEPRECATED: GetTeams returns the teams the entity is a member of.
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64
+
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
+
 	// GetAuthID returns external id for entity.
 	GetAuthID() string
-	// GetNamespace returns either "*" or the single namespace this requester has access to
-	// An empty value means the implementation has not specified a kubernetes namespace.
-	GetNamespace() string
-	// GetAuthenticatedBy returns the authentication method used to authenticate the entity.
-	GetAuthenticatedBy() string
+
 	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.
 	IsAuthenticatedBy(providers ...string) bool
+
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool

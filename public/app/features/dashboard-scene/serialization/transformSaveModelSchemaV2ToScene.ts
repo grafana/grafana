@@ -51,7 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
@@ -63,7 +63,8 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
@@ -71,21 +72,21 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getDashboardSceneFor, getIntervalsFromQueryString } from '../utils/utils';
+import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,
-  transformValueMappingsToV1,
+  transformMappingsToV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
 
 const DEFAULT_DATASOURCE = 'default';
 
-type TypedVariableModelv2 =
+export type TypedVariableModelV2 =
   | QueryVariableKind
   | TextVariableKind
   | ConstantVariableKind
@@ -101,7 +102,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const annotationLayers = dashboard.annotations.map((annotation) => {
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
-      query: annotation.spec,
+      query: {
+        ...annotation.spec,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
+      },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
@@ -116,7 +120,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     isDirty: false,
     links: dashboard.links,
     // TODO: Combine access and metadata to compose the V1 meta object
-    meta: {},
+    meta: {
+      version: parseInt(metadata.resourceVersion, 10),
+    },
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
@@ -190,7 +196,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         const vizPanel = buildVizPanel(panel);
 
         return new DashboardGridItem({
-          key: `grid-item-${panel.spec.uid}`,
+          key: `grid-item-${panel.spec.id}`,
           x: element.spec.x,
           y: element.spec.y,
           width: element.spec.width,
@@ -214,13 +220,12 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     titleItems.push(new AngularDeprecation());
   }
 
-  // FIXME: Links in a panel are DashboardLinks not DataLinks
-  // titleItems.push(
-  //   new VizPanelLinks({
-  //     rawLinks: panel.spec.links,
-  //     menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-  //   })
-  // );
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.spec.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 
@@ -228,15 +233,14 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: panel.spec.uid,
+    key: getVizPanelKeyForPanelId(panel.spec.id),
     title: panel.spec.title,
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
-    fieldConfig: transformValueMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    // FIXME: Transparent is not added to the schema yet
-    // displayMode: panel.spec.transparent ? 'transparent' : undefined,
+    displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
@@ -297,7 +301,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource.uid || datasource.type !== query.spec.datasource.type) {
+    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
@@ -339,8 +343,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,
     dataLayerFilter: {
-      // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-      panelId: Number.isNaN(parseInt(panel.uid, 10)) ? 0 : parseInt(panel.uid, 10),
+      panelId: panel.id,
     },
     $behaviors: [new DashboardDatasourceBehaviour({})],
   });
@@ -393,7 +396,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): SceneVariable {
+function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -590,7 +593,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVariable {
+export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

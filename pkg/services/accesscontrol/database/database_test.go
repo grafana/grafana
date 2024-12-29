@@ -3,13 +3,11 @@ package database_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -148,17 +146,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Len(t, permissions, tt.expected)
-
-			policies, err := database.GetAccessPolicies(context.Background(), user.OrgID, sql.GetSqlxSession(),
-				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
-					return strings.Split(scope, ":"), nil
-				})
-			require.NoError(t, err)
-			assert.Len(t, policies, tt.policyCount)
-
-			for idx, p := range policies {
-				fmt.Printf("POLICIES[%d] %+v\n", idx, p.Spec)
-			}
 		})
 	}
 }
@@ -625,7 +612,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				TypedID:      claims.NewTypeID(claims.TypeUser, "1"),
+				UserID:       1,
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},

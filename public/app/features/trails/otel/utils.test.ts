@@ -21,7 +21,9 @@ jest.mock('./api', () => ({
   totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
   getDeploymentEnvironments: jest.fn(() => ['production', 'staging']),
   isOtelStandardization: jest.fn(() => true),
-  getFilteredResourceAttributes: jest.fn().mockResolvedValue(['resourceAttribute']),
+  getFilteredResourceAttributes: jest
+    .fn()
+    .mockResolvedValue({ attributes: ['resourceAttribute'], missingOtelTargets: false }),
 }));
 
 describe('sortResources', () => {
@@ -162,8 +164,8 @@ describe('limitOtelMatchTerms', () => {
     const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
-    expect(result.jobsRegex).toEqual('job=~"a"');
-    expect(result.instancesRegex).toEqual('instance=~"d"');
+    expect(result.jobsRegex).toEqual(`job=~'a'`);
+    expect(result.instancesRegex).toEqual(`instance=~'d'`);
   });
 
   it('should include | char in the count', () => {
@@ -187,8 +189,8 @@ describe('limitOtelMatchTerms', () => {
     const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
-    expect(result.jobsRegex).toEqual('job=~"a|b"');
-    expect(result.instancesRegex).toEqual('instance=~"d|e"');
+    expect(result.jobsRegex).toEqual(`job=~'a|b'`);
+    expect(result.instancesRegex).toEqual(`instance=~'d|e'`);
   });
 
   it('should add all OTel job and instance matches if the character count is less that 2000', () => {
@@ -201,8 +203,8 @@ describe('limitOtelMatchTerms', () => {
     const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(false);
-    expect(result.jobsRegex).toEqual('job=~"job1|job2|job3|job4|job5"');
-    expect(result.instancesRegex).toEqual('instance=~"instance1|instance2|instance3|instance4|instance5"');
+    expect(result.jobsRegex).toEqual(`job=~'job1|job2|job3|job4|job5'`);
+    expect(result.instancesRegex).toEqual(`instance=~'instance1|instance2|instance3|instance4|instance5'`);
   });
 });
 

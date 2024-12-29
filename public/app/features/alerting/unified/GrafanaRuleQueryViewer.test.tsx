@@ -1,4 +1,4 @@
-import { render, waitFor, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { DataSourceRef } from '@grafana/schema';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

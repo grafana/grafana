@@ -105,11 +105,6 @@ module.exports = {
         type: 'asset/resource',
         generator: { filename: 'static/img/[name].[hash:8][ext]' },
       },
-      // for pre-caching SVGs as part of the JS bundles
-      {
-        test: /(unicons|mono|custom|solid)[\\/].*\.svg$/,
-        type: 'asset/source',
-      },
       {
         // Required for msagl library (used in Nodegraph panel) to work
         test: /\.m?js$/,
@@ -126,12 +121,6 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
-        unicons: {
-          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

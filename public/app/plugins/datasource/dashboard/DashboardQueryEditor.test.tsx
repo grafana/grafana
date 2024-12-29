@@ -5,7 +5,7 @@ import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import {
   createDashboardModelFixture,
@@ -13,8 +13,8 @@ import {
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
-import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
