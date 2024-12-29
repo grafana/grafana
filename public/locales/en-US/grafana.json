@@ -2781,6 +2781,12 @@
       "placeholder": "Search for dashboards"
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "When <1>Reduce Strict mode</1> is used, the <3>fill(null)</3> function (InfluxQL) will result in <6>NaN</6>. <9>See the documentation for more details.</9>",
+      "title": "Strict Mode Behaviour"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
