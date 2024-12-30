@@ -14,9 +14,25 @@ describe('migrate old dep env var to otel and metrics var', () => {
         useOtelExperience: true,
       });
     });
-    it('should not migrate if var-otel_and_metric_filters is present', () => {
+    it('should not be called if var-otel_and_metric_filters is present with label', () => {
+      // this variable being present indicates it has already been migrated
       const urlParams: UrlQueryMap = {
-        'var-otel_and_metric_filters': 'key|=|value',
+        'var-otel_and_metric_filters': ['key|=|value'],
+      };
+
+      migrateOtelDeploymentEnvironment(trail, urlParams);
+
+      const otelMetricsVar = getOtelAndMetricsVar(trail);
+
+      expect(otelMetricsVar.state.filters).toEqual([]);
+    });
+
+    it('should not be called if starting a new trail', () => {
+      // new trails do not need to be migrated
+      trail.setState({ fromStart: true });
+
+      const urlParams: UrlQueryMap = {
+        'var-otel_and_metric_filters': [''],
       };
 
       migrateOtelDeploymentEnvironment(trail, urlParams);
