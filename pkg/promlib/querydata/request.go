@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -300,6 +301,7 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		} else {
 			dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
 		}
+		dr.ErrorSource = status.SourceFromHTTPStatus(int(res.Status))
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)
