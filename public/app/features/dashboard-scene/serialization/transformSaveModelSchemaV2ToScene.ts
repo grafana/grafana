@@ -51,6 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -122,6 +123,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     // TODO: Combine access and metadata to compose the V1 meta object
     meta: {
       version: parseInt(metadata.resourceVersion, 10),
+      isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
     },
     tags: dashboard.tags,
     title: dashboard.title,
