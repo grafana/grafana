@@ -100,7 +100,7 @@ func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.List
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Compile")
 	defer span.End()
 
-	res, err := c.authzext.List(ctx, &authzextv1.ListRequest{
+	res, err := c.authz.List(ctx, &authzv1.ListRequest{
 		Subject:   id.GetUID(),
 		Group:     req.Group,
 		Verb:      utils.VerbList,
@@ -115,7 +115,7 @@ func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.List
 	return newItemChecker(res), nil
 }
 
-func newItemChecker(res *authzextv1.ListResponse) authz.ItemChecker {
+func newItemChecker(res *authzv1.ListResponse) authz.ItemChecker {
 	// if we can see all resource of this type we can just return a function that always return true
 	if res.GetAll() {
 		return func(_, _, _ string) bool { return true }
