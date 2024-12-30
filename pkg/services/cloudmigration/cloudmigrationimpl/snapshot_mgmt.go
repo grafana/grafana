@@ -15,6 +15,7 @@ import (
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	plugins "github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -404,6 +405,13 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 	results := make([]PluginCmd, 0)
 	plugins := s.pluginStore.Plugins(ctx)
 
+	// Obtain plugins from gcom
+	requestID := tracing.TraceIDFromContext(ctx, false)
+	gcomPlugins, err := s.gcomService.GetPlugins(ctx, requestID)
+	if err != nil {
+		return results, fmt.Errorf("fetching gcom plugins: %w", err)
+	}
+
 	// Permissions for listing plugins, taken from plugins api
 	userIsOrgAdmin := signedInUser.HasRole(org.RoleAdmin)
 	hasAccess, _ := s.accessControl.Evaluate(ctx, signedInUser, ac.EvalAny(
@@ -411,11 +419,16 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 	if !(userIsOrgAdmin || hasAccess) {
-		s.log.Info("user is not allowed to list core plugins", "UID", signedInUser.UserUID)
+		s.log.Info("user is not allowed to list non-core plugins", "UID", signedInUser.UserUID)
 		return results, nil
 	}
 
 	for _, plugin := range plugins {
+		// filter plugins to keep only the ones allowed by gcom
+		if _, exists := gcomPlugins[plugin.ID]; !exists {
+			continue
+		}
+
 		// filter plugins to keep only non core, signed, with public signature type plugins
 		if plugin.IsCorePlugin() || !plugin.Signature.IsValid() || !IsPublicSignatureType(plugin.SignatureType) {
 			continue
