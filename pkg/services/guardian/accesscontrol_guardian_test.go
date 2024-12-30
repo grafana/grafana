@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -959,13 +958,13 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	folderSvc := foldertest.NewFakeService()
 
-	fStore := folder.NewFakeStore()
 	folderStore := foldertest.NewFakeFolderStore(t)
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, fStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(fStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, fStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, folderSvc))
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()

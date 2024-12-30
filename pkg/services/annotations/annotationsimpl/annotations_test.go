@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	ftestutil "github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -228,11 +227,10 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
-		folderPermissions, err := ftestutil.ProvideFolderPermissions(features, cfg, sql)
-		require.NoError(t, err)
 		fStore := folderimpl.ProvideStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderimpl.ProvideDashboardFolderStore(sql), sql, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
 		cfg.AnnotationMaximumTagsLength = 60
 
 		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)

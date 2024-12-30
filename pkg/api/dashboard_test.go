@@ -833,7 +833,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	db := db.InitTestDB(t)
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashboardStore, folderStore, db, features, cfg, folderPermissions,
+		dashboardStore, folderStore, db, features,
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(

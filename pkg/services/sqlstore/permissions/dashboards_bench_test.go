@@ -78,13 +78,12 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 
 	quotaService := quotatest.New(false, nil)
 
-	folderPermissions := mock.NewMockedPermissionsService()
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store), quotaService)
 	require.NoError(b, err)
 
 	fStore := folderimpl.ProvideStore(store)
 	folderSvc := folderimpl.ProvideService(fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store),
-		store, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		store, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})

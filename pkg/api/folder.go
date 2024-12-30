@@ -14,10 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -32,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -231,6 +234,10 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
+		hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
+	}
+
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
 	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
@@ -242,6 +249,36 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, folderDTO)
+}
+
+func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
+
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
+
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+
+	isNested := folder.ParentUID != ""
+	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
