@@ -8,7 +8,6 @@ import Highlighter from 'react-highlight-words';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import {
   AsyncSelect,
   Button,
