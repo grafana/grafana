@@ -35,7 +35,6 @@
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
 
-/docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @brendamuir
