@@ -1,13 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { flip, offset, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
 import { memo, HTMLAttributes, useState } from 'react';
 
