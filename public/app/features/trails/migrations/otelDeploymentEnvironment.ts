@@ -24,7 +24,13 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const otelMetricsVar = urlParams['var-otel_and_metric_filters'];
 
   // this check is if it has already been migrated
-  if (otelMetricsVar && typeof otelMetricsVar === 'object' && otelMetricsVar.length > 0 && otelMetricsVar[0] !== '') {
+
+  if (
+    otelMetricsVar &&
+    Array.isArray(otelMetricsVar) &&
+    otelMetricsVar.length > 0 &&
+    (trail.state.fromStart || otelMetricsVar[0] !== '')
+  ) {
     return;
   }
   // if there is no dep env, does not need to be migrated
