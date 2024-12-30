@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import {
-  autoUpdate,
   flip,
   offset,
   shift,
@@ -58,7 +57,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     placement: 'bottom-end',
     onOpenChange: setIsOpen,
     middleware,
-    whileElementsMounted: autoUpdate,
   });
 
   const click = useClick(context);
