@@ -2781,6 +2781,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",

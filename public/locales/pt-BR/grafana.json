@@ -2781,6 +2781,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Atualização automática desativada. Escolha o intervalo de tempo de atualização",
