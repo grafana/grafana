@@ -53,6 +53,7 @@ import {
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardIsSnapshot,
   AnnoKeyDashboardNotFound,
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
@@ -138,6 +139,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -182,7 +184,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       weekStart: dashboard.timeSettings.weekStart,
       UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
     }),
-    $variables: getVariables(dashboard),
+    $variables: getVariables(dashboard, meta.isSnapshot ?? false),
     $behaviors: [
       new behaviors.CursorSync({
         sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
@@ -397,15 +399,12 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
-function getVariables(dashboard: DashboardV2Spec): SceneVariableSet | undefined {
+function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (dashboard.variables.length) {
-    if (false) {
-      // FIXME: isSnapshot is not added to the schema yet
-      //if (dashboard.meta?.isSnapshot) {
-      // in the old model we use .meta.isSnapshot but meta is not persisted
-      // variables = createVariablesForSnapshot(dashboard);
+    if (isSnapshot) {
+      variables = createVariablesForSnapshot(dashboard);
     } else {
       variables = createVariablesForDashboard(dashboard);
     }
