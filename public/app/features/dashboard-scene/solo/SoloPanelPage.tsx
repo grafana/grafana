@@ -52,12 +52,12 @@ export default SoloPanelPage;
 export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
   const [panel, error] = useSoloPanel(dashboard, panelId);
   const { controls } = dashboard.useState();
-  const { refreshPicker } = controls!.useState();
+  const refreshPicker = controls?.useState()?.refreshPicker;
 
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    return refreshPicker.activate();
+    return refreshPicker?.activate();
   }, [refreshPicker]);
 
   if (error) {
