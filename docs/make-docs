@@ -6,6 +6,14 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.3.0 (2024-12-27)
+#
+# ### Added
+#
+# - Debug output of the final command when DEBUG=true.
+#
+#   Useful to inspect if the script is correctly constructing the final command.
+#
 # ## 8.2.0 (2024-12-22)
 #
 # ### Removed
@@ -631,7 +639,7 @@ POSIX_HERESTRING
 
     case "${_project}" in
       # Workaround for arbitrary mounts where the version field is expected to be the local directory
-      # and the repo field is expected to be the container directory.
+     # and the repo field is expected to be the container directory.
       arbitrary)
         echo "${_project}^${_version}^${_repo}^" # TODO
         ;;
@@ -801,6 +809,10 @@ case "${image}" in
                 | sed "s#$(proj_dst "${proj}")#sources#"
 EOF
 
+    if [ -n "${DEBUG}" ]; then
+      debg "${cmd}"
+    fi
+
     case "${OUTPUT_FORMAT}" in
       human)
         if ! command -v jq >/dev/null 2>&1; then
@@ -836,6 +848,10 @@ EOF
                 --glob=*.md \
                 /hugo/content/docs
 EOF
+
+    if [ -n "${DEBUG}" ]; then
+      debg "${cmd}"
+    fi
 
     case "${OUTPUT_FORMAT}" in
       human)
