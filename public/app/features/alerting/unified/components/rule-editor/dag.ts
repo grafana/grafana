@@ -64,7 +64,7 @@ export function parseRefsFromMathExpression(input: string): string[] {
 export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
 export const getDescendants = memoize(_getDescendants, (refId, graph) => refId + fingerprintGraph(graph));
 
-export function _getOriginsOfRefId(refId = '', graph: Graph): string[] {
+export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
   if (!node) {
     return [];
