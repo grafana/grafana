@@ -53,7 +53,6 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;

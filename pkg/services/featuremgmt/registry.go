@@ -273,15 +273,6 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
-			Name:           "prometheusMetricEncyclopedia",
-			Description:    "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "influxdbBackendMigration",
 			Description:    "Query InfluxDB InfluxQL without the proxy",
 			Stage:          FeatureStageGeneralAvailability,
