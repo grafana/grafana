@@ -67,8 +67,6 @@ export function MetricSelect({
     resultsTruncated?: boolean;
   }>({});
 
-  const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-
   const metricsModalOption: SelectableValue[] = [
     {
       value: 'BrowseMetrics',
@@ -93,16 +91,11 @@ export function MetricSelect({
 
       return searchWords.reduce((acc, cur) => {
         const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
-
-        let browseOption = false;
-        if (prometheusMetricEncyclopedia) {
-          browseOption = label === 'Metrics explorer';
-        }
-
+        const browseOption = label === 'Metrics explorer';
         return acc && (matcheSearch || browseOption);
       }, true);
     },
-    [prometheusMetricEncyclopedia]
+    []
   );
 
   const formatOptionLabel = useCallback(
@@ -159,11 +152,7 @@ export function MetricSelect({
         };
       });
 
-      if (prometheusMetricEncyclopedia) {
-        return [...metricsModalOption, ...resultsOptions];
-      } else {
-        return resultsOptions;
-      }
+      return [...metricsModalOption, ...resultsOptions];
     });
   };
 
@@ -286,22 +275,14 @@ export function MetricSelect({
             truncateResult(metrics);
           }
 
-          if (prometheusMetricEncyclopedia) {
-            setState({
-              // add the modal button option to the options
-              metrics: [...metricsModalOption, ...metrics],
-              isLoading: undefined,
-              // pass the initial metrics into the metrics explorer
-              initialMetrics: initialMetrics,
-              resultsTruncated: resultsLength > metrics.length,
-            });
-          } else {
-            setState({
-              metrics,
-              isLoading: undefined,
-              resultsTruncated: resultsLength > metrics.length,
-            });
-          }
+          setState({
+            // add the modal button option to the options
+            metrics: [...metricsModalOption, ...metrics],
+            isLoading: undefined,
+            // pass the initial metrics into the metrics explorer
+            initialMetrics: initialMetrics,
+            resultsTruncated: resultsLength > metrics.length,
+          });
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
@@ -309,8 +290,8 @@ export function MetricSelect({
         onChange={(input) => {
           const value = input?.value;
           if (value) {
-            // if there is no metric and the m.e. is enabled, open the modal
-            if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
+            // if there is no metric and the value is the custom m.e. option, open the modal
+            if (value === 'BrowseMetrics') {
               tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
               setState({ ...state, metricsModalOpen: true });
             } else {
@@ -321,7 +302,7 @@ export function MetricSelect({
           }
         }}
         components={
-          prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
+          { Option: CustomOption, MenuList: CustomMenu }
         }
         onBlur={onBlur}
       />
@@ -330,7 +311,7 @@ export function MetricSelect({
 
   return (
     <>
-      {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
+      {!datasource.lookupsDisabled && state.metricsModalOpen && (
         <MetricsModal
           datasource={datasource}
           isOpen={state.metricsModalOpen}
