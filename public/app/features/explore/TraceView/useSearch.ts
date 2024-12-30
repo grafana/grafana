@@ -90,12 +90,15 @@ export function replaceSearchVariables(replaceVariables: InterpolateFunction, se
   if (newSearch.to) {
     newSearch.to = replaceVariables(newSearch.to);
   }
-  newSearch.tags = newSearch.tags.map((tag) => {
-    return {
-      ...tag,
-      key: replaceVariables(tag.key ?? ''),
-      value: replaceVariables(tag.value ?? ''),
-    };
-  });
+  if (newSearch.tags) {
+    newSearch.tags = newSearch.tags.map((tag) => {
+      return {
+        ...tag,
+        key: replaceVariables(tag.key ?? ''),
+        value: replaceVariables(tag.value ?? ''),
+      };
+    });
+  }
+
   return newSearch;
 }
