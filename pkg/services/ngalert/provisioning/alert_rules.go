@@ -571,6 +571,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
+		if delta.IsEmpty() {
+			// No changes to the rule.
+			return rule, nil
+		}
 		for _, d := range delta.Update {
 			if d.Existing.GetKey() == rule.GetKey() {
 				storedRule = d.Existing
