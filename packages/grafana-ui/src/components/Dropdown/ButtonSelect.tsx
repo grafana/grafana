@@ -58,7 +58,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     placement: 'bottom-end',
     onOpenChange: setIsOpen,
     middleware,
-    whileElementsMounted: autoUpdate,
   });
 
   const click = useClick(context);
