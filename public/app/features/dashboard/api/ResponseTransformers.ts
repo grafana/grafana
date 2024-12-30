@@ -152,11 +152,11 @@ export function ensureV1Response(
     return {
       meta: {
         created: dashboard.metadata.creationTimestamp,
-        createdBy: dashboard.metadata.annotations?.['grafana.app/createdBy'] ?? '',
-        updated: dashboard.metadata.annotations?.['grafana.app/updatedTimestamp'],
-        updatedBy: dashboard.metadata.annotations?.['grafana.app/updatedBy'],
-        folderUid: dashboard.metadata.annotations?.['grafana.app/folder'],
-        slug: dashboard.metadata.annotations?.['grafana.app/slug'],
+        createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
+        updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+        updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
+        folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
+        slug: dashboard.metadata.annotations?.[AnnoKeySlug],
         url: dashboard.access.url,
         canAdmin: dashboard.access.canAdmin,
         canDelete: dashboard.access.canDelete,
