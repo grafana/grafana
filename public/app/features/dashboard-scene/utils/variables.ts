@@ -144,6 +144,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings(variable.datasource)?.meta.multiValueFilterOperators
       ),
+      ...(variable.collapseFilters !== undefined && { collapseFilters: variable.collapseFilters }),
     });
   }
   if (variable.type === 'custom') {

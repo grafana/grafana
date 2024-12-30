@@ -71,6 +71,7 @@ export interface AdHocVariableModel extends BaseVariableModel {
    */
   defaultKeys?: MetricFindValue[];
   allowCustomValue?: boolean;
+  collapseFilters?: boolean;
 }
 
 export interface GroupByVariableModel extends VariableWithOptions {

@@ -30,6 +30,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
 
 describe('AdHocVariableForm', () => {
   const onDataSourceChange = jest.fn();
+  const onCollapseFiltersValueChange = jest.fn();
   const defaultProps: AdHocVariableFormProps = {
     datasource: defaultDatasource,
     onDataSourceChange,
@@ -77,6 +78,32 @@ describe('AdHocVariableForm', () => {
 
     expect(allowCustomValueCheckbox).toBeInTheDocument();
     expect(allowCustomValueCheckbox).toBeChecked();
+  });
+
+  it('should render the form with collapse filters value false', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const collapseFiltersCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.collapseFiltersToggle
+    );
+
+    expect(collapseFiltersCheckbox).toBeInTheDocument();
+    expect(collapseFiltersCheckbox).not.toBeChecked();
+  });
+
+  it('should call the onCollapseFiltersValueChange callback when the collapse filters is changed', async () => {
+    const { renderer, user } = await setup(defaultProps);
+
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.collapseFiltersToggle)
+    );
+
+    expect(onCollapseFiltersValueChange).toHaveBeenCalledTimes(1);
+    expect(onCollapseFiltersValueChange).toHaveBeenCalledWith(true);
   });
 
   it('should not render code editor when no default keys provided', async () => {

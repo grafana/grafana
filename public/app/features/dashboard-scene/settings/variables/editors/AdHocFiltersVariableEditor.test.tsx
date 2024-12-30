@@ -74,8 +74,14 @@ describe('AdHocFiltersVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
+    const collapseFiltersCheckbox = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.collapseFiltersToggle
+    );
+
     expect(allowCustomValueCheckbox).toBeInTheDocument();
     expect(allowCustomValueCheckbox).toBeChecked();
+    expect(collapseFiltersCheckbox).toBeInTheDocument();
+    expect(collapseFiltersCheckbox).not.toBeChecked();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(infoText).toBeInTheDocument();
@@ -112,6 +118,16 @@ describe('AdHocFiltersVariableEditor', () => {
     );
 
     expect(variable.state.defaultKeys).toEqual(undefined);
+  });
+
+  it('should update the variable collapse filters property when collapse filters is changed', async () => {
+    const { renderer, variable, user } = await setup();
+
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.collapseFiltersToggle)
+    );
+
+    expect(variable.state.collapseFilters).toEqual(true);
   });
 });
 

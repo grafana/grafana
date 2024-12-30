@@ -183,6 +183,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,
         defaultKeys: variable.state.defaultKeys,
+        ...(variable.state.collapseFilters !== undefined && { collapseFilters: variable.state.collapseFilters }),
       });
     } else {
       throw new Error('Unsupported variable type');
@@ -418,6 +419,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           baseFilters: variable.state.baseFilters || [],
           filters: variable.state.filters,
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          ...(variable.state.collapseFilters !== undefined && { collapseFilters: variable.state.collapseFilters }),
         },
       };
       variables.push(adhocVariable);

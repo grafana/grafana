@@ -770,6 +770,7 @@ AdhocVariableSpec: {
   hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
+  collapseFilters?: bool
 }
 
 // Define the MetricFindValue type

@@ -3,7 +3,7 @@ import { FormEvent, useCallback } from 'react';
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, Box, CodeEditor, Field, Stack, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -17,6 +17,8 @@ export interface AdHocVariableFormProps {
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  collapseFilters?: boolean;
+  onCollapseFiltersValueChange?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function AdHocVariableForm({
@@ -27,6 +29,8 @@ export function AdHocVariableForm({
   onDefaultKeysChange,
   onAllowCustomValueChange,
   defaultKeys,
+  collapseFilters,
+  onCollapseFiltersValueChange,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
@@ -55,7 +59,6 @@ export function AdHocVariableForm({
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
-
       {onDefaultKeysChange && (
         <>
           <Field label="Use static key dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
@@ -73,28 +76,40 @@ export function AdHocVariableForm({
           </Field>
 
           {defaultKeys !== undefined && (
-            <CodeEditor
-              height={300}
-              language="csv"
-              value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
-              onBlur={updateStaticKeys}
-              onSave={updateStaticKeys}
-              showMiniMap={false}
-              showLineNumbers={true}
-            />
+            <Box marginBottom={2}>
+              <CodeEditor
+                height={300}
+                language="csv"
+                value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
+                onBlur={updateStaticKeys}
+                onSave={updateStaticKeys}
+                showMiniMap={false}
+                showLineNumbers={true}
+              />
+            </Box>
           )}
         </>
       )}
-
-      {onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name="Allow custom values"
-          description="Enables users to add custom values to the list"
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
-      )}
+      <Stack direction="column" gap={2} height="inherit" alignItems="start">
+        {onAllowCustomValueChange && (
+          <VariableCheckboxField
+            value={allowCustomValue ?? true}
+            name="Allow custom values"
+            description="Enables users to add custom values to the list"
+            onChange={onAllowCustomValueChange}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+          />
+        )}
+        {onCollapseFiltersValueChange && (
+          <VariableCheckboxField
+            value={collapseFilters ?? false}
+            name="Collapse filters"
+            description="Automatically collapse filters when they span for more than two lines"
+            onChange={onCollapseFiltersValueChange}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.collapseFiltersToggle}
+          />
+        )}
+      </Stack>
     </>
   );
 }
