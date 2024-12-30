@@ -74,28 +74,25 @@ export function MetricSelect({
     },
   ];
 
-  const customFilterOption = useCallback(
-    (option: SelectableValue, searchQuery: string) => {
-      const label = option.label ?? option.value;
-      if (!label) {
-        return false;
-      }
+  const customFilterOption = useCallback((option: SelectableValue, searchQuery: string) => {
+    const label = option.label ?? option.value;
+    if (!label) {
+      return false;
+    }
 
-      // custom value is not a string label but a react node
-      if (!label.toLowerCase) {
-        return true;
-      }
+    // custom value is not a string label but a react node
+    if (!label.toLowerCase) {
+      return true;
+    }
 
-      const searchWords = searchQuery.split(splitSeparator);
+    const searchWords = searchQuery.split(splitSeparator);
 
-      return searchWords.reduce((acc, cur) => {
-        const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
-        const browseOption = label === 'Metrics explorer';
-        return acc && (matcheSearch || browseOption);
-      }, true);
-    },
-    []
-  );
+    return searchWords.reduce((acc, cur) => {
+      const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
+      const browseOption = label === 'Metrics explorer';
+      return acc && (matcheSearch || browseOption);
+    }, true);
+  }, []);
 
   const formatOptionLabel = useCallback(
     (option: SelectableValue, meta: FormatOptionLabelMeta<any>) => {
@@ -300,9 +297,7 @@ export function MetricSelect({
             onChange({ ...query, metric: '' });
           }
         }}
-        components={
-          { Option: CustomOption, MenuList: CustomMenu }
-        }
+        components={{ Option: CustomOption, MenuList: CustomMenu }}
         onBlur={onBlur}
       />
     );

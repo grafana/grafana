@@ -61,7 +61,8 @@ const props: MetricSelectProps = {
   metricLookupDisabled: false,
 };
 
-describe('MetricSelect', () => {  it('shows all metric options', async () => {
+describe('MetricSelect', () => {
+  it('shows all metric options', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     await waitFor(() => expect(screen.getByText('random_metric')).toBeInTheDocument());

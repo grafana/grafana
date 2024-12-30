@@ -124,7 +124,7 @@ describe('MetricCombobox', () => {
     expect(mockOnChange).toHaveBeenCalledWith({ metric: 'random_metric', labels: [], operations: [] });
   });
 
-  it("shows the metrics explorer button by default", () => {
+  it('shows the metrics explorer button by default', () => {
     render(<MetricCombobox {...defaultProps} />);
     expect(screen.queryByRole('button', { name: /open metrics explorer/i })).toBeInTheDocument();
   });
