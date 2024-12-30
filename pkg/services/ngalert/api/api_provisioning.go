@@ -383,6 +383,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		)
 	}
 
+	if UID == "" {
+		// If there is no UID, return 404 as the UID is part of the URL.
+		return response.Empty(http.StatusNotFound)
+	}
+
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
