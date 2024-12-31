@@ -88,7 +88,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);
     expect(scene.state.preload).toEqual(false);
-    expect(scene.state.version).toEqual(dash.schemaVersion);
+    expect(scene.state.version).toEqual(123);
     expect(scene.state.tags).toEqual(dash.tags);
 
     const liveNow = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
