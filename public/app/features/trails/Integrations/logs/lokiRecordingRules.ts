@@ -62,7 +62,6 @@ export function extractRecordingRulesFromRuleGroups(
 
   // We only want to return the first matching rule when there are multiple rules with same name
   const extractedRules = new Map<string, ExtractedRecordingRule>();
-  // const extractedRules: [] = [];
   ruleGroups.forEach((rg) => {
     rg.rules
       .filter((r) => r.type === 'recording')
