@@ -6,26 +6,26 @@ import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUt
 
 import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
 
-export type RecordingRuleGroup = {
+export interface RecordingRuleGroup {
   name: string;
   rules: RecordingRule[];
-};
+}
 
-export type RecordingRule = {
+export interface RecordingRule {
   name: string;
   query: string;
   type: 'recording' | 'alerting' | string;
   labels?: Record<string, string>;
-};
+}
 
-export type ExtractedRecordingRule = RecordingRule & {
+export interface ExtractedRecordingRule extends RecordingRule {
   datasource: FoundLokiDataSource;
   hasMultipleOccurrences?: boolean;
-};
+}
 
-export type ExtractedRecordingRules = {
+export interface ExtractedRecordingRules {
   [dataSourceUID: string]: ExtractedRecordingRule[];
-};
+}
 
 /**
  * Fetch Loki recording rule groups from the specified datasource.
@@ -35,7 +35,7 @@ export type ExtractedRecordingRules = {
  */
 async function fetchRecordingRuleGroups(datasourceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
   const recordingRuleUrl = `api/prometheus/${datasourceSettings.uid}/api/v1/rules`;
-  const recordingRules: BackendSrvRequest = { url: recordingRuleUrl };
+  const recordingRules: BackendSrvRequest = { url: recordingRuleUrl, showErrorAlert: false, showSuccessAlert: false };
   const { data } = await lastValueFrom<
     FetchResponse<{
       data: { groups: RecordingRuleGroup[] };
