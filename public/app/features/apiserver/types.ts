@@ -49,6 +49,7 @@ export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
+export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -75,6 +76,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardNotFound]?: boolean;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsNew]?: boolean;
 };
 
 export interface Resource<T = object, K = string> extends TypeMeta<K> {

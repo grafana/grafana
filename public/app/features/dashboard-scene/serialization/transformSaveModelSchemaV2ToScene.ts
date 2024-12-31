@@ -57,6 +57,7 @@ import {
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
+  AnnoKeyDashboardIsNew,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -145,7 +146,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
-    isNew: dto.access.isNew,
+    isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
   };
 
   // Ref: DashboardModel.initMeta
