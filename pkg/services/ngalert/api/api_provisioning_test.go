@@ -1428,6 +1428,23 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
+
+			t.Run("hcl contains required group_by field", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Add("format", "hcl")
+				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n" +
+					"  contact_point = \"some-receiver\"\n" +
+					"  group_by      = []\n" +
+					"}\n"
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				t.Log(string(response.Body()))
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
 		})
 
 		t.Run("mute timings", func(t *testing.T) {
