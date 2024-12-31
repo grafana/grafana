@@ -1,16 +1,9 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx/tasks-runners/default",
-      "options": {
-        "cacheableOperations": ["build", "generate"]
-      }
-    }
-  },
   "targetDefaults": {
     "build": {
-      "outputs": ["{projectRoot}/dist"]
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true
     },
     "pack": {
       "executor": "nx:run-commands",
@@ -18,6 +11,9 @@
         "command": "yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
         "cwd": "{projectRoot}"
       }
+    },
+    "generate": {
+      "cache": true
     }
   },
   "release": {
