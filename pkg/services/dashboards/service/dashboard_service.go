@@ -839,20 +839,21 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			query.OrgId = requester.GetOrgID()
 		}
 
-		results, err := dr.searchDashboardsThroughK8s(ctx, query)
+		response, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
 		if err != nil {
 			return nil, err
 		}
 
-		finalResults := make([]dashboards.DashboardSearchProjection, len(results))
-		for i, result := range results {
+		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
+		for i, hit := range response.Hits {
 			finalResults[i] = dashboards.DashboardSearchProjection{
-				UID:       result.UID,
-				OrgID:     result.OrgID,
-				Title:     result.Title,
-				Slug:      result.Slug,
+				UID:       hit.Name,
+				OrgID:     query.OrgId,
+				Title:     hit.Title,
+				Slug:      slugify.Slugify(hit.Title),
 				IsFolder:  false,
-				FolderUID: result.FolderUID,
+				FolderUID: hit.Folder,
+				Tags:      hit.Tags,
 			}
 		}
 
@@ -928,6 +929,13 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				Tags:        []string{},
 			}
 
+			// when searching through unified storage, the dashboard will come as one
+			// item, when searching through legacy, the dashboard will come multiple times
+			// per tag. So we need to add the array here for unified, and the term below for legacy.
+			if item.Tags != nil {
+				hit.Tags = item.Tags
+			}
+
 			// nolint:staticcheck
 			if item.FolderID > 0 {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
@@ -954,7 +962,41 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 }
 
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
-	// TODO: use k8s client to get dashboards first, and then filter tags and join
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesCliDashboards) {
+		res, err := dr.k8sclient.getSearcher().Search(ctx, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: dr.k8sclient.getNamespace(query.OrgID),
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"tags": {
+					Field: "tags",
+					Limit: 100000,
+				},
+			},
+			Limit: 100000})
+		if err != nil {
+			return nil, err
+		}
+		facet, ok := res.Facet["tags"]
+		if !ok {
+			return []*dashboards.DashboardTagCloudItem{}, nil
+		}
+
+		results := make([]*dashboards.DashboardTagCloudItem, len(facet.Terms))
+		for i, item := range facet.Terms {
+			results[i] = &dashboards.DashboardTagCloudItem{
+				Term:  item.Term,
+				Count: int(item.Count),
+			}
+		}
+
+		return results, nil
+	}
+
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 
@@ -1206,7 +1248,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashboards, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (*v0alpha1.SearchResults, error) {
 	dashboardskey := &resource.ResourceKey{
 		Namespace: dr.k8sclient.getNamespace(query.OrgId),
 		Group:     "dashboard.grafana.app",
@@ -1287,7 +1329,14 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 		return nil, err
 	}
 
-	response := ParseResults(res, 0)
+	return ParseResults(res, 0), nil
+}
+
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
+	response, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]*dashboards.Dashboard, len(response.Hits))
 	for i, hit := range response.Hits {
 		result[i] = &dashboards.Dashboard{
