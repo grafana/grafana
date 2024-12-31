@@ -495,6 +495,8 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	// 	req.ResourceVersion = head
 	// 	return b.listAtRevision(ctx, req, cb)
 	// }
+	// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
+	// some keys that are ahead of head and some that are behind.
 	return b.listLatest(ctx, req, cb)
 }
 
@@ -740,7 +742,7 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	return since, nil
 }
 
-// fetchLatestRV returns the current maximum RV in the resource table
+// fetchLatestRV returns the current maximum RV in the resource history table
 func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),

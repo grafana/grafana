@@ -43,7 +43,7 @@ var (
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
+	sqlResourceVersionGet    = mustTemplate("resource_version_head.sql") // TODO: rename to sqlResourceVersionHead
 	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
 	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
