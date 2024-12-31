@@ -217,6 +217,15 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceVersionList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
+					},
+				},
+			},
 
 			sqlResourceVersionUpdate: {
 				{

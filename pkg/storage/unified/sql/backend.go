@@ -405,14 +405,6 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 		return b.listAtRevision(ctx, req, cb)
 	}
 
-	// head := b.getHeadRV(ctx, req.Options.Key)
-	// if head > 0 {
-	// 	// Some of the keys are ahead of HEAD, we need to read from the history table
-	// 	req.ResourceVersion = head
-	// 	return b.listAtRevision(ctx, req, cb)
-	// }
-	// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
-	// some keys that are ahead of head and some that are behind.
 	return b.listLatest(ctx, req, cb)
 }
 
@@ -486,6 +478,16 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+
+		// head := b.getHeadRV(ctx, req.Options.Key)
+		// if head > 0 {
+		// 	// Some of the keys are ahead of HEAD, we need to read from the history table
+		// 	req.ResourceVersion = head
+		// 	return b.listAtRevision(ctx, req, cb)
+		// }
+
+		// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
+		// some keys that are ahead of head and some that are behind.
 		var err error
 		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
@@ -518,6 +520,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	// TODO: we probably need to check that the RV isn't head of head
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion}
 	if req.NextPageToken != "" {
