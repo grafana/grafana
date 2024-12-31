@@ -1123,14 +1123,22 @@ func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string) 
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
-	query := user.GetUserByUIDQuery{
-		UID: userUID,
-	}
-	user, err := fk8s.userService.GetByUID(ctx, &query)
+	queryUID := user.GetUserByUIDQuery{UID: userUID}
+	u, err := fk8s.userService.GetByUID(ctx, &queryUID)
 	if err != nil {
-		return anonString
+		// The admin user has an ID in place of a UID.
+		maybeID, errID := strconv.Atoi(userUID)
+		if errID != nil {
+			return anonString
+		}
+
+		queryID := user.GetUserByIDQuery{ID: int64(maybeID)}
+		u, err = fk8s.userService.GetByID(ctx, &queryID)
+		if err != nil {
+			return anonString
+		}
 	}
-	return user.Login
+	return u.Login
 }
 
 func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
