@@ -121,5 +121,25 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "''",
 	}))
 
+	// Resource Lock
+	resource_lock := migrator.Table{
+		Name: "resource_lock",
+		Columns: []*migrator.Column{
+			// K8s Identity group+(version)+namespace+resource+name
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+			// resource version
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create table "+resource_lock.Name, migrator.NewAddTableMigration(resource_lock))
+	for i := range resource_lock.Indices {
+		mg.AddMigration(fmt.Sprintf("create table %s, index: %d", resource_lock.Name, i), migrator.NewAddIndexMigration(resource_lock, resource_lock.Indices[i]))
+	}
 	return marker
 }

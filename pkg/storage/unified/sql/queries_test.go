@@ -266,5 +266,61 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceLockInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+					},
+				},
+			},
+			sqlResourceLockGet: {
+				{
+					Name: "get",
+					Data: &sqlResourceLockGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+						Response: new(resourceVersionResponse),
+					},
+				},
+			},
+			sqlResourceLockDelete: {
+				{
+					Name: "unlock",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+					},
+				},
+			},
+			sqlResourceLockMinRV: {
+				{
+					Name: "minrv",
+					Data: &sqlResourceLockMinRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Group:    "gp",
+							Resource: "rs",
+						},
+						Response: new(resourceVersionResponse),
+					},
+				},
+			},
 		}})
 }

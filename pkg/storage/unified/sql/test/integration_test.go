@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"math/rand/v2"
+	"strconv"
 	"testing"
 	"time"
 
@@ -30,8 +32,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceServer) {
-	t.Helper()
+func newServer(t testing.TB, cfg *setting.Cfg) (sql.Backend, resource.ResourceServer) {
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
@@ -48,7 +49,7 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 	require.NoError(t, err)
 	require.NotNil(t, ret)
 
-	err = ret.Init(testutil.NewDefaultTestContext(t))
+	err = ret.Init(context.TODO())
 	require.NoError(t, err)
 
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -63,9 +64,6 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	// if infraDB.IsTestDbSQLite() {
-	// 	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	// }
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -135,7 +133,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
-	t.Run("PrepareList latest", func(t *testing.T) {
+	t.Run("List latest", func(t *testing.T) {
 		resp, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -184,9 +182,6 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 }
 
 func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -209,9 +204,6 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 }
 
 func TestIntegrationBackendList(t *testing.T) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -230,6 +222,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	require.Greater(t, rv4, rv3)
 	rv5, _ := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
 	require.Greater(t, rv5, rv4)
+	time.Sleep(2 * time.Microsecond)
 	rv6, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
 	require.Greater(t, rv6, rv5)
 	rv7, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
@@ -456,4 +449,30 @@ func resourceKey(name string) *resource.ResourceKey {
 		Resource:  "resource",
 		Name:      name,
 	}
+}
+
+func BenchmarkWriteEvent(b *testing.B) {
+	ctx := context.TODO()
+	backend, _ := newServer(b, nil)
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		ns := strconv.Itoa(rand.IntN(100000))
+		var i int
+		for pb.Next() {
+			backend.WriteEvent(ctx, resource.WriteEvent{
+				Type:  resource.WatchEvent_ADDED,
+				Value: []byte("{}"),
+				Key: &resource.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "item" + strconv.Itoa(i),
+				},
+			})
+			i += 1
+		}
+	})
+	b.StopTimer()
+
 }

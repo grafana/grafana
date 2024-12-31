@@ -27,12 +27,13 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete            = mustTemplate("resource_delete.sql")
-	sqlResourceInsert            = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate            = mustTemplate("resource_update.sql")
-	sqlResourceRead              = mustTemplate("resource_read.sql")
-	sqlResourceStats             = mustTemplate("resource_stats.sql")
-	sqlResourceList              = mustTemplate("resource_list.sql")
+	sqlResourceDelete = mustTemplate("resource_delete.sql")
+	sqlResourceInsert = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate = mustTemplate("resource_update.sql")
+	sqlResourceRead   = mustTemplate("resource_read.sql")
+	sqlResourceStats  = mustTemplate("resource_stats.sql")
+	sqlResourceList   = mustTemplate("resource_list.sql")
+	// sqlResourceMaxRV             = mustTemplate("resource_max_rv.sql")
 	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
 	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
@@ -46,6 +47,12 @@ var (
 	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
 	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+
+	sqlResourceLockInsert = mustTemplate("resource_lock_insert.sql")
+	sqlResourceLockDelete = mustTemplate("resource_lock_delete.sql")
+	sqlResourceLockGet    = mustTemplate("resource_lock_get.sql")
+	// sqlResourceLockUpdate = mustTemplate("resource_lock_update_rv.sql")
+	sqlResourceLockMinRV = mustTemplate("resource_lock_min_rv.sql")
 )
 
 // TxOptions.
@@ -271,4 +278,51 @@ func (r *sqlResourceVersionListRequest) Validate() error {
 func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
 	x := *r.groupResourceVersion
 	return &x, nil
+}
+
+type sqlResourceLockInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+}
+
+func (r sqlResourceLockInsertRequest) Validate() error {
+	if r.Key == nil || r.Key.Group == "" || r.Key.Resource == "" || r.Key.Namespace == "" || r.Key.Name == "" {
+		return fmt.Errorf("all the fields in the key must be set")
+	}
+	return nil
+}
+
+type sqlResourceLockGetRequest struct {
+	sqltemplate.SQLTemplate
+	Key      *resource.ResourceKey
+	Response *resourceVersionResponse
+}
+
+func (r sqlResourceLockGetRequest) Validate() error {
+	if r.Key == nil || r.Key.Group == "" || r.Key.Resource == "" || r.Key.Namespace == "" || r.Key.Name == "" {
+		return fmt.Errorf("all the fields in the key must be set")
+	}
+	return nil
+}
+func (r sqlResourceLockGetRequest) Results() (int64, error) {
+	return r.Response.ResourceVersion, nil
+}
+
+type sqlResourceLockMinRVRequest struct {
+	sqltemplate.SQLTemplate
+	Key      *resource.ResourceKey
+	Response *resourceVersionResponse
+}
+
+func (r sqlResourceLockMinRVRequest) Validate() error {
+	if r.Key == nil || r.Key.Group == "" || r.Key.Resource == "" {
+		return fmt.Errorf("group and resource must be set")
+	}
+	return nil
+}
+func (r sqlResourceLockMinRVRequest) Results() (int64, error) {
+	if r.Response == nil {
+		return 0, fmt.Errorf("response not set")
+	}
+	return r.Response.ResourceVersion, nil
 }
