@@ -125,7 +125,7 @@ describe('ResponseTransformers', () => {
     });
   });
 
-  describe('v2 transformation', () => {
+  describe('v2 -> v1 transformation', () => {
     it('should return the same object if it is already a DashboardDTO', () => {
       const dashboard: DashboardDTO = {
         dashboard: {
