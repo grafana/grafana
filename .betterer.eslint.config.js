@@ -100,6 +100,7 @@ module.exports = [
   },
   {
     files: ['public/app/**/*.{ts,tsx}'],
+    ignores: ['**/webpack.config.ts'],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
     },
