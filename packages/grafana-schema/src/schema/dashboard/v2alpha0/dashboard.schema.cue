@@ -1,4 +1,4 @@
-package v2alpha0
+spackage v2alpha0
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
@@ -369,12 +369,12 @@ VizConfigKind: {
 
 AnnotationQuerySpec: {
   datasource?: DataSourceRef
-  query: DataQueryKind
+  query?: DataQueryKind
   enable: bool
   hide: bool
   iconColor: string
   name: string
-  builtIn?: bool
+  builtIn?: bool | *false
   filter?: AnnotationPanelFilter
 }
 
