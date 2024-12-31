@@ -771,6 +771,31 @@ func TestIntegrationConcurrent(t *testing.T) {
 	}
 }
 
+func TestIntegrationListAfterWrite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	b := testServer(t)
+	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
+
+	for i := 0; i < 10; i++ {
+		_, err := writeEvent(ctx, b, fmt.Sprintf("item%d", i), resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+
+		lo := &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}
+		items := make([]string, 0)
+		cb := func(iter resource.ListIterator) error {
+			for iter.Next() {
+				items = append(items, iter.Name())
+			}
+			return nil
+		}
+		_, err = b.ListIterator(ctx, lo, cb)
+		require.NoError(t, err)
+		require.Equal(t, i+1, len(items))
+	}
+}
+
 func TestIntegrationSQLBackend(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

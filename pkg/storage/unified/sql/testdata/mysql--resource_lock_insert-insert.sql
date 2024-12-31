@@ -14,5 +14,10 @@ INSERT INTO `resource_lock`
         FROM `resource_history`
         WHERE `group`     = 'gp'
         AND `resource`  = 'rs'
+        UNION ALL
+        SELECT MIN(`resource_version`) + 1 AS rv
+        FROM `resource_lock`
+        WHERE `group`     = 'gp'
+        AND `resource`  = 'rs'
     ) AS t
 ;
