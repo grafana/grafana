@@ -19,14 +19,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "hide": false,
         "iconColor": "red",
         "name": "query1",
-        "query": {
-          "kind": "grafana",
-          "spec": {
-            "enable": true,
-            "iconColor": "red",
-            "name": "query1",
-          },
-        },
       },
     },
     {
@@ -45,14 +37,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "hide": true,
         "iconColor": "blue",
         "name": "query2",
-        "query": {
-          "kind": "prometheus",
-          "spec": {
-            "enable": true,
-            "iconColor": "blue",
-            "name": "query2",
-          },
-        },
       },
     },
     {
@@ -71,14 +55,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "hide": true,
         "iconColor": "green",
         "name": "query3",
-        "query": {
-          "kind": "loki",
-          "spec": {
-            "enable": true,
-            "iconColor": "green",
-            "name": "query3",
-          },
-        },
       },
     },
   ],
@@ -125,6 +101,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       },
     },
   },
+  "id": 1,
   "layout": {
     "kind": "GridLayout",
     "spec": {
@@ -249,7 +226,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "text": "text1",
           "value": "value1",
         },
-        "defaultOptionEnabled": true,
         "description": "A datasource variable",
         "hide": "dontHide",
         "includeAll": false,

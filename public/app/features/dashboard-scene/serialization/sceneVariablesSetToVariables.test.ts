@@ -888,7 +888,6 @@ describe('sceneVariablesSetToVariables', () => {
             "selected-ds-2",
           ],
         },
-        "defaultOptionEnabled": false,
         "description": "test-desc",
         "hide": "dontHide",
         "includeAll": true,
