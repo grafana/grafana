@@ -1,4 +1,4 @@
-spackage v2alpha0
+package v2alpha0
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
