@@ -161,7 +161,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     id: dashboard.id,
     isDirty: false,
     links: dashboard.links,
-    // TODO: Combine access and metadata to compose the V1 meta object
     meta,
     tags: dashboard.tags,
     title: dashboard.title,
