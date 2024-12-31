@@ -2952,6 +2952,7 @@
         "name": "prometheusMetricEncyclopedia",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-07T18:41:05Z",
+        "deletionTimestamp": "2024-12-30T14:42:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
