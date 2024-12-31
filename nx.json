@@ -14,7 +14,15 @@
       "cache": true
     },
     "generate": {
-      "cache": true
+      "cache": true,
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+        "cwd": "{projectRoot}"
+      }
     }
   },
   "tui": {
@@ -27,7 +35,6 @@
       "grafanaPackages": {
         "projects": [
           "@grafana/data",
-          "@grafana/e2e",
           "@grafana/e2e-selectors",
           "@grafana/flamegraph",
           "@grafana/prometheus",
