@@ -3,7 +3,12 @@ import { set } from 'lodash';
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  GrafanaRuleGroupIdentifier,
+  RuleIdentifier,
+  RuleNamespace,
+  RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
@@ -23,6 +28,7 @@ import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
 
 import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
   FetchPromRulesFilter,
   getRulesFilterSearchParams,
@@ -258,11 +264,22 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         };
       },
       providesTags: (_result, _error, { namespace, group }) => [
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${group}`,
-        },
+        { type: 'RuleGroup', id: `${namespace}/${group}` },
         { type: 'RuleNamespace', id: namespace },
+      ],
+    }),
+
+    getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, GrafanaRuleGroupIdentifier>({
+      query: ({ namespace, groupName }) => {
+        if (!groupName) {
+          throw new Error('Empty group name provided. Group name is required to fetch Grafana ruler group');
+        }
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(namespace.uid, groupName);
+        return { url: path, params };
+      },
+      providesTags: (_result, _error, { namespace, groupName }) => [
+        { type: 'RuleGroup', id: `${namespace.uid}/${groupName}` },
+        { type: 'RuleNamespace', id: namespace.uid },
       ],
     }),
 
@@ -319,10 +336,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
       invalidatesTags: (result, _error, { namespace, payload }) => [
         { type: 'RuleNamespace', id: namespace },
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${payload.name}`,
-        },
+        { type: 'RuleGroup', id: `${namespace}/${payload.name}` },
         ...payload.rules
           .filter((rule) => isGrafanaRulerRule(rule))
           .map((rule) => ({ type: 'GrafanaRulerRule', id: rule.grafana_alert.uid }) as const),

@@ -519,6 +519,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			Name:           rule.Title,
 			FolderUID:      rule.NamespaceUID,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+			IsPaused:       rule.IsPaused,
 			Health:         status.Health,
 			LastError:      errorOrEmpty(status.LastError),
 			Type:           rule.Type().String(),
