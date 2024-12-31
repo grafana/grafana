@@ -1,13 +1,5 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx/tasks-runners/default",
-      "options": {
-        "cacheableOperations": ["build", "generate"]
-      }
-    }
-  },
   "targetDefaults": {
     "build": {
       "outputs": ["{projectRoot}/dist"],
@@ -51,13 +43,14 @@
       }
     },
     "version": {
-      "generatorOptions": {
-        "skipLockFileUpdate": true
-      },
       "git": {
         "commit": false,
         "stageChanges": false,
         "tag": false
+      },
+      "preserveLocalDependencyProtocols": false,
+      "versionActionsOptions": {
+        "skipLockFileUpdate": true
       }
     }
   },
