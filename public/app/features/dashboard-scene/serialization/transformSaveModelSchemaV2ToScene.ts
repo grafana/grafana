@@ -516,6 +516,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,
