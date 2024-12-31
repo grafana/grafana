@@ -13,7 +13,7 @@ import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 describe('ResponseTransformers', () => {
-  describe('v1 transformation', () => {
+  describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
       const dashboardV1: DashboardDataDTO = {
         uid: 'dashboard-uid',
