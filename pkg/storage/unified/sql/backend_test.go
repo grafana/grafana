@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -714,18 +716,14 @@ func TestBackend_restore(t *testing.T) {
 	})
 }
 
-func TestIntegrationSQLBackend(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func testServer(t *testing.T) *backend {
 	dbstore := infraDB.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
-	pollIntv := 1 * time.Millisecond
 	back, err := NewBackend(BackendOptions{
 		DBProvider:      eDB,
-		PollingInterval: pollIntv,
+		PollingInterval: 3 * time.Millisecond,
 	})
 	b := back.(*backend)
 	require.NoError(t, err)
@@ -733,7 +731,51 @@ func TestIntegrationSQLBackend(t *testing.T) {
 
 	err = b.Init(context.TODO())
 	require.NoError(t, err)
+	return b
+}
+func TestIntegrationConcurrent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	b := testServer(t)
+	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
 
+	stream, err := b.WatchWriteEvents(context.Background())
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	wg.Add(10)
+	for i := 0; i < 10; i++ {
+		go func(start int) {
+			defer wg.Done()
+			for j := start; j < start+10; j++ {
+				_, err := writeEvent(ctx, b, fmt.Sprintf("item%d", j), resource.WatchEvent_ADDED)
+				require.NoError(t, err)
+			}
+		}(i * 10)
+	}
+	wg.Wait()
+	require.NoError(t, err)
+
+	// Check that events are strictly ordered by resource version
+	var lastRV int64
+	for i := 0; i < 100; i++ {
+		select {
+		case event := <-stream:
+			// t.Log(event.ResourceVersion, event.Key.Name)
+			require.GreaterOrEqual(t, event.ResourceVersion, lastRV)
+			lastRV = event.ResourceVersion
+		case <-ctx.Done():
+			t.Fatal("context done before receiving all events")
+		}
+	}
+}
+
+func TestIntegrationSQLBackend(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	b := testServer(t)
 	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
 
 	stream, err := b.WatchWriteEvents(context.Background())
@@ -753,7 +795,7 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	require.Greater(t, rv4, rv3)
 	rv5, _ := writeEvent(ctx, b, "item5", resource.WatchEvent_ADDED)
 	require.Greater(t, rv5, rv4)
-	t.Log(rv1, rv2, rv3, rv4, rv5)
+	// t.Log(rv1, rv2, rv3, rv4, rv5)
 
 	// List events should be blocked until the lock is released.
 	lo := &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}
@@ -768,7 +810,6 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
 
 	// Ensure only the initial events can be watched
-	time.Sleep(pollIntv)
 	grv, err = b.listLatestRVs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
