@@ -71,9 +71,10 @@ var (
 
 type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
-	GUID       string
-	WriteEvent resource.WriteEvent
-	Folder     string
+	GUID            string
+	WriteEvent      resource.WriteEvent
+	Folder          string
+	ResourceVersion int64
 }
 
 func (r sqlResourceRequest) Validate() error {

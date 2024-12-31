@@ -10,7 +10,8 @@ INSERT INTO {{ .Ident "resource" }}
 
         {{ .Ident "previous_resource_version" }},
         {{ .Ident "value" }},
-        {{ .Ident "action" }}
+        {{ .Ident "action" }},
+        {{ .Ident "resource_version" }}
     )
     VALUES (
         {{ .Arg .GUID }},
@@ -22,6 +23,7 @@ INSERT INTO {{ .Ident "resource" }}
 
         {{ .Arg .WriteEvent.PreviousRV }},
         {{ .Arg .WriteEvent.Value }},
-        {{ .Arg .WriteEvent.Type }}
+        {{ .Arg .WriteEvent.Type }},
+        {{ .Arg .ResourceVersion }}
     )
 ;
