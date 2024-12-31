@@ -5,15 +5,19 @@ import (
 	"database/sql/driver"
 	"errors"
 	"testing"
+	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -77,6 +81,10 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 		backend:        bb,
 		TestDBProvider: dbp,
 	}, ctx
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
 
 func TestNewBackend(t *testing.T) {
@@ -704,4 +712,109 @@ func TestBackend_restore(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update history uid")
 	})
+}
+
+func TestIntegrationSQLBackend(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dbstore := infraDB.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
+	pollIntv := 1 * time.Millisecond
+	back, err := NewBackend(BackendOptions{
+		DBProvider:      eDB,
+		PollingInterval: pollIntv,
+	})
+	b := back.(*backend)
+	require.NoError(t, err)
+	require.NotNil(t, b)
+
+	err = b.Init(context.TODO())
+	require.NoError(t, err)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
+
+	stream, err := b.WatchWriteEvents(context.Background())
+
+	require.NoError(t, err)
+	rv1, _ := writeEvent(ctx, b, "item1", resource.WatchEvent_ADDED)
+	require.Greater(t, rv1, int64(0))
+	rv2, _ := writeEvent(ctx, b, "item2", resource.WatchEvent_ADDED)
+	require.Greater(t, rv2, rv1)
+
+	// Lock item 3. This should block the list and watch events.
+	rv3, _ := b.lockKey(ctx, resourceKey("item3"))
+	require.Greater(t, rv3, rv2)
+
+	// Write more events while item 3 is locked.
+	rv4, _ := writeEvent(ctx, b, "item4", resource.WatchEvent_ADDED)
+	require.Greater(t, rv4, rv3)
+	rv5, _ := writeEvent(ctx, b, "item5", resource.WatchEvent_ADDED)
+	require.Greater(t, rv5, rv4)
+	t.Log(rv1, rv2, rv3, rv4, rv5)
+
+	// List events should be blocked until the lock is released.
+	lo := &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}
+	cb := func(resource.ListIterator) error { return nil }
+	head, err := b.ListIterator(ctx, lo, cb)
+	require.NoError(t, err)
+	require.Equal(t, rv3, head)
+
+	// listLatestRVs
+	grv, err := b.listLatestRVs(ctx)
+	require.NoError(t, err)
+	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
+
+	// Ensure only the initial events can be watched
+	time.Sleep(pollIntv)
+	grv, err = b.listLatestRVs(ctx)
+	require.NoError(t, err)
+	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
+
+	// Should have 2 events in the stream
+	ev1 := <-stream
+	require.Equal(t, "item1 ADDED", string(ev1.Value))
+	ev2 := <-stream
+	require.Equal(t, "item2 ADDED", string(ev2.Value))
+	require.Equal(t, 0, len(stream))
+
+	// Unlock item 3. This should unblock the list and watch events.
+	b.unlockKey(ctx, resourceKey("item3"))
+	head, err = b.ListIterator(ctx, lo, cb)
+	require.NoError(t, err)
+	require.Equal(t, rv5, head)
+
+	// Should have 2 more events in the stream
+	ev3 := <-stream
+	require.Equal(t, "item4 ADDED", string(ev3.Value))
+	ev4 := <-stream
+	require.Equal(t, "item5 ADDED", string(ev4.Value))
+}
+
+func writeEvent(ctx context.Context, store Backend, name string, action resource.WatchEvent_Type) (int64, error) {
+	res := &unstructured.Unstructured{
+		Object: map[string]any{},
+	}
+	meta, err := utils.MetaAccessor(res)
+	if err != nil {
+		return 0, err
+	}
+	meta.SetFolder("folderuid")
+	return store.WriteEvent(ctx, resource.WriteEvent{
+		Type:   action,
+		Value:  []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
+		Key:    resourceKey(name),
+		Object: meta,
+	})
+}
+
+func resourceKey(name string) *resource.ResourceKey {
+	return &resource.ResourceKey{
+		Namespace: "namespace",
+		Group:     "group",
+		Resource:  "resource",
+		Name:      name,
+	}
 }

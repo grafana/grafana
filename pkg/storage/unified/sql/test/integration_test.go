@@ -222,7 +222,6 @@ func TestIntegrationBackendList(t *testing.T) {
 	require.Greater(t, rv4, rv3)
 	rv5, _ := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
 	require.Greater(t, rv5, rv4)
-	time.Sleep(2 * time.Microsecond)
 	rv6, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
 	require.Greater(t, rv6, rv5)
 	rv7, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)

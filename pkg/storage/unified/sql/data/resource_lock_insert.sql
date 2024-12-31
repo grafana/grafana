@@ -14,5 +14,10 @@ INSERT INTO {{ .Ident "resource_lock" }}
         FROM {{ .Ident "resource_history" }}
         WHERE {{ .Ident "group" }}     = {{ .Arg .Key.Group }}
         AND {{ .Ident "resource" }}  = {{ .Arg .Key.Resource }}
+        UNION ALL
+        SELECT MIN({{ .Ident "resource_version" }}) + 1 AS rv
+        FROM {{ .Ident "resource_lock" }}
+        WHERE {{ .Ident "group" }}     = {{ .Arg .Key.Group }}
+        AND {{ .Ident "resource" }}  = {{ .Arg .Key.Resource }}
     ) AS t
 ;

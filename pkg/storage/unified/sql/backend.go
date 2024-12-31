@@ -578,7 +578,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 		return nil, fmt.Errorf("get the latest resource version: %w", err)
 	}
 	// Start the poller
-	stream := make(chan *resource.WrittenEvent)
+	stream := make(chan *resource.WrittenEvent, 100)
 	go b.poller(ctx, since, stream)
 	return stream, nil
 }
@@ -612,7 +612,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					}
 
 					// Poll for new events
-					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
+					next, err := b.poll(ctx, group, resource, since[group][resource], grv[group][resource], stream)
 					if err != nil {
 						b.log.Error("polling for resource", "err", err)
 						t.Reset(b.pollingInterval)
@@ -632,7 +632,6 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
-	// This will become select max from resource group by group, resource
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatestRVs")
 	defer span.End()
 	var grvs []*groupResourceVersion
@@ -677,7 +676,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 	return res.ResourceVersion, nil
 }
 
-func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
+func (b *backend) poll(ctx context.Context, grp string, res string, since int64, maxrv int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
 	var records []*historyPollResponse
@@ -689,6 +688,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			Resource:             res,
 			Group:                grp,
 			SinceResourceVersion: since,
+			MaxResourceVersion:   maxrv,
 			Response:             &historyPollResponse{},
 		})
 		return err
