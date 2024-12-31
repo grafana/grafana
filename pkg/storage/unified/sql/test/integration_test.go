@@ -181,7 +181,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	})
 }
 
-func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
+func TestIntegrationBackendWatchWriteEventsFromLatest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

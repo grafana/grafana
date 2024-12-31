@@ -115,6 +115,7 @@ type sqlResourceHistoryPollRequest struct {
 	Resource             string
 	Group                string
 	SinceResourceVersion int64
+	MaxResourceVersion   int64
 	Response             *historyPollResponse
 }
 

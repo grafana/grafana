@@ -520,7 +520,6 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	// TODO: we probably need to check that the RV isn't head of head
 	// Get the RV
 	iter := &listIter{listRV: req.ResourceVersion}
 	if req.NextPageToken != "" {
@@ -684,6 +683,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
+
 		records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
 			SQLTemplate:          sqltemplate.New(b.dialect),
 			Resource:             res,
