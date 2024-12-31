@@ -11,6 +11,13 @@
   "targetDefaults": {
     "build": {
       "outputs": ["{projectRoot}/dist"]
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+        "cwd": "{projectRoot}"
+      }
     }
   },
   "release": {
@@ -19,7 +26,6 @@
       "grafanaPackages": {
         "projects": [
           "@grafana/data",
-          "@grafana/e2e",
           "@grafana/e2e-selectors",
           "@grafana/flamegraph",
           "@grafana/prometheus",
