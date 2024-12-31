@@ -145,6 +145,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
+    isNew: dto.access.isNew,
   };
 
   // Ref: DashboardModel.initMeta
@@ -165,7 +166,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
-    version: dashboard.schemaVersion,
+    version: parseInt(metadata.resourceVersion, 10),
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: dashboard.preload ? false : true,
