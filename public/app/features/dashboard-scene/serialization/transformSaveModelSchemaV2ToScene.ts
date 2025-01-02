@@ -53,11 +53,12 @@ import {
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import {
   AnnoKeyCreatedBy,
-  AnnoKeyDashboardIsSnapshot,
   AnnoKeyDashboardNotFound,
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
+  AnnoKeyDashboardIsNew,
+  AnnoKeyDashboardIsSnapshot,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -147,6 +148,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
+    isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
   };
 
   // Ref: DashboardModel.initMeta
@@ -163,12 +165,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     id: dashboard.id,
     isDirty: false,
     links: dashboard.links,
-    // TODO: Combine access and metadata to compose the V1 meta object
     meta,
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
-    version: dashboard.schemaVersion,
+    version: parseInt(metadata.resourceVersion, 10),
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: dashboard.preload ? false : true,
@@ -555,6 +556,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,

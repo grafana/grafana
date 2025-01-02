@@ -26,6 +26,7 @@ import {
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -89,7 +90,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);
     expect(scene.state.preload).toEqual(false);
-    expect(scene.state.version).toEqual(dash.schemaVersion);
+    expect(scene.state.version).toEqual(123);
     expect(scene.state.tags).toEqual(dash.tags);
 
     const liveNow = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
@@ -468,6 +469,27 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canSave).toBe(true);
         expect(scene.state.meta.canEdit).toBe(true);
         expect(scene.state.meta.canDelete).toBe(true);
+      });
+    });
+
+    describe('is new dashboard handling', () => {
+      it('handles undefined is new dashbaord annotation', () => {
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        expect(scene.state.meta.isNew).toBe(false);
+      });
+      it('handles defined is new dashbaord annotation', () => {
+        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          metadata: {
+            ...defaultDashboard.metadata,
+            annotations: {
+              ...defaultDashboard.metadata.annotations,
+              [AnnoKeyDashboardIsNew]: true,
+            },
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        expect(scene.state.meta.isNew).toBe(true);
       });
     });
   });

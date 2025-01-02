@@ -13,7 +13,7 @@ import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 describe('ResponseTransformers', () => {
-  describe('v1 transformation', () => {
+  describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
       const dashboardV1: DashboardDataDTO = {
         uid: 'dashboard-uid',
@@ -38,7 +38,20 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        links: [],
+        links: [
+          {
+            title: 'Link 1',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag1', 'tag2'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 1 Tooltip',
+          },
+        ],
         annotations: {
           list: [],
         },
@@ -107,12 +120,12 @@ describe('ResponseTransformers', () => {
       expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
       expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
       expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
-      expect(spec.links).toEqual([]); // Assuming transformDashboardLinksToEnums([]) returns []
+      expect(spec.links).toEqual(dashboardV1.links);
       expect(spec.annotations).toEqual([]);
     });
   });
 
-  describe('v2 transformation', () => {
+  describe('v2 -> v1 transformation', () => {
     it('should return the same object if it is already a DashboardDTO', () => {
       const dashboard: DashboardDTO = {
         dashboard: {
@@ -164,7 +177,20 @@ describe('ResponseTransformers', () => {
             fiscalYearStartMonth: 1,
             weekStart: 'monday',
           },
-          links: [],
+          links: [
+            {
+              title: 'Link 1',
+              url: 'https://grafana.com',
+              asDropdown: false,
+              targetBlank: true,
+              includeVars: true,
+              keepTime: true,
+              tags: ['tag1', 'tag2'],
+              icon: 'external link',
+              type: 'link',
+              tooltip: 'Link 1 Tooltip',
+            },
+          ],
           annotations: [],
           variables: [],
           elements: {},
@@ -228,7 +254,7 @@ describe('ResponseTransformers', () => {
       expect(dashboard.timepicker?.nowDelay).toBe(dashboardV2.spec.timeSettings.nowDelay);
       expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
-      expect(dashboard.links).toEqual([]); // Assuming transformDashboardLinksToEnums([]) returns []
+      expect(dashboard.links).toEqual(dashboardV2.spec.links);
       expect(dashboard.annotations).toEqual({ list: [] });
     });
   });

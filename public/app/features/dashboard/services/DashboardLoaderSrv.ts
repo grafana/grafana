@@ -304,6 +304,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
         .catch((e) => {
+          console.error('Failed to load dashboard', e);
           if (isFetchError(e)) {
             e.isHandled = true;
           }

@@ -476,7 +476,7 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 
 export interface AnnotationQuerySpec {
 	datasource?: DataSourceRef;
-	query: DataQueryKind;
+	query?: DataQueryKind;
 	enable: boolean;
 	hide: boolean;
 	iconColor: string;
@@ -486,7 +486,7 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	query: defaultDataQueryKind(),
+	builtIn: false,
 	enable: false,
 	hide: false,
 	iconColor: "",
