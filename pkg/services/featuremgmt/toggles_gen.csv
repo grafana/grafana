@@ -69,7 +69,6 @@ grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-s
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/grafana-backend-group,false,false,false
-prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 alertingNoDataErrorExecution,GA,@grafana/alerting-squad,false,true,false
 angularDeprecationUI,GA,@grafana/plugins-platform-backend,false,false,true

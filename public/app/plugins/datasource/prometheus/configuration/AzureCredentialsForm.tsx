@@ -3,7 +3,6 @@ import { ChangeEvent, useMemo } from 'react';
 
 import { AzureAuthType, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { InlineFormLabel, Button, Select, Input } from '@grafana/ui';
 
 export interface Props {
@@ -113,8 +112,6 @@ export const AzureCredentialsForm = (props: Props) => {
     }
   };
 
-  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
-
   return (
     <div className="gf-form-group">
       {authTypeOptions.length > 1 && (
@@ -156,7 +153,7 @@ export const AzureCredentialsForm = (props: Props) => {
               <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
               <div className="width-15">
                 <Input
-                  className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-30')}
+                  className={cx('width-20')}
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.tenantId || ''}
                   onChange={onTenantIdChange}
@@ -170,7 +167,7 @@ export const AzureCredentialsForm = (props: Props) => {
               <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
               <div className="width-15">
                 <Input
-                  className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-30')}
+                  className={cx('width-20')}
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientId || ''}
                   onChange={onClientIdChange}
@@ -185,20 +182,11 @@ export const AzureCredentialsForm = (props: Props) => {
                 <InlineFormLabel htmlFor="azure-client-secret" className="width-12">
                   Client Secret
                 </InlineFormLabel>
-                <Input
-                  id="azure-client-secret"
-                  className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-25')}
-                  placeholder="configured"
-                  disabled
-                />
+                <Input id="azure-client-secret" className={cx('width-20')} placeholder="configured" disabled />
               </div>
               {!disabled && (
                 <div className="gf-form">
-                  <div
-                    className={cx(
-                      prometheusConfigOverhaulAuth ? 'max-width-20 gf-form-inline' : 'max-width-30 gf-form-inline'
-                    )}
-                  >
+                  <div className={cx('max-width-20 gf-form-inline')}>
                     <Button variant="secondary" type="button" onClick={onClientSecretReset}>
                       reset
                     </Button>
@@ -212,7 +200,7 @@ export const AzureCredentialsForm = (props: Props) => {
                 <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
                 <div className="width-15">
                   <Input
-                    className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-30')}
+                    className={cx('width-20')}
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={credentials.clientSecret || ''}
                     onChange={onClientSecretChange}
