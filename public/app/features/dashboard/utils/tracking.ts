@@ -1,16 +1,15 @@
-import { Panel, VariableModel } from '@grafana/schema/dist/esm/index';
+import { VariableModel } from '@grafana/schema/dist/esm/index';
+import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
-import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
   const variables = getV1SchemaVariables(dashboard.templating.list);
   // Count the different types of panels
-  const panels = getV1SchemaPanelCounts(dashboard.panels);
+  const panels = getPanelPluginCounts(dashboard.panels.map((p) => p.type));
 
   DashboardInteractions.dashboardInitialized({
     uid: dashboard.uid,

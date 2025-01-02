@@ -22,6 +22,7 @@ import { findVizPanelByKey } from '../utils/utils';
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -274,8 +275,7 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('provides dashboard tracking information with from initial save model', () => {
-        const serializer = new V1DashboardSerializer();
-        serializer.initialSaveModel = {
+        const dashboard = setup({
           schemaVersion: 30,
           version: 10,
           uid: 'my-uid',
@@ -309,12 +309,12 @@ describe('DashboardSceneSerializer', () => {
               },
             ],
           },
-        };
+        });
 
-        expect(serializer.getTrackingInformation()).toEqual({
+        expect(dashboard.getTrackingInformation()).toEqual({
           uid: 'my-uid',
           title: 'hello',
-          schemaVersion: 30,
+          schemaVersion: DASHBOARD_SCHEMA_VERSION,
           panels_count: 3,
           panel_type_text_count: 2,
           panel_type_timeseries_count: 1,
@@ -322,7 +322,6 @@ describe('DashboardSceneSerializer', () => {
           variable_type_textbox_count: 1,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          version_before_migration: 10,
         });
       });
     });
@@ -589,10 +588,7 @@ describe('DashboardSceneSerializer', () => {
           liveNow: true,
         });
 
-        const serializer = new V2DashboardSerializer();
-        serializer.initialSaveModel = dashboard.getSaveModel()! as DashboardV2Spec;
-
-        expect(serializer.getTrackingInformation(dashboard)).toEqual({
+        expect(dashboard.getTrackingInformation()).toEqual({
           uid: 'dashboard-test',
           title: 'hello',
           panels_count: 1,
@@ -600,10 +596,7 @@ describe('DashboardSceneSerializer', () => {
           variable_type_custom_count: 1,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          // schemaVersion and version_before_migration are placeholders.
-          // Please update the test when the actual values are known.
-          schemaVersion: 1,
-          version_before_migration: undefined,
+          schemaVersion: DASHBOARD_SCHEMA_VERSION,
         });
       });
     });
@@ -636,7 +629,7 @@ describe('DashboardSceneSerializer', () => {
   });
 });
 
-function setup() {
+function setup(override: Partial<Dashboard> = {}) {
   const dashboard = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
@@ -662,6 +655,7 @@ function setup() {
           },
         ],
       },
+      ...override,
     },
     meta: {},
   });

@@ -40,7 +40,6 @@ interface DashboardTrackingInfo {
   uid?: string;
   title?: string;
   schemaVersion: number;
-  version_before_migration?: number | string;
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
@@ -107,7 +106,6 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
         uid: this.initialSaveModel.uid,
         title: this.initialSaveModel.title,
         schemaVersion: this.initialSaveModel.schemaVersion,
-        version_before_migration: this.initialSaveModel.version,
         panels_count: this.initialSaveModel.panels?.length || 0,
         settings_nowdelay: undefined,
         settings_livenow: !!this.initialSaveModel.liveNow,
@@ -172,13 +170,9 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
 
-    if (this.initialSaveModel && s) {
+    if (this.initialSaveModel) {
       return {
-        // TODO: schemaVersion and version_before_migration are not stored anywhere in the v2 schema
-        // version_before_migration need to be stored in the serializer to be used for tracking purposes
-        // schemaVersion needs to be stored in the dashboard model to be used for the migration strategy too
-        schemaVersion: 1, // placeholder value
-        version_before_migration: undefined, // placeholder value
+        schemaVersion: this.initialSaveModel.schemaVersion,
         uid: s.state.uid,
         title: this.initialSaveModel.title,
         panels_count: panelPluginIds.length || 0,
