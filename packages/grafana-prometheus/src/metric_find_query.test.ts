@@ -439,7 +439,7 @@ describe('PrometheusMetricFindQuery', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
           method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${label}/values?match%5B%5D=${escapeForUtf8Support(metricName)}&start=1524650400&end=1524654000`,
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${label}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
           hideFromInspector: true,
           headers: {},
         });
@@ -454,7 +454,7 @@ describe('PrometheusMetricFindQuery', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
           method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${escapeForUtf8Support(metricName)}&start=1524650400&end=1524654000`,
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
           hideFromInspector: true,
           headers: {},
         });
