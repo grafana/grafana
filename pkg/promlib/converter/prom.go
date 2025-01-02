@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	jsoniter "github.com/json-iterator/go"
-
-	"golang.org/x/exp/slices"
 )
 
 // helpful while debugging all the options that may appear

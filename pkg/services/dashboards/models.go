@@ -316,6 +316,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Tags        []string
 	Deleted     *time.Time
 }
 
