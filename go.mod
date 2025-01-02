@@ -96,7 +96,7 @@ require (
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
-	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/observability-metrics
+	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // @grafana/grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
@@ -180,7 +180,7 @@ require (
 	golang.org/x/text v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.28.0 // @grafana/grafana-as-code
-	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
+	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.68.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // @grafana/plugins-platform-backend
@@ -457,7 +457,7 @@ require (
 require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
 
 require (
-	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
+	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 )
 
