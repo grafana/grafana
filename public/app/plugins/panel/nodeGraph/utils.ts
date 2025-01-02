@@ -58,6 +58,7 @@ export type NodeFields = {
   icon?: Field;
   nodeRadius?: Field;
   highlighted?: Field;
+  isInstrumented?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -80,6 +81,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     fixedX: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
     fixedY: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
+    isInstrumented: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.isInstrumented.toLowerCase()),
   };
 }
 
@@ -364,6 +366,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     highlighted: nodeFields.highlighted?.values[index] || false,
     x: nodeFields.fixedX?.values[index] ?? undefined,
     y: nodeFields.fixedY?.values[index] ?? undefined,
+    isInstrumented: nodeFields.isInstrumented?.values[index] ?? true,
   };
 }
 

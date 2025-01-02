@@ -7,6 +7,7 @@ import {
   CoreApp,
   DataFrame,
   DataFrameDTO,
+  DataLink,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
@@ -21,6 +22,7 @@ import {
   TestDataSourceResponse,
   urlUtil,
 } from '@grafana/data';
+import { generateInternalHref } from '@grafana/data/src/utils/dataLinks';
 import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
@@ -29,6 +31,7 @@ import {
   getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
+  locationService,
   reportInteraction,
   TemplateSrv,
 } from '@grafana/runtime';
@@ -1073,13 +1076,7 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLink(
-        'View traces',
-        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
-        `\${${targetField}}`,
-        '',
-        tempoDatasourceUid
-      ),
+      makeTempoLinkServiceMap('View traces', tempoDatasourceUid, !!namespaceFields?.targetNamespace),
     ],
   };
 }
@@ -1134,25 +1131,85 @@ export function makeTempoLink(
   };
 }
 
+function makeTempoLinkServiceMap(title: string, datasourceUid: string, includeNamespace: boolean): DataLink {
+  return {
+    url: '',
+    title,
+    onClick: (evt) => {
+      const query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
+      const serviceName = evt.e?.title;
+      const serviceNamespace = evt.e?.subTitle;
+
+      // Only do the peer query if service is actively set as not instrumented
+      if (evt?.e?.isInstrumented === false) {
+        const filters = ['db.name', 'peer.service', 'messaging.system']
+          .map((peerAttribute) => `span.${peerAttribute}="${serviceName}"`)
+          .join(' || ');
+        query.queryType = 'traceql';
+        query.query = `{${filters}}`;
+      } else {
+        if (includeNamespace && serviceNamespace) {
+          query.filters.push({
+            id: 'service-namespace',
+            scope: TraceqlSearchScope.Resource,
+            tag: 'service.namespace',
+            value: serviceNamespace,
+            operator: '=',
+            valueType: 'string',
+          });
+        }
+        if (serviceName) {
+          query.filters.push({
+            id: 'service-name',
+            scope: TraceqlSearchScope.Resource,
+            tag: 'service.name',
+            value: serviceName,
+            operator: '=',
+            valueType: 'string',
+          });
+        }
+      }
+
+      locationService.push(generateInternalHref(datasourceUid, query));
+    },
+  };
+}
+
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
   return {
     ...options,
-    targets: serviceMapMetrics.map((metric) => {
-      const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
-      const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
-      const queries = Array.isArray(serviceMapQuery) ? serviceMapQuery : [serviceMapQuery];
-      const subExprs = queries.map(
-        (query) => `sum by (client, server${extraSumByFields}) (rate(${metric}${query || ''}[$__range]))`
-      );
-      return {
-        format: 'table',
-        refId: metric,
-        // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
-        // service map at the same time anyway
-        expr: subExprs.join(' OR '),
-        instant: true,
-      };
-    }),
+    targets: serviceMapMetrics
+      .map<PromQuery[]>((metric) => {
+        const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
+        const extraSumByFields = serviceMapIncludeNamespace
+          ? ', client_service_namespace, server_service_namespace'
+          : '';
+        const queries = Array.isArray(serviceMapQuery) ? serviceMapQuery : [serviceMapQuery];
+        const sumSubExprs = queries.map(
+          (query) => `sum by (client, server${extraSumByFields}) (rate(${metric}${query || ''}[$__range]))`
+        );
+        const groupSubExprs = queries.map(
+          (query) => `group by (client, connection_type, server${extraSumByFields}) (${metric}${query || ''})`
+        );
+
+        return [
+          {
+            format: 'table',
+            refId: metric,
+            // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
+            // service map at the same time anyway
+            expr: sumSubExprs.join(' OR '),
+            instant: true,
+          },
+          {
+            format: 'table',
+            refId: `${metric}_labels`,
+            expr: groupSubExprs.join(' OR '),
+            instant: true,
+          },
+        ];
+      })
+      .flat(),
   };
 }
 
