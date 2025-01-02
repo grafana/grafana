@@ -4,5 +4,5 @@ test('Smoke test: decoupled frontend plugin loads', async ({ createDataSourceCon
   await createDataSourceConfigPage({ type: 'stackdriver' });
 
   await expect(await page.getByText('Type: Google Cloud Monitoring', { exact: true })).toBeVisible();
-  await expect(await page.getByRole('heading', { name: 'Authentication', exact: true })).toBeVisible();
+  await expect(await page.getByText('Google JWT File', { exact: true })).toBeVisible();
 });
