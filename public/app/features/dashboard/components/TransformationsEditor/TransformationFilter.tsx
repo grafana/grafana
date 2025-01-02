@@ -124,7 +124,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 const setOutputWithoutDuplicateQueries = (frames: DataFrame[]) => {
   const queryRefIdSet = new Set();
   const filteredFrames: DataFrame[] = [];
-  for (const frame of frames) {
+
+  // we receive series and transformation outputs in this order
+  // therefore if we loop forward we will get original Query A instead of modified Query A
+  // therefore looping in reverse to have the most accurate data serries
+  for (let i = frames.length - 1; i >= 0; i--) {
+    const frame = frames[i];
     if (!frame.refId) {
       filteredFrames.push(frame);
       continue;
