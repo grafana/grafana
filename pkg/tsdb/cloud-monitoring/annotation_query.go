@@ -38,6 +38,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		} `json:"timeSeriesList"`
 	}{}
 
+	// It's okay to use the first query for annotations as there should only be one
 	firstQuery := req.Queries[0]
 	err = json.Unmarshal(firstQuery.JSON, &tslq)
 	if err != nil {
