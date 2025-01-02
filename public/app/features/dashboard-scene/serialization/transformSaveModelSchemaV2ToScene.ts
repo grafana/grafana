@@ -224,10 +224,9 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   });
 
   dashboardScene.setInitialSaveModel(dto.spec);
+
   if (dashboardScene.serializer instanceof V2DashboardSerializer) {
     dashboardScene.serializer.setSnapshotUrl(metadata.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl]);
-  } else {
-    console.error('Unexpected serializer type');
   }
 
   return dashboardScene;
