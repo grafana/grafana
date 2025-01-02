@@ -287,10 +287,6 @@ const (
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
-	// FlagPrometheusConfigOverhaulAuth
-	// Update the Prometheus configuration page with the new auth component
-	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"

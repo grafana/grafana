@@ -524,14 +524,6 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
-			Name:           "prometheusConfigOverhaulAuth",
-			Description:    "Update the Prometheus configuration page with the new auth component",
-			Owner:          grafanaObservabilityMetricsSquad,
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // on by default
-			AllowSelfServe: false,
-		},
-		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,
