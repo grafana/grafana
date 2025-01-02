@@ -18,12 +18,8 @@ import {
 import { Stack, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import {
-  fetchAndExtractLokiRecordingRules,
-  getLokiQueryForRelatedMetric,
-  getDataSourcesWithRecordingRulesContainingMetric,
-  type ExtractedRecordingRules,
-} from '../Integrations/logsIntegration';
+import { MetricsLogsConnector } from '../Integrations/logs/base';
+import { lokiRecordingRulesConnector } from '../Integrations/logs/lokiRecordingRules';
 import { reportExploreMetrics } from '../interactions';
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
@@ -32,7 +28,7 @@ import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
 export interface RelatedLogsSceneState extends SceneObjectState {
   controls: SceneObject[];
   body: SceneFlexLayout;
-  lokiRecordingRules: ExtractedRecordingRules;
+  connectors: MetricsLogsConnector[];
 }
 
 const LOGS_PANEL_CONTAINER_KEY = 'related_logs/logs_panel_container';
@@ -52,7 +48,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
           }),
         ],
       }),
-      lokiRecordingRules: {},
+      connectors: [lokiRecordingRulesConnector],
       ...state,
     });
 
@@ -60,12 +56,12 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   }
 
   private onActivate() {
-    fetchAndExtractLokiRecordingRules().then((lokiRecordingRules) => {
-      const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-      const lokiDatasources = getDataSourcesWithRecordingRulesContainingMetric(selectedMetric, lokiRecordingRules);
+    const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
+    Promise.all(this.state.connectors.map((connector) => connector.getDataSources(selectedMetric))).then((results) => {
+      const lokiDataSources = results.flat();
       const logsPanelContainer = sceneGraph.findByKeyAndType(this, LOGS_PANEL_CONTAINER_KEY, SceneFlexItem);
 
-      if (!lokiDatasources?.length) {
+      if (!lokiDataSources?.length) {
         logsPanelContainer.setState({
           body: new NoRelatedLogsScene({}),
         });
@@ -88,12 +84,11 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
               new CustomVariable({
                 name: VAR_LOGS_DATASOURCE,
                 label: 'Logs data source',
-                query: lokiDatasources?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
+                query: lokiDataSources?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
               }),
             ],
           }),
           controls: [new VariableValueSelectors({ layout: 'vertical' })],
-          lokiRecordingRules,
         });
       }
     });
@@ -107,11 +102,9 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       if (name === VAR_LOGS_DATASOURCE) {
         const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
         const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-        const lokiQuery = getLokiQueryForRelatedMetric(
-          selectedMetric,
-          selectedDatasourceUid,
-          this.state.lokiRecordingRules
-        );
+        const lokiQuery = this.state.connectors
+          .map((connector) => `(${connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid)})`)
+          .join(' and ');
 
         if (lokiQuery) {
           const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);

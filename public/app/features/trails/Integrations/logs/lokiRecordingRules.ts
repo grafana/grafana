@@ -1,29 +1,31 @@
 import { lastValueFrom } from 'rxjs';
 
-import type { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUtils';
 
-export type RecordingRuleGroup = {
+import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
+
+export interface RecordingRuleGroup {
   name: string;
   rules: RecordingRule[];
-};
+}
 
-export type RecordingRule = {
+export interface RecordingRule {
   name: string;
   query: string;
   type: 'recording' | 'alerting' | string;
   labels?: Record<string, string>;
-};
+}
 
-export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
-export type ExtractedRecordingRule = RecordingRule & {
+export interface ExtractedRecordingRule extends RecordingRule {
   datasource: FoundLokiDataSource;
   hasMultipleOccurrences?: boolean;
-};
-export type ExtractedRecordingRules = {
+}
+
+export interface ExtractedRecordingRules {
   [dataSourceUID: string]: ExtractedRecordingRule[];
-};
+}
 
 /**
  * Fetch Loki recording rule groups from the specified datasource.
@@ -60,7 +62,6 @@ export function extractRecordingRulesFromRuleGroups(
 
   // We only want to return the first matching rule when there are multiple rules with same name
   const extractedRules = new Map<string, ExtractedRecordingRule>();
-  // const extractedRules: [] = [];
   ruleGroups.forEach((rg) => {
     rg.rules
       .filter((r) => r.type === 'recording')
@@ -167,3 +168,22 @@ export async function fetchAndExtractLokiRecordingRules() {
 
   return extractedRecordingRules;
 }
+
+const createLokiRecordingRulesConnector = () => {
+  let lokiRecordingRules: ExtractedRecordingRules = {};
+
+  return createMetricsLogsConnector({
+    async getDataSources(selectedMetric: string): Promise<FoundLokiDataSource[]> {
+      lokiRecordingRules = await fetchAndExtractLokiRecordingRules();
+      const lokiDataSources = getDataSourcesWithRecordingRulesContainingMetric(selectedMetric, lokiRecordingRules);
+
+      return lokiDataSources;
+    },
+
+    getLokiQueryExpr(selectedMetric: string, datasourceUid: string): string {
+      return getLokiQueryForRelatedMetric(selectedMetric, datasourceUid, lokiRecordingRules);
+    },
+  });
+};
+
+export const lokiRecordingRulesConnector = createLokiRecordingRulesConnector();
