@@ -158,7 +158,6 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("and updating the keeper replaces the spec fields and returns them", func(t *testing.T) {
 			newRaw := testDataKeeperAwsXyz.DeepCopy()
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
-			newRaw.Object["spec"].(map[string]any)["audiences"] = []string{"audience1/name1", "audience2/*"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
@@ -193,6 +192,40 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		var statusErr *apierrors.StatusError
 		require.True(t, errors.As(err, &statusErr))
+	})
+
+	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvrKeepers,
+		})
+
+		testDataKeeperAWS := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
+
+		rawAWS, err := client.Resource.Create(ctx, testDataKeeperAWS, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, rawAWS)
+
+		t.Cleanup(func() {
+			require.NoError(t, client.Resource.Delete(ctx, rawAWS.GetName(), metav1.DeleteOptions{}))
+		})
+
+		testDataKeeperGCP := testDataKeeperAWS.DeepCopy()
+		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
+		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
+			"projectId":       "project-id",
+			"credentialsFile": "/path/to/file.json",
+		}
+
+		rawGCP, err := client.Resource.Update(ctx, testDataKeeperGCP, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, rawGCP)
+
+		require.NotEqualValues(t, rawAWS.Object["spec"], rawGCP.Object["spec"])
 	})
 
 	t.Run("deleting a keeper that exists does not return an error", func(t *testing.T) {

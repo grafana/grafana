@@ -18,8 +18,8 @@ type secureValueDB struct {
 	GUID        string `xorm:"pk 'guid'"`
 	Name        string `xorm:"name"`
 	Namespace   string `xorm:"namespace"`
-	Annotations string `xorm:"annotations"`
-	Labels      string `xorm:"labels"`
+	Annotations string `xorm:"annotations"` // map[string]string
+	Labels      string `xorm:"labels"`      // map[string]string
 	Created     int64  `xorm:"created"`
 	CreatedBy   string `xorm:"created_by"`
 	Updated     int64  `xorm:"updated"`
