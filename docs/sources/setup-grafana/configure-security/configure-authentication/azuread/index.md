@@ -46,26 +46,27 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets** in the side menu, then add a new entry under the supported client authentication option you wish to use. Provided below are the supported client authentication options with their respective configuration steps.
+1. Click **Certificates & secrets** in the side menu, then add a new entry under the supported client authentication option you want to use. The following are the supported client authentication options with their respective configuration steps.
 
    - **Client secrets**
 
-     1. Add a new entry under Client secrets with the following configuration.
+     1. Add a new entry under **Client secrets** with the following configuration.
 
-        - Description: Grafana OAuth
+        - Description: Grafana OAuth 2.0
         - Expires: Select an expiration period
 
-     2. Click **Add** then copy the key **Value**. This is the OAuth client secret.
+     1. Click **Add** then copy the key **Value**. This is the OAuth 2.0 client secret.
 
-     {{% admonition type="note" %}}
+     {{< admonition type="note" >}}
      Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
-     {{% /admonition %}}
+     {{< /admonition >}}
 
-     3. The setting `client_authentication` under `[auth.azuread]` must be set to `client_secret_post` for this to work.
+     1. You must have set `client_authentication` under `[auth.azuread]` to `client_secret_post` in the Grafana server configuration for this to work.
 
    - **Federated credentials**
 
-     1. Please refer to [Configure an application to trust a managed identity (preview)](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity?tabs=microsoft-entra-admin-center) for a complete guide on setting up a managed identity as a federated credential. Add a new entry under Federated credentials with the following configuration.
+     1. Refer to [Configure an application to trust a managed identity (preview)](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity?tabs=microsoft-entra-admin-center) for a complete guide on setting up a managed identity as a federated credential.
+        Add a new entry under Federated credentials with the following configuration.
 
         - Federated credential scenario: Select **Other issuer**.
         - Issuer: The OAuth 2.0 / OIDC issuer URL of the Microsoft Entra ID authority. For example: `https://login.microsoftonline.com/{tenantID}/v2.0`.
@@ -74,13 +75,15 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
         - Description: Grafana OAuth.
         - Audience: The audience value that must appear in the external token. For Public cloud, it would be `api://AzureADTokenExchange`. See mentioned documentation for the full list of available audiences.
 
-     2. Click **Add**, and then copy the Managed Identity Client ID and the federated credential Audience values. This is your OAuth federated credential.
+     1. Click **Add**, and then copy the Managed Identity Client ID and the federated credential Audience values. This is your OAuth 2.0 federated credential.
 
-     3. The setting `client_authentication` under `[auth.azuread]` must be set to `managed_identity` for this to work.
+     1. You must have set `client_authentication` under `[auth.azuread]` to `managed_identity` in the Grafana server configuration for this to work.
 
-     {{% admonition type="note" %}}
-     Managed identities as federated credentials are only applicable to workloads hosted in Azure. Also, only user-assigned managed identities can be added as a federated credential on Entra ID applications.
-     {{% /admonition %}}
+     {{< admonition type="note" >}}
+     Managed identities as federated credentials are only applicable to workloads hosted in Azure.
+
+     You can only add user-assigned managed identities as federated credentials on Entra ID applications.
+     {{< /admonition >}}
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
@@ -279,7 +282,7 @@ skip_org_role_sync = false
 use_pkce = true
 ```
 
-You can also use these environment variables to configure **client_authentication**, **client_id**, **client_secret**, **managed_identity_client_id**, and **federated_credential_audience**:
+You can also use these environment variables to configure `client_authentication`, `client_id`, `client_secret`, `managed_identity_client_id`, and `federated_credential_audience`:
 
 ```
 GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION
