@@ -1588,6 +1588,34 @@
     },
     {
       "metadata": {
+        "name": "folderCounts",
+        "resourceVersion": "1734702013658",
+        "creationTimestamp": "2024-12-20T13:40:13Z",
+        "deletionTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "folderMove",
+        "resourceVersion": "1734702013658",
+        "creationTimestamp": "2024-12-20T13:40:13Z",
+        "deletionTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server move",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "formatString",
         "resourceVersion": "1722290290367",
         "creationTimestamp": "2023-10-13T18:17:12Z",
@@ -1884,6 +1912,32 @@
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "k8SFolderCounts",
+        "resourceVersion": "1735294794086",
+        "creationTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "k8SFolderMove",
+        "resourceVersion": "1735294794086",
+        "creationTimestamp": "2024-12-27T10:19:54Z"
+      },
+      "spec": {
+        "description": "Enable folder's api server move",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
       }
     },
     {
@@ -2670,12 +2724,16 @@
     },
     {
       "metadata": {
-        "name": "playlistsWatcher",
-        "resourceVersion": "1730462910506",
-        "creationTimestamp": "2024-11-01T12:08:30Z"
+        "name": "playlistsReconciler",
+        "resourceVersion": "1734463170112",
+        "creationTimestamp": "2024-11-01T12:08:30Z",
+        "deletionTimestamp": "2024-12-19T19:17:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-17 19:19:30.112629 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables experimental watcher for playlists",
+        "description": "Enables experimental reconciler for playlists",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2894,6 +2952,7 @@
         "name": "prometheusMetricEncyclopedia",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-07T18:41:05Z",
+        "deletionTimestamp": "2024-12-30T14:42:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3647,11 +3706,28 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchSprinkles",
-        "resourceVersion": "1734123247356",
-        "creationTimestamp": "2024-12-13T20:54:07Z"
+        "resourceVersion": "1734563607668",
+        "creationTimestamp": "2024-12-18T23:13:27Z"
       },
       "spec": {
         "description": "Enable sprinkles on unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearchUI",
+        "resourceVersion": "1734563607668",
+        "creationTimestamp": "2024-12-10T21:28:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-18 23:13:27.66802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable unified storage search UI",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,

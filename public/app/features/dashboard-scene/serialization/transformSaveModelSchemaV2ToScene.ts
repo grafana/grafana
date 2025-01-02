@@ -51,6 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -120,7 +121,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     isDirty: false,
     links: dashboard.links,
     // TODO: Combine access and metadata to compose the V1 meta object
-    meta: {},
+    meta: {
+      version: parseInt(metadata.resourceVersion, 10),
+      isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
+    },
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
@@ -512,6 +516,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,

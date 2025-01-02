@@ -53,7 +53,6 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
@@ -229,7 +228,7 @@ export interface FeatureToggles {
   userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
-  playlistsWatcher?: boolean;
+  playlistsReconciler?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
@@ -244,8 +243,11 @@ export interface FeatureToggles {
   alertingNotificationsStepMode?: boolean;
   useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
+  unifiedStorageSearchUI?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
   investigationsBackend?: boolean;
+  k8SFolderCounts?: boolean;
+  k8SFolderMove?: boolean;
 }

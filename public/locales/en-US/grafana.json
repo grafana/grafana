@@ -532,6 +532,11 @@
       },
       "save-query": "Save current search"
     },
+    "silences": {
+      "affected-instances": "Affected alert rule instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
+    },
     "simpleCondition": {
       "alertCondition": "Alert condition"
     },
@@ -2774,6 +2779,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": "Search for dashboards"
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "When <1>Reduce Strict mode</1> is used, the <3>fill(null)</3> function (InfluxQL) will result in <6>NaN</6>. <9>See the documentation for more details.</9>",
+      "title": "Strict Mode Behaviour"
     }
   },
   "refresh-picker": {

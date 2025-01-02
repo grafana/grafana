@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,19 +44,22 @@ var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv            schema.GroupVersion
-	features      featuremgmt.FeatureToggles
-	namespacer    request.NamespaceMapper
-	folderSvc     folder.Service
-	storage       grafanarest.Storage
-	accessControl accesscontrol.AccessControl
-	searcher      resource.ResourceIndexClient
+	gv                   schema.GroupVersion
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	folderSvc            folder.Service
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	storage              grafanarest.Storage
+	accessControl        accesscontrol.AccessControl
+	searcher             resource.ResourceIndexClient
+	cfg                  *setting.Cfg
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
+	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -69,12 +73,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 
 	builder := &FolderAPIBuilder{
-		gv:            resourceInfo.GroupVersion(),
-		features:      features,
-		namespacer:    request.GetNamespaceMapper(cfg),
-		folderSvc:     folderSvc,
-		accessControl: accessControl,
-		searcher:      unified,
+		gv:                   resourceInfo.GroupVersion(),
+		features:             features,
+		namespacer:           request.GetNamespaceMapper(cfg),
+		folderSvc:            folderSvc,
+		folderPermissionsSvc: folderPermissionsSvc,
+		cfg:                  cfg,
+		accessControl:        accessControl,
+		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -119,9 +125,12 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	dualWriteBuilder := opts.DualWriteBuilder
 
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
+		service:              b.folderSvc,
+		namespacer:           b.namespacer,
+		tableConverter:       resourceInfo.TableConverter(),
+		folderPermissionsSvc: b.folderPermissionsSvc,
+		features:             b.features,
+		cfg:                  b.cfg,
 	}
 
 	storage := map[string]rest.Storage{}
@@ -236,6 +245,20 @@ var folderValidationRules = struct {
 }{
 	maxDepth:     5,
 	invalidNames: []string{"general"},
+}
+
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := a.GetOperation()
+	if verb == admission.Create || verb == admission.Update {
+		obj := a.GetObject()
+		f, ok := obj.(*v0alpha1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not v0alpha1.Folder")
+		}
+		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		return nil
+	}
+	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {

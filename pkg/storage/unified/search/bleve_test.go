@@ -27,13 +27,14 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.CreateTemp("", "bleve-test")
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
-	backend := NewBleveBackend(BleveOptions{
-		Root:          tmpdir.Name(),
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 	}, tracing.NewNoopTracerService())
+	require.NoError(t, err)
 
 	// AVOID NPE in test
 	resource.NewIndexMetrics(backend.opts.Root, backend)
@@ -65,11 +66,12 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "aaa",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "aaa (dash)",
-				Folder: "xxx",
+				Title:     "aaa (dash)",
+				TitleSort: "aaa (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
@@ -82,11 +84,12 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "bbb",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "bbb (dash)",
-				Folder: "xxx",
+				Title:     "bbb (dash)",
+				TitleSort: "bbb (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID:    12,
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
@@ -102,11 +105,12 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "ccc",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "ccc (dash)",
-				Folder: "zzz",
+				Title:     "ccc (dash)",
+				TitleSort: "ccc (dash)",
+				Folder:    "zzz",
 				RepoInfo: &utils.ResourceRepositoryInfo{
 					Name: "r0",
 				},
@@ -144,11 +148,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		t.Run("x", func(t *testing.T) {
-			t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
-			// Match the results
-			resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
-		})
+		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 
 		// Get the tags facets
 		facet, ok := rsp.Facet["tags"]
@@ -192,20 +192,22 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "zzz",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "zzz (folder)",
+				Title:     "zzz (folder)",
+				TitleSort: "zzz (folder)",
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
 				Key: &resource.ResourceKey{
 					Name:      "yyy",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "yyy (folder)",
+				Title:     "yyy (folder)",
+				TitleSort: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -231,8 +233,6 @@ func TestBleveBackend(t *testing.T) {
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
-		t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
-
 		// The other tests must run first to build the indexes
 		require.NotNil(t, dashboardsIndex)
 		require.NotNil(t, foldersIndex)
