@@ -168,6 +168,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
             field.values.push(...f.values);
           }
         });
+
         view.dataFrame.length = length;
 
         // Add all the location lookup info
