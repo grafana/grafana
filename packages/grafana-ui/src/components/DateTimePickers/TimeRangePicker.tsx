@@ -149,6 +149,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           variant={variant}
           onClick={onMoveBackward}
           icon="angle-left"
+          type="button"
           narrow
         />
       )}
@@ -168,6 +169,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onToolbarButtonSwitch}
           icon={timePickerIcon}
           isOpen={isOpen}
+          type="button"
           variant={variant}
         >
           <TimePickerButtonLabel {...props} />
@@ -206,6 +208,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onMoveForward}
           icon="angle-right"
           narrow
+          type="button"
           variant={variant}
         />
       )}
@@ -215,6 +218,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           aria-label={t('time-picker.range-picker.zoom-out-button', 'Zoom out time range')}
           onClick={onZoom}
           icon="search-minus"
+          type="button"
           variant={variant}
         />
       </Tooltip>
