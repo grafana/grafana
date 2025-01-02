@@ -532,6 +532,11 @@
       },
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
     },
+    "silences": {
+      "affected-instances": "Åƒƒęčŧęđ äľęřŧ řūľę įŉşŧäŉčęş",
+      "only-firing-instances": "Øŉľy äľęřŧ įŉşŧäŉčęş įŉ ŧĥę ƒįřįŉģ şŧäŧę äřę đįşpľäyęđ.",
+      "preview-affected-instances": "Přęvįęŵ ŧĥę äľęřŧ įŉşŧäŉčęş äƒƒęčŧęđ þy ŧĥįş şįľęŉčę."
+    },
     "simpleCondition": {
       "alertCondition": "Åľęřŧ čőŉđįŧįőŉ"
     },
@@ -2774,6 +2779,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "Ŵĥęŉ <1>Ŗęđūčę Ŝŧřįčŧ mőđę</1> įş ūşęđ, ŧĥę <3>ƒįľľ(ŉūľľ)</3> ƒūŉčŧįőŉ (ĨŉƒľūχQĿ) ŵįľľ řęşūľŧ įŉ <6>ŃäŃ</6>. <9>Ŝęę ŧĥę đőčūmęŉŧäŧįőŉ ƒőř mőřę đęŧäįľş.</9>",
+      "title": "Ŝŧřįčŧ Mőđę ßęĥävįőūř"
     }
   },
   "refresh-picker": {
