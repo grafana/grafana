@@ -102,6 +102,12 @@ type GrafanaMetaAccessor interface {
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
+	// Deprecated: This will be removed in Grafana 13
+	GetDeprecatedInternalID() int64
+
+	// Deprecated: This will be removed in Grafana 13
+	SetDeprecatedInternalID(id int64)
+
 	GetRepositoryInfo() (*ResourceRepositoryInfo, error)
 	SetRepositoryInfo(info *ResourceRepositoryInfo)
 	GetRepositoryName() string
