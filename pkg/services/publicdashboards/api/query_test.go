@@ -326,7 +326,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil, nil,
 	)
 	require.NoError(t, err)
 
