@@ -38,6 +38,7 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
+export const AnnoKeyDashboardId = 'grafana.app/dashboardId';
 
 // Identify where values came from
 export const AnnoKeyRepoName = 'grafana.app/repoName';
@@ -46,6 +47,8 @@ export const AnnoKeyRepoHash = 'grafana.app/repoHash';
 export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
+export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
+export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
 export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 
 // Annotations provided by the API
@@ -55,6 +58,7 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
+  [AnnoKeyDashboardId]?: number;
 
   [AnnoKeyRepoName]?: string;
   [AnnoKeyRepoPath]?: string;
@@ -70,6 +74,8 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
+  [AnnoKeyDashboardNotFound]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardIsNew]?: boolean;
 };
 
