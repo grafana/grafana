@@ -3,7 +3,9 @@ import {
   VariableRefresh as VariableRefreshV1,
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
+  DataTopic,
 } from '@grafana/schema';
+import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import {
   DashboardCursorSync,
   defaultDashboardV2Spec,
@@ -66,5 +68,18 @@ export function transformSortVariableToEnum(sort?: VariableSortV1): VariableSort
       return 'numericalDesc';
     default:
       return defaultVariableSort();
+  }
+}
+
+export function transformDataTopic(topic: DataTransformerConfig['topic']): DataTopic | undefined {
+  switch (topic) {
+    case 'annotations':
+      return DataTopic.Annotations;
+    case 'alertStates':
+      return DataTopic.AlertStates;
+    case 'series':
+      return DataTopic.Series;
+    default:
+      return undefined;
   }
 }

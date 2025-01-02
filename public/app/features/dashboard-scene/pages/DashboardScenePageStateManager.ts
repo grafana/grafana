@@ -2,10 +2,14 @@ import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
-import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
@@ -13,7 +17,8 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
-import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
+import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -34,8 +39,8 @@ const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
 export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
-interface DashboardCacheEntry {
-  dashboard: DashboardDTO;
+interface DashboardCacheEntry<T> {
+  dashboard: T;
   ts: number;
   cacheKey: string;
 }
@@ -55,103 +60,36 @@ export interface LoadDashboardOptions {
   };
 }
 
-export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
-  private cache: Record<string, DashboardScene> = {};
+interface DashboardScenePageStateManagerLike<T> {
+  fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
+  getDashboardFromCache(cacheKey: string): T | null;
+  loadDashboard(options: LoadDashboardOptions): Promise<void>;
+  transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+  reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
+  loadSnapshot(slug: string): Promise<void>;
+  setDashboardCache(cacheKey: string, dashboard: T): void;
+  clearSceneCache(): void;
+  clearDashboardCache(): void;
+  clearState(): void;
+  getCache(): Record<string, DashboardScene>;
+  useState: () => DashboardScenePageState;
+}
+
+abstract class DashboardScenePageStateManagerBase<T>
+  extends StateManagerBase<DashboardScenePageState>
+  implements DashboardScenePageStateManagerLike<T>
+{
+  abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
+  abstract reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
+  abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+
+  protected cache: Record<string, DashboardScene> = {};
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
-  private dashboardCache?: DashboardCacheEntry;
+  protected dashboardCache?: DashboardCacheEntry<T>;
 
-  // To eventualy replace the fetchDashboard function from Dashboard redux state management.
-  // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({
-    uid,
-    route,
-    urlFolderUid,
-    params,
-  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
-    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-
-    if (!params) {
-      const cachedDashboard = this.getDashboardFromCache(cacheKey);
-
-      if (cachedDashboard) {
-        return cachedDashboard;
-      }
-    }
-
-    let rsp: DashboardDTO;
-
-    try {
-      switch (route) {
-        case DashboardRoutes.New:
-          rsp = await buildNewDashboardSaveModel(urlFolderUid);
-
-          break;
-        case DashboardRoutes.Home:
-          rsp = await getBackendSrv().get('/api/dashboards/home');
-
-          if (rsp.redirectUri) {
-            return rsp;
-          }
-
-          if (rsp?.meta) {
-            rsp.meta.canSave = false;
-            rsp.meta.canShare = false;
-            rsp.meta.canStar = false;
-          }
-
-          break;
-        case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
-        }
-        default:
-          const queryParams = params
-            ? {
-                version: params.version,
-                scopes: params.scopes,
-                from: params.timeRange.from,
-                to: params.timeRange.to,
-                ...params.variables,
-              }
-            : undefined;
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
-
-          if (route === DashboardRoutes.Embedded) {
-            rsp.meta.isEmbedded = true;
-          }
-      }
-
-      if (rsp.meta.url && route === DashboardRoutes.Normal) {
-        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
-        const currentPath = locationService.getLocation().pathname;
-
-        if (dashboardUrl !== currentPath) {
-          // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
-        }
-      }
-
-      // Populate nav model in global store according to the folder
-      if (rsp.meta.folderUid) {
-        await updateNavModel(rsp.meta.folderUid);
-      }
-
-      // Do not cache new dashboards
-      this.setDashboardCache(cacheKey, rsp);
-    } catch (e) {
-      // Ignore cancelled errors
-      if (isFetchError(e) && e.cancelled) {
-        return null;
-      }
-
-      throw e;
-    }
-
-    return rsp;
+  getCache(): Record<string, DashboardScene> {
+    return this.cache;
   }
 
   public async loadSnapshot(slug: string) {
@@ -205,6 +143,177 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
+    this.setState({ dashboard: undefined, isLoading: true });
+    const rsp = await this.fetchDashboard(options);
+    return this.transformResponseToScene(rsp, options);
+  }
+
+  public getDashboardFromCache(cacheKey: string): T | null {
+    const cachedDashboard = this.dashboardCache;
+
+    if (
+      cachedDashboard &&
+      cachedDashboard.cacheKey === cacheKey &&
+      Date.now() - cachedDashboard?.ts < DASHBOARD_CACHE_TTL
+    ) {
+      return cachedDashboard.dashboard;
+    }
+
+    return null;
+  }
+
+  public clearState() {
+    getDashboardSrv().setCurrent(undefined);
+
+    this.setState({
+      dashboard: undefined,
+      loadError: undefined,
+      isLoading: false,
+      panelEditor: undefined,
+    });
+  }
+
+  public setDashboardCache(cacheKey: string, dashboard: T) {
+    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
+  }
+
+  public clearDashboardCache() {
+    this.dashboardCache = undefined;
+  }
+
+  public getSceneFromCache(cacheKey: string) {
+    return this.cache[cacheKey];
+  }
+
+  public setSceneCache(cacheKey: string, scene: DashboardScene) {
+    this.cache[cacheKey] = scene;
+  }
+
+  public clearSceneCache() {
+    this.cache = {};
+  }
+}
+
+export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
+  transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
+    const fromCache = this.getSceneFromCache(options.uid);
+
+    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      return fromCache;
+    }
+
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      if (options.uid) {
+        this.setSceneCache(options.uid, scene);
+      }
+
+      return scene;
+    }
+
+    if (rsp?.redirectUri) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
+    }
+
+    throw new Error('Dashboard not found');
+  }
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    params,
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+
+    if (!params) {
+      const cachedDashboard = this.getDashboardFromCache(cacheKey);
+
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
+    }
+
+    let rsp: DashboardDTO;
+
+    try {
+      switch (route) {
+        case DashboardRoutes.New:
+          rsp = await buildNewDashboardSaveModel(urlFolderUid);
+
+          break;
+        case DashboardRoutes.Home:
+          rsp = await getBackendSrv().get('/api/dashboards/home');
+
+          if (rsp.redirectUri) {
+            return rsp;
+          }
+
+          if (rsp?.meta) {
+            rsp.meta.canSave = false;
+            rsp.meta.canShare = false;
+            rsp.meta.canStar = false;
+          }
+
+          break;
+        case DashboardRoutes.Public: {
+          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+        }
+        default:
+          const queryParams = params
+            ? {
+                version: params.version,
+                scopes: params.scopes,
+                from: params.timeRange.from,
+                to: params.timeRange.to,
+                ...params.variables,
+              }
+            : undefined;
+
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
+
+          if (route === DashboardRoutes.Embedded) {
+            rsp.meta.isEmbedded = true;
+          }
+      }
+
+      if (rsp.meta.url && route === DashboardRoutes.Normal) {
+        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
+        const currentPath = locationService.getLocation().pathname;
+
+        if (dashboardUrl !== currentPath) {
+          // Spread current location to persist search params used for navigation
+          locationService.replace({
+            ...locationService.getLocation(),
+            pathname: dashboardUrl,
+          });
+          console.log('not correct url correcting', dashboardUrl, currentPath);
+        }
+      }
+
+      // Populate nav model in global store according to the folder
+      if (rsp.meta.folderUid) {
+        await updateNavModel(rsp.meta.folderUid);
+      }
+
+      // Do not cache new dashboards
+      this.setDashboardCache(cacheKey, rsp);
+    } catch (e) {
+      // Ignore cancelled errors
+      if (isFetchError(e) && e.cancelled) {
+        return null;
+      }
+
+      throw e;
+    }
+
+    return rsp;
+  }
+
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
     const stateOptions = this.state.options;
 
@@ -254,19 +363,30 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       this.setState({ isLoading: false, loadError: msg });
     }
   }
+}
 
-  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
-    this.setState({ dashboard: undefined, isLoading: true });
+export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
+  DashboardWithAccessInfo<DashboardV2Spec>
+> {
+  private dashboardLoader = new DashboardLoaderSrvV2();
 
-    const rsp = await this.fetchDashboard(options);
-
+  transformResponseToScene(
+    rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
+    options: LoadDashboardOptions
+  ): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+
+    // TODO[schema v2]: Dashboard scene state is incorrectly save, it must use the resourceVersion
+    if (
+      fromCache &&
+      rsp?.metadata.resourceVersion &&
+      fromCache.state.version === parseInt(rsp?.metadata.resourceVersion, 10)
+    ) {
       return fromCache;
     }
 
-    if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+    if (rsp) {
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
@@ -276,67 +396,127 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       return scene;
     }
 
-    if (rsp?.redirectUri) {
-      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-      locationService.replace(newUrl);
-      return null;
-    }
+    // TOD)[schema v2]: Figure out redirect utl
+    // if (rsp?.redirectUri) {
+    //   const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+    //   locationService.replace(newUrl);
+    //   return null;
+    // }
 
     throw new Error('Dashboard not found');
   }
 
-  public getDashboardFromCache(cacheKey: string) {
-    const cachedDashboard = this.dashboardCache;
+  reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
 
-    if (
-      cachedDashboard &&
-      cachedDashboard.cacheKey === cacheKey &&
-      Date.now() - cachedDashboard?.ts < DASHBOARD_CACHE_TTL
-    ) {
-      return cachedDashboard.dashboard;
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    params,
+  }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
+    // throw new Error('Method not implemented.');
+    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+    if (!params) {
+      const cachedDashboard = this.getDashboardFromCache(cacheKey);
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
     }
+    let rsp: DashboardWithAccessInfo<DashboardV2Spec>;
+    try {
+      switch (route) {
+        case DashboardRoutes.New:
+          rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
+          break;
+        case DashboardRoutes.Home:
+          // throw new Error('Method not implemented.');
+          const dto = await getBackendSrv().get<DashboardDTO>('/api/dashboards/home');
+          rsp = ResponseTransformers.ensureV2Response(dto);
+          rsp.access.canSave = false;
+          rsp.access.canShare = false;
+          rsp.access.canStar = false;
 
-    return null;
-  }
+          // if (rsp.redirectUri) {
+          //   return rsp;
+          // }
 
-  public clearState() {
-    getDashboardSrv().setCurrent(undefined);
-
-    this.setState({
-      dashboard: undefined,
-      loadError: undefined,
-      isLoading: false,
-      panelEditor: undefined,
-    });
-  }
-
-  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
-  }
-
-  public clearDashboardCache() {
-    this.dashboardCache = undefined;
-  }
-
-  public getSceneFromCache(cacheKey: string) {
-    return this.cache[cacheKey];
-  }
-
-  public setSceneCache(cacheKey: string, scene: DashboardScene) {
-    this.cache[cacheKey] = scene;
-  }
-
-  public clearSceneCache() {
-    this.cache = {};
+          break;
+        case DashboardRoutes.Public: {
+          return await this.dashboardLoader.loadDashboard('public', '', uid);
+        }
+        default:
+          const queryParams = params
+            ? {
+                version: params.version,
+                scopes: params.scopes,
+                from: params.timeRange.from,
+                to: params.timeRange.to,
+                ...params.variables,
+              }
+            : undefined;
+          rsp = await this.dashboardLoader.loadDashboard('db', '', uid, queryParams);
+          if (route === DashboardRoutes.Embedded) {
+            throw new Error('Method not implemented.');
+            // rsp.meta.isEmbedded = true;
+          }
+      }
+      if (rsp.access.url && route === DashboardRoutes.Normal) {
+        const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
+        const currentPath = locationService.getLocation().pathname;
+        if (dashboardUrl !== currentPath) {
+          // Spread current location to persist search params used for navigation
+          locationService.replace({
+            ...locationService.getLocation(),
+            pathname: dashboardUrl,
+          });
+          console.log('not correct url correcting', dashboardUrl, currentPath);
+        }
+      }
+      // Populate nav model in global store according to the folder
+      if (rsp.metadata.annotations?.[AnnoKeyFolder]) {
+        await updateNavModel(rsp.metadata.annotations?.[AnnoKeyFolder]);
+      }
+      // Do not cache new dashboards
+      this.setDashboardCache(cacheKey, rsp);
+    } catch (e) {
+      // Ignore cancelled errors
+      if (isFetchError(e) && e.cancelled) {
+        return null;
+      }
+      throw e;
+    }
+    return rsp;
   }
 }
 
-let stateManager: DashboardScenePageStateManager | null = null;
+const managers: {
+  v1?: DashboardScenePageStateManager;
+  v2?: DashboardScenePageStateManagerV2;
+} = {
+  v1: undefined,
+  v2: undefined,
+};
 
-export function getDashboardScenePageStateManager(): DashboardScenePageStateManager {
-  if (!stateManager) {
-    stateManager = new DashboardScenePageStateManager({});
+export function getDashboardScenePageStateManager(
+  v: 'v2'
+): DashboardScenePageStateManagerLike<DashboardWithAccessInfo<DashboardV2Spec>>;
+export function getDashboardScenePageStateManager(): DashboardScenePageStateManagerLike<DashboardDTO>;
+
+export function getDashboardScenePageStateManager(
+  v?: 'v2'
+): DashboardScenePageStateManagerLike<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
+  if (v === 'v2') {
+    if (!managers.v2) {
+      managers.v2 = new DashboardScenePageStateManagerV2({});
+    }
+
+    return managers.v2;
+  } else {
+    if (!managers.v1) {
+      managers.v1 = new DashboardScenePageStateManager({});
+    }
+    return managers.v1;
   }
-
-  return stateManager;
 }

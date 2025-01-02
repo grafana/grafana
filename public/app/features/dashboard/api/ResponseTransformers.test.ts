@@ -1,19 +1,65 @@
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { DashboardDTO } from 'app/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyDashboardId,
+  AnnoKeyFolder,
+  AnnoKeySlug,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 describe('ResponseTransformers', () => {
-  describe('v1 transformation', () => {
+  describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
-      const dashboardDTO: DashboardDTO = {
-        meta: {
-          created: '2023-01-01T00:00:00Z',
-          createdBy: 'user1',
-          updated: '2023-01-02T00:00:00Z',
-          updatedBy: 'user2',
-          folderUid: 'folder1',
+      const dashboardV1: DashboardDataDTO = {
+        uid: 'dashboard-uid',
+        id: 123,
+        title: 'Dashboard Title',
+        description: 'Dashboard Description',
+        tags: ['tag1', 'tag2'],
+        schemaVersion: 1,
+        graphTooltip: 0,
+        preload: true,
+        liveNow: false,
+        editable: true,
+        time: { from: 'now-6h', to: 'now' },
+        timezone: 'browser',
+        refresh: '5m',
+        timepicker: {
+          refresh_intervals: ['5s', '10s', '30s'],
+          hidden: false,
+          time_options: ['5m', '15m', '1h'],
+          nowDelay: '1m',
+        },
+        fiscalYearStartMonth: 1,
+        weekStart: 'monday',
+        version: 1,
+        links: [
+          {
+            title: 'Link 1',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag1', 'tag2'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 1 Tooltip',
+          },
+        ],
+        annotations: {
+          list: [],
+        },
+      };
+
+      const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
+        spec: dashboardV1,
+        access: {
           slug: 'dashboard-slug',
           url: '/d/dashboard-slug',
           canAdmin: true,
@@ -27,73 +73,59 @@ describe('ResponseTransformers', () => {
             organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
-        dashboard: {
-          uid: 'dashboard1',
-          title: 'Dashboard Title',
-          description: 'Dashboard Description',
-          tags: ['tag1', 'tag2'],
-          schemaVersion: 1,
-          graphTooltip: 0,
-          preload: true,
-          liveNow: false,
-          editable: true,
-          time: { from: 'now-6h', to: 'now' },
-          timezone: 'browser',
-          refresh: '5m',
-          timepicker: {
-            refresh_intervals: ['5s', '10s', '30s'],
-            hidden: false,
-            time_options: ['5m', '15m', '1h'],
-            nowDelay: '1m',
-          },
-          fiscalYearStartMonth: 1,
-          weekStart: 'monday',
-          version: 1,
-          links: [],
+        apiVersion: 'v1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dashboard-uid',
+          resourceVersion: '1',
+
+          creationTimestamp: '2023-01-01T00:00:00Z',
           annotations: {
-            list: [],
+            [AnnoKeyCreatedBy]: 'user1',
+            [AnnoKeyUpdatedBy]: 'user2',
+            [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
+            [AnnoKeyFolder]: 'folder1',
+            [AnnoKeySlug]: 'dashboard-slug',
           },
         },
       };
 
-      const transformed = ResponseTransformers.ensureV2Response(dashboardDTO);
+      const transformed = ResponseTransformers.ensureV2Response(dto);
 
       expect(transformed.apiVersion).toBe('v2alpha1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
-      expect(transformed.metadata.creationTimestamp).toBe(dashboardDTO.meta.created);
-      expect(transformed.metadata.name).toBe(dashboardDTO.dashboard.uid);
-      expect(transformed.metadata.resourceVersion).toBe(dashboardDTO.dashboard.version?.toString());
-      expect(transformed.metadata.annotations?.['grafana.app/createdBy']).toBe(dashboardDTO.meta.createdBy);
-      expect(transformed.metadata.annotations?.['grafana.app/updatedBy']).toBe(dashboardDTO.meta.updatedBy);
-      expect(transformed.metadata.annotations?.['grafana.app/updatedTimestamp']).toBe(dashboardDTO.meta.updated);
-      expect(transformed.metadata.annotations?.['grafana.app/folder']).toBe(dashboardDTO.meta.folderUid);
-      expect(transformed.metadata.annotations?.['grafana.app/slug']).toBe(dashboardDTO.meta.slug);
+      expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
+      expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
+      expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
+      expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
+      expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardId]).toBe(123);
 
       const spec = transformed.spec;
-      expect(spec.title).toBe(dashboardDTO.dashboard.title);
-      expect(spec.description).toBe(dashboardDTO.dashboard.description);
-      expect(spec.tags).toEqual(dashboardDTO.dashboard.tags);
-      expect(spec.schemaVersion).toBe(dashboardDTO.dashboard.schemaVersion);
+      expect(spec.title).toBe(dashboardV1.title);
+      expect(spec.description).toBe(dashboardV1.description);
+      expect(spec.tags).toEqual(dashboardV1.tags);
+      expect(spec.schemaVersion).toBe(dashboardV1.schemaVersion);
       expect(spec.cursorSync).toBe('Off'); // Assuming transformCursorSynctoEnum(0) returns 'Off'
-      expect(spec.preload).toBe(dashboardDTO.dashboard.preload);
-      expect(spec.liveNow).toBe(dashboardDTO.dashboard.liveNow);
-      expect(spec.editable).toBe(dashboardDTO.dashboard.editable);
-      expect(spec.timeSettings.from).toBe(dashboardDTO.dashboard.time?.from);
-      expect(spec.timeSettings.to).toBe(dashboardDTO.dashboard.time?.to);
-      expect(spec.timeSettings.timezone).toBe(dashboardDTO.dashboard.timezone);
-      expect(spec.timeSettings.autoRefresh).toBe(dashboardDTO.dashboard.refresh);
-      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardDTO.dashboard.timepicker?.refresh_intervals);
-      expect(spec.timeSettings.hideTimepicker).toBe(dashboardDTO.dashboard.timepicker?.hidden);
-      expect(spec.timeSettings.quickRanges).toEqual(dashboardDTO.dashboard.timepicker?.time_options);
-      expect(spec.timeSettings.nowDelay).toBe(dashboardDTO.dashboard.timepicker?.nowDelay);
-      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardDTO.dashboard.fiscalYearStartMonth);
-      expect(spec.timeSettings.weekStart).toBe(dashboardDTO.dashboard.weekStart);
-      expect(spec.links).toEqual([]); // Assuming transformDashboardLinksToEnums([]) returns []
+      expect(spec.preload).toBe(dashboardV1.preload);
+      expect(spec.liveNow).toBe(dashboardV1.liveNow);
+      expect(spec.editable).toBe(dashboardV1.editable);
+      expect(spec.timeSettings.from).toBe(dashboardV1.time?.from);
+      expect(spec.timeSettings.to).toBe(dashboardV1.time?.to);
+      expect(spec.timeSettings.timezone).toBe(dashboardV1.timezone);
+      expect(spec.timeSettings.autoRefresh).toBe(dashboardV1.refresh);
+      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardV1.timepicker?.refresh_intervals);
+      expect(spec.timeSettings.hideTimepicker).toBe(dashboardV1.timepicker?.hidden);
+      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.time_options);
+      expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
+      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
+      expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
+      expect(spec.links).toEqual(dashboardV1.links);
       expect(spec.annotations).toEqual([]);
     });
   });
 
-  describe('v2 transformation', () => {
+  describe('v2 -> v1 transformation', () => {
     it('should return the same object if it is already a DashboardDTO', () => {
       const dashboard: DashboardDTO = {
         dashboard: {
@@ -145,7 +177,20 @@ describe('ResponseTransformers', () => {
             fiscalYearStartMonth: 1,
             weekStart: 'monday',
           },
-          links: [],
+          links: [
+            {
+              title: 'Link 1',
+              url: 'https://grafana.com',
+              asDropdown: false,
+              targetBlank: true,
+              includeVars: true,
+              keepTime: true,
+              tags: ['tag1', 'tag2'],
+              icon: 'external link',
+              type: 'link',
+              tooltip: 'Link 1 Tooltip',
+            },
+          ],
           annotations: [],
           variables: [],
           elements: {},
@@ -209,7 +254,7 @@ describe('ResponseTransformers', () => {
       expect(dashboard.timepicker?.nowDelay).toBe(dashboardV2.spec.timeSettings.nowDelay);
       expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
-      expect(dashboard.links).toEqual([]); // Assuming transformDashboardLinksToEnums([]) returns []
+      expect(dashboard.links).toEqual(dashboardV2.spec.links);
       expect(dashboard.annotations).toEqual({ list: [] });
     });
   });
