@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log/slog"
 	"net/url"
 	"path"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 // resourcePreview represents a resource that has changed in a pull request.
@@ -52,11 +52,11 @@ Click the preview links above to view how your changes will look and compare the
 
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
-	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*repository.FileInfo, error)
-	CompareFiles(ctx context.Context, logger *slog.Logger, base, ref string) ([]repository.FileChange, error)
-	ClearAllPullRequestFileComments(ctx context.Context, logger *slog.Logger, pr int) error
-	CommentPullRequestFile(ctx context.Context, logger *slog.Logger, pr int, path string, ref string, comment string) error
-	CommentPullRequest(ctx context.Context, logger *slog.Logger, pr int, comment string) error
+	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]repository.FileChange, error)
+	ClearAllPullRequestFileComments(ctx context.Context, pr int) error
+	CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error
+	CommentPullRequest(ctx context.Context, pr int, comment string) error
 }
 
 // PreviewRenderer is an interface for rendering a preview of a file
@@ -68,7 +68,6 @@ type PreviewRenderer interface {
 type PullRequestCommenter struct {
 	repo         PullRequestRepo
 	parser       *resources.Parser
-	logger       *slog.Logger
 	lintTemplate *template.Template
 	prevTemplate *template.Template
 	baseURL      *url.URL
@@ -78,7 +77,6 @@ type PullRequestCommenter struct {
 func NewPullRequestCommenter(
 	repo PullRequestRepo,
 	parser *resources.Parser,
-	logger *slog.Logger,
 	renderer PreviewRenderer,
 	baseURL *url.URL,
 ) (*PullRequestCommenter, error) {
@@ -94,7 +92,6 @@ func NewPullRequestCommenter(
 	return &PullRequestCommenter{
 		repo:         repo,
 		parser:       parser,
-		logger:       logger,
 		lintTemplate: lintTemplate,
 		prevTemplate: prevTemplate,
 		renderer:     renderer,
@@ -114,7 +111,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		return nil
 	}
 
-	logger := c.logger.With("pr", job.Spec.PR)
+	logger := slogctx.From(ctx).With("pr", job.Spec.PR)
 	logger.InfoContext(ctx, "process pull request")
 	defer logger.InfoContext(ctx, "pull request processed")
 
@@ -123,13 +120,13 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	ref := spec.Hash
 
 	// list pull requests changes files
-	files, err := c.repo.CompareFiles(ctx, logger, base, ref)
+	files, err := c.repo.CompareFiles(ctx, base, ref)
 	if err != nil {
 		return fmt.Errorf("failed to list pull request files: %w", err)
 	}
 
 	// clear all previous comments
-	if err := c.repo.ClearAllPullRequestFileComments(ctx, logger, spec.PR); err != nil {
+	if err := c.repo.ClearAllPullRequestFileComments(ctx, spec.PR); err != nil {
 		return fmt.Errorf("failed to clear pull request comments: %w", err)
 	}
 
@@ -141,17 +138,17 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		if c.parser.ShouldIgnore(ctx, logger, f.Path) {
+		if c.parser.ShouldIgnore(f.Path) {
 			continue
 		}
 
 		logger := logger.With("file", f.Path)
-		fileInfo, err := c.repo.Read(ctx, logger, f.Path, ref)
+		fileInfo, err := c.repo.Read(ctx, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)
 		}
 
-		parsed, err := c.parser.Parse(ctx, logger, fileInfo, true)
+		parsed, err := c.parser.Parse(ctx, fileInfo, true)
 		if err != nil {
 			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 				logger.DebugContext(ctx, "file is not a resource", "path", f.Path)
@@ -167,7 +164,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 				return fmt.Errorf("execute lint comment template: %w", err)
 			}
 
-			if err := c.repo.CommentPullRequestFile(ctx, logger, spec.PR, f.Path, ref, buf.String()); err != nil {
+			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, ref, buf.String()); err != nil {
 				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 
@@ -215,7 +212,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			return fmt.Errorf("execute previews comment template: %w", err)
 		}
 
-		if err := c.repo.CommentPullRequest(ctx, logger, spec.PR, buf.String()); err != nil {
+		if err := c.repo.CommentPullRequest(ctx, spec.PR, buf.String()); err != nil {
 			return fmt.Errorf("comment pull request: %w", err)
 		}
 

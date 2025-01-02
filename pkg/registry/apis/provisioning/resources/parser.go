@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"path"
 	"path/filepath"
 
@@ -22,22 +21,21 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
 type ParserFactory struct {
 	Client *ClientFactory
-	Logger *slog.Logger
 }
 
-func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
+func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repository) (*Parser, error) {
 	config := repo.Config()
 	client, kinds, err := f.Client.New(config.Namespace) // As system user
 	if err != nil {
 		return nil, err
 	}
-	logger := f.Logger.With("parser", config.Name)
 
 	parser := &Parser{
 		repo:   config,
@@ -46,11 +44,10 @@ func (f *ParserFactory) GetParser(repo repository.Repository) (*Parser, error) {
 		mapper: NamesFromHashedRepoPath,
 	}
 	if repo.Config().Spec.Linting {
-		ctx := context.Background()
-
 		linterFactory := lint.NewDashboardLinterFactory()
-		cfg, err := repo.Read(ctx, logger, linterFactory.ConfigPath(), "")
+		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
+		logger := slogctx.From(ctx)
 		var linter lint.Linter
 		switch {
 		case err == nil:
@@ -123,7 +120,7 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
-func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string) bool {
+func (r *Parser) ShouldIgnore(p string) bool {
 	ext := filepath.Ext(p)
 	if ext == ".yaml" || ext == ".json" {
 		return false
@@ -132,19 +129,20 @@ func (r *Parser) ShouldIgnore(ctx context.Context, logger *slog.Logger, p string
 	return true
 }
 
-func (r *Parser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
+	logger := slogctx.From(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}
 
-	if r.ShouldIgnore(ctx, logger, info.Path) {
+	if r.ShouldIgnore(info.Path) {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
 	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
-		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, logger, info)
+		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil {
 			logger.DebugContext(ctx, "also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err

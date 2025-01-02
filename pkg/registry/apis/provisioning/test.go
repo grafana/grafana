@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"slices"
 	"time"
@@ -24,7 +23,6 @@ import (
 type testConnector struct {
 	getter RepoGetter
 	tester *RepositoryTester
-	logger *slog.Logger
 }
 
 func (*testConnector) New() runtime.Object {
@@ -112,8 +110,6 @@ type RepositoryTester struct {
 
 	// Repository+Jobs
 	client client.ProvisioningV0alpha1Interface
-
-	logger *slog.Logger
 }
 
 // This function will check if the repository is configured and functioning as expected
@@ -131,7 +127,7 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 		return rsp, nil
 	}
 
-	return repo.Test(ctx, t.logger)
+	return repo.Test(ctx)
 }
 
 // This function will check if the repository is configured and functioning as expected

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"path"
 	"strings"
@@ -18,12 +17,12 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type filesConnector struct {
 	getter  RepoGetter
 	parsers *resources.ParserFactory
-	logger  *slog.Logger
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -58,7 +57,8 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := s.logger.With("repository_name", name)
+	logger := slogctx.From(ctx).With("logger", "files-connector", "repository_name", name)
+	ctx = slogctx.To(ctx, logger)
 	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find repository", "error", err)
@@ -69,7 +69,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
-		logger = logger.With("url", r.URL.Path, "ref", ref, "message", message)
+		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
+		ctx := slogctx.To(r.Context(), logger)
 
 		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
@@ -86,7 +87,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				return
 			}
 
-			rsp, err := repo.ReadTree(r.Context(), logger, ref)
+			rsp, err := repo.ReadTree(ctx, ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -111,7 +112,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case ".json", ".yaml", ".yml":
 			// ok
 		default:
-			logger.DebugContext(r.Context(), "got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
+			logger.DebugContext(ctx, "got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
 			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
 			return
 		}
@@ -120,13 +121,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			code, obj, err = s.doRead(r.Context(), logger, repo, filePath, ref)
+			code, obj, err = s.doRead(ctx, repo, filePath, ref)
 		case http.MethodPost:
-			obj, err = s.doWrite(r.Context(), logger, false, repo, filePath, ref, message, r)
+			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
-			obj, err = s.doWrite(r.Context(), logger, true, repo, filePath, ref, message, r)
+			obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
 		case http.MethodDelete:
-			obj, err = s.doDelete(r.Context(), logger, repo, filePath, ref, message)
+			obj, err = s.doDelete(ctx, repo, filePath, ref, message)
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 		}
@@ -141,18 +142,18 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
-	info, err := repo.Read(ctx, logger, path, ref)
+func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
+	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	parser, err := s.parsers.GetParser(repo)
+	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	parsed, err := parser.Parse(ctx, logger, info, true)
+	parsed, err := parser.Parse(ctx, info, true)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -161,7 +162,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 	if parsed.GVR == nil {
 		if parsed.GVK != nil {
 			//nolint:govet
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: "+parsed.GVK.Kind))
+			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: %s", parsed.GVK.Kind))
 		} else {
 			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
 		}
@@ -174,7 +175,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 	return code, parsed.AsResourceWrapper(), nil
 }
 
-func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if update && !settings.Update {
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
@@ -194,12 +195,12 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		Ref:  ref,
 	}
 
-	parser, err := s.parsers.GetParser(repo)
+	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	parsed, err := parser.Parse(ctx, logger, info, true)
+	parsed, err := parser.Parse(ctx, info, true)
 	if err != nil {
 		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
@@ -218,9 +219,9 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 	}
 
 	if update {
-		err = repo.Update(ctx, logger, path, ref, data, message)
+		err = repo.Update(ctx, path, ref, data, message)
 	} else {
-		err = repo.Create(ctx, logger, path, ref, data, message)
+		err = repo.Create(ctx, path, ref, data, message)
 	}
 	if err != nil {
 		return nil, err
@@ -247,18 +248,19 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 	return parsed.AsResourceWrapper(), err
 }
 
-func (s *filesConnector) doDelete(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if !settings.Delete {
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
 	}
 
-	err := repo.Delete(ctx, logger, path, ref, message)
+	err := repo.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("TODO! trigger sync for this file we just deleted... %s\n", path)
+	logger := slogctx.From(ctx).With("path", path)
+	logger.InfoContext(ctx, "TODO! trigger sync for this file we just deleted...")
 
 	return &provisioning.ResourceWrapper{
 		Path: path,
