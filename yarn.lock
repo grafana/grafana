@@ -4064,6 +4064,7 @@ __metadata:
     react-i18next: "npm:^15.0.0"
     react-inlinesvg: "npm:4.1.5"
     react-loading-skeleton: "npm:3.5.0"
+    react-router-dom: "npm:5.3.3"
     react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:5.9.0"
     react-select-event: "npm:^5.1.0"
