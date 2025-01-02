@@ -5,7 +5,7 @@ import { LegacyDashboardAPI } from './legacy';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v0';
-import { K8sDashboardV2APIStub } from './v2';
+import { K8sDashboardV2API } from './v2';
 
 type DashboardAPIClients = {
   legacy: DashboardAPI<DashboardDTO>;
@@ -36,12 +36,12 @@ export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<Dashboar
     clients = {
       legacy: new LegacyDashboardAPI(),
       v0: new K8sDashboardAPI(),
-      v2: new K8sDashboardV2APIStub(isConvertingToV1),
+      v2: new K8sDashboardV2API(isConvertingToV1),
     };
   }
 
   if (v === 'v2' && requestV2Response === 'v2') {
-    return new K8sDashboardV2APIStub(false);
+    return new K8sDashboardV2API(false);
   }
 
   if (!clients[v]) {

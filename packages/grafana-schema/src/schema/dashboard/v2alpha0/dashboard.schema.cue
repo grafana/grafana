@@ -370,12 +370,12 @@ VizConfigKind: {
 AnnotationQuerySpec: {
   datasource?: DataSourceRef
   query?: DataQueryKind
-  builtIn?: bool | *false
   enable: bool
-  filter: AnnotationPanelFilter
   hide: bool
   iconColor: string
   name: string
+  builtIn?: bool | *false
+  filter?: AnnotationPanelFilter
 }
 
 AnnotationQueryKind: {

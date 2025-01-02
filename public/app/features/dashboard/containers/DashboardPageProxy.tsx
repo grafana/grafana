@@ -23,6 +23,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
 
+  // Force scenes if v2 api and scenes are enabled
+  if (config.featureToggles.useV2DashboardsAPI && config.featureToggles.dashboardScene && !forceOld) {
+    console.log('DashboardPageProxy: forcing scenes because of v2 api');
+    return <DashboardScenePage {...props} />;
+  }
+
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
