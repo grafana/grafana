@@ -13,6 +13,7 @@ import {
   defaultPanelSpec,
   defaultTimeSettingsSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -274,8 +275,7 @@ describe('DashboardSceneSerializer', () => {
       });
 
       it('provides dashboard tracking information with from initial save model', () => {
-        const serializer = new V1DashboardSerializer();
-        serializer.initialSaveModel = {
+        const dashboard = setup({
           schemaVersion: 30,
           version: 10,
           uid: 'my-uid',
@@ -309,12 +309,12 @@ describe('DashboardSceneSerializer', () => {
               },
             ],
           },
-        };
+        });
 
-        expect(serializer.getTrackingInformation()).toEqual({
+        expect(dashboard.getTrackingInformation()).toEqual({
           uid: 'my-uid',
           title: 'hello',
-          schemaVersion: 30,
+          schemaVersion: DASHBOARD_SCHEMA_VERSION,
           panels_count: 3,
           panel_type_text_count: 2,
           panel_type_timeseries_count: 1,
@@ -322,7 +322,6 @@ describe('DashboardSceneSerializer', () => {
           variable_type_textbox_count: 1,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          version_before_migration: 10,
         });
       });
     });
@@ -565,9 +564,41 @@ describe('DashboardSceneSerializer', () => {
       });
     });
 
-    it('should throw on getTrackingInformation', () => {
-      const serializer = new V2DashboardSerializer();
-      expect(() => serializer.getTrackingInformation()).toThrow('Method not implemented.');
+    describe('tracking information', () => {
+      it('provides dashboard tracking information with no initial save model', () => {
+        const dashboard = setupV2();
+        const serializer = new V2DashboardSerializer();
+        expect(serializer.getTrackingInformation(dashboard)).toBe(undefined);
+      });
+
+      it('provides dashboard tracking information with from initial save model', () => {
+        const dashboard = setupV2({
+          timeSettings: {
+            nowDelay: '10s',
+            from: '',
+            to: '',
+            autoRefresh: '',
+            autoRefreshIntervals: [],
+            quickRanges: [],
+            hideTimepicker: false,
+            weekStart: '',
+            fiscalYearStartMonth: 0,
+            timezone: '',
+          },
+          liveNow: true,
+        });
+
+        expect(dashboard.getTrackingInformation()).toEqual({
+          uid: 'dashboard-test',
+          title: 'hello',
+          panels_count: 1,
+          panel_type__count: 1,
+          variable_type_custom_count: 1,
+          settings_nowdelay: undefined,
+          settings_livenow: true,
+          schemaVersion: DASHBOARD_SCHEMA_VERSION,
+        });
+      });
     });
 
     it('should throw on getSaveAsModel', () => {
@@ -598,7 +629,7 @@ describe('DashboardSceneSerializer', () => {
   });
 });
 
-function setup() {
+function setup(override: Partial<Dashboard> = {}) {
   const dashboard = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
@@ -624,6 +655,7 @@ function setup() {
           },
         ],
       },
+      ...override,
     },
     meta: {},
   });

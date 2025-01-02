@@ -653,7 +653,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getTrackingInformation() {
-    return this._serializer.getTrackingInformation();
+    return this._serializer.getTrackingInformation(this);
   }
 
   public async onDashboardDelete() {
