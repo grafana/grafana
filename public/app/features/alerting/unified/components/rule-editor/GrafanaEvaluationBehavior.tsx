@@ -21,11 +21,11 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -603,7 +603,7 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={evaluateForId}
-            description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
           </Label>

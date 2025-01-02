@@ -78,8 +78,7 @@ type QueryJSONModel struct {
 }
 
 type ResponseOpts struct {
-	metricDataplane bool
-	logsDataplane   bool
+	logsDataplane bool
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -180,8 +179,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
+		logsDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
 	if isFeatureEnabled(ctx, featuremgmt.FlagLokiSendDashboardPanelNames) {
@@ -291,8 +289,12 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 	}
 
 	for _, frame := range res.Frames {
-		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
+		// Skip frames without fields
+		if len(frame.Fields) < 2 {
+			continue
+		}
 
+		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
 		if err != nil {
 			plog.Error("Error adjusting frame", "error", err)
 			return res, err

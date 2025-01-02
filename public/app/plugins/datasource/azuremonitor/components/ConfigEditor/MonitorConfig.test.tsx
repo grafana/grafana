@@ -1,21 +1,37 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
+
+import { config } from '@grafana/runtime';
 
 import { createMockDatasourceSettings } from '../../__mocks__/datasourceSettings';
 
 import { MonitorConfig, Props } from './MonitorConfig';
 
-const mockDatasourceSettings = createMockDatasourceSettings();
-
 const defaultProps: Props = {
-  options: mockDatasourceSettings,
+  options: createMockDatasourceSettings(),
   updateOptions: jest.fn(),
   getSubscriptions: jest.fn().mockResolvedValue([]),
 };
 
 describe('MonitorConfig', () => {
+  beforeEach(() => {
+    config.azure = {
+      ...config.azure,
+      managedIdentityEnabled: false,
+      workloadIdentityEnabled: false,
+      userIdentityEnabled: false,
+    };
+    config.featureToggles = {
+      azureMonitorEnableUserAuth: false,
+    };
+  });
+
+  afterEach(() => {
+    cleanup();
+    jest.clearAllMocks();
+  });
+
   it('should render component', () => {
     render(<MonitorConfig {...defaultProps} />);
-
     expect(screen.getByText('Azure Cloud')).toBeInTheDocument();
   });
 
@@ -29,6 +45,7 @@ describe('MonitorConfig', () => {
     expect(defaultProps.updateOptions).toHaveBeenCalled();
     expect(screen.getByText('Azure Cloud')).toBeInTheDocument();
   });
+
   expect(defaultProps.options.jsonData.azureAuthType).toBe('clientsecret');
 
   it('should render component and set the default subscription if specified', async () => {
@@ -38,5 +55,42 @@ describe('MonitorConfig', () => {
 
     expect(screen.getByText('Azure Cloud')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Test Sub')).toBeInTheDocument());
+  });
+
+  it('should render with user identity enabled when feature toggle is true', async () => {
+    config.azure.userIdentityEnabled = true;
+    config.featureToggles.azureMonitorEnableUserAuth = true;
+
+    const optionsWithUserAuth = createMockDatasourceSettings({
+      jsonData: { azureAuthType: 'currentuser' },
+    });
+
+    render(<MonitorConfig {...defaultProps} options={optionsWithUserAuth} />);
+
+    const authDropdownInput = screen.getByTestId('data-testid auth-type').querySelector('input');
+
+    if (authDropdownInput) {
+      fireEvent.mouseDown(authDropdownInput);
+    }
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          (content, element) => element?.tagName?.toLowerCase() === 'span' && /Current User/i.test(content)
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('should render with user identity disabled when feature toggle is false', async () => {
+    config.azure.userIdentityEnabled = true;
+    config.featureToggles.azureMonitorEnableUserAuth = false;
+
+    render(<MonitorConfig {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Authentication')).toBeInTheDocument();
+      expect(screen.queryByText(/Current User/i)).not.toBeInTheDocument();
+    });
   });
 });

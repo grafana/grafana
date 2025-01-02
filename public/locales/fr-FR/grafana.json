@@ -162,7 +162,7 @@
     },
     "users-table": {
       "last-seen-never": "",
-      "no-licensed-role": ""
+      "no-licensed-roles": ""
     }
   },
   "alert-labels": {
@@ -241,10 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -280,6 +283,12 @@
     "contactPointFilter": {
       "label": ""
     },
+    "export": {
+      "subtitle": {
+        "formats": "",
+        "one-format": ""
+      }
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -301,6 +310,7 @@
           "title": ""
         },
         "grafanaManaged": {
+          "export-new-rule": "",
           "export-rules": "",
           "loading": "",
           "new-recording-rule": "",
@@ -319,15 +329,33 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
         "description": "",
-        "title": ""
+        "title": "",
+        "update": ""
       },
+      "delete": {
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": ""
+      },
+      "filter-description": "",
       "generated-policies": "",
+      "matchers": "",
       "metadata": {
         "active-time": "",
         "delivered-to": "",
@@ -358,6 +386,20 @@
       "new-child": "",
       "new-policy": "",
       "no-matchers": "",
+      "reload-policies": "",
+      "save-policy": "",
+      "update": {
+        "please-wait": "",
+        "update-policy": "",
+        "updating": ""
+      },
+      "update-errors": {
+        "conflict": "",
+        "error-code": "",
+        "fallback": "",
+        "suffix": "",
+        "title": ""
+      },
       "n-more-policies_one": "",
       "n-more-policies_other": ""
     },
@@ -442,6 +484,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -486,10 +532,23 @@
       },
       "save-query": ""
     },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
+    },
     "simpleCondition": {
       "alertCondition": ""
     },
     "templates": {
+      "editor": {
+        "add-example": "",
+        "auto-complete": "",
+        "goto-docs": ""
+      },
+      "help": {
+        "intro": ""
+      },
       "misconfigured-badge-text": "",
       "misconfigured-warning": "",
       "misconfigured-warning-details": ""
@@ -665,6 +724,7 @@
     "close": "",
     "collapse": "",
     "edit": "",
+    "help": "",
     "locale": {
       "default": "Par défaut"
     },
@@ -1021,6 +1081,10 @@
     },
     "open-advanced-button": "Ouvrir le sélecteur de données avancé"
   },
+  "data-source-testing-status-page": {
+    "error-more-details-link": "",
+    "success-more-details-links": ""
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
@@ -1211,6 +1275,8 @@
       "title-with-name": "Tableau – {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "Copier l'URL",
       "copy-link-abs-time": "",
@@ -1234,6 +1300,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1653,7 +1720,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -1701,6 +1771,16 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": ""
+    },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
+    },
+    "log-row-message": {
+      "ellipsis": "",
+      "more": ""
     }
   },
   "migrate-to-cloud": {
@@ -2060,6 +2140,9 @@
       "subtitle": "Voir et gérer vos connexions de sources de données connectées",
       "title": "Sources de données"
     },
+    "databases": {
+      "title": ""
+    },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
       "title": "Sources de données"
@@ -2098,6 +2181,16 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "Accueil"
     },
@@ -2143,9 +2236,6 @@
     },
     "new-folder": {
       "title": "Nouveau dossier"
-    },
-    "observability": {
-      "title": "Observabilité"
     },
     "oncall": {
       "title": "OnCall"
@@ -2275,12 +2365,6 @@
       "list-label": "Navigation",
       "open": "",
       "undock": "Ancrer le menu"
-    },
-    "toolbar": {
-      "close-menu": "Fermer le menu",
-      "enable-kiosk": "Activer le mode kiosque",
-      "open-menu": "Ouvrir le menu",
-      "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
   "news": {
@@ -2697,6 +2781,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
@@ -2858,6 +2948,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -2889,8 +2980,7 @@
       "loading": "",
       "save-button": "Enregistrer dans un fichier",
       "share-externally-label": "Exporter pour un partage externe",
-      "view-button": "Afficher au format JSON",
-      "view-button-schemav2": ""
+      "view-button": "Afficher au format JSON"
     },
     "library": {
       "info": "Créer un panneau de bibliothèque."
@@ -2967,6 +3057,27 @@
       "create-button": ""
     }
   },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Les hauteurs du panneau seront ajustées à la taille de l'écran",
     "checkbox-label": "Ajustement automatique",
@@ -2975,7 +3086,6 @@
     "mode": "Mode",
     "mode-kiosk": "Kiosque",
     "mode-normal": "Normal",
-    "mode-tv": "Téléviseur",
     "title": "Partager la playlist"
   },
   "shared": {
@@ -3069,6 +3179,7 @@
       "copy-link-button": "",
       "delete-button": "",
       "delete-description": "",
+      "delete-permission-tooltip": "",
       "delete-title": "",
       "deleted-alert": "",
       "expiration-label": "",
@@ -3172,9 +3283,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",
@@ -3281,6 +3390,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }

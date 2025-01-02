@@ -53,7 +53,7 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
+	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
@@ -70,7 +70,7 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -526,20 +526,14 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
-	if options.TypedID != "" {
-		userID, err := options.ComputeUserID()
-		if err != nil {
-			s.log.Error("Failed to resolve user ID", "error", err)
-			return nil, err
-		}
-
+	if options.UserID > 0 {
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
 		}
-		return map[int64][]accesscontrol.Permission{userID: userPerms}, nil
+		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
 	}
 
 	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
@@ -641,7 +635,7 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.TypedID == "" {
+	if searchOptions.UserID <= 0 {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
@@ -655,20 +649,15 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.searchUserPermissions")
 	defer span.End()
 
-	userID, err := searchOptions.ComputeUserID()
-	if err != nil {
-		return nil, err
-	}
-
 	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{searchOptions.UserID}, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
 	}
 	var roles []string
 	var ok bool
-	if roles, ok = roleList[userID]; !ok {
-		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
+	if roles, ok = roleList[searchOptions.UserID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
 	}
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range roles {
@@ -692,13 +681,13 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	if err != nil {
 		return nil, err
 	}
-	permissions = append(permissions, dbPermissions[userID]...)
+	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 
-	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
+	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: searchOptions.UserID, OrgID: orgID}, searchOptions)
 	if err != nil {
 		s.log.Warn("failed to create search permission cache key", "err", err)
 	} else {
@@ -712,14 +701,9 @@ func (s *Service) searchUserPermissionsFromCache(ctx context.Context, orgID int6
 	_, span := tracer.Start(ctx, "accesscontrol.acimpl.searchUserPermissionsFromCache")
 	defer span.End()
 
-	userID, err := searchOptions.ComputeUserID()
-	if err != nil {
-		return nil, false
-	}
-
 	// Create a temp signed in user object to retrieve cache key
 	tempUser := &user.SignedInUser{
-		UserID: userID,
+		UserID: searchOptions.UserID,
 		OrgID:  orgID,
 	}
 

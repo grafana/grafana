@@ -11,10 +11,10 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -132,7 +132,7 @@ type rowsWrapper struct {
 	err error
 }
 
-func (a *dashboardSqlAccess) Namespaces(ctx context.Context) ([]string, error) {
+func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -314,10 +314,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString, id sql.NullInt64) string {
 	if v.Valid && v.String != "" {
-		return identity.NewTypedIDString(claims.TypeUser, v.String)
+		return claims.NewTypeID(claims.TypeUser, v.String)
 	}
 	if id.Valid && id.Int64 == -1 {
-		return identity.NewTypedIDString(claims.TypeProvisioning, "")
+		return claims.NewTypeID(claims.TypeProvisioning, "")
 	}
 	return ""
 }
@@ -382,10 +382,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 
 	var userID int64
-	idClaims := user.GetIdentity()
-	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
 		var err error
-		userID, err = identity.UserIdentifier(idClaims.Subject())
+		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {
 			return nil, false, err
 		}
@@ -409,6 +408,15 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
+
+	// stash the raw value in context (if requested)
+	access := GetLegacyAccess(ctx)
+	if access != nil {
+		id, ok, _ := unstructured.NestedInt64(dash.Spec.Object, "id")
+		if ok {
+			access.DashboardID = id
+		}
+	}
 	return dash, created, err
 }
 

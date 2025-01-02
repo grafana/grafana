@@ -84,13 +84,19 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-|                                      |                                      |
-| ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)           | [Status history](ref:status-history) |
-| [Candlestick](ref:candlestick)       | [Time series](ref:time-series)       |
-| [Heatmap](ref:heatmap)               | [Trend](ref:trend)                   |
-| [Pie chart](ref:pie-chart)           | [XY chart](ref:xy-chart)             |
-| [State timeline](ref:state-timeline) |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Candlestick](ref:candlestick)
+- [Heatmap](ref:heatmap)
+- [Pie chart](ref:pie-chart)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
 
 Some visualizations, for example [candlestick](ref:candlestick) and [flame graph](ref:flame-graph), have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane. [Geomaps](ref:geomaps) provide you the option to have tooltips triggered upon click or hover under the **Map controls** options in the panel editor pane.
 

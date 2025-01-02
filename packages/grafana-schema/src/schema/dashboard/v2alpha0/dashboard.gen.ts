@@ -1,5 +1,8 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+import * as common from '@grafana/schema';
+
+
 export interface DashboardV2Spec {
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
@@ -24,10 +27,10 @@ export interface DashboardV2Spec {
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// Tags associated with dashboard.
-	tags?: string[];
+	tags: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
-	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind)[];
+	variables: VariableKind[];
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
@@ -42,10 +45,11 @@ export interface DashboardV2Spec {
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	title: "",
-	cursorSync: DashboardCursorSync.Off,
+	cursorSync: "Off",
 	preload: false,
 	editable: true,
 	links: [],
+	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
 	variables: [],
 	elements: {},
@@ -69,13 +73,9 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export enum DashboardCursorSync {
-	Off = "Off",
-	Crosshair = "Crosshair",
-	Tooltip = "Tooltip",
-}
+export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
 
-export const defaultDashboardCursorSync = (): DashboardCursorSync => (DashboardCursorSync.Off);
+export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
 // Links with references to other dashboards or external resources
 export interface DashboardLink {
@@ -104,7 +104,7 @@ export interface DashboardLink {
 
 export const defaultDashboardLink = (): DashboardLink => ({
 	title: "",
-	type: DashboardLinkType.Link,
+	type: "link",
 	icon: "",
 	tooltip: "",
 	tags: [],
@@ -135,8 +135,7 @@ export interface DataTransformerConfig {
 	// Optional frame matcher. When missing it will be applied to all results
 	filter?: MatcherConfig;
 	// Where to pull DataFrames from as input to transformation
-	// replaced with common.DataTopic
-	topic?: "series" | "annotations" | "alertStates";
+	topic?: common.DataTopic;
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	options: any;
@@ -145,6 +144,17 @@ export interface DataTransformerConfig {
 export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 	id: "",
 	options: {},
+});
+
+export interface DataLink {
+	title: string;
+	url: string;
+	targetBlank?: boolean;
+}
+
+export const defaultDataLink = (): DataLink => ({
+	title: "",
+	url: "",
 });
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -247,7 +257,7 @@ export const defaultMatcherConfig = (): MatcherConfig => ({
 });
 
 export interface Threshold {
-	value: number | null;
+	value: number;
 	color: string;
 }
 
@@ -256,12 +266,9 @@ export const defaultThreshold = (): Threshold => ({
 	color: "",
 });
 
-export enum ThresholdsMode {
-	Absolute = "absolute",
-	Percentage = "percentage",
-}
+export type ThresholdsMode = "absolute" | "percentage";
 
-export const defaultThresholdsMode = (): ThresholdsMode => (ThresholdsMode.Absolute);
+export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface ThresholdsConfig {
 	mode: ThresholdsMode;
@@ -269,7 +276,7 @@ export interface ThresholdsConfig {
 }
 
 export const defaultThresholdsConfig = (): ThresholdsConfig => ({
-	mode: ThresholdsMode.Absolute,
+	mode: "absolute",
 	steps: [],
 });
 
@@ -282,14 +289,9 @@ export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 // `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-export enum MappingType {
-	Value = "value",
-	Range = "range",
-	Regex = "regex",
-	Special = "special",
-}
+export type MappingType = "value" | "range" | "regex" | "special";
 
-export const defaultMappingType = (): MappingType => (MappingType.Value);
+export const defaultMappingType = (): MappingType => ("value");
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -365,22 +367,15 @@ export interface SpecialValueMap {
 export const defaultSpecialValueMap = (): SpecialValueMap => ({
 	type: "special",
 	options: {
-	match: SpecialValueMatch.True,
+	match: "true",
 	result: defaultValueMappingResult(),
 },
 });
 
 // Special value types supported by the `SpecialValueMap`
-export enum SpecialValueMatch {
-	True = "true",
-	False = "false",
-	Null = "null",
-	NotANumber = "nan",
-	NullNan = "null+nan",
-	Empty = "empty",
-}
+export type SpecialValueMatch = "true" | "false" | "null" | "nan" | "null+nan" | "empty";
 
-export const defaultSpecialValueMatch = (): SpecialValueMatch => (SpecialValueMatch.True);
+export const defaultSpecialValueMatch = (): SpecialValueMatch => ("true");
 
 // Result used as replacement with text and color when the value matches
 export interface ValueMappingResult {
@@ -415,34 +410,14 @@ export const defaultValueMappingResult = (): ValueMappingResult => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export enum FieldColorModeId {
-	Thresholds = "thresholds",
-	PaletteClassic = "palette-classic",
-	PaletteClassicByName = "palette-classic-by-name",
-	ContinuousGrYlRd = "continuous-GrYlRd",
-	ContinuousRdYlGr = "continuous-RdYlGr",
-	ContinuousBlYlRd = "continuous-BlYlRd",
-	ContinuousYlRd = "continuous-YlRd",
-	ContinuousBlPu = "continuous-BlPu",
-	ContinuousYlBl = "continuous-YlBl",
-	ContinuousBlues = "continuous-blues",
-	ContinuousReds = "continuous-reds",
-	ContinuousGreens = "continuous-greens",
-	ContinuousPurples = "continuous-purples",
-	Fixed = "fixed",
-	Shades = "shades",
-}
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
 
-export const defaultFieldColorModeId = (): FieldColorModeId => (FieldColorModeId.Thresholds);
+export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
-export enum FieldColorSeriesByMode {
-	Min = "min",
-	Max = "max",
-	Last = "last",
-}
+export type FieldColorSeriesByMode = "min" | "max" | "last";
 
-export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => (FieldColorSeriesByMode.Min);
+export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
 
 // Map a field to a color.
 export interface FieldColor {
@@ -455,16 +430,13 @@ export interface FieldColor {
 }
 
 export const defaultFieldColor = (): FieldColor => ({
-	mode: FieldColorModeId.Thresholds,
+	mode: "thresholds",
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-export enum DashboardLinkType {
-	Link = "link",
-	Dashboards = "dashboards",
-}
+export type DashboardLinkType = "link" | "dashboards";
 
-export const defaultDashboardLinkType = (): DashboardLinkType => (DashboardLinkType.Link);
+export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
 
 // --- Common types ---
 export interface Kind {
@@ -503,11 +475,9 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	datasource: DataSourceRef;
-	query: DataQueryKind;
-	// TODO: Should be figured out based on datasource (Grafana ds)
-	// builtIn?: int
-	// Below are currently existing options for annotation queries
+	datasource?: DataSourceRef;
+	query?: DataQueryKind;
+	builtIn?: boolean;
 	enable: boolean;
 	filter: AnnotationPanelFilter;
 	hide: boolean;
@@ -516,8 +486,7 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	datasource: defaultDataSourceRef(),
-	query: defaultDataQueryKind(),
+	builtIn: false,
 	enable: false,
 	filter: defaultAnnotationPanelFilter(),
 	hide: false,
@@ -542,6 +511,7 @@ export interface QueryOptionsSpec {
 	queryCachingTTL?: number;
 	interval?: string;
 	cacheTimeout?: string;
+	hideTimeOverride?: boolean;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
@@ -560,14 +530,13 @@ export const defaultDataQueryKind = (): DataQueryKind => ({
 
 export interface PanelQuerySpec {
 	query: DataQueryKind;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	refId: string;
 	hidden: boolean;
 }
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	datasource: defaultDataSourceRef(),
 	refId: "",
 	hidden: false,
 });
@@ -726,16 +695,17 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface PanelSpec {
-	uid: string;
+	id: number;
 	title: string;
 	description: string;
-	links: DashboardLink[];
+	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
+	transparent?: boolean;
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
-	uid: "",
+	id: 0,
 	title: "",
 	description: "",
 	links: [],
@@ -782,7 +752,7 @@ export interface CustomFormatterVariable {
 
 export const defaultCustomFormatterVariable = (): CustomFormatterVariable => ({
 	name: "",
-	type: VariableType.Query,
+	type: "query",
 	multi: false,
 	includeAll: false,
 });
@@ -813,7 +783,7 @@ export const defaultVariableCustomFormatterFn = (): VariableCustomFormatterFn =>
 	value: {},
 	legacyVariableModel: {
 	name: "",
-	type: VariableType.Query,
+	type: "query",
 	multi: false,
 	includeAll: false,
 },
@@ -828,20 +798,13 @@ export const defaultVariableCustomFormatterFn = (): VariableCustomFormatterFn =>
 // `textbox`: Display a free text input field with an optional default value.
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-export enum VariableType {
-	Query = "query",
-	Adhoc = "adhoc",
-	Groupby = "groupby",
-	Constant = "constant",
-	Datasource = "datasource",
-	Interval = "interval",
-	Textbox = "textbox",
-	Custom = "custom",
-	System = "system",
-	Snapshot = "snapshot",
-}
+export type VariableType = "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" | "snapshot";
 
-export const defaultVariableType = (): VariableType => (VariableType.Query);
+export const defaultVariableType = (): VariableType => ("query");
+
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+
+export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
 // Sort variable options
 // Accepted values are:
@@ -855,41 +818,23 @@ export const defaultVariableType = (): VariableType => (VariableType.Query);
 // `naturalAsc`: Natural ASC
 // `naturalDesc`: Natural DESC
 // VariableSort enum with default value
-export enum VariableSort {
-	Disabled = "disabled",
-	AlphabeticalAsc = "alphabeticalAsc",
-	AlphabeticalDesc = "alphabeticalDesc",
-	NumericalAsc = "numericalAsc",
-	NumericalDesc = "numericalDesc",
-	AlphabeticalCaseInsensitiveAsc = "alphabeticalCaseInsensitiveAsc",
-	AlphabeticalCaseInsensitiveDesc = "alphabeticalCaseInsensitiveDesc",
-	NaturalAsc = "naturalAsc",
-	NaturalDesc = "naturalDesc",
-}
+export type VariableSort = "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAsc" | "numericalDesc" | "alphabeticalCaseInsensitiveAsc" | "alphabeticalCaseInsensitiveDesc" | "naturalAsc" | "naturalDesc";
 
-export const defaultVariableSort = (): VariableSort => (VariableSort.Disabled);
+export const defaultVariableSort = (): VariableSort => ("disabled");
 
 // Options to config when to refresh a variable
 // `never`: Never refresh the variable
 // `onDashboardLoad`: Queries the data source every time the dashboard loads.
 // `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
-export enum VariableRefresh {
-	Never = "never",
-	OnDashboardLoad = "onDashboardLoad",
-	OnTimeRangeChanged = "onTimeRangeChanged",
-}
+export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
-export const defaultVariableRefresh = (): VariableRefresh => (VariableRefresh.Never);
+export const defaultVariableRefresh = (): VariableRefresh => ("never");
 
 // Determine if the variable shows on dashboard
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-export enum VariableHide {
-	DontHide = "dontHide",
-	HideLabel = "hideLabel",
-	HideVariable = "hideVariable",
-}
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable";
 
-export const defaultVariableHide = (): VariableHide => (VariableHide.DontHide);
+export const defaultVariableHide = (): VariableHide => ("dontHide");
 
 // FIXME: should we introduce this? --- Variable value option
 export interface VariableValueOption {
@@ -927,7 +872,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	query: string | DataQueryKind;
 	regex: string;
 	sort: VariableSort;
@@ -942,13 +887,12 @@ export interface QueryVariableSpec {
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	name: "",
 	current: { text: "", value: "", },
-	hide: VariableHide.DontHide,
-	refresh: VariableRefresh.Never,
+	hide: "dontHide",
+	refresh: "never",
 	skipUrlSync: false,
-	datasource: defaultDataSourceRef(),
 	query: "",
 	regex: "",
-	sort: VariableSort.Disabled,
+	sort: "disabled",
 	options: [],
 	multi: false,
 	includeAll: false,
@@ -980,7 +924,7 @@ export const defaultTextVariableSpec = (): TextVariableSpec => ({
 	name: "",
 	current: { text: "", value: "", },
 	query: "",
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1010,7 +954,7 @@ export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
 	name: "",
 	query: "",
 	current: { text: "", value: "", },
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1032,7 +976,6 @@ export interface DatasourceVariableSpec {
 	refresh: VariableRefresh;
 	regex: string;
 	current: VariableOption;
-	defaultOptionEnabled: boolean;
 	options: VariableOption[];
 	multi: boolean;
 	includeAll: boolean;
@@ -1046,14 +989,13 @@ export interface DatasourceVariableSpec {
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	name: "",
 	pluginId: "",
-	refresh: VariableRefresh.Never,
+	refresh: "never",
 	regex: "",
 	current: { text: "", value: "", },
-	defaultOptionEnabled: false,
 	options: [],
 	multi: false,
 	includeAll: false,
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1092,8 +1034,8 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto: false,
 	auto_min: "",
 	auto_count: 0,
-	refresh: VariableRefresh.Never,
-	hide: VariableHide.DontHide,
+	refresh: "never",
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1130,7 +1072,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	options: [],
 	multi: false,
 	includeAll: false,
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1148,7 +1090,7 @@ export const defaultCustomVariableKind = (): CustomVariableKind => ({
 // GroupBy variable specification
 export interface GroupByVariableSpec {
 	name: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
@@ -1162,12 +1104,11 @@ export interface GroupByVariableSpec {
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	name: "",
-	datasource: defaultDataSourceRef(),
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
 	includeAll: false,
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 
@@ -1185,7 +1126,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 // Adhoc variable specification
 export interface AdhocVariableSpec {
 	name: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	baseFilters: AdHocFilterWithLabels[];
 	filters: AdHocFilterWithLabels[];
 	defaultKeys: MetricFindValue[];
@@ -1197,11 +1138,10 @@ export interface AdhocVariableSpec {
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	name: "",
-	datasource: defaultDataSourceRef(),
 	baseFilters: [],
 	filters: [],
 	defaultKeys: [],
-	hide: VariableHide.DontHide,
+	hide: "dontHide",
 	skipUrlSync: false,
 });
 

@@ -281,8 +281,3 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 	return oas, err
 }
-
-// Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}

@@ -178,7 +178,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, bool)
 }
 
 type SSOSettingsAwareClient interface {

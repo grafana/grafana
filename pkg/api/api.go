@@ -66,7 +66,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqRoleForAppRoute := middleware.RoleAppPluginAuth(hs.AccessControl, hs.pluginStore, hs.Features, hs.log)
-	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
+	reqSnapshotPublicModeOrCreate := middleware.SnapshotPublicModeOrCreate(hs.Cfg, hs.AccessControl)
+	reqSnapshotPublicModeOrDelete := middleware.SnapshotPublicModeOrDelete(hs.Cfg, hs.AccessControl)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.authnService)
@@ -315,10 +316,6 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-			apiRoute.Group("/unified-search", hs.UnifiedSearchHTTPService.RegisterHTTPRoutes)
-		}
-
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
@@ -509,7 +506,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
+			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionSnapshotsRead)), routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist
@@ -610,11 +607,14 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), hs.AvatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, hs.GetSharingOptions)
+
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrCreate, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
-	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+	r.Delete("/api/snapshots/:key", authorize(ac.EvalPermission(dashboards.ActionSnapshotsDelete)), routing.Wrap(hs.DeleteDashboardSnapshot))
+
+	// Snapshots delete for public mode or using the deleteKey
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrDelete, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 }
 
 func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {

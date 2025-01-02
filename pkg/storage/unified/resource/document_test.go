@@ -12,7 +12,7 @@ import (
 
 func TestStandardDocumentBuilder(t *testing.T) {
 	ctx := context.Background()
-	builder := StandardDocumentBuilder().Builder
+	builder := StandardDocumentBuilder()
 
 	body, err := os.ReadFile("testdata/playlist-resource.json")
 	require.NoError(t, err)
@@ -33,8 +33,10 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
+		"kind": "playlists",
 		"rv": 10,
-		"title": "test1",
+		"title": "test playlist unified storage",
+		"title_sort": "test playlist unified storage",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
@@ -43,5 +45,5 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"path": "15",
 			"hash": "xyz"
 		}
-	}`, string(jj))
+		}`, string(jj))
 }

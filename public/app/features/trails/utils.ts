@@ -83,7 +83,7 @@ export function getDataSourceName(dataSourceUid: string) {
 
 export function getMetricName(metric?: string) {
   if (!metric) {
-    return 'Select metric';
+    return 'All metrics';
   }
 
   if (metric === LOGS_METRIC) {
@@ -97,13 +97,15 @@ export function getDatasourceForNewTrail(): string | undefined {
   const prevTrail = getTrailStore().recent[0];
   if (prevTrail) {
     const prevDataSource = sceneGraph.interpolate(prevTrail.resolve(), VAR_DATASOURCE_EXPR);
-    if (typeof prevDataSource === 'string' && prevDataSource.length > 0) {
+    if (prevDataSource.length > 0) {
       return prevDataSource;
     }
   }
   const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
   if (promDatasources.length > 0) {
-    return promDatasources.find((mds) => mds.uid === config.defaultDatasource)?.uid ?? promDatasources[0].uid;
+    const defaultDatasource = promDatasources.find((mds) => mds.isDefault);
+
+    return defaultDatasource?.uid ?? promDatasources[0].uid;
   }
   return undefined;
 }

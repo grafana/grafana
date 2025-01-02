@@ -1,18 +1,12 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import {
-  behaviors,
-  SceneQueryRunner,
-  SceneTimeRange,
-  VizPanel,
-  SceneDataTransformer,
-  SceneDataLayerSet,
-} from '@grafana/scenes';
+import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
@@ -150,8 +144,8 @@ function setup() {
       weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
-    $data: new SceneDataLayerSet({
-      layers: [
+    $data: new DashboardDataLayerSet({
+      annotationLayers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
           query: {

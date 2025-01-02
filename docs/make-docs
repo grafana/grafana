@@ -6,6 +6,20 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.3.0 (2024-12-27)
+#
+# ### Added
+#
+# - Debug output of the final command when DEBUG=true.
+#
+#   Useful to inspect if the script is correctly constructing the final command.
+#
+# ## 8.2.0 (2024-12-22)
+#
+# ### Removed
+#
+# - Special cases for Oracle and Datadog plugins now that they exist in the plugins monorepo.
+#
 # ## 8.1.0 (2024-08-22)
 #
 # ### Added
@@ -13,7 +27,7 @@
 # - Additional website mounts for projects that use the website repository.
 #
 #   Mounts are required for `make docs` to work in the website repository or with the website project.
-#   The Makefile is also mounted for convenient development of the procedure that repository.
+#   The Makefile is also mounted for convenient development of the procedure in that repository.
 #
 # ## 8.0.1 (2024-07-01)
 #
@@ -355,8 +369,6 @@ SOURCES_grafana_cloud_frontend_observability_faro_web_sdk='faro-web-sdk'
 SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
-SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
-SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
 SOURCES_resources='website'
 
 VERSIONS_as_code='UNVERSIONED'
@@ -367,8 +379,6 @@ VERSIONS_grafana_cloud_k6='UNVERSIONED'
 VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
 VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
-VERSIONS_plugins_grafana_datadog_datasource='latest'
-VERSIONS_plugins_grafana_oracle_datasource='latest'
 VERSIONS_resources='UNVERSIONED'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
@@ -378,8 +388,6 @@ PATHS_grafana_cloud='content/docs/grafana-cloud'
 PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
 PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
-PATHS_plugins_grafana_datadog_datasource='docs/sources'
-PATHS_plugins_grafana_oracle_datasource='docs/sources'
 PATHS_resources='content'
 PATHS_tempo='docs/sources/tempo'
 PATHS_website='content'
@@ -631,7 +639,7 @@ POSIX_HERESTRING
 
     case "${_project}" in
       # Workaround for arbitrary mounts where the version field is expected to be the local directory
-      # and the repo field is expected to be the container directory.
+     # and the repo field is expected to be the container directory.
       arbitrary)
         echo "${_project}^${_version}^${_repo}^" # TODO
         ;;
@@ -801,6 +809,10 @@ case "${image}" in
                 | sed "s#$(proj_dst "${proj}")#sources#"
 EOF
 
+    if [ -n "${DEBUG}" ]; then
+      debg "${cmd}"
+    fi
+
     case "${OUTPUT_FORMAT}" in
       human)
         if ! command -v jq >/dev/null 2>&1; then
@@ -836,6 +848,10 @@ EOF
                 --glob=*.md \
                 /hugo/content/docs
 EOF
+
+    if [ -n "${DEBUG}" ]; then
+      debg "${cmd}"
+    fi
 
     case "${OUTPUT_FORMAT}" in
       human)

@@ -1,4 +1,4 @@
-import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
+import { RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
@@ -12,12 +12,12 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { SimpleConditionIdentifier } from './SimpleCondition';
 import {
+  QueriesAndExpressionsState,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
   optimizeReduceExpression,
   queriesAndExpressionsReducer,
-  QueriesAndExpressionsState,
   removeExpression,
   rewireExpressions,
   setDataQueries,

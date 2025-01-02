@@ -18,7 +18,6 @@ export interface AddToExplorationButtonState extends SceneObjectState {
   fieldName?: string;
   context?: ExtensionContext;
 
-  disabledLinks: string[];
   queries: DataQuery[];
 }
 
@@ -37,8 +36,8 @@ interface ExtensionContext {
 }
 
 export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButtonState> {
-  constructor(state: Omit<AddToExplorationButtonState, 'disabledLinks' | 'queries'>) {
-    super({ ...state, disabledLinks: [], queries: [] });
+  constructor(state: Omit<AddToExplorationButtonState, 'queries'>) {
+    super({ ...state, queries: [] });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -98,7 +97,7 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToExplorationButton>) => {
-    const { context, disabledLinks } = model.useState();
+    const { context } = model.useState();
     const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
     const link = links.find((link) => link.pluginId === explorationsPluginId);
 
@@ -109,7 +108,6 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
     return (
       <IconButton
         tooltip={link.description}
-        disabled={link.category === 'disabled' || disabledLinks.includes(link.id)}
         aria-label={addToExplorationsButtonLabel} // this is overriden by the `tooltip`
         key={link.id}
         name={link.icon ?? 'panel-add'}
@@ -117,7 +115,6 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
           if (link.onClick) {
             link.onClick(e);
           }
-          model.setState({ disabledLinks: [...disabledLinks, link.id] });
         }}
       />
     );

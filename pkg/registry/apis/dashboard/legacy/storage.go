@@ -246,7 +246,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.SearchRequest) (*resource.SearchResponse, error) {
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
 
@@ -332,4 +332,9 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 // Used for efficient provisioning
 func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
 	return nil, fmt.Errorf("not yet (origin)")
+}
+
+// GetStats implements ResourceServer.
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	return nil, fmt.Errorf("not yet (GetStats)")
 }

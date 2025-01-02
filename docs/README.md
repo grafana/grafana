@@ -19,6 +19,11 @@ First, make sure the Docker daemon is running on your machine. Then, follow thes
 
 If you have the grafana/website repo checked out in the same directory as the grafana repo, then you can run `make docs-local-static` to use local assets (such as images).
 
+## Deploy preview
+
+When you open a PR that changes files in the `docs/sources/` directory, CI builds a deploy preview.
+After the deploy preview has been built, the **Deploy pr preview** workflow comments a link to the preview URL and adds a commit status check .
+
 ---
 
 ## Content guidelines

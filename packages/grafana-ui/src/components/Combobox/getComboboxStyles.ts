@@ -19,7 +19,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       display: 'none',
     }),
     menu: css({
-      label: 'grafana-select-menu',
+      label: 'combobox-menu',
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
@@ -27,11 +27,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
     }),
     menuUlContainer: css({
-      label: 'grafana-select-menu-ul-container',
+      label: 'combobox-menu-ul-container',
       listStyle: 'none',
     }),
     option: css({
-      label: 'grafana-select-option',
+      label: 'combobox-option',
       padding: MENU_ITEM_PADDING,
       position: 'absolute',
       display: 'flex',
@@ -50,7 +50,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       },
     }),
     optionBody: css({
-      label: 'grafana-select-option-body',
+      label: 'combobox-option-body',
       display: 'flex',
       fontWeight: theme.typography.fontWeightMedium,
       flexDirection: 'column',
@@ -58,7 +58,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     optionLabel: css({
-      label: 'grafana-select-option-label',
+      label: 'combobox-option-label',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       fontSize: MENU_ITEM_FONT_SIZE,
@@ -66,7 +66,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       letterSpacing: 0, // pr todo: text in grafana has a slightly different letter spacing, which causes measureText() to be ~5% off
     }),
     optionDescription: css({
-      label: 'grafana-select-option-description',
+      label: 'combobox-option-description',
       fontWeight: 'normal',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
@@ -75,7 +75,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     optionFocused: css({
-      label: 'grafana-select-option-focused',
+      label: 'combobox-option-focused',
       top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
@@ -97,7 +97,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       },
     }),
     clear: css({
-      label: 'grafana-select-clear',
+      label: 'combobox-clear',
       cursor: 'pointer',
       pointerEvents: 'auto',
       '&:hover': {
@@ -105,13 +105,20 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       },
     }),
     warningIcon: css({
-      label: 'grafana-select-warning-icon',
+      label: 'combobox-warning-icon',
       color: theme.colors.text.secondary,
     }),
     input: css({
-      label: 'grafana-select-input',
+      label: 'combobox-input',
       '> div > div:last-child': {
         pointerEvents: 'none',
+      },
+    }),
+    addaptToParent: css({
+      label: 'combobox-addapt-to-parent',
+      maxWidth: '100%',
+      '[class*="input-wrapper-combobox-input"]': {
+        maxWidth: '100%',
       },
     }),
   };

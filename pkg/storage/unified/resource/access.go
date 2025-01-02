@@ -39,8 +39,8 @@ type groupResource map[string]map[string]interface{}
 // For now, it makes one call to the authz service for each list items. This is known to be inefficient.
 type authzLimitedClient struct {
 	client authz.AccessChecker
-	// whitelist is a map of group to resources that are compatible with RBAC.
-	whitelist groupResource
+	// allowlist is a map of group to resources that are compatible with RBAC.
+	allowlist groupResource
 	logger    *slog.Logger
 	tracer    trace.Tracer
 }
@@ -57,7 +57,7 @@ func NewAuthzLimitedClient(client authz.AccessChecker, opts AuthzOptions) authz.
 	}
 	return &authzLimitedClient{
 		client: client,
-		whitelist: groupResource{
+		allowlist: groupResource{
 			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
 			"folder.grafana.app":    map[string]interface{}{"folders": nil},
 		},
@@ -107,7 +107,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		))
 		defer span.End()
 		if grpcutils.FallbackUsed(ctx) {
-			c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "fallback", true, "rbac", false, "allowed", true)
+			c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "fallback", true, "rbac", false, "allowed", true)
 			return true
 		}
 		// TODO: Implement For now we perform the check for each item.
@@ -134,8 +134,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
-	if _, ok := c.whitelist[group]; ok {
-		if _, ok := c.whitelist[group][resource]; ok {
+	if _, ok := c.allowlist[group]; ok {
+		if _, ok := c.allowlist[group][resource]; ok {
 			return true
 		}
 	}

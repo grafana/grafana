@@ -2,12 +2,67 @@
 
 exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model schema v2 1`] = `
 {
-  "annotations": [],
+  "annotations": [
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": false,
+        "iconColor": "red",
+        "name": "query1",
+      },
+    },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "abcdef",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": true,
+        "iconColor": "blue",
+        "name": "query2",
+      },
+    },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": true,
+        "iconColor": "green",
+        "name": "query3",
+      },
+    },
+  ],
   "cursorSync": "Crosshair",
   "description": "Test Description",
   "editable": true,
   "elements": {
-    "test-panel-uid": {
+    "panel-1": {
       "kind": "Panel",
       "spec": {
         "data": {
@@ -19,9 +74,19 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         },
         "description": "Test Description",
-        "links": [],
+        "id": 1,
+        "links": [
+          {
+            "targetBlank": true,
+            "title": "Test Link 1",
+            "url": "http://test1.com",
+          },
+          {
+            "title": "Test Link 2",
+            "url": "http://test2.com",
+          },
+        ],
         "title": "Test Panel",
-        "uid": "test-panel-uid",
         "vizConfig": {
           "kind": "timeseries",
           "spec": {
@@ -36,6 +101,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       },
     },
   },
+  "id": 1,
   "layout": {
     "kind": "GridLayout",
     "spec": {
@@ -45,7 +111,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "spec": {
             "element": {
               "kind": "ElementReference",
-              "name": "test-panel-uid",
+              "name": "panel-1",
             },
             "height": 0,
             "width": 0,
@@ -160,7 +226,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "text": "text1",
           "value": "value1",
         },
-        "defaultOptionEnabled": true,
         "description": "A datasource variable",
         "hide": "dontHide",
         "includeAll": false,
