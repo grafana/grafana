@@ -260,6 +260,10 @@ export class GrafanaApp {
 
       initializeScopes();
 
+      if (config.featureToggles.crashDetection) {
+        initializeCrashDetection();
+      }
+
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
         createElement(AppWrapper, {
