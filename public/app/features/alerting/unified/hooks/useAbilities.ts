@@ -13,18 +13,13 @@ import {
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import {
-  CombinedRule,
-  GrafanaNamespaceIdentifier,
-  GrafanaRuleGroupIdentifier,
-  RuleGroupIdentifierV2,
-} from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../utils/datasource';
+import { getRulesSourceName } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
