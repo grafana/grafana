@@ -173,7 +173,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _prevScrollPos?: number;
 
   // TODO: use feature toggle to allow v2 serializer
-  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
+  public serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -265,7 +265,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
-    this._serializer.onSaveComplete(saveModel, result);
+    this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
 
@@ -640,20 +640,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getInitialSaveModel() {
-    return this._serializer.initialSaveModel;
+    return this.serializer.initialSaveModel;
   }
 
   public getSnapshotUrl = () => {
-    return this._serializer.getSnapshotUrl();
+    return this.serializer.getSnapshotUrl();
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
   public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
-    this._serializer.initialSaveModel = saveModel;
+    this.serializer.initialSaveModel = saveModel;
   }
 
   public getTrackingInformation() {
-    return this._serializer.getTrackingInformation();
+    return this.serializer.getTrackingInformation();
   }
 
   public async onDashboardDelete() {
@@ -698,15 +698,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {
-    return this._serializer.getSaveModel(this);
+    return this.serializer.getSaveModel(this);
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
-    return this._serializer.getSaveAsModel(this, options);
+    return this.serializer.getSaveAsModel(this, options);
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 }
 

@@ -59,6 +59,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsNew,
   AnnoKeyDashboardIsSnapshot,
+  AnnoKeyDashboardSnapshotOriginalUrl,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -84,6 +85,7 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { V2DashboardSerializer } from './DashboardSceneSerializer';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -222,6 +224,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   });
 
   dashboardScene.setInitialSaveModel(dto.spec);
+  if (dashboardScene.serializer instanceof V2DashboardSerializer) {
+    dashboardScene.serializer.setSnapshotUrl(metadata.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl]);
+  } else {
+    console.error('Unexpected serializer type');
+  }
 
   return dashboardScene;
 }

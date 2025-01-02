@@ -16,10 +16,14 @@ import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashb
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardId,
+  AnnoKeyDashboardIsSnapshot,
+  AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
+  GrafanaAnnotations,
+  GrafanaClientAnnotations,
 } from 'app/features/apiserver/types';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
@@ -66,6 +70,20 @@ export function ensureV2Response(
       }
     : dto.meta;
 
+  const metaAnnotations: GrafanaAnnotations & GrafanaClientAnnotations = {
+    [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
+    [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
+    [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
+    [AnnoKeyFolder]: accessAndMeta.folderUid,
+    [AnnoKeySlug]: accessAndMeta.slug,
+    [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+  };
+
+  if (accessAndMeta.isSnapshot) {
+    metaAnnotations[AnnoKeyDashboardIsSnapshot] = accessAndMeta.isSnapshot;
+    metaAnnotations[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
+  }
+
   const spec: DashboardV2Spec = {
     title: dashboard.title,
     description: dashboard.description,
@@ -101,14 +119,7 @@ export function ensureV2Response(
       creationTimestamp: accessAndMeta.created || '', // TODO verify this empty string is valid
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
-      annotations: {
-        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
-        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
-        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
-        [AnnoKeyFolder]: accessAndMeta.folderUid,
-        [AnnoKeySlug]: accessAndMeta.slug,
-        [AnnoKeyDashboardId]: dashboard.id ?? undefined,
-      },
+      annotations: metaAnnotations,
     },
     spec,
     access: {

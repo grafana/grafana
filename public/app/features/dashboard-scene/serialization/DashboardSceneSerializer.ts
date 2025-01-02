@@ -120,6 +120,7 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
 export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
   initialSaveModel?: DashboardV2Spec;
+  snapshotUrl?: string;
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
@@ -165,8 +166,11 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getSnapshotUrl() {
-    throw new Error('v2 schema: Method not implemented.');
-    return undefined;
+    return this.snapshotUrl;
+  }
+
+  setSnapshotUrl(snapshotUrl?: string) {
+    this.snapshotUrl = snapshotUrl;
   }
 }
 
