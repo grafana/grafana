@@ -166,8 +166,8 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 		Key:       key,
 		Kind:      key.Resource,
 		RV:        rv,
-		Title:     title, // We always want *something* to display
-		TitleSort: title,
+		Title:     title,                  // We always want *something* to display
+		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
 		Labels:    obj.GetLabels(),
 		Folder:    obj.GetFolder(),
 		CreatedBy: obj.GetCreatedBy(),
