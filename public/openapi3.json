@@ -6487,6 +6487,10 @@
           "isStarred": {
             "type": "boolean"
           },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "permanentlyDeleteDate": {
             "format": "date-time",
             "type": "string"

@@ -75,6 +75,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			zclient,
 			nil,
 			nil,
+			nil,
 		)
 		require.NoError(t, err)
 

@@ -887,6 +887,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			zanzana.NewNoopClient(),
 			nil,
 			nil,
+			nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -956,6 +957,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		zanzana.NewNoopClient(),
 		nil,
 		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -982,6 +984,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		folder.NewFakeStore(),
 		nil,
 		zanzana.NewNoopClient(),
+		nil,
 		nil,
 		nil,
 	)
@@ -1029,6 +1032,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		folder.NewFakeStore(),
 		nil,
 		zanzana.NewNoopClient(),
+		nil,
 		nil,
 		nil,
 	)
@@ -1083,6 +1087,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		folder.NewFakeStore(),
 		nil,
 		zanzana.NewNoopClient(),
+		nil,
 		nil,
 		nil,
 	)
