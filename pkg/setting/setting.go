@@ -129,13 +129,14 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath              string
-	ProvisioningPath      string
-	DataPath              string
-	LogsPath              string
-	PluginsPath           string
-	BundledPluginsPath    string
-	EnterpriseLicensePath string
+	HomePath                   string
+	ProvisioningPath           string
+	PermittedProvisioningPaths []string
+	DataPath                   string
+	LogsPath                   string
+	PluginsPath                string
+	BundledPluginsPath         string
+	EnterpriseLicensePath      string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -1097,8 +1098,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
-	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
-	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
 	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err
@@ -1117,6 +1116,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readProvisioningSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1987,6 +1990,24 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 
 	cfg.LiveAllowedOrigins = originPatterns
+	return nil
+}
+
+func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+
+	provisioningPaths := strings.TrimSpace(valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", ""))
+	if provisioningPaths != "|" && provisioningPaths != "" {
+		cfg.PermittedProvisioningPaths = strings.Split(provisioningPaths, "|")
+		for i, s := range cfg.PermittedProvisioningPaths {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning path is empty in '%s' (at index %d)", provisioningPaths, i)
+			}
+			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
+		}
+	}
 	return nil
 }
 

@@ -1,11 +1,15 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
+import { useFolderRepository } from '../../provisioning/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
+import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
@@ -16,11 +20,18 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
   onSaveSuccess?: () => void;
+  saveProvisioned?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   public onClose = () => {
-    this.state.dashboardRef.resolve().setState({ overlay: undefined });
+    const dashboard = this.state.dashboardRef.resolve();
+    const changeInfo = dashboard.getDashboardChanges();
+    dashboard.setState({
+      overlay: undefined,
+      // Reset meta to initial state if it's a new dashboard to remove provisioned fields
+      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.state.meta,
+    });
   };
 
   public onToggleSaveTimeRange = () => {
@@ -36,7 +47,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+    const { saveProvisioned, showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
 
     const changeInfo = model.state.dashboardRef
       .resolve()
@@ -47,6 +58,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
+    const [params] = useUrlParams();
+    const folderUid = params.get('folderUid');
+    const folderRepository = useFolderRepository(folderUid ?? undefined);
+    // Provisioned dashboards have k8s metadata annotations
+    const isProvisionedNG = saveProvisioned || meta.k8s?.annotations?.[AnnoKeyRepoName] || Boolean(folderRepository);
 
     const tabs = (
       <TabsBar>
@@ -65,7 +81,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     let title = 'Save dashboard';
     if (saveAsCopy) {
       title = 'Save dashboard copy';
-    } else if (isProvisioned) {
+    } else if (isProvisioned || isProvisionedNG) {
       title = 'Provisioned dashboard';
     }
 
@@ -81,6 +97,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
             newFolder={folderTitle}
           />
         );
+      }
+
+      if (isProvisionedNG) {
+        return <SaveProvisionedDashboard dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 
       if (saveAsCopy || changeInfo.isNew) {
