@@ -59,6 +59,7 @@ export enum PromOperationId {
   Deg = 'deg',
   Delta = 'delta',
   Deriv = 'deriv',
+  DoubleExponentialSmoothing = 'double_exponential_smoothing',
   DropCommonLabels = 'drop_common_labels',
   Exp = 'exp',
   Floor = 'floor',
@@ -70,6 +71,8 @@ export enum PromOperationId {
   HistogramFraction = 'histogram_fraction',
   HistogramStddev = 'histogram_stddev',
   HistogramStdvar = 'histogram_stdvar',
+  // Renamed as DoubleExponentialSmoothing with Prometheus v3.x
+  // https://github.com/prometheus/prometheus/pull/14930
   HoltWinters = 'holt_winters',
   Hour = 'hour',
   Idelta = 'idelta',
