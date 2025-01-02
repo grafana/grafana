@@ -352,15 +352,3 @@ func (r *localRepository) Webhook(ctx context.Context, req *http.Request) (*prov
 		},
 	}, nil
 }
-
-func (r *localRepository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *localRepository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *localRepository) OnDelete(ctx context.Context) error {
-	return nil
-}

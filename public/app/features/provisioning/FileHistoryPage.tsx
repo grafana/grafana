@@ -1,7 +1,9 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Card, EmptyState, Spinner, Text, TextLink } from '@grafana/ui';
+import { Card, EmptyState, Spinner, Stack, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+
+import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from './api';
 import { HistoryListResponse } from './api/types';
@@ -13,9 +15,8 @@ export default function FileHistoryPage() {
   const path = params['*'] ?? '';
   const query = useGetRepositoryStatusQuery({ name });
   const history = useGetRepositoryHistoryWithPathQuery({ name, path });
+  const notFound = query.isError && isNotFoundError(query.error);
 
-  //@ts-expect-error TODO add error types
-  const notFound = query.isError && query.error?.status === 404;
   return (
     <Page
       navId="provisioning"
@@ -51,23 +52,25 @@ function HistoryView({ history, path, repo }: Props) {
   }
 
   return (
-    <div>
-      <div>
-        <h5>History</h5>
-        {history.items.map((item) => (
-          <Card href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`}>
-            <Card.Heading>{item.message}</Card.Heading>
-            <Card.Meta>
-              <>Authors</>
-              {item.authors.map((a) => (
-                <span>
-                  <a href={`https://github.com/${a.username}`}>{a.name}</a>
-                </span>
-              ))}
-            </Card.Meta>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <Stack direction={'column'}>
+      <h5>History</h5>
+      {history.items.map((item) => (
+        <Card href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`} key={item.ref}>
+          <Card.Heading>{item.message}</Card.Heading>
+          <Card.Meta>
+            <Stack gap={1}>
+              <span key={item.ref}>Authors:</span>
+              <Stack>
+                {item.authors.map((a) => (
+                  <span key={a.username}>
+                    <a href={`https://github.com/${a.username}`}>{a.name}</a>
+                  </span>
+                ))}
+              </Stack>
+            </Stack>
+          </Card.Meta>
+        </Card>
+      ))}
+    </Stack>
   );
 }

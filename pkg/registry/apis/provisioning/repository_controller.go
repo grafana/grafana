@@ -20,6 +20,7 @@ import (
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/slogctx"
 )
 
@@ -230,7 +231,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("unable to create repository from object: %w", err)
 		}
 
-		return repo.OnDelete(ctx)
+		hooks, ok := repo.(repository.RepositoryHooks)
+		if ok {
+			return hooks.OnDelete(ctx)
+		}
+		return nil
 	}
 
 	cachedRepo, err := rc.repoLister.Repositories(namespace).Get(name)
@@ -263,20 +268,22 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	logger.InfoContext(ctx, "repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
 
 	var status *provisioning.RepositoryStatus
-	if cachedRepo.Status.ObservedGeneration > 0 {
-		logger.InfoContext(ctx, "handle repository update")
-		status, err = repo.OnUpdate(ctx)
-		if err != nil {
-			return fmt.Errorf("handle repository update: %w", err)
-		}
-	} else {
-		logger.InfoContext(ctx, "handle repository init")
-		status, err = repo.OnCreate(ctx)
-		if err != nil {
-			return fmt.Errorf("handle repository create: %w", err)
+	hooks, ok := repo.(repository.RepositoryHooks)
+	if ok {
+		if cachedRepo.Status.ObservedGeneration > 0 {
+			logger.InfoContext(ctx, "handle repository update")
+			status, err = hooks.OnUpdate(ctx)
+			if err != nil {
+				return fmt.Errorf("handle repository update: %w", err)
+			}
+		} else {
+			logger.InfoContext(ctx, "handle repository init")
+			status, err = hooks.OnCreate(ctx)
+			if err != nil {
+				return fmt.Errorf("handle repository create: %w", err)
+			}
 		}
 	}
-
 	if status == nil {
 		status = cachedRepo.Status.DeepCopy()
 	}

@@ -111,15 +111,3 @@ func (r *unknownRepository) Webhook(ctx context.Context, req *http.Request) (*pr
 		},
 	}
 }
-
-func (r *unknownRepository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *unknownRepository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
-	return nil, nil
-}
-
-func (r *unknownRepository) OnDelete(ctx context.Context) error {
-	return nil
-}

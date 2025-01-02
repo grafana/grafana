@@ -273,15 +273,6 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
-			Name:           "prometheusMetricEncyclopedia",
-			Description:    "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "influxdbBackendMigration",
 			Description:    "Query InfluxDB InfluxQL without the proxy",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1526,6 +1517,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1570,15 +1569,8 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "dashboardSchemaV2",
-			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: true,
-		},
-		{
-			Name:            "playlistsWatcher",
-			Description:     "Enables experimental watcher for playlists",
+			Name:            "playlistsReconciler",
+			Description:     "Enables experimental reconciler for playlists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
@@ -1599,6 +1591,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
 			HideFromDocs: true,
+		},
+		{
+			Name:         "prometheusSpecialCharsInLabelValues",
+			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:            "enableExtensionsAdminPage",
@@ -1677,6 +1676,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "unifiedStorageSearchUI",
+			Description:       "Enable unified storage search UI",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "elasticsearchCrossClusterSearch",
 			Description: "Enables cross cluster search in the Elasticsearch datasource",
 			Stage:       FeatureStagePublicPreview,
@@ -1701,6 +1708,20 @@ var (
 			Description: "Enable the investigations backend API",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "k8SFolderCounts",
+			Description: "Enable folder's api server counts",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "k8SFolderMove",
+			Description: "Enable folder's api server move",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 		},
 	}

@@ -1,28 +1,18 @@
-import { useEffect } from 'react';
+import debounce from 'debounce-promise';
+import { ChangeEvent, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Field,
-  Input,
-  LinkButton,
-  RadioButtonGroup,
-  Spinner,
-  Stack,
-  TextArea,
-  TextLink,
-} from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
-import { RepositorySelect } from '../../provisioning/RepositorySelect';
-import { useGetRepositoryQuery, RepositorySpec } from '../../provisioning/api';
-import { PROVISIONING_URL } from '../../provisioning/constants';
-import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from '../../provisioning/hooks';
+import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
+import { RepositorySpec } from '../../provisioning/api';
+import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -37,28 +27,34 @@ type FormData = {
   comment?: string;
   repo: string;
   workflow?: WorkflowOption;
+  title: string;
+  description: string;
+  folder: { uid?: string; title?: string; repository?: string };
 };
 
 function getDefaultValues(meta: DashboardMeta) {
   const anno = meta.k8s?.annotations;
-  let ref = '';
-  let path = anno?.[AnnoKeyRepoPath] ?? `${meta.slug}.json` ?? '';
+  const timestamp = Date.now();
+  const ref = `dashboard/${timestamp}`;
+  const pathName = meta.slug || `new-dashboard-${timestamp}`;
+  let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
   const repo = anno?.[AnnoKeyRepoName] ?? '';
   const idx = path.indexOf('#');
   if (idx > 0) {
-    ref = path.substring(idx + 1);
     path = path.substring(0, idx);
   }
+
   return {
-    ref: ref || `dashboard/${Date.now()}`,
+    ref,
     path,
     repo,
     comment: '',
+    folder: { uid: meta.folderUid, title: '', repository: '' },
   };
 }
 
 const getDefaultWorkflow = (config?: RepositorySpec) => {
-  return config?.github?.branchWorkflow ? WorkflowOption.Branch : WorkflowOption.PullRequest;
+  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Branch;
 };
 
 function getWorkflowOptions(branch = 'main') {
@@ -69,18 +65,19 @@ function getWorkflowOptions(branch = 'main') {
 }
 
 export interface Props {
-  meta: DashboardMeta;
   dashboard: DashboardScene;
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
+export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
   // Saving as a new provisioned dashboard
   const { saveProvisioned } = drawer.useState();
+  const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
   const defaultValues = getDefaultValues(meta);
-  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned ? undefined : defaultValues.path);
+  const isNew = !meta.k8s?.annotations?.[AnnoKeyRepoPath];
+  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
     handleSubmit,
@@ -88,17 +85,20 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     formState: { errors },
     control,
     setValue,
-  } = useForm({
+  } = useForm<FormData>({
     defaultValues: {
       ...defaultValues,
+      title: defaultTitle,
+      description: defaultDescription,
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [repo, ref, workflow, path] = watch(['repo', 'ref', 'workflow', 'path']);
-  const repositoryConfigQuery = useGetRepositoryQuery({ name: repo });
-  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const [title, ref, workflow, path] = watch(['title', 'ref', 'workflow', 'path']);
+  const folderRepository = useFolderRepository(meta.folderUid);
+  const repositoryConfig = folderRepository?.spec;
+  const repo = folderRepository?.metadata?.name;
   const isGitHub = repositoryConfig?.type === 'github';
-  const href = createPRLink(repositoryConfig, repo, ref);
+  const href = createPRLink(repositoryConfig, title, ref);
   const { isDirty } = dashboard.state;
   const navigate = useNavigate();
 
@@ -110,10 +110,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-
-      if (saveProvisioned) {
-        navigate(`${PROVISIONING_URL}/${repo}/dashboard/preview/${path}?ref=${ref}`);
-      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -126,51 +122,95 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
   }, [repositoryConfig, setValue]);
 
-  const doSave = ({ ref, path, comment, repo }: FormData) => {
+  const doSave = async ({ ref, path, comment, repo, title, description }: FormData) => {
     if (!repo || !path) {
       return;
     }
 
+    const saveModel = dashboard.getSaveAsModel({
+      isNew: isNew,
+      title: title,
+      description: description,
+    });
+
     if (workflow === WorkflowOption.Branch) {
       ref = repositoryConfig?.github?.branch || 'main';
     }
-    action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+
+    action({ ref, name: repo, path, message: comment, body: saveModel });
   };
 
-  if (repositoryConfigQuery.isLoading) {
-    return (
-      <Stack justifyContent={'center'}>
-        <Spinner />
-      </Stack>
-    );
-  }
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        <div>
-          <Alert severity="warning" title="Development feature">
-            More warnings here... mostly exploratory interfaces.
+        {isGitHub && workflow === WorkflowOption.PullRequest && !isDirty && (
+          <Alert
+            severity="success"
+            title="Branch successfully created"
+            buttonContent={
+              <Stack alignItems={'center'}>
+                <span>Open pull request in GitHub</span>
+                <Icon name="external-link-alt" />
+              </Stack>
+            }
+            onRemove={() => {
+              window.open(href, '_blank');
+            }}
+          >
+            You can now open a pull request in Github.
           </Alert>
-        </div>
+        )}
+        {isNew && (
+          <>
+            <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
+              <Input
+                {...register('title', { required: 'Required', validate: validateDashboardName })}
+                onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
+                  setValue('title', e.target.value, { shouldValidate: true });
+                }, 400)}
+              />
+            </Field>
+            <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
+              <TextArea {...register('description')} />
+            </Field>
 
-        <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+            <Field label={'Target folder'}>
+              <Controller
+                control={control}
+                name={'folder'}
+                render={({ field: { ref, value, onChange, ...field } }) => {
+                  return (
+                    <FolderPicker
+                      onChange={(uid?: string, title?: string, repository?: string) => {
+                        onChange({ uid, title, repository });
+                        dashboard.setState({
+                          meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+                        });
+                      }}
+                      value={value.uid}
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Field>
+          </>
+        )}
 
-        <Field label="Repository">
-          {saveProvisioned ? (
-            <Controller
-              control={control}
-              name={'repo'}
-              render={({ field: { ref, onChange, ...field } }) => {
-                return <RepositorySelect {...field} onChange={(v) => onChange(v.value)} />;
-              }}
-            />
-          ) : (
-            <Input {...register('repo')} readOnly />
-          )}
-        </Field>
+        {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly={!saveProvisioned} />
+          <Input {...register('path')} readOnly={false} />
+        </Field>
+
+        <Field label="Comment">
+          <TextArea
+            {...register('comment')}
+            aria-label="comment"
+            placeholder="Add a note to describe your changes (optional)."
+            autoFocus
+            rows={5}
+          />
         </Field>
 
         {isGitHub && (
@@ -197,22 +237,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           </>
         )}
 
-        <Field label="Comment">
-          <TextArea
-            {...register('comment')}
-            aria-label="comment"
-            placeholder="Add a note to describe your changes (optional)."
-            autoFocus
-            rows={5}
-          />
-        </Field>
-
-        {workflow === WorkflowOption.PullRequest && isDirty && (
-          <Alert severity="warning" title="Unsaved changes">
-            You have unsaved changes. Please save them before opening a pull request.
-          </Alert>
-        )}
-
         {prURL && (
           <Alert severity="info" title="Pull request created">
             A pull request has been created with changes to this dashboard:{' '}
@@ -228,18 +252,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
             Cancel
           </Button>
-          {isGitHub && workflow === WorkflowOption.PullRequest && (
-            <LinkButton
-              variant="secondary"
-              href={href}
-              fill="outline"
-              target={'_blank'}
-              rel={'noreferrer noopener'}
-              disabled={isDirty}
-            >
-              Open pull request
-            </LinkButton>
-          )}
         </Stack>
       </Stack>
     </form>
@@ -258,3 +270,16 @@ const BranchValidationError = () => {
     </>
   );
 };
+
+async function validateDashboardName(title: string, formValues: FormData) {
+  if (title === formValues.folder.title?.trim()) {
+    return 'Dashboard name cannot be the same as folder name';
+  }
+
+  try {
+    await validationSrv.validateNewDashboardName(formValues.folder.uid ?? 'general', title);
+    return true;
+  } catch (e) {
+    return e instanceof Error ? e.message : 'Dashboard name is invalid';
+  }
+}
