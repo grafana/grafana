@@ -3,6 +3,7 @@ import { GrafanaRuleGroupIdentifier, RuleGroupIdentifier } from 'app/types/unifi
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { pauseRuleAction } from '../../reducers/ruler/ruleGroups';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
@@ -20,7 +21,7 @@ export function usePauseRuleInGroup() {
 
   return useAsync(async (ruleGroup: GrafanaRuleGroupIdentifier, uid: string, pause: boolean) => {
     const groupIdentifierV1: RuleGroupIdentifier = {
-      dataSourceName: ruleGroup.rulesSource.name,
+      dataSourceName: GRAFANA_RULES_SOURCE_NAME,
       namespaceName: ruleGroup.namespace.uid,
       groupName: ruleGroup.groupName,
     };

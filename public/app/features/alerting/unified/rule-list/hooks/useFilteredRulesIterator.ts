@@ -19,7 +19,7 @@ import {
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
-import { GrafanaRulesSource, getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
@@ -109,7 +109,6 @@ function mapGrafanaRuleToRuleWithOrigin(
   return {
     rule,
     groupIdentifier: {
-      rulesSource: GrafanaRulesSource,
       namespace: { uid: group.folderUid },
       groupName: group.name,
       groupOrigin: 'grafana',

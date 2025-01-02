@@ -9,6 +9,8 @@ import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
 type DeleteModalHook = [
@@ -40,8 +42,10 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
 
     const { ruleIdentifier, groupIdentifier } = ruleToDelete;
 
+    const rulesSourceName = getGroupOriginName(groupIdentifier);
+
     const groupIdentifierV1: RuleGroupIdentifier = {
-      dataSourceName: groupIdentifier.rulesSource.name,
+      dataSourceName: rulesSourceName,
       namespaceName:
         'uid' in groupIdentifier.namespace ? groupIdentifier.namespace.uid : groupIdentifier.namespace.name,
       groupName: groupIdentifier.groupName,
@@ -51,13 +55,13 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
 
     // refetch rules for this rules source
     // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: groupIdentifier.rulesSource.name }));
+    dispatch(fetchPromAndRulerRulesAction({ rulesSourceName }));
 
     if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
       await waitForRemoval(ruleIdentifier);
     } else {
       // Without this the delete popup will close and the user will still see the deleted rule
-      await dispatch(fetchRulerRulesAction({ rulesSourceName: groupIdentifier.rulesSource.name }));
+      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
 
     dismissModal();

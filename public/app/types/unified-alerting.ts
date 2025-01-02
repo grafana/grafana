@@ -209,7 +209,6 @@ export interface DataSourceNamespaceIdentifier {
 }
 
 export interface GrafanaRuleGroupIdentifier {
-  rulesSource: GrafanaRulesSourceIdentifier;
   groupName: string;
   namespace: GrafanaNamespaceIdentifier;
   groupOrigin: 'grafana';

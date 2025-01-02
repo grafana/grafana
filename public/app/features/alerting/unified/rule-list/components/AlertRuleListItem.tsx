@@ -5,13 +5,7 @@ import { ReactNode, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import {
-  GrafanaRulesSourceSymbol,
-  Rule,
-  RuleGroupIdentifierV2,
-  RuleHealth,
-  RulesSourceIdentifier,
-} from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
@@ -19,6 +13,7 @@ import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
@@ -268,12 +263,12 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const { rulesSource, namespace, groupName } = groupIdentifier;
+    const { namespace, groupName } = groupIdentifier;
     const ruleContext = {
       name: rule.name,
       groupName,
       namespace: JSON.stringify(namespace),
-      rulesSource: rulesSource.uid === GrafanaRulesSourceSymbol ? GRAFANA_RULES_SOURCE_NAME : rulesSource.uid,
+      rulesSource: getGroupOriginName(groupIdentifier),
     };
     logError(new Error('unknown rule type'), ruleContext);
   }, [rule, groupIdentifier]);
