@@ -36,7 +36,6 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 	if err != nil {
 		return nil, err
 	}
-	ctx, logger := slogctx.From(ctx, "parser", config.Name)
 
 	parser := &Parser{
 		repo:   config,
@@ -48,6 +47,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
+		logger := slogctx.From(ctx)
 		var linter lint.Linter
 		switch {
 		case err == nil:
@@ -120,7 +120,7 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
-func (r *Parser) ShouldIgnore(ctx context.Context, p string) bool {
+func (r *Parser) ShouldIgnore(p string) bool {
 	ext := filepath.Ext(p)
 	if ext == ".yaml" || ext == ".json" {
 		return false
@@ -130,12 +130,12 @@ func (r *Parser) ShouldIgnore(ctx context.Context, p string) bool {
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	ctx, logger := slogctx.From(ctx, "path", info.Path, "validate", validate)
+	logger := slogctx.From(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}
 
-	if r.ShouldIgnore(ctx, info.Path) {
+	if r.ShouldIgnore(info.Path) {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 

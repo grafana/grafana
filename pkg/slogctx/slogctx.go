@@ -1,5 +1,5 @@
 // Slogctx defines contextual slog utilities, that allow for tying a slog logger with each context.
-// Context sources should usually start with a `FromContext(ctx, "logger", "my-module-here")` such that all outputs have a logger attribute.
+// The package only defines the context-related actions. To add more data to the logger itself, call the `log/slog` functions directly, e.g. With or WithGroup.
 package slogctx
 
 import (
@@ -13,27 +13,14 @@ type key int
 // The loggerKey is the default key in the context. It is a separate type from any other, so no value is necessary. This is recommended practice, per Context.Value.
 var loggerKey key
 
-// With returns a Logger that includes the given attributes in each output operation.
-// Arguments are converted to attributes as if by [Logger.Log].
-// The attached context also includes this new logger.
-func With(ctx context.Context, logger *slog.Logger, values ...any) (context.Context, *slog.Logger) {
-	if len(values) == 0 {
-		return ctx, logger
-	}
-
-	logger = logger.With(values...)
-	return To(ctx, logger), logger
-}
-
 // FromContext fetches the logger from the context, or constructs a new one from slog.Default.
-// The output will also include the new values, as if you called With directly after.
-func From(ctx context.Context, values ...any) (context.Context, *slog.Logger) {
+// To include more values, you may want to call `With` or `WithGroup` directly afterwards.
+func From(ctx context.Context) *slog.Logger {
 	logger, ok := ctx.Value(loggerKey).(*slog.Logger)
 	if !ok {
-		logger = slog.Default()
+		return slog.Default()
 	}
-	ctx = To(ctx, logger)
-	return With(ctx, logger, values...)
+	return logger
 }
 
 // ToContext writes the logger to a new context wrapping the context given.

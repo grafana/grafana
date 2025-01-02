@@ -62,12 +62,13 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 	ns := repo.Config().GetNamespace()
-	ctx, logger := slogctx.From(ctx, "logger", "export-connector", "repository", name, "namespace", ns)
+	logger := slogctx.From(ctx).With("logger", "export-connector", "repository", name, "namespace", ns)
 
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = slogctx.To(ctx, logger)
 
 		job, err := c.queue.Add(ctx, &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{

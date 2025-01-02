@@ -106,16 +106,19 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 
 // Reads the queue until no jobs remain
 func (s *jobStore) drainPending() {
+	logger := slogctx.From(context.Background()).With("logger", "job-store")
+	ctx := slogctx.To(context.Background(), logger)
+
 	var err error
 	for {
 		time.Sleep(time.Microsecond * 200)
-		ctx, logger := slogctx.From(context.Background(), "logger", "job-store")
 
 		job := s.Checkout(ctx, nil)
 		if job == nil {
 			return // done
 		}
-		ctx, logger = slogctx.With(ctx, logger, "job", job.GetName(), "namespace", job.GetNamespace())
+		logger := logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+		ctx := slogctx.To(ctx, logger)
 
 		started := time.Now()
 		var status *provisioning.JobStatus

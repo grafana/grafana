@@ -117,7 +117,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
-	ctx, logger := slogctx.From(ctx, "logger", loggerName)
+	logger := slogctx.From(ctx).With("logger", loggerName)
+	ctx = slogctx.To(ctx, logger)
 	logger.InfoContext(ctx, "Starting RepositoryController")
 	defer logger.InfoContext(ctx, "Shutting down RepositoryController")
 
@@ -172,7 +173,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 	defer rc.queue.Done(item)
 
-	ctx, logger := slogctx.From(ctx, "key", item.key)
+	// TODO: should we move tracking work to trace ids instead?
+	logger := slogctx.From(ctx).With("work_key", item.key)
+	ctx = slogctx.To(ctx, logger) // lets us track the work in child tasks, similar to a trace id
 	logger.InfoContext(ctx, "RepositoryController processing key")
 
 	err := rc.processFn(item)
@@ -205,7 +208,11 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 // process is the business logic of the controller.
 func (rc *RepositoryController) process(item *queueItem) error {
-	ctx, logger := slogctx.From(context.Background(), "logger", loggerName, "key", item.key)
+	ctx := context.Background()
+
+	logger := slogctx.From(ctx).With("logger", loggerName, "key", item.key)
+	ctx = slogctx.To(ctx, logger)
+
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
 		return err
@@ -239,7 +246,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 	ctx = identity.WithRequester(ctx, id)
-	ctx, logger = slogctx.With(ctx, logger, "repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+	logger = logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
+	ctx = slogctx.To(ctx, logger)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {

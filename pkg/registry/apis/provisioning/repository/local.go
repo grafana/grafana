@@ -286,8 +286,7 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 
 	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
 	if err != nil {
-		_, logger := slogctx.From(ctx, "component", "local-repository")
-		logger.WarnContext(ctx, "got an invalid path from caller", "path", inputUnsafePath, "err", err)
+		slogctx.From(ctx).WarnContext(ctx, "got an invalid local path from caller", "path", inputUnsafePath, "err", err)
 		return err
 	}
 

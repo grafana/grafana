@@ -57,7 +57,9 @@ func NewJobWorker(
 }
 
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
-	ctx, logger := slogctx.From(ctx, "job", job.GetName(), "namespace", job.GetNamespace())
+	logger := slogctx.From(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	ctx = slogctx.To(ctx, logger)
+
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
 		return nil, err
@@ -68,7 +70,8 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	if !ok {
 		return nil, fmt.Errorf("missing repository name in label")
 	}
-	ctx, logger = slogctx.With(ctx, logger, "repository", repoName)
+	logger = logger.With("repository", repoName)
+	ctx = slogctx.To(ctx, logger)
 
 	repo, err := g.getter.GetRepository(ctx, repoName)
 	if err != nil {

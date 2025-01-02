@@ -57,7 +57,8 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ctx, logger := slogctx.From(ctx, "logger", "files-connector", "repository_name", name)
+	logger := slogctx.From(ctx).With("logger", "files-connector", "repository_name", name)
+	ctx = slogctx.To(ctx, logger)
 	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find repository", "error", err)
@@ -68,7 +69,8 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
-		ctx, logger := slogctx.With(r.Context(), logger, "url", r.URL.Path, "ref", ref, "message", message)
+		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
+		ctx := slogctx.To(r.Context(), logger)
 
 		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
@@ -257,7 +259,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err
 	}
 
-	_, logger := slogctx.From(ctx, "path", path)
+	logger := slogctx.From(ctx).With("path", path)
 	logger.InfoContext(ctx, "TODO! trigger sync for this file we just deleted...")
 
 	return &provisioning.ResourceWrapper{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"slices"
@@ -25,6 +26,7 @@ type SecretsService interface {
 	Encrypt(ctx context.Context, data string) (string, error)
 }
 
+// Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	config     *provisioning.Repository
 	gh         pgh.Client
@@ -178,7 +180,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 	}
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	ctx, logger := slogctx.From(ctx, "component", "github-repository", "owner", owner, "repo", repo, "ref", ref)
+	ctx, logger := r.logger(ctx, ref)
 
 	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
 	if err != nil {
@@ -212,6 +214,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on create: %w", err)
@@ -236,6 +239,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on update: %w", err)
@@ -268,6 +272,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
 		return fmt.Errorf("create branch on delete: %w", err)
@@ -296,6 +301,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+	ctx, _ = r.logger(ctx, ref)
 
 	commits, err := r.gh.Commits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, ref)
 	if err != nil {
@@ -384,8 +390,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 	}
 
 	if ok {
-		_, logger := slogctx.From(ctx, "component", "github-repository")
-		logger.InfoContext(ctx, "branch already exists", "branch", branchName)
+		slogctx.From(ctx).InfoContext(ctx, "branch already exists", "branch", branchName)
 
 		return nil
 	}
@@ -524,6 +529,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 }
 
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
+	ctx, _ = r.logger(ctx, "")
 	branch, err := r.gh.GetBranch(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, r.Config().Spec.GitHub.Branch)
 	if err != nil {
 		return "", fmt.Errorf("get branch: %w", err)
@@ -540,6 +546,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 			return nil, fmt.Errorf("get latest ref: %w", err)
 		}
 	}
+	ctx, logger := r.logger(ctx, ref)
 
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
@@ -581,7 +588,6 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		case "unchanged":
 			// do nothing
 		default:
-			_, logger := slogctx.From(ctx, "component", "github-repository")
 			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
 	}
@@ -595,16 +601,19 @@ func (r *githubRepository) shouldLintPullRequest() bool {
 
 // ClearAllPullRequestFileComments clears all comments on a pull request
 func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, prNumber int) error {
+	ctx, _ = r.logger(ctx, "")
 	return r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber)
 }
 
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
+	ctx, _ = r.logger(ctx, "")
 	return r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment)
 }
 
 // CommentPullRequestFile lints a file and comments the issues found.
 func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber int, path, ref, comment string) error {
+	ctx, _ = r.logger(ctx, ref)
 	fileComment := pgh.FileComment{
 		Content:  comment,
 		Path:     path,
@@ -636,8 +645,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, err
 	}
 
-	_, logger := slogctx.From(ctx)
-	logger.InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
+	slogctx.From(ctx).InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
 }
 
@@ -717,12 +725,12 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	_, logger := slogctx.From(ctx)
-	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
+	slogctx.From(ctx).InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
 func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
+	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
 		return nil, err
@@ -740,6 +748,7 @@ func (r *githubRepository) OnCreate(ctx context.Context) (*provisioning.Reposito
 }
 
 func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.RepositoryStatus, error) {
+	ctx, _ = r.logger(ctx, "")
 	hook, updated, err := r.updateWebhook(ctx)
 	if err != nil {
 		return nil, err
@@ -761,5 +770,27 @@ func (r *githubRepository) OnUpdate(ctx context.Context) (*provisioning.Reposito
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context) error {
+	ctx, _ = r.logger(ctx, "")
 	return r.deleteWebhook(ctx)
+}
+
+func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, *slog.Logger) {
+	logger := slogctx.From(ctx)
+
+	type containsGh int
+	var containsGhKey containsGh
+	if ctx.Value(containsGhKey) != nil {
+		return ctx, slogctx.From(ctx)
+	}
+
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	logger = logger.With(slog.Group("github_repository", "owner", owner, "name", repo, "ref", ref))
+	ctx = slogctx.To(ctx, logger)
+	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
+	ctx = context.WithValue(ctx, containsGhKey, true)
+	return ctx, logger
 }

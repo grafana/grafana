@@ -155,7 +155,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
 	serviceAccountName := fmt.Sprintf("%s-org-%d", o.serviceAccountNamePrefix, orgId)
-	ctx, logger := slogctx.From(ctx, "account_name", serviceAccountName)
+	logger := slogctx.From(ctx).With("account_name", serviceAccountName)
 	saForm := serviceaccounts.CreateServiceAccountForm{
 		Name: serviceAccountName,
 		Role: &o.role,

@@ -111,7 +111,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		return nil
 	}
 
-	ctx, logger := slogctx.From(ctx, "component", "pull-request-commenter", "pr", job.Spec.PR)
+	logger := slogctx.From(ctx).With("pr", job.Spec.PR)
 	logger.InfoContext(ctx, "process pull request")
 	defer logger.InfoContext(ctx, "pull request processed")
 
@@ -138,11 +138,11 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		if c.parser.ShouldIgnore(ctx, f.Path) {
+		if c.parser.ShouldIgnore(f.Path) {
 			continue
 		}
 
-		ctx, logger := slogctx.With(ctx, logger, "file", f.Path)
+		logger := logger.With("file", f.Path)
 		fileInfo, err := c.repo.Read(ctx, f.Path, ref)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", f.Path, err)

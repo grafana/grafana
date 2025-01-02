@@ -63,7 +63,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := slogctx.From(ctx, "logger", "webhook-connector", "repo", name)
+		logger := slogctx.From(r.Context()).With("logger", "webhook-connector", "repo", name)
+		ctx := slogctx.To(r.Context(), logger)
+
 		rsp, err := repo.Webhook(ctx, r)
 		if err != nil {
 			responder.Error(err)

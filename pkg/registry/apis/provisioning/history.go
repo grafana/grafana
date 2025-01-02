@@ -49,7 +49,8 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ctx, logger := slogctx.From(ctx, "logger", "history-connector", "repository_name", name)
+	logger := slogctx.From(ctx).With("logger", "history-subresource")
+	ctx = slogctx.To(ctx, logger)
 	repo, err := h.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find repository", "error", err)
@@ -59,7 +60,6 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
-		ctx, logger = slogctx.With(r.Context(), logger, "ref", ref)
 
 		var filePath string
 		prefix := fmt.Sprintf("/%s/history/", name)
@@ -68,7 +68,8 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 			filePath = r.URL.Path[idx+len(prefix):]
 		}
 
-		ctx, logger = slogctx.With(ctx, logger, "path", filePath)
+		logger := logger.With("ref", ref, "path", filePath)
+		ctx := slogctx.To(r.Context(), logger)
 
 		commits, err := repo.History(ctx, filePath, ref)
 		if err != nil {

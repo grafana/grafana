@@ -46,8 +46,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", ErrClassicResourceIsAlreadyK8sForm
 		}
 
-		_, logger := slogctx.From(ctx)
-		logger.DebugContext(ctx, "TODO... likely a provisioning",
+		slogctx.From(ctx).DebugContext(ctx, "TODO... likely a provisioning",
 			"apiVersion", value["apiVersion"],
 			"kind", value["Kind"])
 		gv, err := schema.ParseGroupVersion(value["apiVersion"].(string))
