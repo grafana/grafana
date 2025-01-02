@@ -570,6 +570,11 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
+		require.NoError(t, err)
+	})
 	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)

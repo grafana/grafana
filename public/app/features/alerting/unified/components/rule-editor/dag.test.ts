@@ -56,21 +56,21 @@ describe('working with dag', () => {
       dag.getNode('D');
     }).not.toThrow();
 
-    expect(dag.getNode('A').inputEdges).toHaveLength(0);
-    expect(dag.getNode('A').outputEdges).toHaveLength(0);
+    expect(dag.getNode('A')!.inputEdges).toHaveLength(0);
+    expect(dag.getNode('A')!.outputEdges).toHaveLength(0);
 
-    expect(dag.getNode('B').inputEdges).toHaveLength(0);
-    expect(dag.getNode('B').outputEdges).toHaveLength(2);
-    expect(dag.getNode('B').outputEdges[0].outputNode).toHaveProperty('name', 'C');
-    expect(dag.getNode('B').outputEdges[1].outputNode).toHaveProperty('name', 'D');
+    expect(dag.getNode('B')!.inputEdges).toHaveLength(0);
+    expect(dag.getNode('B')!.outputEdges).toHaveLength(2);
+    expect(dag.getNode('B')!.outputEdges[0].outputNode).toHaveProperty('name', 'C');
+    expect(dag.getNode('B')!.outputEdges[1].outputNode).toHaveProperty('name', 'D');
 
-    expect(dag.getNode('C').inputEdges).toHaveLength(1);
-    expect(dag.getNode('C').inputEdges[0].inputNode).toHaveProperty('name', 'B');
-    expect(dag.getNode('C').outputEdges).toHaveLength(0);
+    expect(dag.getNode('C')!.inputEdges).toHaveLength(1);
+    expect(dag.getNode('C')!.inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('C')!.outputEdges).toHaveLength(0);
 
-    expect(dag.getNode('D').inputEdges).toHaveLength(1);
-    expect(dag.getNode('D').inputEdges[0].inputNode).toHaveProperty('name', 'B');
-    expect(dag.getNode('D').outputEdges).toHaveLength(0);
+    expect(dag.getNode('D')!.inputEdges).toHaveLength(1);
+    expect(dag.getNode('D')!.inputEdges[0].inputNode).toHaveProperty('name', 'B');
+    expect(dag.getNode('D')!.outputEdges).toHaveLength(0);
   });
 
   test('data queries cannot have references', () => {

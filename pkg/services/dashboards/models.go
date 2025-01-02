@@ -305,6 +305,7 @@ type SaveDashboardDTO struct {
 type DashboardSearchProjection struct {
 	ID       int64  `xorm:"id"`
 	UID      string `xorm:"uid"`
+	OrgID    int64  `xorm:"org_id"`
 	Title    string
 	Slug     string
 	Term     string
