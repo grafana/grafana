@@ -3487,14 +3487,6 @@
           "token": {
             "description": "Token for accessing the repository.",
             "type": "string"
-          },
-          "webhookSecret": {
-            "description": "WebhookSecret is the secret used to validate incoming webhooks.",
-            "type": "string"
-          },
-          "webhookURL": {
-            "description": "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",
-            "type": "string"
           }
         }
       },
@@ -3505,12 +3497,7 @@
         ],
         "properties": {
           "checked": {
-            "description": "When the sync job started",
-            "type": "integer",
-            "format": "int64"
-          },
-          "generation": {
-            "description": "The generation (spec changed) that triggered this health check",
+            "description": "When the health was checked last time",
             "type": "integer",
             "format": "int64"
           },
@@ -3901,8 +3888,10 @@
         "description": "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
         "type": "object",
         "required": [
+          "observedGeneration",
           "health",
-          "sync"
+          "sync",
+          "webhook"
         ],
         "properties": {
           "health": {
@@ -3914,12 +3903,26 @@
               }
             ]
           },
+          "observedGeneration": {
+            "description": "The generation of the spec last time reconciliation ran",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
           "sync": {
-            "description": "Sync information",
+            "description": "Sync information with the last sync information",
             "default": {},
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus"
+              }
+            ]
+          },
+          "webhook": {
+            "description": "Webhook Information (if applicable)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus"
               }
             ]
           }
@@ -4239,6 +4242,28 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "subscribedEvents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "url": {
+            "type": "string"
+          }
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
