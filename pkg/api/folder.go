@@ -76,6 +76,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				} else {
 					folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 				}
+				folderUidRoute.Get("parents", handler.getFolderParents)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -808,6 +809,23 @@ func (fk8s *folderK8sHandler) countFolderContent(c *contextmodel.ReqContext) {
 	}
 
 	out, err := toFolderLegacyCounts(counts)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, out)
+}
+
+func (fk8s *folderK8sHandler) getFolderParents(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	uid := web.Params(c.Req)[":uid"]
+
+	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{}, "parents")
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
