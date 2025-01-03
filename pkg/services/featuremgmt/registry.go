@@ -1591,6 +1591,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "exploreMetricsRemoveOverviewTab",
+			Description:  "Remove overview tab from selected metric view.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "prometheusSpecialCharsInLabelValues",
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,
