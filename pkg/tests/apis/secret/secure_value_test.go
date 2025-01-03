@@ -39,6 +39,10 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
+	// Generic keeper name used in integration tests.
+	// Needed because creating/update securevalues requires the keeper to exist.
+	mustGenerateKeeper(t, helper, "my-keeper-1")
+
 	t.Run("creating a secure value without a name generates one", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
@@ -126,12 +130,16 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
+			newKeeperName := "New keeper"
+
 			newRaw := testDataSecureValueXyz.DeepCopy()
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = "New keeper"
+			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeperName
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["audiences"] = []string{"audience1/name1", "audience2/*"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
+
+			mustGenerateKeeper(t, helper, newKeeperName)
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -242,5 +250,29 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotNil(t, rawList)
 			require.Empty(t, rawList.Items)
 		})
+	})
+}
+
+func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, keeperName string) {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	keeperClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		// #TODO: figure out permissions topic
+		User: helper.Org1.Admin,
+		GVR:  gvrKeepers,
+	})
+
+	testKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+	testKeeper.Object["metadata"].(map[string]any)["name"] = keeperName
+
+	rawKeeper, err := keeperClient.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, rawKeeper)
+
+	t.Cleanup(func() {
+		require.NoError(t, keeperClient.Resource.Delete(ctx, rawKeeper.GetName(), metav1.DeleteOptions{}))
 	})
 }
