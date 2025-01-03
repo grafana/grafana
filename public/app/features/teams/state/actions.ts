@@ -1,11 +1,12 @@
 import { debounce } from 'lodash';
 
+import { Team } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, TeamWithRoles, TeamMember, ThunkResult, Team } from 'app/types';
+import { AccessControlAction, TeamWithRoles, TeamMember, ThunkResult } from 'app/types';
 
 import { buildNavModel } from './navModel';
 import {
