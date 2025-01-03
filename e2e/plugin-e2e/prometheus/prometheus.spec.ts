@@ -2,7 +2,7 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 import { enterCodeEditorQueryExpr, setEditorMode } from './utils';
 
-test('Smoke test: decoupled plugin loads', async ({ createDataSourceConfigPage, page }) => {
+test('Smoke test: config editor loads', async ({ createDataSourceConfigPage, page }) => {
   await createDataSourceConfigPage({ type: 'prometheus' });
   await expect(await page.getByText('Type: Prometheus', { exact: true })).toBeVisible();
   await expect(await page.getByRole('heading', { name: 'Connection', exact: true })).toBeVisible();
