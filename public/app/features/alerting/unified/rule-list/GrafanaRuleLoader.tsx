@@ -6,7 +6,7 @@ import { GrafanaRulesSource } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
-import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
+import { AlertRuleListItemLoader, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
@@ -18,16 +18,20 @@ interface GrafanaRuleLoaderProps {
 }
 
 export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
-  const { data: rulerRuleGroup } = useGetGrafanaRulerGroupQuery(groupIdentifier);
+  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery(groupIdentifier);
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === rule.uid);
 
   if (!rulerRule) {
+    if (isError) {
+      return <RulerRuleLoadingError rule={rule} />;
+    }
+
     return <AlertRuleListItemLoader />;
   }
 
   const {
-    grafana_alert: { title, provenance },
+    grafana_alert: { title, provenance, is_paused },
     annotations = {},
     labels = {},
   } = rulerRule;
@@ -44,6 +48,7 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     error: rule.lastError,
     labels: labels,
     isProvisioned,
+    isPaused: is_paused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
   };

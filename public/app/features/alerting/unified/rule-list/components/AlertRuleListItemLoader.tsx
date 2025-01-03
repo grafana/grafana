@@ -1,5 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 
+import { PromRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { ActionsLoader } from './ActionsLoader';
 import { ListItem } from './ListItem';
 import { RuleListIcon } from './RuleListIcon';
@@ -14,4 +16,8 @@ export function AlertRuleListItemLoader() {
       data-testid="alert-rule-list-item-loader"
     />
   );
+}
+
+export function RulerRuleLoadingError({ rule }: { rule: PromRuleDTO }) {
+  return <ListItem title={rule.name} description="Failed to load rule" data-testid="ruler-rule-loading-error" />;
 }
