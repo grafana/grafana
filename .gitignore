@@ -107,8 +107,8 @@ profile.cov
 # Extensions
 /pkg/extensions/*
 !/pkg/extensions/.keep
-/pkg/build/extensions/*
-!/pkg/build/extensions/.keep
+/pkg/build/cmd/extensions/*
+!/pkg/build/cmd/extensions/.keep
 /public/app/extensions
 !/public/app/extensions/.keep
 
