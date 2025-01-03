@@ -213,7 +213,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     throw new Error('Dashboard not found');
   }
 
-  async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
 
     if (rsp?.dashboard) {
@@ -370,7 +370,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
   DashboardWithAccessInfo<DashboardV2Spec>
 > {
-  async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await dashboardLoaderSrvV2.loadSnapshot(slug);
 
     if (rsp?.spec) {

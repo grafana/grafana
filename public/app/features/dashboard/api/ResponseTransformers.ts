@@ -69,7 +69,8 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
       [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
       [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
-      [AnnoKeyDashboardId]: dto.metadata.annotations?.[AnnoKeyDashboardId],
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
     };
     creationTimestamp = dto.metadata.creationTimestamp;
@@ -91,6 +92,8 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
     creationTimestamp = dto.meta.created;
