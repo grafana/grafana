@@ -1,10 +1,17 @@
 import { uniq } from 'lodash';
 
-import { TraceqlSearchScope } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 
-import { getUnscopedTags, getFilteredTags, getAllTags, getTagsByScope, generateQueryFromAdHocFilters } from './utils';
+import {
+  filterToQuerySection,
+  generateQueryFromAdHocFilters,
+  getAllTags,
+  getFilteredTags,
+  getTagsByScope,
+  getUnscopedTags,
+} from './utils';
 
 const datasource: TempoDatasource = {
   search: {
@@ -98,6 +105,76 @@ describe('gets correct tags', () => {
   it('for tags by span scope', () => {
     const tags = getTagsByScope(v2Tags, TraceqlSearchScope.Span);
     expect(tags).toEqual(['db']);
+  });
+});
+
+describe('filterToQuerySection returns the correct query section for a filter', () => {
+  it('filter with single value', () => {
+    const filter: TraceqlFilter = { id: 'abc', tag: 'foo', operator: '=', value: 'bar' };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('.foo=bar');
+  });
+
+  it('filter with regex operator', () => {
+    const filter: TraceqlFilter = { id: 'abc', tag: 'foo', operator: '=~', value: 'bar.*', valueType: 'string' };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('.foo=~"bar.*"');
+  });
+
+  it('filter with scope', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=',
+      value: 'bar',
+      scope: TraceqlSearchScope.Resource,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('resource.foo=bar');
+  });
+
+  it('filter with intrinsic tag', () => {
+    const filter: TraceqlFilter = { id: 'abc', tag: 'duration', operator: '=', value: '100ms' };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('duration=100ms');
+  });
+
+  it('filter with multiple non-string values and scope', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('(span.foo=bar || span.foo=baz)');
+  });
+
+  it('filter with multiple string values and scope', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('(span.foo="bar" || span.foo="baz")');
+  });
+
+  it('filter with multiple string values with regex', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=~',
+      value: ['bar', 'baz'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('span.foo=~"bar|baz"');
   });
 });
 

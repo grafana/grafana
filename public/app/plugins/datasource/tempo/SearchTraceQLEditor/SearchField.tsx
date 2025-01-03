@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
@@ -57,11 +57,6 @@ const SearchField = ({
     () => filterScopedTag(filter, datasource.languageProvider),
     [datasource.languageProvider, filter]
   );
-  // We automatically change the operator to the regex op when users select 2 or more values
-  // However, they expect this to be automatically rolled back to the previous operator once
-  // there's only one value selected, so we store the previous operator and value
-  const [prevOperator, setPrevOperator] = useState(filter.operator);
-  const [prevValue, setPrevValue] = useState(filter.value);
   const [tagQuery, setTagQuery] = useState<string>('');
   const [tagValuesQuery, setTagValuesQuery] = useState<string>('');
 
@@ -93,25 +88,6 @@ const SearchField = ({
   if (filter.value && !Array.isArray(filter.value) && options && !options.find((o) => o.value === filter.value)) {
     options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
   }
-
-  useEffect(() => {
-    if (
-      Array.isArray(filter.value) &&
-      filter.value.length > 1 &&
-      filter.operator !== '=~' &&
-      filter.operator !== '!~'
-    ) {
-      setPrevOperator(filter.operator);
-      updateFilter({ ...filter, operator: '=~' });
-    }
-    if (Array.isArray(filter.value) && filter.value.length <= 1 && (prevValue?.length || 0) > 1) {
-      updateFilter({ ...filter, operator: prevOperator, value: filter.value[0] });
-    }
-  }, [prevValue, prevOperator, updateFilter, filter]);
-
-  useEffect(() => {
-    setPrevValue(filter.value);
-  }, [filter.value]);
 
   const scopeOptions = Object.values(TraceqlSearchScope)
     .filter((s) => {
