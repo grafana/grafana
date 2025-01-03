@@ -5,7 +5,6 @@ This module returns all the pipelines used in the event of documentation changes
 load(
     "scripts/drone/steps/lib.star",
     "build_docs_website_step",
-    "codespell_step",
     "identify_runner_step",
     "verify_gen_cue_step",
     "yarn_install_step",
@@ -33,7 +32,6 @@ def docs_pipelines(ver_mode, trigger):
     steps = [
         identify_runner_step(),
         yarn_install_step(),
-        codespell_step(),
         lint_docs(),
         build_docs_website_step(),
         verify_gen_cue_step(),
