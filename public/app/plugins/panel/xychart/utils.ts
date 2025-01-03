@@ -128,12 +128,17 @@ export function prepSeries(
             let name = seriesCfg.name?.fixed;
 
             if (name == null) {
+              // if the displayed field name is likely to have a common prefix or suffix
+              // (such as those from Partition by values transformation)
+              const likelyHasCommonParts = frame.name != null || Object.keys(y.labels ?? {}).length > 0;
+
               // if the field was explictly (re)named using config.displayName or config.displayNameFromDS
               // we still want to retain any frame name prefix or suffix so that autoNameSeries() can
               // properly detect + strip common parts across all series...
               const { displayName, displayNameFromDS } = y.config;
+              const hasExplicitName = displayName != null || displayNameFromDS != null;
 
-              if (displayName != null || displayNameFromDS != null) {
+              if (likelyHasCommonParts && hasExplicitName) {
                 // ...and a hacky way to do this is to temp remove the explicit name, get the auto name, then revert
                 const stateDisplayName = y.state!.displayName;
 
