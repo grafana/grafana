@@ -838,6 +838,9 @@ func (s *Service) create(ctx context.Context, cmd *folder.CreateFolderCommand, u
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
 		f, err = s.setFullpath(ctx, f, user)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return f, nil

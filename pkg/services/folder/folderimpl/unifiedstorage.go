@@ -351,10 +351,12 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		return hits, nil
 	}
 
-	if len(q.AncestorUIDs) > 0 {
-		// TODO
-		//return all nodes under those ancestors, requires building a tree
-	}
+	/*
+		if len(q.AncestorUIDs) > 0 {
+			// TODO
+			//return all nodes under those ancestors, requires building a tree
+		}
+	*/
 
 	//return everything
 	for _, f := range m {
