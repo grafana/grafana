@@ -166,14 +166,14 @@ describe('BarChart utils', () => {
   });
 
   describe('prepareGraphableFrames', () => {
-    it('will warn when there is no frames in the response', () => {
+    it('will warn with empty message when there is no frames in the response', () => {
       const info = prepSeries([], fieldConfig, StackingMode.None, createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
 
-      expect(warning.warn).toEqual('No data in response');
+      expect(warning.warn).toEqual('');
     });
 
-    it('will warn when there is no data in the response', () => {
+    it('will warn with empty message when there is no data in the response', () => {
       const info = prepSeries(
         [
           {
@@ -187,7 +187,7 @@ describe('BarChart utils', () => {
       );
       const warning = assertIsDefined('warn' in info ? info : null);
 
-      expect(warning.warn).toEqual('No data in response');
+      expect(warning.warn).toEqual('');
     });
 
     it('will warn when there is no string or time field', () => {
