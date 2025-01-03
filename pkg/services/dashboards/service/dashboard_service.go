@@ -1432,6 +1432,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 
 	out := dashboards.Dashboard{
 		OrgID:     orgID,
+		ID:        obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		UID:       uid,
 		Slug:      obj.GetSlug(),
 		FolderUID: obj.GetFolder(),
@@ -1471,8 +1472,12 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.UpdatedBy = updator.ID
 	}
 
+	// any dashboards that have already been synced to unified storage will have the id in the spec
+	// and not as a label. We will need to support this conversion until they have all been updated
+	// to labels
 	if id, ok := spec["id"].(int64); ok {
 		out.ID = id
+		out.Data.Del("id")
 	}
 
 	if gnetID, ok := spec["gnet_id"].(int64); ok {
