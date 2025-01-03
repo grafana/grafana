@@ -16,7 +16,7 @@ permissions:
 jobs:
   update:
     runs-on: "ubuntu-latest"
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
     - name: Retrieve GitHub App secrets
