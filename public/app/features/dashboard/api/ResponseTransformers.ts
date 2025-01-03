@@ -22,8 +22,6 @@ import {
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
-  GrafanaAnnotations,
-  GrafanaClientAnnotations,
 } from 'app/features/apiserver/types';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
