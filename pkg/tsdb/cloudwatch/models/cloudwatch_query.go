@@ -62,6 +62,8 @@ type sqlExpression struct {
 
 type CloudWatchQuery struct {
 	logger            log.Logger
+	StartTime         time.Time
+	EndTime           time.Time
 	RefId             string
 	Region            string
 	Id                string
@@ -251,6 +253,8 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
+			StartTime:         startTime,
+			EndTime:           endTime,
 			RefId:             refId,
 			Id:                utils.Depointerizer(mdq.Id),
 			Region:            utils.Depointerizer(mdq.Region),
