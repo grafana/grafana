@@ -1,14 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { flip, offset, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
 import { memo, HTMLAttributes, useState } from 'react';
 
@@ -58,7 +49,6 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
     placement: 'bottom-end',
     onOpenChange: setIsOpen,
     middleware,
-    whileElementsMounted: autoUpdate,
   });
 
   const click = useClick(context);
