@@ -5579,6 +5579,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
+hmac: a70515389e7eb5831cadd471869964f9d47f5fd6bfa308a6b9ff0dd5e5b761cb
 
 ...
