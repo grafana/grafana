@@ -621,11 +621,6 @@ describe('DashboardSceneSerializer', () => {
         })
       ).toThrow('Method not implemented.');
     });
-
-    it('should throw on getSnapshotUrl', () => {
-      const serializer = new V2DashboardSerializer();
-      expect(() => serializer.getSnapshotUrl()).toThrow('Method not implemented.');
-    });
   });
 });
 
