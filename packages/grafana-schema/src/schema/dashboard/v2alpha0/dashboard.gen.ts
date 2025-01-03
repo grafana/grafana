@@ -32,7 +32,7 @@ export interface DashboardV2Spec {
 	// Configured template variables.
 	variables: VariableKind[];
 	// |* more element types in the future
-	elements: Record<string, PanelKind>;
+	elements: Record<string, PanelKind | LibraryPanelKind>;
 	annotations: AnnotationQueryKind[];
 	layout: GridLayoutKind;
 	// Version of the JSON schema, incremented each time a Grafana update brings
@@ -56,6 +56,28 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	annotations: [],
 	layout: defaultGridLayoutKind(),
 	schemaVersion: 39,
+});
+
+export interface LibraryPanelKind {
+	kind: "LibraryPanel";
+	spec: LibraryPanelSpec;
+}
+
+export const defaultLibraryPanelKind = (): LibraryPanelKind => ({
+	kind: "LibraryPanel",
+	spec: defaultLibraryPanelSpec(),
+});
+
+export interface LibraryPanelSpec {
+	// Library panel name
+	name: string;
+	// Library panel UID
+	uid: string;
+}
+
+export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
+	name: "",
+	uid: "",
 });
 
 export interface AnnotationPanelFilter {

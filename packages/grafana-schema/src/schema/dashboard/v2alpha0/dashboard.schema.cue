@@ -43,7 +43,7 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: PanelKind // |* more element types in the future
+  elements: [ElementReference.name]: PanelKind | LibraryPanelKind // |* more element types in the future
 
   annotations: [...AnnotationQueryKind]
 
@@ -58,6 +58,17 @@ DashboardV2Spec: {
   revision?: uint16
 }
 
+LibraryPanelKind: {
+  kind: "LibraryPanel"
+  spec: LibraryPanelSpec
+}
+
+LibraryPanelSpec: {
+  // Library panel name
+  name: string
+  // Library panel UID
+  uid: string
+}
 
 AnnotationPanelFilter: {
   // Should the specified panels be included or excluded
