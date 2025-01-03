@@ -51,11 +51,8 @@ export class PrometheusMetricFindQuery {
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
     if (labelValuesQuery) {
-      let filter = labelValuesQuery[1];
-      let label = labelValuesQuery[2];
-      if (!isValidLegacyName(label)) {
-        label = escapeForUtf8Support(label);
-      }
+      const filter = labelValuesQuery[1];
+      const label = labelValuesQuery[2];
       if (isFilterDefined(filter)) {
         return this.labelValuesQuery(label, filter);
       } else {
@@ -88,8 +85,13 @@ export class PrometheusMetricFindQuery {
     const end = getPrometheusTime(this.range.to, true);
     const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
+    let escapedLabel = label;
+    if (!isValidLegacyName(label)) {
+      escapedLabel = escapeForUtf8Support(label);
+    }
+
     if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
-      const url = `/api/v1/label/${label}/values`;
+      const url = `/api/v1/label/${escapedLabel}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result) => {
         return _map(result.data.data, (value) => {
