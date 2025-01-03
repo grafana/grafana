@@ -1,3 +1,4 @@
+import { DataQuery } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import {
   AnnoKeyCreatedBy,
@@ -9,7 +10,7 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { ResponseTransformers } from './ResponseTransformers';
+import { getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 describe('ResponseTransformers', () => {
@@ -256,6 +257,76 @@ describe('ResponseTransformers', () => {
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
       expect(dashboard.links).toEqual(dashboardV2.spec.links);
       expect(dashboard.annotations).toEqual({ list: [] });
+    });
+  });
+
+  describe('getPanelQueries', () => {
+    it('respects targets data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
+      };
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          },
+        },
+      ];
+
+      const result = getPanelQueries(targets, panelDs);
+
+      expect(result).toHaveLength(targets.length);
+      expect(result[0].spec.refId).toBe('A');
+      expect(result[1].spec.refId).toBe('B');
+
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.datasource).toEqual({
+          type: 'theoretical-ds',
+          uid: 'theoretical-uid',
+        });
+        expect(query.spec.query.kind).toBe('theoretical-ds');
+      });
+    });
+
+    it('respects panel data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
+      };
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+        },
+        {
+          refId: 'B',
+        },
+      ];
+
+      const result = getPanelQueries(targets, panelDs);
+
+      expect(result).toHaveLength(targets.length);
+      expect(result[0].spec.refId).toBe('A');
+      expect(result[1].spec.refId).toBe('B');
+
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.datasource).toEqual({
+          type: 'theoretical-ds',
+          uid: 'theoretical-uid',
+        });
+        expect(query.spec.query.kind).toBe('theoretical-ds');
+      });
     });
   });
 });
