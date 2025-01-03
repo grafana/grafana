@@ -37,10 +37,10 @@ export interface DashboardV2Spec {
 	layout: GridLayoutKind;
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
-	// version: will rely on k8s resource versioning, via metadata.resorceVersion
-	// revision?: int // for plugins only
-	// gnetId?: string // ??? Wat is this used for?
 	schemaVersion: number;
+	// Plugins only. The version of the dashboard installed together with the plugin.
+	// This is used to determine if the dashboard should be updated when the plugin is updated.
+	revision?: number;
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
@@ -486,11 +486,11 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	builtIn: false,
 	enable: false,
 	hide: false,
 	iconColor: "",
 	name: "",
+	builtIn: false,
 });
 
 export interface AnnotationQueryKind {
