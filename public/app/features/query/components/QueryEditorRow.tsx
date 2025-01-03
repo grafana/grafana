@@ -389,7 +389,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
-  renderWarnings = (): JSX.Element | null => {
+  renderWarnings = (type: string): JSX.Element | null => {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
 
@@ -398,7 +398,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      let criterion;
+      if (type === 'warning') {
+        criterion = (item: QueryResultMetaNotice) => item.severity === 'warning';
+      } else {
+        // The first condition is because sometimes info notices are not marked as info.
+        // We don't filter on severity not being equal to warnings because there's still
+        // the error severity, which does not seem to be used as errors are indicated
+        // separately, but we do this just to be safe.
+        criterion = (item: QueryResultMetaNotice) => !('severity' in item) || item.severity === 'info';
+      }
+      const warnings = filter(serie.meta.notices, criterion) ?? [];
       return acc.concat(warnings);
     }, []);
 
@@ -409,16 +419,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
+    const key = 'query-' + type + 's';
+    const colour = type === 'warning' ? 'orange' : 'blue';
+    const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
+
     const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
 
     return (
       <Badge
-        key="query-warning"
-        color="orange"
-        icon="exclamation-triangle"
+        key={key}
+        color={colour}
+        icon={iconName}
         text={
           <>
-            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+            {uniqueWarnings.length} {pluralize(type, uniqueWarnings.length)}
           </>
         }
         tooltip={serializedWarnings}
@@ -450,7 +464,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       )
       .filter(Boolean);
 
-    extraActions.push(this.renderWarnings());
+    extraActions.push(this.renderWarnings('info'));
+    extraActions.push(this.renderWarnings('warning'));
 
     return extraActions;
   };
