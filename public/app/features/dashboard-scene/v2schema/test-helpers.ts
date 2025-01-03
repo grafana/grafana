@@ -60,20 +60,24 @@ export function validateVariable<
 }
 
 export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
-  expect(vizPanel.state.title).toBe(dash.elements['panel-1'].spec.title);
-  expect(vizPanel.state.description).toBe(dash.elements['panel-1'].spec.description);
-  expect(vizPanel.state.pluginId).toBe(dash.elements['panel-1'].spec.vizConfig.kind);
-  expect(vizPanel.state.pluginVersion).toBe(dash.elements['panel-1'].spec.vizConfig.spec.pluginVersion);
-  expect(vizPanel.state.options).toEqual(dash.elements['panel-1'].spec.vizConfig.spec.options);
-  expect(vizPanel.state.fieldConfig).toEqual(dash.elements['panel-1'].spec.vizConfig.spec.fieldConfig);
-  expect(getPanelIdForVizPanel(vizPanel)).toBe(dash.elements['panel-1'].spec.id);
-  expect(vizPanel.state.displayMode).toBe(dash.elements['panel-1'].spec.transparent ? 'transparent' : 'default');
+  const panel = dash.elements['panel-1'];
+
+  if (panel.kind !== 'Panel') {
+    throw new Error('vizPanel is not a Panel');
+  }
+
+  expect(vizPanel.state.title).toBe(panel.spec.title);
+  expect(vizPanel.state.description).toBe(panel.spec.description);
+  expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.kind);
+  expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.spec.pluginVersion);
+  expect(vizPanel.state.options).toEqual(panel.spec.vizConfig.spec.options);
+  expect(vizPanel.state.fieldConfig).toEqual(panel.spec.vizConfig.spec.fieldConfig);
+  expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);
+  expect(vizPanel.state.displayMode).toBe(panel.spec.transparent ? 'transparent' : 'default');
 
   expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
   const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-  expect(dataTransformer.state.transformations[0]).toEqual(
-    dash.elements['panel-1'].spec.data.spec.transformations[0].spec
-  );
+  expect(dataTransformer.state.transformations[0]).toEqual(panel.spec.data.spec.transformations[0].spec);
 
   expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
   const queryRunner = getQueryRunnerFor(vizPanel)!;
@@ -87,7 +91,8 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   expect(queryRunner.state.minInterval).toBe('1m');
   const titleItems = vizPanel.state.titleItems as SceneObject[];
   const vizPanelLinks = titleItems[0] as VizPanelLinks;
-  expect(vizPanelLinks.state.rawLinks).toHaveLength(dash.elements['panel-1'].spec.links.length);
-  expect(vizPanelLinks.state.rawLinks).toEqual(dash.elements['panel-1'].spec.links);
-  expect(queryRunner.state.dataLayerFilter?.panelId).toBe(dash.elements['panel-1'].spec.id);
+
+  expect(vizPanelLinks.state.rawLinks).toHaveLength(panel.spec.links.length);
+  expect(vizPanelLinks.state.rawLinks).toEqual(panel.spec.links);
+  expect(queryRunner.state.dataLayerFilter?.panelId).toBe(panel.spec.id);
 }

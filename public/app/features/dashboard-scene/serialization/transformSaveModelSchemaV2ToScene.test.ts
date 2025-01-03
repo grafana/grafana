@@ -22,6 +22,7 @@ import {
   DatasourceVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
+  PanelKind,
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
@@ -223,7 +224,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
     expect(layout.state.grid.state.children.length).toBe(1);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+    expect(layout.state.grid.state.children[0].state.key).toBe(
+      `grid-item-${(dash.elements['panel-1'] as PanelKind).spec.id}`
+    );
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
@@ -232,13 +235,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Transformations
     expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+      (dash.elements['panel-1'] as PanelKind).spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -266,7 +269,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -294,7 +297,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',

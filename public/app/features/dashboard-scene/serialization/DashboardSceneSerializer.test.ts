@@ -12,6 +12,7 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
+  PanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -559,8 +560,8 @@ describe('DashboardSceneSerializer', () => {
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
         const result = dashboard.getDashboardChanges(false, true);
-        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'].spec;
-        expect(panelSaveModel.title).toBe('changed title');
+        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'] as PanelKind;
+        expect(panelSaveModel.spec.title).toBe('changed title');
       });
     });
 
