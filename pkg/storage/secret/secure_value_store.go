@@ -19,22 +19,22 @@ import (
 func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &storage{}, nil
+		return &secureValueStorage{}, nil
 	}
 
 	if err := migrateSecretSQL(db.GetEngine(), cfg); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return &storage{db: db}, nil
+	return &secureValueStorage{db: db}, nil
 }
 
-// storage is the actual implementation of the secure value (metadata) storage.
-type storage struct {
+// secureValueStorage is the actual implementation of the secure value (metadata) storage.
+type secureValueStorage struct {
 	db db.DB
 }
 
-func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -81,7 +81,7 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 	return createdSecureValue, nil
 }
 
-func (s *storage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
 	row, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read internal: %w", err)
@@ -95,7 +95,7 @@ func (s *storage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0al
 	return secureValue, nil
 }
 
-func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -140,7 +140,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
-func (s *storage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
+func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -166,7 +166,7 @@ func (s *storage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
 	return nil
 }
 
-func (s *storage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -210,7 +210,7 @@ func (s *storage) List(ctx context.Context, namespace xkube.Namespace, options *
 	}, nil
 }
 
-func (s *storage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
+func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
