@@ -121,7 +121,19 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before updating that the new `keeper` exists.
+		keeperRow := &Keeper{Name: newRow.Keeper, Namespace: newRow.Namespace}
+
+		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+		if err != nil {
+			return fmt.Errorf("check keeper existence: %w", err)
+		}
+
+		if !keeperExists {
+			return contracts.ErrKeeperNotFound
+		}
+
 		if _, err := sess.Update(newRow); err != nil {
 			return fmt.Errorf("update row: %w", err)
 		}
