@@ -30,7 +30,7 @@
     "lint:ts": "eslint . --cache",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
-    "lint:fix": "yarn lint:ts --fix",
+    "lint:fix": "yarn lint:ts --fix --debug",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
