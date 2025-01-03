@@ -27,7 +27,8 @@ export const enum TooltipHoverMode {
   xyOne,
 }
 
-type GeDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetOneClickCallback = (seriesIdx: number, dataIdx: number) => LinkModel | undefined;
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -42,7 +43,8 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelectRange?: OnSelectRangeCallback;
-  getDataLinks?: GeDataLinksCallback;
+  getDataLinks?: GetDataLinksCallback;
+  getOneClick?: GetOneClickCallback;
 
   render: (
     u: uPlot,
@@ -106,7 +108,7 @@ const MIN_ZOOM_DIST = 5;
 
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
-const getDataLinksFallback: GeDataLinksCallback = () => [];
+const getDataLinksFallback: GetDataLinksCallback = () => [];
 
 /**
  * @alpha
@@ -122,6 +124,7 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
+  getOneClick = () => undefined,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -140,6 +143,9 @@ export const TooltipPlugin2 = ({
 
   const getLinksRef = useRef(getDataLinks);
   getLinksRef.current = getDataLinks;
+
+  const getOneClickRef = useRef(getOneClick);
+  getOneClickRef.current = getOneClick;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -316,6 +322,7 @@ export const TooltipPlugin2 = ({
       // this handles pinning
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
+          const oneClick = getOneClickRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
           if (e.ctrlKey || e.metaKey) {
             let xVal;
 
@@ -332,6 +339,9 @@ export const TooltipPlugin2 = ({
             };
 
             scheduleRender(false);
+          } else if (oneClick) {
+            _isPinned = false;
+            window.open(oneClick.href, oneClick.target ?? '_self');
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
@@ -594,6 +604,13 @@ export const TooltipPlugin2 = ({
         // transition: transform 100ms;
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
+
+        const oneClick = getOneClickRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
+        if (oneClick) {
+          u.over.style.cursor = 'pointer';
+        } else {
+          u.over.style.cursor = 'default';
+        }
 
         if (domRef.current != null) {
           domRef.current.style.transform = transform;
