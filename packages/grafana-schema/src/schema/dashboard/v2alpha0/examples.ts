@@ -185,6 +185,13 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'library-panel-1': {
+      kind: 'LibraryPanel',
+      spec: {
+        uid: 'library-panel-1',
+        name: 'Library Panel',
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -201,6 +208,19 @@ export const handyTestingSchema: DashboardV2Spec = {
             width: 200,
             x: 0,
             y: 0,
+          },
+        },
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            element: {
+              kind: 'ElementReference',
+              name: 'library-panel-1',
+            },
+            height: 100,
+            width: 200,
+            x: 0,
+            y: 2,
           },
         },
       ],
