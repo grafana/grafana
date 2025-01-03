@@ -9,6 +9,8 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,7 +60,7 @@ type Service struct {
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
 	return &Service{
-		store:          store.NewStore(sql),
+		store:          store.NewStore(sql, tracer),
 		identityStore:  identityStore,
 		actionMapper:   mappers.NewK8sRbacMapper(),
 		logger:         logger,
@@ -73,7 +75,7 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 }
 
 func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.Check")
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.Check")
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
@@ -101,7 +103,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 }
 
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.List")
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
@@ -122,6 +124,9 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 }
 
 func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateCheckRequest")
+	defer span.End()
+
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
@@ -152,6 +157,9 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 }
 
 func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*ListRequest, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateListRequest")
+	defer span.End()
+
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return nil, err
@@ -230,6 +238,9 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
+	defer span.End()
+
 	if idType == claims.TypeAnonymous {
 		return s.getAnonymousPermissions(ctx, ns, action)
 	}
@@ -268,10 +279,14 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	}
 	scopeMap := getScopeMap(permissions)
 	s.permCache.Set(userPermKey, scopeMap, 0)
+	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
 	return scopeMap, nil
 }
 
 func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string) (map[string]bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
+	defer span.End()
+
 	anonPermKey := anonymousPermCacheKey(ns.Value, action)
 	if cached, ok := s.permCache.Get(anonPermKey); ok {
 		return cached.(map[string]bool), nil
@@ -316,6 +331,9 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInf
 }
 
 func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserTeams")
+	defer span.End()
+
 	teamIDs := make([]int64, 0, 50)
 	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
 	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
@@ -341,11 +359,15 @@ func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, use
 		}
 	}
 	s.teamCache.Set(teamsCacheKey, teamIDs, 0)
+	span.SetAttributes(attribute.Int("num_user_teams", len(teamIDs)))
 
 	return teamIDs, nil
 }
 
 func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserBasicRole")
+	defer span.End()
+
 	basicRoleKey := userBasicRoleCacheKey(ns.Value, userIdentifiers.UID)
 	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
 		return cached.(store.BasicRole), nil
@@ -364,6 +386,9 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo,
 }
 
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
+		attribute.Int("scope_count", len(scopeMap))))
+	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
 	// Only check action if the request doesn't specify scope
@@ -405,6 +430,8 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 		return false, nil
 	}
 
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkInheritedPermissions")
+	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
 	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
@@ -432,6 +459,9 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 }
 
 func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
+	defer span.End()
+
 	key := folderCacheKey(ns.Value)
 	if cached, ok := s.folderCache.Get(key); ok {
 		return cached.(map[string]FolderNode), nil
@@ -442,6 +472,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 		if err != nil {
 			return nil, fmt.Errorf("could not get folders: %w", err)
 		}
+		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		folderMap := make(map[string]FolderNode, len(folders))
 		for _, folder := range folders {
@@ -485,6 +516,8 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return &authzv1.ListResponse{All: true}, nil
 	}
 
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.listPermission")
+	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
 	folderMap, err := s.buildFolderTree(ctx, req.Namespace)
@@ -519,6 +552,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		dashList = append(dashList, dash)
 	}
 
+	span.SetAttributes(attribute.Int("num_folders", len(folderList)), attribute.Int("num_dashboards", len(dashList)))
 	return &authzv1.ListResponse{Folders: folderList, Items: dashList}, nil
 }
 
