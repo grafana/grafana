@@ -38,7 +38,9 @@ export function initializeCrashDetection() {
   }
 
   let lastInteraction = Date.now();
-  document.body.addEventListener('click', () => (lastInteraction = Date.now()));
+  // Add last interaction listeners to capture phase to reduce skipped events when stopPropagation() is called
+  document.body.addEventListener('click', () => (lastInteraction = Date.now()), true);
+  document.body.addEventListener('keypress', () => (lastInteraction = Date.now()), true);
 
   initCrashDetection<GrafanaCrashReport>({
     id: nanoid(5),
