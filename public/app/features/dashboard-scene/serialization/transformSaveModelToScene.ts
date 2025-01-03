@@ -1,7 +1,8 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
+import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   VizPanel,
   SceneTimePicker,
@@ -19,6 +20,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
+  SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -220,7 +222,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
-    new behaviors.SceneQueryController(),
+    new behaviors.SceneQueryController({
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    }),
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new DashboardEditPaneBehavior({}),
@@ -428,5 +434,42 @@ function trackIfEmpty(grid: SceneGridLayout) {
 
   return () => {
     sub.unsubscribe();
+  };
+}
+
+function getDashboardInteractionCallback(uid: string, title: string) {
+  return (e: SceneInteractionProfileEvent) => {
+    let interactionType = '';
+
+    if (e.origin === 'SceneTimeRange') {
+      interactionType = 'time-range-change';
+    } else if (e.origin === 'SceneRefreshPicker') {
+      interactionType = 'refresh';
+    } else if (e.origin === 'DashboardScene') {
+      interactionType = 'view';
+    } else if (e.origin.indexOf('Variable') > -1) {
+      interactionType = 'variable-change';
+    }
+    reportInteraction('dashboard-render', {
+      interactionType,
+      duration: e.duration,
+      networkDuration: e.networkDuration,
+      totalJSHeapSize: e.totalJSHeapSize,
+      usedJSHeapSize: e.usedJSHeapSize,
+      jsHeapSizeLimit: e.jsHeapSizeLimit,
+    });
+
+    logMeasurement(
+      `dashboard.${interactionType}`,
+      {
+        duration: e.duration,
+        networkDuration: e.networkDuration,
+        totalJSHeapSize: e.totalJSHeapSize,
+        usedJSHeapSize: e.usedJSHeapSize,
+        jsHeapSizeLimit: e.jsHeapSizeLimit,
+        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+      },
+      { dashboard: uid, title: title }
+    );
   };
 }
