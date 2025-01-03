@@ -109,6 +109,7 @@ profile.cov
 /pkg/build/cmd/artifactspage.tmpl.html
 /pkg/build/cmd/exportversion.go
 /public/app/extensions
+!/public/app/extensions/.keep
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
