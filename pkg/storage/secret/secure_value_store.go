@@ -50,7 +50,19 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before inserting that the chosen `keeper` exists.
+		keeperRow := &Keeper{Name: row.Keeper, Namespace: row.Namespace}
+
+		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+		if err != nil {
+			return fmt.Errorf("check keeper existence: %w", err)
+		}
+
+		if !keeperExists {
+			return contracts.ErrKeeperNotFound
+		}
+
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
