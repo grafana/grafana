@@ -421,6 +421,7 @@ describe('when creating variables objects', () => {
       ],
       hide: 0,
       skipUrlSync: false,
+      collapseFilters: true,
     };
 
     const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
@@ -443,6 +444,7 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapseFilters: true,
     });
   });
 
