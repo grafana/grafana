@@ -398,17 +398,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      let criterion;
-      if (type === 'warning') {
-        criterion = (item: QueryResultMetaNotice) => item.severity === 'warning';
-      } else {
-        // The first condition is because sometimes info notices are not marked as info.
-        // We don't filter on severity not being equal to warnings because there's still
-        // the error severity, which does not seem to be used as errors are indicated
-        // separately, but we do this just to be safe.
-        criterion = (item: QueryResultMetaNotice) => !('severity' in item) || item.severity === 'info';
-      }
-      const warnings = filter(serie.meta.notices, criterion) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 

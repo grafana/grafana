@@ -11,9 +11,11 @@
 //      },
 //      "notices": [
 //          {
+//              "severity": "info",
 //              "text": "info 1"
 //          },
 //          {
+//              "severity": "info",
 //              "text": "info 2"
 //          }
 //      ]
@@ -41,9 +43,11 @@
 //      },
 //      "notices": [
 //          {
+//              "severity": "info",
 //              "text": "info 1"
 //          },
 //          {
+//              "severity": "info",
 //              "text": "info 2"
 //          }
 //      ]
@@ -71,9 +75,11 @@
 //      },
 //      "notices": [
 //          {
+//              "severity": "info",
 //              "text": "info 1"
 //          },
 //          {
+//              "severity": "info",
 //              "text": "info 2"
 //          }
 //      ]
@@ -101,9 +107,11 @@
 //      },
 //      "notices": [
 //          {
+//              "severity": "info",
 //              "text": "info 1"
 //          },
 //          {
+//              "severity": "info",
 //              "text": "info 2"
 //          }
 //      ]
@@ -131,9 +139,11 @@
 //      },
 //      "notices": [
 //          {
+//              "severity": "info",
 //              "text": "info 1"
 //          },
 //          {
+//              "severity": "info",
 //              "text": "info 2"
 //          }
 //      ]
@@ -166,9 +176,11 @@
           },
           "notices": [
             {
+              "severity": "info",
               "text": "info 1"
             },
             {
+              "severity": "info",
               "text": "info 2"
             }
           ]
@@ -219,9 +231,11 @@
           },
           "notices": [
             {
+              "severity": "info",
               "text": "info 1"
             },
             {
+              "severity": "info",
               "text": "info 2"
             }
           ]
@@ -272,9 +286,11 @@
           },
           "notices": [
             {
+              "severity": "info",
               "text": "info 1"
             },
             {
+              "severity": "info",
               "text": "info 2"
             }
           ]
@@ -332,9 +348,11 @@
           },
           "notices": [
             {
+              "severity": "info",
               "text": "info 1"
             },
             {
+              "severity": "info",
               "text": "info 2"
             }
           ]
@@ -392,9 +410,11 @@
           },
           "notices": [
             {
+              "severity": "info",
               "text": "info 1"
             },
             {
+              "severity": "info",
               "text": "info 2"
             }
           ]
