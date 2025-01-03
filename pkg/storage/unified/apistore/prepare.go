@@ -56,6 +56,15 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
+	if s.opts.RequireDeprecatedInternalID {
+		// nolint:staticcheck
+		id := obj.GetDeprecatedInternalID()
+		if id < 1 {
+			// nolint:staticcheck
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+		}
+	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -100,9 +109,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
-		if obj.GetUID() != "" {
-			klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
-		}
+		// Eventually this should be a real error or logged
+		// However the dashboard dual write behavior hits this every time, so we will ignore it
+		// if obj.GetUID() != "" {
+		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// }
 		obj.SetUID(previous.GetUID())
 	}
 
@@ -112,7 +123,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+	obj.SetResourceVersion("")                                      // removed from saved JSON because the RV is not yet calculated
+	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
 	// Read+write will verify that origin format is accurate
 	repo, err := obj.GetRepositoryInfo()

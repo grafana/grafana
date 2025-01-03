@@ -302,11 +302,7 @@ type Cfg struct {
 	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
-	AnonymousDeviceLimit int64
+	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
 
@@ -527,12 +523,14 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage     map[string]UnifiedStorageConfig
-	IndexPath          string
-	IndexWorkers       int
-	IndexMaxBatchSize  int
-	IndexFileThreshold int
-	IndexMinCount      int
+	UnifiedStorage              map[string]UnifiedStorageConfig
+	IndexPath                   string
+	IndexWorkers                int
+	IndexMaxBatchSize           int
+	IndexFileThreshold          int
+	IndexMinCount               int
+	SprinklesApiServer          string
+	SprinklesApiServerPageLimit int
 }
 
 type UnifiedStorageConfig struct {
@@ -1654,12 +1652,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// anonymous access
-	anonSection := iniFile.Section("auth.anonymous")
-	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
-	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
-	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
+	cfg.readAnonymousSettings()
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
