@@ -129,7 +129,7 @@ const MonacoQueryField = (props: Props) => {
   return (
     <div
       data-testid={selectors.components.QueryField.container}
-      data-queryexpr={currentEditorValue}
+      data-queryexpr={currentEditorValue} // in e2e tests, we can use this to know the current value of the debounced `expr` input
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
