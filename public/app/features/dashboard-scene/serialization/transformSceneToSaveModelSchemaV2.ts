@@ -407,7 +407,6 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
-        filter: layer.state.query.filter,
         iconColor: layer.state.query.iconColor,
       },
     };
@@ -419,6 +418,11 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         kind: queryKind,
         spec: layer.state.query.query.spec,
       };
+    }
+
+    // If filter is an empty array, don't save it
+    if (layer.state.query.filter?.ids?.length) {
+      result.spec.filter = layer.state.query.filter;
     }
 
     annotations.push(result);
