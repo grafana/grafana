@@ -103,13 +103,16 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+
+# Extensions
 /pkg/extensions/*
 !/pkg/extensions/.keep
-/pkg/build/cmd/artifactspage.go
-/pkg/build/cmd/artifactspage.tmpl.html
-/pkg/build/cmd/exportversion.go
+/pkg/build/extensions/*
+!/pkg/build/extensions/.keep
 /public/app/extensions
 !/public/app/extensions/.keep
+
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
