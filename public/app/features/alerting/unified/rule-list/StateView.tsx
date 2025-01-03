@@ -16,7 +16,8 @@ import { hashRule } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
 import { AlertRuleListItem } from './components/AlertRuleListItem';
-import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { ActionsLoader } from './components/ActionsLoader';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];

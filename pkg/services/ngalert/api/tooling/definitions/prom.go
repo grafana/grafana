@@ -177,6 +177,8 @@ type Rule struct {
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitempty"`
 	// required: true
+	IsPaused bool `json:"isPaused"`
+	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
 	// required: true

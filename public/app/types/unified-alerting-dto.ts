@@ -162,6 +162,7 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
 export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
   uid: string;
   folderUid: string;
+  isPaused: boolean;
 }
 
 export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
