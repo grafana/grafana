@@ -130,7 +130,8 @@ export function prepSeries(
             if (name == null) {
               // if the displayed field name is likely to have a common prefix or suffix
               // (such as those from Partition by values transformation)
-              const likelyHasCommonParts = frame.name != null || Object.keys(y.labels ?? {}).length > 0;
+              const likelyHasCommonParts =
+                frames.length > 1 && (frame.name != null || Object.keys(y.labels ?? {}).length > 0);
 
               // if the field was explictly (re)named using config.displayName or config.displayNameFromDS
               // we still want to retain any frame name prefix or suffix so that autoNameSeries() can
