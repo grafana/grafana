@@ -31,6 +31,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -173,7 +174,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _prevScrollPos?: number;
 
   // TODO: use feature toggle to allow v2 serializer
-  public serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
+  private _serializer: DashboardSceneSerializerLike<
+    Dashboard | DashboardV2Spec,
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  > = getDashboardSceneSerializer();
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -265,7 +269,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
-    this.serializer.onSaveComplete(saveModel, result);
+    this._serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
 
@@ -640,20 +644,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getInitialSaveModel() {
-    return this.serializer.initialSaveModel;
+    return this._serializer.initialSaveModel;
   }
 
   public getSnapshotUrl = () => {
-    return this.serializer.getSnapshotUrl();
+    return this._serializer.getSnapshotUrl();
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
-    this.serializer.initialSaveModel = saveModel;
+  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta): void;
+  setInitialSaveModel(model?: DashboardV2Spec, meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata']): void;
+  public setInitialSaveModel(
+    saveModel?: Dashboard | DashboardV2Spec,
+    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  ): void {
+    this._serializer.initialSaveModel = saveModel;
+    this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {
-    return this.serializer.getTrackingInformation(this);
+    return this._serializer.getTrackingInformation(this);
   }
 
   public async onDashboardDelete() {
@@ -698,15 +708,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {
-    return this.serializer.getSaveModel(this);
+    return this._serializer.getSaveModel(this);
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
-    return this.serializer.getSaveAsModel(this, options);
+    return this._serializer.getSaveAsModel(this, options);
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+    return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 }
 
