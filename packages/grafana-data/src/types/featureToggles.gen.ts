@@ -113,6 +113,7 @@ export interface FeatureToggles {
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
   kubernetesFolders?: boolean;
+  kubernetesFoldersServiceV2?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
