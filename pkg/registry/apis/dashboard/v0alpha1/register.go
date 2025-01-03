@@ -45,6 +45,7 @@ var (
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
+	features         featuremgmt.FeatureToggles
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
@@ -73,6 +74,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
 
 		dashboardService: dashboardService,
+		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
 		search:           dashboard.NewSearchHandler(unified, tracing),
@@ -117,6 +119,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 	storageOpts := apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
 		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
 			internal := &dashboardinternal.Dashboard{}
 			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
@@ -160,18 +163,20 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
-	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
-		b.unified,
-		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
-		defaultOpts,
-	)
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
+		storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+			b.unified,
+			dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+		)
 
-	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
-		b.unified,
-		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
-		defaultOpts,
-		scheme,
-	)
+		storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+			b.unified,
+			dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+			scheme,
+		)
+	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
