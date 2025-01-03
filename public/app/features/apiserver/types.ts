@@ -53,7 +53,7 @@ export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapsh
 export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 
 // Annotations provided by the API
-export type GrafanaAnnotations = {
+type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
   [AnnoKeyUpdatedTimestamp]?: string;
   [AnnoKeyUpdatedBy]?: string;
@@ -68,7 +68,7 @@ export type GrafanaAnnotations = {
 };
 
 // Annotations provided by the front-end client
-export type GrafanaClientAnnotations = {
+type GrafanaClientAnnotations = {
   [AnnoKeyMessage]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
