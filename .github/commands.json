@@ -96,7 +96,7 @@
     "name": "datasource/Prometheus",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/112"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

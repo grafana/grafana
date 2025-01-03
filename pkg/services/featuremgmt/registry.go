@@ -277,7 +277,7 @@ var (
 			Description:    "Query InfluxDB InfluxQL without the proxy",
 			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
-			Owner:          grafanaObservabilityMetricsSquad,
+			Owner:          grafanaPartnerPluginsSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: false,
 		},
@@ -285,21 +285,21 @@ var (
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:         "influxdbRunQueriesInParallel",
 			Description:  "Enables running InfluxDB Influxql queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:         "prometheusRunQueriesInParallel",
 			Description:  "Enables running Prometheus queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:        "lokiLogsDataplane",
@@ -806,14 +806,14 @@ var (
 			Description:  "Prometheus and AI/ML to assist users in creating a query",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
 			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
@@ -1058,7 +1058,7 @@ var (
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaOSSBigTent,
 			Expression:  "true",
 		},
 		{
@@ -1191,7 +1191,7 @@ var (
 			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaObservabilityMetricsSquad,
+			Owner:           grafanaOSSBigTent,
 			RequiresRestart: true,
 		},
 		{
@@ -1544,7 +1544,7 @@ var (
 			Name:        "prometheusUsesCombobox",
 			Description: "Use new combobox component for Prometheus query editor",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "userStorageAPI",
@@ -1595,7 +1595,7 @@ var (
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:            "enableExtensionsAdminPage",

@@ -1208,13 +1208,16 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-16T14:52:47Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2024-04-16T14:52:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/oss-big-tent",
         "requiresRestart": true
       }
     },
@@ -1822,17 +1825,17 @@
     {
       "metadata": {
         "name": "influxdbBackendMigration",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1735845919509",
         "creationTimestamp": "2022-02-09T18:26:16Z",
         "deletionTimestamp": "2023-01-17T14:11:26Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
         }
       },
       "spec": {
         "description": "Query InfluxDB InfluxQL without the proxy",
         "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/partner-datasources",
         "frontend": true,
         "expression": "true"
       }
@@ -1840,25 +1843,31 @@
     {
       "metadata": {
         "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-01T10:58:24Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2024-02-01T10:58:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running InfluxDB Influxql queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/partner-datasources"
       }
     },
     {
       "metadata": {
         "name": "influxqlStreamingParser",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-29T17:29:35Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2023-11-29T17:29:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/partner-datasources"
       }
     },
     {
@@ -2881,16 +2890,16 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1724076197892",
+        "resourceVersion": "1735845919509",
         "creationTimestamp": "2024-01-29T20:22:17Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-19 14:03:17.892558375 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
         }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
         "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/oss-big-tent",
         "expression": "true"
       }
     },
@@ -2914,13 +2923,16 @@
     {
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-04T20:38:23Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2024-04-04T20:38:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true
       }
     },
@@ -2995,54 +3007,63 @@
     {
       "metadata": {
         "name": "prometheusPromQAIL",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-19T15:45:32Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2023-10-19T15:45:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Prometheus and AI/ML to assist users in creating a query",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true
       }
     },
     {
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
-        "resourceVersion": "1720677541862",
-        "creationTimestamp": "2024-08-12T12:31:39Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2024-08-12T12:31:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
       "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
-        "resourceVersion": "1734047568531",
-        "creationTimestamp": "2024-12-12T23:52:48Z"
+        "resourceVersion": "1735845919509",
+        "creationTimestamp": "2024-12-12T23:52:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for quotes and special characters in label values for Prometheus queries",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true
       }
     },
     {
       "metadata": {
         "name": "prometheusUsesCombobox",
-        "resourceVersion": "1726140033271",
+        "resourceVersion": "1735845919509",
         "creationTimestamp": "2024-09-12T11:19:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-12 11:20:33.271822988 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use new combobox component for Prometheus query editor",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
