@@ -103,14 +103,16 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+
+# Extensions
 /pkg/extensions/*
-/pkg/build/cmd/artifactspage.go
-/pkg/build/cmd/artifactspage.tmpl.html
-/pkg/build/cmd/exportversion.go
-/pkg/server/wireexts_enterprise.go
-/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
-!/pkg/extensions/main.go
+!/pkg/extensions/.keep
+/pkg/build/cmd/extensions/*
+!/pkg/build/cmd/extensions/.keep
 /public/app/extensions
+!/public/app/extensions/.keep
+
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -170,6 +172,7 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
