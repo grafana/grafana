@@ -9,7 +9,7 @@ import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { dashboardLoaderSrv, dashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
@@ -82,6 +82,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   abstract reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+  abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -100,17 +101,6 @@ abstract class DashboardScenePageStateManagerBase<T>
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
-  }
-
-  private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
-    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
-
-    if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
-      return scene;
-    }
-
-    throw new Error('Snapshot not found');
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -222,6 +212,18 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     throw new Error('Dashboard not found');
   }
+
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
+
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
+  }
+
   public async fetchDashboard({
     uid,
     route,
@@ -368,7 +370,16 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
   DashboardWithAccessInfo<DashboardV2Spec>
 > {
-  private dashboardLoader = new DashboardLoaderSrvV2();
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await dashboardLoaderSrvV2.loadSnapshot(slug);
+
+    if (rsp?.spec) {
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
+  }
 
   transformResponseToScene(
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
@@ -444,7 +455,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
           break;
         case DashboardRoutes.Public: {
-          return await this.dashboardLoader.loadDashboard('public', '', uid);
+          return await dashboardLoaderSrvV2.loadDashboard('public', '', uid);
         }
         default:
           const queryParams = params
@@ -456,7 +467,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
                 ...params.variables,
               }
             : undefined;
-          rsp = await this.dashboardLoader.loadDashboard('db', '', uid, queryParams);
+          rsp = await dashboardLoaderSrvV2.loadDashboard('db', '', uid, queryParams);
           if (route === DashboardRoutes.Embedded) {
             throw new Error('Method not implemented.');
             // rsp.meta.isEmbedded = true;
