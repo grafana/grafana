@@ -62,6 +62,7 @@ func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDat
 }
 
 // Split the main query into multiple
+// Comment for testing
 func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRequest) (parsedRequestInfo, error) {
 	ctx, span := p.tracer.Start(ctx, "QueryService.parseRequest")
 	defer span.End()
