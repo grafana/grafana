@@ -36,8 +36,6 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     labels = {},
   } = rulerRule;
 
-  const isProvisioned = Boolean(provenance);
-
   const commonProps = {
     name: title,
     rulesSource: GrafanaRulesSource,
@@ -47,7 +45,7 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     health: rule.health,
     error: rule.lastError,
     labels: labels,
-    isProvisioned,
+    isProvisioned: Boolean(provenance),
     isPaused: is_paused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,

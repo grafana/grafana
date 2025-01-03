@@ -19,7 +19,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../utils/datasource';
+import { getRulesSourceName } from '../utils/datasource';
 import { getGroupOriginName } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';

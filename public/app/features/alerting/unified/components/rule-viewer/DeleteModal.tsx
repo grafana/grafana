@@ -9,7 +9,6 @@ import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
