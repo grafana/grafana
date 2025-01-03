@@ -12,7 +12,6 @@ import (
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -22,7 +21,6 @@ import (
 )
 
 type FolderUnifiedStoreImpl struct {
-	db        db.DB
 	log       log.Logger
 	k8sclient folderK8sHandler
 }
