@@ -24,14 +24,14 @@
     environment:
       FD_DATASOURCE: prom
 
-  alertmanager:
-    image: prom/alertmanager 
-    volumes:
-    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-    command: >
-      --config.file=/etc/alertmanager/alertmanager.yml
-    ports:
-      - "9093:9093"
+#  alertmanager:
+#    image: prom/alertmanager
+#    volumes:
+#    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+#    command: >
+#      --config.file=/etc/alertmanager/alertmanager.yml
+#    ports:
+#      - "9093:9093"
 
   prometheus-random-data:
     build: docker/blocks/prometheus_random_data
