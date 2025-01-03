@@ -87,8 +87,8 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsExternal = true
 
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
-		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
+		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
+		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
 	userProfile.AccessControl = getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))

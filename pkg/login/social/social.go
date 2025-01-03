@@ -112,6 +112,10 @@ func (o *OAuthInfo) IsAutoLoginEnabled() bool {
 	return o.AutoLogin
 }
 
+func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
+	return o.SkipOrgRoleSync
+}
+
 type BasicUserInfo struct {
 	Id             string
 	Name           string
