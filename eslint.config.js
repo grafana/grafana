@@ -45,7 +45,7 @@ module.exports = [
       'public/lib/monaco/', // this path is no longer required but local dev environments may still have it
       'public/locales/_build',
       'public/locales/**/*.js',
-      'vendor',
+      '/public/vendor',
       'scripts/grafana-server/tmp',
     ],
   },
