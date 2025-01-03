@@ -41,10 +41,6 @@ export type TracePageHeaderProps = {
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  showSpanFilterMatchesOnly: boolean;
-  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  showCriticalPathSpansOnly: boolean;
-  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -61,10 +57,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setShowSpanFilters,
-    showSpanFilterMatchesOnly,
-    setShowSpanFilterMatchesOnly,
-    showCriticalPathSpansOnly,
-    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -171,10 +163,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         trace={trace}
         showSpanFilters={showSpanFilters}
         setShowSpanFilters={setShowSpanFilters}
-        showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-        setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-        showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-        setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
         search={search}
         setSearch={setSearch}
         spanFilterMatches={spanFilterMatches}
