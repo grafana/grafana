@@ -1393,14 +1393,17 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	type mockResponse struct {
 		PublicDashboardListResponseWithPagination *PublicDashboardListResponseWithPagination
 		Err                                       error
+		DashboardResponse                         []dashboards.DashboardSearchProjection
+		DashboardErr                              error
 	}
 
-	mockedDashboards := []*PublicDashboardListResponse{
+	expectedFinalResponse := []*PublicDashboardListResponse{
 		{
-			Uid:          "0GwW7mgVk",
-			AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
-			DashboardUid: "0S6TmO67z",
-			Title:        "my zero dashboard",
+			Uid:          "9GwW7mgVk",
+			AccessToken:  "deletedashboardaccesstoken",
+			DashboardUid: "9S6TmO67z",
+			Title:        "",
+			Slug:         "",
 			IsEnabled:    true,
 		},
 		{
@@ -1408,6 +1411,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
 			DashboardUid: "1S6TmO67z",
 			Title:        "my first dashboard",
+			Slug:         "my-first-dashboard",
 			IsEnabled:    true,
 		},
 		{
@@ -1415,14 +1419,64 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
 			DashboardUid: "2S6TmO67z",
 			Title:        "my second dashboard",
+			Slug:         "my-second-dashboard",
+			IsEnabled:    false,
+		},
+		{
+			Uid:          "0GwW7mgVk",
+			AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "0S6TmO67z",
+			Title:        "my zero dashboard",
+			Slug:         "my-zero-dashboard",
+			IsEnabled:    true,
+		},
+	}
+	mockedStoreResponse := []*PublicDashboardListResponse{
+		{
+			Uid:          "0GwW7mgVk",
+			AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "0S6TmO67z",
+			IsEnabled:    true,
+		},
+		{
+			Uid:          "1GwW7mgVk",
+			AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "1S6TmO67z",
+			IsEnabled:    true,
+		},
+		{
+			Uid:          "2GwW7mgVk",
+			AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+			DashboardUid: "2S6TmO67z",
 			IsEnabled:    false,
 		},
 		{
 			Uid:          "9GwW7mgVk",
 			AccessToken:  "deletedashboardaccesstoken",
 			DashboardUid: "9S6TmO67z",
-			Title:        "",
 			IsEnabled:    true,
+		},
+	}
+	dashboardsMocked := []dashboards.DashboardSearchProjection{
+		{
+			UID:   "9S6TmO67z",
+			Title: "",
+			Slug:  "",
+		},
+		{
+			UID:   "1S6TmO67z",
+			Title: "my first dashboard",
+			Slug:  "my-first-dashboard",
+		},
+		{
+			UID:   "2S6TmO67z",
+			Title: "my second dashboard",
+			Slug:  "my-second-dashboard",
+		},
+		{
+			UID:   "0S6TmO67z",
+			Title: "my zero dashboard",
+			Slug:  "my-zero-dashboard",
 		},
 	}
 
@@ -1439,7 +1493,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 				ctx: context.Background(),
 				query: &PublicDashboardListQuery{
 					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z"}}},
 					},
 					OrgID: 1,
 					Page:  1,
@@ -1448,16 +1502,78 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			},
 			mockResponse: &mockResponse{
 				PublicDashboardListResponseWithPagination: &PublicDashboardListResponseWithPagination{
-					TotalCount:       int64(len(mockedDashboards)),
-					PublicDashboards: mockedDashboards,
+					TotalCount:       int64(len(mockedStoreResponse)),
+					PublicDashboards: mockedStoreResponse,
 				},
-				Err: nil,
+				Err:               nil,
+				DashboardResponse: dashboardsMocked,
+				DashboardErr:      nil,
 			},
 			want: &PublicDashboardListResponseWithPagination{
 				Page:             1,
 				PerPage:          50,
-				TotalCount:       int64(len(mockedDashboards)),
-				PublicDashboards: mockedDashboards,
+				TotalCount:       int64(len(expectedFinalResponse)),
+				PublicDashboards: expectedFinalResponse,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return correct pagination response if limited",
+			args: args{
+				ctx: context.Background(),
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 2,
+				},
+			},
+			mockResponse: &mockResponse{
+				PublicDashboardListResponseWithPagination: &PublicDashboardListResponseWithPagination{
+					TotalCount:       int64(len(mockedStoreResponse)),
+					PublicDashboards: mockedStoreResponse,
+				},
+				Err:               nil,
+				DashboardResponse: dashboardsMocked,
+				DashboardErr:      nil,
+			},
+			want: &PublicDashboardListResponseWithPagination{
+				Page:             1,
+				PerPage:          2,
+				TotalCount:       4,
+				PublicDashboards: expectedFinalResponse[:2],
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return correct page",
+			args: args{
+				ctx: context.Background(),
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  2,
+					Limit: 2,
+				},
+			},
+			mockResponse: &mockResponse{
+				PublicDashboardListResponseWithPagination: &PublicDashboardListResponseWithPagination{
+					TotalCount:       int64(len(mockedStoreResponse)),
+					PublicDashboards: mockedStoreResponse,
+				},
+				Err:               nil,
+				DashboardResponse: dashboardsMocked,
+				DashboardErr:      nil,
+			},
+			want: &PublicDashboardListResponseWithPagination{
+				Page:             2,
+				PerPage:          2,
+				TotalCount:       4,
+				PublicDashboards: expectedFinalResponse[2:],
 			},
 			wantErr: assert.NoError,
 		},
@@ -1476,7 +1592,34 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			},
 			mockResponse: &mockResponse{
 				PublicDashboardListResponseWithPagination: nil,
-				Err: errors.New("an err"),
+				Err:               errors.New("an err"),
+				DashboardResponse: dashboardsMocked,
+				DashboardErr:      nil,
+			},
+			want:    nil,
+			wantErr: assert.Error,
+		},
+		{
+			name: "should return error when dashboard service returns error",
+			args: args{
+				ctx: context.Background(),
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
+				},
+			},
+			mockResponse: &mockResponse{
+				PublicDashboardListResponseWithPagination: &PublicDashboardListResponseWithPagination{
+					TotalCount:       int64(len(mockedStoreResponse)),
+					PublicDashboards: mockedStoreResponse,
+				},
+				Err:               nil,
+				DashboardResponse: nil,
+				DashboardErr:      errors.New("an err"),
 			},
 			want:    nil,
 			wantErr: assert.Error,
@@ -1488,9 +1631,12 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("FindAllWithPagination", mock.Anything, mock.Anything).
+			store.On("FindAll", mock.Anything, mock.Anything).
 				Return(tt.mockResponse.PublicDashboardListResponseWithPagination, tt.mockResponse.Err)
-			pd, _, _ := newPublicDashboardServiceImpl(t, store, nil, nil)
+			dashSvc := &dashboards.FakeDashboardService{}
+			dashSvc.On("FindDashboards", mock.Anything, mock.Anything).
+				Return(tt.mockResponse.DashboardResponse, tt.mockResponse.DashboardErr)
+			pd, _, _ := newPublicDashboardServiceImpl(t, store, dashSvc, nil)
 			pd.ac = ac
 
 			got, err := pd.FindAllWithPagination(tt.args.ctx, tt.args.query)
