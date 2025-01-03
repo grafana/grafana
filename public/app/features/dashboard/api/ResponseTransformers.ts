@@ -15,6 +15,7 @@ import {
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
   AnnoKeyFolder,
   AnnoKeySlug,
@@ -75,6 +76,7 @@ export function ensureV2Response(
     preload: dashboard.preload || dashboardDefaults.preload,
     liveNow: dashboard.liveNow,
     editable: dashboard.editable,
+    revision: dashboard.revision,
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
       to: dashboard.time?.to || timeSettingsDefaults.to,
@@ -108,6 +110,7 @@ export function ensureV2Response(
         [AnnoKeyFolder]: accessAndMeta.folderUid,
         [AnnoKeySlug]: accessAndMeta.slug,
         [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+        [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       },
     },
     spec,
@@ -176,6 +179,8 @@ export function ensureV1Response(
         preload: spec.preload,
         liveNow: spec.liveNow,
         editable: spec.editable,
+        gnetId: dashboard.metadata.annotations?.[AnnoKeyDashboardGnetId],
+        revision: spec.revision,
         time: {
           from: spec.timeSettings.from,
           to: spec.timeSettings.to,

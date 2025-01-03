@@ -53,10 +53,9 @@ DashboardV2Spec: {
   // changes to said schema.
   schemaVersion: uint16 | *39
 
-
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion
-  // revision?: int // for plugins only
-  // gnetId?: string // ??? Wat is this used for?
+  // Plugins only. The version of the dashboard installed together with the plugin.
+  // This is used to determine if the dashboard should be updated when the plugin is updated.
+  revision?: uint16
 }
 
 
