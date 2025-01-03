@@ -196,7 +196,7 @@ require (
 	k8s.io/kube-aggregator v0.31.3 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // @grafana/partner-datasources
-	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // @grafana-app-platform-squad
+	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
