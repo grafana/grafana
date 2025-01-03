@@ -1109,9 +1109,9 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		return nil, nil
 	}
 
-	// if including deleted dashboards, use the /latest subresource
+	// if including deleted dashboards for restore, use the /latest subresource
 	subresource := ""
-	if query.IncludeDeleted {
+	if query.IncludeDeleted && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
 		subresource = "latest"
 	}
 

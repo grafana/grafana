@@ -1942,6 +1942,19 @@
     },
     {
       "metadata": {
+        "name": "kuberenetesRestore",
+        "resourceVersion": "1735880172453",
+        "creationTimestamp": "2025-01-03T04:56:12Z",
+        "deletionTimestamp": "2025-01-03T05:01:38Z"
+      },
+      "spec": {
+        "description": "Allow restoring objects in k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAggregator",
         "resourceVersion": "1723151074613",
         "creationTimestamp": "2024-02-12T20:59:35Z",
@@ -2026,6 +2039,18 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesRestore",
+        "resourceVersion": "1735880498698",
+        "creationTimestamp": "2025-01-03T05:01:38Z"
+      },
+      "spec": {
+        "description": "Allow restoring objects in k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad"
       }
     },
     {
