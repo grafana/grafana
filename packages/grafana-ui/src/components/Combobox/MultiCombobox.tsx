@@ -187,9 +187,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               })
             )}
           />
-          <div className={multiStyles.suffix} ref={suffixMeasureRef}>
-            {loading && <Spinner inline={true} />}
-          </div>
+          {loading && (
+            <div className={multiStyles.suffix} ref={suffixMeasureRef}>
+              <Spinner inline={true} />
+            </div>
+          )}
         </span>
       </div>
       <Portal>
