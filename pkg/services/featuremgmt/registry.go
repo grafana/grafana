@@ -703,6 +703,12 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "kubernetesRestore",
+			Description: "Allow restoring objects in k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
