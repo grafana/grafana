@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
