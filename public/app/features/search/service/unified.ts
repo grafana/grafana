@@ -206,6 +206,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
     uri += `&limit=${query.limit ?? pageSize}`;
 
+    if (!isEmpty(query.location)) {
+      uri += `&folder=${query.location}`;
+    }
+
     if (query.kind) {
       // filter resource types
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
