@@ -690,11 +690,13 @@ func TestLogoutSaml(t *testing.T) {
 
 func TestIsExternallySynced(t *testing.T) {
 	testcases := []struct {
-		name      string
-		cfg       *setting.Cfg
-		oauthInfo *social.OAuthInfo
-		provider  string
-		expected  bool
+		name                string
+		cfg                 *setting.Cfg
+		oauthInfo           *social.OAuthInfo
+		provider            string
+		enabledAuthnClients []string
+		authnClientConfig   authn.SSOClientConfig
+		expected            bool
 	}{
 		// Same for all of the OAuth providers
 		{
@@ -727,15 +729,33 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// saml
 		{
-			name:     "SAML synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: false},
-			provider: loginservice.SAMLAuthModule,
+			name:                "SAML synced user should return that it is not externally synced when the provider is disabled",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: false,
+		},
+		{
+			name:                "SAML synced user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
 			expected: true,
 		},
 		{
-			name:     "SAML synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: true},
-			provider: loginservice.SAMLAuthModule,
+			name:                "SAML synced user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
 			expected: false,
 		},
 		// ldap
@@ -773,8 +793,14 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 	}
 
-	hs := &HTTPServer{}
 	for _, tc := range testcases {
+		hs := &HTTPServer{
+			authnService: &authntest.FakeService{
+				ExpectedClientConfig: tc.authnClientConfig,
+				EnabledClients:       tc.enabledAuthnClients,
+			},
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider, tc.oauthInfo))
 		})
@@ -783,10 +809,11 @@ func TestIsExternallySynced(t *testing.T) {
 
 func TestIsProviderEnabled(t *testing.T) {
 	testcases := []struct {
-		name      string
-		oauthInfo *social.OAuthInfo
-		provider  string
-		expected  bool
+		name                string
+		oauthInfo           *social.OAuthInfo
+		provider            string
+		enabledAuthnClients []string
+		expected            bool
 	}{
 		// github
 		{
@@ -801,11 +828,28 @@ func TestIsProviderEnabled(t *testing.T) {
 			provider:  loginservice.GithubAuthModule,
 			expected:  false,
 		},
+		// saml
+		{
+			name:                "SAML should return true if enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			expected:            true,
+		},
+		{
+			name:                "SAML should return false if not enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
+		},
 	}
 
-	hs := &HTTPServer{}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				authnService: &authntest.FakeService{
+					EnabledClients: tc.enabledAuthnClients,
+				},
+			}
 			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider, tc.oauthInfo))
 		})
 	}

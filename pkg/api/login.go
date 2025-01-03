@@ -404,6 +404,14 @@ func (hs *HTTPServer) samlAutoLoginEnabled() bool {
 	return hs.samlEnabled() && config.IsAutoLoginEnabled()
 }
 
+func (hs *HTTPServer) samlSkipOrgRoleSyncEnabled() bool {
+	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+	if !ok {
+		return false
+	}
+	return hs.samlEnabled() && config.IsSkipOrgRoleSyncEnabled()
+}
+
 func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
@@ -448,7 +456,7 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oa
 	// first check SAML, LDAP and JWT
 	switch authModule {
 	case loginservice.SAMLAuthModule:
-		return !cfg.SAMLSkipOrgRoleSync
+		return !hs.samlSkipOrgRoleSyncEnabled()
 	case loginservice.LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
 	case loginservice.JWTModule:
@@ -487,7 +495,7 @@ func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo
 func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
 	switch authModule {
 	case loginservice.SAMLAuthModule:
-		return cfg.SAMLAuthEnabled
+		return hs.samlEnabled()
 	case loginservice.LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
 	case loginservice.JWTModule:
