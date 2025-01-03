@@ -115,5 +115,50 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'azuremonitor',
+      testDir: path.join(testDirRoot, '/azuremonitor'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'cloudmonitoring',
+      testDir: path.join(testDirRoot, '/cloudmonitoring'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'graphite',
+      testDir: path.join(testDirRoot, '/graphite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'influxdb',
+      testDir: path.join(testDirRoot, '/influxdb'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'opentsdb',
+      testDir: path.join(testDirRoot, '/opentsdb'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });
