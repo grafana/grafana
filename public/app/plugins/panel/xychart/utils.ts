@@ -124,7 +124,34 @@ export function prepSeries(
           // if we match non-excluded y, create series
           if (yMatcher(field, frame, frames) && !field.config.custom?.hideFrom?.viz) {
             let y = field;
-            let name = seriesCfg.name?.fixed ?? getFieldDisplayName(y, frame, frames);
+
+            let name = seriesCfg.name?.fixed;
+
+            if (name == null) {
+              // if the field was explictly (re)named using config.displayName or config.displayNameFromDS
+              // we still want to retain any frame name prefix or suffix so that autoNameSeries() can
+              // properly detect + strip common parts across all series...
+              const { displayName, displayNameFromDS } = y.config;
+
+              if (displayName != null || displayNameFromDS != null) {
+                // ...and a hacky way to do this is to temp remove the explicit name, get the auto name, then revert
+                const stateDisplayName = y.state!.displayName;
+
+                // clear config and cache
+                y.config.displayName = y.config.displayNameFromDS = y.state!.displayName = undefined;
+                // get default/calculated display name (maybe use calculateFieldDisplayName() here instead?)
+                name = getFieldDisplayName(y, frame, frames);
+                // replace original field name with explicit one
+                name = name.replace(y.name, (displayNameFromDS ?? displayName)!);
+
+                // revert
+                y.config.displayName = displayName;
+                y.config.displayNameFromDS = displayNameFromDS;
+                y.state!.displayName = stateDisplayName;
+              } else {
+                name = getFieldDisplayName(y, frame, frames);
+              }
+            }
 
             let ser: XYSeries = {
               // these typically come from y field
