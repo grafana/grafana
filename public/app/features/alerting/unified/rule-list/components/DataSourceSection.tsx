@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { PropsWithChildren, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, LinkButton, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -53,7 +53,7 @@ export const DataSourceSection = ({
                 )}
                 <Spacer />
                 <WithReturnButton
-                  title="alert rules"
+                  title={t('alerting.rule-list.return-button.title', 'Alert rules')}
                   component={
                     <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${String(uid)}`}>
                       <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>

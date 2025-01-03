@@ -10,6 +10,7 @@ import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -79,28 +80,7 @@ interface GrafanaRuleGroupListItemProps {
 }
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
   return (
-    <ListGroup
-      key={group.name}
-      name={group.name}
-      isOpen={false}
-      actions={
-        <>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
-                <Menu.Item label="Re-order rules" icon="flip" />
-                <Menu.Divider />
-                <Menu.Item label="Export" icon="download-alt" />
-                <Menu.Item label="Delete" icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <IconButton name="ellipsis-h" aria-label="rule group actions" />
-          </Dropdown>
-        </>
-      }
-    >
+    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
       {group.rules.map((rule) => {
         return <GrafanaRuleLoader key={rule.uid} rule={rule} groupName={group.name} namespaceName={namespaceName} />;
       })}

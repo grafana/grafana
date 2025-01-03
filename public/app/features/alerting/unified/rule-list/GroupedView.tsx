@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 import { ExternalRulesSourceIdentifier, RulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getExternalRulesSources, GrafanaRulesSource } from '../utils/datasource';
+import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';

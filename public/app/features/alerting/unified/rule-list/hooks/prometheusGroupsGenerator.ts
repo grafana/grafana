@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { BaseQueryFnArgs } from '../../api/alertingApi';
-import { prometheusApi, PromRulesResponse } from '../../api/prometheusApi';
+import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 

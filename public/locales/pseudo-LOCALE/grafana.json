@@ -299,6 +299,12 @@
         }
       }
     },
+    "group-actions": {
+      "delete": "Đęľęŧę",
+      "edit": "Ēđįŧ",
+      "export": "Ēχpőřŧ",
+      "reorder": "Ŗę-őřđęř řūľęş"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
@@ -484,11 +490,17 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "ds-error-boundary": {
+        "title": "Ůŉäþľę ŧő ľőäđ řūľęş ƒřőm ŧĥįş đäŧä şőūřčę"
+      },
       "filter-view": {
         "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
         "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
       },
-      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+      "return-button": {
+        "title": "Åľęřŧ řūľęş"
+      }
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",

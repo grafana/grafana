@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Dropdown, Icon, IconButton, Menu, Stack, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
 import { hashRule } from '../utils/rule-id';
@@ -11,6 +11,7 @@ import { DataSourceSection, DataSourceSectionProps } from './components/DataSour
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -98,28 +99,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
   }, [group, namespaceName, rulesSourceIdentifier]);
 
   return (
-    <ListGroup
-      key={group.name}
-      name={group.name}
-      isOpen={false}
-      actions={
-        <>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
-                <Menu.Item label="Re-order rules" icon="flip" />
-                <Menu.Divider />
-                <Menu.Item label="Export" icon="download-alt" />
-                <Menu.Item label="Delete" icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <IconButton name="ellipsis-h" aria-label="rule group actions" />
-          </Dropdown>
-        </>
-      }
-    >
+    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
       {rulesWithGroupId.map(({ rule, groupIdentifier }) => (
         <DataSourceRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />
       ))}

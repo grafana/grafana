@@ -1,4 +1,4 @@
-import { Stack, Button, Icon } from '@grafana/ui';
+import { Button, Icon, Stack } from '@grafana/ui';
 
 interface LazyPaginationProps {
   canMoveForward: boolean;
