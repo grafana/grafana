@@ -87,9 +87,6 @@ type TempoQuery struct {
 	Datasource *any            `json:"datasource,omitempty"`
 	Filters    []TraceqlFilter `json:"filters,omitempty"`
 
-	// Filters that are used to query the metrics summary
-	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
-
 	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 

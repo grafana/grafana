@@ -50,7 +50,6 @@ import {
   totalsMetric,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
-import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import { formatTraceQLResponse, transformFromOTLP as transformFromOTEL, transformTrace } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
@@ -368,18 +367,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceqlSearch?.length) {
       try {
-        if (config.featureToggles.metricsSummary) {
-          const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
-          if (target) {
-            const appliedQuery = this.applyVariables(target, options.scopedVars);
-            const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
-            subQueries.push(this.handleMetricsSummaryQuery(appliedQuery, queryFromFilters, options));
-          }
-        }
-
-        const traceqlSearchTargets = config.featureToggles.metricsSummary
-          ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t))
-          : targets.traceqlSearch;
+        const traceqlSearchTargets = targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
           const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
@@ -498,17 +486,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       expandedQuery.filters = interpolateFilters(query.filters, scopedVars);
     }
 
-    if (query.groupBy) {
-      expandedQuery.groupBy = query.groupBy.map((filter) => {
-        const updatedFilter = {
-          ...filter,
-          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
-        };
-
-        return updatedFilter;
-      });
-    }
-
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
@@ -517,22 +494,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         : this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
     };
   }
-
-  formatGroupBy = (groupBy: TraceqlFilter[]) => {
-    return groupBy
-      ?.filter((f) => f.tag)
-      .map((f) => {
-        if (f.scope === TraceqlSearchScope.Unscoped) {
-          return `.${f.tag}`;
-        }
-        return f.scope !== TraceqlSearchScope.Intrinsic ? `${f.scope}.${f.tag}` : f.tag;
-      })
-      .join(', ');
-  };
-
-  hasGroupBy = (query: TempoQuery) => {
-    return query.groupBy?.find((gb) => gb.tag);
-  };
 
   /**
    * Handles the simplest of the queries where we have just a trace id and return trace data for it.
@@ -611,63 +572,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       })
     );
   }
-
-  handleMetricsSummaryQuery = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
-    reportInteraction('grafana_traces_metrics_summary_queried', {
-      datasourceType: 'tempo',
-      app: options.app ?? '',
-      grafana_version: config.buildInfo.version,
-      filterCount: target.groupBy?.length ?? 0,
-    });
-
-    if (query === '{}') {
-      return of({
-        error: {
-          message:
-            'Please ensure you do not have an empty query. This is so filters are applied and the metrics summary is not generated from all spans.',
-        },
-        data: emptyResponse,
-      });
-    }
-
-    const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
-    return this._request('/api/metrics/summary', {
-      q: query,
-      groupBy,
-      start: options.range.from.unix(),
-      end: options.range.to.unix(),
-    }).pipe(
-      map((response) => {
-        if (!response.data.summaries) {
-          return {
-            error: {
-              message: getErrorMessage(`No summary data for '${groupBy}'.`),
-            },
-            data: emptyResponse,
-          };
-        }
-        // Check if any of the results have series data as older versions of Tempo placed the series data in a different structure
-        const hasSeries = response.data.summaries.some((summary: MetricsSummary) => summary.series.length > 0);
-        if (!hasSeries) {
-          return {
-            error: {
-              message: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
-            },
-            data: emptyResponse,
-          };
-        }
-        return {
-          data: createTableFrameFromMetricsSummaryQuery(response.data.summaries, query, this.instanceSettings),
-        };
-      }),
-      catchError((error) => {
-        return of({
-          error: { message: getErrorMessage(error.data.message) },
-          data: emptyResponse,
-        });
-      })
-    );
-  };
 
   // This function can probably be simplified by avoiding passing both `targets` and `query`,
   // since `query` is built from `targets`, if you look at how this function is currently called

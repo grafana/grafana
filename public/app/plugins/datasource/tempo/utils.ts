@@ -91,7 +91,6 @@ export const migrateFromSearchToTraceQLSearch = (query: TempoQuery) => {
   const migratedQuery: TempoQuery = {
     datasource: query.datasource,
     filters,
-    groupBy: query.groupBy,
     limit: query.limit,
     query: query.query,
     queryType: 'traceqlSearch',
