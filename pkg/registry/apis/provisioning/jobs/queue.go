@@ -97,10 +97,7 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 	}, nil)
 
 	// For now, start a thread processing each job
-	go func() {
-		time.Sleep(time.Millisecond * 200)
-		s.drainPending()
-	}()
+	go s.drainPending()
 
 	s.jobs = jobs // replace existing list
 	return job, nil

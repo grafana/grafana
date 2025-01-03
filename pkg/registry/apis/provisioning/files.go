@@ -161,7 +161,7 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 	if parsed.GVR == nil {
 		if parsed.GVK != nil {
 			//nolint:govet
-			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: "+parsed.GVK.Kind))
+			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: %s", parsed.GVK.Kind))
 		} else {
 			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
 		}

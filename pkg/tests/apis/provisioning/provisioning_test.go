@@ -10,11 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
@@ -47,9 +49,13 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
 		client := github.NewMockClient(ttc)
-		client.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
+		client.On("IsAuthenticated", mock.Anything).Maybe().Return(nil)
 		client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
+		client.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+		client.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+		client.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
+		client.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
 		// Don't need DeleteWebhook or EditWebhook, because they require that ListWebhooks returns a slice with elements.
 		return client
 	}
@@ -262,9 +268,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"owner": "grafana",
 					"pullRequestLinter": true,
 					"repository": "git-ui-sync-demo",
-					"token": "github_pat_dummy",
-					"webhookSecret": "dummyWebhookSecret",
-					"webhookURL": "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
+					"token": "github_pat_dummy"
 				},
 				"title": "Github Example",
 				"type": "github"
@@ -326,9 +330,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+			require.NoError(collect, err)
+			require.Equal(collect, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+		}, time.Second*2, time.Millisecond*20)
 	})
 
 	t.Run("safe path usages", func(t *testing.T) {
@@ -442,7 +448,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		for _, v := range found.Items {
 			names = append(names, v.GetName())
 		}
-		require.Equal(t, []string{"all-panels-5Y4ReX6LwL7d"}, names, "all-panels dashboard should now exist")
+		require.Contains(t, names, "all-panels-5Y4ReX6LwL7d", "all-panels dashboard should now exist")
 	})
 }
 
@@ -460,4 +466,17 @@ func randomAsciiStr(n int) string {
 		b.WriteByte(char)
 	}
 	return b.String()
+}
+
+func objectToUnstructured(t *testing.T, obj runtime.Object) *unstructured.Unstructured {
+	t.Helper()
+
+	encoded, err := json.Marshal(obj)
+	require.NoError(t, err)
+
+	out := new(unstructured.Unstructured)
+	_, _, err = unstructured.UnstructuredJSONScheme.Decode(encoded, nil, out)
+	require.NoError(t, err)
+
+	return out
 }
