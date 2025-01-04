@@ -38,14 +38,14 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		// NumberType represents all integer and floating point types
 		// TODO: branch between int and float
 		case types.Int64:
-			field = data.NewField(col.Name, nil, []int64{})
+			field = data.NewField(col.Name, nil, []*int64{})
 		case types.Float64:
-			field = data.NewField(col.Name, nil, []float64{})
+			field = data.NewField(col.Name, nil, []*float64{})
 		// StringType represents all string types, including VARCHAR and BLOB.
 		case types.Text:
-			field = data.NewField(col.Name, nil, []string{})
+			field = data.NewField(col.Name, nil, []*string{})
 		case types.Timestamp:
-			field = data.NewField(col.Name, nil, []time.Time{})
+			field = data.NewField(col.Name, nil, []*time.Time{})
 		// TODO: Implement the following types
 		// DatetimeType represents DATE, DATETIME, and TIMESTAMP.
 		// YearType represents the YEAR type.
@@ -74,25 +74,53 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		}
 
 		for i, val := range row {
-			switch v := val.(type) {
+			switch schema[i].Type {
 			// TODO: The types listed here should be the same as that
 			// used when creating the fields. Am I using the wrong fields
 			// from the schema instance?
-			case int8:
-				f.Fields[i].Append(int64(v))
-			case int64:
-				f.Fields[i].Append(v)
-			case float64:
-				f.Fields[i].Append(v)
-			case string:
-				f.Fields[i].Append(v)
-			case bool:
-				f.Fields[i].Append(v)
-			case time.Time:
-				f.Fields[i].Append(v)
+			case types.Int64:
+				if val == nil {
+					f.Fields[i].Append((*int64)(nil))
+				} else {
+					v, ok := val.(int64)
+					if !ok {
+						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+					}
+					f.Fields[i].Append(&v)
+				}
+			case types.Float64:
+				if val == nil {
+					f.Fields[i].Append((*float64)(nil))
+				} else {
+					v, ok := val.(float64)
+					if !ok {
+						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+					}
+					f.Fields[i].Append(&v)
+				}
+			case types.Text:
+				if val == nil {
+					f.Fields[i].Append((*string)(nil))
+				} else {
+					v, ok := val.(string)
+					if !ok {
+						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+					}
+					f.Fields[i].Append(&v)
+				}
+			case types.Timestamp:
+				if val == nil {
+					f.Fields[i].Append((*time.Time)(nil))
+				} else {
+					v, ok := val.(time.Time)
+					if !ok {
+						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+					}
+					f.Fields[i].Append(&v)
+				}
 			// Add more types as needed
 			default:
-				return fmt.Errorf("unsupported value type for column %s: %T", schema[i].Name, v)
+				return fmt.Errorf("unsupported type for column %s: %v", schema[i].Name, schema[i].Type)
 			}
 		}
 	}
