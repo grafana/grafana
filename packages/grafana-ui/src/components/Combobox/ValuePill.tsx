@@ -9,28 +9,35 @@ import { IconButton } from '../IconButton/IconButton';
 interface ValuePillProps {
   children: string;
   onRemove: () => void;
+  disabled?: boolean;
 }
 
-export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(({ children, onRemove, ...rest }, ref) => {
-  const styles = useStyles2(getValuePillStyles);
-  return (
-    <span className={styles.wrapper} {...rest} ref={ref}>
-      <span className={styles.text}>{children}</span>
-      <span className={styles.separator} />
-      <IconButton
-        name="times"
-        size="md"
-        aria-label={`Remove ${children}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-      />
-    </span>
-  );
-});
+export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
+  ({ children, onRemove, disabled, ...rest }, ref) => {
+    const styles = useStyles2(getValuePillStyles, disabled);
+    return (
+      <span className={styles.wrapper} {...rest} ref={ref}>
+        <span className={styles.text}>{children}</span>
+        {!disabled && (
+          <>
+            <span className={styles.separator} />
+            <IconButton
+              name="times"
+              size="md"
+              aria-label={`Remove ${children}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            />
+          </>
+        )}
+      </span>
+    );
+  }
+);
 
-const getValuePillStyles = (theme: GrafanaTheme2) => ({
+const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
     display: 'inline-flex',
     gap: theme.spacing(0.5),
@@ -38,6 +45,7 @@ const getValuePillStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
     padding: theme.spacing(0.25),
+    border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
     fontSize: theme.typography.bodySmall.fontSize,
     flexShrink: 0,
     minWidth: '50px',
