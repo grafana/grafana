@@ -7,7 +7,7 @@ import { callSuggestionsApi } from '../utils';
 import { OtelResponse, LabelResponse, OtelTargetType } from './types';
 import { limitOtelMatchTerms, sortResources } from './util';
 
-const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
+const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__']; // name is handled by metric search metrics bar
 /**
  * Function used to test for OTEL
  * When filters are added, we can also get a list of otel targets used to reduce the metric list
@@ -18,6 +18,7 @@ const metricOtelJobInstanceQuery = (metric: string) => `count(${metric}) by (job
 export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', operator: '=' };
 
 /**
+ * REMOVE THIS IN FUTURE
  * Query the DS for target_info matching job and instance.
  * Parse the results to get label filters.
  * @param dataSourceUid
@@ -46,13 +47,19 @@ export async function getOtelResources(
 
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
 
-  // exclude __name__ or deployment_environment or previously chosen filters
+  // exclude __name__ or previously chosen filters
   return response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
 }
 
 /**
- * Get the total amount of job/instance pairs on a metric.
- * Can be used for target_info.
+ * Get the total amount of job/instance for target_info or for a metric.
+ *
+ * If used for target_info, this is the metric preview scene with many panels and
+ * the job/instance pairs will be used to filter the metric list.
+ *
+ * If used for a metric, this is the metric preview scene with a single panel and
+ * the job/instance pairs will be used to identify otel resource attributes for the metric
+ * and distinguish between resource attributes and promoted attributes.
  *
  * @param dataSourceUid
  * @param timeRange
@@ -106,6 +113,7 @@ export async function totalOtelResources(
 }
 
 /**
+ * REMOVE THIS IN FUTURE WORK
  * Look for duplicated series in target_info metric by job and instance labels
  * If each job&instance combo is unique, the data source is otel standardized.
  * If there is a count by job&instance on target_info greater than one,
@@ -136,6 +144,7 @@ export async function isOtelStandardization(dataSourceUid: string, timeRange: Ra
 
 /**
  * Query the DS for deployment environment label values.
+ * The deployment environment can be either on target_info or promoted to metrics.
  *
  * @param dataSourceUid
  * @param timeRange
@@ -172,7 +181,8 @@ export async function getDeploymentEnvironmentsWithoutScopes(
   const params: Record<string, string | number> = {
     start,
     end,
-    'match[]': '{__name__="target_info"}',
+    // we are ok if deployment_environment has been promoted to metrics so we don't need the match
+    // 'match[]': '{__name__="target_info"}',
   };
 
   const response = await getBackendSrv().get<LabelResponse>(
@@ -181,7 +191,7 @@ export async function getDeploymentEnvironmentsWithoutScopes(
     'explore-metrics-otel-resources-deployment-env'
   );
 
-  // exclude __name__ or deployment_environment or previously chosen filters
+  // exclude __name__ or previously chosen filters
   return response.data;
 }
 
@@ -203,17 +213,19 @@ export async function getDeploymentEnvironmentsWithScopes(
     timeRange,
     scopes,
     [
-      {
-        key: '__name__',
-        operator: '=',
-        value: 'target_info',
-      },
+      // we are ok if deployment_environment has been promoted to metrics so we don't need the match
+      // 'match[]': '{__name__="target_info"}',
+      // {
+      //   key: '__name__',
+      //   operator: '=',
+      //   value: 'target_info',
+      // },
     ],
     'deployment_environment',
     undefined,
     'explore-metrics-otel-resources-deployment-env'
   );
-  // exclude __name__ or deployment_environment or previously chosen filters
+  // exclude __name__ or previously chosen filters
   return response.data.data;
 }
 
@@ -221,11 +233,16 @@ export async function getDeploymentEnvironmentsWithScopes(
  * For OTel, get the resource attributes for a metric.
  * Handle filtering on both OTel resources as well as metric labels.
  *
+ * 1. Does not include resources promoted to metrics
+ * 2. Does not include __name__ or previously chosen filters
+ * 3. Sorts the resources, surfacing the blessedlist on top
+ * 4. Identifies if missing targets if the job/instance list is too long for the label values endpoint request
+ *
  * @param datasourceUid
  * @param timeRange
  * @param metric
  * @param excludedFilters
- * @returns
+ * @returns attributes: string[], missingOtelTargets: boolean
  */
 export async function getFilteredResourceAttributes(
   datasourceUid: string,
@@ -295,7 +312,7 @@ export async function getFilteredResourceAttributes(
   // first filters out metric labels from the resource attributes
   const firstFilter = targetInfoAttributes.filter((resource) => !metricLabels.includes(resource));
 
-  // exclude __name__ or deployment_environment or previously chosen filters
+  // exclude __name__ or previously chosen filters
   const secondFilter = firstFilter
     .filter((resource) => !allExcludedFilters.includes(resource))
     .map((el) => ({ text: el }));
@@ -306,4 +323,63 @@ export async function getFilteredResourceAttributes(
   const resourceAttributes = sortedResourceAttributes.map((el) => el.text);
 
   return { attributes: resourceAttributes, missingOtelTargets: metricMatchTerms.missingOtelTargets };
+}
+
+/**
+ * This function gets otel resources that only exist in target_info and
+ * do not exist on metrics as promoted labels.
+ *
+ * This is used when selecting a label from the list that includes both otel resources and metric labels.
+ * This list helps identify that a selected lbel/resource must be stored in VAR_OTEL_RESOURCES or VAR_FILTERS to be interpolated correctly in the queries.
+ */
+export async function getNonPromotedOtelResources(datasourceUid: string, timeRange: RawTimeRange) {
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+  // The URL for the labels endpoint
+  const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
+  // GET TARGET_INFO LABELS
+  let targetInfoMatchParam = `{__name__="target_info"}`;
+
+  const targetInfoParams: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': targetInfoMatchParam,
+  };
+
+  // these are the resource attributes that come from target_info,
+  // filtered by the metric job and instance
+  const targetInfoResponse = await getBackendSrv().get<LabelResponse>(
+    url,
+    targetInfoParams,
+    // RENAME
+    `explore-metrics-otel-resources-metric-job-instance-${targetInfoMatchParam}`
+  );
+
+  const targetInfoLabels = targetInfoResponse.data ?? [];
+
+  let metricMatchParam = `{name!="",__name__!~"target_info"}`;
+
+  // all labels in all metrics
+  const metricParams: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': metricMatchParam,
+  };
+  // Get the metric labels but exclude any labels found on target_info.
+  // We prioritize metric attributes over resource attributes.
+  // If a label is present in both metric and target_info, we exclude it from the resource attributes.
+  // This prevents errors in the join query.
+  const metricResponse = await getBackendSrv().get<LabelResponse>(
+    url,
+    metricParams,
+    // RENAME THIS
+    `explore-metrics-otel-resources-metric-job-instance-all labels`
+  );
+  // the metric labels here
+  const metricLabels = metricResponse.data ?? [];
+
+  // get all the resource attributes that are not present on metrics (have been promoted to metrics)
+  const nonPromotedResources = targetInfoLabels.filter((item) => !metricLabels.includes(item));
+
+  return nonPromotedResources;
 }

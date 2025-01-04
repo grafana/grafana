@@ -126,6 +126,7 @@ type Interactions = {
   missing_otel_labels_by_truncating_job_and_instance: {
     metric?: string;
   },
+  deployment_environment_migrated: {},
 };
 
 const PREFIX = 'grafana_explore_metrics_';
