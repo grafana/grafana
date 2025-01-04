@@ -372,6 +372,12 @@ func schema_pkg_apis_folder_v0alpha1_Spec(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
 				},
 				Required: []string{"title"},
 			},
