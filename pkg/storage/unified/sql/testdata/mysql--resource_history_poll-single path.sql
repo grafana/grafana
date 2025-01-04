@@ -13,5 +13,6 @@ SELECT
     AND `group` = 'group'
     AND `resource` = 'res'
     AND `resource_version` > 1234
+    AND `resource_version` <= 2345
     ORDER BY `resource_version` ASC
 ;

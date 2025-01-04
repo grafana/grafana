@@ -157,87 +157,72 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
-	// TODO: validate key ?
+
+	// Lock the key and get a new resource version
+	rv, err := b.lockKey(ctx, event.Key)
+	defer b.unlockKey(ctx, event.Key)
+	if err != nil {
+		return 0, fmt.Errorf("lock key: %w", err)
+	}
+
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
 		if event.ObjectOld != nil {
-			return b.restore(ctx, event)
+			err = b.restore(ctx, event, rv)
+		} else {
+			err = b.create(ctx, event, rv)
 		}
-		return b.create(ctx, event)
 	case resource.WatchEvent_MODIFIED:
-		return b.update(ctx, event)
+		err = b.update(ctx, event, rv)
 	case resource.WatchEvent_DELETED:
-		return b.delete(ctx, event)
+		err = b.delete(ctx, event, rv)
 	default:
 		return 0, fmt.Errorf("unsupported event type")
 	}
+
+	// TODO: Wait for the head to catch up to the new RV
+	return rv, err
 }
 
-func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) create(ctx context.Context, event resource.WriteEvent, rv int64) error {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
-	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		folder := ""
 		if event.Object != nil {
 			folder = event.Object.GetFolder()
 		}
+		// TODO: update the following queries to include the RV from above
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
-
-		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
-
-		// 4. Atomically increment resource version for this kind
-		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
-		if err != nil {
-			return fmt.Errorf("increment resource version: %w", err)
-		}
-
-		// 5. Update the RV in both resource and resource_history
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update resource_history rv: %w", err)
-		}
-
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update resource rv: %w", err)
-		}
-		newVersion = rv
-
 		return nil
 	})
-	return newVersion, err
+	return err
 }
 
-func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) update(ctx context.Context, event resource.WriteEvent, rv int64) error {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
-	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		folder := ""
@@ -246,10 +231,11 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		}
 		// 1. Update resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		})
 		if err != nil {
 			return fmt.Errorf("initial resource update: %w", err)
@@ -257,50 +243,23 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 2. Insert into resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
-
-		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
-
-		// 4. Atomically increment resource version for this kind
-		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
-		if err != nil {
-			return fmt.Errorf("increment resource version: %w", err)
-		}
-
-		// 5. Update the RV in both resource and resource_history
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update history rv: %w", err)
-		}
-
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update resource rv: %w", err)
-		}
-		newVersion = rv
-
 		return nil
 	})
 
-	return newVersion, err
+	return err
 }
 
-func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) delete(ctx context.Context, event resource.WriteEvent, rv int64) error {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
-	var newVersion int64
 	guid := uuid.New().String()
 
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
@@ -320,42 +279,23 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 2. Add event to resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
-		}); err != nil {
-			return fmt.Errorf("insert into resource history: %w", err)
-		}
-
-		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
-
-		// 4. Atomically increment resource version for this kind
-		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
-		if err != nil {
-			return fmt.Errorf("increment resource version: %w", err)
-		}
-
-		// 5. Update the RV in resource_history
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
 			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
 			GUID:            guid,
 			ResourceVersion: rv,
 		}); err != nil {
-			return fmt.Errorf("update history rv: %w", err)
+			return fmt.Errorf("insert into resource history: %w", err)
 		}
-		newVersion = rv
-
 		return nil
 	})
 
-	return newVersion, err
+	return err
 }
 
-func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) restore(ctx context.Context, event resource.WriteEvent, rv int64) error {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Restore")
 	defer span.End()
-	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		folder := ""
@@ -366,53 +306,30 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		// 1. Re-create resource
 		// Note: we may want to replace the write event with a create event, tbd.
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			Folder:      folder,
-			GUID:        guid,
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			WriteEvent:      event,
+			Folder:          folder,
+			GUID:            guid,
+			ResourceVersion: rv,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
 
-		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
-
-		// 4. Atomically increment resource version for this kind
-		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
-		if err != nil {
-			return fmt.Errorf("increment resource version: %w", err)
-		}
-
-		// 5. Update the RV in both resource and resource_history
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceHistoryUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update history rv: %w", err)
-		}
-
-		if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
-			SQLTemplate:     sqltemplate.New(b.dialect),
-			GUID:            guid,
-			ResourceVersion: rv,
-		}); err != nil {
-			return fmt.Errorf("update resource rv: %w", err)
-		}
-
-		// 6. Update all resource history entries with the new UID
+		// 3. Update all resource history entries with the new UID
 		// Note: we do not update any history entries that have a deletion timestamp included. This will become
 		// important once we start using finalizers, as the initial delete will show up as an update with a deletion timestamp included.
-		if _, err = dbutil.Exec(ctx, tx, sqlResoureceHistoryUpdateUid, sqlResourceHistoryUpdateRequest{
+		if _, err := dbutil.Exec(ctx, tx, sqlResoureceHistoryUpdateUid, sqlResourceHistoryUpdateRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			OldUID:      string(event.ObjectOld.GetUID()),
@@ -420,13 +337,10 @@ func (b *backend) restore(ctx context.Context, event resource.WriteEvent) (int64
 		}); err != nil {
 			return fmt.Errorf("update history uid: %w", err)
 		}
-
-		newVersion = rv
-
 		return nil
 	})
 
-	return newVersion, err
+	return err
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
@@ -434,13 +348,12 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	defer span.End()
 
 	// TODO: validate key ?
-
 	readReq := &sqlResourceReadRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Request:     req,
 		Response:    NewReadResponse(),
 	}
-
+	// TODO: check the RV is not greater than the last committed RV.
 	sr := sqlResourceRead
 	if req.ResourceVersion > 0 {
 		// read a specific version
@@ -491,6 +404,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	if req.ResourceVersion > 0 || req.NextPageToken != "" {
 		return b.listAtRevision(ctx, req, cb)
 	}
+
 	return b.listLatest(ctx, req, cb)
 }
 
@@ -564,6 +478,16 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+
+		// head := b.getHeadRV(ctx, req.Options.Key)
+		// if head > 0 {
+		// 	// Some of the keys are ahead of HEAD, we need to read from the history table
+		// 	req.ResourceVersion = head
+		// 	return b.listAtRevision(ctx, req, cb)
+		// }
+
+		// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
+		// some keys that are ahead of head and some that are behind.
 		var err error
 		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
@@ -654,7 +578,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 		return nil, fmt.Errorf("get the latest resource version: %w", err)
 	}
 	// Start the poller
-	stream := make(chan *resource.WrittenEvent)
+	stream := make(chan *resource.WrittenEvent, 100)
 	go b.poller(ctx, since, stream)
 	return stream, nil
 }
@@ -688,7 +612,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					}
 
 					// Poll for new events
-					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
+					next, err := b.poll(ctx, group, resource, since[group][resource], grv[group][resource], stream)
 					if err != nil {
 						b.log.Error("polling for resource", "err", err)
 						t.Reset(b.pollingInterval)
@@ -735,7 +659,7 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	return since, nil
 }
 
-// fetchLatestRV returns the current maximum RV in the resource table
+// fetchLatestRV returns the current maximum RV in the resource history table
 func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
@@ -752,17 +676,19 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 	return res.ResourceVersion, nil
 }
 
-func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
+func (b *backend) poll(ctx context.Context, grp string, res string, since int64, maxrv int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
+
 		records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
 			SQLTemplate:          sqltemplate.New(b.dialect),
 			Resource:             res,
 			Group:                grp,
 			SinceResourceVersion: since,
+			MaxResourceVersion:   maxrv,
 			Response:             &historyPollResponse{},
 		})
 		return err
@@ -864,4 +790,70 @@ func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExec
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
 	return nextRV, nil
+}
+
+// lockKey locks the resource for update and returns a new resource version.
+// The resource version is a timestamp in microseconds guaranteed to be greater than previously generated timestamps.
+// However it's not guaranteed to be unique and multiple resources may have the same resource version. This is a design
+// tradeoff to avoid a global lock per resource and is provider high throughput.
+// The lock is aquired in it's own transaction to ensure it's visible to other transactions.
+func (b *backend) lockKey(ctx context.Context, key *resource.ResourceKey) (newVersion int64, err error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"version_atomic_inc", trace.WithAttributes(
+		semconv.K8SNamespaceName(key.Namespace),
+		attribute.String("k8s.resource.group", key.Group),
+		attribute.String("k8s.resource.type", key.Resource),
+		attribute.String("k8s.resource.namespace", key.Namespace),
+		attribute.String("k8s.resource.name", key.Name),
+	))
+	defer span.End()
+
+	var rv int64
+	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		// 1. Lock the resource by inserting a row into the resource_lock table.
+		_, err := dbutil.Exec(ctx, tx, sqlResourceLockInsert, sqlResourceLockInsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Key:         key,
+		})
+		if err != nil {
+			return fmt.Errorf("lock the resource: %w", err)
+		}
+
+		rv, err = dbutil.QueryRow(ctx, tx, sqlResourceLockGet, sqlResourceLockGetRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Key:         key,
+			Response:    new(resourceVersionResponse),
+		})
+		return err
+	})
+	return rv, err
+}
+
+// unlockKey unlocks the resource.
+func (b *backend) unlockKey(ctx context.Context, key *resource.ResourceKey) error {
+	return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		_, err := dbutil.Exec(ctx, tx, sqlResourceLockDelete, sqlResourceLockInsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Key:         key,
+		})
+		return err
+	})
+}
+
+// getHeadRV returns the max usable resource version.
+// TODO: update this with a proper description and a better name.
+func (b *backend) getHeadRV(ctx context.Context, key *resource.ResourceKey) int64 {
+	var rv int64
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		rv, err = dbutil.QueryRow(ctx, tx, sqlResourceLockMinRV, sqlResourceLockMinRVRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Key:         key,
+			Response:    new(resourceVersionResponse),
+		})
+		return err
+	})
+	if err != nil {
+		return 0
+	}
+	return rv
 }

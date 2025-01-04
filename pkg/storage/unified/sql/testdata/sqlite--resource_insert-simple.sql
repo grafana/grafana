@@ -8,7 +8,8 @@ INSERT INTO "resource"
         "folder",
         "previous_resource_version",
         "value",
-        "action"
+        "action",
+        "resource_version"
     )
     VALUES (
         '',
@@ -19,6 +20,7 @@ INSERT INTO "resource"
         'fldr',
         123,
         '[]',
-        'ADDED'
+        'ADDED',
+        0
     )
 ;

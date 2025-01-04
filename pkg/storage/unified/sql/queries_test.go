@@ -124,6 +124,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Resource:             "res",
 						Group:                "group",
 						SinceResourceVersion: 1234,
+						MaxResourceVersion:   2345,
 						Response:             new(historyPollResponse),
 					},
 				},
@@ -217,6 +218,15 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceVersionList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
+					},
+				},
+			},
 
 			sqlResourceVersionUpdate: {
 				{
@@ -263,6 +273,62 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+			},
+			sqlResourceLockInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+					},
+				},
+			},
+			sqlResourceLockGet: {
+				{
+					Name: "get",
+					Data: &sqlResourceLockGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+						Response: new(resourceVersionResponse),
+					},
+				},
+			},
+			sqlResourceLockDelete: {
+				{
+					Name: "unlock",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+					},
+				},
+			},
+			sqlResourceLockMinRV: {
+				{
+					Name: "minrv",
+					Data: &sqlResourceLockMinRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Group:    "gp",
+							Resource: "rs",
+						},
+						Response: new(resourceVersionResponse),
 					},
 				},
 			},
