@@ -16,6 +16,15 @@ import { TempoDatasource } from './datasource';
 import { intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
 
+// Limit maximum tags retrieved from the backend
+export const TAGS_LIMIT = 5000;
+
+// Limit maximum tags values retrieved from the backend
+export const TAG_VALUES_LIMIT = 5000;
+
+// Limit maximum options in select dropdowns
+export const OPTIONS_LIMIT = 1000;
+
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
   tagsV1?: string[];
@@ -45,7 +54,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   async fetchTags() {
     let v1Resp, v2Resp;
     try {
-      v2Resp = await this.request('/api/v2/search/tags', []);
+      v2Resp = await this.request('/api/v2/search/tags', { limit: TAGS_LIMIT });
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -152,7 +161,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     const encodedTag = this.encodeTag(tag);
     const response = await this.request(
       `/api/v2/search/tag/${encodedTag}/values`,
-      query ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe) } : {}
+      query
+        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: TAG_VALUES_LIMIT }
+        : { limit: TAG_VALUES_LIMIT }
     );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {

@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InputActionMeta, Select } from '@grafana/ui';
 
-import { maxOptions } from './SearchTraceQLEditor/SearchField';
 import { TempoDatasource } from './datasource';
+import { OPTIONS_LIMIT } from './language_provider';
 
 export enum TempoVariableQueryType {
   LabelNames,
@@ -46,7 +46,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
 
   const options = useMemo(() => {
     if (labelQuery.length === 0) {
-      return labelOptions.slice(0, maxOptions);
+      return labelOptions.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = labelQuery.toLowerCase();
@@ -57,7 +57,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
         }
         return false;
       })
-      .slice(0, maxOptions);
+      .slice(0, OPTIONS_LIMIT);
   }, [labelQuery, labelOptions]);
 
   const onQueryTypeChange = (newType: SelectableValue<TempoVariableQueryType>) => {
