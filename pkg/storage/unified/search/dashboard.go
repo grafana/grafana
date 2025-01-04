@@ -18,7 +18,6 @@ import (
 // Standard dashboard fields
 //------------------------------------------------------------
 
-const DASHBOARD_LEGACY_ID = "legacy_id"
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
@@ -192,9 +191,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		DASHBOARD_LINK_COUNT:     summary.LinkCount,
 	}
 
-	if summary.ID > 0 {
-		doc.Fields[DASHBOARD_LEGACY_ID] = summary.ID
-	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
 		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes

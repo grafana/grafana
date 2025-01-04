@@ -37,13 +37,16 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"rv": 10,
 		"title": "test playlist unified storage",
 		"title_sort": "test playlist unified storage",
+		"labels": {
+			"region": "xyz"
+		},
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
 		"repository": {
-			"name": "SQL",
-			"path": "15",
+			"name": "External",
 			"hash": "xyz"
-		}
-		}`, string(jj))
+		},
+		"deprecatedInternalID": 15
+	}`, string(jj))
 }
