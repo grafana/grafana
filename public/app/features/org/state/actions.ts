@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { updateConfigurationSubtitle } from 'app/core/actions';
+import { updateConfigurationSubtitle } from 'app/core/reducers/navModel';
 import { ThunkResult } from 'app/types';
 
 import { organizationLoaded, userOrganizationsLoaded } from './reducers';

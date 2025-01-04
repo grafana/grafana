@@ -2,8 +2,8 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction, TeamWithRoles, TeamMember, ThunkResult, Team } from 'app/types';
 

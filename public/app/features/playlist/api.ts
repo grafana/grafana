@@ -2,8 +2,8 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
