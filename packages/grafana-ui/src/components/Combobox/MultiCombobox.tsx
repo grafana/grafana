@@ -1,8 +1,9 @@
 import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Checkbox } from '../Forms/Checkbox';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
@@ -21,12 +22,13 @@ import { useMeasureMulti } from './useMeasureMulti';
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (items?: T[]) => void;
+  canToggleAll?: boolean;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width } = props;
+  const { options, placeholder, onChange, value, width, canToggleAll } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -40,8 +42,26 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
 
-  const [items, _baseSetItems] = useState(isAsync ? [] : options);
+  const allOption = useMemo(() => {
+    return {
+      label: t('multicombobox.all.title', 'All'),
+      // Type casting needed to make this work when T is a number
+      value: 'all' as unknown as T,
+    };
+  }, []);
+
+  const [items, _baseSetItems] = useState(isAsync ? [] : canToggleAll ? [allOption, ...options] : options);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAsync) {
+      if (canToggleAll) {
+        _baseSetItems([allOption, ...options]);
+      } else {
+        _baseSetItems(options);
+      }
+    }
+  }, [options, canToggleAll, allOption, isAsync]);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
@@ -107,6 +127,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          if (newSelectedItem?.value === 'all') {
+            const allSelected = selectedItems.length === items.length - 1;
+            onChange(getComboboxOptionsValues(allSelected ? [] : items.slice(1)));
+            break;
+          }
           if (newSelectedItem) {
             if (!isOptionSelected(newSelectedItem)) {
               onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
@@ -195,6 +220,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
+                  const isAll = item.value === 'all';
+                  const isEverythingSelected = selectedItems.length === items.length - 1;
                   return (
                     <li
                       key={item.value}
@@ -203,7 +230,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                     >
                       {' '}
                       {/* Add styling with virtualization */}
-                      <Checkbox key={id} value={isSelected} aria-labelledby={id} />
+                      <Checkbox
+                        key={id}
+                        value={isAll ? isEverythingSelected : isSelected}
+                        indeterminate={isAll && !isEverythingSelected && selectedItems.length > 0}
+                        aria-labelledby={id}
+                      />
                       <OptionListItem option={item} id={id} />
                     </li>
                   );
