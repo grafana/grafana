@@ -1,6 +1,7 @@
 package coreplugin
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/expfmt"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -75,7 +78,23 @@ func (cp *corePlugin) Target() backendplugin.Target {
 }
 
 func (cp *corePlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return nil, plugins.ErrMethodNotImplemented
+	metricGatherer := prometheus.DefaultGatherer
+	mfs, err := metricGatherer.Gather()
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	for _, mf := range mfs {
+		_, err := expfmt.MetricFamilyToText(&buf, mf)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &backend.CollectMetricsResult{
+		PrometheusMetrics: buf.Bytes(),
+	}, nil
 }
 
 func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
