@@ -447,6 +447,7 @@ export const defaultCalcs: FieldCalcs = {
   max: -Number.MAX_VALUE,
   min: Number.MAX_VALUE,
   logmin: Number.MAX_VALUE,
+  median: null,
   mean: null,
   last: null,
   first: null,
@@ -477,6 +478,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
   const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
+  const numberData: any[] = [];
+
   for (let i = 0; i < data.length; i++) {
     let currentValue = data[i];
 
@@ -505,6 +508,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
+        numberData.push(currentValue);
         calcs.sum += currentValue;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
@@ -584,6 +588,11 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
     calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
   }
+
+  if (numberData.length > 0) {
+    calcs.median = calculateMedian(numberData);
+  }
+
   return calcs;
 }
 
@@ -702,4 +711,18 @@ function calculatePercentile(field: Field, percentile: number, ignoreNulls: bool
   const sorted = data.slice().sort((a, b) => a - b);
   const index = Math.round((sorted.length - 1) * percentile);
   return sorted[index];
+}
+
+function calculateMedian(arr: any[]): number {
+  // sort array
+  const sortedArr = [...arr].sort((a, b) => a - b);
+
+  const mid = Math.floor(sortedArr.length / 2);
+
+  //  calculate median
+  if (sortedArr.length % 2 === 0) {
+    return (sortedArr[mid - 1] + sortedArr[mid]) / 2;
+  } else {
+    return sortedArr[mid];
+  }
 }
