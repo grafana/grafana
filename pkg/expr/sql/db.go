@@ -261,12 +261,12 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		// convert fields' labels to fields
 		copy := labelsToFields(frame)
 
-		txt, err := copy.StringTable(-1, -1)
-		if err != nil {
-			return err
-		}
+		// txt, err := copy.StringTable(-1, -1)
+		// if err != nil {
+		// 	return err
+		// }
 
-		fmt.Printf("GOT: %s", txt)
+		// fmt.Printf("GOT: %s", txt)
 
 		convertedFrames = append(convertedFrames, copy)
 	}
