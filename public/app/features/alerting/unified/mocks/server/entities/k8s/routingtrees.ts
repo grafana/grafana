@@ -1,8 +1,8 @@
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import {
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Matcher,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree,
 } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
@@ -11,7 +11,7 @@ import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/da
  * Normalise matchers from config Route object -> what the k8s API expects to be returning
  */
 const normalizeMatchers = (route: Route) => {
-  const routeMatchers: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher[] = [];
+  const routeMatchers: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Matcher[] = [];
 
   if (route.object_matchers) {
     route.object_matchers.forEach(([label, type, value]) => {
@@ -34,11 +34,14 @@ const normalizeMatchers = (route: Route) => {
   return routeMatchers;
 };
 
-const mapRoute = (route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route => {
+const mapRoute = (
+  route: Route
+): ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1Route => {
   const normalisedMatchers = normalizeMatchers(route);
   const { match, match_re, object_matchers, routes, receiver, ...rest } = route;
   return {
     ...rest,
+    continue: Boolean(route.continue),
     // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
     receiver: receiver || '',
     matchers: normalisedMatchers,
@@ -48,7 +51,7 @@ const mapRoute = (route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificat
 
 export const getUserDefinedRoutingTree: (
   config: AlertManagerCortexConfig
-) => ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = (config) => {
+) => ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree = (config) => {
   const route = config.alertmanager_config?.route || {};
 
   const { routes, ...defaults } = route;
@@ -73,6 +76,7 @@ export const getUserDefinedRoutingTree: (
       resourceVersion: btoa(JSON.stringify(spec)),
     },
     spec,
+    status: {},
   };
 };
 
@@ -87,7 +91,7 @@ export const getRoutingTree = (treeName: string) => {
 
 export const setRoutingTree = (
   treeName: string,
-  updatedRoutingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+  updatedRoutingTree: ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceRoutingtreeV0Alpha1RoutingTree
 ) => {
   return ROUTING_TREE_MAP.set(treeName, updatedRoutingTree);
 };
