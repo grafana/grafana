@@ -83,8 +83,8 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       return [undefined, {}];
     }
 
-    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint), grafanaNotifiers);
-  }, [contactPoint, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
+    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
+  }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
