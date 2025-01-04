@@ -77,6 +77,7 @@ export enum PromOperationId {
   Hour = 'hour',
   Idelta = 'idelta',
   Increase = 'increase',
+  Info = 'info',
   Irate = 'irate',
   LabelJoin = 'label_join',
   LabelReplace = 'label_replace',
