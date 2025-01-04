@@ -208,7 +208,7 @@ describe('runQueries', () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     await dispatch(runQueries({ exploreId: 'left' }));
-    expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
+    expect(getState().explore.panes.left!.graphResult).not.toBeTruthy();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
@@ -232,7 +232,7 @@ describe('runQueries', () => {
   });
 
   /* the next two tests are for ensuring the query datasource's filterQuery function stops queries
-    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0]) 
+    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0])
     to filter queries off their key value
 
     datasources[1] does not have filterQuery defined
@@ -463,6 +463,57 @@ describe('changeQueries', () => {
         datasource: datasources[0].getRef(),
         queryType: 'someValue',
       });
+    });
+
+    it('should merge streamed response packet correctly', async () => {
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            ['left']: {
+              ...defaultInitialState.explore.panes['left'],
+              isLive: true,
+              queryResponse: {
+                state: LoadingState.Streaming,
+              },
+              graphResult: null,
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      expect(getState().explore.panes['left']?.nodeGraphResult).not.toBeDefined();
+
+      await dispatch(
+        queryStreamUpdatedAction({
+          exploreId: 'left',
+          response: {
+            request: true,
+            nodeGraphFrames: [{}, {}],
+            traceFrames: [],
+            rawPrometheusFrames: [],
+            flameGraphFrames: [],
+          },
+        } as unknown as QueryEndedPayload)
+      );
+
+      await dispatch(
+        queryStreamUpdatedAction({
+          exploreId: 'left',
+          response: {
+            request: true,
+            nodeGraphFrames: [],
+            traceFrames: [],
+            rawPrometheusFrames: [],
+            flameGraphFrames: [],
+            graphResult: [{}, {}],
+          },
+        } as unknown as QueryEndedPayload)
+      );
+      expect(getState().explore.panes['left']?.graphResult).toHaveLength(2);
+      expect(getState().explore.panes['left']?.nodeGraphResult).toHaveLength(2);
+      expect(getState().explore.panes.left!.showNodeGraph).toBeTruthy();
+      expect(getState().explore.panes.left!.showMetrics).toBeTruthy();
     });
   });
 
