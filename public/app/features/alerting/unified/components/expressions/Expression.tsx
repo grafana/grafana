@@ -369,13 +369,17 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
+        <ExpressionStatusIndicator
+          refId={refId}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={alertCondition}
+        />
         <IconButton
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip="Remove expression"
+          tooltip={`Remove expression "${refId}"`}
         />
       </Stack>
     </header>
