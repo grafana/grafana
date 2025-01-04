@@ -12,7 +12,6 @@ describe('utils', () => {
       uid: 'new-folder',
       title: 'NewFolder',
       url: '',
-      canAdmin: true,
       canDelete: true,
       canEdit: true,
       canSave: true,
