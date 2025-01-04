@@ -49,6 +49,21 @@ type upsertDataSourceFromConfig struct {
 	Editable        bool
 	UID             string
 	IsPrunable      bool
+	Caching         *cachingConfig
+}
+
+type cachingConfig struct {
+	Enabled       bool
+	QueriesTTL    int64
+	ResourcesTTL  int64
+	UseDefaultTTL bool
+}
+
+type upsertCachingConfig struct {
+	Enabled       values.BoolValue       `json:"enabled" yaml:"enabled"`
+	QueriesTTL    values.DurationMsValue `json:"queriesTTL" yaml:"queriesTTL"`
+	ResourcesTTL  values.DurationMsValue `json:"resourcesTTL" yaml:"resourcesTTL"`
+	UseDefaultTTL values.BoolValue       `json:"useDefaultTTL" yaml:"useDefaultTTL"`
 }
 
 type configsV0 struct {
@@ -115,6 +130,7 @@ type upsertDataSourceFromConfigV1 struct {
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
 	IsPrunable      values.BoolValue
+	Caching         *upsertCachingConfig `json:"caching,omitempty" yaml:"caching,omitempty"`
 }
 
 func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
@@ -127,6 +143,16 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
+		var dsCachingConfig *cachingConfig
+		if ds.Caching != nil {
+			dsCachingConfig = &cachingConfig{
+				Enabled:       ds.Caching.Enabled.Value(),
+				QueriesTTL:    ds.Caching.QueriesTTL.Value(),
+				ResourcesTTL:  ds.Caching.ResourcesTTL.Value(),
+				UseDefaultTTL: ds.Caching.UseDefaultTTL.Value(),
+			}
+		}
+
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
 			Name:            ds.Name.Value(),
@@ -146,6 +172,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			Version:         ds.Version.Value(),
 			UID:             ds.UID.Value(),
 			IsPrunable:      cfg.Prune,
+			Caching:         dsCachingConfig,
 		})
 	}
 
