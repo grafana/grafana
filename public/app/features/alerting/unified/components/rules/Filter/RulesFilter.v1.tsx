@@ -4,10 +4,21 @@ import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  Icon,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  RadioButtonGroup,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -51,7 +62,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const { pluginsFilterEnabled } = usePluginsFilterStatus();
+  const { isLoading: pluginsIsLoading, pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
@@ -127,6 +138,10 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
       config.featureToggles.alertingSimplifiedRouting) ??
     false;
   const searchIcon = <Icon name={'search'} />;
+
+  if (pluginsIsLoading) {
+    return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+  }
 
   return (
     <Stack direction="column" gap={0}>
@@ -234,7 +249,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Stack>
           </AlertmanagerProvider>
         )}
-        {pluginsFilterEnabled && (
+        {!pluginsIsLoading && pluginsFilterEnabled && (
           <div>
             <Label>Plugin rules</Label>
             <RadioButtonGroup<'hide'>
@@ -370,8 +385,8 @@ const helpStyles = (theme: GrafanaTheme2) => ({
 });
 
 function usePluginsFilterStatus() {
-  const { components } = useAlertingHomePageExtensions();
-  return { pluginsFilterEnabled: components.length > 0 };
+  const { components, isLoading } = useAlertingHomePageExtensions();
+  return { isLoading, pluginsFilterEnabled: components.length > 0 };
 }
 
 export default RulesFilter;
