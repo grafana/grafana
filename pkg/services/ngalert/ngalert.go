@@ -271,6 +271,7 @@ func (ng *AlertNG) init() error {
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
 	var alertsSender schedule.AlertsSender
+	ng.Log.Debug("Unified Alerting scheduled evaluation config", "scheduled_evaluation_enabled", ng.Cfg.UnifiedAlerting.ScheduledEvalEnabled)
 	if ng.Cfg.UnifiedAlerting.ScheduledEvalEnabled {
 		alertsSender = alertsRouter
 	} else {

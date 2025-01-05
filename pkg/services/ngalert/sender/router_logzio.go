@@ -37,7 +37,6 @@ func NewLogzioAlertsRouter(alertsRouteUrl string) (*LogzioAlertsRouter, error) {
 
 func (d *LogzioAlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New(key.LogContext()...)
-	logger.Debug("Sending alerts on logzio sender")
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")
 		return
@@ -55,7 +54,7 @@ func (d *LogzioAlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, 
 		return
 	}
 
-	logger.Info("Sending alerts to external url", "url", d.url, "headers", headers, "payload", body)
+	logger.Debug("Sending alerts to external url", "url", d.url, "headers", headers, "payload", body)
 	err = sendAlert(logger, ctx, d.client, d.url, payload, headers)
 	if err != nil {
 		logger.Warn("Error from sending alerts to notify", "err", err)

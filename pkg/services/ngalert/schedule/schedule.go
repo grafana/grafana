@@ -301,9 +301,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 					folderTitle: folderTitle,
 				}})
 			}
-		} else {
-			sch.log.Debug("Scheduled evaluation disabled, not adding alerts to run")
 		}
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
@@ -363,7 +362,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio external evaluation
 func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.ExternalAlertEvaluationRequest) error {
-	logger := sch.log.FromContext(ctx)
+	logger := sch.log.New(ctx, "eval_time", evalReq.EvalTime, "rule_title", evalReq.AlertRule.Title, "rule_uid", evalReq.AlertRule.UID, "org_id", evalReq.AlertRule.OrgID).FromContext(ctx)
 	alertKey := ngmodels.AlertRuleKey{
 		OrgID: evalReq.AlertRule.OrgID,
 		UID:   evalReq.AlertRule.UID,
@@ -385,7 +384,7 @@ func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.Ext
 				return fmt.Errorf("evaluation was not sent for alert key %s", alertKey)
 			}
 			if dropped != nil {
-				logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped, "rule_uid", alertKey.UID, "org_id", alertKey.OrgID)
+				logger.Warn("RunRuleEvaluation: got dropped eval", "dropped_eval_time", dropped.scheduledAt)
 			}
 		}
 	} else {
@@ -428,7 +427,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span trace.Span, retry bool) error {
-		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", e.scheduledAt).FromContext(ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add observability to alerting
 		start := sch.clock.Now()
 
 		// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
@@ -517,6 +516,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
 		))
 		if len(alerts.PostableAlerts) > 0 {
+			logger.Info("Sending postable alerts", "alerts", len(alerts.PostableAlerts)) // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add observability to alerting
 			sch.alertsSender.Send(ctx, key, alerts)
 		}
 		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
@@ -593,7 +593,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					if tracingCtx.Err() != nil {
 						span.SetStatus(codes.Error, "rule evaluation cancelled")
 						span.End()
-						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", ctx.scheduledAt)
 						return
 					}
 
@@ -606,10 +606,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt, "error", err)
+					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", ctx.scheduledAt, "error", err)
 					select {
 					case <-tracingCtx.Done():
-						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "eval_time", ctx.scheduledAt)
 						return
 					case <-time.After(retryDelay):
 						continue

@@ -76,19 +76,20 @@ func (srv *LogzioAlertingService) addQuerySourceHeader(c *contextmodel.ReqContex
 }
 
 func (srv *LogzioAlertingService) RouteSendAlertNotifications(c *contextmodel.ReqContext, sendNotificationsRequest apimodels.AlertSendNotificationsRequest) response.Response {
-	c.Logger.Info("Sending alerts to local notifier", "count", len(sendNotificationsRequest.Alerts.PostableAlerts))
+	logger := c.Logger.New(sendNotificationsRequest.AlertRuleKey.LogContext()...).FromContext(c.Req.Context())
+	logger.Info("Sending alerts to local notifier", "count", len(sendNotificationsRequest.Alerts.PostableAlerts))
 	n, err := srv.MultiOrgAlertmanager.AlertmanagerFor(sendNotificationsRequest.AlertRuleKey.OrgID)
 	if err == nil {
 		if err := n.PutAlerts(c.Req.Context(), sendNotificationsRequest.Alerts); err != nil {
-			c.Logger.Error("Failed to put alerts in the local notifier", "count", len(sendNotificationsRequest.Alerts.PostableAlerts), "error", err)
+			logger.Error("Failed to put alerts in the local notifier", "count", len(sendNotificationsRequest.Alerts.PostableAlerts), "error", err)
 		} else {
 			return response.Success("Put alerts was successful")
 		}
 	} else {
 		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			c.Logger.Debug("Local notifier was not found")
+			logger.Debug("Local notifier was not found")
 		} else {
-			c.Logger.Error("Local notifier is not available", "error", err)
+			logger.Error("Local notifier is not available", "error", err)
 		}
 	}
 
