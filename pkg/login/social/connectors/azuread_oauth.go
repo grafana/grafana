@@ -357,7 +357,6 @@ func validateFederatedCredentialAudience(info *social.OAuthInfo, requester ident
 	}
 	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
 		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
-
 			return nil
 		}
 	}
