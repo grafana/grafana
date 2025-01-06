@@ -305,6 +305,11 @@ func (m *mockResourceInterface) Delete(ctx context.Context, name string, options
 	return args.Error(0)
 }
 
+func (m *mockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, options, listOptions)
+	return args.Error(0)
+}
+
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *mockDashK8sCli, *mockResourceInterface) {
 	k8sClientMock := new(mockDashK8sCli)
 	k8sResourceMock := new(mockResourceInterface)
@@ -644,6 +649,33 @@ func TestDeleteDashboard(t *testing.T) {
 	})
 }
 
+func TestDeleteAllDashboards(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sClientMock.AssertExpectations(t)
+	})
+}
+
 func TestSearchDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
@@ -660,7 +692,10 @@ func TestSearchDashboards(t *testing.T) {
 			Type:  "dash-db",
 			URI:   "db/dashboard-1",
 			URL:   "/d/uid1/dashboard-1",
-			Tags:  []string{},
+			Tags: []string{
+				"tag1",
+				"tag2",
+			},
 		},
 		{
 			UID:   "uid2",
@@ -683,6 +718,7 @@ func TestSearchDashboards(t *testing.T) {
 				Slug:  "dashboard-1",
 				OrgID: 1,
 				Title: "Dashboard 1",
+				Tags:  []string{"tag1", "tag2"},
 			},
 			{
 				UID:   "uid2",
@@ -709,6 +745,9 @@ func TestSearchDashboards(t *testing.T) {
 					{
 						Name: "folder",
 					},
+					{
+						Name: "tags",
+					},
 				},
 				Rows: []*resource.ResourceTableRow{
 					{
@@ -719,6 +758,7 @@ func TestSearchDashboards(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte(""),
+							[]byte("[\"tag1\", \"tag2\"]"),
 						},
 					},
 					{
@@ -728,6 +768,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
+							[]byte(""),
 							[]byte(""),
 						},
 					},
@@ -920,7 +961,6 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 				"spec": map[string]interface{}{
 					"title":   title,
 					"version": int64(1),
-					"id":      int64(1),
 				},
 			},
 		}
@@ -931,7 +971,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		obj.SetName(uid)
 		obj.SetCreatedBy("user:useruid")
 		obj.SetUpdatedBy("user:useruid")
-
+		obj.SetDeprecatedInternalID(1) // nolint:staticcheck
 		result, err := dr.UnstructuredToLegacyDashboard(context.Background(), item, orgID)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -955,6 +995,63 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		_, err := (&DashboardServiceImpl{}).UnstructuredToLegacyDashboard(context.Background(), item, int64(123))
 		assert.Error(t, err)
 		assert.Equal(t, "error parsing dashboard from k8s response", err.Error())
+	})
+}
+
+func TestGetDashboardTags(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	expectedResult := []*dashboards.DashboardTagCloudItem{
+		{
+			Term:  "tag1",
+			Count: 1,
+		},
+		{
+			Term:  "tag2",
+			Count: 3,
+		},
+	}
+	query := &dashboards.GetDashboardTagsQuery{
+		OrgID: 1,
+	}
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("GetDashboardTags", mock.Anything, query).Return(expectedResult, nil).Once()
+		result, err := service.GetDashboardTags(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
+			Facet: map[string]*resource.ResourceSearchResponse_Facet{
+				"tags": {
+					Terms: []*resource.ResourceSearchResponse_TermFacet{
+						{
+							Term:  "tag1",
+							Count: 1,
+						},
+						{
+							Term:  "tag2",
+							Count: 3,
+						},
+					},
+				},
+			},
+		}, nil)
+
+		result, err := service.GetDashboardTags(ctx, query)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+		fakeStore.AssertExpectations(t)
 	})
 }
 

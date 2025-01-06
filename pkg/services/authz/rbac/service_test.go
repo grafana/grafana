@@ -149,7 +149,7 @@ func TestService_checkPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper()}
+			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper(), tracer: tracing.NewNoopTracerService()}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -207,6 +207,7 @@ func TestService_getUserTeams(t *testing.T) {
 				teamCache:     cacheService,
 				identityStore: identityStore,
 				logger:        log.New("test"),
+				tracer:        tracing.NewNoopTracerService(),
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -288,6 +289,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 				basicRoleCache: cacheService,
 				store:          store,
 				logger:         log.New("test"),
+				tracer:         tracing.NewNoopTracerService(),
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -438,6 +440,7 @@ func TestService_buildFolderTree(t *testing.T) {
 				folderCache: cacheService,
 				logger:      log.New("test"),
 				sf:          new(singleflight.Group),
+				tracer:      tracing.NewNoopTracerService(),
 			}
 
 			tree, err := s.buildFolderTree(ctx, ns)
@@ -640,7 +643,12 @@ func TestService_listPermission(t *testing.T) {
 			if tc.folderTree != nil {
 				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
 			}
-			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper(), folderCache: folderCache}
+			s := &Service{
+				logger:       log.New("test"),
+				actionMapper: mappers.NewK8sRbacMapper(),
+				folderCache:  folderCache,
+				tracer:       tracing.NewNoopTracerService(),
+			}
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
