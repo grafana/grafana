@@ -530,14 +530,12 @@ describe('DataTrail', () => {
       trail = new DataTrail({
         useOtelExperience: true,
         nonPromotedOtelResources,
+        // before checking, things should be hidden
+        initialOtelCheckComplete: false
       });
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
       getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
-    });
-
-    afterEach(() => {
-      trail.setState({ initialCheckComplete: false });
     });
 
     it('should start with hidden otel resources and var filters variables', () => {
@@ -552,40 +550,62 @@ describe('DataTrail', () => {
       expect(joinQueryVarHide).toBe(VariableHide.hideVariable);
     });
 
-    it('should automatically update the otel resources var when a non promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
-      getOtelAndMetricsVar(trail).setState({
-        filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
-      });
-      const otelResourcesFilter = getOtelResourcesVar(trail).state.filters[0];
-      expect(otelResourcesFilter.key).toBe('deployment_environment');
-      expect(otelResourcesFilter.value).toBe('production');
-    });
-    it('should add history step of type "resource" when adding a non promoted otel resource', () => {
-      getOtelAndMetricsVar(trail).setState({
-        filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
-      });
-      expect(trail.state.history.state.steps[2].type).toBe('resource');
-    });
-
-    it('should automatically update the var filters when a promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
-      getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
-      const varFilters = getFilterVar().state.filters[0];
-      expect(varFilters.key).toBe('promoted');
-      expect(varFilters.value).toBe('resource');
-    });
-    it('should add history step of type "filters" when adding a non promoted otel resource', () => {
-      getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
-      expect(trail.state.history.state.steps[2].type).toBe('filters');
-    });
-
     it('should have a group left variable for resource attributes', () => {
       expect(getOtelGroupLeftVar(trail).state.value).toBe('attribute1,attribute2');
     });
 
-    it('should display with hideLabel var filters and hide VAR_OTEL_AND_METRIC_FILTERS when resetting otel experience', () => {
-      trail.resetOtelExperience();
-      expect(getFilterVar().state.hide).toBe(VariableHide.hideLabel);
-      expect(getOtelAndMetricsVar(trail).state.hide).toBe(VariableHide.hideVariable);
-    });
+    describe('resetting the OTel experience', () => {
+      it('should display with hideLabel var filters and hide VAR_OTEL_AND_METRIC_FILTERS when resetting otel experience', () => {
+        trail.resetOtelExperience();
+        expect(getFilterVar().state.hide).toBe(VariableHide.hideLabel);
+        expect(getOtelAndMetricsVar(trail).state.hide).toBe(VariableHide.hideVariable);
+      });
+
+      // it should preserve var filters when it resets
+    })
+    
+
+    describe('after the initial OTel check the subscription to Otel and metrics var should update other variables', () => {
+      beforeEach(()=> {
+        trail.setState({initialOtelCheckComplete: true});
+      });
+
+      it('should automatically update the otel resources var when a non promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
+        getOtelAndMetricsVar(trail).setState({
+          filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
+        });
+  
+        const otelResourcesVar = getOtelResourcesVar(trail);
+        const otelResourcesFilter = otelResourcesVar.state.filters[0];
+        expect(otelResourcesFilter.key).toBe('deployment_environment');
+        expect(otelResourcesFilter.value).toBe('production');
+      });
+
+      it('should add history step of type "resource" when adding a non promoted otel resource', () => {
+        getOtelAndMetricsVar(trail).setState({
+          filters: [{ key: 'deployment_environment', operator: '=', value: 'production' }],
+        });
+        expect(trail.state.history.state.steps[2].type).toBe('resource');
+      });
+
+      it('should automatically update the var filters when a promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
+        getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
+        const varFilters = getFilterVar().state.filters[0];
+        expect(varFilters.key).toBe('promoted');
+        expect(varFilters.value).toBe('resource');
+      });
+
+      it('should add history step of type "filters" when adding a non promoted otel resource', () => {
+        getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
+        expect(trail.state.history.state.steps[2].type).toBe('filters');
+      });
+    })
+    
+    // tests for the DS change with OTel here
+    describe('changing the DS when using OTel', ()=>{
+      // does not reset OTel if on initialization
+
+      // does reset otel after initialization before next check
+    })
   });
 });

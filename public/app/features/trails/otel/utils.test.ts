@@ -338,7 +338,7 @@ describe('util functions that rely on trail and variable setup', () => {
   });
 
   afterEach(() => {
-    trail.setState({ initialCheckComplete: false });
+    trail.setState({ initialOtelCheckComplete: false });
   });
   describe('updateOtelData', () => {
     it('should automatically add the deployment environment on loading a data trail from start', () => {
@@ -352,7 +352,6 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       const otelMetricsKey = otelMetricsVar.state.filters[0].key;
@@ -385,7 +384,6 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       const otelMetricsKey = otelMetricsVar.state.filters[0].key;
@@ -420,7 +418,6 @@ describe('util functions that rely on trail and variable setup', () => {
         ['production'],
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
 
       const otelMetricsVar = getOtelAndMetricsVar(trail);
@@ -445,7 +442,6 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
 
@@ -466,7 +462,6 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
 
@@ -487,7 +482,6 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         [], //nonPromotedOtelResources
-        true // fromDataSourceChanged
       );
       const varFilters = getFilterVar().state.filters[0];
       expect(varFilters.key).toBe('deployment_environment');
@@ -495,7 +489,7 @@ describe('util functions that rely on trail and variable setup', () => {
     });
 
     it('should preserve var filters when switching a data source but not initial load', () => {
-      trail.setState({ initialCheckComplete: true });
+      trail.setState({ initialOtelCheckComplete: true });
       const deploymentEnvironments = ['production'];
       getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
       updateOtelData(
@@ -505,27 +499,10 @@ describe('util functions that rely on trail and variable setup', () => {
         deploymentEnvironments,
         true, // hasOtelResources
         nonPromotedOtelResources,
-        true // fromDataSourceChanged
       );
       const varFilters = getFilterVar().state.filters[0];
       expect(varFilters.key).toBe('zone');
       expect(varFilters.value).toBe('a');
-    });
-
-    it('should not preserve otel resources when switching a data source but not initial load', () => {
-      trail.setState({ initialCheckComplete: true });
-      getOtelResourcesVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
-      updateOtelData(
-        trail,
-        'datasourceUid',
-        defaultTimeRange,
-        [], //deploymentEnvironments,
-        true, // hasOtelResources
-        nonPromotedOtelResources,
-        true // fromDataSourceChanged
-      );
-      const otelResources = getOtelResourcesVar(trail).state.filters[0];
-      expect(otelResources).toBe(undefined);
     });
   });
 
