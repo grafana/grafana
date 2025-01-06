@@ -63,6 +63,7 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 }
 
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
+// Test
 func folderTreeCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
