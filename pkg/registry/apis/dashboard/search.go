@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -193,7 +192,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-//nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -310,63 +308,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
-	}
-
-	scoreIDX := 0
-	explainIDX := 0
-	for i, v := range result.Results.Columns {
-		switch v.Name {
-		case resource.SEARCH_FIELD_EXPLAIN:
-			explainIDX = i
-		case resource.SEARCH_FIELD_SCORE:
-			scoreIDX = i
-		}
-	}
-
-	sr := &dashboardv0alpha1.SearchResults{
-		Offset:    searchRequest.Offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
-	}
-	for i, row := range result.Results.Rows {
-		hit := dashboardv0alpha1.DashboardHit{
-			Resource: row.Key.Resource, // folders | dashboards
-			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[0]),
-			Folder:   string(row.Cells[1]),
-		}
-		if row.Cells[2] != nil {
-			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
-		}
-
-		if explainIDX > 0 && row.Cells[explainIDX] != nil {
-			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
-		}
-		if scoreIDX > 0 && row.Cells[scoreIDX] != nil {
-			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
-		}
-		sr.Hits[i] = hit
-	}
-
-	// Add facet results
-	if result.Facet != nil {
-		sr.Facets = make(map[string]dashboardv0alpha1.FacetResult)
-		for k, v := range result.Facet {
-			sr.Facets[k] = dashboardv0alpha1.FacetResult{
-				Field:   v.Field,
-				Total:   v.Total,
-				Missing: v.Missing,
-				Terms:   make([]dashboardv0alpha1.TermFacet, len(v.Terms)),
-			}
-			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = dashboardv0alpha1.TermFacet{
-					Term:  t.Term,
-					Count: t.Count,
-				}
-			}
-		}
 	}
 
 	s.write(w, dashboardsvc.ParseResults(result, searchRequest.Offset))
