@@ -240,6 +240,32 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NotContains(t, terms, "delete this")
 	})
 
+	t.Run("Should be able to delete all dashboards for an org", func(t *testing.T) {
+		setup()
+		dash1 := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
+		dash2 := insertTestDashboard(t, dashboardStore, "delete me2", 1, 0, "", false, "delete this2")
+		dash3 := insertTestDashboard(t, dashboardStore, "dont delete me", 2, 0, "", false, "dont delete me")
+
+		err := dashboardStore.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+
+		// no dashboards should exist for org 1
+		queryResult, err := dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
+			OrgID:         1,
+			DashboardUIDs: []string{dash1.UID, dash2.UID},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, len(queryResult), 0)
+
+		// but we should still have one for org 2
+		queryResult, err = dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
+			OrgID:         2,
+			DashboardUIDs: []string{dash3.UID},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, len(queryResult), 1)
+	})
+
 	t.Run("Should be able to create dashboard", func(t *testing.T) {
 		setup()
 		cmd := dashboards.SaveDashboardCommand{

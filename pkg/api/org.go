@@ -297,7 +297,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
 	}
 
-	if err := hs.orgService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
+	if err := hs.orgDeletionService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
 		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}

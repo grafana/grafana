@@ -228,6 +228,7 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+				hs.orgDeletionService = &orgtest.FakeOrgDeletionService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
 				hs.accesscontrolService = actest.FakeService{ExpectedPermissions: tt.permission}
 				hs.authnService = &authntest.FakeService{}

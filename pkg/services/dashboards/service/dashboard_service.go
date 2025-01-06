@@ -511,6 +511,15 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 	return dr.deleteDashboard(ctx, dashboardId, dashboardUID, orgId, true)
 }
 
+// DeleteAllDashboards will delete all dashboards within a given org.
+func (dr *DashboardServiceImpl) DeleteAllDashboards(ctx context.Context, orgId int64) error {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		return dr.deleteAllDashboardThroughK8s(ctx, orgId)
+	}
+
+	return dr.dashboardStore.DeleteAllDashboards(ctx, orgId)
+}
+
 func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
@@ -1176,6 +1185,29 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	}
 
 	return finalDash, nil
+}
+
+func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
+	// create a new context - prevents issues when the request stems from the k8s api itself
+	// otherwise the context goes through the handlers twice and causes issues
+	newCtx, cancel, err := dr.getK8sContext(ctx)
+	if err != nil {
+		return err
+	} else if cancel != nil {
+		defer cancel()
+	}
+
+	client, ok := dr.k8sclient.getClient(newCtx, orgID)
+	if !ok {
+		return fmt.Errorf("could not get k8s client")
+	}
+
+	err = client.DeleteCollection(newCtx, v1.DeleteOptions{}, v1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {

@@ -205,6 +205,7 @@ type HTTPServer struct {
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
 	orgService           org.Service
+	orgDeletionService   org.DeletionService
 	TeamService          team.Service
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
@@ -264,7 +265,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
-	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
+	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
@@ -356,6 +357,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		orgDeletionService:           orgDeletionService,
 		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,

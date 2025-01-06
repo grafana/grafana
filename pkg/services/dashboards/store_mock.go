@@ -94,6 +94,24 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDa
 	return r0
 }
 
+// DeleteAllDashboards provides a mock function with given fields: ctx, orgID
+func (_m *FakeDashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
+	ret := _m.Called(ctx, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDashboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, orgID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteDashboardsInFolders provides a mock function with given fields: ctx, request
 func (_m *FakeDashboardStore) DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error {
 	ret := _m.Called(ctx, request)
