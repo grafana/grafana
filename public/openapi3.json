@@ -7205,7 +7205,6 @@
               "RESOURCE_CONFLICT",
               "UNEXPECTED_STATUS_CODE",
               "INTERNAL_SERVICE_ERROR",
-              "ONLY_CORE_DATA_SOURCES",
               "GENERIC_ERROR"
             ],
             "type": "string"
@@ -7242,7 +7241,8 @@
               "CONTACT_POINT",
               "NOTIFICATION_POLICY",
               "NOTIFICATION_TEMPLATE",
-              "MUTE_TIMING"
+              "MUTE_TIMING",
+              "PLUGIN"
             ],
             "type": "string"
           }

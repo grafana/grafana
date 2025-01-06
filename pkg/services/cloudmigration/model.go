@@ -92,6 +92,7 @@ const (
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 type ItemStatus string
@@ -116,7 +117,6 @@ const (
 	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
