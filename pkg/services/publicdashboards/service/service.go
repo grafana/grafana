@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -363,10 +364,57 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindAllWithPagination")
 	defer span.End()
 	query.Offset = query.Limit * (query.Page - 1)
-	resp, err := pd.store.FindAllWithPagination(ctx, query)
+	resp, err := pd.store.FindAll(ctx, query)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetPublicDashboards: %w", err)
 	}
+
+	// join in the dashboard data
+	dashUIDs := make([]string, len(resp.PublicDashboards))
+	for i, pubdash := range resp.PublicDashboards {
+		dashUIDs[i] = pubdash.DashboardUid
+	}
+
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User})
+	if err != nil {
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
+	}
+
+	dashMap := make(map[string]dashboards.DashboardSearchProjection)
+	for _, dash := range dashboardsFound {
+		dashMap[dash.UID] = dash
+	}
+
+	// add dashboard title & slug to response, and
+	// remove any public dashboards that don't have a corresponding active dashboard that the user has access to
+	idx := 0
+	for _, pubdash := range resp.PublicDashboards {
+		if dash, exists := dashMap[pubdash.DashboardUid]; exists {
+			pubdash.Title = dash.Title
+			pubdash.Slug = dash.Slug
+			resp.PublicDashboards[idx] = pubdash
+			idx++
+		} else {
+			resp.TotalCount--
+		}
+	}
+	resp.PublicDashboards = resp.PublicDashboards[:idx]
+
+	//  sort by title
+	sort.Slice(resp.PublicDashboards, func(i, j int) bool {
+		return resp.PublicDashboards[i].Title < resp.PublicDashboards[j].Title
+	})
+
+	// and now paginate
+	start := query.Offset
+	end := start + query.Limit
+	if start > len(resp.PublicDashboards) {
+		start = len(resp.PublicDashboards)
+	}
+	if end > len(resp.PublicDashboards) {
+		end = len(resp.PublicDashboards)
+	}
+	resp.PublicDashboards = resp.PublicDashboards[start:end]
 
 	resp.Page = query.Page
 	resp.PerPage = query.Limit
