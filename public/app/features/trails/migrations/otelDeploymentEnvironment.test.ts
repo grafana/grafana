@@ -1,8 +1,8 @@
 import { AdHocVariableFilter, UrlQueryMap, UrlQueryValue } from '@grafana/data';
-import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, CustomVariable, sceneGraph } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
-import { VAR_OTEL_AND_METRIC_FILTERS } from '../shared';
+import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_DEPLOYMENT_ENV } from '../shared';
 
 import { migrateOtelDeploymentEnvironment, migrateAdHocFilters } from './otelDeploymentEnvironment';
 
@@ -82,6 +82,9 @@ describe('migrate old dep env var to otel and metrics var', () => {
 
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       expect(otelMetricsVar.state.filters).toEqual(expectedFilters);
+      // should clear out the dep env var
+      const depEnvVar = getDepEnvVar(trail);
+      expect(depEnvVar.state.value).toBe('');
     });
   });
 
@@ -114,5 +117,13 @@ describe('migrate old dep env var to otel and metrics var', () => {
       return variable;
     }
     throw new Error('getOtelAndMetricsVar failed');
+  }
+
+  function getDepEnvVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, trail);
+    if (variable instanceof CustomVariable) {
+      return variable;
+    }
+    throw new Error('getDepVar failed');
   }
 });

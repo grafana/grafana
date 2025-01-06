@@ -1,5 +1,5 @@
 import { AdHocVariableFilter, UrlQueryValue, UrlQueryMap } from '@grafana/data';
-import { sceneGraph, AdHocFiltersVariable } from '@grafana/scenes';
+import { sceneGraph, AdHocFiltersVariable, CustomVariable } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
 import { reportExploreMetrics } from '../interactions';
@@ -68,7 +68,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
 
   if (!(
     otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable &&
-    deploymentEnvironmentVariable instanceof AdHocFiltersVariable
+    deploymentEnvironmentVariable instanceof CustomVariable
   )) {
     return;
   }
@@ -79,7 +79,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   // clear the deployment environment to not migrate it again
   reportExploreMetrics('deployment_environment_migrated', {});
   deploymentEnvironmentVariable.setState({
-    filters: []
+    value: ''
   });
 }
 
