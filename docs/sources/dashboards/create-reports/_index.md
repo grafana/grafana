@@ -137,7 +137,7 @@ To create a report, follow these steps:
 1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
    - [Select dashboard](#1-select-dashboard)
    - [Format report](#2-format-report)
-   - [Schedule](#schedule)
+   - [Schedule](#3-schedule)
    - [Share](#share)
    - [Confirm](#confirm)
 1. Do one of the following:
@@ -217,13 +217,11 @@ If you selected the PDF format option, under the **Style the PDF** section, set 
 - **Configure the report header** - Click the checkbox to select this option.
 - **Orientation** - Set the report orientation in **Portrait** or **Landscape**.
 - **Layout** - Select one of the following:
-  - **Simple** - Renders each panel as full-width across the PDF. Refer to [Layout and orientation](#layout-and-orientation) to see examples.
-  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to [Layout and orientation](#layout-and-orientation) to see examples.
+  - **Simple** - Renders each panel as full-width across the PDF. Refer to the table following this list to see examples.
+  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to the table following this list to see examples.
 - **Zoom** - Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
 
 Click **Preview PDF** in the top-right corner of the screen to view a rendered PDF with the options you selected.
-
-##### Layout and orientation
 
 <!-- prettier-ignore-start -->
 
@@ -269,30 +267,21 @@ When there's more data in your table visualizations than can be shown in the das
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
-### Schedule
+### 3. Schedule
 
-1. Schedule report.
-   - Enter scheduling information. Options vary depending on the frequency selected.
+At this step, set scheduling information. Options vary depending on the frequency selected.
 
-#### Scheduling
+<!-- prettier-ignore-start -->
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+| Option | Description |
+| ------ | ----------- |
+| Frequency | Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report using the API. |
+| Time | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
+| End date | If you leave the end date empty, the report is sent out indefinitely. |
+| Send only from Monday to Friday | For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday. |
+| Send on the last day of the month | When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select this option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month. |
 
-Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report via the API.
-
-**Send now or schedule for later**
-
-- **Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date. If you leave the end date empty, the report is sent out indefinitely.
-
-- **Send later** schedules a report for a later date. Thus, the start date and time are required fields. If you leave the end date empty, the report is sent out indefinitely.
-
-**Send only from Monday to Friday**
-
-For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday.
-
-**Send on the last day of the month**
-
-When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month.
+<!-- prettier-ignore-end -->
 
 ### Share
 
