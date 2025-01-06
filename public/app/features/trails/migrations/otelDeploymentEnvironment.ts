@@ -3,7 +3,7 @@ import { sceneGraph, AdHocFiltersVariable } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
 import { reportExploreMetrics } from '../interactions';
-import { VAR_OTEL_AND_METRIC_FILTERS } from '../shared';
+import { VAR_OTEL_AND_METRIC_FILTERS, VAR_OTEL_DEPLOYMENT_ENV } from '../shared';
 
 /**
  * Migration for the otel deployment environment variable.
@@ -40,8 +40,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   let filters: AdHocVariableFilter[] = [];
   // if there is a dep environment, we must also migrate the otel resources to the new variable
   const otelResources = urlParams['var-otel_resources'];
-  const metricVarfilters = urlParams['var-filters'];
-  reportExploreMetrics('deployment_environment_migrated', {});
+  const metricVarfilters = urlParams['var-filters'];  
   if (
     Array.isArray(deploymentEnv) &&
     deploymentEnv.length > 0 &&
@@ -65,13 +64,22 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   migrateAdHocFilters(metricVarfilters, filters);
 
   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
+  const deploymentEnvironmentVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, trail);
 
-  if (!(otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable)) {
+  if (!(
+    otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable &&
+    deploymentEnvironmentVariable instanceof AdHocFiltersVariable
+  )) {
     return;
   }
 
-  otelAndMetricsFiltersVariable?.setState({
+  otelAndMetricsFiltersVariable.setState({
     filters,
+  });
+  // clear the deployment environment to not migrate it again
+  reportExploreMetrics('deployment_environment_migrated', {});
+  deploymentEnvironmentVariable.setState({
+    filters: []
   });
 }
 
