@@ -315,6 +315,7 @@ func (a *alertRule) Run() error {
 						attribute.String("rule_fingerprint", fpStr),
 						attribute.String("tick", utcTick),
 					))
+					logger := logger.FromContext(tracingCtx)
 
 					// Check before any execution if the context was cancelled so that we don't do any evaluations.
 					if tracingCtx.Err() != nil {
