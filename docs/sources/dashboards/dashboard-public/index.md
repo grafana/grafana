@@ -191,6 +191,7 @@ guaranteed because plugin developers can override this functionality. The follow
     <td>
       <ul>
         <li>Graphite</li>
+        <li>Google Sheets</li>
       </ul>
     </td>
   </tr>
