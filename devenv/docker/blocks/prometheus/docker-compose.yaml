@@ -27,7 +27,7 @@
   alertmanager:
     image: prom/alertmanager
     volumes:
-    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    - ${PWD}/docker/blocks/prometheus:/etc/alertmanager
     command: >
       --config.file=/etc/alertmanager/alertmanager.yml
     ports:
