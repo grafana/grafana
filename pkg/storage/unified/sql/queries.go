@@ -5,7 +5,9 @@ import (
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -210,10 +212,11 @@ func (r sqlResourceHistoryUpdateRequest) Validate() error {
 
 type sqlResourceBlobInsertRequest struct {
 	sqltemplate.SQLTemplate
+	Now         time.Time
+	Info        *utils.BlobInfo
 	Key         *resource.ResourceKey
-	Hash        string
-	ContentType string
 	Value       []byte
+	ContentType string
 }
 
 func (r sqlResourceBlobInsertRequest) Validate() error {

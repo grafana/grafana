@@ -2,7 +2,7 @@ package sql
 
 import (
 	context "context"
-	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
 	"net/http"
 
@@ -33,8 +33,11 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 		}, nil
 	}
 
-	hasher := md5.New()
-	_, _ = hasher.Write(req.Value)
+	hasher := sha1.New()
+	_, err := hasher.Write(req.Value)
+	if err != nil {
+		return nil, err
+	}
 
 	info := &utils.BlobInfo{
 		UID:  uuid.New().String(),
@@ -50,11 +53,11 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	}
 
 	// Insert the value
-	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		_, err := dbutil.Exec(ctx, tx, sqlResourceBlobInsert, sqlResourceBlobInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
+			Info:        info,
 			Key:         req.Resource,
-			Hash:        info.Hash,
 			ContentType: req.ContentType,
 			Value:       req.Value,
 		})
@@ -84,7 +87,7 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceBlobQuery, sqlResourceBlobQueryRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Key:         key,
-			UID:         info.UID,
+			UID:         info.UID, // optional
 		})
 		if err != nil {
 			return err

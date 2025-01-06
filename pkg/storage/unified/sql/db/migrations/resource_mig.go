@@ -108,7 +108,11 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"resource_guid"}, Type: migrator.IndexType},
+			{
+				Cols: []string{"namespace", "group", "resource", "name"},
+				Type: migrator.IndexType,
+				Name: "IDX_resource_history_namespace_group_name",
+			},
 			{Cols: []string{"created"}, Type: migrator.IndexType}, // sort field
 		},
 	})

@@ -353,6 +353,55 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
+
+func TestIntegrationBlobSupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	backend, server := newServer(t, nil)
+	store, ok := backend.(resource.BlobSupport)
+	require.True(t, ok)
+
+	t.Run("put and fetch blob", func(t *testing.T) {
+		key := &resource.ResourceKey{
+			Namespace: "ns",
+			Group:     "g",
+			Resource:  "r",
+			Name:      "n",
+		}
+
+		b1, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 11111"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, b1.Error)
+		require.Equal(t, "0a6fd72c57f1e849ef021a77de900dcb0b207747", b1.Hash)
+
+		time.Sleep(100 * time.Millisecond) // different created times
+
+		b2, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 22222"), // the most recent
+		})
+		require.NoError(t, err)
+		require.Nil(t, b2.Error)
+		require.Equal(t, "1d4d84ae529ee7afcb567fb153d755adbfcd128e", b2.Hash)
+
+		// Getting by key will return the last one
+		last, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 22222"), last.Value)
+
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")

@@ -5,8 +5,9 @@ SELECT
 FROM "resource_blob"
 WHERE 1 = 1
   AND "namespace" = 'x'
-  AND "group"   = 'g'
+  AND "group"     = 'g'
   AND "resource"  = 'r'
-  AND "name"    = 'name'
-  AND "uuid"    = 'abc'
-ORDER BY "created" DESC;
+  AND "name"      = 'name'
+  AND "uuid"      = 'abc'
+ORDER BY "created" DESC
+LIMIT 1;

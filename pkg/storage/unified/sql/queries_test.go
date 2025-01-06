@@ -3,7 +3,9 @@ package sql
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
@@ -277,7 +279,12 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Resource:  "r",
 							Name:      "name",
 						},
-						Hash:        "xxx",
+						Now: time.UnixMilli(1704056400000).UTC(),
+						Info: &utils.BlobInfo{
+							UID:  "abc",
+							Hash: "xxx",
+							Size: 1234,
+						},
 						ContentType: "text/plain",
 						Value:       []byte("abcdefg"),
 					},
