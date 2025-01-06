@@ -131,6 +131,7 @@ const (
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 // swagger:enum ItemStatus
@@ -158,7 +159,6 @@ const (
 	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ItemErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
 )
 

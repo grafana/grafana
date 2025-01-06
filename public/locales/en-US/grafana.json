@@ -1873,7 +1873,8 @@
       "library_elements": "library elements",
       "mute_timings": "mute timings",
       "notification_policies": "notification policies",
-      "notification_templates": "notification templates"
+      "notification_templates": "notification templates",
+      "plugins": "plugins"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1924,7 +1925,9 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
-      "title": "Migrate to Grafana Cloud is in public preview"
+      "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
+      "title": "Migrate to Grafana Cloud is in public preview",
+      "title-plugins": "Migration of plugins"
     },
     "resource-details": {
       "dismiss-button": "OK",
@@ -1937,7 +1940,6 @@
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
-        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
         "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
         "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "unsupported-data-type": "Migration of this data type is not currently supported."
@@ -1976,6 +1978,7 @@
       "mute_timing": "Mute Timing",
       "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
+      "plugin": "Plugin",
       "unknown": "Unknown"
     },
     "summary": {

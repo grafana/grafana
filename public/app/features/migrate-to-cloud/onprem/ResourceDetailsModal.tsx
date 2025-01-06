@@ -53,11 +53,6 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.resource-conflict',
         'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.'
       );
-    case 'ONLY_CORE_DATA_SOURCES':
-      return t(
-        'migrate-to-cloud.resource-details.error-messages.only-core-data-sources',
-        'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.'
-      );
     case 'UNEXPECTED_STATUS_CODE':
       return t(
         'migrate-to-cloud.resource-details.error-messages.unexpected-error',
