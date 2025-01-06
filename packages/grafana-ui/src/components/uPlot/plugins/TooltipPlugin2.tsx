@@ -608,6 +608,8 @@ export const TooltipPlugin2 = ({
         const oneClick = getOneClickRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
         if (oneClick) {
           u.over.style.cursor = 'pointer';
+          // TODO !!!
+          dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs?.[closestSeriesIdx!]!);
         } else {
           u.over.style.cursor = 'default';
         }
