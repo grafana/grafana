@@ -288,11 +288,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", ? as folder_name ", cmd.FolderName)
-		builder.Write(", COALESCE((SELECT folder.uid FROM folder WHERE folder.id = le.folder_id), '') as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
-		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
+		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderUID})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
@@ -323,6 +322,9 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
 		var updatedModel json.RawMessage
+		if libraryElement.FolderUID != cmd.FolderUID {
+			continue
+		}
 		if libraryElement.Kind == int64(model.PanelElement) {
 			updatedModel, err = l.addUidToLibraryPanel(libraryElement.Model, libraryElement.UID)
 			if err != nil {
@@ -331,15 +333,11 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		folderUID := libraryElement.FolderUID
-		if libraryElement.FolderID == 0 { // nolint:staticcheck
-			folderUID = ac.GeneralFolderUID
-		}
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
 			FolderID:    libraryElement.FolderID, // nolint:staticcheck
-			FolderUID:   folderUID,
+			FolderUID:   libraryElement.FolderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,

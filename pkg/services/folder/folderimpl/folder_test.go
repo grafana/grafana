@@ -766,14 +766,14 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 					FolderName: parent.Title,
-					FolderID:   parent.ID, // nolint:staticcheck
+					FolderUID:  parent.ParentUID,
 					UID:        parentPanel.UID,
 				})
 				require.ErrorIs(t, err, tc.libPanelParentErr)
 				if tc.depth > 1 {
 					_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 						FolderName: subfolder.Title,
-						FolderID:   subfolder.ID, // nolint:staticcheck
+						FolderUID:  subfolder.UID,
 						UID:        subPanel.UID,
 					})
 					require.ErrorIs(t, err, tc.libPanelSubErr)
