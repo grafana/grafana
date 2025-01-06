@@ -380,9 +380,7 @@ func TestIntegrationBlobSupport(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, b1.Error)
-		require.Equal(t, "0a6fd72c57f1e849ef021a77de900dcb0b207747", b1.Hash)
-
-		time.Sleep(100 * time.Millisecond) // different created times
+		require.Equal(t, "c894ae57bd227b8f8c63f38a2ddf458b", b1.Hash)
 
 		b2, err := server.PutBlob(ctx, &resource.PutBlobRequest{
 			Resource:    key,
@@ -392,13 +390,16 @@ func TestIntegrationBlobSupport(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, b2.Error)
-		require.Equal(t, "1d4d84ae529ee7afcb567fb153d755adbfcd128e", b2.Hash)
+		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
-		// Getting by key will return the last one
-		last, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{}, true)
+		// Check that we can still access both values
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
-		require.Equal(t, []byte("hello 22222"), last.Value)
+		require.Equal(t, []byte("hello 11111"), found.Value)
 
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 22222"), found.Value)
 	})
 }
 
