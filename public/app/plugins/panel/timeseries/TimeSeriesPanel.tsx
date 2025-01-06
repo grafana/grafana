@@ -8,7 +8,7 @@ import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/p
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
-import { getOneClickLinks } from '../status-history/utils';
+import { isOneClickLinkEnabledForField } from '../status-history/utils';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -111,13 +111,13 @@ export const TimeSeriesPanel = ({
                 getDataLinks={(seriesIdx: number, dataIdx: number) =>
                   alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
-                getOneClick={(seriesIdx, dataIdx) => {
+                oneClickEnabled={(seriesIdx) => {
                   const field = alignedFrame.fields[seriesIdx!];
                   if (field) {
-                    return getOneClickLinks(field, dataIdx);
+                    return isOneClickLinkEnabledForField(field);
                   }
 
-                  return undefined;
+                  return false;
                 }}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {

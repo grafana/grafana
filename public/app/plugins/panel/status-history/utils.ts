@@ -24,14 +24,12 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   return links;
 };
 
-export const getOneClickLinks = (field: Field, dataIdx: number) => {
+export const isOneClickLinkEnabledForField = (field: Field) => {
   if (field.config.oneClickMode === OneClickMode.Off || !config.featureToggles.vizActions) {
-    return undefined;
+    return false;
   }
 
-  const links = getDataLinks(field, dataIdx);
-
-  return links[0] ?? undefined;
+  return field.config.oneClickMode === OneClickMode.Link;
 };
 
 export const getFieldActions = (
