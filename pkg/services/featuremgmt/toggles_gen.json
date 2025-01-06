@@ -2518,13 +2518,17 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-08T12:09:34Z"
+        "resourceVersion": "1735810618168",
+        "creationTimestamp": "2024-02-08T12:09:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-02 09:36:58.168957157 +0000 UTC"
+        }
       },
       "spec": {
         "description": "New implementation for the dashboard-to-PDF rendering",
-        "stage": "preview",
-        "codeowner": "@grafana/sharing-squad"
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "true"
       }
     },
     {
@@ -3301,17 +3305,17 @@
     {
       "metadata": {
         "name": "reportingUseRawTimeRange",
-        "resourceVersion": "1731604692461",
+        "resourceVersion": "1735810729877",
         "creationTimestamp": "2024-11-13T15:48:28Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-11-14 17:18:12.461446 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-02 09:38:49.877519888 +0000 UTC"
         }
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
