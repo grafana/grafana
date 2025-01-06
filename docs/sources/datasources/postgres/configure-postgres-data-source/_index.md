@@ -60,16 +60,32 @@ refs:
 
 # Configure the PostgreSQL data source
 
-## PostgreSQL settings
 
 To configure basic settings for the data source, complete the following steps:
 
-1.  Click **Connections** in the left-side menu.
-1.  Under Your connections, click **Data sources**.
-1.  Enter `PostgreSQL` in the search bar.
-1.  Select **PostgreSQL**.
 
-    The **Settings** tab of the data source is displayed.
+## Add the PostgreSQL data source
+
+Complete the following steps to set up a new PostgreSQL data source:
+
+1. Click **Connections** in the left-side menu.
+1. Click **Add new connection**
+1. Type `PostgreSQL` in the search bar.
+1. Select the **PostgreSQL data source**.
+1. Click **Add new data source** in the upper right.
+
+You are taken to the **Settings** tab where you will configure the data source.
+
+## PostgreSQL configuration options
+
+Add same admonition from MYSQL 
+
+The database user should only be granted SELECT permissions on the specified database & tables you want to query.
+
+
+
+- **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: `PostgreSQL-DB-1`.
+- **Default** - Toggle to set as the default data source.
 
 1.  Set the data source's basic configuration options:
 

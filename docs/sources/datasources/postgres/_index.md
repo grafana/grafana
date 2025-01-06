@@ -60,7 +60,10 @@ refs:
 
 # PostgreSQL data source
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
+Grafana includes a built-in PostgreSQL data source plugin, enabling you to query and visualize data from any PostgreSQL-compatible database.
+
+
+
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
