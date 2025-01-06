@@ -37,6 +37,7 @@ export async function enterCodeEditorQueryExpr<P extends GrafanaPage>(
   await expect(codeEditor).toBeVisible();
   await codeEditor.click();
   await codeEditor.fill(expr);
+  await codeEditor.press('Shift+Enter');
   const queryFieldContainer = await grafanaPage.getByGrafanaSelector(selectors.components.QueryField.container);
 
   // Wait for the 'data-queryexpr' attribute to be set correctly,
