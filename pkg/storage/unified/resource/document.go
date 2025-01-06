@@ -343,6 +343,16 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        ResourceTableColumnDefinition_INT64,
 				Description: "created timestamp", // date?
 			},
+			{
+				Name:        SEARCH_FIELD_EXPLAIN,
+				Type:        ResourceTableColumnDefinition_OBJECT,
+				Description: "Explain why this result matches (depends on the engine)",
+			},
+			{
+				Name:        SEARCH_FIELD_SCORE,
+				Type:        ResourceTableColumnDefinition_DOUBLE,
+				Description: "The search score",
+			},
 		})
 		if err != nil {
 			panic("failed to initialize standard search fields")

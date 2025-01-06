@@ -123,6 +123,9 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 	}
 	var err error
 	for i, v := range cols {
+		if v == nil {
+			return nil, fmt.Errorf("invalid field definitions")
+		}
 		if table.lookup[v.Name] != nil {
 			table.hasDuplicateNames = true
 			continue
