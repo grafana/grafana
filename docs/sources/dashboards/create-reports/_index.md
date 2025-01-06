@@ -91,9 +91,15 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
   temp-data-lifetime:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp_data_lifetime
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp_data_lifetime
+  rendering-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
+  
 ---
 
 # Create and manage reports
@@ -130,7 +136,7 @@ To create a report, follow these steps:
 1. Click **+ Create a new report**.
 1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
    - [Select dashboard](#1-select-dashboard)
-   - [Format report](#format-report)
+   - [Format report](#2-format-report)
    - [Schedule](#schedule)
    - [Share](#share)
    - [Confirm](#confirm)
@@ -194,38 +200,53 @@ If the time zone is set differently between your Grafana server and its remote i
 
 Add more dashboards to the report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You can't add the same dashboard to a report multiple times.
 
-### Format report
+### 2. Format report
 
-1. Format the report.
-   - **Choose format options for the report:** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
-   - If you selected the PDF format option:
-     - Select an orientation for the report: **Portrait** or **Landscape**.
-     - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-     - Select a zoom level for the report. Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
-     - Click **Preview PDF** to view a rendered PDF with the options you selected.
+To begin, select at least one of the following options for how the report should be formatted:
 
-#### Embed a dashboard as an image into a report
+- [Attach the report as a PDF](#attach-the-report-as-a-pdf)
+- [Include table data as PDF appendix](#table-data-in-pdf) (Public preview)
+- [Embed a dashboard image in the email](#embed-a-dashboard-as-an-image-in-the-email)
+- [Attach a CSV file of the table panel data](#attach-a-csv-file-of-the-table-panel-data)
+- [Attach a separate PDF of table data](#table-data-in-pdf) (Public preview)
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+#### Attach the report as a PDF
+
+If you selected the PDF format option, under the **Style the PDF** section, set the following options:
+
+- **Configure the report header** - Click the checkbox to select this option.
+- **Orientation** - Set the report orientation in **Portrait** or **Landscape**.
+- **Layout** - Select one of the following:
+  - **Simple** - Renders each panel as full-width across the PDF. Refer to [Layout and orientation](#layout-and-orientation) to see examples.
+  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to [Layout and orientation](#layout-and-orientation) to see examples.
+- **Zoom** - Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
+
+Click **Preview PDF** in the top-right corner of the screen to view a rendered PDF with the options you selected.
+
+##### Layout and orientation
+
+<!-- prettier-ignore-start -->
+
+| Layout | Orientation | Description                                                                                               | Preview    |
+| ------ | ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| Simple | Portrait    | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" alt="Simple layout in portrait" >}}    |
+| Simple | Landscape   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" alt="Simple layout in landscape" >}}                     |
+| Grid   | Portrait    | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" alt="Grid layout in portrait" >}} |
+| Grid   | Landscape   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" alt="Grid layout in landscape" >}}                  |
+
+<!-- prettier-ignore-end -->
+
+#### Embed a dashboard as an image in the email
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
-#### Layout and orientation
-
-| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                                                             |
-| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Simple layout in portrait" >}}    |
-| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Simple layout in landscape" >}}                     |
-| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Grid layout in portrait" >}} |
-| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Grid layout in landscape" >}}                  |
-
-#### CSV export
+#### Attach a CSV file of the table panel data
 
 {{< admonition type="note" >}}
 To use this feature in Grafana Enterprise, you must have [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0.
 {{< /admonition >}}
 
-You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](#rendering-configuration).
+You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:rendering-configuration).
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
@@ -233,10 +254,12 @@ When the CSV file is generated, it is temporarily written to the `csv` folder in
 
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime](ref:temp-data-lifetime) setting. This setting also affects how long a renderer PNG file should be stored.
 
+Click **Download CSV** in the top-right corner of the screen to see the file.
+
 #### Table data in PDF
 
 {{% admonition type="note" %}}
-Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, as well as [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
@@ -245,14 +268,6 @@ When there's more data in your table visualizations than can be shown in the das
 - **Attach a separate PDF of table data** - Generates a separate PDF file.
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
-
-#### Preview PDF
-
-TBD
-
-#### Download CSV
-
-TBD
 
 ### Schedule
 
