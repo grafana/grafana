@@ -113,7 +113,7 @@
     "eslint-plugin-jsdoc": "50.6.1",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-lodash": "8.0.0",
-    "eslint-plugin-react": "7.37.2",
+    "eslint-plugin-react": "7.37.3",
     "eslint-plugin-react-hooks": "5.0.0",
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
