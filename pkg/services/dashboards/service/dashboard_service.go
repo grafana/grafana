@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,18 +11,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"golang.org/x/exp/slices"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8sUser "k8s.io/apiserver/pkg/authentication/user"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 
-	"golang.org/x/exp/slices"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -46,8 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 var (
@@ -1356,6 +1355,27 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alph
 		return nil
 	}
 
+	titleIDX := 0
+	folderIDX := 1
+	tagsIDX := -1
+	scoreIDX := 0
+	explainIDX := 0
+
+	for i, v := range result.Results.Columns {
+		switch v.Name {
+		case resource.SEARCH_FIELD_EXPLAIN:
+			explainIDX = i
+		case resource.SEARCH_FIELD_SCORE:
+			scoreIDX = i
+		case "title":
+			titleIDX = i
+		case "folder":
+			folderIDX = i
+		case "tags":
+			tagsIDX = i
+		}
+	}
+
 	sr := &v0alpha1.SearchResults{
 		Offset:    offset,
 		TotalHits: result.TotalHits,
@@ -1364,28 +1384,21 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alph
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
-	titleRow := 0
-	folderRow := 1
-	tagsRow := -1
-	for i, row := range result.Results.GetColumns() {
-		if row.Name == "title" {
-			titleRow = i
-		} else if row.Name == "folder" {
-			folderRow = i
-		} else if row.Name == "tags" {
-			tagsRow = i
-		}
-	}
-
 	for i, row := range result.Results.Rows {
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[titleRow]),
-			Folder:   string(row.Cells[folderRow]),
+			Title:    string(row.Cells[titleIDX]),
+			Folder:   string(row.Cells[folderIDX]),
 		}
-		if tagsRow != -1 && row.Cells[tagsRow] != nil {
-			_ = json.Unmarshal(row.Cells[tagsRow], &hit.Tags)
+		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
+			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
+		}
+		if explainIDX > 0 && row.Cells[explainIDX] != nil {
+			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
+		}
+		if scoreIDX > 0 && row.Cells[scoreIDX] != nil {
+			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
 		}
 
 		sr.Hits[i] = *hit
