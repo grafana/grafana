@@ -7,13 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -43,7 +40,7 @@ func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.Feature
 }
 
 // FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
-func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
 	resp := &PublicDashboardListResponseWithPagination{
 		PublicDashboards: make([]*PublicDashboardListResponse, 0),
 		TotalCount:       0,
@@ -55,24 +52,14 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	}
 
 	pubdashBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
-	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title, dashboard.slug")
+	pubdashBuilder.Write("SELECT uid, access_token, dashboard_uid, is_enabled")
 	pubdashBuilder.Write(" FROM dashboard_public")
-	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
-	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
-	if query.User.OrgRole != org.RoleAdmin {
-		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboardaccess.PERMISSION_VIEW, searchstore.TypeDashboard)
-	}
-	pubdashBuilder.Write(" ORDER BY dashboard.title")
-	pubdashBuilder.Write(d.sqlStore.GetDialect().LimitOffset(int64(query.Limit), int64(query.Offset)))
+	pubdashBuilder.Write(` WHERE org_id = ?`, query.OrgID)
 
 	counterBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	counterBuilder.Write("SELECT COUNT(*)")
 	counterBuilder.Write(" FROM dashboard_public")
-	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
-	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
-	if query.User.OrgRole != org.RoleAdmin {
-		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboardaccess.PERMISSION_VIEW, searchstore.TypeDashboard)
-	}
+	counterBuilder.Write(` WHERE org_id = ?`, query.OrgID)
 
 	err = d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.SQL(pubdashBuilder.GetSQLString(), pubdashBuilder.GetParams()...).Find(&resp.PublicDashboards)
