@@ -7,12 +7,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	reflect "reflect"
 	"strconv"
+	"testing"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 )
@@ -74,6 +79,10 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 			}
 		} else if r.Key != nil {
 			obj := &metav1.PartialObjectMetadata{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       r.Key.Resource, // :(
+					APIVersion: r.Key.Group,    // :(
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      r.Key.Name,
 					Namespace: r.Key.Namespace,
@@ -102,6 +111,8 @@ type TableBuilder struct {
 	hasDuplicateNames bool
 }
 
+type ResourceColumnEncoder = func(v any) ([]byte, error)
+
 func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
 	table := &TableBuilder{
 		ResourceTable: ResourceTable{
@@ -122,6 +133,15 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 		}
 	}
 	return table, err
+}
+
+func (x *TableBuilder) Encoders() []ResourceColumnEncoder {
+	encoders := make([]ResourceColumnEncoder, len(x.Columns))
+	for i, f := range x.Columns {
+		v := x.lookup[f.Name]
+		encoders[i] = v.Encode
+	}
+	return encoders
 }
 
 func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) error {
@@ -395,6 +415,8 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 						f = int64(typed)
 					case float32:
 						f = int64(typed)
+					case float64:
+						f = int64(typed)
 					case uint64:
 						f = int64(typed)
 					case uint:
@@ -546,4 +568,30 @@ func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 		return nil, err
 	}
 	return v, err
+}
+
+// AssertTableSnapshot will match a ResourceTable vs the saved value
+func AssertTableSnapshot(t *testing.T, path string, table *ResourceTable) {
+	t.Helper()
+
+	k8sTable, err := table.ToK8s()
+	require.NoError(t, err, "unable to create table response", path)
+	actual, err := json.MarshalIndent(k8sTable, "", "  ")
+	require.NoError(t, err, "unable to write table json", path)
+
+	// Safe to disable, this is a test.
+	// nolint:gosec
+	expected, err := os.ReadFile(path)
+	if err != nil || len(expected) < 1 {
+		assert.Fail(t, "missing file: %s", path)
+	} else if assert.JSONEq(t, string(expected), string(actual)) {
+		return // everything is OK
+	}
+
+	// Write the snapshot
+	// Safe to disable, this is a test.
+	// nolint:gosec
+	err = os.WriteFile(path, actual, 0600)
+	require.NoError(t, err)
+	fmt.Printf("Updated table snapshot: %s\n", path)
 }

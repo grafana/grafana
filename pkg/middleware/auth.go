@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -235,9 +236,9 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// SnapshotPublicModeOrSignedIn creates a middleware that allows access
-// if snapshot public mode is enabled or if user is signed in.
-func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
+// SnapshotPublicModeOrCreate creates a middleware that allows access
+// if snapshot public mode is enabled or if user has creation permission.
+func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
@@ -247,6 +248,25 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 			notAuthorized(c)
 			return
 		}
+
+		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsCreate))
+	}
+}
+
+// SnapshotPublicModeOrDelete creates a middleware that allows access
+// if snapshot public mode is enabled or if user has delete permission.
+func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		if cfg.SnapshotPublicMode {
+			return
+		}
+
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
+		}
+
+		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsDelete))
 	}
 }
 

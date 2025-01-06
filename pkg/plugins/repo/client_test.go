@@ -69,4 +69,22 @@ func Test_Download(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 2, count, "should retry on error")
 	})
+
+	t.Run("it should use gcom token when it's available", func(t *testing.T) {
+		expectedToken := "token-test"
+		var gcomCalled bool
+		fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			require.Equal(t, "Bearer "+expectedToken, token, "gcom token should be set")
+			err := writeFakeZip(w)
+			require.NoError(t, err)
+			gcomCalled = true
+		}))
+		defer fakeServer.Close()
+		cli := fakeServer.Client()
+		repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test"), grafanaComAPIToken: expectedToken}
+		_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
+		require.NoError(t, err)
+		require.True(t, gcomCalled)
+	})
 }

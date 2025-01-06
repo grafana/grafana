@@ -41,6 +41,8 @@
         ]
       ],
       "object": {
+        "kind": "xyz",
+        "apiVersion": "ggg",
         "metadata": {
           "name": "aaa",
           "namespace": "default",
@@ -60,6 +62,8 @@
         ]
       ],
       "object": {
+        "kind": "xyz",
+        "apiVersion": "ggg",
         "metadata": {
           "name": "bbb",
           "namespace": "default",

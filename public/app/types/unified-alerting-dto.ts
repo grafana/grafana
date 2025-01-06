@@ -169,6 +169,7 @@ export interface PromResponse<T> {
 
 export type PromRulesResponse = PromResponse<{
   groups: PromRuleGroupDTO[];
+  groupNextToken?: string;
   totals?: AlertGroupTotals;
 }>;
 
@@ -224,6 +225,7 @@ export interface GrafanaNotificationSettings {
 
 export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
+  simplified_notifications_section: boolean;
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

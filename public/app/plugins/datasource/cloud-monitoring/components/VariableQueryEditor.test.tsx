@@ -1,4 +1,4 @@
-import renderer from 'react-test-renderer';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { VariableModel } from '@grafana/data';
 
@@ -39,9 +39,13 @@ const props: Props = {
 };
 
 describe('VariableQueryEditor', () => {
-  it('renders correctly', () => {
-    const tree = renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
-    expect(tree).toMatchSnapshot();
+  it('renders correctly', async () => {
+    const { container } = render(<CloudMonitoringVariableQueryEditor {...props} />);
+    const select = await screen.findByRole('combobox');
+    waitFor(() => {
+      expect(select).toHaveValue('projects');
+    });
+    expect(container).toMatchSnapshot();
   });
 
   describe('and a new variable is created', () => {
@@ -50,7 +54,7 @@ describe('VariableQueryEditor', () => {
         expect(query.selectedQueryType).toBe('projects');
         done();
       };
-      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
+      render(<CloudMonitoringVariableQueryEditor {...props} />);
     });
   });
 
@@ -61,7 +65,7 @@ describe('VariableQueryEditor', () => {
         expect(query.selectedQueryType).toBe('labelKeys');
         done();
       };
-      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
+      render(<CloudMonitoringVariableQueryEditor {...props} />);
     });
   });
 });

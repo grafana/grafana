@@ -1,21 +1,20 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 /**
  * A scene object that usually wraps an underlying layout
  * Dealing with all the state management and editing of the layout
  */
 export interface DashboardLayoutManager extends SceneObject {
+  /** Marks it as a DashboardLayoutManager */
+  isDashboardLayoutManager: true;
   /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */
   editModeChanged(isEditing: boolean): void;
-  /**
-   * Not sure we will need this in the long run, we should be able to handle this inside internally
-   */
-  getNextPanelId(): number;
   /**
    * Remove an element / panel
    * @param element
@@ -54,7 +53,11 @@ export interface DashboardLayoutManager extends SceneObject {
   /**
    * Renders options and layout actions
    */
-  renderEditor?(): React.ReactNode;
+  getOptions?(): OptionsPaneItemDescriptor[];
+}
+
+export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
+  return 'isDashboardLayoutManager' in obj;
 }
 
 /**
@@ -71,10 +74,6 @@ export interface LayoutRegistryItem extends RegistryItem {
    * @param saveModel
    */
   createFromSaveModel?(saveModel: any): void;
-}
-
-export interface LayoutEditorProps<T> {
-  layoutManager: T;
 }
 
 /**
@@ -121,4 +120,30 @@ export interface DashboardRepeatsProcessedEventPayload {
 
 export class DashboardRepeatsProcessedEvent extends BusEventWithPayload<DashboardRepeatsProcessedEventPayload> {
   public static type = 'dashboard-repeats-processed';
+}
+
+/**
+ * Interface for elements that have options
+ */
+export interface EditableDashboardElement {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isEditableDashboardElement: true;
+  /**
+   * Hook that returns edit pane optionsß
+   */
+  useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+  /**
+   * Panel Actions
+   **/
+  renderActions?(): React.ReactNode;
+}
+
+export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
+  return 'isEditableDashboardElement' in obj;
 }

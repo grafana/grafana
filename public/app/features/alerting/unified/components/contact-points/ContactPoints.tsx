@@ -15,7 +15,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';
@@ -155,7 +155,7 @@ const NotificationTemplatesTab = () => {
             href="/alerting/notifications/templates/new"
             disabled={!createTemplateAllowed}
           >
-            Add notification template
+            Add notification template group
           </LinkButton>
         )}
       </Stack>

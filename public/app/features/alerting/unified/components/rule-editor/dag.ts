@@ -24,8 +24,11 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   graph.createNodes(nodes);
 
   queries.forEach((query) => {
+    if (!isExpressionQuery(query.model)) {
+      return;
+    }
     const source = query.refId;
-    const isMathExpression = isExpressionQuery(query.model) && query.model.type === 'math';
+    const isMathExpression = query.model.type === 'math';
 
     // some expressions have multiple targets (like the math expression)
     const targets = isMathExpression
@@ -59,30 +62,60 @@ export function parseRefsFromMathExpression(input: string): string[] {
 }
 
 export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
+export const getDescendants = memoize(_getDescendants, (refId, graph) => refId + fingerprintGraph(graph));
 
 export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
+  if (!node) {
+    return [];
+  }
 
   const origins: Node[] = [];
 
   // recurse through "node > inputEdges > inputNode"
-  function findChildNode(node: Node) {
+  function findParentNode(node: Node) {
     const inputEdges = node.inputEdges;
 
     if (inputEdges.length > 0) {
       inputEdges.forEach((edge) => {
         if (edge.inputNode) {
-          findChildNode(edge.inputNode);
+          findParentNode(edge.inputNode);
         }
       });
     } else {
-      origins?.push(node);
+      origins.push(node);
     }
+  }
+
+  findParentNode(node);
+
+  return origins.map((origin) => origin.name);
+}
+
+// get all children (and children's children etc) from a given node
+export function _getDescendants(refId: string, graph: Graph): string[] {
+  const node = graph.getNode(refId);
+  if (!node) {
+    return [];
+  }
+
+  const descendants: Node[] = [];
+
+  // recurse through "node > outputEdges > outputNode"
+  function findChildNode(node: Node) {
+    const outputEdges = node.outputEdges;
+
+    outputEdges.forEach((edge) => {
+      if (edge.outputNode) {
+        descendants.push(edge.outputNode);
+        findChildNode(edge.outputNode);
+      }
+    });
   }
 
   findChildNode(node);
 
-  return origins.map((origin) => origin.name);
+  return descendants.map((descendant) => descendant.name);
 }
 
 // create a unique fingerprint of the DAG
