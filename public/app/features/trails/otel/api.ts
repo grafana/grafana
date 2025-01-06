@@ -18,40 +18,6 @@ const metricOtelJobInstanceQuery = (metric: string) => `count(${metric}) by (job
 export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', operator: '=' };
 
 /**
- * REMOVE THIS IN FUTURE
- * Query the DS for target_info matching job and instance.
- * Parse the results to get label filters.
- * @param dataSourceUid
- * @param timeRange
- * @param excludedFilters
- * @param matchFilters
- * @returns OtelResourcesType[], labels for the query result requesting matching job and instance on target_info metric
- */
-export async function getOtelResources(
-  dataSourceUid: string,
-  timeRange: RawTimeRange,
-  excludedFilters?: string[],
-  matchFilters?: string
-): Promise<string[]> {
-  const allExcludedFilters = (excludedFilters ?? []).concat(OTEL_RESOURCE_EXCLUDED_FILTERS);
-
-  const start = getPrometheusTime(timeRange.from, false);
-  const end = getPrometheusTime(timeRange.to, true);
-
-  const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/labels`;
-  const params: Record<string, string | number> = {
-    start,
-    end,
-    'match[]': `{__name__="target_info"${matchFilters ? `,${matchFilters}` : ''}}`,
-  };
-
-  const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
-
-  // exclude __name__ or previously chosen filters
-  return response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
-}
-
-/**
  * Get the total amount of job/instance for target_info or for a metric.
  *
  * If used for target_info, this is the metric preview scene with many panels and
@@ -110,36 +76,6 @@ export async function totalOtelResources(
     jobs,
     instances,
   };
-}
-
-/**
- * REMOVE THIS IN FUTURE WORK
- * Look for duplicated series in target_info metric by job and instance labels
- * If each job&instance combo is unique, the data source is otel standardized.
- * If there is a count by job&instance on target_info greater than one,
- * the data source is not standardized
- *
- * @param dataSourceUid
- * @param timeRange
- * @returns
- */
-export async function isOtelStandardization(dataSourceUid: string, timeRange: RawTimeRange): Promise<boolean> {
-  const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
-
-  const start = getPrometheusTime(timeRange.from, false);
-  const end = getPrometheusTime(timeRange.to, true);
-
-  const paramsTargets: Record<string, string | number> = {
-    start,
-    end,
-    // any data source with duplicated series will have a count > 1
-    query: `${otelTargetInfoQuery()} > 1`,
-  };
-
-  const response = await getBackendSrv().get<OtelResponse>(url, paramsTargets, 'explore-metrics-otel-check-standard');
-
-  // the response should be not greater than zero if it is standard
-  return !(response.data.result.length > 0);
 }
 
 /**
@@ -349,8 +285,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   const targetInfoResponse = getBackendSrv().get<LabelResponse>(
     url,
     targetInfoParams,
-    // RENAME
-    `explore-metrics-otel-resources-metric-job-instance-${targetInfoMatchParam}`
+    `explore-metrics-all-otel-resources-on-target_info`
   );
 
   // all labels in all metrics
@@ -367,8 +302,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   const metricResponse = await getBackendSrv().get<LabelResponse>(
     url,
     metricParams,
-    // RENAME THIS
-    `explore-metrics-otel-resources-metric-job-instance-all labels`
+    `explore-metrics-all-metric-labels-not-otel-resource-attributes`
   );
   const promResponses = await Promise.all([targetInfoResponse, metricResponse])
   // otel resource attributes
