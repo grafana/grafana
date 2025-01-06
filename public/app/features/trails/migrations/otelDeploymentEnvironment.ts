@@ -24,7 +24,6 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   const otelMetricsVar = urlParams['var-otel_and_metric_filters'];
 
   // this check is if it has already been migrated
-
   if (
     otelMetricsVar &&
     Array.isArray(otelMetricsVar) &&
@@ -52,21 +51,18 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
     // all the values are strings because they are prometheus labels
     // so we can safely cast them to strings
     const stringDepEnv = deploymentEnv.map((r) => r.toString());
-    const value = reduceDepEnv(stringDepEnv);
+    const value = stringDepEnv.join('|');
 
-    filters = [
-      {
-        key: 'deployment_environment',
-        operator: deploymentEnv.length > 1 ? '=~' : '=',
-        value,
-      },
-    ];
+    filters.push({
+      key: 'deployment_environment',
+      operator: deploymentEnv.length > 1 ? '=~' : '=',
+      value,
+    });
   }
 
-  const otelFilters = migrateAdHocFilters(otelResources);
-  const metricFilters = migrateAdHocFilters(metricVarfilters);
-
-  filters = [...filters, ...otelFilters, ...metricFilters];
+  // mutate the filters and add to them if we need to 
+  migrateAdHocFilters(otelResources, filters);
+  migrateAdHocFilters(metricVarfilters, filters);
 
   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
 
@@ -79,7 +75,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   });
 }
 
-export function migrateAdHocFilters(urlFilter: UrlQueryValue) {
+export function migrateAdHocFilters(urlFilter: UrlQueryValue, filters: AdHocVariableFilter[]) {
   if (
     !(
       urlFilter && // is present
@@ -89,29 +85,17 @@ export function migrateAdHocFilters(urlFilter: UrlQueryValue) {
       urlFilter.every((r) => r && typeof r === 'string') // vars are of any type but ours are all strings
     )
   ) {
-    return [];
+    return filters;
   }
 
-  let filters: AdHocVariableFilter[] = [];
-
-  filters = urlFilter.map((filter) => {
+  urlFilter.forEach((filter) => {
     const parts = filter.toString().split('|');
-    return {
+    filters.push({
       key: parts[0].toString(),
       operator: parts[1].toString(),
       value: parts[2].toString(),
-    };
+    });
   });
 
   return filters;
-}
-
-function reduceDepEnv(depEnv: string[]) {
-  return depEnv.reduce((acc: string, env: string, idx: number) => {
-    if (idx === 0) {
-      return env;
-    }
-
-    return `${acc}|${env}`;
-  }, '');
 }

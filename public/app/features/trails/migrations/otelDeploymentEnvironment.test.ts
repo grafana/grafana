@@ -1,4 +1,4 @@
-import { UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { AdHocVariableFilter, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
@@ -83,37 +83,20 @@ describe('migrate old dep env var to otel and metrics var', () => {
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       expect(otelMetricsVar.state.filters).toEqual(expectedFilters);
     });
-
-    // it('should not set filters when otelAndMetricsFiltersVariable is not an instance of AdHocFiltersVariable', () => {
-    //   const trail = {} as DataTrail;
-    //   const urlParams: UrlQueryMap = {
-    //     'var-deployment_environment': ['env1', 'env2'],
-    //     'var-otel_resources': 'otelResource',
-    //     'var-filters': 'metricFilter',
-    //   };
-    //   const VAR_OTEL_AND_METRIC_FILTERS = 'var-otel_and_metric_filters';
-
-    //   const sceneGraph = {
-    //     lookupVariable: jest.fn().mockReturnValue({}),
-    //   };
-
-    //   migrateOtelDeploymentEnvironment(trail, urlParams);
-
-    //   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
-    //   expect(otelAndMetricsFiltersVariable.setState).not.toHaveBeenCalled();
-    // });
   });
 
   describe('migrateAdHocFilters', () => {
     it('should return empty array when urlFilter is not present', () => {
       const urlFilter: UrlQueryValue = null;
-      const result = migrateAdHocFilters(urlFilter);
-      expect(result).toEqual([]);
+      const filters: AdHocVariableFilter[] = []
+      migrateAdHocFilters(urlFilter, filters);
+      expect(filters).toEqual([]);
     });
 
     it('should return filters when urlFilter is present', () => {
       const urlFilter: UrlQueryValue = ['someKey|=|someValue'];
-      const result = migrateAdHocFilters(urlFilter);
+      const filters: AdHocVariableFilter[] = []
+      migrateAdHocFilters(urlFilter, filters);
       const expected = [
         {
           key: 'someKey',
@@ -121,7 +104,7 @@ describe('migrate old dep env var to otel and metrics var', () => {
           value: 'someValue',
         },
       ];
-      expect(result).toEqual(expected);
+      expect(filters).toEqual(expected);
     });
   });
 
