@@ -206,7 +206,7 @@ describe('Popover menu', () => {
     jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
     const user = userEvent.setup();
     setup();
-    await user.keyboard('[ShiftLeft>]'); // Press Shift (without releasing it)
+    await user.keyboard('[AltLeft>]'); // Press Alt (without releasing it)
     await user.click(screen.getByText('log message 1'));
     expect(enablePopoverMenu).toHaveBeenCalledTimes(1);
   });

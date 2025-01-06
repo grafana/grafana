@@ -209,7 +209,7 @@ export const LogRows = memo(
         if (!selection) {
           return false;
         }
-        if (e.shiftKey) {
+        if (e.altKey) {
           enablePopoverMenu();
         }
         if (popoverMenuSupported() === false) {
@@ -273,11 +273,11 @@ export const LogRows = memo(
               <>
                 <Trans i18nKey="logs.log-rows.disable-popover.message">
                   You are about to disable the logs filter menu. To re-enable it, select text in a log line while
-                  holding the shift key.
+                  holding the alt key.
                 </Trans>
                 <div className={styles.shortcut}>
                   <Icon name="keyboard" title="keyboard shortcut" />
-                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">shift+select to enable again</Trans>
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">alt+select to enable again</Trans>
                 </div>
               </>
             }
