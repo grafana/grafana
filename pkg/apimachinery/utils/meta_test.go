@@ -444,32 +444,3 @@ func asJSON(v any, pretty bool) string {
 	bytes, _ := json.Marshal(v)
 	return string(bytes)
 }
-
-func TestGetOrgID(t *testing.T) {
-	type testCase struct {
-		namespace string
-		expected  int64
-	}
-	tests := []testCase{
-		{
-			namespace: "default",
-			expected:  1,
-		},
-		{
-			namespace: "org-1",
-			expected:  1,
-		},
-		{
-			namespace: "org-2",
-			expected:  2,
-		},
-		{
-			namespace: "stack-500",
-			expected:  1,
-		},
-	}
-
-	for _, tt := range tests {
-		require.Equal(t, utils.GetOrgID(tt.namespace), tt.expected)
-	}
-}

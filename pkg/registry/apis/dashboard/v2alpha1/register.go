@@ -16,6 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -233,7 +234,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 
 		if deleteOptions.GracePeriodSeconds == nil || *deleteOptions.GracePeriodSeconds != 0 {
-			provisioningData, err := b.provisioningDashboardService.GetProvisionedDashboardDataByDashboardUID(ctx, utils.GetOrgID(a.GetNamespace()), a.GetName())
+			nsInfo, err := claims.ParseNamespace(a.GetNamespace())
+			if err != nil {
+				return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+			}
+
+			provisioningData, err := b.provisioningDashboardService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
 			if err != nil {
 				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) {
 					return nil

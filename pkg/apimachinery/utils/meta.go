@@ -813,15 +813,3 @@ func ParseBlobInfo(v string) *BlobInfo {
 	}
 	return info
 }
-
-func GetOrgID(namespace string) int64 {
-	orgID, found := strings.CutPrefix(namespace, "org-")
-	if found {
-		id, err := strconv.ParseInt(orgID, 10, 64)
-		if err == nil {
-			return id
-		}
-	}
-
-	return 1
-}
