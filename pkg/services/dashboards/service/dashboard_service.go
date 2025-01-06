@@ -1360,7 +1360,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		return nil, err
 	}
 
-	return ParseResults(res, 0), nil
+	return ParseResults(res, 0)
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
@@ -1382,9 +1382,13 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	return result, nil
 }
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alpha1.SearchResults {
+func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alpha1.SearchResults, error) {
 	if result == nil {
-		return nil
+		return nil, nil
+	} else if result.Error != nil {
+		return nil, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+	} else if result.Results == nil {
+		return nil, nil
 	}
 
 	titleIDX := 0
@@ -1455,7 +1459,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alph
 		}
 	}
 
-	return sr
+	return sr, nil
 }
 
 func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {
