@@ -34,6 +34,7 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
