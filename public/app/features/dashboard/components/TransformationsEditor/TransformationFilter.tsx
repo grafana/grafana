@@ -1,62 +1,33 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
-import { mergeMap } from 'rxjs';
+import { useMemo } from 'react';
 
-import {
-  DataFrame,
-  DataTransformContext,
-  DataTransformerConfig,
-  GrafanaTheme2,
-  transformDataFrame,
-} from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { DataFrame, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { TransformationData } from './TransformationsEditor';
-import { TransformationsEditorTransformation } from './types';
 
 interface TransformationFilterProps {
+  prevTransformOutput: DataFrame[];
   index: number;
   config: DataTransformerConfig;
   data: TransformationData;
   onChange: (index: number, config: DataTransformerConfig) => void;
-  configs: TransformationsEditorTransformation[];
 }
 
-export const TransformationFilter = ({ index, data, config, onChange, configs }: TransformationFilterProps) => {
+export const TransformationFilter = ({
+  index,
+  data,
+  config,
+  onChange,
+  prevTransformOutput,
+}: TransformationFilterProps) => {
   const styles = useStyles2(getStyles);
-  const [outputs, setOutputs] = useState<DataFrame[]>([]);
-
-  useEffect(() => {
-    // we need previous transformation index to get its outputs
-    //    to be used in this transforms inputs
-    const prevTransformIndex = index - 1;
-    let inputTransforms: Array<DataTransformerConfig<{}>> = [];
-    let outputTransforms: Array<DataTransformerConfig<{}>> = [];
-
-    if (prevTransformIndex >= 0) {
-      inputTransforms = configs.slice(0, prevTransformIndex).map((t) => t.transformation);
-      outputTransforms = configs.slice(prevTransformIndex, index).map((t) => t.transformation);
-    }
-
-    const ctx: DataTransformContext = {
-      interpolate: (v: string) => getTemplateSrv().replace(v),
-    };
-
-    const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
-      .subscribe(setOutputs);
-
-    return function unsubscribe() {
-      outputSubscription.unsubscribe();
-    };
-  }, [index, data, configs]);
 
   const opts = useMemo(() => {
     const combinedQueriesAndTransforms = index
-      ? setOutputWithoutDuplicateQueries([...data.series, ...outputs])
+      ? setOutputWithoutDuplicateQueries([...data.series, ...prevTransformOutput])
       : data.series;
 
     return {
@@ -69,7 +40,7 @@ export const TransformationFilter = ({ index, data, config, onChange, configs }:
         { value: DataTopic.Annotations, label: `Annotation data` },
       ],
     };
-  }, [index, data.series, data.annotations?.length, outputs, config.topic]);
+  }, [index, data.series, data.annotations?.length, prevTransformOutput, config.topic]);
 
   return (
     <div className={styles.wrapper}>
