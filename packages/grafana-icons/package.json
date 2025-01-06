@@ -48,7 +48,7 @@
     "@types/node": "22.10.2",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
-    "esbuild": "0.24.0",
+    "esbuild": "0.24.2",
     "prettier": "3.4.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
