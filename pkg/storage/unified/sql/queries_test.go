@@ -195,7 +195,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
-						ReadOnly:    false,
+						Response:    new(resourceVersionResponse),
 					},
 				},
 			},
@@ -246,6 +246,18 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Resource:  "rs",
 							Name:      "nm",
 						},
+					},
+				},
+			},
+			sqlResourceLockCount: {
+				{
+					Name: "count",
+					Data: &sqlResourceLockCountRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "gp",
+						Resource:    "rs",
+						Response:    new(lockCountResponse),
 					},
 				},
 			},

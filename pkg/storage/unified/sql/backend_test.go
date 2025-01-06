@@ -470,7 +470,7 @@ func TestIntegrationConcurrent(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	b := testServer(t)
-	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	stream, err := b.WatchWriteEvents(context.Background())
 	require.NoError(t, err)
@@ -508,7 +508,7 @@ func TestIntegrationListAfterWrite(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	b := testServer(t)
-	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	for i := 0; i < 10; i++ {
 		_, err := writeEvent(ctx, b, fmt.Sprintf("item%d", i), resource.WatchEvent_ADDED)
@@ -533,7 +533,7 @@ func TestIntegrationSQLBackend(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	b := testServer(t)
-	ctx := testutil.NewTestContext(t, time.Now().Add(50*time.Second))
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	stream, err := b.WatchWriteEvents(context.Background())
 
@@ -559,35 +559,36 @@ func TestIntegrationSQLBackend(t *testing.T) {
 		require.Greater(t, rv4, rv3)
 		wg.Done()
 
-	}()
-	go func() {
 		rv5, err = writeEvent(ctx, b, "item5", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv5, rv4)
 		wg.Done()
 	}()
-	t.Log(rv1, rv2, rv3, rv4, rv5)
+	t.Log(rv1, rv2, rv3)
 
 	// List events should return rv3 until we release the lock
-	lo := &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}
-	cb := func(resource.ListIterator) error { return nil }
+	nbItems := 0
+	cb := func(it resource.ListIterator) error {
+		nbItems = 0
+		for it.Next() {
+			nbItems++
+		}
+		return nil
+	}
 
 	var retry int
 	var head int64
 	for retry < 3 {
-		head, err = b.ListIterator(ctx, lo, cb)
+		head, err = b.ListIterator(ctx, &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}, cb)
 		require.NoError(t, err)
-		require.Equal(t, rv3-1, head)
+		require.Equal(t, 2, nbItems)
+		require.GreaterOrEqual(t, head, rv2)
+		require.Less(t, head, rv3)
 		retry++
 	}
 
 	// listLatestRVs
 	grv, err := b.listLatestRVs(ctx)
-	require.NoError(t, err)
-	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
-
-	// Ensure only the initial events can be watched
-	grv, err = b.listLatestRVs(ctx)
 	require.NoError(t, err)
 	require.Equal(t, groupResourceRV{"group": {"resource": rv3 - 1}}, grv)
 
@@ -602,7 +603,9 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	b.unlockKey(resourceKey("item3"))
 	wg.Wait()
 
-	head, err = b.ListIterator(ctx, lo, cb)
+	t.Log(rv4, rv5)
+
+	head, err = b.ListIterator(ctx, &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}, cb)
 	require.NoError(t, err)
 	require.Equal(t, rv5, head)
 

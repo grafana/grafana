@@ -46,6 +46,7 @@ var (
 	sqlResourceLockInsert = mustTemplate("resource_lock_insert.sql")
 	sqlResourceLockDelete = mustTemplate("resource_lock_delete.sql")
 	sqlResourceLockGet    = mustTemplate("resource_lock_get.sql")
+	sqlResourceLockCount  = mustTemplate("resource_lock_count.sql")
 )
 
 // TxOptions.
@@ -210,6 +211,7 @@ func (r sqlResourceHistoryUpdateRequest) Validate() error {
 // resource_version table requests.
 type resourceVersionResponse struct {
 	ResourceVersion int64
+	PendingCount    int64 // The count of pending ResourceVersions.
 }
 
 func (r *resourceVersionResponse) Results() (*resourceVersionResponse, error) {
@@ -224,8 +226,7 @@ type groupResourceVersion struct {
 type sqlResourceVersionHeadRequest struct {
 	sqltemplate.SQLTemplate
 	Group, Resource string
-	ReadOnly        bool
-	ResourceVersion int64
+	Response        *resourceVersionResponse
 }
 
 func (r sqlResourceVersionHeadRequest) Validate() error {
@@ -235,8 +236,11 @@ func (r sqlResourceVersionHeadRequest) Validate() error {
 	return nil
 }
 
-func (r sqlResourceVersionHeadRequest) Results() (int64, error) {
-	return r.ResourceVersion, nil
+func (r sqlResourceVersionHeadRequest) Results() (*resourceVersionResponse, error) {
+	if r.Response == nil {
+		return nil, fmt.Errorf("response not set")
+	}
+	return r.Response, nil
 }
 
 type sqlResourceVersionListRequest struct {
@@ -279,6 +283,35 @@ func (r sqlResourceLockGetRequest) Validate() error {
 }
 func (r sqlResourceLockGetRequest) Results() (int64, error) {
 	return r.Response.ResourceVersion, nil
+}
+
+type lockCountResponse struct {
+	Count int64
+}
+
+func (r *lockCountResponse) Results() (int64, error) {
+	return r.Count, nil
+}
+
+type sqlResourceLockCountRequest struct {
+	sqltemplate.SQLTemplate
+	Group     string
+	Resource  string
+	Namespace string
+	Response  *lockCountResponse
+}
+
+func (r sqlResourceLockCountRequest) Validate() error {
+	if r.Group == "" || r.Resource == "" {
+		return fmt.Errorf("group and resource must be set")
+	}
+	return nil
+}
+func (r sqlResourceLockCountRequest) Results() (int64, error) {
+	if r.Response == nil {
+		return 0, fmt.Errorf("count not set")
+	}
+	return r.Response.Count, nil
 }
 
 type sqlResourceLockMinRVRequest struct {

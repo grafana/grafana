@@ -162,7 +162,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	// Lock the key and get a new resource version
 	rv, err := b.lockKey(ctx, event.Key)
 	if err != nil {
-		b.unlockKey(event.Key)
+		_ = b.unlockKey(event.Key)
 		return 0, fmt.Errorf("lock key: %w", err)
 	}
 
@@ -181,28 +181,14 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 		b.unlockKey(event.Key)
 		return 0, fmt.Errorf("unsupported event type")
 	}
-	// unlock the lock
-	b.unlockKey(event.Key)
-
-	// Wait for all the previous events
-	ba := backoff.New(ctx, backoff.Config{
-		MinBackoff: time.Millisecond,
-		MaxBackoff: 50 * time.Millisecond,
-	})
-	var head int64
-	for head < rv {
-		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-			head, err = headResourceVersion(ctx, tx, b.dialect, event.Key.Group, event.Key.Resource)
-			if err != nil {
-				return err
-			}
-			return nil
-		})
-		if err != nil {
-			return 0, fmt.Errorf("get head resource version: %w", err)
-		}
-		ba.Wait()
+	// unlock the key.
+	err = b.unlockKey(event.Key)
+	if err != nil {
+		return 0, fmt.Errorf("unlock key: %w", err)
 	}
+
+	// Wait for head to catch'up to ensure read-after-write consistency.
+	b.waitForRevision(ctx, event.Key.Group, event.Key.Resource, rv)
 	return rv, err
 }
 
@@ -485,6 +471,30 @@ func (l *listIter) Next() bool {
 	return false
 }
 
+// waitForRevision waits for events with a resource version lower than the given revision to be committed.
+func (b *backend) waitForRevision(ctx context.Context, group string, resource string, rv int64) error {
+	ba := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Millisecond,
+		MaxBackoff: 50 * time.Millisecond,
+	})
+	var head int64
+	var err error
+	for head < rv {
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			head, err = headResourceVersion(ctx, tx, b.dialect, group, resource)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("get head resource version: %w", err)
+		}
+		ba.Wait()
+	}
+	return nil
+}
+
 var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
@@ -498,7 +508,6 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-
 		// head := b.headRV(ctx, req.Options.Key)
 		// if head > 0 {
 		// 	// Some of the keys are ahead of HEAD, we need to read from the history table
@@ -509,9 +518,21 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
 		// some keys that are ahead of head and some that are behind.
 		var err error
-		iter.listRV, err = headResourceVersion(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		headRV, err := headResourceVersion(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
+		}
+		iter.listRV = headRV
+
+		// Check if there are any inflight requests
+		cnt, err := countInflightRequests(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		if err != nil {
+			return err
+		}
+		if cnt > 0 {
+			// Some of the keys are ahead of HEAD, we need to read from the history table
+			req.ResourceVersion = headRV
+			return b.listAtRevisionQuery(ctx, tx, req, iter, cb)
 		}
 
 		listReq := sqlResourceListRequest{
@@ -559,36 +580,40 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		limit := int64(0) // ignore limit
-		if iter.offset > 0 {
-			limit = math.MaxInt64 // a limit is required for offset
-		}
-		listReq := sqlResourceHistoryListRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Request: &historyListRequest{
-				ResourceVersion: iter.listRV,
-				Limit:           limit,
-				Offset:          iter.offset,
-				Options:         req.Options,
-			},
-		}
-
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryList, listReq)
-		if rows != nil {
-			defer func() {
-				if err := rows.Close(); err != nil {
-					b.log.Warn("listAtRevision error closing rows", "error", err)
-				}
-			}()
-		}
-		if err != nil {
-			return err
-		}
-
-		iter.rows = rows
-		return cb(iter)
+		return b.listAtRevisionQuery(ctx, tx, req, iter, cb)
 	})
 	return iter.listRV, err
+}
+
+func (b *backend) listAtRevisionQuery(ctx context.Context, tx db.ContextExecer, req *resource.ListRequest, iter *listIter, cb func(resource.ListIterator) error) error {
+	limit := int64(0) // ignore limit
+	if iter.offset > 0 {
+		limit = math.MaxInt64 // a limit is required for offset
+	}
+	listReq := sqlResourceHistoryListRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request: &historyListRequest{
+			ResourceVersion: iter.listRV,
+			Limit:           limit,
+			Offset:          iter.offset,
+			Options:         req.Options,
+		},
+	}
+
+	rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryList, listReq)
+	if rows != nil {
+		defer func() {
+			if err := rows.Close(); err != nil {
+				b.log.Warn("listAtRevision error closing rows", "error", err)
+			}
+		}()
+	}
+	if err != nil {
+		return err
+	}
+
+	iter.rows = rows
+	return cb(iter)
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
@@ -681,12 +706,26 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 
 // headResourceVersion returns the resource version of the backend store for the given group and resource.
 // This has the same meaning as the ETCD Header Revision.
-func headResourceVersion(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+func headResourceVersion(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (headRV int64, err error) {
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionHead, sqlResourceVersionHeadRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
-		ReadOnly:    true,
+		Response:    new(resourceVersionResponse),
+	})
+	if err != nil {
+		return 0, fmt.Errorf("get resource version: %w", err)
+	}
+	return res.ResourceVersion, nil
+}
+
+// countInflightRequests returns the number of currently locked keys.
+func countInflightRequests(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (count int64, err error) {
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceLockCount, sqlResourceLockCountRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Group:       group,
+		Resource:    resource,
+		Response:    new(lockCountResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
@@ -752,7 +791,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // The resource version is a timestamp in microseconds guaranteed to be greater than previously generated timestamps.
 // However it's not guaranteed to be unique and multiple resources may have the same resource version. This is a design
 // tradeoff to avoid a global lock per resource and is provider high throughput.
-// The lock is aquired in it's own transaction to ensure it's visible to other transactions.
+// The lock is acquired in it's own transaction to ensure it's visible to other transactions.
 func (b *backend) lockKey(ctx context.Context, key *resource.ResourceKey) (newVersion int64, err error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"version_atomic_inc", trace.WithAttributes(
 		semconv.K8SNamespaceName(key.Namespace),
