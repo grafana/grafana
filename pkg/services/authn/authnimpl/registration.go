@@ -82,10 +82,11 @@ func ProvideRegistration(
 
 	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		oauthInfos := socialService.GetOAuthInfoProviders()
-		enabledProvidersLen := 0
+		hasEnabledProviders := false
 		for _, provider := range oauthInfos {
 			if provider.Enabled {
-				enabledProvidersLen++
+				hasEnabledProviders = true
+				break
 			}
 		}
 
