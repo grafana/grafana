@@ -11,10 +11,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
+	"github.com/m3db/prometheus_remote_client_golang/promremote"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -26,6 +27,7 @@ const (
 	// Fixed error messages
 	MimirDuplicateTimestampError = "err-mimir-sample-duplicate-timestamp"
 	MimirInvalidLabelError       = "err-mimir-label-invalid"
+	MimirMaxSeriesPerUserError   = "err-mimir-max-series-per-user"
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
@@ -265,6 +267,11 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		}
 
 		if strings.Contains(msg, MimirInvalidLabelError) {
+			return errors.Join(ErrRejectedWrite, writeErr), false
+		}
+
+		// this can happen when user exceeded defined maximum of
+		if strings.Contains(msg, MimirMaxSeriesPerUserError) {
 			return errors.Join(ErrRejectedWrite, writeErr), false
 		}
 
