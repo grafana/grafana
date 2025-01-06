@@ -528,6 +528,11 @@
       },
       "save-query": ""
     },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
+    },
     "simpleCondition": {
       "alertCondition": ""
     },
@@ -2760,6 +2765,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": ""
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
     }
   },
   "refresh-picker": {

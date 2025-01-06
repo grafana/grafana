@@ -38,6 +38,7 @@ export const AnnoKeyFolderId = 'grafana.app/folderId';
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
+export const AnnoKeyDashboardId = 'grafana.app/dashboardId';
 
 // Identify where values came from
 export const AnnoKeyRepoName = 'grafana.app/repoName';
@@ -46,6 +47,10 @@ export const AnnoKeyRepoHash = 'grafana.app/repoHash';
 export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
+export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
+export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
+export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
+export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -54,6 +59,7 @@ type GrafanaAnnotations = {
   [AnnoKeyUpdatedBy]?: string;
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
+  [AnnoKeyDashboardId]?: number;
 
   [AnnoKeyRepoName]?: string;
   [AnnoKeyRepoPath]?: string;
@@ -69,6 +75,13 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
+  [AnnoKeyDashboardNotFound]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsNew]?: boolean;
+
+  // TODO: This should be provided by the API
+  // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
+  [AnnoKeyDashboardGnetId]?: string;
 };
 
 export interface Resource<T = object, K = string> extends TypeMeta<K> {
