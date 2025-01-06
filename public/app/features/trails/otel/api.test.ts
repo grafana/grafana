@@ -1,11 +1,7 @@
 import { RawTimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
-import {
-  totalOtelResources,
-  getDeploymentEnvironments,
-  getFilteredResourceAttributes,
-} from './api';
+import { totalOtelResources, getDeploymentEnvironments, getFilteredResourceAttributes } from './api';
 
 jest.mock('./util', () => ({
   ...jest.requireActual('./util'),

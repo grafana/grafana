@@ -294,7 +294,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
     end,
     'match[]': `{name!="",__name__!~"target_info"}`,
   };
-  
+
   // Get the metric labels but exclude any labels found on target_info.
   // We prioritize metric attributes over resource attributes.
   // If a label is present in both metric and target_info, we exclude it from the resource attributes.
@@ -304,7 +304,7 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
     metricParams,
     `explore-metrics-all-metric-labels-not-otel-resource-attributes`
   );
-  const promResponses = await Promise.all([targetInfoResponse, metricResponse])
+  const promResponses = await Promise.all([targetInfoResponse, metricResponse]);
   // otel resource attributes
   const targetInfoLabels = promResponses[0].data ?? [];
   // the metric labels here
