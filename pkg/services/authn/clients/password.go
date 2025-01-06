@@ -59,13 +59,17 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 			c.log.FromContext(ctx).Debug("Failed to authenticate password identity", "client", pwClient, "error", clientErr)
 			continue
 		}
+		if err := c.loginAttempts.Reset(ctx, username); err != nil {
+			c.log.Warn("could not reset login attempts", "err", err, "username", username)
+		}
 
 		return identity, nil
 	}
 
-	if errors.Is(clientErrs, errInvalidPassword) {
-		_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
+	err = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", clientErrs)
+	return nil, clientErrs
 }
