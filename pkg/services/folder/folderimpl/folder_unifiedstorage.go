@@ -177,27 +177,28 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 
 	var err error
 	// TODO: figure out what to do with Guardian
-	/*
-		// we only need to check access to the folder
-		// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-		g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
-		if err != nil {
-			return nil, err
-		}
+	// we only need to check access to the folder
+	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
+	f := &folder.Folder{
+		UID: q.UID,
+	}
+	g, err := guardian.NewByFolder(ctx, f, q.OrgID, q.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
 
-		guardianFunc := g.CanView
-		if q.Permission == dashboardaccess.PERMISSION_EDIT {
-			guardianFunc = g.CanEdit
-		}
+	guardianFunc := g.CanView
+	if q.Permission == dashboardaccess.PERMISSION_EDIT {
+		guardianFunc = g.CanEdit
+	}
 
-		hasAccess, err := guardianFunc()
-		if err != nil {
-			return nil, err
-		}
-		if !hasAccess {
-			return nil, dashboards.ErrFolderAccessDenied
-		}
-	*/
+	hasAccess, err := guardianFunc()
+	if err != nil {
+		return nil, err
+	}
+	if !hasAccess {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
 
 	children, err := s.unifiedStore.GetChildren(ctx, *q)
 	if err != nil {
@@ -407,7 +408,10 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	guard, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	f := &folder.Folder{
+		UID: cmd.UID,
+	}
+	guard, err := guardian.NewByFolder(ctx, f, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return err
 	}

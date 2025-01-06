@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	//"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,11 +30,9 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	//"github.com/grafana/grafana/pkg/setting"
-	//"github.com/grafana/grafana/pkg/util"
 )
 
-func TestIntegrationApisServerCreate(t *testing.T) {
+func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -63,8 +60,6 @@ func TestIntegrationApisServerCreate(t *testing.T) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("DELETE /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
-		// err := json.NewEncoder(w).Encode(unifiedStorageFolder)
-		// require.NoError(t, err)
 	})
 
 	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
