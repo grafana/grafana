@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -41,9 +42,11 @@ type dashboardStore struct {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	Id          int64
-	DashboardId int64
-	Term        string
+	Id           int64
+	OrgID        int64 `xorm:"org_id"`
+	DashboardId  int64
+	DashboardUID string `xorm:"dashboard_uid"`
+	Term         string
 }
 
 // DashboardStore implements the Store interface
@@ -55,6 +58,13 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	// fill out dashboard_uid and org_id for dashboard_tags
+	// need to run this at startup in case any downgrade happened after the initial migration
+	err = migrations.RunDashboardTagMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName())
+	if err != nil {
+		s.log.Error("Failed to run dashboard_tag migrations", "err", err)
 	}
 
 	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
@@ -438,7 +448,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	}
 
 	// delete existing tags
-	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.ID); err != nil {
+	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_uid=? AND org_id=?", dash.UID, dash.OrgID); err != nil {
 		return nil, err
 	}
 
@@ -446,7 +456,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	tags := dash.GetTags()
 	if len(tags) > 0 {
 		for _, tag := range tags {
-			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {
+			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag, OrgID: dash.OrgID, DashboardUID: dash.UID}); err != nil {
 				return nil, err
 			}
 		}
@@ -604,7 +614,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	}
 
 	sqlStatements := []statement{
-		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
@@ -935,8 +945,8 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 					  COUNT(*) as count,
 						term
 					FROM dashboard
-					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
-					WHERE dashboard.org_id=?
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_uid = dashboard.uid
+					WHERE dashboard_tag.org_id=?
 					GROUP BY term
 					ORDER BY term`
 
