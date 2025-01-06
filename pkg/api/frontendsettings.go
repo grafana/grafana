@@ -363,15 +363,17 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-		enabledProvidersLen := 0
-		for _, provider := range oauthInfos {
-			if provider.Enabled {
-				enabledProvidersLen++
+		hasEnabledProviders := hs.Cfg.SAMLAuthEnabled || hs.Cfg.LDAPAuthEnabled || hs.samlEnabled()
+		if !hasEnabledProviders {
+			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
+			for _, provider := range oauthInfos {
+				if provider.Enabled {
+					hasEnabledProviders = true
+				}
 			}
 		}
 
-		if !hs.samlEnabled() || enabledProvidersLen == 0 {
+		if !hasEnabledProviders {
 			frontendSettings.Auth.PasswordlessEnabled = true
 		}
 	}
