@@ -15,7 +15,7 @@
   node_exporter:
     image: prom/node-exporter
     ports:
-      - "9100:9100"
+      - "9101:9100"
 
   fake-prometheus-data:
     image: grafana/fake-data-gen
@@ -24,14 +24,14 @@
     environment:
       FD_DATASOURCE: prom
 
-#  alertmanager:
-#    image: prom/alertmanager
-#    volumes:
-#    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-#    command: >
-#      --config.file=/etc/alertmanager/alertmanager.yml
-#    ports:
-#      - "9093:9093"
+  alertmanager:
+    image: prom/alertmanager
+    volumes:
+    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command: >
+      --config.file=/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
 
   prometheus-random-data:
     build: docker/blocks/prometheus_random_data
@@ -42,3 +42,10 @@
     build: docker/blocks/prometheus_high_card
     ports:
       - "9111:9111"
+
+  debug:
+    image: alpine
+    volumes:
+      - ${PWD}/docker/blocks/prometheus:/debug
+    command: >
+      sh -c "ls -l /debug && cat /debug/alertmanager.yml"
