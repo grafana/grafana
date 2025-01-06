@@ -338,33 +338,28 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   // The URL for the labels endpoint
   const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
   // GET TARGET_INFO LABELS
-  let targetInfoMatchParam = `{__name__="target_info"}`;
-
   const targetInfoParams: Record<string, string | number> = {
     start,
     end,
-    'match[]': targetInfoMatchParam,
+    'match[]': `{__name__="target_info"}`,
   };
 
   // these are the resource attributes that come from target_info,
   // filtered by the metric job and instance
-  const targetInfoResponse = await getBackendSrv().get<LabelResponse>(
+  const targetInfoResponse = getBackendSrv().get<LabelResponse>(
     url,
     targetInfoParams,
     // RENAME
     `explore-metrics-otel-resources-metric-job-instance-${targetInfoMatchParam}`
   );
 
-  const targetInfoLabels = targetInfoResponse.data ?? [];
-
-  let metricMatchParam = `{name!="",__name__!~"target_info"}`;
-
   // all labels in all metrics
   const metricParams: Record<string, string | number> = {
     start,
     end,
-    'match[]': metricMatchParam,
+    'match[]': `{name!="",__name__!~"target_info"}`,
   };
+  
   // Get the metric labels but exclude any labels found on target_info.
   // We prioritize metric attributes over resource attributes.
   // If a label is present in both metric and target_info, we exclude it from the resource attributes.
@@ -375,8 +370,11 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
     // RENAME THIS
     `explore-metrics-otel-resources-metric-job-instance-all labels`
   );
+  const promResponses = await Promise.all([targetInfoResponse, metricResponse])
+  // otel resource attributes
+  const targetInfoLabels = promResponses[0].data ?? [];
   // the metric labels here
-  const metricLabels = metricResponse.data ?? [];
+  const metricLabels = promResponses[1].data ?? [];
 
   // get all the resource attributes that are not present on metrics (have been promoted to metrics)
   const nonPromotedResources = targetInfoLabels.filter((item) => !metricLabels.includes(item));
