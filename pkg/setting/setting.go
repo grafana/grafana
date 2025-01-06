@@ -531,6 +531,8 @@ type Cfg struct {
 	IndexMinCount               int
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int
+	CACertPath                  string
+	HttpsSkipVerify             bool
 }
 
 type UnifiedStorageConfig struct {
