@@ -447,7 +447,7 @@
   "engines": {
     "node": ">= 22"
   },
-  "packageManager": "yarn@4.5.3",
+  "packageManager": "yarn@4.6.0",
   "dependenciesMeta": {
     "prettier@3.4.2": {
       "unplugged": true
