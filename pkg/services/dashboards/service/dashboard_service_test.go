@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -302,6 +303,11 @@ func (m *mockResourceInterface) Update(ctx context.Context, obj *unstructured.Un
 
 func (m *mockResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 	args := m.Called(ctx, name, options, subresources)
+	return args.Error(0)
+}
+
+func (m *mockResourceInterface) DeleteCollection(ctx context.Context, options v1.DeleteOptions, listOptions v1.ListOptions) error {
+	args := m.Called(ctx, options, listOptions)
 	return args.Error(0)
 }
 
@@ -641,6 +647,33 @@ func TestDeleteDashboard(t *testing.T) {
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 		k8sClientMock.searcher.AssertExpectations(t)
+	})
+}
+
+func TestDeleteAllDashboards(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sClientMock.AssertExpectations(t)
 	})
 }
 
