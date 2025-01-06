@@ -74,11 +74,7 @@ func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUser
 			And("created >= ?", query.Since.Unix()).
 			Count(loginAttempt)
 
-		if queryErr != nil {
-			return queryErr
-		}
-
-		return nil
+		return queryErr
 	})
 
 	return total, err

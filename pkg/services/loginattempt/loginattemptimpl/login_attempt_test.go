@@ -22,40 +22,40 @@ func TestService_Validate(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			name:          "When brute force protection enabled and user login attempt count is less than max",
+			name:          "Should be valid when brute force protection enabled and user login attempt count is less than max",
 			loginAttempts: maxInvalidLoginAttempts - 1,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection enabled and user login attempt count equals max",
+			name:          "Should be invalid when brute force protection enabled and user login attempt count equals max",
 			loginAttempts: maxInvalidLoginAttempts,
 			expected:      false,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection enabled and user login attempt count is greater than max",
+			name:          "Should be invalid when brute force protection enabled and user login attempt count is greater than max",
 			loginAttempts: maxInvalidLoginAttempts + 1,
 			expected:      false,
 			expectedErr:   nil,
 		},
 
 		{
-			name:          "When brute force protection disabled and user login attempt count is less than max",
+			name:          "Should be valid when brute force protection disabled and user login attempt count is less than max",
 			loginAttempts: maxInvalidLoginAttempts - 1,
 			disabled:      true,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection disabled and user login attempt count equals max",
+			name:          "Should be valid when brute force protection disabled and user login attempt count equals max",
 			loginAttempts: maxInvalidLoginAttempts,
 			disabled:      true,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection disabled and user login attempt count is greater than max",
+			name:          "Should be valid when brute force protection disabled and user login attempt count is greater than max",
 			loginAttempts: maxInvalidLoginAttempts + 1,
 			disabled:      true,
 			expected:      true,
@@ -120,40 +120,40 @@ func TestService_ValidateIPAddress(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			name:          "When brute force protection enabled and IP address login attempt count is less than max",
+			name:          "Should be valid when brute force protection enabled and IP address login attempt count is less than max",
 			loginAttempts: maxInvalidLoginAttempts - 1,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection enabled and IP address login attempt count equals max",
+			name:          "Should be invalid when brute force protection enabled and IP address login attempt count equals max",
 			loginAttempts: maxInvalidLoginAttempts,
 			expected:      false,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection enabled and IP address login attempt count is greater than max",
+			name:          "Should be invalid when brute force protection enabled and IP address login attempt count is greater than max",
 			loginAttempts: maxInvalidLoginAttempts + 1,
 			expected:      false,
 			expectedErr:   nil,
 		},
 
 		{
-			name:          "When brute force protection disabled and IP address login attempt count is less than max",
+			name:          "Should be valid when brute force protection disabled and IP address login attempt count is less than max",
 			loginAttempts: maxInvalidLoginAttempts - 1,
 			disabled:      true,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection disabled and IP address login attempt count equals max",
+			name:          "Should be valid when brute force protection disabled and IP address login attempt count equals max",
 			loginAttempts: maxInvalidLoginAttempts,
 			disabled:      true,
 			expected:      true,
 			expectedErr:   nil,
 		},
 		{
-			name:          "When brute force protection disabled and IP address login attempt count is greater than max",
+			name:          "Should be valid when brute force protection disabled and IP address login attempt count is greater than max",
 			loginAttempts: maxInvalidLoginAttempts + 1,
 			disabled:      true,
 			expected:      true,
