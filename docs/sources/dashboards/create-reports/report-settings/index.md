@@ -7,7 +7,7 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: Reporting
+menuTitle: Settings
 title: Reporting settings
 description: Manage organizational Reporting settings
 weight: 700

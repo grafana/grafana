@@ -21,9 +21,9 @@ weight: 600
 refs:
   repeat-panels-or-rows:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
   http-apis:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
@@ -129,7 +129,7 @@ To create a report, follow these steps:
 1. Click **Dashboards > Reports** in the main menu.
 1. Click **+ Create a new report**.
 1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
-   - [Select dashboard](#select-dashboard)
+   - [Select dashboard](#1-select-dashboard)
    - [Format report](#format-report)
    - [Schedule](#schedule)
    - [Share](#share)
@@ -139,24 +139,32 @@ To create a report, follow these steps:
    - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
    - **Discard** - Delete the report draft. This action can't be reversed.
 
-### Select dashboard
+### 1. Select dashboard
 
-1. Select report dashboard.
-   - **Source dashboard:** Select the dashboard from which you want to generate the report.
-   - **Time range:** (optional) Use custom time range for the report. For more information, refer to [Report time range](#report-time-range).
-   - **Add another dashboard:** Add more than one dashboard to the report.
+At this step, select the dashboard or dashboards on which the report is based as well as the variables and time range for those dashboards. The options are:
 
-#### Add multiple dashboards to a report
+- [Source dashboard](#source-dashboard)
+- [Template variables](#template-variables)
+- [Time range (optional)](#time-range)
+- [Add another dashboard](#add-another-dashboard)
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+#### Source dashboard
 
-You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
+Select the dashboard from which you want to generate the report.
 
-#### Render a report with panels or rows set to repeat by a variable
+#### Template variables
+
+Select the variable **Datasource** and **Instance** for the selected dashboard. This option is only displayed if the dashboard has variables.
+
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
+
+The query variables saved with a report might become out of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the **All** value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
+
+##### Reports with panels or rows set to repeat by a variable
 
 You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
 
-##### Caveats
+This functionality has the following caveats:
 
 - Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
 - If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
@@ -165,21 +173,9 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
   - generate a report based on the copied dashboard.
 - Rendering of the repeating panels inside collapsed rows in reports is not supported.
 
-#### Choose template variables
+#### Time range
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
-
-{{% admonition type="note" %}}
-The query variables saved with a report might become of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
-{{% /admonition %}}
-
-#### Report time range
-
-> **Note:** You can set custom report time ranges in [Grafana Enterprise](ref:grafana-enterprise) 7.2+ and [Grafana Cloud](/docs/grafana-cloud/).
-
-By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
+By default, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report by:
 
 - Saving a modified time range to the dashboard. Changing the dashboard time range without saving it doesn't change the time zone of the report.
 - Setting a time range via the **Time range** field in the report form. If specified, the custom time range overrides the time range from the report's dashboard.
@@ -193,6 +189,10 @@ Reports use the time zone of the dashboard from which they’re generated. You c
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
+
+#### Add another dashboard
+
+Add more dashboards to the report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You can't add the same dashboard to a report multiple times.
 
 ### Format report
 
