@@ -337,6 +337,7 @@ var wireBasicSet = wire.NewSet(
 	starApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
