@@ -185,6 +185,8 @@ type DSNode struct {
 	intervalMS int64
 	maxDP      int64
 	request    Request
+
+	noConvert bool
 }
 
 func (dn *DSNode) String() string {
@@ -333,7 +335,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames) //, s.allowLongFrames)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -401,7 +403,23 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+	// TODO: Don't run Datasource Node Results through converter if input is SQL expression
+	// Also for now, must be one frame and not of the fields may have labels
+	if dn.noConvert {
+		if len(dataFrames) > 1 {
+			return result, fmt.Errorf("expected only one frame from datasource query that is input to a SQL expression, got %d", len(dataFrames))
+		}
+		for _, field := range dataFrames[0].Fields {
+			if field.Labels != nil {
+				return result, fmt.Errorf("expected no labels in frame from datasource query (for now) that is input to a SQL expression, got %v", field.Labels)
+			}
+		}
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: dataFrames[0]},
+		}
+		return result, nil
+	}
+	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames) //, s.allowLongFrames)
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}
