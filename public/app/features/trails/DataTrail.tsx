@@ -80,8 +80,10 @@ export interface DataTrailState extends SceneObjectState {
   otelJoinQuery?: string;
   isStandardOtel?: boolean;
   nonPromotedOtelResources?: string[];
-  initialCheckComplete?: boolean; // updated after the first otel check
-  fromStart?: boolean;
+  initialOtelCheckComplete?: boolean; // updated after the first otel check
+  fromStart?: boolean; // from original landing page
+  afterFirstDSChange?: boolean; // when starting there is always a DS var change from variable dependency
+  resettingOtel?: boolean; // when switching OTel off from the switch
 
   // moved into settings
   showPreviews?: boolean;
@@ -156,10 +158,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
           // identify the added, updated or removed variables and update the correct filter,
           // either the otel resource or the var filter
           // do not update on switching on otel experience or the initial check
-          // we know it is the initial check because the label is hidden
-          // the initial check may also be the data source resetting
-          const isNormalUpdate = newState.hide === prevState.hide;
-          if (this.state.useOtelExperience && isNormalUpdate) {
+          if (this.state.useOtelExperience && this.state.initialOtelCheckComplete) {
             const nonPromotedOtelResources = this.state.nonPromotedOtelResources ?? [];
             manageOtelAndMetricFilters(
               newState.filters,
@@ -199,12 +198,18 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
 
+        if (this.state.afterFirstDSChange) {
+          // we need a new check for OTel
+          this.setState({initialOtelCheckComplete: false});
+          // clear out the OTel filters, do not clear out var filters
+          this.resetOtelExperience();
+        }
         // fresh check for otel experience
-        this.checkDataSourceForOTelResources(true);
+        this.checkDataSourceForOTelResources();
       }
 
       // update otel variables when changed
-      if (this.state.useOtelExperience && name === VAR_OTEL_RESOURCES) {
+      if (this.state.useOtelExperience && name === VAR_OTEL_RESOURCES && this.state.initialOtelCheckComplete) {
         // for state and variables
         const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
         const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
@@ -338,7 +343,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
    *
    * @returns
    */
-  public async checkDataSourceForOTelResources(fromDataSourceChanged?: boolean) {
+  public async checkDataSourceForOTelResources() {
     // call up in to the parent trail
     const trail = getTrailFor(this);
 
@@ -365,8 +370,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
           timeRange,
           deploymentEnvironments,
           hasOtelResources,
-          nonPromotedOtelResources,
-          fromDataSourceChanged
+          nonPromotedOtelResources
         );
       } else {
         // reset filters to apply auto, anywhere there are {} characters
@@ -423,6 +427,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         useOtelExperience: false,
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
+        afterFirstDSChange: true,
       });
     } else {
       // partial reset when a user turns off the otel experience
@@ -430,6 +435,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
         useOtelExperience: false,
+        afterFirstDSChange: true,
       });
     }
   }
@@ -465,19 +471,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // check if the otel experience has been enabled
       if (!useOtelExperience) {
         // if the experience has been turned off, reset the otel variables
-        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
-        const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, model);
-        const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
-        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
-
-        if (
-          otelResourcesVariable instanceof AdHocFiltersVariable &&
-          otelAndMetricsFiltersVariable instanceof AdHocFiltersVariable &&
-          otelJoinQueryVariable instanceof ConstantVariable &&
-          filtersVariable instanceof AdHocFiltersVariable
-        ) {
-          model.resetOtelExperience();
-        }
+        model.resetOtelExperience(); 
       } else {
         // if experience is enabled, check standardization and update the otel variables
         model.checkDataSourceForOTelResources();
@@ -584,6 +578,7 @@ function getVariableSet(
         applyMode: 'manual',
         // since we only support prometheus datasources, this is always true
         supportsMultiValueOperators: true,
+        // skipUrlSync: true
       }),
       // Legacy variable needed for bookmarking which is necessary because
       // url sync method does not handle multiple dep env values
