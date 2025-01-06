@@ -220,9 +220,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 isClearable
                 onChange={(v) => setSpanFiltersSearch({ ...search, serviceName: v?.value || '' })}
                 onOpenMenu={getServiceNames}
-                options={serviceNames}
+                options={serviceNames || (search.serviceName ? [search.serviceName].map(toOption) : [])}
                 placeholder="All service names"
                 value={search.serviceName || null}
+                defaultValue={search.serviceName || null}
               />
             </HorizontalGroup>
           </InlineField>
@@ -250,7 +251,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 isClearable
                 onChange={(v) => setSpanFiltersSearch({ ...search, spanName: v?.value || '' })}
                 onOpenMenu={getSpanNames}
-                options={spanNames}
+                options={spanNames || (search.spanName ? [search.spanName].map(toOption) : [])}
                 placeholder="All span names"
                 value={search.spanName || null}
               />
@@ -311,7 +312,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                       key={tag.key}
                       onChange={(v) => onTagChange(tag, v)}
                       onOpenMenu={getTagKeys}
-                      options={tagKeys}
+                      options={tagKeys || (tag.key ? [tag.key].map(toOption) : [])}
                       placeholder="Select tag"
                       value={tag.key || null}
                     />
@@ -342,7 +343,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                               }),
                             });
                           }}
-                          options={tagValues[tag.id] ? tagValues[tag.id] : []}
+                          options={tagValues[tag.id] ? tagValues[tag.id] : tag.value ? [tag.value].map(toOption) : []}
                           placeholder="Select value"
                           value={tag.value}
                         />
