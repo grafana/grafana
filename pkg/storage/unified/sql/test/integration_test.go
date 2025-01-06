@@ -459,7 +459,7 @@ func BenchmarkWriteEvent(b *testing.B) {
 		ns := strconv.Itoa(rand.IntN(100000))
 		var i int
 		for pb.Next() {
-			backend.WriteEvent(ctx, resource.WriteEvent{
+			_, err := backend.WriteEvent(ctx, resource.WriteEvent{
 				Type:  resource.WatchEvent_ADDED,
 				Value: []byte("{}"),
 				Key: &resource.ResourceKey{
@@ -470,8 +470,8 @@ func BenchmarkWriteEvent(b *testing.B) {
 				},
 			})
 			i += 1
+			require.NoError(b, err)
 		}
 	})
 	b.StopTimer()
-
 }

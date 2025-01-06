@@ -313,22 +313,3 @@ func (r sqlResourceLockCountRequest) Results() (int64, error) {
 	}
 	return r.Response.Count, nil
 }
-
-type sqlResourceLockMinRVRequest struct {
-	sqltemplate.SQLTemplate
-	Key      *resource.ResourceKey
-	Response *resourceVersionResponse
-}
-
-func (r sqlResourceLockMinRVRequest) Validate() error {
-	if r.Key == nil || r.Key.Group == "" || r.Key.Resource == "" {
-		return fmt.Errorf("group and resource must be set")
-	}
-	return nil
-}
-func (r sqlResourceLockMinRVRequest) Results() (int64, error) {
-	if r.Response == nil {
-		return 0, fmt.Errorf("response not set")
-	}
-	return r.Response.ResourceVersion, nil
-}
