@@ -4057,7 +4057,7 @@ __metadata:
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.31.0"
     rc-drawer: "npm:7.2.0"
-    rc-slider: "npm:11.1.7"
+    rc-slider: "npm:11.1.8"
     rc-time-picker: "npm:^3.7.3"
     rc-tooltip: "npm:6.3.2"
     react: "npm:18.2.0"
@@ -17854,7 +17854,7 @@ __metadata:
     prettier: "npm:3.4.2"
     prismjs: "npm:1.29.0"
     pseudoizer: "npm:^0.1.0"
-    rc-slider: "npm:11.1.7"
+    rc-slider: "npm:11.1.8"
     rc-time-picker: "npm:3.7.3"
     rc-tree: "npm:5.11.0"
     re-resizable: "npm:6.10.3"
@@ -25165,9 +25165,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:11.1.7":
-  version: 11.1.7
-  resolution: "rc-slider@npm:11.1.7"
+"rc-slider@npm:11.1.8":
+  version: 11.1.8
+  resolution: "rc-slider@npm:11.1.8"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:^2.2.5"
@@ -25175,7 +25175,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/3b484d7ba4e4b6fc695666c27b767622c64b5819d0386cc0afb6d186c08f8ed4f93dd72f55377af9a957c77ee77db4d7fa73f85ccdaab0f39d9670daf42a17c5
+  checksum: 10/3efaefebd1699f9fcdb7008f03f9ecc73eb0c9db69b8a4009fbec1107950ec84b241275503505fa7e77d85fcef62d93934b8a94efb2be44d70d3e889db1070b4
   languageName: node
   linkType: hard
 
