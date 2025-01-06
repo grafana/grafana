@@ -41,7 +41,7 @@ require (
 	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.10.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/time v0.7.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.68.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // indirect; @grafana/plugins-platform-backend
