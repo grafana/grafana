@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	TableNameSecureValue = "secret_secure_value"
+	TableNameSecureValue  = "secret_secure_value"
+	TableNameSecretKeeper = "secret_keeper"
+	TableNameDataKey      = "secret_data_key"
 )
 
 func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
@@ -55,7 +57,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "secret_keeper",
+		Name: TableNameSecretKeeper,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
@@ -80,7 +82,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "encryption_data_key",
+		Name: TableNameDataKey,
 		Columns: []*migrator.Column{
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // in this table, it isn't used by k8s, but we will track it for added security
