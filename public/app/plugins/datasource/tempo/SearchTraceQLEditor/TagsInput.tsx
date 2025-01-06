@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface Props {
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter: (f: TraceqlFilter) => void;
+  generateQueryWithoutFilter: (f?: TraceqlFilter) => string;
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError | null) => void;
@@ -39,7 +40,6 @@ interface Props {
   isTagsLoading: boolean;
   hideValues?: boolean;
   requireTagAndValue?: boolean;
-  query: string;
   addVariablesToOptions?: boolean;
 }
 const TagsInput = ({
@@ -52,7 +52,7 @@ const TagsInput = ({
   isTagsLoading,
   hideValues,
   requireTagAndValue,
-  query,
+  generateQueryWithoutFilter,
   addVariablesToOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -89,7 +89,7 @@ const TagsInput = ({
             tags={getTags(f)}
             isTagsLoading={isTagsLoading}
             hideValue={hideValues}
-            query={query}
+            query={generateQueryWithoutFilter(f)}
             addVariablesToOptions={addVariablesToOptions}
           />
           {(validInput(f) || filters.length > 1) && (

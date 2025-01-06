@@ -3,13 +3,11 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import {
+  filterToQuerySection,
   getAllTags,
   getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
-  scopeHelper,
-  tagHelper,
-  valueHelper,
 } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
@@ -188,7 +186,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
     return `{${filters
       .filter((f) => f.tag && f.operator && f.value?.length)
-      .map((f) => `${scopeHelper(f, this)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
+      .map((f) => filterToQuerySection(f, filters, this))
       .join(' && ')}}`;
   }
 }
