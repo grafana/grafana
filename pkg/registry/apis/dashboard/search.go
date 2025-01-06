@@ -223,6 +223,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			"title",
 			"folder",
