@@ -338,12 +338,13 @@ export async function updateOtelData(
   deploymentEnvironments?: string[],
   hasOtelResources?: boolean,
   nonPromotedOtelResources?: string[],
-  fromDataSourceChanged?: boolean
 ) {
   const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
   const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
   const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+  const initialOtelCheckComplete = trail.state.initialOtelCheckComplete;
+  const resettingOtel = trail.state.resettingOtel;
 
   if (
     !(
@@ -367,11 +368,8 @@ export async function updateOtelData(
   // only update the variable state and hide if the otel experience is enabled
   if (!isEnabledInLocalStorage) {
     // show the var filters normally
-    filtersVariable.setState({
-      addFilterButtonText: 'Add label',
-      label: 'Select label',
-      hide: VariableHide.hideLabel,
-    });
+    // if the local storage OTel is turned off and someone clicks a link or opens a bookmark with OTel, we reset
+    trail.resetOtelExperience();
   } else {
     // 1. Cases of how to add filters to the otelmetricsvar
     //  -- when we set these on instantiation, we need to check that we are not double setting them
@@ -387,23 +385,23 @@ export async function updateOtelData(
     // the previous var filters are not reset so even if they don't apply to the new data source we want to keep them
     // 2. on load with url values, check isInitial CheckComplete
     // Set otelmetrics var, distinguish if these are var filters or otel resources, then place in correct filter
-    let prevVarFilters = trail.state.initialCheckComplete ? filtersVariable.state.filters : [];
+    let prevVarFilters = resettingOtel ? filtersVariable.state.filters : [];
     // only look at url values for otelmetricsvar if the initial check is NOT YET complete
-    const urlOtelAndMetricsFilters = trail.state.initialCheckComplete
-      ? []
-      : otelAndMetricsFiltersVariable.state.filters;
-    // url vars should overrid the deployment environment variable
+    const urlOtelAndMetricsFilters = initialOtelCheckComplete && !resettingOtel ? 
+      [] : otelAndMetricsFiltersVariable.state.filters;
+    // url vars should override the deployment environment variable
     const urlVarsObject = checkLabelPromotion(urlOtelAndMetricsFilters, nonPromotedOtelResources);
-    const urlOtelResources = trail.state.initialCheckComplete ? [] : urlVarsObject.nonPromoted;
-    const urlVarFilters = trail.state.initialCheckComplete ? [] : urlVarsObject.promoted;
-    // CHECK URL FOR THIS CONDITION TOO
-    if (fromDataSourceChanged) {
+    const urlOtelResources = initialOtelCheckComplete ? [] : urlVarsObject.nonPromoted;
+    const urlVarFilters = initialOtelCheckComplete ? [] : urlVarsObject.promoted;
+
+    // set the vars if the following conditions
+    if (!initialOtelCheckComplete || resettingOtel) {
       // if the default dep env value like 'prod' is missing OR
       // if we are loading from the url and the default dep env is missing
       // there are no prev deployment environments from url
-      const hasUrlDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
+      const hasPreviousDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
       const doNotSetDepEvValue =
-        defaultDepEnv === '' || (!trail.state.initialCheckComplete && (hasUrlDepEnv || !trail.state.fromStart));
+        defaultDepEnv === '' || hasPreviousDepEnv;
       // we do not have to set the dep env value if the default is missing
       const defaultDepEnvFilter = doNotSetDepEvValue
         ? []
@@ -481,7 +479,7 @@ export async function updateOtelData(
   // we pass in deploymentEnvironments and hasOtelResources on start
   // RETHINK We may be able to get rid of this check
   // a non standard data source is more missing job and instance matchers
-  if (hasOtelResources && deploymentEnvironments) {
+  if (hasOtelResources && deploymentEnvironments && !initialOtelCheckComplete) {
     trail.setState({
       otelTargets,
       otelJoinQuery,
@@ -491,13 +489,17 @@ export async function updateOtelData(
       isStandardOtel: (nonPromotedOtelResources ?? []).length > 0,
       useOtelExperience: isEnabledInLocalStorage,
       nonPromotedOtelResources,
-      initialCheckComplete: true,
+      initialOtelCheckComplete: true,
+      resettingOtel: false,
+      afterFirstDSChange: true,
     });
   } else {
     // we are updating on variable changes
     trail.setState({
       otelTargets,
       otelJoinQuery,
+      resettingOtel: false,
+      afterFirstDSChange: true,
     });
   }
 }
