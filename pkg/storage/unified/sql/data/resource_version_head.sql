@@ -1,6 +1,5 @@
  SELECT
-    MIN({{ .Ident "rv" | .Into .Response.ResourceVersion }}) AS rv,
-    {{ .CurrentEpoch | .Into .Response.CurrentEpoch }} AS current_epoch
+    MIN({{ .Ident "rv" | .Into .ResourceVersion }}) AS rv,
     FROM (
         SELECT MAX({{ .Ident "resource_version" }}) AS rv
         FROM {{ .Ident "resource_history" }}

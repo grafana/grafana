@@ -130,15 +130,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceUpdateRV: {
-				{
-					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-					},
-				},
-			},
-
 			sqlResourceHistoryRead: {
 				{
 					Name: "single path",
@@ -154,15 +145,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							},
 						},
 						Response: NewReadResponse(),
-					},
-				},
-			},
-
-			sqlResourceHistoryUpdateRV: {
-				{
-					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
@@ -213,7 +195,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
-						Response:    new(resourceVersionResponse),
 						ReadOnly:    false,
 					},
 				},

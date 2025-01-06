@@ -35,9 +35,7 @@ var (
 	sqlResourceList   = mustTemplate("resource_list.sql")
 	// sqlResourceMaxRV             = mustTemplate("resource_max_rv.sql")
 	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
 	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
@@ -209,22 +207,9 @@ func (r sqlResourceHistoryUpdateRequest) Validate() error {
 	return nil // TODO
 }
 
-// update RV
-
-type sqlResourceUpdateRVRequest struct {
-	sqltemplate.SQLTemplate
-	GUID            string
-	ResourceVersion int64
-}
-
-func (r sqlResourceUpdateRVRequest) Validate() error {
-	return nil // TODO
-}
-
 // resource_version table requests.
 type resourceVersionResponse struct {
 	ResourceVersion int64
-	CurrentEpoch    int64
 }
 
 func (r *resourceVersionResponse) Results() (*resourceVersionResponse, error) {
@@ -236,31 +221,22 @@ type groupResourceVersion struct {
 	ResourceVersion int64
 }
 
-type sqlResourceVersionUpsertRequest struct {
-	sqltemplate.SQLTemplate
-	Group, Resource string
-	ResourceVersion int64
-}
-
-func (r sqlResourceVersionUpsertRequest) Validate() error {
-	return nil // TODO
-}
-
 type sqlResourceVersionHeadRequest struct {
 	sqltemplate.SQLTemplate
 	Group, Resource string
 	ReadOnly        bool
-	Response        *resourceVersionResponse
+	ResourceVersion int64
 }
 
 func (r sqlResourceVersionHeadRequest) Validate() error {
-	return nil // TODO
+	if r.Group == "" || r.Resource == "" {
+		return fmt.Errorf("group and resource must be set")
+	}
+	return nil
 }
-func (r sqlResourceVersionHeadRequest) Results() (*resourceVersionResponse, error) {
-	return &resourceVersionResponse{
-		ResourceVersion: r.Response.ResourceVersion,
-		CurrentEpoch:    r.Response.CurrentEpoch,
-	}, nil
+
+func (r sqlResourceVersionHeadRequest) Results() (int64, error) {
+	return r.ResourceVersion, nil
 }
 
 type sqlResourceVersionListRequest struct {

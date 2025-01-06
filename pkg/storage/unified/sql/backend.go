@@ -687,14 +687,13 @@ func headResourceVersion(ctx context.Context, x db.ContextExecer, d sqltemplate.
 		Group:       group,
 		Resource:    resource,
 		ReadOnly:    true,
-		Response:    new(resourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
 	} else if err != nil {
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
-	return res.ResourceVersion, nil
+	return res, nil
 }
 
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, maxrv int64, stream chan<- *resource.WrittenEvent) (int64, error) {
