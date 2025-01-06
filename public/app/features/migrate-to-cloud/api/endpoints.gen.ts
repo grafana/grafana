@@ -182,7 +182,6 @@ export type MigrateDataResponseItemDto = {
     | 'RESOURCE_CONFLICT'
     | 'UNEXPECTED_STATUS_CODE'
     | 'INTERNAL_SERVICE_ERROR'
-    | 'ONLY_CORE_DATA_SOURCES'
     | 'GENERIC_ERROR';
   message?: string;
   name?: string;
@@ -198,7 +197,8 @@ export type MigrateDataResponseItemDto = {
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
-    | 'MUTE_TIMING';
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
 };
 export type SnapshotResourceStats = {
   statuses?: {
