@@ -379,6 +379,10 @@ const (
 	// Use the k8s client to retrieve dashboards internally
 	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
 
+	// FlagKubernetesRestore
+	// Allow restoring objects in k8s
+	FlagKubernetesRestore = "kubernetesRestore"
+
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"

@@ -929,7 +929,6 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 				"spec": map[string]interface{}{
 					"title":   title,
 					"version": int64(1),
-					"id":      int64(1),
 				},
 			},
 		}
@@ -940,7 +939,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		obj.SetName(uid)
 		obj.SetCreatedBy("user:useruid")
 		obj.SetUpdatedBy("user:useruid")
-
+		obj.SetDeprecatedInternalID(1) // nolint:staticcheck
 		result, err := dr.UnstructuredToLegacyDashboard(context.Background(), item, orgID)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)

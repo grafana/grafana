@@ -2,6 +2,7 @@ import { DataQuery } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
   AnnoKeyFolder,
   AnnoKeySlug,
@@ -39,6 +40,8 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
+        gnetId: 'something-like-a-uid',
+        revision: 225,
         links: [
           {
             title: 'Link 1',
@@ -101,6 +104,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardId]).toBe(123);
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
 
       const spec = transformed.spec;
       expect(spec.title).toBe(dashboardV1.title);
@@ -111,6 +115,7 @@ describe('ResponseTransformers', () => {
       expect(spec.preload).toBe(dashboardV1.preload);
       expect(spec.liveNow).toBe(dashboardV1.liveNow);
       expect(spec.editable).toBe(dashboardV1.editable);
+      expect(spec.revision).toBe(dashboardV1.revision);
       expect(spec.timeSettings.from).toBe(dashboardV1.time?.from);
       expect(spec.timeSettings.to).toBe(dashboardV1.time?.to);
       expect(spec.timeSettings.timezone).toBe(dashboardV1.timezone);
@@ -155,6 +160,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
             'grafana.app/slug': 'dashboard-slug',
+            'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
           },
         },
         spec: {
@@ -166,6 +172,7 @@ describe('ResponseTransformers', () => {
           preload: true,
           liveNow: false,
           editable: true,
+          revision: 225,
           timeSettings: {
             from: 'now-6h',
             to: 'now',
@@ -245,6 +252,8 @@ describe('ResponseTransformers', () => {
       expect(dashboard.preload).toBe(dashboardV2.spec.preload);
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
+      expect(dashboard.revision).toBe(225);
+      expect(dashboard.gnetId).toBe(dashboardV2.metadata.annotations?.['grafana.app/dashboard-gnet-id']);
       expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
       expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
       expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
