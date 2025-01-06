@@ -113,6 +113,19 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
       f.id !== 'duration-type'
   );
 
+  // We use this function to generate queries without a specfic filter.
+  // This is useful because we're sending the query to Tempo so it can return the attributes and values filtered down.
+  // However, if we send the full query then we won't see more values for the filter we're trying to edit.
+  // For example, if we already have a service.name value selected and try to add another one, we won't see the other
+  // values if we send the full query since Tempo will only return the service.name that's already selected.
+  const generateQueryWithoutFilter = (filter?: TraceqlFilter) => {
+    if (!filter) {
+      return traceQlQuery;
+    }
+    const filtersAfterRemoval = query.filters?.filter((f) => f.id !== filter.id) || [];
+    return datasource.languageProvider.generateQueryFromFilters(interpolateFilters(filtersAfterRemoval || []));
+  };
+
   return (
     <>
       <div className={styles.container}>
@@ -136,7 +149,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                     tags={[]}
                     hideScope={true}
                     hideTag={true}
-                    query={traceQlQuery}
+                    query={generateQueryWithoutFilter(findFilter(f.id))}
                     addVariablesToOptions={addVariablesToOptions}
                   />
                 </InlineSearchField>
@@ -158,7 +171,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               tags={[]}
               hideScope={true}
               hideTag={true}
-              query={traceQlQuery}
+              query={generateQueryWithoutFilter(findFilter('status'))}
               isMulti={false}
               allowCustomValue={false}
               addVariablesToOptions={addVariablesToOptions}
@@ -219,7 +232,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               deleteFilter={deleteFilter}
               staticTags={staticTags}
               isTagsLoading={isTagsLoading}
-              query={traceQlQuery}
+              generateQueryWithoutFilter={generateQueryWithoutFilter}
               requireTagAndValue={true}
               addVariablesToOptions={addVariablesToOptions}
             />
