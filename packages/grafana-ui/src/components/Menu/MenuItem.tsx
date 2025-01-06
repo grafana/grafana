@@ -152,7 +152,13 @@ export const MenuItem = React.memo(
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={onClick}
+        onClick={(event) => {
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          onClick?.(event);
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
@@ -215,6 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'stretch',
+      justifyContent: 'center',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,

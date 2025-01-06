@@ -110,13 +110,23 @@ You can also use thresholds to:
 
 You can set thresholds in the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Stat](ref:stat)                     | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [State timeline](ref:state-timeline) | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Histogram](ref:histogram)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+
+{{< /column-list >}}
 
 ## Default thresholds
 

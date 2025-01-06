@@ -309,6 +309,63 @@ describe('applyFieldOverrides', () => {
     expect(config.decimals).toEqual(1);
   });
 
+  it('displayName should be able to reference itself', () => {
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: {
+        defaults: {
+          displayName: '${__field.displayName} and more!',
+        },
+        overrides: [],
+      },
+      replaceVariables: (v, scopedVars) => {
+        const dataContext = scopedVars?.__dataContext?.value;
+        if (dataContext) {
+          // Trying to fake what would happen with the real interpolation function
+          return getFieldDisplayName(dataContext.field, dataContext.frame) + ' and more!';
+        }
+        return v;
+      },
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    const valueColumn = data.fields[1];
+    const displayName = getFieldDisplayName(valueColumn, data);
+
+    expect(displayName).toEqual('value and more!');
+  });
+
+  it('displayName should be able to reference itself in an override', () => {
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'value' },
+            properties: [{ id: 'displayName', value: '${__field.displayName} and more!' }],
+          },
+        ],
+      },
+      replaceVariables: (v, scopedVars) => {
+        const dataContext = scopedVars?.__dataContext?.value;
+        if (dataContext) {
+          // Trying to fake what would happen with the real interpolation function
+          return getFieldDisplayName(dataContext.field, dataContext.frame) + ' and more!';
+        }
+        return v;
+      },
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    const valueColumn = data.fields[1];
+    const displayName = getFieldDisplayName(valueColumn, data);
+
+    expect(displayName).toEqual('value and more!');
+  });
+
   it('will apply set min/max when asked', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
@@ -672,6 +729,33 @@ describe('setFieldConfigDefaults', () => {
         ],
       }
     `);
+  });
+
+  it('applies the base threshold when one does not exist in the config', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'red' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: 50, color: 'green' }],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds).toMatchSnapshot();
   });
 });
 

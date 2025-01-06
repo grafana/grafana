@@ -6,7 +6,9 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { canEditEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
@@ -17,6 +19,7 @@ import { useDispatch } from 'app/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { shouldUseK8sApi } from '../../../utils/k8s/utils';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -50,8 +53,13 @@ const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
   const dispatch = useDispatch();
-  const createContactPoint = useCreateContactPoint({ alertmanager: GRAFANA_RULES_SOURCE_NAME });
-  const updateContactPoint = useUpdateContactPoint({ alertmanager: GRAFANA_RULES_SOURCE_NAME });
+  const useK8sAPI = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+  const [createContactPoint] = useCreateContactPoint({
+    alertmanager: GRAFANA_RULES_SOURCE_NAME,
+  });
+  const [updateContactPoint] = useUpdateContactPoint({
+    alertmanager: GRAFANA_RULES_SOURCE_NAME,
+  });
 
   const {
     onCallNotifierMeta,
@@ -80,16 +88,23 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
+
     try {
       if (editMode) {
-        await updateContactPoint({
-          contactPoint: newReceiver,
-          id: contactPoint!.id,
-          resourceVersion: contactPoint?.metadata?.resourceVersion,
-          originalName: contactPoint?.name,
-        });
+        if (useK8sAPI && contactPoint && contactPoint.id) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            id: contactPoint.id,
+            resourceVersion: contactPoint?.metadata?.resourceVersion,
+          });
+        } else if (contactPoint) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            originalName: contactPoint.name,
+          });
+        }
       } else {
-        await createContactPoint({ contactPoint: newReceiver });
+        await createContactPoint.execute({ contactPoint: newReceiver });
       }
       locationService.push('/alerting/notifications');
     } catch (error) {
@@ -121,7 +136,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     }
   };
 
-  const isEditable = !readOnly && !contactPoint?.provisioned;
+  const isEditable = Boolean(
+    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
+  );
   const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
@@ -150,6 +167,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
+        contactPointId={contactPoint?.id}
         isEditable={isEditable}
         isTestable={isTestable}
         onSubmit={onSubmit}
@@ -160,6 +178,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         defaultItem={{ ...defaultChannelValues }}
         commonSettingsComponent={GrafanaCommonChannelSettings}
         customValidators={{ [ReceiverTypes.OnCall]: onCallFormValidators }}
+        canManagePermissions={
+          editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
+        }
       />
       <TestContactPointModal
         onDismiss={() => setTestChannelValues(undefined)}

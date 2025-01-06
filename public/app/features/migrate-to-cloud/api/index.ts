@@ -1,5 +1,5 @@
 export * from './endpoints.gen';
-import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
+import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
 
 import { generatedAPI } from './endpoints.gen';
 
@@ -47,6 +47,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     getDashboardByUid: suppressErrorsOnQuery,
+    getLibraryElementByUid: suppressErrorsOnQuery,
   },
 });
 

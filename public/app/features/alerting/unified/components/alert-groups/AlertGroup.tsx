@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, TextLink } from '@grafana/ui';
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
-import { createContactPointLink } from '../../utils/misc';
+import { createContactPointSearchLink } from '../../utils/misc';
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
@@ -44,7 +44,7 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
                 <MetaText icon="at">
                   Delivered to{' '}
                   <TextLink
-                    href={createContactPointLink(contactPoint, alertManagerSourceName)}
+                    href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
                     variant="bodySmall"
                     color="primary"
                     inline={false}
@@ -77,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+    padding: theme.spacing(1),
     backgroundColor: theme.colors.background.secondary,
     width: '100%',
   }),
@@ -85,15 +85,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-  }),
-  summary: css({}),
-  [AlertState.Active]: css({
-    color: theme.colors.error.main,
-  }),
-  [AlertState.Suppressed]: css({
-    color: theme.colors.primary.main,
-  }),
-  [AlertState.Unprocessed]: css({
-    color: theme.colors.secondary.main,
   }),
 });

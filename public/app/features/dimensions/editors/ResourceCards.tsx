@@ -93,46 +93,46 @@ export const ResourceCards = (props: CardProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  card: css`
-    display: inline-block;
-    width: 90px;
-    height: 90px;
-    margin: 0.75rem;
-    margin-left: 15px;
-    text-align: center;
-    cursor: pointer;
-    position: relative;
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    padding-top: 6px;
-    :hover {
-      border-color: ${theme.colors.action.hover};
-      box-shadow: ${theme.shadows.z2};
-    }
-  `,
-  selected: css`
-    border: 2px solid ${theme.colors.primary.main};
-    :hover {
-      border-color: ${theme.colors.primary.main};
-    }
-  `,
-  img: css`
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    vertical-align: middle;
-    fill: ${theme.colors.text.primary};
-  `,
-  text: css`
-    color: ${theme.colors.text.primary};
-    white-space: nowrap;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    display: block;
-    overflow: hidden;
-  `,
-  grid: css`
-    border: 1px solid ${theme.colors.border.medium};
-  `,
+  card: css({
+    display: 'inline-block',
+    width: '90px',
+    height: '90px',
+    margin: '0.75rem',
+    marginLeft: '15px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    position: 'relative',
+    backgroundColor: 'transparent',
+    border: '1px solid transparent',
+    borderRadius: theme.shape.radius.default,
+    paddingTop: '6px',
+    ':hover': {
+      borderColor: theme.colors.action.hover,
+      boxShadow: theme.shadows.z2,
+    },
+  }),
+  selected: css({
+    border: `2px solid ${theme.colors.primary.main}`,
+    ':hover': {
+      borderColor: theme.colors.primary.main,
+    },
+  }),
+  img: css({
+    width: '40px',
+    height: '40px',
+    objectFit: 'cover',
+    verticalAlign: 'middle',
+    fill: theme.colors.text.primary,
+  }),
+  text: css({
+    color: theme.colors.text.primary,
+    whiteSpace: 'nowrap',
+    fontSize: '12px',
+    textOverflow: 'ellipsis',
+    display: 'block',
+    overflow: 'hidden',
+  }),
+  grid: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+  }),
 });

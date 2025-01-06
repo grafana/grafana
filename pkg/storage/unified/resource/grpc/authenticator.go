@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/authn"
-	authClaims "github.com/grafana/authlib/claims"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/authlib/authn"
+	authClaims "github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -18,7 +19,6 @@ const (
 	mdLogin   = "grafana-login"
 	mdUserID  = "grafana-user-id"
 	mdUserUID = "grafana-user-uid"
-	mdOrgName = "grafana-org-name"
 	mdOrgID   = "grafana-org-id"
 	mdOrgRole = "grafana-org-role"
 )
@@ -89,7 +89,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	typ, id, err := identity.ParseTypeAndID(getter(mdUserID))
+	typ, id, err := authClaims.ParseTypeID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
@@ -99,13 +99,12 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	_, id, err = identity.ParseTypeAndID(getter(mdUserUID))
+	_, id, err = authClaims.ParseTypeID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 	user.UserUID = id
 
-	user.OrgName = getter(mdOrgName)
 	user.OrgID, err = strconv.ParseInt(getter(mdOrgID), 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid org id: %w", err)
@@ -154,7 +153,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 		// Or we can create it directly
 		mdUserID, user.GetID(),
 		mdUserUID, user.GetUID(),
-		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
 		mdLogin, user.GetLogin(),

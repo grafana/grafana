@@ -114,7 +114,7 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setComponentsFromLegacyExports(pluginExports: any) {
+  setComponentsFromLegacyExports(pluginExports: System.Module) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;

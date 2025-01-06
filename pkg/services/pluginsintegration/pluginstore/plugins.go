@@ -10,7 +10,7 @@ import (
 type Plugin struct {
 	plugins.JSONData
 
-	fs                plugins.FS
+	FS                plugins.FS
 	supportsStreaming bool
 
 	Class plugins.Class
@@ -42,7 +42,7 @@ func (p Plugin) SupportsStreaming() bool {
 }
 
 func (p Plugin) Base() string {
-	return p.fs.Base()
+	return p.FS.Base()
 }
 
 func (p Plugin) IsApp() bool {
@@ -61,7 +61,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 	}
 
 	dto := Plugin{
-		fs:                p.FS,
+		FS:                p.FS,
 		supportsStreaming: supportsStreaming,
 		Class:             p.Class,
 		JSONData:          p.JSONData,

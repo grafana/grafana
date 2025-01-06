@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
-import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow, MenuGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { ToolbarButton, Dropdown, Menu, MenuGroup, ButtonGroup } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { useSelector } from 'app/types';
@@ -39,6 +39,7 @@ export function ShortLinkButtonMenu() {
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   const onCopyLink = (shorten: boolean, absTime: boolean, url?: string) => {
     if (shorten) {
       createAndCopyShortLink(url || global.location.href);
@@ -131,27 +132,29 @@ export function ShortLinkButtonMenu() {
 
   // we need the Toolbar button click to be an action separate from opening/closing the menu
   return (
-    <ToolbarButtonRow>
-      <Stack gap={0} direction="row" alignItems="center" wrap="nowrap">
+    <ButtonGroup>
+      <ToolbarButton
+        tooltip={lastSelected.label}
+        icon={lastSelected.icon}
+        iconOnly={!isSingleTopNav}
+        variant={isSingleTopNav ? 'canvas' : 'default'}
+        narrow={true}
+        onClick={() => {
+          const url = lastSelected.getUrl();
+          onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
+        }}
+        aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
+      >
+        {isSingleTopNav && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
+      </ToolbarButton>
+      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <ToolbarButton
-          tooltip={lastSelected.label}
-          icon={lastSelected.icon}
-          iconOnly={true}
           narrow={true}
-          onClick={() => {
-            const url = lastSelected.getUrl();
-            onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
-          }}
-          aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
+          variant={isSingleTopNav ? 'canvas' : 'default'}
+          isOpen={isOpen}
+          aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
         />
-        <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
-          <ToolbarButton
-            narrow={true}
-            isOpen={isOpen}
-            aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
-          />
-        </Dropdown>
-      </Stack>
-    </ToolbarButtonRow>
+      </Dropdown>
+    </ButtonGroup>
   );
 }

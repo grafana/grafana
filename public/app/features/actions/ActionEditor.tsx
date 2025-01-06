@@ -32,8 +32,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onUrlChange = (url: string) => {
     onChange(index, {
       ...value,
-      options: {
-        ...value.options,
+      fetch: {
+        ...value.fetch,
         url,
       },
     });
@@ -42,8 +42,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onBodyChange = (body: string) => {
     onChange(index, {
       ...value,
-      options: {
-        ...value.options,
+      fetch: {
+        ...value.fetch,
         body,
       },
     });
@@ -52,8 +52,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onMethodChange = (method: HttpRequestMethod) => {
     onChange(index, {
       ...value,
-      options: {
-        ...value.options,
+      fetch: {
+        ...value.fetch,
         method,
       },
     });
@@ -62,8 +62,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
     onChange(index, {
       ...value,
-      options: {
-        ...value.options,
+      fetch: {
+        ...value.fetch,
         queryParams,
       },
     });
@@ -72,8 +72,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onHeadersChange = (headers: Array<[string, string]>) => {
     onChange(index, {
       ...value,
-      options: {
-        ...value.options,
+      fetch: {
+        ...value.fetch,
         headers,
       },
     });
@@ -93,8 +93,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   };
 
   const shouldRenderJSON =
-    value.options.method !== HttpRequestMethod.GET &&
-    value.options.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+    value.fetch.method !== HttpRequestMethod.GET &&
+    value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
 
   return (
     <div className={styles.listItem}>
@@ -111,7 +111,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
           <RadioButtonGroup<HttpRequestMethod>
-            value={value?.options.method}
+            value={value?.fetch.method}
             options={httpMethodOptions}
             onChange={onMethodChange}
             fullWidth
@@ -122,7 +122,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <InlineFieldRow>
         <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
           <SuggestionsInput
-            value={value.options.url}
+            value={value.fetch.url}
             onChange={onUrlChange}
             suggestions={suggestions}
             placeholder="URL"
@@ -131,26 +131,22 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       </InlineFieldRow>
 
       <Field label="Query parameters" className={styles.fieldGap}>
-        <ParamsEditor
-          value={value?.options.queryParams ?? []}
-          onChange={onQueryParamsChange}
-          suggestions={suggestions}
-        />
+        <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
       <Field label="Headers">
         <ParamsEditor
-          value={value?.options.headers ?? []}
+          value={value?.fetch.headers ?? []}
           onChange={onHeadersChange}
           suggestions={suggestions}
           contentTypeHeader={true}
         />
       </Field>
 
-      {value?.options.method !== HttpRequestMethod.GET && (
+      {value?.fetch.method !== HttpRequestMethod.GET && (
         <Field label="Body">
           <SuggestionsInput
-            value={value.options.body}
+            value={value.fetch.body}
             onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
@@ -161,7 +157,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       {shouldRenderJSON && (
         <>
           <br />
-          {renderJSON(value?.options.body)}
+          {renderJSON(value?.fetch.body)}
         </>
       )}
     </div>

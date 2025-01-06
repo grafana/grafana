@@ -25,6 +25,7 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	UID              string
 }
 
 type TestApiKey struct {
@@ -36,17 +37,17 @@ type TestApiKey struct {
 	ServiceAccountID *int64
 }
 
-func SetupUserServiceAccount(t *testing.T, store db.DB, cfg *setting.Cfg, testUser TestUser) *user.User {
+func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser TestUser) *user.User {
 	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -107,12 +108,21 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 	return key
 }
 
+func SetupApiKeys(t *testing.T, store db.DB, cfg *setting.Cfg, testKeys []TestApiKey) []*apikey.APIKey {
+	result := make([]*apikey.APIKey, len(testKeys))
+	for i, testKey := range testKeys {
+		result[i] = SetupApiKey(t, store, cfg, testKey)
+	}
+
+	return result
+}
+
 // SetupUsersServiceAccounts creates in "test org" all users or service accounts passed in parameter
 // To achieve this, it sets the AutoAssignOrg and AutoAssignOrgId settings.
-func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (orgID int64) {
+func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (users []user.User, orgID int64) {
 	role := string(org.RoleNone)
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(sqlStore), cfg)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -129,8 +139,9 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(org.ID)
 
+	users = make([]user.User, len(testUsers))
 	for i := range testUsers {
-		_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+		newUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Login:            testUsers[i].Login,
 			IsServiceAccount: testUsers[i].IsServiceAccount,
 			DefaultOrgRole:   role,
@@ -138,6 +149,8 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 			OrgID:            org.ID,
 		})
 		require.NoError(t, err)
+
+		users[i] = *newUser
 	}
-	return org.ID
+	return users, org.ID
 }

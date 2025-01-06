@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
 import { AnyAction } from '@reduxjs/toolkit';
-import { FormEvent, useEffect, useReducer } from 'react';
 import * as React from 'react';
+import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { ButtonSelect, InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
 
+import { ThresholdSelect } from './ThresholdSelect';
+import { ToLabel } from './ToLabel';
 import {
   isInvalid,
   thresholdReducer,
@@ -91,12 +93,8 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <ButtonSelect
-          className={styles.buttonSelectText}
-          options={thresholdFunctions}
-          onChange={onEvalFunctionChange}
-          value={thresholdFunction}
-        />
+        <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
+
         {isRange ? (
           <>
             <Input
@@ -105,7 +103,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
               onChange={(event) => onEvaluateValueChange(event, 0)}
               defaultValue={conditionInState.evaluator.params[0]}
             />
-            <div className={styles.button}>TO</div>
+            <ToLabel />
             <Input
               type="number"
               width={10}
@@ -226,7 +224,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
                   />
                 </InlineField>
               </div>
-              <div className={styles.button}>TO</div>
+              <ToLabel />
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
                   <Input
@@ -257,7 +255,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
                 </InlineField>
               </div>
 
-              <div className={styles.button}>TO</div>
+              <ToLabel />
               <div className={styles.range}>
                 <InlineField invalid={Boolean(errorMsgTo)} error={errorMsgTo}>
                   <Input
@@ -321,26 +319,6 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSelectText: css({
-    color: theme.colors.primary.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textTransform: 'uppercase',
-    padding: `0 ${theme.spacing(1)}`,
-  }),
-  button: css({
-    height: '32px',
-    color: theme.colors.primary.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textTransform: 'uppercase',
-    display: 'flex',
-    alignItems: 'center',
-    borderRadius: theme.shape.radius.default,
-    fontWeight: theme.typography.fontWeightBold,
-    border: `1px solid ${theme.colors.border.medium}`,
-    whiteSpace: 'nowrap',
-    padding: `0 ${theme.spacing(1)}`,
-    backgroundColor: theme.colors.background.primary,
-  }),
   range: css({
     width: 'min-content',
   }),

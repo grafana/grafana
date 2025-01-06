@@ -6,9 +6,9 @@ import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
+import { AzureMonitorQuery, AzureMonitorDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
 
-export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureDataSourceJsonData>(Datasource)
+export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(AzureMonitorQueryEditor);
 

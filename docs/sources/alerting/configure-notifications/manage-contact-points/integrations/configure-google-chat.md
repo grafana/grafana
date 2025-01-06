@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Google Chat
 title: Configure Google Chat for Alerting
-weight: 0
+weight: 115
 ---
 
 # Configure Google Chat for Alerting
@@ -38,6 +38,8 @@ To create your Google Chat integration in Grafana Alerting, complete the followi
 1. From the Integration list, select **Google Chat**.
 1. In the **URL** field, paste in your Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
 
    A test alert notification should be sent to the Google Chat space that you associated with the Webhook.
 

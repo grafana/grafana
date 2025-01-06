@@ -1,0 +1,15 @@
+module folder
+
+type folder
+  relations
+    define parent: [folder]
+
+    # Action sets
+    define view: [user, service-account, team#member, role#assignee] or edit or view from parent
+    define edit: [user, service-account, team#member, role#assignee] or admin or edit from parent
+    define admin: [user, service-account, team#member, role#assignee] or admin from parent
+
+    define get: [user, service-account, team#member, role#assignee] or view or get from parent
+    define create: [user, service-account, team#member, role#assignee] or edit or create from parent
+    define update: [user, service-account, team#member, role#assignee] or edit or update from parent
+    define delete: [user, service-account, team#member, role#assignee] or edit or delete from parent

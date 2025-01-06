@@ -234,7 +234,7 @@ To determine the number of active users:
 
 A tiered license defines dashboard viewers, and dashboard editors and administrators, as two distinct user types that each have their own user limit.
 
-As of Grafana Enterprise version 9.0, Grafana only counts and enforces the _total_ number of active users in your Grafana instance. For example, if you purchase 150 active users, you can have 20 admins, 70 editors, and 60 viewers, or you can have 150 admins. Grafana will enforce the total number of active users even if you use a license that grants a specific number of admins or editors and a certain number of viewers. This is a more permissive policy than before, which gives you the flexibility to change users' roles.
+Grafana only counts and enforces the _total_ number of active users in your Grafana instance. For example, if you purchase 150 active users, you can have 20 admins, 70 editors, and 60 viewers, or you can have 150 admins. Grafana will enforce the total number of active users even if you use a license that grants a specific number of admins or editors and a certain number of viewers. This is a more permissive policy than before, which gives you the flexibility to change users' roles.
 
 If you are running a pre-9.0 version of Grafana Enterprise, please refer to the documentation for that version to learn more about license enforcement in your current version.
 

@@ -99,7 +99,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 
 		err := h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
 		if err != nil {
-			logger.Error("Failed to save history batch", len(annotations), "err", err)
+			logger.Error("Failed to save history batch", "samples", len(annotations), "err", err)
 			errCh <- err
 			return
 		}

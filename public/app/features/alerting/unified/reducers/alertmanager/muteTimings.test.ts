@@ -1,5 +1,3 @@
-import { UnknownAction } from 'redux';
-
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { addMuteTimingAction, deleteMuteTimingAction, muteTimingsReducer, updateMuteTimingAction } from './muteTimings';
@@ -53,14 +51,6 @@ describe('mute timings', () => {
     const muteTimingName = initialConfig.alertmanager_config.time_intervals![0].name;
     const updateMuteTiming = updateMuteTimingAction({ originalName: muteTimingName, interval: newMuteTiming });
     expect(muteTimingsReducer(initialConfig, updateMuteTiming)).toMatchSnapshot();
-  });
-
-  it('should throw for unknown action', () => {
-    const action: UnknownAction = { type: 'unknown' };
-
-    expect(() => {
-      muteTimingsReducer(initialConfig, action);
-    }).toThrow('unknown');
   });
 });
 

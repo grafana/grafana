@@ -153,19 +153,19 @@ Grafana is an open source platform for monitoring and observability that lets yo
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="note" >}}
-This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
+This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you need to log in and provide credentials. In that case, the default username and password is `admin`.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore START -->
 
 {{< docs/ignore >}}
 
-> This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
+> This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you need to log in and provide credentials. In that case, the default username and password is `admin`.
 > {{< /docs/ignore >}}
 
 The first thing you see is the Home dashboard, which helps you get started.
 
-In the top left corner, you can see the menu icon. Clicking it will open the _sidebar_, the main menu for navigating Grafana.
+In the top left corner, you can see the menu icon. Clicking it opens the _sidebar_, the main menu for navigating Grafana.
 
 <!-- INTERACTIVE page step2.md END -->
 
@@ -177,7 +177,7 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
-1. Click the menu icon and, in the sidebar, click **Explore**. A dropdown menu for the list of available data sources is on the upper-left side. The Prometheus data source will already be selected. If not, choose Prometheus.
+1. Click the menu icon and, in the sidebar, click **Explore**. A dropdown menu for the list of available data sources is on the upper-left side. The Prometheus data source should already be selected. If not, choose Prometheus.
 1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel.
 1. In the query editor, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
    A graph appears.
@@ -259,7 +259,7 @@ Let's generate an error, and analyze it with Explore.
 
 1. Click the log line that says `level=error msg="empty url"` to see more information about the error.
 
-   > **Note:** If you're in Live mode, clicking logs will not show more information about the error. Instead, stop and exit the live stream, then click the log line there.
+   > **Note:** If you're in Live mode, clicking logs does not show more information about the error. Instead, stop and exit the live stream, then click the log line there.
 
 Logs are helpful for understanding what went wrong. Later in this tutorial, you'll see how you can correlate logs with metrics from Prometheus to better understand the context of the error.
 
@@ -302,7 +302,7 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
 
 When things go bad, it often helps if you understand the context in which the failure occurred. Time of last deploy, system changes, or database migration can offer insight into what might have caused an outage. Annotations allow you to represent such events directly on your graphs.
 
-In the next part of the tutorial, we will simulate some common use cases that someone would add annotations for.
+In the next part of the tutorial, we simulate some common use cases that someone would add annotations for.
 
 1. To manually add an annotation, click anywhere in your graph, then click **Add annotation**.
    Note: you might need to save the dashboard first.
@@ -346,7 +346,7 @@ The log lines returned by your query are now displayed as annotations in the gra
 
 Being able to combine data from multiple data sources in one graph allows you to correlate information from both Prometheus and Loki.
 
-Annotations also work very well alongside alert rules. In the next and final section, we will set up an alert rules for our app `grafana.news` and then we will trigger it. This will provide a quick intro to our new Alerting platform.
+Annotations also work very well alongside alert rules. In the next and final section, we set up an alert rules for our app `grafana.news` and then we trigger it. This provides a quick intro to our new Alerting platform.
 
 <!-- INTERACTIVE page step7.md END -->
 
@@ -356,7 +356,7 @@ Annotations also work very well alongside alert rules. In the next and final sec
 
 Alert rules allow you to identify problems in your system moments after they occur. By quickly identifying unintended changes in your system, you can minimize disruptions to your services.
 
-Grafana's new alerting platform debuted with Grafana 8. A year later, with Grafana 9, it became the default alerting method. In this step we will create a Grafana-managed alert rule. Then we will trigger our new alert rule and send a test message to a dummy endpoint.
+Grafana's new alerting platform debuted with Grafana 8. A year later, with Grafana 9, it became the default alerting method. In this step we create a Grafana-managed alert rule. Then we trigger our new alert rule and send a test message to a dummy endpoint.
 
 The most basic alert rule consists of two parts:
 
@@ -384,7 +384,7 @@ The most basic alert rule consists of two parts:
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert rule is triggered.
 
-To begin, let's set up a webhook contact point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
+To begin, let's set up a webhook contact point. Once we have a usable endpoint, we write an alert rule and trigger a notification.
 
 <!-- INTERACTIVE page step8.md END -->
 
@@ -392,24 +392,23 @@ To begin, let's set up a webhook contact point. Once we have a usable endpoint, 
 
 ### Create a contact point for Grafana-managed alert rules
 
-In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
+In this step, we set up a new contact point. This contact point uses the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We can use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
 
-1. Browse to [requestbin.com](https://requestbin.com).
-1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
-1. From Request Bin, copy the endpoint URL.
+1. Browse to [Webhook.site](https://webhook.site/).
+1. Copy Your unique URL.
 
-Your Request Bin is now waiting for the first request.
+Your webhook endpoint is now waiting for the first request.
 
-Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
+Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Manage Contact points**.
 1. Click **+ Add contact point**.
-1. In **Name**, write **RequestBin**.
+1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
-1. In **URL**, paste the endpoint to your request bin.
+1. In **URL**, paste the endpoint to your webhook endpoint.
 
-1. Click **Test**, and then click **Send test notification** to send a test alert notification to your request bin.
-1. Navigate back to the Request Bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+1. Click **Test**, and then click **Send test notification** to send a test alert notification to your webhook endpoint.
+1. Navigate back to the webhook endpoint you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 1. Return to Grafana and click **Save contact point**.
 
 We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
@@ -423,23 +422,26 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
+
+   In this tutorial, we use the advanced options for Grafana-managed alert rule creation. The advanced options let us define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered (the default condition is the threshold).
+
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`.
-1. For **Section 2**, Find the **query A** box. Choose your Prometheus data source. Note that the rule type should automatically switch to Grafana-managed alert rule.
-1. Switch to code mode by checking the Builder/Code toggle.
+1. For **Section 2**, toggle the **Advanced options** button.
+1. Find the **query A** box, and choose your Prometheus data source.
 1. Enter the same Prometheus query that we used in our earlier panel:
 
    ```
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
+1. Keep expressions **B** and **C** as they are. These expressions (Reduce and Threshold, respectively) are included by default when creating a new rule. Enter `0.2` as threshold value. You can read more about queries and conditions [here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. Scroll down to bottom of section #2 and click the **Preview** button. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) are included by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert rule condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
-1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alert rules. For example: `fundamentals`. Then, click `create`.
-1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
-1. Choose an Evaluation interval (how often the alert rule will be evaluated). For example, every `10s` (10 seconds).
+1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder contains our alert rules. For example: `fundamentals`. Then, click `create`.
+1. In the Evaluation group, repeat the above step to create a new one. Name it `fundamentals` too.
+1. Choose an Evaluation interval (how often the alert rule are evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert instance enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert instance has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, choose **RequestBin** as the **Contact point**.
+1. In **Section 4**, choose **Webhook** as the **Contact point**.
 1. Click **Save rule and exit** at the top of the page.
 
 ### Trigger a Grafana-managed alert rule
@@ -449,7 +451,7 @@ We have now configured an alert rule and a contact point. Now let's see if we ca
 1. Browse to [localhost:8081](http://localhost:8081).
 1. Add a new title and URL, repeatedly click the vote button, or refresh the page to generate a traffic spike.
 
-Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana will trigger our alert rule. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
+Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana triggers our alert rule. Browse to the webhook endpoint we created earlier and find the sent Grafana alert notification with details and metadata.
 
 <!-- INTERACTIVE ignore START -->
 
@@ -492,7 +494,7 @@ Let's see how we can configure this.
 
 {{< admonition type="tip" >}}
 
-Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /admonition >}}
 
@@ -500,7 +502,7 @@ Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting
 
 {{< docs/ignore >}}
 
-> Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 

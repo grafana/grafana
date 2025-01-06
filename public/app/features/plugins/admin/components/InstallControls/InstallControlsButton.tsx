@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import configCore from 'app/core/config';
@@ -20,6 +20,8 @@ import {
 } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
+
+const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
@@ -53,6 +55,8 @@ export function InstallControlsButton({
     plugin_id: plugin.id,
     plugin_type: plugin.type,
     path: location.pathname,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
   };
 
   useEffect(() => {
@@ -107,16 +111,16 @@ export function InstallControlsButton({
   };
 
   const onUpdate = async () => {
+    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME, trackingProps);
+
     await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }
   };
 
-  let disableUninstall =
-    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-      ? plugin.isUninstallingFromInstance
-      : isUninstalling;
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
     disableUninstall = true;
@@ -174,4 +178,12 @@ export function InstallControlsButton({
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
+}
+
+function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
+  if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+    return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
+  }
+
+  return isUninstalling;
 }

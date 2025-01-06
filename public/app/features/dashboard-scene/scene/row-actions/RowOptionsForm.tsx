@@ -12,13 +12,13 @@ export type OnRowOptionsUpdate = (title: string, repeat?: string | null) => void
 export interface Props {
   title: string;
   repeat?: string;
-  parent: SceneObject;
+  sceneContext: SceneObject;
   onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
   warning?: React.ReactNode;
 }
 
-export const RowOptionsForm = ({ repeat, title, parent, warning, onUpdate, onCancel }: Props) => {
+export const RowOptionsForm = ({ repeat, title, sceneContext, warning, onUpdate, onCancel }: Props) => {
   const [newRepeat, setNewRepeat] = useState<string | undefined>(repeat);
   const onChangeRepeat = useCallback((name?: string) => setNewRepeat(name), [setNewRepeat]);
 
@@ -38,7 +38,7 @@ export const RowOptionsForm = ({ repeat, title, parent, warning, onUpdate, onCan
         <Input {...register('title')} type="text" />
       </Field>
       <Field label="Repeat for">
-        <RepeatRowSelect2 parent={parent} repeat={newRepeat} onChange={onChangeRepeat} />
+        <RepeatRowSelect2 sceneContext={sceneContext} repeat={newRepeat} onChange={onChangeRepeat} />
       </Field>
       {warning && (
         <Alert

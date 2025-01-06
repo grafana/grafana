@@ -230,7 +230,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		description := "a description"
 		label := "a label"
 		fieldName := "fieldName"
-		corrType := correlations.TypeQuery
+		corrType := correlations.CorrelationType("query")
 		transformation := correlations.Transformation{Type: "logfmt"}
 		transformation2 := correlations.Transformation{Type: "regex", Expression: "testExpression", MapValue: "testVar"}
 		res := ctx.Post(PostParams{

@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { ActionMeta, AsyncVirtualizedSelect, Input, InputActionMeta, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -323,7 +323,9 @@ export function OldFolderPicker(props: Props) {
     return (
       <>
         <FolderWarningWhenCreating />
-        <div className={styles.newFolder}>Press enter to create the new folder.</div>
+        <div className={styles.newFolder}>
+          <Trans i18nKey="folder-picker.create-instructions">Press enter to create the new folder.</Trans>
+        </div>
         <Input
           width={30}
           autoFocus={true}

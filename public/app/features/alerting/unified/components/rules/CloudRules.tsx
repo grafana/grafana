@@ -27,17 +27,13 @@ interface Props {
 export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () =>
-      rulesDataSources.filter(
-        (ds) => isAsyncRequestStatePending(promRules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
-      ),
-    [promRules, dsConfigs, rulesDataSources]
+    () => rulesDataSources.filter((ds) => isAsyncRequestStatePending(promRules[ds.name])),
+    [promRules, rulesDataSources]
   );
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));

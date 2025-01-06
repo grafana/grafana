@@ -1,0 +1,96 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "aaa (dash)",
+        "ns/g/dash/bbb"
+      ],
+      "object": {
+        "kind": "dash",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "bbb (dash)",
+        "ns/g/dash/aaa"
+      ],
+      "object": {
+        "kind": "dash",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "aaa",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ccc (dash)",
+        "ns/g/dash/ccc"
+      ],
+      "object": {
+        "kind": "dash",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "ccc",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "yyy (folder)",
+        "ns/g/folder/yyy"
+      ],
+      "object": {
+        "kind": "folder",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "yyy",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "zzz (folder)",
+        "ns/g/folder/zzz"
+      ],
+      "object": {
+        "kind": "folder",
+        "apiVersion": "g",
+        "metadata": {
+          "name": "zzz",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

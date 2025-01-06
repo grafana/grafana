@@ -13,8 +13,8 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { MetricActionBar } from './MetricScene';
+import { AutoVizPanel } from './autoQuery/components/AutoVizPanel';
 import { getTrailSettings } from './utils';
 
 export const MAIN_PANEL_MIN_HEIGHT = 280;
@@ -62,6 +62,8 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       flexDirection: 'row',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       position: 'sticky',
+      paddingTop: theme.spacing(1),
+      marginTop: `-${theme.spacing(1)}`,
       top: `${chromeHeaderHeight + 70}px`,
       zIndex: 10,
     }),

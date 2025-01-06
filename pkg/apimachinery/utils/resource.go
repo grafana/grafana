@@ -40,6 +40,10 @@ func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) 
 	}
 }
 
+func (info *ResourceInfo) GetName() string {
+	return info.resourceName
+}
+
 func (info *ResourceInfo) GetSingularName() string {
 	return info.singularName
 }

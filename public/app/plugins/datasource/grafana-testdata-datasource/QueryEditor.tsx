@@ -10,6 +10,7 @@ import { CSVContentEditor } from './components/CSVContentEditor';
 import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import ErrorEditor from './components/ErrorEditor';
+import ErrorWithSourceQueryEditor from './components/ErrorWithSourceEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
@@ -120,6 +121,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         update.usa = {
           mode: usaQueryModes[0].value,
         };
+        break;
+      case TestDataQueryType.ErrorWithSource:
+        update.errorSource = 'plugin';
     }
 
     onUpdate(update);
@@ -378,6 +382,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             placeholder="10"
           />
         </InlineField>
+      )}
+      {scenarioId === TestDataQueryType.ErrorWithSource && (
+        <ErrorWithSourceQueryEditor onChange={onUpdate} query={query} ds={datasource} />
       )}
 
       {description && <p>{description}</p>}

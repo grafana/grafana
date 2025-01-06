@@ -97,6 +97,38 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
 			expectErr: false,
 		},
+		{
+			name:  "using __name__ as part of the query",
+			query: `{__name__="http_requests_total"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "istio", Operator: FilterOperatorEquals},
+			},
+			expected:  `{__name__="http_requests_total",namespace="istio"}`,
+			expectErr: false,
+		},
+		{
+			name:  "merge scopes filters into using OR if they share filter key",
+			query: `http_requests_total{}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			},
+			expected:  `http_requests_total{namespace=~"default|kube-system"}`,
+			expectErr: false,
+		},
+		{
+			name:  "adhoc filters win over scope filters if they share filter key",
+			query: `http_requests_total{}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			},
+			adhocFilters: []ScopeFilter{
+				{Key: "namespace", Value: "adhoc-wins", Operator: FilterOperatorEquals},
+			},
+			expected:  `http_requests_total{namespace="adhoc-wins"}`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -107,7 +139,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.expected, expr)
+				require.Equal(t, tt.expected, expr, tt.name)
 			}
 		})
 	}

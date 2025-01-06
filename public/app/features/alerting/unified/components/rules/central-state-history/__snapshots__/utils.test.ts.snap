@@ -1,0 +1,102 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`historyResultToDataFrame should decode 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {
+          "custom": {
+            "fillOpacity": 100,
+          },
+          "displayName": "Time",
+        },
+        "name": "time",
+        "type": "time",
+        "values": [
+          1727189670000,
+          1727189680000,
+          1727189700000,
+          1727189690000,
+          1727189710000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "value",
+        "type": "number",
+        "values": [
+          11,
+          2,
+          2,
+          8,
+          9,
+        ],
+      },
+    ],
+    "length": 5,
+  },
+]
+`;
+
+exports[`historyResultToDataFrame should decode and filter example1 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {
+          "custom": {
+            "fillOpacity": 100,
+          },
+          "displayName": "Time",
+        },
+        "name": "time",
+        "type": "time",
+        "values": [
+          1727189680000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "value",
+        "type": "number",
+        "values": [
+          1,
+        ],
+      },
+    ],
+    "length": 1,
+  },
+]
+`;
+
+exports[`historyResultToDataFrame should decode and filter example2 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {
+          "custom": {
+            "fillOpacity": 100,
+          },
+          "displayName": "Time",
+        },
+        "name": "time",
+        "type": "time",
+        "values": [
+          1727189670000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "value",
+        "type": "number",
+        "values": [
+          8,
+        ],
+      },
+    ],
+    "length": 1,
+  },
+]
+`;

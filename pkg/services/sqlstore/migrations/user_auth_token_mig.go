@@ -48,4 +48,8 @@ func addUserAuthTokenMigrations(mg *Migrator) {
 	mg.AddMigration("add index user_auth_token.revoked_at", NewAddIndexMigration(userAuthTokenV1, &Index{
 		Cols: []string{"revoked_at"},
 	}))
+
+	mg.AddMigration("add external_session_id to user_auth_token", NewAddColumnMigration(userAuthTokenV1, &Column{
+		Name: "external_session_id", Type: DB_BigInt, Nullable: true,
+	}))
 }

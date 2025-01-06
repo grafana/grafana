@@ -137,7 +137,7 @@ export function prepareGraphableFields(
 
     const frameFields = nullToValue(nulledFrame).fields;
 
-    for (let fieldIdx = 0; fieldIdx < frameFields?.length ?? 0; fieldIdx++) {
+    for (let fieldIdx = 0; fieldIdx < (frameFields?.length || 0); fieldIdx++) {
       const field = frameFields[fieldIdx];
 
       switch (field.type) {

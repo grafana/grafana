@@ -31,12 +31,13 @@ import (
 var _ ssosettings.Service = (*Service)(nil)
 
 type Service struct {
-	logger  log.Logger
-	cfg     *setting.Cfg
-	store   ssosettings.Store
-	ac      ac.AccessControl
-	secrets secrets.Service
-	metrics *metrics
+	logger           log.Logger
+	cfg              *setting.Cfg
+	store            ssosettings.Store
+	settingsProvider setting.Provider
+	ac               ac.AccessControl
+	secrets          secrets.Service
+	metrics          *metrics
 
 	fbStrategies          []ssosettings.FallbackStrategy
 	providersList         []string
@@ -87,6 +88,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		providersList:         providersList,
 		configurableProviders: configurableProviders,
 		reloadables:           make(map[string]ssosettings.Reloadable),
+		settingsProvider:      settingsProvider,
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -240,7 +242,7 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 		return ssosettings.ErrNotConfigurable
 	}
 
-	social, ok := s.reloadables[provider]
+	reloadable, ok := s.reloadables[provider]
 	if !ok {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
 	}
@@ -250,13 +252,26 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 		return err
 	}
 
+	// When deleting settings for SAML, clear the Settings table
+	if provider == social.SAMLProviderName {
+		samlSettings := setting.SettingsRemovals{
+			"auth.saml": make([]string, 0, len(s.settingsProvider.Current())),
+		}
+		for k := range s.settingsProvider.Current()["auth.saml"] {
+			samlSettings["auth.saml"] = append(samlSettings["auth.saml"], k)
+		}
+		if err := s.settingsProvider.Update(setting.SettingsBag{}, samlSettings); err != nil {
+			s.logger.Warn("Failed to remove SAML settings from the settings table", "error", err)
+		}
+	}
+
 	currentSettings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
 		s.logger.Error("failed to get current settings, skipping reload", "provider", provider, "error", err)
 		return nil
 	}
 
-	go s.reload(social, provider, *currentSettings)
+	go s.reload(reloadable, provider, *currentSettings)
 
 	return nil
 }
@@ -421,19 +436,19 @@ func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (
 			if IsSecretField(k) && v != "" {
 				strValue, ok := v.(string)
 				if !ok {
-					s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
+					s.logger.FromContext(ctx).Error("Failed to parse secret value, it is not a string", "key", k)
 					return nil, fmt.Errorf("secret value is not a string")
 				}
 
 				decoded, err := base64.RawStdEncoding.DecodeString(strValue)
 				if err != nil {
-					s.logger.Error("Failed to decode secret string", "err", err, "value")
+					s.logger.FromContext(ctx).Error("Failed to decode secret string", "err", err, "value")
 					return nil, err
 				}
 
 				decrypted, err := s.secrets.Decrypt(ctx, decoded)
 				if err != nil {
-					s.logger.Error("Failed to decrypt secret", "err", err)
+					s.logger.FromContext(ctx).Error("Failed to decrypt secret", "err", err)
 					return nil, err
 				}
 

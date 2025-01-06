@@ -51,7 +51,7 @@ To use profiling data, you should:
 
 - [Configure your application to send profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/)
 - [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source/).
-- [View and query profiling data in Explore](./query-profile-data/)
+- [View and query profiling data using Explore Profiles or the query editor ](./query-profile-data/)
 
 ## Integrate profiles into dashboards
 

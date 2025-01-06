@@ -10,12 +10,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Detect and respond
-title: Detect and respond
+menuTitle: Monitor status
+title: Monitor status
 weight: 130
 ---
 
-# Detect and respond
+# Monitor status
 
 Use Grafana Alerting to track and generate alerts and send notifications, providing an efficient way for engineers to monitor, respond, and triage issues within their services.
 

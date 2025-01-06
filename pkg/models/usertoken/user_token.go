@@ -22,19 +22,20 @@ func (e *TokenRevokedError) Unwrap() error { return ErrInvalidSessionToken }
 
 // UserToken represents a user token
 type UserToken struct {
-	Id            int64
-	UserId        int64
-	AuthToken     string
-	PrevAuthToken string
-	UserAgent     string
-	ClientIp      string
-	AuthTokenSeen bool
-	SeenAt        int64
-	RotatedAt     int64
-	CreatedAt     int64
-	UpdatedAt     int64
-	RevokedAt     int64
-	UnhashedToken string
+	Id                int64
+	UserId            int64
+	ExternalSessionId int64
+	AuthToken         string
+	PrevAuthToken     string
+	UserAgent         string
+	ClientIp          string
+	AuthTokenSeen     bool
+	SeenAt            int64
+	RotatedAt         int64
+	CreatedAt         int64
+	UpdatedAt         int64
+	RevokedAt         int64
+	UnhashedToken     string
 }
 
 const UrgentRotateTime = 1 * time.Minute

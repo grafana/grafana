@@ -9,9 +9,13 @@ import { isFetchError } from '@grafana/runtime';
  *   .catch(notFoundToNull); // RuleGroupDTO | null
  */
 export function notFoundToNullOrThrow(error: unknown): null {
-  if (isFetchError(error) && error.status === 404) {
+  if (isNotFoundError(error)) {
     return null;
   }
 
   throw error;
+}
+
+export function isNotFoundError(error: unknown): boolean {
+  return isFetchError(error) && error.status === 404;
 }

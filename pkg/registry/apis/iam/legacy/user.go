@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"text/template"
 
@@ -12,6 +13,79 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type GetUserInternalIDQuery struct {
+	OrgID int64
+	UID   string
+}
+
+type GetUserInternalIDResult struct {
+	ID int64
+}
+
+var sqlQueryUserInternalIDTemplate = mustTemplate("user_internal_id.sql")
+
+func newGetUserInternalID(sql *legacysql.LegacyDatabaseHelper, q *GetUserInternalIDQuery) getUserInternalIDQuery {
+	return getUserInternalIDQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Query:        q,
+	}
+}
+
+type getUserInternalIDQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Query        *GetUserInternalIDQuery
+}
+
+func (r getUserInternalIDQuery) Validate() error {
+	return nil // TODO
+}
+
+func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetUserInternalIDQuery) (*GetUserInternalIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetUserInternalID(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUserInternalIDTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, errors.New("user not found")
+	}
+
+	var id int64
+	if err := rows.Scan(&id); err != nil {
+		return nil, err
+	}
+
+	return &GetUserInternalIDResult{
+		id,
+	}, nil
+}
 
 type ListUserQuery struct {
 	OrgID int64

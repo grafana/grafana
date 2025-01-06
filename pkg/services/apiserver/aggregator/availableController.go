@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	informersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions/service/v0alpha1"
 	listersservicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
-
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -69,6 +68,7 @@ type AvailableConditionController struct {
 	cache map[string]map[string][]string
 	// this lock protects operations on the above cache
 	cacheLock sync.RWMutex
+	metrics   *Metrics
 }
 
 // NewAvailableConditionController returns a new AvailableConditionController.
@@ -79,6 +79,7 @@ func NewAvailableConditionController(
 	proxyTransportDial *transport.DialHolder,
 	proxyCurrentCertKeyContent certKeyFunc,
 	serviceResolver ServiceResolver,
+	metrics *Metrics,
 ) (*AvailableConditionController, error) {
 	c := &AvailableConditionController{
 		apiServiceClient:   apiServiceClient,
@@ -94,6 +95,7 @@ func NewAvailableConditionController(
 		),
 		proxyTransportDial:         proxyTransportDial,
 		proxyCurrentCertKeyContent: proxyCurrentCertKeyContent,
+		metrics:                    metrics,
 	}
 
 	// resync on this one because it is low cardinality and rechecking the actual discovery
@@ -124,6 +126,7 @@ func NewAvailableConditionController(
 func (c *AvailableConditionController) sync(key string) error {
 	originalAPIService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
+		c.metrics.ForgetAPIService(key)
 		return nil
 	}
 	if err != nil {
@@ -225,7 +228,7 @@ func (c *AvailableConditionController) sync(key string) error {
 						_ = resp.Body.Close()
 						// we should always been in the 200s or 300s
 						if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-							errCh <- fmt.Errorf("bad status from %v: %v", discoveryURL, resp.StatusCode)
+							errCh <- fmt.Errorf("bad status from %v: %d", discoveryURL, resp.StatusCode)
 							return
 						}
 					}
@@ -285,6 +288,9 @@ func (c *AvailableConditionController) sync(key string) error {
 // updateAPIServiceStatus only issues an update if a change is detected.  We have a tight resync loop to quickly detect dead
 // apiservices. Doing that means we don't want to quickly issue no-op updates.
 func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService, newAPIService *apiregistrationv1.APIService) (*apiregistrationv1.APIService, error) {
+	// update this metric on every sync operation to reflect the actual state
+	c.metrics.SetUnavailableGauge(newAPIService)
+
 	if equality.Semantic.DeepEqual(originalAPIService.Status, newAPIService.Status) {
 		return newAPIService, nil
 	}
@@ -310,6 +316,7 @@ func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService
 		return nil, err
 	}
 
+	c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
 	return newAPIService, nil
 }
 

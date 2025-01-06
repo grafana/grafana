@@ -3,6 +3,7 @@ package azuremonitor
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -34,7 +35,7 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 	// Use Azure credentials if the route has OAuth scopes configured
 	if len(route.Scopes) > 0 {
 		if cred, ok := model.Credentials.(*azcredentials.AzureClientSecretCredentials); ok && cred.ClientSecret == "" {
-			return nil, fmt.Errorf("unable to initialize HTTP Client: clientSecret not found")
+			return nil, backend.DownstreamError(errors.New("unable to initialize HTTP Client: clientSecret not found"))
 		}
 
 		authOpts := azhttpclient.NewAuthOptions(azureSettings)

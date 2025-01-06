@@ -20,7 +20,7 @@ func NewAlertmanagerMetrics(r prometheus.Registerer, l log.Logger) *Alertmanager
 	other := prometheus.WrapRegistererWithPrefix(fmt.Sprintf("%s_%s_", Namespace, Subsystem), r)
 	return &Alertmanager{
 		Registerer:                r,
-		Alerts:                    metrics.NewAlerts(other),
+		Alerts:                    metrics.NewAlerts(other, l),
 		AlertmanagerConfigMetrics: NewAlertmanagerConfigMetrics(r, l),
 	}
 }

@@ -16,17 +16,15 @@ import { css } from '@emotion/css';
 
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    TimelineCollapser: css`
-      align-items: center;
-      display: flex;
-      flex: none;
-      justify-content: center;
-      margin-right: 0.5rem;
-    `,
-  };
-};
+const getStyles = () => ({
+  TimelineCollapser: css({
+    alignItems: 'center',
+    display: 'flex',
+    flex: 'none',
+    justifyContent: 'center',
+    marginRight: '0.5rem',
+  }),
+});
 
 type CollapserProps = {
   onCollapseAll: () => void;

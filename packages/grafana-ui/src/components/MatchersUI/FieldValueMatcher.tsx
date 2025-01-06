@@ -62,7 +62,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
   );
 
   const opts = options ?? {};
-  const isBool = isBooleanReducer(options.reducer);
+  const isBool = isBooleanReducer(opts.reducer);
 
   return (
     <div className={styles.spot}>

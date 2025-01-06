@@ -1,15 +1,12 @@
 package accesscontrol
 
 import (
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func Checker(user *user.SignedInUser, action string) func(scopes ...string) bool {
-	if user.Permissions == nil || user.Permissions[user.OrgID] == nil {
-		return func(scopes ...string) bool { return false }
-	}
-
-	userScopes, ok := user.Permissions[user.OrgID][action]
+func Checker(user identity.Requester, action string) func(scopes ...string) bool {
+	permissions := user.GetPermissions()
+	userScopes, ok := permissions[action]
 	if !ok {
 		return func(scopes ...string) bool { return false }
 	}

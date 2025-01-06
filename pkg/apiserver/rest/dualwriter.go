@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -139,27 +137,6 @@ func NewDualWriter(
 	}
 }
 
-type updateWrapper struct {
-	upstream rest.UpdatedObjectInfo
-	updated  runtime.Object
-}
-
-// Returns preconditions built from the updated object, if applicable.
-// May return nil, or a preconditions object containing nil fields,
-// if no preconditions can be determined from the updated object.
-func (u *updateWrapper) Preconditions() *metav1.Preconditions {
-	if u.upstream == nil {
-		return nil
-	}
-	return u.upstream.Preconditions()
-}
-
-// UpdatedObject returns the updated object, given a context and old object.
-// The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
-func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
-	return u.updated, nil
-}
-
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
@@ -192,6 +169,7 @@ func SetDualWritingMode(
 		"2": Mode2,
 		"3": Mode3,
 		"4": Mode4,
+		"5": Mode5,
 	}
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
@@ -218,33 +196,14 @@ func SetDualWritingMode(
 		}
 	}
 
-	// Desired mode is 2 and current mode is 1
-	if (desiredMode == Mode2) && (currentMode == Mode1) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode2
-
+	switch {
+	case desiredMode == Mode2 || desiredMode == Mode1:
+		currentMode = desiredMode
 		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
-	}
-
-	if (desiredMode == Mode1) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode1
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return Mode0, errDualWriterSetCurrentMode
-		}
-	}
-
-	if (desiredMode == Mode3) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 3.
-
-		// gate #1: ensure the data is 100% in sync
+	case desiredMode >= Mode3 && currentMode < Mode3:
 		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
 		if err != nil {
 			klog.Info("data syncer failed for mode:", m)
@@ -259,12 +218,16 @@ func SetDualWritingMode(
 		if err != nil {
 			return currentMode, errDualWriterSetCurrentMode
 		}
-
 		return desiredMode, nil
+	case desiredMode >= Mode3 && currentMode >= Mode3:
+		currentMode = desiredMode
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return currentMode, errDualWriterSetCurrentMode
+		}
+	default:
+		return Mode0, errDualWriterSetCurrentMode
 	}
-
-	// 	#TODO add support for other combinations of desired and current modes
-
 	return currentMode, nil
 }
 
@@ -275,20 +238,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}
@@ -305,55 +266,4 @@ func getName(o runtime.Object) string {
 		return ""
 	}
 	return accessor.GetName()
-}
-
-const dataSyncerInterval = 60 * time.Minute
-
-// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
-func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
-	klog.Info("Starting periodic data syncer for mode mode: ", mode)
-
-	// run in background
-	go func() {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		timeWindow := 600 // 600 seconds (10 minutes)
-		jitterSeconds := r.Int63n(int64(timeWindow))
-		klog.Info("data syncer is going to start at: ", time.Now().Add(time.Second*time.Duration(jitterSeconds)))
-		time.Sleep(time.Second * time.Duration(jitterSeconds))
-
-		// run it immediately
-		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-
-		ticker := time.NewTicker(dataSyncerInterval)
-		for {
-			select {
-			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-				klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-// runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
-// The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
-	// ensure that execution takes no longer than necessary
-	const timeout = dataSyncerInterval - time.Minute
-	ctx, cancelFn := context.WithTimeout(ctx, timeout)
-	defer cancelFn()
-
-	// implementation depends on the current DualWriter mode
-	switch mode {
-	case Mode2:
-		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
-	default:
-		klog.Info("data syncer not implemented for mode mode:", mode)
-		return false, nil
-	}
 }

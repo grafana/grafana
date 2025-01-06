@@ -12,11 +12,13 @@ import {
   SceneVariableSet,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
+
+const DEFAULT_DATASOURCE = 'default';
 
 export function createVariablesForDashboard(oldModel: DashboardModel) {
   const variableObjects = oldModel.templating.list
@@ -136,6 +138,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
@@ -156,6 +159,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultToAll: Boolean(variable.includeAll),
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else if (variable.type === 'query') {
     return new QueryVariable({
@@ -175,6 +179,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       definition: variable.definition,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
@@ -189,6 +194,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       isMulti: variable.multi,
       hide: variable.hide,
+      defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
+      allowCustomValue: variable.allowCustomValue,
     });
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
@@ -239,6 +246,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       // @ts-expect-error
       defaultOptions: variable.options,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);

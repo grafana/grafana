@@ -145,7 +145,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		AuthProxy:            setting.AuthProxySettings{Enabled: true},
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
-		RemoteCacheOptions: &setting.RemoteCacheOptions{
+		RemoteCacheOptions: &setting.RemoteCacheSettings{
 			Name: "database",
 		},
 	}, sqlStore, statsService,

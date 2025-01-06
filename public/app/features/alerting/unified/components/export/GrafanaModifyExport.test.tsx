@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
-import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
+import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { mockExportApi, setupMswServer } from '../../mockApi';
@@ -33,20 +33,12 @@ const ui = {
   loading: byText('Loading the rule...'),
   form: {
     nameInput: byRole('textbox', { name: 'name' }),
-    folder: byTestId('folder-picker'),
-    group: byTestId('group-picker'),
-    annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
-    annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
-    labelKey: (idx: number) => byTestId(`label-key-${idx}`),
-    labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
   exportButton: byRole('button', { name: 'Export' }),
   exportDrawer: {
     dialog: byRole('dialog', { name: /Export Group/ }),
-    jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
     editor: byTestId('code-editor'),
-    loadingSpinner: byTestId('Spinner'),
   },
 };
 
@@ -55,9 +47,14 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
-  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
-    historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
-  });
+  render(
+    <Routes>
+      <Route path="/alerting/:id/modify-export" element={<GrafanaModifyExport />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
+    }
+  );
 }
 
 const server = setupMswServer();

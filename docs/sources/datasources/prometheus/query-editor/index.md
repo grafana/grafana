@@ -143,7 +143,7 @@ Click **Inspector** to get detailed statistics regarding your query. Inspector f
 
 **Builder mode** helps you build queries using a visual interface. This option is best for users who have limited or no previous experience working with Prometheus and PromQL.
 
-This video demonstrates how to use the visual Prometheus query builder available in Grafana v9.0:
+This video demonstrates how to use the visual Prometheus query builder:
 
 {{< vimeo 720004179 >}}
 

@@ -2,13 +2,11 @@ import { produce } from 'immer';
 import { isEqual } from 'lodash';
 
 import { t } from 'app/core/internationalization';
-import { dispatch } from 'app/store/store';
-import { RuleGroupIdentifier, EditableRuleIdentifier } from 'app/types/unified-alerting';
+import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { addRuleAction, updateRuleAction } from '../../reducers/ruler/ruleGroups';
-import { fetchRulerRulesAction } from '../../state/actions';
 import { isGrafanaRuleIdentifier, isGrafanaRulerRule } from '../../utils/rules';
 import { useAsync } from '../useAsync';
 
@@ -25,7 +23,7 @@ export function useAddRuleToRuleGroup() {
   const successMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: PostableRuleDTO, interval?: string) => {
-    const { namespaceName, dataSourceName } = ruleGroup;
+    const { namespaceName } = ruleGroup;
 
     // the new rule might have to be created in a new group, pass name and interval (optional) to the action
     const action = addRuleAction({ rule, interval, groupName: ruleGroup.groupName });
@@ -37,9 +35,6 @@ export function useAddRuleToRuleGroup() {
       payload: newRuleGroupDefinition,
       notificationOptions: { successMessage },
     }).unwrap();
-
-    // @TODO remove
-    await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
 
     return result;
   });
@@ -60,7 +55,8 @@ export function useUpdateRuleInRuleGroup() {
       ruleGroup: RuleGroupIdentifier,
       ruleIdentifier: EditableRuleIdentifier,
       ruleDefinition: PostableRuleDTO,
-      targetRuleGroup?: RuleGroupIdentifier
+      targetRuleGroup?: RuleGroupIdentifier,
+      interval?: string
     ) => {
       const { namespaceName } = ruleGroup;
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
@@ -68,7 +64,7 @@ export function useUpdateRuleInRuleGroup() {
       // check if the existing rule and the form values have the same rule group identifier
       const sameTargetRuleGroup = isEqual(ruleGroup, targetRuleGroup);
       if (targetRuleGroup && !sameTargetRuleGroup) {
-        const result = moveRuleToGroup.execute(ruleGroup, targetRuleGroup, ruleIdentifier, ruleDefinition);
+        const result = moveRuleToGroup.execute(ruleGroup, targetRuleGroup, ruleIdentifier, ruleDefinition, interval);
         return result;
       }
 
@@ -101,12 +97,13 @@ export function useMoveRuleToRuleGroup() {
       currentRuleGroup: RuleGroupIdentifier,
       targetRuleGroup: RuleGroupIdentifier,
       ruleIdentifier: EditableRuleIdentifier,
-      ruleDefinition: PostableRuleDTO
+      ruleDefinition: PostableRuleDTO,
+      interval?: string
     ) => {
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
 
       // 1. add the rule to the new namespace / group / ruler target
-      const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition });
+      const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition, interval });
       const { newRuleGroupDefinition: newTargetGroup, rulerConfig: targetGroupRulerConfig } = await produceNewRuleGroup(
         targetRuleGroup,
         addRuleToGroup

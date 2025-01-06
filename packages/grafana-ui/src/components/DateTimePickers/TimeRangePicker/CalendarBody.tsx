@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
-import Calendar from 'react-calendar';
-import { CalendarType } from 'react-calendar/dist/cjs/shared/types';
+import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
-import { WeekStart } from '../WeekStartPicker';
+import { getWeekStart, WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
@@ -19,10 +18,11 @@ const weekStartMap: Record<WeekStart, CalendarType> = {
   monday: 'iso8601',
 };
 
-export function Body({ onChange, from, to, timeZone, weekStart = 'monday' }: TimePickerCalendarProps) {
+export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCalendarProps) {
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
+  const weekStartValue = getWeekStart(weekStart);
 
   return (
     <Calendar
@@ -38,7 +38,7 @@ export function Body({ onChange, from, to, timeZone, weekStart = 'monday' }: Tim
       prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
       onChange={onCalendarChange}
       locale="en"
-      calendarType={weekStartMap[weekStart]}
+      calendarType={weekStartMap[weekStartValue]}
     />
   );
 }

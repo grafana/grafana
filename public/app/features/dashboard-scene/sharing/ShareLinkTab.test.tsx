@@ -6,10 +6,10 @@ import { dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { ShareLinkTab } from './ShareLinkTab';
@@ -111,18 +111,7 @@ function buildAndRenderScenario(options: ScenarioOptions) {
       canEdit: true,
     },
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
     overlay: tab,
   });
 

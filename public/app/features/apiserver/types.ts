@@ -37,10 +37,10 @@ export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
-export const AnnoKeyOriginName = 'grafana.app/originName';
-export const AnnoKeyOriginPath = 'grafana.app/originPath';
-export const AnnoKeyOriginHash = 'grafana.app/originHash';
-const AnnoKeyOriginTimestamp = 'grafana.app/originTimestamp';
+export const AnnoKeyRepoName = 'grafana.app/repoName';
+export const AnnoKeyRepoPath = 'grafana.app/repoPath';
+export const AnnoKeyRepoHash = 'grafana.app/repoHash';
+const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 
 type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
@@ -49,10 +49,10 @@ type GrafanaAnnotations = {
   [AnnoKeyFolder]?: string;
   [AnnoKeySlug]?: string;
 
-  [AnnoKeyOriginName]?: string;
-  [AnnoKeyOriginPath]?: string;
-  [AnnoKeyOriginHash]?: string;
-  [AnnoKeyOriginTimestamp]?: string;
+  [AnnoKeyRepoName]?: string;
+  [AnnoKeyRepoPath]?: string;
+  [AnnoKeyRepoHash]?: string;
+  [AnnoKeyRepoTimestamp]?: string;
 
   // Any key value
   [key: string]: string | undefined;

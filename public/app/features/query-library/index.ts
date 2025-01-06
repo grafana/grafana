@@ -24,5 +24,9 @@ export function isQueryLibraryEnabled() {
 }
 
 export const QueryLibraryMocks = {
-  data: mockData,
+  data: mockData.all,
+};
+
+export const IdentityServiceMocks = {
+  data: mockData.identityDisplay,
 };

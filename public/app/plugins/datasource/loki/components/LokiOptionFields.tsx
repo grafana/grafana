@@ -38,6 +38,19 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
   },
 ];
 
+if (config.featureToggles.lokiShardSplitting) {
+  queryDirections.push({
+    value: LokiQueryDirection.Scan,
+    label: 'Scan',
+    description: 'Experimental. Split the query into smaller units and stop at the requested log line limit.',
+    icon: 'exclamation-triangle',
+  });
+}
+
+export function getQueryDirectionLabel(direction: LokiQueryDirection) {
+  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
+}
+
 if (config.featureToggles.lokiExperimentalStreaming) {
   queryTypeOptions.push({
     value: LokiQueryType.Stream,

@@ -11,9 +11,6 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
-  AnnoKeyOriginPath,
-  AnnoKeyOriginHash,
-  AnnoKeyOriginName,
   K8sAPIGroupList,
 } from './types';
 
@@ -55,12 +52,12 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
       // THe passed in value is the suggested prefix
       obj.metadata.generateName = login ? login.slice(0, 2) : 'g';
     }
-    setOriginAsUI(obj.metadata);
+    setSavedFromUIAnnotation(obj.metadata);
     return getBackendSrv().post(this.url, obj);
   }
 
   public async update(obj: Resource<T, K>): Promise<Resource<T, K>> {
-    setOriginAsUI(obj.metadata);
+    setSavedFromUIAnnotation(obj.metadata);
     return getBackendSrv().put<Resource<T, K>>(`${this.url}/${obj.metadata.name}`, obj);
   }
 
@@ -103,13 +100,11 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
 }
 
 // add the origin annotations so we know what was set from the UI
-function setOriginAsUI(meta: Partial<ObjectMeta>) {
+function setSavedFromUIAnnotation(meta: Partial<ObjectMeta>) {
   if (!meta.annotations) {
     meta.annotations = {};
   }
-  meta.annotations[AnnoKeyOriginName] = 'UI';
-  meta.annotations[AnnoKeyOriginPath] = window.location.pathname;
-  meta.annotations[AnnoKeyOriginHash] = config.buildInfo.versionString;
+  meta.annotations['grafana.app/saved-from-ui'] = config.buildInfo.versionString;
 }
 
 export class DatasourceAPIVersions {

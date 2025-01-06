@@ -294,14 +294,17 @@ const validateOption = (value: string, validationRule: string, required: boolean
 };
 
 const determineRequired = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
+  const secureFields = getValues(`${pathIndex}secureFields`);
+  const secureSettings = getValues(`${pathIndex}secureSettings`);
+
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
-    const dependentOn = getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
-    return !Boolean(dependentOn) && option.required ? 'Required' : false;
+  if (isEmpty(secureFields) || !secureFields[option.dependsOn]) {
+    const dependentOn = Boolean(secureSettings[option.dependsOn]);
+    return !dependentOn && option.required ? 'Required' : false;
   } else {
-    const dependentOn: boolean = getValues(`${pathIndex}secureFields.${option.dependsOn}`);
+    const dependentOn = Boolean(secureFields[option.dependsOn]);
     return !dependentOn && option.required ? 'Required' : false;
   }
 };

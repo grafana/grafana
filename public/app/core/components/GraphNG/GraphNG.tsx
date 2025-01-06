@@ -28,7 +28,7 @@ import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 /**
  * @internal -- not a public API
  */
-export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
+export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
@@ -52,6 +52,14 @@ export interface GraphNGProps extends Themeable2 {
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
 
+  // Remove fields that are hidden from the visualization before rendering
+  // The fields will still be available for other things like data links
+  // this is a temporary hack that only works when:
+  // 1. renderLegend (above) does not render <PlotLegend>
+  // 2. does not have legend series toggle
+  // 3. passes through all fields required for link/action gen (including those with hideFrom.viz)
+  omitHideFromViz?: boolean;
+
   /**
    * needed for propsToDiff to re-init the plot & config
    * this is a generic approach to plot re-init, without having to specify which panel-level options
@@ -61,7 +69,11 @@ export interface GraphNGProps extends Themeable2 {
   options?: Record<string, any>;
 }
 
-function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
+function sameProps<T extends Record<string, unknown>>(
+  prevProps: T,
+  nextProps: T,
+  propsToDiff: Array<string | PropDiffFn> = []
+) {
   for (const propName of propsToDiff) {
     if (typeof propName === 'function') {
       if (!propName(prevProps, nextProps)) {
@@ -168,6 +180,15 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         alignedFrameFinal = {
           ...alignedFrame,
           fields: alignedFrame.fields.filter((field, i) => i === 0 || fields.y(field, alignedFrame, [alignedFrame])),
+        };
+      }
+
+      if (props.omitHideFromViz) {
+        const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
+        alignedFrameFinal = {
+          ...alignedFrameFinal,
+          fields: nonHiddenFields,
+          length: nonHiddenFields.length,
         };
       }
 

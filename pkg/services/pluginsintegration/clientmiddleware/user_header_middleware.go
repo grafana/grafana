@@ -6,25 +6,22 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-// NewUserHeaderMiddleware creates a new plugins.ClientMiddleware that will
-// populate the X-Grafana-User header on outgoing plugins.Client requests.
-func NewUserHeaderMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+// NewUserHeaderMiddleware creates a new backend.HandlerMiddleware that will
+// populate the X-Grafana-User header on outgoing backend.Handler requests.
+func NewUserHeaderMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &UserHeaderMiddleware{
-			baseMiddleware: baseMiddleware{
-				next: next,
-			},
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type UserHeaderMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 }
 
 func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -42,30 +39,30 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 
 func (m *UserHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	m.applyUserHeader(ctx, req)
 
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *UserHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return m.next.CallResource(ctx, req, sender)
+		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
 	m.applyUserHeader(ctx, req)
 
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *UserHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return m.next.CheckHealth(ctx, req)
+		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
 	m.applyUserHeader(ctx, req)
 
-	return m.next.CheckHealth(ctx, req)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }

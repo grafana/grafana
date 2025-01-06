@@ -19,8 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
-	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -90,10 +88,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		// set the default middlewars from the httpClientProvider
-		httpCliOpts.Middlewares = httpClientProvider.Opts.Middlewares
-		// enable experimental http client to support errors with source
-		httpCli, err := exphttpclient.New(httpCliOpts)
+		httpCli, err := httpClientProvider.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -102,11 +97,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
-			return nil, errors.New("timeField cannot be cast to string")
+			return nil, backend.DownstreamError(errors.New("timeField cannot be cast to string"))
 		}
 
 		if timeField == "" {
-			return nil, errors.New("elasticsearch time field name is required")
+			return nil, backend.DownstreamError(errors.New("elasticsearch time field name is required"))
 		}
 
 		logLevelField, ok := jsonData["logLevelField"].(string)
@@ -225,9 +220,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
-		sourceErr := exp.Error{}
+		sourceErr := backend.ErrorWithSource{}
 		if errors.As(err, &sourceErr) {
-			lp = append(lp, "statusSource", sourceErr.Source())
+			lp = append(lp, "statusSource", sourceErr.ErrorSource())
 		}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)

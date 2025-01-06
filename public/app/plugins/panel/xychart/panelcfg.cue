@@ -25,55 +25,58 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				// Auto is "table" in the UI
+				PointShape:    "circle" | "square"                 @cuetsy(kind="enum")
 				SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
-				ScatterShow:   "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
+				XYShowMode:    "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
 
-				// Configuration for the Table/Auto mode
-				XYDimensionConfig: {
-					frame: int32 & >=0
-					x?:    string
-					exclude?: [...string]
-				} @cuetsy(kind="interface")
+				// NOTE: (copied from dashboard_kind.cue, since not exported)
+				// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+				// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+				#MatcherConfig: {
+					// The matcher id. This is used to find the matcher implementation from registry.
+					id: string | *"" @grafanamaturity(NeedsExpertReview)
+					// The matcher options. This is specific to the matcher implementation.
+					options?: _ @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				FieldConfig: {
 					common.HideableFieldConfig
 					common.AxisConfig
 
-					show?: ScatterShow & (*"points" | _)
+					show?: XYShowMode & (*"points" | _)
 
-					pointSize?:  common.ScaleDimensionConfig
-					pointColor?: common.ColorDimensionConfig
-					// pointSymbol?: common.ResourceDimensionConfig
-					// fillOpacity?: number & >=0 & <=1 | *0.5
+					pointSize?: {
+						fixed?: int32 & >=0
+						min?:   int32 & >=0
+						max?:   int32 & >=0
+					}
 
-					lineColor?: common.ColorDimensionConfig
+					pointShape?: PointShape
+
+					pointStrokeWidth?: int32 & >=0
+
+					fillOpacity?: uint32 & <=100 | *50
+
 					lineWidth?: int32 & >=0
 					lineStyle?: common.LineStyle
-
-					label?:      common.VisibilityMode & (*"auto" | _)
-					labelValue?: common.TextDimensionConfig
 				} @cuetsy(kind="interface",TSVeneer="type")
 
-				ScatterSeriesConfig: {
-					FieldConfig
-					x?:     string
-					y?:     string
-					name?:  string
-					frame?: number
+				XYSeriesConfig: {
+					name?: {fixed?: string}
+					frame?: {matcher: #MatcherConfig}
+					x?: {matcher: #MatcherConfig}
+					y?: {matcher: #MatcherConfig}
+					color?: {matcher: #MatcherConfig}
+					size?: {matcher: #MatcherConfig}
 				} @cuetsy(kind="interface")
 
 				Options: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
 
-					seriesMapping?: SeriesMapping
+					mapping: SeriesMapping
 
-					// Table Mode (auto)
-					dims: XYDimensionConfig
-
-					// Manual Mode
-					series: [...ScatterSeriesConfig]
+					series: [...XYSeriesConfig]
 				} @cuetsy(kind="interface")
 			}
 		}]

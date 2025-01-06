@@ -1,6 +1,9 @@
+import { SelectableValue, toOption } from '@grafana/data';
+
 import {
   QueryEditorExpressionType,
   QueryEditorFunctionExpression,
+  QueryEditorFunctionParameterExpression,
   QueryEditorGroupByExpression,
   QueryEditorPropertyExpression,
   QueryEditorPropertyType,
@@ -66,4 +69,19 @@ export function createFunctionField(functionName?: string): QueryEditorFunctionE
     name: functionName,
     parameters: [],
   };
+}
+
+/**
+ * Retrieves the column value from a QueryEditorFunctionParameterExpression object.
+ *
+ * @param column - The QueryEditorFunctionParameterExpression object representing the column.
+ * @returns The column value as a SelectableValue<string> or null if the column is undefined or null.
+ */
+export function getColumnValue(
+  column?: QueryEditorFunctionParameterExpression | QueryEditorFunctionExpression
+): SelectableValue<string> | null {
+  if (column?.name) {
+    return toOption(column.name);
+  }
+  return null;
 }

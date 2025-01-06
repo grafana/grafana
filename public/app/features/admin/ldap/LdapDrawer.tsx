@@ -17,7 +17,6 @@ import {
   Select,
   Stack,
   Switch,
-  Text,
   TextLink,
   Tooltip,
   RadioButtonGroup,
@@ -60,7 +59,7 @@ export const LdapDrawerComponent = ({
   useEffect(() => {
     const { client_cert, client_key, root_ca_cert } = getValues(serverConfig);
     setEncryptionProvider(
-      !client_cert.length && !client_key.length && !root_ca_cert?.length
+      !client_cert?.length && !client_key?.length && !root_ca_cert?.length
         ? EncryptionProvider.Base64
         : EncryptionProvider.FilePath
     );
@@ -73,6 +72,18 @@ export const LdapDrawerComponent = ({
     return value;
   };
 
+  const attributesLabel = (
+    <Label
+      className={styles.sectionLabel}
+      description={t(
+        'ldap-drawer.attributes-section.description',
+        "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information."
+      )}
+    >
+      <Trans i18nKey="ldap-drawer.attributes-section.label">Attributes</Trans>
+    </Label>
+  );
+
   const groupMappingsLabel = (
     <Label
       className={styles.sectionLabel}
@@ -83,19 +94,21 @@ export const LdapDrawerComponent = ({
   );
 
   const useTlsDescription = (
-    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
-      For a complete list of supported ciphers and TLS versions, refer to:{' '}
-      {
-        <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
-          https://go.dev/src/crypto/tls/cipher_suites.go
-        </TextLink>
-      }
-    </Trans>
+    <>
+      <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
+        For a complete list of supported ciphers and TLS versions, refer to:
+      </Trans>{' '}
+      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+      <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
+        https://go.dev/src/crypto/tls/cipher_suites.go
+      </TextLink>
+    </>
   );
 
   const onAddGroupMapping = () => {
+    const groupMappings = getValues(`${serverConfig}.group_mappings`) || [];
     setValue(`${serverConfig}.group_mappings`, [
-      ...getValues(`${serverConfig}.group_mappings`),
+      ...groupMappings,
       {
         group_dn: '',
         org_id: 1,
@@ -114,7 +127,7 @@ export const LdapDrawerComponent = ({
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
       <CollapsableSection label={t('ldap-drawer.misc-section.label', 'Misc')} isOpen={true}>
         <Field
-          label={t('ldap-drawer.misc-section.allow-sign-up-label', 'Allow sign up')}
+          label={t('ldap-drawer.misc-section.allow-sign-up-label', 'Allow sign-up')}
           description={t(
             'ldap-drawer.misc-section.allow-sign-up-descrition',
             'If not enabled, only existing Grafana users can log in using LDAP'
@@ -151,13 +164,7 @@ export const LdapDrawerComponent = ({
           />
         </Field>
       </CollapsableSection>
-      <CollapsableSection label={t('ldap-drawer.attributes-section.label', 'Attributes')} isOpen={true}>
-        <Text color="secondary">
-          <Trans i18nKey="ldap-drawer.attributes-section.description">
-            Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring
-            the application correctly retrieves and displays user information.
-          </Trans>
-        </Text>
+      <CollapsableSection label={attributesLabel} isOpen={true}>
         <Field label={t('ldap-drawer.attributes-section.name-label', 'Name')}>
           <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
         </Field>
@@ -195,17 +202,24 @@ export const LdapDrawerComponent = ({
         >
           <Input id="group-search-filter" {...register(`${serverConfig}.group_search_filter`)} />
         </Field>
-        <Field
-          htmlFor="group-search-base-dns"
-          label={t('ldap-drawer.group-mapping-section.group-search-base-dns-label', 'Group search base DNS')}
-          description={t(
-            'ldap-drawer.group-mapping-section.group-search-base-dns-description',
-            'Separate by commas or spaces'
-          )}
-        >
-          <Input
-            id="group-search-base-dns"
-            onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.group_search_base_dns`, [value])}
+        <Field label={t('ldap-drawer.group-mapping-section.group-search-base-dns-label', 'Group search base DNS')}>
+          <Controller
+            name={`${serverConfig}.group_search_base_dns`}
+            control={control}
+            render={({ field: { onChange, ref, value, ...field } }) => (
+              <MultiSelect
+                {...field}
+                allowCustomValue
+                className={styles.multiSelect}
+                noOptionsMessage=""
+                placeholder={t(
+                  'ldap-drawer.group-mapping-section.group-search-base-dns-placeholder',
+                  'example: ou=groups,dc=example,dc=com'
+                )}
+                onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                value={value?.map((v) => ({ label: v, value: v }))}
+              />
+            )}
           />
         </Field>
         <Field
@@ -276,26 +290,24 @@ export const LdapDrawerComponent = ({
                 onChange={({ value }) => setValue(`${serverConfig}.min_tls_version`, value)}
               />
             </Field>
-            <Field
-              label={t('ldap-drawer.extra-security-section.tls-ciphers-label', 'TLS ciphers')}
-              description={t(
-                'ldap-drawer.extra-security-section.tls-ciphers-description',
-                'List of comma- or space-separated ciphers'
-              )}
-            >
-              <Input
-                id="tls-ciphers"
-                placeholder={t(
-                  'ldap-drawer.extra-security-section.tls-ciphers-placeholder',
-                  'e.g. ["TLS_AES_256_GCM_SHA384"]'
+            <Field label={t('ldap-drawer.extra-security-section.tls-ciphers-label', 'TLS ciphers')}>
+              <Controller
+                name={`${serverConfig}.tls_ciphers`}
+                control={control}
+                render={({ field: { onChange, ref, value, ...field } }) => (
+                  <MultiSelect
+                    {...field}
+                    allowCustomValue
+                    className={styles.multiSelect}
+                    noOptionsMessage=""
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.tls-ciphers-placeholder',
+                      'example: TLS_AES_256_GCM_SHA384'
+                    )}
+                    onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                    value={value?.map((v) => ({ label: v, value: v }))}
+                  />
                 )}
-                value={watch(`${serverConfig}.tls_ciphers`) || ''}
-                onChange={({ currentTarget: { value } }) =>
-                  setValue(
-                    `${serverConfig}.tls_ciphers`,
-                    value?.split(/,|\s/).map((v) => v.trim())
-                  )
-                }
               />
             </Field>
             <Field
@@ -338,10 +350,16 @@ export const LdapDrawerComponent = ({
                   <Controller
                     name={`${serverConfig}.root_ca_cert_value`}
                     control={control}
-                    render={({ field: { onChange, value, ...field } }) => (
+                    render={({ field: { onChange, ref, value, ...field } }) => (
                       <MultiSelect
                         {...field}
                         allowCustomValue
+                        className={styles.multiSelect}
+                        noOptionsMessage=""
+                        placeholder={t(
+                          'ldap-drawer.extra-security-section.root-ca-cert-value-placeholder',
+                          'example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t'
+                        )}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
@@ -351,17 +369,14 @@ export const LdapDrawerComponent = ({
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-cert-value-label', 'Client certificate content')}
                 >
-                  <SecretInput
+                  <Input
                     id="client-cert"
                     placeholder={t(
                       'ldap-drawer.extra-security-section.client-cert-value-placeholder',
                       'Client certificate content in base64'
                     )}
-                    isConfigured={mapCertConfigured.clientCertValue}
-                    onReset={() => {
-                      setValue(`${serverConfig}.client_cert_value`, '');
-                      setMapCertConfigured({ ...mapCertConfigured, clientCertValue: false });
-                    }}
+                    type="text"
+                    {...register(`${serverConfig}.client_cert_value`)}
                   />
                 </Field>
                 <Field label={t('ldap-drawer.extra-security-section.client-key-value-label', 'Client key content')}>
@@ -383,35 +398,25 @@ export const LdapDrawerComponent = ({
             {encryptionProvider === EncryptionProvider.FilePath && (
               <>
                 <Field label={t('ldap-drawer.extra-security-section.root-ca-cert-label', 'Root CA certificate path')}>
-                  <SecretInput
+                  <Input
                     id="root-ca-cert"
                     placeholder={t(
                       'ldap-drawer.extra-security-section.root-ca-cert-placeholder',
                       '/path/to/root_ca_cert.pem'
                     )}
-                    isConfigured={mapCertConfigured.rootCaCertPath}
-                    onReset={() => {
-                      setValue(`${serverConfig}.root_ca_cert`, '');
-                      setMapCertConfigured({ ...mapCertConfigured, rootCaCertPath: false });
-                    }}
-                    value={watch(`${serverConfig}.root_ca_cert`)}
-                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.root_ca_cert`, value)}
+                    type="text"
+                    {...register(`${serverConfig}.root_ca_cert`)}
                   />
                 </Field>
                 <Field label={t('ldap-drawer.extra-security-section.client-cert-label', 'Client certificate path')}>
-                  <SecretInput
+                  <Input
                     id="client-cert"
                     placeholder={t(
                       'ldap-drawer.extra-security-section.client-cert-placeholder',
                       '/path/to/client_cert.pem'
                     )}
-                    isConfigured={mapCertConfigured.clientCertPath}
-                    onReset={() => {
-                      setValue(`${serverConfig}.client_cert`, '');
-                      setMapCertConfigured({ ...mapCertConfigured, clientCertPath: false });
-                    }}
-                    value={watch(`${serverConfig}.client_cert`)}
-                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.client_cert`, value)}
+                    type="text"
+                    {...register(`${serverConfig}.client_cert`)}
                   />
                 </Field>
                 <Field label={t('ldap-drawer.extra-security-section.client-key-label', 'Client key path')}>
@@ -446,6 +451,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     button: css({
       marginBottom: theme.spacing(4),
+    }),
+    multiSelect: css({
+      'div:last-of-type > svg': {
+        display: 'none',
+      },
     }),
   };
 }

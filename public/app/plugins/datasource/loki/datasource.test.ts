@@ -442,9 +442,74 @@ describe('LokiDatasource', () => {
       expect(res.length).toBe(2);
       expect(res[0].text).toBe('hello');
       expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
 
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+    });
+
+    it('should transform the loki dataplane data to annotation response', async () => {
+      const originalDataplaneState = config.featureToggles.lokiLogsDataplane;
+      config.featureToggles.lokiLogsDataplane = true;
+      const testFrame: DataFrame = {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1, 2],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['hello', 'hello 2'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            config: {},
+            values: [
+              {
+                label: 'value',
+                label2: 'value ',
+              },
+              {
+                label: '',
+                label2: 'value2',
+                label3: ' ',
+              },
+            ],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: ['1000000', '2000000'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            config: {},
+            values: ['id1', 'id2'],
+          },
+        ],
+        length: 2,
+      };
+      const res = await getTestContext(testFrame, { stepInterval: '15s' });
+
+      expect(res.length).toBe(2);
+      expect(res[0].text).toBe('hello');
+      expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
+
+      expect(res[1].text).toBe('hello 2');
+      expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+
+      config.featureToggles.lokiLogsDataplane = originalDataplaneState;
     });
 
     describe('Formatting', () => {
@@ -1429,11 +1494,10 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
@@ -1448,11 +1512,10 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
@@ -1468,8 +1531,7 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
-          legendFormat: '{{ level }}',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: 'range',
           refId: 'log-volume-A',
           supportingQueryType: 'logsVolume',
@@ -1510,7 +1572,9 @@ describe('LokiDatasource', () => {
             refId: 'A',
           }
         );
-        expect(query?.expr).toEqual('sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))');
+        expect(query?.expr).toEqual(
+          'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
+        );
       });
     });
 

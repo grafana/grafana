@@ -46,9 +46,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
   export_templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-notification-template-groups
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-notification-template-groups
 ---
 
 # Use configuration files to provision alerting resources
@@ -270,8 +270,8 @@ settings:
   url: https://discord/webhook
   # <string>
   avatar_url: https://my_avatar
-  # <string>
-  use_discord_username: Grafana
+  # <bool>
+  use_discord_username: false
   # <string>
   message: |
     {{ template "default.message" . }}
@@ -616,6 +616,16 @@ settings:
   authorization_credentials: abc123
   # <string>
   maxAlerts: '10'
+  # <map>
+  tlsConfig:
+    # <bool>
+    insecureSkipVerify: false
+    # <string>
+    clientCertificate: certificate in PEM format
+    # <string>
+    clientKey: key in PEM format
+    # <string>
+    caCertificate: CA certificate in PEM format
 ```
 
 {{< /collapse >}}
@@ -639,19 +649,19 @@ settings:
 
 {{< /collapse >}}
 
-## Import templates
+## Import notification template groups
 
-Create or delete templates using provisioning files in your Grafana instance(s).
+Create or delete notification template groups using provisioning files in your Grafana instance(s).
 
-1. Find the notification template in Grafana.
-1. [Export](ref:export_templates) a template by copying the template content and title.
+1. Find the notification template group in Grafana.
+1. [Export](ref:export_templates) a template group by copying the template content and name.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
 
 1. Restart your Grafana instance (or reload the provisioned files using the Admin API).
 
-Here is an example of a configuration file for creating templates.
+Here is an example of a configuration file for creating notification template groups.
 
 ```yaml
 # config file version
@@ -661,16 +671,16 @@ apiVersion: 1
 templates:
   # <int> organization ID, default = 1
   - orgId: 1
-    # <string, required> name of the template, must be unique
+    # <string, required> name of the template group, must be unique
     name: my_first_template
-    # <string, required> content of the template
+    # <string, required> content of the template group
     template: |
       {{ define "my_first_template" }}
         Custom notification message
       {{ end }}
 ```
 
-Here is an example of a configuration file for deleting templates.
+Here is an example of a configuration file for deleting notification template groups.
 
 ```yaml
 # config file version
@@ -680,7 +690,7 @@ apiVersion: 1
 deleteTemplates:
   # <int> organization ID, default = 1
   - orgId: 1
-    # <string, required> name of the template, must be unique
+    # <string, required> name of the template group, must be unique
     name: my_first_template
 ```
 
@@ -853,8 +863,8 @@ In alerting resources, most properties support template variable interpolation, 
 - Alert rule query model: `groups[].rules[].data.model`
 - Mute timings name: `muteTimes[].name`
 - Mute timings time intervals: `muteTimes[].time_intervals[]`
-- Notification template name: `templates[].name`
-- Notification template content: `templates[].template`
+- Notification template group name: `templates[].name`
+- Notification template group content: `templates[].template`
 
 Note for properties that support interpolation, you may unexpectedly substitute template variables when not intended. To avoid this, you can escape the `$variable` with `$$variable`.
 

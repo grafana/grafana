@@ -2,17 +2,9 @@ import { Subscription } from 'rxjs';
 
 import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import {
-  behaviors,
-  SceneDataLayerSet,
-  sceneGraph,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObject,
-  VizPanel,
-} from '@grafana/scenes';
+import { behaviors, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
@@ -113,8 +105,8 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof SceneDataLayerSet) {
-      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    if (this._scene.state.$data instanceof DashboardDataLayerSet) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.annotationLayers);
     }
 
     return annotations;
@@ -175,39 +167,7 @@ export class DashboardModelCompatibilityWrapper {
       return;
     }
 
-    const gridItem = vizPanel.parent;
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to remove a panel that is not wrapped in DashboardGridItem');
-      return;
-    }
-
-    const layout = sceneGraph.getLayout(vizPanel);
-    if (!(layout instanceof SceneGridLayout)) {
-      console.error('Trying to remove a panel in a layout that is not SceneGridLayout ');
-      return;
-    }
-
-    // if grid item is directly in the layout just remove it
-    if (layout === gridItem.parent) {
-      layout.setState({
-        children: layout.state.children.filter((child) => child !== gridItem),
-      });
-    }
-
-    // Removing from a row is a bit more complicated
-    if (gridItem.parent instanceof SceneGridRow) {
-      // Clone the row and remove the grid item
-      const newRow = layout.clone({
-        children: layout.state.children.filter((child) => child !== gridItem),
-      });
-
-      // Now update the grid layout and replace the row with the updated one
-      if (layout.parent instanceof SceneGridLayout) {
-        layout.parent.setState({
-          children: layout.parent.state.children.map((child) => (child === layout ? newRow : child)),
-        });
-      }
-    }
+    this._scene.removePanel(vizPanel);
   }
 
   public canEditAnnotations(dashboardUID?: string) {

@@ -135,20 +135,20 @@ export const QueryPatternsModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cardsContainer: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    spacing: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    modal: css`
-      width: 85vw;
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
-    `,
+    cardsContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    }),
+    spacing: css({
+      marginBottom: theme.spacing(1),
+    }),
+    modal: css({
+      width: '85vw',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
   };
 };

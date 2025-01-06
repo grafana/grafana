@@ -1,6 +1,5 @@
-import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
@@ -25,7 +24,8 @@ import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import * as config from 'app/features/alerting/unified/utils/config';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, DashboardDataDTO } from 'app/types';
@@ -34,7 +34,6 @@ import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 
@@ -77,11 +76,7 @@ const mocks = {
 };
 
 const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
-  render(
-    <TestProvider store={initialStore}>
-      <PanelDataAlertingTabRendered model={model}></PanelDataAlertingTabRendered>
-    </TestProvider>
-  );
+  render(<PanelDataAlertingTabRendered model={model} />);
 };
 
 const promResponse: PromRulesResponse = {
@@ -349,9 +344,9 @@ async function clickNewButton() {
   const oldPush = locationService.push;
   locationService.push = pushMock;
   const button = await ui.createButton.find();
-  await act(async () => {
-    await userEvent.click(button);
-  });
+
+  await userEvent.click(button);
+
   const match = pushMock.mock.lastCall[0].match(/alerting\/new\?defaults=(.*)&returnTo=/);
   const defaults = JSON.parse(decodeURIComponent(match![1]));
   locationService.push = oldPush;
@@ -361,7 +356,7 @@ async function clickNewButton() {
 function createModel(dashboard: DashboardModel) {
   const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
-  const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
+  const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }

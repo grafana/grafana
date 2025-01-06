@@ -384,7 +384,7 @@ To learn more about Grafana's strong password policy, refer to the [documentatio
 
 _Generally available in Grafana Enterprise_
 
-We are announcing a license change to the anonymous access feature in Grafana 11. As you may already be aware, anonymous access allows users access to Grafana without login credentials. Anonymous access was an early feature of Grafana to share dashboards; however, we recently introduced [Public Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/) which allows you to share dashboards in a more secure manner. We also noticed that anonymous access inadvertently resulted in user licensing issues. After careful consideration, we have decided to charge for the continued use of anonymous access starting in Grafana 11.
+We are announcing a license change to the anonymous access feature in Grafana 11. As you may already be aware, anonymous access allows users access to Grafana without login credentials. Anonymous access was an early feature of Grafana to share dashboards; however, we recently introduced [Public Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards) which allows you to share dashboards in a more secure manner. We also noticed that anonymous access inadvertently resulted in user licensing issues. After careful consideration, we have decided to charge for the continued use of anonymous access starting in Grafana 11.
 
 **Affected Grafana versions**
 

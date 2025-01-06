@@ -27,4 +27,10 @@ describe('SupplementaryResultError', () => {
     await userEvent.click(button);
     expect(screen.getByText(message)).toBeInTheDocument();
   });
+
+  it('allows arbitrary components in the message', async () => {
+    const error = { data: { message: 'error' } };
+    render(<SupplementaryResultError error={error} message={<div data-testid="custom-stuff" />} title={'Error'} />);
+    expect(screen.getByTestId('custom-stuff')).toBeInTheDocument();
+  });
 });

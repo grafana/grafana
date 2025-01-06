@@ -51,7 +51,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   async fetchTeamGroups() {
-    await this.props.loadTeamGroups();
+    this.props.loadTeamGroups();
   }
 
   onToggleAdding = () => {

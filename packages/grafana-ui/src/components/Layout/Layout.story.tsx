@@ -62,8 +62,9 @@ export default meta;
 export const Horizontal: StoryFn<LayoutProps> = (args) => {
   return (
     <HorizontalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </HorizontalGroup>
   );
 };
@@ -71,8 +72,9 @@ export const Horizontal: StoryFn<LayoutProps> = (args) => {
 export const Vertical: StoryFn<LayoutProps> = (args) => {
   return (
     <VerticalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </VerticalGroup>
   );
 };

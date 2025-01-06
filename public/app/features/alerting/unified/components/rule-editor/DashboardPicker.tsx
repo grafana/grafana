@@ -9,16 +9,16 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import {
   Alert,
   Button,
-  clearButtonStyles,
   FilterInput,
   Icon,
   LoadingPlaceholder,
   Modal,
   Tooltip,
+  clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
 
-import { DashboardModel } from '../../../../dashboard/state';
+import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { dashboardApi } from '../../api/dashboardApi';
 
 import { useDashboardQuery } from './useDashboardQuery';

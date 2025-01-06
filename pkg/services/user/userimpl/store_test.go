@@ -34,7 +34,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss, cfg := db.InitTestDBWithCfg(t)
-	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
@@ -99,6 +99,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "abcd", siu.UserUID)
+
+		query := user.GetUserByUIDQuery{UID: "abcd"}
+		result, err := userStore.GetByUID(context.Background(), query.UID)
+		require.Nil(t, err)
+		require.Equal(t, result.UID, "abcd")
+		require.Equal(t, result.Email, "next-test@email.com")
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
@@ -903,7 +909,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 func TestMetricsUsage(t *testing.T) {
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
@@ -962,7 +968,7 @@ func assertEqualUser(t *testing.T, expected, got *user.User) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
+	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(

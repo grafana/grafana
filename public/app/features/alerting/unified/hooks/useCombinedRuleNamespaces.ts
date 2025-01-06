@@ -3,9 +3,9 @@ import { useMemo, useRef } from 'react';
 
 import {
   AlertGroupTotals,
-  AlertingRule,
-  AlertInstanceTotals,
   AlertInstanceTotalState,
+  AlertInstanceTotals,
+  AlertingRule,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -25,9 +25,9 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSources,
   getRulesSourceByName,
-  GRAFANA_RULES_SOURCE_NAME,
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
@@ -126,7 +126,7 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
-export function combineRulesNamespaces(
+export function combineRulesNamespace(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
   rulerRules?: RulerRulesConfigDTO
@@ -180,6 +180,33 @@ export function attachRulerRulesToCombinedRules(
   });
 
   return ns;
+}
+
+export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: RulerRuleGroupDTO): void {
+  if (!rule.promRule) {
+    return;
+  }
+
+  const combinedRulesFromRuler = rulerGroup.rules.map((rulerRule) =>
+    rulerRuleToCombinedRule(rulerRule, rule.namespace, rule.group)
+  );
+  const existingRulerRulesByName = combinedRulesFromRuler.reduce((acc, rule) => {
+    const sameNameRules = acc.get(rule.name);
+    if (sameNameRules) {
+      sameNameRules.push(rule);
+    } else {
+      acc.set(rule.name, [rule]);
+    }
+    return acc;
+  }, new Map<string, CombinedRule[]>());
+
+  const matchingRulerRule = getExistingRuleInGroup(rule.promRule, existingRulerRulesByName, rule.namespace.rulesSource);
+  if (matchingRulerRule) {
+    rule.rulerRule = matchingRulerRule.rulerRule;
+    rule.query = matchingRulerRule.query;
+    rule.labels = matchingRulerRule.labels;
+    rule.annotations = matchingRulerRule.annotations;
+  }
 }
 
 export function addCombinedPromAndRulerGroups(

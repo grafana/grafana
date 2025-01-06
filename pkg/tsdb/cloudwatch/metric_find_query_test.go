@@ -80,6 +80,86 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 		assert.Equal(t, expResponse, resp)
 	})
+
+	t.Run("Get different types", func(t *testing.T) {
+		var expectedInt int64 = 3
+		var expectedBool = true
+		var expectedArn = "arn"
+		cli = oldEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							AmiLaunchIndex: &expectedInt,
+							EbsOptimized:   &expectedBool,
+							IamInstanceProfile: &ec2.IamInstanceProfile{
+								Arn: &expectedArn,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+		})
+
+		executor := newExecutor(im, log.NewNullLogger())
+
+		testcases := []struct {
+			name          string
+			attributeName string
+			expResponse   []suggestData
+		}{
+			{
+				"int field",
+				"AmiLaunchIndex",
+				[]suggestData{
+					{Text: "3", Value: "3", Label: "3"},
+				},
+			},
+			{
+				"bool field",
+				"EbsOptimized",
+				[]suggestData{
+					{Text: "true", Value: "true", Label: "true"},
+				},
+			},
+			{
+				"nested field",
+				"IamInstanceProfile.Arn",
+				[]suggestData{
+					{Text: expectedArn, Value: expectedArn, Label: expectedArn},
+				},
+			},
+			{
+				"nil field",
+				"InstanceLifecycle",
+				[]suggestData{},
+			},
+		}
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				filterMap := map[string][]string{}
+				filterJson, err := json.Marshal(filterMap)
+				require.NoError(t, err)
+
+				resp, err := executor.handleGetEc2InstanceAttribute(
+					context.Background(),
+					backend.PluginContext{
+						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+					}, url.Values{
+						"region":        []string{"us-east-1"},
+						"attributeName": []string{tc.attributeName},
+						"filters":       []string{string(filterJson)},
+					},
+				)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expResponse, resp)
+			})
+		}
+	})
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {

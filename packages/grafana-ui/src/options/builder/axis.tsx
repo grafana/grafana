@@ -10,6 +10,7 @@ import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistr
 import { Field } from '../../components/Forms/Field';
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../../components/Input/Input';
+import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
@@ -163,21 +164,20 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
   const type = value?.type ?? ScaleDistribution.Linear;
   const log = value?.log ?? 2;
+
   return (
-    <>
-      <div style={{ marginBottom: 16 }}>
-        <RadioButtonGroup
-          value={type}
-          options={DISTRIBUTION_OPTIONS}
-          onChange={(v) => {
-            onChange({
-              ...value,
-              type: v!,
-              log: v === ScaleDistribution.Linear ? undefined : log,
-            });
-          }}
-        />
-      </div>
+    <Stack direction="column" gap={2}>
+      <RadioButtonGroup
+        value={type}
+        options={DISTRIBUTION_OPTIONS}
+        onChange={(v) => {
+          onChange({
+            ...value,
+            type: v!,
+            log: v === ScaleDistribution.Linear ? undefined : log,
+          });
+        }}
+      />
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
         <Field label="Log base">
           <Select
@@ -193,7 +193,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         </Field>
       )}
       {type === ScaleDistribution.Symlog && (
-        <Field label="Linear threshold">
+        <Field label="Linear threshold" style={{ marginBottom: 0 }}>
           <Input
             placeholder="1"
             value={value?.linearThreshold}
@@ -206,6 +206,6 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
           />
         </Field>
       )}
-    </>
+    </Stack>
   );
 };

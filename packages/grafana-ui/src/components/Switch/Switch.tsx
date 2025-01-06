@@ -27,6 +27,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
       <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
+          role="switch"
           disabled={disabled}
           checked={value}
           onChange={(event) => {
@@ -36,7 +37,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'}>
+        <label htmlFor={switchIdRef.current} aria-label={label}>
           <Icon name="check" size="xs" />
         </label>
       </div>
@@ -79,8 +80,8 @@ InlineSwitch.displayName = 'Switch';
 
 const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   switch: css({
-    width: '32px',
-    height: '16px',
+    width: theme.spacing(4),
+    height: theme.spacing(2),
     position: 'relative',
     lineHeight: 1,
 
@@ -100,7 +101,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         },
 
         svg: {
-          transform: 'translate3d(17px, -50%, 0)',
+          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
           background: theme.colors.primary.contrastText,
           color: theme.colors.primary.main,
         },
@@ -146,13 +147,14 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         position: 'absolute',
         display: 'block',
         color: 'transparent',
-        width: '12px',
-        height: '12px',
+        width: theme.spacing(1.5),
+        height: theme.spacing(1.5),
         borderRadius: theme.shape.radius.circle,
         background: theme.colors.text.secondary,
         boxShadow: theme.shadows.z1,
+        left: 0,
         top: '50%',
-        transform: 'translate3d(1px, -50%, 0)',
+        transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
         transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
 
         '@media (forced-colors: active)': {

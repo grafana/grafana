@@ -27,6 +27,28 @@ function createMockAPI(): SetupServer {
       });
     }),
 
+    http.get('/api/library-elements/:uid', ({ request, params }) => {
+      if (params.uid === 'library-element-404') {
+        return HttpResponse.json(
+          {
+            message: 'Library element not found',
+          },
+          {
+            status: 404,
+          }
+        );
+      }
+
+      return HttpResponse.json({
+        result: {
+          name: 'My Library Element',
+          meta: {
+            folderName: 'FolderName',
+          },
+        },
+      });
+    }),
+
     http.post('/api/cloudmigration/migration', async ({ request }) => {
       const data = await request.json();
       const authToken = typeof data === 'object' && data && data.authToken;

@@ -9,7 +9,7 @@ type ReusableComponentProps = {
 
 export function AddedComponents() {
   const { components } = usePluginComponents<ReusableComponentProps>({
-    extensionPointId: 'plugins/grafana-extensionexample2-app/addComponent/v1',
+    extensionPointId: 'plugins/grafana-extensionstest-app/addComponent/v1',
   });
 
   return (

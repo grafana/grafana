@@ -83,6 +83,6 @@ it('should call delete team', async () => {
   await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
   await waitFor(() => {
-    expect(mockDelete).toHaveBeenCalledWith(mockTeam.id);
+    expect(mockDelete).toHaveBeenCalledWith(mockTeam.uid);
   });
 });

@@ -20,6 +20,6 @@ describe('<BasicSettings>', () => {
     setup();
 
     expect(screen.getByTestId(selectors.pages.DataSource.name)).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Default/ })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Default/)).toBeInTheDocument();
   });
 });

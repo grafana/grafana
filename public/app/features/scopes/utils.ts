@@ -25,12 +25,12 @@ export function disableScopes() {
 
 export function exitScopesReadOnly() {
   scopesSelectorScene?.exitReadOnly();
-  scopesDashboardsScene?.enable();
+  scopesDashboardsScene?.exitReadOnly();
 }
 
 export function enterScopesReadOnly() {
   scopesSelectorScene?.enterReadOnly();
-  scopesDashboardsScene?.disable();
+  scopesDashboardsScene?.enterReadOnly();
 }
 
 export function getClosestScopesFacade(scene: SceneObject): ScopesFacade | null {

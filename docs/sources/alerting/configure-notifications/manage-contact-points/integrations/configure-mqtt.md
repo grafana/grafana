@@ -12,9 +12,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: MQTT notifier
+menuTitle: MQTT
 title: Configure the MQTT notifier for Alerting
-weight: 80
+weight: 140
 ---
 
 # Configure the MQTT notifier for Alerting
@@ -33,7 +33,11 @@ To configure the MQTT integration for Alerting, complete the following steps.
 1. Enter the MQTT topic name in the **Topic** field.
 1. In **Optional MQTT settings**, specify additional settings for the MQTT integration if needed.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
    A test alert notification should be sent to the MQTT broker.
+
 1. Click **Save** contact point.
 
 The integration sends data in JSON format by default. You can change that using **Message format** field in the **Optional MQTT settings** section. There are two supported formats:
@@ -145,8 +149,8 @@ Each alert instance in the `alerts` array has the following fields.
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Deprecated. It will be removed in a future release.**                            |
-| panelURL     | string | **Deprecated. It will be removed in a future release.**                            |
+| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation        |
+| panelURL     | string | A link to the panel if the alert has a Panel ID annotation                         |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}

@@ -9,6 +9,8 @@ import {
   incrRoundDn,
   isValidDuration,
   parseDuration,
+  rangeUtil,
+  ScopedVars,
   Table,
   trimTable,
 } from '@grafana/data';
@@ -21,24 +23,23 @@ type TargetIdent = string;
 
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
-type TargetSig = string;
-
+type TargetSignature = string;
 type TimestampMs = number;
-
 type SupportedQueryTypes = PromQuery;
+type ApplyInterpolation = (str: string, scopedVars?: ScopedVars) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
 
 interface TargetCache {
-  sig: TargetSig;
+  signature: TargetSignature;
   prevTo: TimestampMs;
   frames: DataFrame[];
 }
 
 export interface CacheRequestInfo<T extends SupportedQueryTypes> {
   requests: Array<DataQueryRequest<T>>;
-  targSigs: Map<TargetIdent, TargetSig>;
+  targetSignatures: Map<TargetIdent, TargetSignature>;
   shouldCache: boolean;
 }
 
@@ -47,23 +48,25 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
  * This is the string used to uniquely identify a field within a "target"
  * @param field
  */
-export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+export const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
  * NOMENCLATURE
  * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
- * Ident: Identity: the string that is not expected to change
- * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
+ * Identity: the string that is not expected to change
+ * Signature: the string that is expected to change, upon which we wipe the cache fields
  */
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  private applyInterpolation = (str: string, scopedVars?: ScopedVars) => str;
 
   cache = new Map<TargetIdent, TargetCache>();
 
   constructor(options: {
     getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
     overlapString: string;
+    applyInterpolation?: ApplyInterpolation;
   }) {
     const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
@@ -75,6 +78,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
     }
 
     this.getTargetSignature = options.getTargetSignature;
+    if (options.applyInterpolation) {
+      this.applyInterpolation = options.applyInterpolation;
+    }
   }
 
   // can be used to change full range request to partial, split into multiple requests
@@ -91,20 +97,20 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    // pre-compute reqTargSigs
-    const reqTargSigs = new Map<TargetIdent, TargetSig>();
-    request.targets.forEach((targ) => {
-      let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
-      reqTargSigs.set(targIdent, targSig);
+    // pre-compute reqTargetSignatures
+    const reqTargetSignatures = new Map<TargetIdent, TargetSignature>();
+    request.targets.forEach((target) => {
+      let targetIdentity = `${request.dashboardUID}|${request.panelId}|${target.refId}`;
+      let targetSignature = this.getTargetSignature(request, target); // ${request.maxDataPoints} ?
+      reqTargetSignatures.set(targetIdentity, targetSignature);
     });
 
     // figure out if new query range or new target props trigger full cache invalidation & re-query
-    for (const [targIdent, targSig] of reqTargSigs) {
-      let cached = this.cache.get(targIdent);
-      let cachedSig = cached?.sig;
+    for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
+      let cached = this.cache.get(targetIdentity);
+      let cachedSig = cached?.signature;
 
-      if (cachedSig !== targSig) {
+      if (cachedSig !== targetSignature) {
         doPartialQuery = false;
       } else {
         // only do partial queries when new request range follows prior request range (possibly with overlap)
@@ -136,14 +142,14 @@ export class QueryCache<T extends SupportedQueryTypes> {
         },
       };
     } else {
-      reqTargSigs.forEach((targSig, targIdent) => {
+      reqTargetSignatures.forEach((targSig, targIdent) => {
         this.cache.delete(targIdent);
       });
     }
 
     return {
       requests: [request],
-      targSigs: reqTargSigs,
+      targetSignatures: reqTargetSignatures,
       shouldCache,
     };
   }
@@ -162,13 +168,13 @@ export class QueryCache<T extends SupportedQueryTypes> {
       const respByTarget = new Map<TargetIdent, DataFrame[]>();
 
       respFrames.forEach((frame: DataFrame) => {
-        let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+        let targetIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
 
-        let frames = respByTarget.get(targIdent);
+        let frames = respByTarget.get(targetIdent);
 
         if (!frames) {
           frames = [];
-          respByTarget.set(targIdent, frames);
+          respByTarget.set(targetIdent, frames);
         }
 
         frames.push(frame);
@@ -176,8 +182,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
       let outFrames: DataFrame[] = [];
 
-      respByTarget.forEach((respFrames, targIdent) => {
-        let cachedFrames = (targIdent ? this.cache.get(targIdent)?.frames : null) ?? [];
+      respByTarget.forEach((respFrames, targetIdentity) => {
+        let cachedFrames = (targetIdentity ? this.cache.get(targetIdentity)?.frames : null) ?? [];
 
         respFrames.forEach((respFrame: DataFrame) => {
           // skip empty frames
@@ -187,9 +193,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
           // frames are identified by their second (non-time) field's name + labels
           // TODO: maybe also frame.meta.type?
-          let respFrameIdent = getFieldIdent(respFrame.fields[1]);
+          let respFrameIdentity = getFieldIdentity(respFrame.fields[1]);
 
-          let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
+          let cachedFrame = cachedFrames.find((cached) => getFieldIdentity(cached.fields[1]) === respFrameIdentity);
 
           if (!cachedFrame) {
             // append new unknown frames
@@ -207,6 +213,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
             if (amendedTable) {
               for (let i = 0; i < amendedTable.length; i++) {
                 cachedFrame.fields[i].values = amendedTable[i];
+                if (cachedFrame.fields[i].config.displayNameFromDS !== respFrame.fields[i].config.displayNameFromDS) {
+                  cachedFrame.fields[i].config.displayNameFromDS = respFrame.fields[i].config.displayNameFromDS;
+                }
               }
               cachedFrame.length = cachedFrame.fields[0].values.length;
             }
@@ -220,7 +229,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
 
-          let trimmed = trimTable(table, newFrom, newTo);
+          const dataPointStep = findDatapointStep(request, respFrames, this.applyInterpolation);
+
+          // query interval is greater than request.intervalMs, use query interval to make sure we've always got one datapoint outside the panel viewport
+          let trimmed = trimTable(table, newFrom - dataPointStep, newTo);
 
           if (trimmed[0].length > 0) {
             for (let i = 0; i < trimmed.length; i++) {
@@ -230,8 +242,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
           }
         });
 
-        this.cache.set(targIdent, {
-          sig: requestInfo.targSigs.get(targIdent)!,
+        this.cache.set(targetIdentity, {
+          signature: requestInfo.targetSignatures.get(targetIdentity)!,
           frames: nonEmptyCachedFrames,
           prevTo: newTo,
         });
@@ -254,4 +266,26 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     return respFrames;
   }
+}
+
+export function findDatapointStep(
+  request: DataQueryRequest<PromQuery>,
+  respFrames: DataFrame[],
+  applyInterpolation: ApplyInterpolation
+): number {
+  // Prometheus specific logic below
+  if (request.targets[0].datasource?.type !== 'prometheus') {
+    return 0;
+  }
+
+  const target = request.targets.find((t) => t.refId === respFrames[0].refId);
+
+  let dataPointStep = request.intervalMs;
+  if (target?.interval) {
+    const minStepMs = rangeUtil.intervalToMs(applyInterpolation(target.interval));
+    if (minStepMs > request.intervalMs) {
+      dataPointStep = minStepMs;
+    }
+  }
+  return dataPointStep;
 }

@@ -45,6 +45,7 @@ export const InlineField = ({
   error,
   transparent,
   interactive,
+  validationMessageHorizontalOverflow,
   ...htmlProps
 }: Props) => {
   const theme = useTheme2();
@@ -72,7 +73,11 @@ export const InlineField = ({
       <div className={styles.childContainer}>
         {cloneElement(children, { invalid, disabled, loading })}
         {invalid && error && (
-          <div className={cx(styles.fieldValidationWrapper)}>
+          <div
+            className={cx(styles.fieldValidationWrapper, {
+              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+            })}
+          >
             <FieldValidationMessage>{error}</FieldValidationMessage>
           </div>
         )}
@@ -93,12 +98,21 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
       position: 'relative',
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
       margin: `0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0`,
+      maxWidth: '100%',
     }),
     childContainer: css({
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
     }),
     fieldValidationWrapper: css({
       marginTop: theme.spacing(0.5),
+    }),
+    validationMessageHorizontalOverflow: css({
+      width: 0,
+      overflowX: 'visible',
+
+      '& > *': {
+        whiteSpace: 'nowrap',
+      },
     }),
   };
 };

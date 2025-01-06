@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -21,6 +22,11 @@ func NpmRetrieveAction(c *cli.Context) error {
 	tag := c.String("tag")
 	if tag == "" {
 		return fmt.Errorf("no tag version specified, exitting")
+	}
+
+	if strings.Contains(tag, "security") {
+		log.Printf("skipping npm publish because version '%s' has 'security'", tag)
+		return nil
 	}
 
 	prereleaseBucket := strings.TrimSpace(os.Getenv("PRERELEASE_BUCKET"))
@@ -48,6 +54,11 @@ func NpmStoreAction(c *cli.Context) error {
 		return fmt.Errorf("no tag version specified, exiting")
 	}
 
+	if strings.Contains(tag, "security") {
+		log.Printf("skipping npm publish because version '%s' has 'security'", tag)
+		return nil
+	}
+
 	prereleaseBucket := strings.TrimSpace(os.Getenv("PRERELEASE_BUCKET"))
 	if prereleaseBucket == "" {
 		return cli.Exit("the environment variable PRERELEASE_BUCKET must be set", 1)
@@ -71,6 +82,11 @@ func NpmReleaseAction(c *cli.Context) error {
 	tag := c.String("tag")
 	if tag == "" {
 		return fmt.Errorf("no tag version specified, exitting")
+	}
+
+	if strings.Contains(tag, "security") {
+		log.Printf("skipping npm publish because version '%s' has 'security'", tag)
+		return nil
 	}
 
 	err := npm.PublishNpmPackages(c.Context, tag)

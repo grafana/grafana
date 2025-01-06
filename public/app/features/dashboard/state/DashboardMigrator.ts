@@ -81,7 +81,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 39;
+export const DASHBOARD_SCHEMA_VERSION = 40;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -855,7 +855,7 @@ export class DashboardMigrator {
           // Update any overrides referencing the cell display mode
           if (panel.fieldConfig?.overrides) {
             for (const override of panel.fieldConfig.overrides) {
-              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+              for (let j = 0; j < (override.properties?.length || 0); j++) {
                 let overrideDisplayMode = override.properties[j].value;
                 if (override.properties[j].id === 'custom.displayMode') {
                   override.properties[j].id = 'custom.cellOptions';
@@ -902,6 +902,13 @@ export class DashboardMigrator {
 
         return panel;
       });
+    }
+
+    if (oldVersion < 40) {
+      // In old ashboards refresh property can be a boolean
+      if (typeof this.dashboard.refresh !== 'string') {
+        this.dashboard.refresh = '';
+      }
     }
 
     /**

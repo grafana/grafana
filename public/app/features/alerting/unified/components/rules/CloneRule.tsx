@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import { Redirect, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -33,7 +33,7 @@ export function RedirectToCloneRule({
       returnTo: redirectTo ? returnTo : '',
     });
 
-    return <Redirect to={`/alerting/new?` + queryParams.toString()} push />;
+    return <Navigate to={`/alerting/new?` + queryParams.toString()} replace={false} />;
   }
 
   return (

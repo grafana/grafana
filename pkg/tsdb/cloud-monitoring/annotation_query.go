@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 type annotationEvent struct {
@@ -23,9 +22,12 @@ type annotationEvent struct {
 func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor, logger log.Logger) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, logger)
+	dr, queryRes, _, err := queries[0].run(ctx, req, s, dsInfo, logger)
+	if dr.Error != nil {
+		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(dr.Error)
+	}
 	if err != nil {
-		errorsource.AddErrorToResponse(queries[0].getRefID(), resp, err)
+		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(err)
 		return resp, err
 	}
 
@@ -39,13 +41,17 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	firstQuery := req.Queries[0]
 	err = json.Unmarshal(firstQuery.JSON, &tslq)
 	if err != nil {
+		logger.Error("error unmarshaling query", "error", err, "statusSource", backend.ErrorSourceDownstream)
+		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
 		return resp, nil
 	}
-	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr.(cloudMonitoringResponse), tslq.TimeSeriesList.Title, tslq.TimeSeriesList.Text)
-	resp.Responses[firstQuery.RefID] = *queryRes
+
+	// parseToAnnotations never actually returns an error
+	err = parseToAnnotations(req.Queries[0].RefID, dr, queryRes.(cloudMonitoringResponse), tslq.TimeSeriesList.Title, tslq.TimeSeriesList.Text)
+	resp.Responses[firstQuery.RefID] = *dr
 
 	if err != nil {
-		errorsource.AddErrorToResponse(firstQuery.RefID, resp, err)
+		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
 		return resp, err
 	}
 

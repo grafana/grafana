@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -19,6 +19,19 @@ export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
       version: info.version,
       angular: angular ?? { detected: false, hideDeprecation: false },
       loadingStrategy: PluginLoadingStrategy.script,
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        extensionPoints: [],
+        exposedComponents: [],
+      },
+      dependencies: {
+        grafanaVersion: '',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
     };
   });
 

@@ -16,6 +16,8 @@ import {
 
 import { LogsTokenTypes } from './types';
 
+// about getStatementPosition: public/app/plugins/datasource/cloudwatch/language/cloudwatch-ppl/completion/statementPosition.ts
+
 export const getStatementPosition = (currentToken: LinkedToken | null): StatementPosition => {
   const previousNonWhiteSpace = currentToken?.getPreviousNonWhiteSpaceToken();
   const nextNonWhiteSpace = currentToken?.getNextNonWhiteSpaceToken();

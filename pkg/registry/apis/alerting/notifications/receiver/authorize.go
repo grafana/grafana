@@ -22,7 +22,7 @@ type AccessControlService interface {
 }
 
 func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	if attr.GetResource() != resourceInfo.GroupResource().Resource {
+	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)
@@ -53,9 +53,7 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 			return deny(err)
 		}
 	case "list":
-		if err := ac.AuthorizeReadSome(ctx, user); err != nil { // Preconditions, further checks are done downstream.
-			return deny(err)
-		}
+		return authorizer.DecisionAllow, "", nil // Always allow listing, receivers are filtered downstream.
 	case "create":
 		if err := ac.AuthorizeCreate(ctx, user); err != nil {
 			return deny(err)

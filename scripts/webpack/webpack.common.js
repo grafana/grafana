@@ -9,6 +9,10 @@ module.exports = {
     app: './public/app/index.ts',
     swagger: './public/swagger/index.tsx',
   },
+  experiments: {
+    // Required to load WASM modules.
+    asyncWebAssembly: true,
+  },
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),
@@ -97,18 +101,9 @@ module.exports = {
         ],
       },
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
-      },
-      {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         type: 'asset/resource',
         generator: { filename: 'static/img/[name].[hash:8][ext]' },
-      },
-      // for pre-caching SVGs as part of the JS bundles
-      {
-        test: /(unicons|mono|custom|solid)[\\/].*\.svg$/,
-        type: 'asset/source',
       },
       {
         // Required for msagl library (used in Nodegraph panel) to work
@@ -126,12 +121,6 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
-        unicons: {
-          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

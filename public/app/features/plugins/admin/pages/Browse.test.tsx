@@ -3,13 +3,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { RouteDescriptor } from 'app/core/navigation/types';
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import { fetchRemotePlugins } from '../state/actions';
-import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
+import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 
 import BrowsePage from './Browse';
 
@@ -30,13 +28,10 @@ const renderBrowse = (
 ): RenderResult => {
   const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
-  const props = getRouteComponentProps({
-    route: { routeName: PluginAdminRoutes.Home } as RouteDescriptor,
-  });
 
   return render(
     <TestProvider store={store}>
-      <BrowsePage {...props} />
+      <BrowsePage />
     </TestProvider>
   );
 };

@@ -100,12 +100,13 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, sec
 	raw, err := ini.Load([]byte(rawCfg))
 	require.NoError(t, err)
 	cfg := &setting.Cfg{Raw: raw}
+	sqlStore := db.InitTestDB(t)
+
 	// this would be the plugin - mocked at the moment
-	fallbackStore := secretskvs.WithCache(secretskvs.NewFakeSQLSecretsKVStore(t), time.Minute*5, time.Minute*5)
+	fallbackStore := secretskvs.WithCache(secretskvs.NewFakeSQLSecretsKVStore(t, sqlStore), time.Minute*5, time.Minute*5)
 	secretsStoreForPlugin := secretskvs.WithCache(secretskvs.NewFakePluginSecretsKVStore(t, featuremgmt.WithFeatures(), fallbackStore), time.Minute*5, time.Minute*5)
 
 	// this is to init the sql secret store inside the migration
-	sqlStore := db.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := secretskvs.NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvideMigrateToPluginService(

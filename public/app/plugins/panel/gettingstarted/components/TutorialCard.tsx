@@ -45,37 +45,37 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
-    card: css`
-      ${cardStyle(theme, complete)}
-      width: 460px;
-      min-width: 460px;
+    card: css({
+      ...cardStyle(theme, complete),
+      width: '460px',
+      minWidth: '460px',
 
-      ${theme.breakpoints.down('xl')} {
-        min-width: 368px;
-      }
+      [theme.breakpoints.down('xl')]: {
+        minWidth: '368px',
+      },
 
-      ${theme.breakpoints.down('lg')} {
-        min-width: 272px;
-      }
-    `,
-    type: css`
-      color: ${theme.colors.primary.text};
-      text-transform: uppercase;
-    `,
-    heading: css`
-      text-transform: uppercase;
-      color: ${theme.colors.primary.text};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    cardTitle: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    info: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    status: css`
-      display: flex;
-      justify-content: flex-end;
-    `,
+      [theme.breakpoints.down('lg')]: {
+        minWidth: '272px',
+      },
+    }),
+    type: css({
+      color: theme.colors.primary.text,
+      textTransform: 'uppercase',
+    }),
+    heading: css({
+      textTransform: 'uppercase',
+      color: theme.colors.primary.text,
+      marginBottom: theme.spacing(1),
+    }),
+    cardTitle: css({
+      marginBottom: theme.spacing(2),
+    }),
+    info: css({
+      marginBottom: theme.spacing(2),
+    }),
+    status: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+    }),
   };
 };

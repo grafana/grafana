@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction, FolderDTO, FolderParent } from 'app/types';
 
 export const FOLDER_ID = 'manage-folder';
 
@@ -13,7 +13,9 @@ export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folder
 export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
+export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+  const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
+
   const model: NavModelItem = {
     icon: 'folder',
     id: FOLDER_ID,

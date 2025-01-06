@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -37,9 +37,7 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
 
   return (
     <Branding.LoginBackground
-      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground, {
-        [loginStyles.containerBodyScrolling]: config.featureToggles.bodyScrolling,
-      })}
+      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
     >
       <div className={loginStyles.loginMain}>
         <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
@@ -47,7 +45,9 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
             <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
             <div className={loginStyles.titleWrapper}>
               {isChangingPassword ? (
-                <h1 className={loginStyles.mainTitle}>Update your password</h1>
+                <h1 className={loginStyles.mainTitle}>
+                  <Trans i18nKey="login.layout.update-password">Update your password</Trans>
+                </h1>
               ) : (
                 <>
                   <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
@@ -89,15 +89,13 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      flex: 1,
       minWidth: '100%',
       marginLeft: 0,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-    }),
-    containerBodyScrolling: css({
-      flex: 1,
     }),
     loginAnim: css({
       ['&:before']: {

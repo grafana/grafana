@@ -19,6 +19,7 @@ import config from '../../core/config';
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
 export const AutoRefreshInterval = 'auto';
+export const RedirectToUrlKey = 'redirectTo';
 
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
@@ -119,10 +120,20 @@ export class ContextSrv {
    * Indicate the user has been logged out
    */
   setLoggedOut() {
+    this.setRedirectToUrl();
     this.cancelTokenRotationJob();
     this.user.isSignedIn = false;
     this.isSignedIn = false;
     window.location.reload();
+  }
+
+  setRedirectToUrl() {
+    if (config.featureToggles.useSessionStorageForRedirection) {
+      window.sessionStorage.setItem(
+        RedirectToUrlKey,
+        encodeURIComponent(window.location.href.substring(window.location.origin.length))
+      );
+    }
   }
 
   hasRole(role: string) {

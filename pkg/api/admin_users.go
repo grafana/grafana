@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -71,6 +70,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
+		UID:     usr.UID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -362,12 +362,13 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
-	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	id := web.Params(c.Req)[":id"]
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.SignedInUser.GetID() == identity.NewTypedID(claims.TypeUser, userID) {
+	if c.SignedInUser.GetID() == claims.NewTypeID(claims.TypeUser, id) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

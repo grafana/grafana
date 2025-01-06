@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,83 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type GetServiceAccountInternalIDQuery struct {
+	OrgID int64
+	UID   string
+}
+
+type GetServiceAccountInternalIDResult struct {
+	ID int64
+}
+
+var sqlQueryServiceAccountInternalIDTemplate = mustTemplate("service_account_internal_id.sql")
+
+func newGetServiceAccountInternalID(sql *legacysql.LegacyDatabaseHelper, q *GetServiceAccountInternalIDQuery) getServiceAccountInternalIDQuery {
+	return getServiceAccountInternalIDQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Query:        q,
+	}
+}
+
+type getServiceAccountInternalIDQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Query        *GetServiceAccountInternalIDQuery
+}
+
+func (r getServiceAccountInternalIDQuery) Validate() error {
+	return nil // TODO
+}
+
+func (s *legacySQLStore) GetServiceAccountInternalID(
+	ctx context.Context,
+	ns claims.NamespaceInfo,
+	query GetServiceAccountInternalIDQuery,
+) (*GetServiceAccountInternalIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetServiceAccountInternalID(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryServiceAccountInternalIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryServiceAccountInternalIDTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, errors.New("service account not found")
+	}
+
+	var id int64
+	if err := rows.Scan(&id); err != nil {
+		return nil, err
+	}
+
+	return &GetServiceAccountInternalIDResult{
+		id,
+	}, nil
+}
 
 type ListServiceAccountsQuery struct {
 	UID        string

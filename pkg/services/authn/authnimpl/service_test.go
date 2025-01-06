@@ -3,7 +3,6 @@ package authnimpl
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 	"net/url"
 	"slices"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -399,11 +397,11 @@ func TestService_Login(t *testing.T) {
 					ExpectedIdentity: tt.expectedClientIdentity,
 				})
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
-					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+					CreateTokenProvider: func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 						if tt.expectedSessionErr != nil {
 							return nil, tt.expectedSessionErr
 						}
-						return &auth.UserToken{UserId: user.ID}, nil
+						return &auth.UserToken{UserId: cmd.User.ID}, nil
 					},
 				}
 			})
@@ -509,7 +507,7 @@ func TestService_Logout(t *testing.T) {
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},

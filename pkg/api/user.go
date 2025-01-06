@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Respo
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
 			OrgID:          c.SignedInUser.GetOrgID(),
 			UID:            c.SignedInUser.GetID(),
-			Name:           c.SignedInUser.NameOrFallback(),
+			Name:           c.SignedInUser.GetName(),
 			Email:          c.SignedInUser.GetEmail(),
 			Login:          c.SignedInUser.GetLogin(),
 		})
@@ -91,7 +91,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
@@ -281,7 +281,7 @@ func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
-	if c.SignedInUser.IsEmailVerified() {
+	if c.SignedInUser.GetEmailVerified() {
 		// email is already verified so we don't need to trigger the flow.
 		return response.Respond(http.StatusNotModified, nil)
 	}

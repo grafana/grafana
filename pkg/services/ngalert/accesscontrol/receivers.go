@@ -2,10 +2,14 @@ package accesscontrol
 
 import (
 	"context"
+	// #nosec G505 Used only for shortening the uid, not for security purposes.
+	"crypto/sha1"
+	"encoding/hex"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -13,8 +17,37 @@ const (
 )
 
 var (
-	ScopeReceiversProvider = ac.NewScopeProvider(ScopeReceiversRoot)
+	ScopeReceiversProvider = ReceiverScopeProvider{ac.NewScopeProvider(ScopeReceiversRoot)}
 	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
+)
+
+type ReceiverScopeProvider struct {
+	ac.ScopeProvider
+}
+
+func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {
+	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(uid))
+}
+
+// GetResourceIDFromUID converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
+// If the uid is already less than or equal to 40 characters, it is returned as is.
+func (p ReceiverScopeProvider) GetResourceIDFromUID(uid string) string {
+	if len(uid) <= util.MaxUIDLength {
+		return uid
+	}
+	// #nosec G505 Used only for shortening the uid, not for security purposes.
+	h := sha1.New()
+	h.Write([]byte(uid))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// ReceiverPermission is a type for representing a receiver permission.
+type ReceiverPermission string
+
+const (
+	ReceiverPermissionView  ReceiverPermission = "View"
+	ReceiverPermissionEdit  ReceiverPermission = "Edit"
+	ReceiverPermissionAdmin ReceiverPermission = "Admin"
 )
 
 var (
@@ -125,6 +158,28 @@ var (
 			ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
+
+	// Admin
+
+	// Asserts pre-conditions for resource permissions access to receivers. If this evaluates to false, the user cannot modify permissions for any receivers.
+	permissionsReceiversPreConditionsEval = ac.EvalAll(
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead),  // Action for receivers. UID scope.
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite), // Action for receivers. UID scope.
+	)
+
+	// Asserts resource permissions access to all receivers.
+	permissionsAllReceiversEval = ac.EvalAll(
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversAll),
+	)
+
+	// Asserts resource permissions access to a specific receiver.
+	permissionsReceiverEval = func(uid string) ac.Evaluator {
+		return ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
 )
 
 type ReceiverAccess[T models.Identified] struct {
@@ -133,6 +188,7 @@ type ReceiverAccess[T models.Identified] struct {
 	create        actionAccess[T]
 	update        actionAccess[T]
 	delete        actionAccess[T]
+	permissions   actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -199,6 +255,18 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			authorizeAll: deleteAllReceiversEval,
 		},
+		permissions: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "admin", // Essentially read+write receiver resource permissions.
+			authorizeSome: permissionsReceiversPreConditionsEval,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return permissionsReceiverEval(receiver.GetUID())
+			},
+			authorizeAll: permissionsAllReceiversEval,
+		},
 	}
 
 	// If this service is meant for the provisioning API, we include the provisioning actions as possible permissions.
@@ -219,9 +287,10 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 		})
 	}
 
-	// Write and delete permissions should require read permissions.
+	// Write, delete, and permissions management should require read permissions.
 	extendAccessControl(&rcvAccess.update, ac.EvalAll, rcvAccess.read)
 	extendAccessControl(&rcvAccess.delete, ac.EvalAll, rcvAccess.read)
+	extendAccessControl(&rcvAccess.permissions, ac.EvalAll, rcvAccess.read)
 
 	return rcvAccess
 }
@@ -335,12 +404,11 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		basePerms.Set(models.ReceiverPermissionReadSecret, true) // Has access to all receivers.
 	}
 
-	// TODO: Add when resource permissions are implemented.
-	//if err := s.permissions.AuthorizePreConditions(ctx, user); err != nil {
-	//	basePerms.Set(models.ReceiverPermissionAdmin, false) // Doesn't match the preconditions.
-	//} else if err := s.permissions.AuthorizeAll(ctx, user); err == nil {
-	//	basePerms.Set(models.ReceiverPermissionAdmin, true) // Has access to all receivers.
-	//}
+	if err := s.permissions.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionAdmin, false) // Doesn't match the preconditions.
+	} else if err := s.permissions.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionAdmin, true) // Has access to all receivers.
+	}
 
 	if err := s.update.AuthorizePreConditions(ctx, user); err != nil {
 		basePerms.Set(models.ReceiverPermissionWrite, false) // Doesn't match the preconditions.
@@ -371,11 +439,10 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 			permSet.Set(models.ReceiverPermissionReadSecret, err == nil)
 		}
 
-		// TODO: Add when resource permissions are implemented.
-		//if _, ok := permSet.Has(models.ReceiverPermissionAdmin); !ok {
-		//	err := s.permissions.authorize(ctx, user, rcv)
-		//	permSet.Set(models.ReceiverPermissionAdmin, err == nil)
-		//}
+		if _, ok := permSet.Has(models.ReceiverPermissionAdmin); !ok {
+			err := s.permissions.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionAdmin, err == nil)
+		}
 
 		if _, ok := permSet.Has(models.ReceiverPermissionWrite); !ok {
 			err := s.update.authorize(ctx, user, rcv)

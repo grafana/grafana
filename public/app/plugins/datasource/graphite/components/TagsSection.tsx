@@ -66,8 +66,8 @@ export function TagsSection({ tags, state }: Props) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    button: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    button: css({
+      marginRight: theme.spacing(0.5),
+    }),
   };
 }

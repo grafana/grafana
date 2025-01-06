@@ -27,6 +27,7 @@ export interface ServiceAccount {
 
 export interface ServiceAccountDTO extends WithAccessControlMetadata {
   id: number;
+  uid: string;
   orgId: number;
   tokens: number;
   name: string;
@@ -44,6 +45,7 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
 export interface ServiceAccountCreateApiResponse {
   avatarUrl?: string;
   id: number;
+  uid: string;
   isDisabled: boolean;
   login: string;
   name: string;

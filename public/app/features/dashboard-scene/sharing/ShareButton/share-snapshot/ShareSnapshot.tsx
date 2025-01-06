@@ -5,6 +5,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
@@ -157,22 +159,36 @@ const UpsertSnapshotActions = ({
   url: string;
   onDeleteClick: () => void;
   onNewSnapshotClick: () => void;
-}) => (
-  <Stack justifyContent="flex-start" gap={1} direction={{ xs: 'column', sm: 'row' }}>
-    <ClipboardButton
-      icon="link"
-      variant="primary"
-      fill="outline"
-      getText={() => url}
-      data-testid={selectors.copyUrlButton}
-    >
-      <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
-    </ClipboardButton>
-    <Button icon="trash-alt" variant="destructive" fill="outline" onClick={onDeleteClick}>
-      <Trans i18nKey="snapshot.share.delete-button">Delete snapshot</Trans>
-    </Button>
-    <Button variant="secondary" fill="solid" onClick={onNewSnapshotClick}>
-      <Trans i18nKey="snapshot.share.new-snapshot-button">New snapshot</Trans>
-    </Button>
-  </Stack>
-);
+}) => {
+  const hasDeletePermission = contextSrv.hasPermission(AccessControlAction.SnapshotsDelete);
+  const deleteTooltip = hasDeletePermission
+    ? ''
+    : t('snapshot.share.delete-permission-tooltip', "You don't have permission to delete snapshots");
+
+  return (
+    <Stack justifyContent="flex-start" gap={1} direction={{ xs: 'column', sm: 'row' }}>
+      <ClipboardButton
+        icon="link"
+        variant="primary"
+        fill="outline"
+        getText={() => url}
+        data-testid={selectors.copyUrlButton}
+      >
+        <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
+      </ClipboardButton>
+      <Button
+        icon="trash-alt"
+        variant="destructive"
+        fill="outline"
+        onClick={onDeleteClick}
+        disabled={!hasDeletePermission}
+        tooltip={deleteTooltip}
+      >
+        <Trans i18nKey="snapshot.share.delete-button">Delete snapshot</Trans>
+      </Button>
+      <Button variant="secondary" fill="solid" onClick={onNewSnapshotClick}>
+        <Trans i18nKey="snapshot.share.new-snapshot-button">New snapshot</Trans>
+      </Button>
+    </Stack>
+  );
+};

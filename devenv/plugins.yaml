@@ -17,3 +17,7 @@ apps:
     org_id: 1
     org_name: Main Org.
     disabled: false
+  - type: grafana-extensionexample3-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false

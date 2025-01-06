@@ -10,7 +10,7 @@ import (
 
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID string) ([]string, error)
-
+type ResourceTranslator func(ctx context.Context, orgID int64, resourceID string) (string, error)
 type Options struct {
 	// Resource is the action and scope prefix that is generated
 	Resource string
@@ -18,6 +18,9 @@ type Options struct {
 	ResourceAttribute string
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
+	// ResourceTranslator is a translator function that will be called before each action, it can be used to translate a resource id to a different format.
+	// If set to nil the translator will be skipped
+	ResourceTranslator ResourceTranslator
 	// ResourceValidator is a validator function that will be called before each assignment.
 	// If set to nil the validator will be skipped
 	ResourceValidator ResourceValidator

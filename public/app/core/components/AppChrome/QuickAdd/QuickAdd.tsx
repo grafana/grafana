@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useSelector } from 'app/types';
@@ -22,6 +22,8 @@ export const QuickAdd = ({}: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+  const showQuickAdd = createActions.length > 0 && (!isSingleTopNav || !isSmallScreen);
 
   useMediaQueryChange({
     breakpoint,
@@ -45,7 +47,7 @@ export const QuickAdd = ({}: Props) => {
     );
   };
 
-  return createActions.length > 0 ? (
+  return showQuickAdd ? (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <ToolbarButton

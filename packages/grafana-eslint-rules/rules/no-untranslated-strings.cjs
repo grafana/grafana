@@ -9,7 +9,7 @@ const noUntranslatedStrings = createRule({
   create(context) {
     return {
       JSXText(node) {
-        const ancestors = context.getAncestors();
+        const ancestors = context.sourceCode.getAncestors(node);
         const isEmpty =  !node.value.trim();
         const hasTransAncestor = ancestors.some((ancestor) => {
           return (

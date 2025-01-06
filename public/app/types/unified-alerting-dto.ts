@@ -77,7 +77,7 @@ export enum PromApplication {
   Thanos = 'Thanos',
 }
 
-export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
+export type RulesSourceApplication = PromApplication | 'Loki' | 'grafana';
 
 export interface PromBuildInfoResponse {
   data: {
@@ -96,7 +96,7 @@ export interface PromBuildInfoResponse {
 }
 
 export interface PromApiFeatures {
-  application?: PromApplication;
+  application: RulesSourceApplication;
   features: {
     rulerApiEnabled: boolean;
   };
@@ -132,7 +132,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     activeAt: string;
     value: string;
   }>;
-  labels: Labels;
+  labels?: Labels;
   annotations?: Annotations;
   duration?: number; // for
   state: PromAlertingRuleState;
@@ -169,6 +169,7 @@ export interface PromResponse<T> {
 
 export type PromRulesResponse = PromResponse<{
   groups: PromRuleGroupDTO[];
+  groupNextToken?: string;
   totals?: AlertGroupTotals;
 }>;
 
@@ -201,6 +202,8 @@ export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
   expression?: string;
+  instant?: boolean;
+  range?: boolean;
 }
 
 export interface AlertQuery<T = AlertDataQuery | ExpressionQuery> {
@@ -219,6 +222,11 @@ export interface GrafanaNotificationSettings {
   repeat_interval?: string;
   mute_time_intervals?: string[];
 }
+
+export interface GrafanaEditorSettings {
+  simplified_query_and_expressions_section: boolean;
+  simplified_notifications_section: boolean;
+}
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
@@ -228,6 +236,9 @@ export interface PostableGrafanaRuleDefinition {
   data: AlertQuery[];
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
+  metadata?: {
+    editor_settings?: GrafanaEditorSettings;
+  };
   record?: {
     metric: string;
     from: string;

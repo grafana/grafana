@@ -6,7 +6,6 @@ import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -19,9 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowActions } from '../scene/row-actions/RowActions';
-
-import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -218,15 +215,13 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
-    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
+    $behaviors: [],
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
@@ -238,17 +233,6 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
       }),
       transformations: [],
     }),
-  });
-}
-
-export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
-  const id = dashboardSceneGraph.getNextPanelId(dashboard);
-
-  return new SceneGridRow({
-    key: getVizPanelKeyForPanelId(id),
-    title: 'Row title',
-    actions: new RowActions({}),
-    y: 0,
   });
 }
 
@@ -267,11 +251,11 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 /**
- * Activates any inactive parents of the scene object.
+ * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
  * @returns
  */
-export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivationHandler | undefined {
   let cancel: CancelActivationHandler | undefined;
   let parentCancel: CancelActivationHandler | undefined;
 
@@ -280,7 +264,7 @@ export function activateInActiveParents(so: SceneObject): CancelActivationHandle
   }
 
   if (so.parent) {
-    parentCancel = activateInActiveParents(so.parent);
+    parentCancel = activateSceneObjectAndParentTree(so.parent);
   }
 
   cancel = so.activate();
@@ -289,4 +273,24 @@ export function activateInActiveParents(so: SceneObject): CancelActivationHandle
     parentCancel?.();
     cancel();
   };
+}
+
+/**
+ * @deprecated use activateSceneObjectAndParentTree instead.
+ * Activates any inactive ancestors of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ */
+export const activateInActiveParents = activateSceneObjectAndParentTree;
+
+export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
+  let parent = sceneObject.parent;
+
+  while (parent) {
+    if (isDashboardLayoutManager(parent)) {
+      return parent;
+    }
+    parent = parent.parent;
+  }
+
+  throw new Error('Could not find layout manager for scene object');
 }

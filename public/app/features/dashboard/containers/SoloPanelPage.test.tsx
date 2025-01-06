@@ -9,7 +9,7 @@ import { DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, SoloPanelPage } from './SoloPanelPage';
@@ -72,12 +72,6 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
           ...getRouteComponentProps({
-            match: {
-              params: { slug: 'my-dash', uid: '11' },
-              isExact: false,
-              path: '',
-              url: '',
-            },
             queryParams: {
               panelId: '1',
             },

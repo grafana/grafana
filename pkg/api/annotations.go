@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const defaultAnnotationsLimit = 100
+
 // swagger:route GET /annotations annotations getAnnotations
 //
 // Find Annotations.
@@ -47,6 +49,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		Type:         c.Query("type"),
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
+	}
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
 	}
 
 	// When dashboard UID present in the request, we ignore dashboard ID
@@ -582,7 +587,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 // where <type> is the type of annotation with id <id>.
 // If annotationPermissionUpdate feature toggle is enabled, dashboard annotation scope will be resolved to the corresponding
 // dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
-func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderStore folder.Store) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")
@@ -644,7 +649,7 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
 			if dashboard.FolderUID != "" {
 				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderStore)
 				if err != nil {
 					return nil, err
 				}

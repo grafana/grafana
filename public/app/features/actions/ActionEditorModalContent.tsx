@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
+import { Trans } from 'app/core/internationalization';
 
 import { ActionEditor } from './ActionEditor';
 
@@ -36,15 +37,15 @@ export const ActionEditorModalContent = ({
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">
-          Cancel
+          <Trans i18nKey="action-editor.modal.cancel-button">Cancel</Trans>
         </Button>
         <Button
           onClick={() => {
             onSave(index, dirtyAction);
           }}
-          disabled={dirtyAction.title.trim() === '' || dirtyAction.options.url.trim() === ''}
+          disabled={dirtyAction.title.trim() === '' || dirtyAction.fetch.url.trim() === ''}
         >
-          Save
+          <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
         </Button>
       </Modal.ButtonRow>
     </>

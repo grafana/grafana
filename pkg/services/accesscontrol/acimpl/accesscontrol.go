@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
@@ -117,22 +116,29 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		eval = evaluator
 	}
 
-	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		kind, _, identifier := accesscontrol.SplitScope(scope)
-		key, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
+	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
+		// FIXME: handle action with no scopes
+		if len(scopes) == 0 {
+			return false, nil
+		}
+
+		resourceScope := scopes[0]
+		kind, _, identifier := accesscontrol.SplitScope(resourceScope)
+
+		// Parent folder always returned by scope resolver as a second value
+		var parentFolder string
+		if len(scopes) > 1 {
+			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
+		}
+
+		req, ok := zanzana.TranslateToCheckRequest(user.GetNamespace(), action, kind, parentFolder, identifier)
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
 		}
 
-		a.log.Debug("evaluating zanzana", "user", key.User, "relation", key.Relation, "object", key.Object)
-		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     key.User,
-				Relation: key.Relation,
-				Object:   key.Object,
-			},
-		})
+		a.log.Debug("evaluating zanzana", "user", user.GetUID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
+		res, err := a.zclient.Check(ctx, user, *req)
 
 		if err != nil {
 			return false, err
@@ -203,6 +209,16 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
+}
+
+func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return &AccessControl{
+		features:  a.features,
+		log:       a.log,
+		zclient:   a.zclient,
+		metrics:   a.metrics,
+		resolvers: accesscontrol.NewResolvers(a.log),
+	}
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {

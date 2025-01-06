@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import { memo, Fragment, useEffect } from 'react';
+import { Fragment, memo, useEffect } from 'react';
 
-import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Icon, TagList, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';

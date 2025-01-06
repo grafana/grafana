@@ -95,7 +95,7 @@ External alertmanagers should now be configured as data sources using Grafana Co
 _Available in Experimental in Grafana Open Source, Enterprise, and Cloud._
 _To enable public dashboards, you must enable a feature flag or request this feature from support._
 
-[Public dashboards](/docs/grafana/latest/dashboards/dashboard-public/) launched as an experimental feature in Grafana v9.1.
+[Public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards) launched as an experimental feature in Grafana v9.1.
 We've received lots of great feedback on this much-anticipated feature and thank everyone who has helped us improve it.
 The team has been hard at work polishing public dashboards, and we've closed quite a few bugs related to community reports.
 If you're trying out public dashboards, let us know how it is going in the [open discussion in GitHub](https://github.com/grafana/grafana/discussions/49253).

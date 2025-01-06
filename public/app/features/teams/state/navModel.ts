@@ -9,6 +9,7 @@ import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
 const loadingTeam = {
   avatarUrl: 'public/img/user_profile.png',
   id: 1,
+  uid: '',
   name: 'Loading',
   email: 'loading',
   memberCount: 0,
@@ -21,9 +22,9 @@ const loadingTeam = {
 export function buildNavModel(team: Team): NavModelItem {
   const navModel: NavModelItem = {
     img: team.avatarUrl,
-    id: 'team-' + team.id,
+    id: 'team-' + team.uid,
     subTitle: 'Manage members and settings',
-    url: '',
+    url: `org/teams/edit/${team.uid}`,
     text: team.name,
     children: [
       // With RBAC this tab will always be available (but not always editable)
@@ -31,9 +32,9 @@ export function buildNavModel(team: Team): NavModelItem {
       {
         active: false,
         icon: 'sliders-v-alt',
-        id: `team-settings-${team.id}`,
+        id: `team-settings-${team.uid}`,
         text: 'Settings',
-        url: `org/teams/edit/${team.id}/settings`,
+        url: `org/teams/edit/${team.uid}/settings`,
       },
     ],
   };
@@ -48,18 +49,18 @@ export function buildNavModel(team: Team): NavModelItem {
     navModel.children!.unshift({
       active: false,
       icon: 'users-alt',
-      id: `team-members-${team.id}`,
+      id: `team-members-${team.uid}`,
       text: 'Members',
-      url: `org/teams/edit/${team.id}/members`,
+      url: `org/teams/edit/${team.uid}/members`,
     });
   }
 
   const teamGroupSync: NavModelItem = {
     active: false,
     icon: 'sync',
-    id: `team-groupsync-${team.id}`,
+    id: `team-groupsync-${team.uid}`,
     text: 'External group sync',
-    url: `org/teams/edit/${team.id}/groupsync`,
+    url: `org/teams/edit/${team.uid}/groupsync`,
   };
 
   const isLoadingTeam = team === loadingTeam;

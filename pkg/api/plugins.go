@@ -123,7 +123,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// Compute metadata
-	pluginsMetadata := hs.getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+	pluginsMetadata := getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			AngularDetected: pluginDef.Angular.Detected,
 		}
 
-		if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
 
@@ -201,6 +201,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		Includes:         plugin.Includes,
 		BaseUrl:          plugin.BaseURL,
 		Module:           plugin.Module,
+		ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 		State:            plugin.State,
 		Signature:        plugin.Signature,
@@ -209,6 +210,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
 		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+		Extensions:       plugin.Extensions,
 	}
 
 	if plugin.IsApp() {
@@ -465,7 +467,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		}
 	}
 
-	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	compatOpts := plugins.NewAddOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
 	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
 	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
@@ -484,7 +486,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+	if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 		// This is a non-blocking function that verifies that the installer has
 		// the permissions that the plugin requests to have on Grafana.
 		// If we want to make this blocking, the check will have to happen before or during the installation.

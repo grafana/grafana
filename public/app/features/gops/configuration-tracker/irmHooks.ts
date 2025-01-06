@@ -1,14 +1,10 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
+import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import {
-  isOnCallContactPointReady,
-  useGetContactPoints,
-  useGetDefaultContactPoint,
-  useIsCreateAlertRuleDone,
-} from './alerting/hooks';
+import { isOnCallContactPointReady, useGetDefaultContactPoint, useIsCreateAlertRuleDone } from './alerting/hooks';
 import { isContactPointReady } from './alerting/utils';
 import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
@@ -53,7 +49,8 @@ export interface EssentialsConfigurationData {
 
 function useGetConfigurationForApps() {
   // configuration checks for alerting
-  const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
+  const { contactPoints, isLoading: isLoadingContactPoints } = useGrafanaContactPoints();
+  // TODO: Switch to k8s API/refactored notification policies hook when available
   const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
   // configuration checks for incidents
@@ -132,8 +129,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: `/alerting/notifications/receivers/${defaultContactpoint}/edit`,
-                queryParams: { alertmanager: 'grafana' },
+                url: `/alerting/notifications`,
+                queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
               },
               label: 'Edit',
               labelOnDone: 'View',

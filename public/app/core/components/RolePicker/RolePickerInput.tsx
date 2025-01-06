@@ -3,7 +3,9 @@ import { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon, Spinner } from '@grafana/ui';
+import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { Trans } from 'app/core/internationalization';
 
 import { Role } from '../../../types';
 
@@ -124,7 +126,11 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
           }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
+        !showBuiltInRole && (
+          <ValueContainer>
+            <Trans i18nKey="role-picker.input.no-roles">No roles assigned</Trans>
+          </ValueContainer>
+        )
       )}
     </>
   );
@@ -144,10 +150,7 @@ const getRolePickerInputStyles = (
     wrapper: cx(
       styles.wrapper,
       sharedInputStyle(theme, invalid),
-      focused &&
-        css`
-          ${styleMixins.focusCss(theme.v1)}
-        `,
+      focused && css(getFocusStyles(theme)),
       disabled && styles.inputDisabled,
       css({
         minWidth: width || ROLE_PICKER_WIDTH + 'px',
@@ -170,32 +173,32 @@ const getRolePickerInputStyles = (
         cursor: 'default',
       }),
       withPrefix &&
-        css`
-          padding-left: 0;
-        `
+        css({
+          paddingLeft: 0,
+        })
     ),
     input: cx(
       sharedInputStyle(theme, invalid),
-      css`
-        max-width: 120px;
-        border: none;
-        cursor: ${focused ? 'default' : 'pointer'};
-      `
+      css({
+        maxWidth: '120px',
+        border: 'none',
+        cursor: focused ? 'default' : 'pointer',
+      })
     ),
     suffix: styles.suffix,
-    dropdownIndicator: css`
-      cursor: pointer;
-    `,
-    selectedRoles: css`
-      display: flex;
-      align-items: center;
-      cursor: ${disabled ? 'not-allowed' : 'pointer'};
-    `,
-    tooltip: css`
-      p {
-        margin-bottom: ${theme.spacing(0.5)};
-      }
-    `,
+    dropdownIndicator: css({
+      cursor: 'pointer',
+    }),
+    selectedRoles: css({
+      display: 'flex',
+      alignItems: 'center',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+    }),
+    tooltip: css({
+      p: {
+        marginBottom: theme.spacing(0.5),
+      },
+    }),
     spinner: css({
       display: 'flex',
       flexGrow: 1,
@@ -205,9 +208,9 @@ const getRolePickerInputStyles = (
 };
 
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
-  tooltip: css`
-    p {
-      margin-bottom: ${theme.spacing(0.5)};
-    }
-  `,
+  tooltip: css({
+    p: {
+      marginBottom: theme.spacing(0.5),
+    },
+  }),
 });

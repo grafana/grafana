@@ -132,10 +132,6 @@ This feature is not available for metrics based on [metric math expressions](#me
 
 ### Create a Metric Insights query
 
-{{% admonition type="note" %}}
-This query option is available only in Grafana v8.3 and higher.
-{{% /admonition %}}
-
 The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
 It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
 
@@ -230,16 +226,39 @@ The label field allows you to override the default name of the metric legend usi
 ## Query CloudWatch Logs
 
 The logs query editor helps you write CloudWatch Logs Query Language queries across defined regions and log groups.
+It supports querying Cloudwatch logs with Logs Insights Query Language, OpenSearch PPL and OpenSearch SQL.
 
 ### Create a CloudWatch Logs query
 
+1. Select the query language you would like to use in the Query Language dropdown.
 1. Select the region and up to 20 log groups to query.
-1. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html).
+
+   {{< admonition type="note" >}}
+   Region and log groups are mandatory fields when querying with Logs Insights QL and OpenSearch PPL. Log group selection is not necessary when querying with OpenSearch SQL. However, selecting log groups simplifies writing logs queries by populating syntax suggestions with discovered log group fields.
+   {{< /admonition >}}
+
+1. Use the main input area to write your logs query. AWS Cloudwatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
+
+   #### Querying Log groups with OpenSearch SQL
+
+   When querying log groups with OpenSearch SQL, the log group identifier or ARN _must_ be explicitly stated in the `FROM` clause:
+
+   ```sql
+   SELECT window.start, COUNT(*) AS exceptionCount
+   FROM `log_group`
+   WHERE `@message` LIKE '%Exception%'
+   ```
+
+   or, when querying multiple log groups:
+
+   ```sql
+   SELECT window.start, COUNT(*) AS exceptionCount
+   FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
+   WHERE `@message` LIKE '%Exception%'
+   ```
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
 When making `stats` queries in [Explore](ref:explore), make sure you are in Metrics Explore mode.
-
-{{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
 ## Cross-account observability
 

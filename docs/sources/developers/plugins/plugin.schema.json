@@ -174,7 +174,7 @@
         },
         "plugins": {
           "type": "array",
-          "description": "An array of required plugins on which this plugin depends.",
+          "description": "An array of required plugins on which this plugin depends. Only non-core (that is, external plugins) have to be specified in this list.",
           "additionalItems": false,
           "items": {
             "type": "object",
@@ -233,6 +233,10 @@
     "backend": {
       "type": "boolean",
       "description": "If the plugin has a backend component."
+    },
+    "buildMode": {
+      "type": "string",
+      "description": "The build mode of the plugin. This field is set automatically at build time, so it should not be provided manually."
     },
     "builtIn": {
       "type": "boolean",

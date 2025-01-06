@@ -1,6 +1,5 @@
 import { PluginState } from '@grafana/data';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
-// Legacy binding paths
 export { config, GrafanaBootConfig as Settings };
 
 let grafanaConfig: GrafanaBootConfig = config;

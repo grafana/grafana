@@ -9,7 +9,7 @@ import {
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
+import { CloudChannelMap, CloudChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { cloudReceiverToFormValues, formValuesToCloudReceiver } from '../../../utils/receiver-form';
@@ -41,8 +41,8 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
   const { isLoading, data: config } = useGetAlertmanagerConfigurationQuery(alertManagerSourceName);
 
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-  const createContactPoint = useCreateContactPoint({ alertmanager: alertManagerSourceName });
-  const updateContactPoint = useUpdateContactPoint({ alertmanager: alertManagerSourceName });
+  const [createContactPoint] = useCreateContactPoint({ alertmanager: alertManagerSourceName });
+  const [updateContactPoint] = useUpdateContactPoint({ alertmanager: alertManagerSourceName });
 
   // transform receiver DTO to form values
   const [existingValue] = useMemo((): [ReceiverFormValues<CloudChannelValues> | undefined, CloudChannelMap] => {
@@ -54,11 +54,12 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
 
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
+
     try {
-      if (editMode) {
-        await updateContactPoint({ contactPoint: newReceiver, originalName: contactPoint!.name });
+      if (editMode && contactPoint) {
+        await updateContactPoint.execute({ contactPoint: newReceiver, originalName: contactPoint.name });
       } else {
-        await createContactPoint({ contactPoint: newReceiver });
+        await createContactPoint.execute({ contactPoint: newReceiver });
       }
       locationService.push('/alerting/notifications');
     } catch (error) {
@@ -68,8 +69,7 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
 
   // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
   // or a Mimir-based AlertManager
-  const isManageableAlertManagerDataSource =
-    !readOnly ?? !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const isManageableAlertManagerDataSource = !readOnly && !isVanillaAM;
 
   return (
     <>

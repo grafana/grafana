@@ -45,12 +45,12 @@ export function TraceIdTimeParams({ options, onOptionsChange }: Props) {
 }
 
 const styles = {
-  container: css`
-    label: container;
-    width: 100%;
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
+  container: css({
+    label: 'container',
+    width: '100%',
+  }),
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
 };

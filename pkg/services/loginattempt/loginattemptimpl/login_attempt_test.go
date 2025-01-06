@@ -12,6 +12,8 @@ import (
 )
 
 func TestService_Validate(t *testing.T) {
+	const maxInvalidLoginAttempts = 5
+
 	testCases := []struct {
 		name          string
 		loginAttempts int64
@@ -64,6 +66,7 @@ func TestService_Validate(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			cfg.BruteForceLoginProtectionMaxAttempts = maxInvalidLoginAttempts
 			cfg.DisableBruteForceLoginProtection = tt.disabled
 			service := &Service{
 				store: fakeStore{
@@ -84,6 +87,7 @@ func TestLoginAttempts(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
+	cfg.BruteForceLoginProtectionMaxAttempts = 5
 	db := db.InitTestDB(t)
 	service := ProvideService(db, cfg, nil)
 

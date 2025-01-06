@@ -18,11 +18,13 @@ type RedisFrameCache struct {
 	mu          sync.RWMutex
 	redisClient *redis.Client
 	frames      map[int64]map[string]data.FrameJSONCache
+	keyPrefix   string
 }
 
 // NewRedisFrameCache ...
-func NewRedisFrameCache(redisClient *redis.Client) *RedisFrameCache {
+func NewRedisFrameCache(redisClient *redis.Client, keyPrefix string) *RedisFrameCache {
 	return &RedisFrameCache{
+		keyPrefix:   keyPrefix,
 		frames:      map[int64]map[string]data.FrameJSONCache{},
 		redisClient: redisClient,
 	}
@@ -43,7 +45,7 @@ func (c *RedisFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMes
 }
 
 func (c *RedisFrameCache) GetFrame(ctx context.Context, orgID int64, channel string) (json.RawMessage, bool, error) {
-	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
+	key := c.getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 	cmd := c.redisClient.HGetAll(ctx, key)
 	result, err := cmd.Result()
 	if err != nil {
@@ -69,7 +71,7 @@ func (c *RedisFrameCache) Update(ctx context.Context, orgID int64, channel strin
 
 	stringSchema := string(jsonFrame.Bytes(data.IncludeSchemaOnly))
 
-	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
+	key := c.getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 
 	pipe := c.redisClient.TxPipeline()
 	defer func() { _ = pipe.Close() }()
@@ -107,6 +109,6 @@ func (c *RedisFrameCache) Update(ctx context.Context, orgID int64, channel strin
 	return true, nil
 }
 
-func getCacheKey(channelID string) string {
-	return "gf_live.managed_stream." + channelID
+func (c *RedisFrameCache) getCacheKey(channelID string) string {
+	return c.keyPrefix + ".managed_stream." + channelID
 }
