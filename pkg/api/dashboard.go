@@ -124,6 +124,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		if isEmptyData {
 			return response.Error(http.StatusInternalServerError, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
+
+		// the dashboard id is no longer set in the spec for unified storage, set it here to keep api compatibility
+		if dash.Data.Get("id").MustString() == "" {
+			dash.Data.Set("id", dash.ID)
+		}
 	}
 	guardian, err := guardian.NewByDashboard(ctx, dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
