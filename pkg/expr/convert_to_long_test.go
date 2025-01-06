@@ -18,3 +18,16 @@ func TestConvertNumericWideToLong(t *testing.T) {
 	spew.Dump(err)
 	spew.Dump(output)
 }
+
+func TestConvertNumericMultiToLong(t *testing.T) {
+	input := data.Frames{
+		data.NewFrame("test",
+			data.NewField("count", data.Labels{"city": "MIA"}, []float64{5})),
+		data.NewFrame("test2",
+			data.NewField("moreCount", data.Labels{"city": "LGA"}, []float64{7}),
+		),
+	}
+	output, err := convertNumericMultiToNumericLong(input)
+	spew.Dump(err)
+	spew.Dump(output)
+}

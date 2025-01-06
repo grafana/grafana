@@ -43,7 +43,24 @@ func ConvertToLong(frames data.Frames) (data.Frames, error) {
 }
 
 func convertNumericMultiToNumericLong(frames data.Frames) (data.Frames, error) {
-	return nil, fmt.Errorf("not implemented")
+	// Apart from metadata. NumericMulti is basically numeric Wide, except one frame per thing
+	// to we collapse into one frame and call the wide conversion
+	newFrame := data.NewFrame("")
+	for _, frame := range frames {
+		for _, field := range frame.Fields {
+			if !field.Type().Numeric() {
+				continue
+			}
+			newField := data.NewFieldFromFieldType(field.Type(), field.Len())
+			newField.Name = field.Name
+			newField.Labels = field.Labels.Copy()
+			for i := 0; i < field.Len(); i++ {
+				newField.Set(i, field.CopyAt(i))
+			}
+			newFrame.Fields = append(newFrame.Fields, newField)
+		}
+	}
+	return convertNumericWideToNumericLong(data.Frames{newFrame})
 }
 
 func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
@@ -127,7 +144,7 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 			continue
 		}
 		rowIdx := prints[field.Labels.Fingerprint().String()]
-		longFrame.Fields[nameIndexMap[field.Name]].Set(rowIdx, field.At(0))
+		longFrame.Fields[nameIndexMap[field.Name]].Set(rowIdx, field.CopyAt(0))
 		for key, value := range field.Labels {
 			longFrame.Fields[keyIndexMap[key]].Set(rowIdx, value)
 		}
