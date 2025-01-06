@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log/slog"
 	//"math/rand"
 	"net/http"
@@ -93,11 +93,11 @@ func TestIntegrationApisServerCreate(t *testing.T) {
 	})
 
 	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
-		buf, err := ioutil.ReadAll(req.Body)
+		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		var foldr v0alpha1.Folder
-		err = json.Unmarshal([]byte(buf), &foldr)
+		err = json.Unmarshal(buf, &foldr)
 		require.NoError(t, err)
 
 		updateFolder.Title = foldr.Spec.Title
@@ -119,11 +119,11 @@ func TestIntegrationApisServerCreate(t *testing.T) {
 		require.NoError(t, err)
 	})
 	mux.HandleFunc("POST /apis/folder.grafana.app/v0alpha1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
-		buf, err := ioutil.ReadAll(req.Body)
+		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		var folder v0alpha1.Folder
-		err = json.Unmarshal([]byte(buf), &folder)
+		err = json.Unmarshal(buf, &folder)
 		require.NoError(t, err)
 
 		m[folder.Name] = folder
@@ -408,5 +408,4 @@ func TestIntegrationApisServerCreate(t *testing.T) {
 			})
 		})
 	})
-
 }

@@ -240,11 +240,6 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 		return nil, err
 	}
 
-	childrenUIDs := make([]string, 0, len(children))
-	for _, f := range children {
-		childrenUIDs = append(childrenUIDs, f.UID)
-	}
-
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
 		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
@@ -303,17 +298,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 	}
 
 	user := cmd.SignedInUser
-
-	var userID int64
-	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
-		userID = id
-	} else {
-		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
-	}
-
-	if userID == 0 {
-		userID = -1
-	}
 
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store

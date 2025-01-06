@@ -155,7 +155,7 @@ func (s *Service) DBMigration(db db.DB) {
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-		s.getFoldersFromApiServer(ctx, q)
+		return s.getFoldersFromApiServer(ctx, q)
 	}
 	return s.GetFoldersLegacy(ctx, q)
 }
