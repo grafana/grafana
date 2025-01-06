@@ -91,9 +91,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 	tables = append(tables, migrator.Table{
 		Name: "resource_blob",
 		Columns: []*migrator.Column{
-			// Every lookup will have the GUID and resource constraints
 			{Name: "uuid", Type: migrator.DB_Uuid, Length: 36, Nullable: false, IsPrimaryKey: true},
-			{Name: "created", Type: migrator.DB_DateTime, Nullable: false}, // this will be append only
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},

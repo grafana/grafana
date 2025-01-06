@@ -4,6 +4,7 @@ import (
 	context "context"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -93,11 +94,11 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey
 			return err
 		}
 		if rows.Next() {
-			// {{ .Ident "uuid" }},
-			// {{ .Ident "value" }},
-			// {{ .Ident "content_type" }}
-			uuid := ""
-			err = rows.Scan(&uuid, &rsp.Value, &rsp.ContentType)
+			uid := ""
+			err = rows.Scan(&uid, &rsp.Value, &rsp.ContentType)
+			if info.UID != "" && info.UID != uid {
+				return fmt.Errorf("unexpected uid in result")
+			}
 			return err
 		}
 		rsp.Error = &resource.ErrorResult{
