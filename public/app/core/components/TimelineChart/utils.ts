@@ -51,6 +51,7 @@ interface UPlotConfigOptions {
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
+  yAxisWidth?: number;
 }
 
 /**
@@ -84,6 +85,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
+  yAxisWidth,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -181,6 +183,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     ticks: { show: false },
     gap: 16,
     theme,
+    size: yAxisWidth,
   });
 
   let seriesIndex = 0;

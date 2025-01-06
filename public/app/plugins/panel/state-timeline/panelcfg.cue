@@ -33,6 +33,8 @@ composableKinds: PanelCfg: {
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the row height
 					rowHeight: float & <=1 | *0.9
+					//Controls the y axis width
+					yAxisWidth: number
 					//Merge equal consecutive values
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
