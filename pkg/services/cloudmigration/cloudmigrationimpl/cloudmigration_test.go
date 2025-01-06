@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -39,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -447,146 +446,6 @@ func Test_SortFolders(t *testing.T) {
 	require.Equal(t, expected, sortedFolders)
 }
 
-func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
-	s := setUpServiceTest(t, false).(*Service)
-
-	// Insert a processing snapshot into the database before we start so we query GMS
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
-		AuthToken: createTokenResp.Token,
-	})
-	require.NoError(t, err)
-	snapshotUid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-		UID:            uuid.NewString(),
-		SessionUID:     sess.UID,
-		Status:         cloudmigration.SnapshotStatusProcessing,
-		GMSSnapshotUID: "gms uid",
-	})
-	require.NoError(t, err)
-
-	// GMS should return: a core ds, a non-core ds, a non-core ds with an error, and a ds that has been uninstalled
-	gmsClientMock := &gmsClientMock{
-		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateFinished,
-			Results: []cloudmigration.CloudMigrationResource{
-				{
-					Name:        "1 name",
-					ParentName:  "1 parent name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "1", // this will be core
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
-				},
-				{
-					Name:        "2 name",
-					ParentName:  "",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "2", // this will be non-core
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
-				},
-				{
-					Name:        "3 name",
-					ParentName:  "3 parent name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "3", // this will be non-core with an error
-					Status:      cloudmigration.ItemStatusError,
-					Error:       "please don't overwrite me",
-					SnapshotUID: snapshotUid,
-				},
-				{
-					Name:        "4 name",
-					ParentName:  "4 folder name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "4", // this will be deleted
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
-				},
-			},
-		},
-	}
-	s.gmsClient = gmsClientMock
-
-	// Update the internal plugin store and ds store with seed data matching the descriptions above
-	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
-		{
-			JSONData: plugins.JSONData{
-				ID: "1",
-			},
-			Class: plugins.ClassCore,
-		},
-		{
-			JSONData: plugins.JSONData{
-				ID: "2",
-			},
-			Class: plugins.ClassExternal,
-		},
-		{
-			JSONData: plugins.JSONData{
-				ID: "3",
-			},
-			Class: plugins.ClassExternal,
-		},
-	}...)
-
-	s.dsService = &datafakes.FakeDataSourceService{
-		DataSources: []*datasources.DataSource{
-			{UID: "1", Type: "1"},
-			{UID: "2", Type: "2"},
-			{UID: "3", Type: "3"},
-			{UID: "4", Type: "4"},
-		},
-	}
-
-	var snapshot *cloudmigration.CloudMigrationSnapshot
-	hasFourResources := func() bool {
-		// Retrieve the snapshot with results
-		var err error
-		snapshot, err = s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: snapshotUid,
-			SessionUID:  sess.UID,
-			ResultPage:  1,
-			ResultLimit: 10,
-		})
-
-		if !assert.NoError(t, err) {
-			return false
-		}
-
-		return len(snapshot.Resources) == 4
-	}
-
-	require.Eventually(t, hasFourResources, time.Second, 10*time.Millisecond)
-
-	findRef := func(id string) *cloudmigration.CloudMigrationResource {
-		for _, r := range snapshot.Resources {
-			if r.RefID == id {
-				return &r
-			}
-		}
-		return nil
-	}
-
-	shouldBeUnaltered := findRef("1")
-	assert.Equal(t, cloudmigration.ItemStatusOK, shouldBeUnaltered.Status)
-	assert.Empty(t, shouldBeUnaltered.Error)
-
-	shouldBeAltered := findRef("2")
-	assert.Equal(t, cloudmigration.ItemStatusWarning, shouldBeAltered.Status)
-	assert.Equal(t, shouldBeAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
-
-	shouldHaveOriginalError := findRef("3")
-	assert.Equal(t, cloudmigration.ItemStatusError, shouldHaveOriginalError.Status)
-	assert.Equal(t, shouldHaveOriginalError.Error, "please don't overwrite me")
-
-	uninstalledAltered := findRef("4")
-	assert.Equal(t, cloudmigration.ItemStatusWarning, uninstalledAltered.Status)
-	assert.Equal(t, uninstalledAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
-}
-
 func TestDeleteSession(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 	user := &user.SignedInUser{UserUID: "user123"}
@@ -817,13 +676,135 @@ func TestGetLibraryElementsCommands(t *testing.T) {
 	require.Equal(t, createLibraryElementCmd.UID, cmds[0].UID)
 }
 
-func ctxWithSignedInUser() context.Context {
-	c := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{OrgID: 1},
+// NOTE: this should be on the plugin object
+func TestIsPublicSignatureType(t *testing.T) {
+	testcases := []struct {
+		signature      plugins.SignatureType
+		expectedPublic bool
+	}{
+		{
+			signature:      plugins.SignatureTypeCommunity,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeCommercial,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeGrafana,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypePrivate,
+			expectedPublic: false,
+		},
+		{
+			signature:      plugins.SignatureTypePrivateGlob,
+			expectedPublic: false,
+		},
 	}
-	k := ctxkey.Key{}
-	ctx := context.WithValue(context.Background(), k, c)
-	return ctx
+
+	for _, testcase := range testcases {
+		resPublic := IsPublicSignatureType(testcase.signature)
+		require.Equal(t, resPublic, testcase.expectedPublic)
+	}
+}
+
+func TestGetPlugins(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-core",
+				Type: plugins.TypeDataSource,
+			},
+			Class:         plugins.ClassCore,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:          "plugin-external-valid-grafana",
+				Type:        plugins.TypeDataSource,
+				AutoEnabled: false,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-commercial",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommercial,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-community",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommunity,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-invalid",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusInvalid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-unsigned",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-private",
+				Type: plugins.TypeApp,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypePrivate,
+		},
+	}...)
+
+	s.pluginSettingsService = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		"plugin-external-valid-grafana": {ID: 0, OrgID: user.OrgID, PluginID: "plugin-external-valid-grafana", PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	plugins, err := s.getPlugins(ctx, user)
+	require.NoError(t, err)
+	require.NotNil(t, plugins)
+	require.Len(t, plugins, 3)
+
+	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
+	pluginsIDs := make([]string, 0)
+	for _, plugin := range plugins {
+		// Special case of using the settings from the settings store
+		if plugin.ID == "plugin-external-valid-grafana" {
+			require.True(t, plugin.SettingCmd.Enabled)
+		}
+
+		pluginsIDs = append(pluginsIDs, plugin.ID)
+	}
+	require.ElementsMatch(t, pluginsIDs, expectedPluginIDs)
 }
 
 type configOverrides func(c *setting.Cfg)
@@ -949,6 +930,8 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 		dashboardService,
 		mockFolder,
 		&pluginstore.FakePluginStore{},
+		&pluginsettings.FakePluginSettings{},
+		actest.FakeAccessControl{ExpectedEvaluate: true},
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,

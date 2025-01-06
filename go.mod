@@ -17,7 +17,7 @@ require (
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.17.0 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.8.2 // @grafana/grafana-as-code
-	filippo.io/age v1.1.1 // @grafana/identity-access-team
+	filippo.io/age v1.2.1 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/partner-datasources
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.7.0 // @grafana/grafana-backend-group
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // @grafana/grafana-backend-group
@@ -86,7 +86,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.23.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.5 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
-	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.260.3 // @grafana/plugins-platform-backend
@@ -96,7 +96,7 @@ require (
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
-	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/observability-metrics
+	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // @grafana/grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
@@ -174,13 +174,13 @@ require (
 	golang.org/x/crypto v0.31.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // @grafana/alerting-backend
 	golang.org/x/mod v0.22.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.32.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.33.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.24.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.10.0 // @grafana/alerting-backend
 	golang.org/x/text v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.28.0 // @grafana/grafana-as-code
-	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
+	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.68.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.2 // @grafana/plugins-platform-backend
@@ -196,7 +196,7 @@ require (
 	k8s.io/kube-aggregator v0.31.3 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // @grafana/partner-datasources
-	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // @grafana-app-platform-squad
+	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
@@ -457,7 +457,7 @@ require (
 require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
 
 require (
-	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
+	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 )
 
