@@ -406,19 +406,40 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	// TODO: Don't run Datasource Node Results through converter if input is SQL expression
 	// Also for now, must be one frame and not of the fields may have labels
 	if dn.noConvert {
+		var convertForSQL bool
 		if len(dataFrames) > 1 {
-			return result, fmt.Errorf("expected only one frame from datasource query that is input to a SQL expression, got %d", len(dataFrames))
+			convertForSQL = true
 		}
-		for _, field := range dataFrames[0].Fields {
-			if field.Labels != nil {
-				return result, fmt.Errorf("expected no labels in frame from datasource query (for now) that is input to a SQL expression, got %v", field.Labels)
+
+		for _, frame := range dataFrames {
+			if convertForSQL {
+				break
+			}
+			for _, field := range frame.Fields {
+				if field.Labels != nil {
+					convertForSQL = true
+					break
+				}
 			}
 		}
+
+		if convertForSQL {
+			convertedFrames, err := ConvertToLong(dataFrames)
+			if err != nil {
+				return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
+			}
+			result.Values = mathexp.Values{
+				mathexp.TableData{Frame: convertedFrames[0]},
+			}
+			return result, nil
+		}
+
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: dataFrames[0]},
 		}
 		return result, nil
 	}
+
 	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames) //, s.allowLongFrames)
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
