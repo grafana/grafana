@@ -77,7 +77,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
-	s.allowLongFrames = hasSqlExpression(*dp)
+	//s.allowLongFrames = hasSqlExpression(*dp)
 
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
@@ -320,12 +320,21 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				_, ok := cmdNode.Command.(*SQLCommand)
-				if ok {
-					continue
-				}
+				// _, ok := cmdNode.Command.(*SQLCommand)
+				// if ok {
+				// 	continue
+				// }
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
+
+			// If the input is SQL, mark for no conversion
+			if _, ok := cmdNode.Command.(*SQLCommand); ok {
+				if dsNode, ok := neededNode.(*DSNode); ok {
+					dsNode.noConvert = true
+				}
+			}
+
+			// TODO: Check if any SQL inputs are the input to any other type of node, and error if so
 
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
