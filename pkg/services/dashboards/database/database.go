@@ -667,6 +667,16 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	return nil
 }
 
+func (d *dashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
+	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteAllDashboards")
+	defer span.End()
+
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Where("org_id = ?", orgID).Delete(&dashboards.Dashboard{})
+		return err
+	})
+}
+
 // FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
 func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64, resourceScope string) error {
 	// retrieve all permissions for the resource scope and org id

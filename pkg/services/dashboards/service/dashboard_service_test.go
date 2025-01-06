@@ -305,6 +305,11 @@ func (m *mockResourceInterface) Delete(ctx context.Context, name string, options
 	return args.Error(0)
 }
 
+func (m *mockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, options, listOptions)
+	return args.Error(0)
+}
+
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *mockDashK8sCli, *mockResourceInterface) {
 	k8sClientMock := new(mockDashK8sCli)
 	k8sResourceMock := new(mockResourceInterface)
@@ -641,6 +646,33 @@ func TestDeleteDashboard(t *testing.T) {
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 		k8sClientMock.searcher.AssertExpectations(t)
+	})
+}
+
+func TestDeleteAllDashboards(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sClientMock.AssertExpectations(t)
 	})
 }
 
