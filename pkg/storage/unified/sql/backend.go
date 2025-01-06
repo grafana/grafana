@@ -181,6 +181,10 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 		b.unlockKey(event.Key)
 		return 0, fmt.Errorf("unsupported event type")
 	}
+	if err != nil {
+		_ = b.unlockKey(event.Key)
+		return 0, fmt.Errorf("write event: %w", err)
+	}
 	// unlock the key.
 	err = b.unlockKey(event.Key)
 	if err != nil {
