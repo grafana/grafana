@@ -368,7 +368,9 @@ function calculateAllGroupsTotals(groups: CombinedRuleGroup[]): AlertGroupTotals
         totals[key] = 0;
       }
 
-      totals[key] += value;
+      if (value !== undefined && value !== null) {
+        totals[key] += value;
+      }
     });
   });
 
