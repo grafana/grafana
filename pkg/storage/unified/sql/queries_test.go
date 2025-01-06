@@ -206,10 +206,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionGet: {
+			sqlResourceVersionHead: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionGetRequest{
+					Data: &sqlResourceVersionHeadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
@@ -224,28 +224,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceVersionListRequest{
 						SQLTemplate:          mocks.NewTestingSQLTemplate(),
 						groupResourceVersion: new(groupResourceVersion),
-					},
-				},
-			},
-
-			sqlResourceVersionUpdate: {
-				{
-					Name: "increment resource version",
-					Data: &sqlResourceVersionUpsertRequest{
-						SQLTemplate:     mocks.NewTestingSQLTemplate(),
-						Resource:        "resource",
-						Group:           "group",
-						ResourceVersion: int64(12354),
-					},
-				},
-			},
-
-			sqlResourceVersionInsert: {
-				{
-					Name: "single path",
-					Data: &sqlResourceVersionUpsertRequest{
-						SQLTemplate:     mocks.NewTestingSQLTemplate(),
-						ResourceVersion: int64(12354),
 					},
 				},
 			},
@@ -316,19 +294,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Resource:  "rs",
 							Name:      "nm",
 						},
-					},
-				},
-			},
-			sqlResourceLockMinRV: {
-				{
-					Name: "minrv",
-					Data: &sqlResourceLockMinRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Key: &resource.ResourceKey{
-							Group:    "gp",
-							Resource: "rs",
-						},
-						Response: new(resourceVersionResponse),
 					},
 				},
 			},

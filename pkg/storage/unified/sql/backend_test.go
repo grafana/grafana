@@ -212,19 +212,6 @@ func TestBackend_IsHealthy(t *testing.T) {
 	require.ErrorIs(t, err, errTest)
 }
 
-// expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
-// resourceVersionAtomicInc, where the returned RV will be 1.
-func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
-	b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
-	b.ExecWithResult("update resource_version set resource_version", 0, 0)
-}
-
-// expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
-// resourceVersionAtomicInc, where the returned RV will be 1.
-func expectUnsuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend, err error) {
-	b.QueryWithErr("select resource_version for update", errTest)
-}
-
 func TestBackend_create(t *testing.T) {
 	t.Parallel()
 	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
@@ -551,9 +538,11 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	stream, err := b.WatchWriteEvents(context.Background())
 
 	require.NoError(t, err)
-	rv1, _ := writeEvent(ctx, b, "item1", resource.WatchEvent_ADDED)
+	rv1, err := writeEvent(ctx, b, "item1", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv1, int64(0))
-	rv2, _ := writeEvent(ctx, b, "item2", resource.WatchEvent_ADDED)
+	rv2, err := writeEvent(ctx, b, "item2", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
 	require.Greater(t, rv2, rv1)
 
 	// Lock item 3. This should block the list and watch events.
@@ -561,18 +550,36 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	require.Greater(t, rv3, rv2)
 
 	// Write more events while item 3 is locked.
-	rv4, _ := writeEvent(ctx, b, "item4", resource.WatchEvent_ADDED)
-	require.Greater(t, rv4, rv3)
-	rv5, _ := writeEvent(ctx, b, "item5", resource.WatchEvent_ADDED)
-	require.Greater(t, rv5, rv4)
-	// t.Log(rv1, rv2, rv3, rv4, rv5)
+	wg := sync.WaitGroup{}
+	var rv4, rv5 int64
+	wg.Add(2)
+	go func() {
+		rv4, err = writeEvent(ctx, b, "item4", resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+		require.Greater(t, rv4, rv3)
+		wg.Done()
 
-	// List events should be blocked until the lock is released.
+	}()
+	go func() {
+		rv5, err = writeEvent(ctx, b, "item5", resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+		require.Greater(t, rv5, rv4)
+		wg.Done()
+	}()
+	t.Log(rv1, rv2, rv3, rv4, rv5)
+
+	// List events should return rv3 until we release the lock
 	lo := &resource.ListRequest{Options: &resource.ListOptions{Key: &resource.ResourceKey{Resource: "resource", Group: "group"}}}
 	cb := func(resource.ListIterator) error { return nil }
-	head, err := b.ListIterator(ctx, lo, cb)
-	require.NoError(t, err)
-	require.Equal(t, rv3, head)
+
+	var retry int
+	var head int64
+	for retry < 3 {
+		head, err = b.ListIterator(ctx, lo, cb)
+		require.NoError(t, err)
+		require.Equal(t, rv3-1, head)
+		retry++
+	}
 
 	// listLatestRVs
 	grv, err := b.listLatestRVs(ctx)
@@ -592,7 +599,9 @@ func TestIntegrationSQLBackend(t *testing.T) {
 	require.Equal(t, 0, len(stream))
 
 	// Unlock item 3. This should unblock the list and watch events.
-	b.unlockKey(ctx, resourceKey("item3"))
+	b.unlockKey(resourceKey("item3"))
+	wg.Wait()
+
 	head, err = b.ListIterator(ctx, lo, cb)
 	require.NoError(t, err)
 	require.Equal(t, rv5, head)

@@ -42,17 +42,12 @@ var (
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 
-	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionGet    = mustTemplate("resource_version_head.sql") // TODO: rename to sqlResourceVersionHead
-	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
-	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
-	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+	sqlResourceVersionHead = mustTemplate("resource_version_head.sql") // TODO: We probably need only one of those (Head/List). Having both isn't very useful.
+	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
 
 	sqlResourceLockInsert = mustTemplate("resource_lock_insert.sql")
 	sqlResourceLockDelete = mustTemplate("resource_lock_delete.sql")
 	sqlResourceLockGet    = mustTemplate("resource_lock_get.sql")
-	// sqlResourceLockUpdate = mustTemplate("resource_lock_update_rv.sql")
-	sqlResourceLockMinRV = mustTemplate("resource_lock_min_rv.sql")
 )
 
 // TxOptions.
@@ -251,17 +246,17 @@ func (r sqlResourceVersionUpsertRequest) Validate() error {
 	return nil // TODO
 }
 
-type sqlResourceVersionGetRequest struct {
+type sqlResourceVersionHeadRequest struct {
 	sqltemplate.SQLTemplate
 	Group, Resource string
 	ReadOnly        bool
 	Response        *resourceVersionResponse
 }
 
-func (r sqlResourceVersionGetRequest) Validate() error {
+func (r sqlResourceVersionHeadRequest) Validate() error {
 	return nil // TODO
 }
-func (r sqlResourceVersionGetRequest) Results() (*resourceVersionResponse, error) {
+func (r sqlResourceVersionHeadRequest) Results() (*resourceVersionResponse, error) {
 	return &resourceVersionResponse{
 		ResourceVersion: r.Response.ResourceVersion,
 		CurrentEpoch:    r.Response.CurrentEpoch,

@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -160,8 +161,8 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 
 	// Lock the key and get a new resource version
 	rv, err := b.lockKey(ctx, event.Key)
-	defer b.unlockKey(ctx, event.Key)
 	if err != nil {
+		b.unlockKey(event.Key)
 		return 0, fmt.Errorf("lock key: %w", err)
 	}
 
@@ -177,10 +178,31 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	case resource.WatchEvent_DELETED:
 		err = b.delete(ctx, event, rv)
 	default:
+		b.unlockKey(event.Key)
 		return 0, fmt.Errorf("unsupported event type")
 	}
+	// unlock the lock
+	b.unlockKey(event.Key)
 
-	// TODO: Wait for the head to catch up to the new RV
+	// Wait for all the previous events
+	ba := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Millisecond,
+		MaxBackoff: 50 * time.Millisecond,
+	})
+	var head int64
+	for head < rv {
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			head, err = headResourceVersion(ctx, tx, b.dialect, event.Key.Group, event.Key.Resource)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return 0, fmt.Errorf("get head resource version: %w", err)
+		}
+		ba.Wait()
+	}
 	return rv, err
 }
 
@@ -193,7 +215,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent, rv int6
 		if event.Object != nil {
 			folder = event.Object.GetFolder()
 		}
-		// TODO: update the following queries to include the RV from above
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate:     sqltemplate.New(b.dialect),
@@ -353,7 +374,6 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 		Request:     req,
 		Response:    NewReadResponse(),
 	}
-	// TODO: check the RV is not greater than the last committed RV.
 	sr := sqlResourceRead
 	if req.ResourceVersion > 0 {
 		// read a specific version
@@ -479,7 +499,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 
-		// head := b.getHeadRV(ctx, req.Options.Key)
+		// head := b.headRV(ctx, req.Options.Key)
 		// if head > 0 {
 		// 	// Some of the keys are ahead of HEAD, we need to read from the history table
 		// 	req.ResourceVersion = head
@@ -489,7 +509,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		// TODO: We need to run getHead and listAtRevision in a single transaction otherwise we might get
 		// some keys that are ahead of head and some that are behind.
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = headResourceVersion(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -659,9 +679,10 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	return since, nil
 }
 
-// fetchLatestRV returns the current maximum RV in the resource history table
-func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+// headResourceVersion returns the resource version of the backend store for the given group and resource.
+// This has the same meaning as the ETCD Header Revision.
+func headResourceVersion(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionHead, sqlResourceVersionHeadRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
@@ -728,70 +749,6 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	return nextRV, nil
 }
 
-// resourceVersionAtomicInc atomically increases the version of a kind within a transaction.
-// TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
-// in a single roundtrip. This would reduce the latency of the operation, and also increase the
-// throughput of the system. This is a good candidate for a future optimization.
-func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+"version_atomic_inc", trace.WithAttributes(
-		semconv.K8SNamespaceName(key.Namespace),
-		// TODO: the following attributes could use some standardization.
-		attribute.String("k8s.resource.group", key.Group),
-		attribute.String("k8s.resource.type", key.Resource),
-	))
-	defer span.End()
-
-	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Group:       key.Group,
-		Resource:    key.Resource,
-
-		Response: new(resourceVersionResponse), ReadOnly: false, // This locks the row for update
-	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		// if there wasn't a row associated with the given resource, then we create it.
-		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Group:       key.Group,
-			Resource:    key.Resource,
-		}); err != nil {
-			return 0, fmt.Errorf("insert into resource_version: %w", err)
-		}
-		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Response:    new(resourceVersionResponse),
-			ReadOnly:    true, // This locks the row for update
-		})
-		if err != nil {
-			return 0, fmt.Errorf("fetching RV after read")
-		}
-		return res.ResourceVersion, nil
-	} else if err != nil {
-		return 0, fmt.Errorf("lock the resource version: %w", err)
-	}
-
-	// 2. Update the RV
-	// Most times, the RV is the current microsecond timestamp generated on the sql server (to avoid clock skew).
-	// In rare occasion, the server clock might go back in time. In those cases, we simply increment the
-	// previous RV until the clock catches up.
-	nextRV := max(res.CurrentEpoch, res.ResourceVersion+1)
-
-	_, err = dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
-		SQLTemplate:     sqltemplate.New(b.dialect),
-		Group:           key.Group,
-		Resource:        key.Resource,
-		ResourceVersion: nextRV,
-	})
-	if err != nil {
-		return 0, fmt.Errorf("increase resource version: %w", err)
-	}
-	return nextRV, nil
-}
-
 // lockKey locks the resource for update and returns a new resource version.
 // The resource version is a timestamp in microseconds guaranteed to be greater than previously generated timestamps.
 // However it's not guaranteed to be unique and multiple resources may have the same resource version. This is a design
@@ -829,31 +786,14 @@ func (b *backend) lockKey(ctx context.Context, key *resource.ResourceKey) (newVe
 }
 
 // unlockKey unlocks the resource.
-func (b *backend) unlockKey(ctx context.Context, key *resource.ResourceKey) error {
-	return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		_, err := dbutil.Exec(ctx, tx, sqlResourceLockDelete, sqlResourceLockInsertRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Key:         key,
+func (b *backend) unlockKey(key *resource.ResourceKey) error {
+	return b.db.WithTx(
+		context.Background(), // Background to ensure the Lock is removed even if the request is canceled.
+		ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+			_, err := dbutil.Exec(ctx, tx, sqlResourceLockDelete, sqlResourceLockInsertRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Key:         key,
+			})
+			return err
 		})
-		return err
-	})
-}
-
-// getHeadRV returns the max usable resource version.
-// TODO: update this with a proper description and a better name.
-func (b *backend) getHeadRV(ctx context.Context, key *resource.ResourceKey) int64 {
-	var rv int64
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		rv, err = dbutil.QueryRow(ctx, tx, sqlResourceLockMinRV, sqlResourceLockMinRVRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Key:         key,
-			Response:    new(resourceVersionResponse),
-		})
-		return err
-	})
-	if err != nil {
-		return 0
-	}
-	return rv
 }

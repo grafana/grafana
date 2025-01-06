@@ -7,7 +7,4 @@ SELECT
     {{ if .Key.Namespace }}
     AND {{ .Ident "namespace" }} = {{ .Arg .Key.Namespace }}
     {{ end }}
-    {{ if .Key.Name }}
-    AND {{ .Ident "name" }}      = {{ .Arg .Key.Name }}
-    {{ end }}
 ;

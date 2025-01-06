@@ -7,7 +7,7 @@
         WHERE "group"     = 'group'
         AND "resource"  = 'resource'
         UNION ALL
-        SELECT MIN("resource_version") AS rv
+        SELECT MIN("resource_version") - 1 AS rv
         FROM "resource_lock"
         WHERE "group"     = 'group'
         AND "resource"  = 'resource'
