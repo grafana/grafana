@@ -351,7 +351,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       const otelMetricsKey = otelMetricsVar.state.filters[0].key;
@@ -383,7 +383,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
       const otelMetricsKey = otelMetricsVar.state.filters[0].key;
@@ -417,7 +417,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         ['production'],
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
 
       const otelMetricsVar = getOtelAndMetricsVar(trail);
@@ -441,7 +441,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
 
@@ -461,7 +461,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
       const otelMetricsVar = getOtelAndMetricsVar(trail);
 
@@ -481,7 +481,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        [], //nonPromotedOtelResources
+        [] //nonPromotedOtelResources
       );
       const varFilters = getFilterVar().state.filters[0];
       expect(varFilters.key).toBe('deployment_environment');
@@ -498,7 +498,7 @@ describe('util functions that rely on trail and variable setup', () => {
         defaultTimeRange,
         deploymentEnvironments,
         true, // hasOtelResources
-        nonPromotedOtelResources,
+        nonPromotedOtelResources
       );
       const varFilters = getFilterVar().state.filters[0];
       expect(varFilters.key).toBe('zone');

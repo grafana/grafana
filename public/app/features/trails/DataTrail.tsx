@@ -200,7 +200,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
         if (this.state.afterFirstDSChange) {
           // we need a new check for OTel
-          this.setState({initialOtelCheckComplete: false});
+          this.setState({ initialOtelCheckComplete: false });
           // clear out the OTel filters, do not clear out var filters
           this.resetOtelExperience();
         }
@@ -471,7 +471,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // check if the otel experience has been enabled
       if (!useOtelExperience) {
         // if the experience has been turned off, reset the otel variables
-        model.resetOtelExperience(); 
+        model.resetOtelExperience();
       } else {
         // if experience is enabled, check standardization and update the otel variables
         model.checkDataSourceForOTelResources();

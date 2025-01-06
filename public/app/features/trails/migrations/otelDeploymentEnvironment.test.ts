@@ -91,14 +91,14 @@ describe('migrate old dep env var to otel and metrics var', () => {
   describe('migrateAdHocFilters', () => {
     it('should return empty array when urlFilter is not present', () => {
       const urlFilter: UrlQueryValue = null;
-      const filters: AdHocVariableFilter[] = []
+      const filters: AdHocVariableFilter[] = [];
       migrateAdHocFilters(urlFilter, filters);
       expect(filters).toEqual([]);
     });
 
     it('should return filters when urlFilter is present', () => {
       const urlFilter: UrlQueryValue = ['someKey|=|someValue'];
-      const filters: AdHocVariableFilter[] = []
+      const filters: AdHocVariableFilter[] = [];
       migrateAdHocFilters(urlFilter, filters);
       const expected = [
         {

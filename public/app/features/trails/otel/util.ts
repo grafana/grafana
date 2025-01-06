@@ -337,7 +337,7 @@ export async function updateOtelData(
   timeRange: RawTimeRange,
   deploymentEnvironments?: string[],
   hasOtelResources?: boolean,
-  nonPromotedOtelResources?: string[],
+  nonPromotedOtelResources?: string[]
 ) {
   const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
   const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
@@ -387,8 +387,8 @@ export async function updateOtelData(
     // Set otelmetrics var, distinguish if these are var filters or otel resources, then place in correct filter
     let prevVarFilters = resettingOtel ? filtersVariable.state.filters : [];
     // only look at url values for otelmetricsvar if the initial check is NOT YET complete
-    const urlOtelAndMetricsFilters = initialOtelCheckComplete && !resettingOtel ? 
-      [] : otelAndMetricsFiltersVariable.state.filters;
+    const urlOtelAndMetricsFilters =
+      initialOtelCheckComplete && !resettingOtel ? [] : otelAndMetricsFiltersVariable.state.filters;
     // url vars should override the deployment environment variable
     const urlVarsObject = checkLabelPromotion(urlOtelAndMetricsFilters, nonPromotedOtelResources);
     const urlOtelResources = initialOtelCheckComplete ? [] : urlVarsObject.nonPromoted;
@@ -400,8 +400,7 @@ export async function updateOtelData(
       // if we are loading from the url and the default dep env is missing
       // there are no prev deployment environments from url
       const hasPreviousDepEnv = urlOtelAndMetricsFilters.filter((f) => f.key === 'deployment_environment').length > 0;
-      const doNotSetDepEvValue =
-        defaultDepEnv === '' || hasPreviousDepEnv;
+      const doNotSetDepEvValue = defaultDepEnv === '' || hasPreviousDepEnv;
       // we do not have to set the dep env value if the default is missing
       const defaultDepEnvFilter = doNotSetDepEvValue
         ? []
