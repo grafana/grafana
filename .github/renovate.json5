@@ -4,6 +4,7 @@
   ignoreDeps: [
     "@types/history", // this can be removed entirely when we upgrade history since v5 exposes types directly
     "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
+    "react-router", // we should bump this together with history and react-router-dom
     "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
     "loader-utils", // v3 requires upstream changes in ngtemplate-loader. ignore, and remove when we remove angular.
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
