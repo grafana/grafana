@@ -46,7 +46,7 @@ export const PopoverMenu = ({
   }, [close]);
 
   const onDisable = useCallback(() => {
-    track('line_contains', selection.length, row.datasourceType);
+    track('popover_menu_disabled', selection.length, row.datasourceType);
     props.onDisable();
   }, [props, row.datasourceType, selection.length]);
 
