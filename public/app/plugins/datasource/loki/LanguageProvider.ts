@@ -174,7 +174,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params: Record<string, string | number> = { start, end };
-    if (options?.streamSelector) {
+    if (options?.streamSelector && options?.streamSelector !== EMPTY_SELECTOR) {
       params['query'] = options.streamSelector;
     }
     const res = await this.request(url, params);
