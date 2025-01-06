@@ -68,5 +68,5 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return nil, err
 	}
 
-	return nil, clientErrs
+	return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", clientErrs)
 }
