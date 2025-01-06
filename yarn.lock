@@ -3763,7 +3763,7 @@ __metadata:
     typescript: "npm:5.5.4"
     uuid: "npm:11.0.4"
     webpack: "npm:5.97.1"
-    webpack-cli: "npm:6.0.0"
+    webpack-cli: "npm:6.0.1"
     whatwg-fetch: "npm:3.6.20"
   peerDependencies:
     react: ^18.0.0
@@ -10625,36 +10625,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@webpack-cli/configtest@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@webpack-cli/configtest@npm:3.0.0"
+"@webpack-cli/configtest@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@webpack-cli/configtest@npm:3.0.1"
   peerDependencies:
-    webpack: 5.x.x
-    webpack-cli: 5.x.x
-  checksum: 10/6dcd3c9dc782c0989eb3858bb8fa817ae549e70f73fbba7c6bc19fed061e00b514d49f94fad164bf80f63b9242dd28305277e0265cee298568cda59fd5a60c16
+    webpack: ^5.82.0
+    webpack-cli: 6.x.x
+  checksum: 10/a83301ff360de6c36fe98766f1f391db6149f0806450ce31484c49df3902584f73385453da23f3324a605d5afad4d2889654ada679afd49e35c59a2c4769ee97
   languageName: node
   linkType: hard
 
-"@webpack-cli/info@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@webpack-cli/info@npm:3.0.0"
+"@webpack-cli/info@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@webpack-cli/info@npm:3.0.1"
   peerDependencies:
-    webpack: 5.x.x
-    webpack-cli: 5.x.x
-  checksum: 10/96c039b4c792507c66cc8fe66b07bae3a48e47a9d4cf4511743ae8cf16e3396dbf3ff06423b11e406e72191bc6e441fd7c19a0001f852fdcd4e4795a0a6c0a4f
+    webpack: ^5.82.0
+    webpack-cli: 6.x.x
+  checksum: 10/0ddcfd8b370d924f71cc085b17b31a77b362d8046fedb38ac601042733568cda05b0c8c7b1e0e1e050dc926ee76f754cd9c4f351e2b361a0d157465f8b03b689
   languageName: node
   linkType: hard
 
-"@webpack-cli/serve@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@webpack-cli/serve@npm:3.0.0"
+"@webpack-cli/serve@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@webpack-cli/serve@npm:3.0.1"
   peerDependencies:
-    webpack: 5.x.x
-    webpack-cli: 5.x.x
+    webpack: ^5.82.0
+    webpack-cli: 6.x.x
   peerDependenciesMeta:
     webpack-dev-server:
       optional: true
-  checksum: 10/9fcf52e08d7f59b220d1574ae0503723d4eb8a8a762854e0c9f58ad06607f4f32dda722c81461988f54233ae79380708ca9d49b6c962e42bed571c6a54096de6
+  checksum: 10/688138f7b2f96ed7a5aae2798bd647e4db0fdf8e86850a493c987049eec6faf63ba78d8f08b4f0a9e41dc459cba80abfb621ae1a45890bb0fa2c09baef4db75b
   languageName: node
   linkType: hard
 
@@ -17928,7 +17928,7 @@ __metadata:
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
-    webpack-cli: "npm:6.0.0"
+    webpack-cli: "npm:6.0.1"
     webpack-dev-server: "npm:5.2.0"
     webpack-livereload-plugin: "npm:3.0.2"
     webpack-manifest-plugin: "npm:5.0.0"
@@ -30660,14 +30660,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-cli@npm:6.0.0":
-  version: 6.0.0
-  resolution: "webpack-cli@npm:6.0.0"
+"webpack-cli@npm:6.0.1":
+  version: 6.0.1
+  resolution: "webpack-cli@npm:6.0.1"
   dependencies:
     "@discoveryjs/json-ext": "npm:^0.6.1"
-    "@webpack-cli/configtest": "npm:^3.0.0"
-    "@webpack-cli/info": "npm:^3.0.0"
-    "@webpack-cli/serve": "npm:^3.0.0"
+    "@webpack-cli/configtest": "npm:^3.0.1"
+    "@webpack-cli/info": "npm:^3.0.1"
+    "@webpack-cli/serve": "npm:^3.0.1"
     colorette: "npm:^2.0.14"
     commander: "npm:^12.1.0"
     cross-spawn: "npm:^7.0.3"
@@ -30686,7 +30686,7 @@ __metadata:
       optional: true
   bin:
     webpack-cli: ./bin/cli.js
-  checksum: 10/af82573d9f23b38e91182f1e8ae8129d14e9622b7f62bca3198c5ba36f469e4102909e73da0a63849f34c53150608ebf09656343b3eb98c91a9db42ceb8cdccf
+  checksum: 10/f765a492babed4d2f42eb7a42a895550ad62f8ae56fde087243490c7ed685c6a3c8a280e27603f5b08c5221f4b8189582acd57a8ceea510fe95225e8229a0c51
   languageName: node
   linkType: hard
 
