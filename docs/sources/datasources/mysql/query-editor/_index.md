@@ -88,7 +88,9 @@ The MySQL query editor has two modes: **Builder** and **Code**.
 
 Builder mode helps you build a query using a visual interface.
 
-Code mode allows for advanced querying and offers support for complex SQL query writing. Code mode supports autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
+Code mode allows for advanced querying and offers support for complex SQL query writing. 
+
+<!-- Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified. -->
 
 {{% admonition type="note" %}}
 If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor will put quotes around the name. For example, the name `table-name` will be quoted with backticks - `` `table-name` ``.
@@ -127,7 +129,7 @@ Use the second dropdown to choose a filter. To filter on more columns, click the
 
 ## MySQL code mode
 
-To create advanced queries, switch to **Code mode** by clicking **Code**in the upper right of the editor window. Code mode supports autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
+To create advanced queries, switch to **Code mode** by clicking **Code**in the upper right of the editor window. Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified.
 
 {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
@@ -151,11 +153,11 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 | `$__timeFrom()`                                       | Will be replaced by the start of the currently active time selection. For example, _FROM_UNIXTIME(1494410783)_                                                                                               |
 | `$__timeTo()`                                         | Will be replaced by the end of the currently active time selection. For example, _FROM_UNIXTIME(1494410983)_                                                                                                 |
 | `$__timeGroup(dateColumn,'5m')`                       | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),\*                                                           |
-| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value (only works with time series queries).                                         |
+| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by Grafana and 0 will be used as value (only works with time series queries).                                         |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points (only works with time series queries).                                                                                                       |
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only works with time series queries).                                        |
 | `$__timeGroupAlias(dateColumn,'5m')`                  | Will be replaced identical to $\_\_timeGroup but with an added column alias.                                                                                                                                 |
-| `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                         |
+| `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as a UNIX timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                         |
 | `$__unixEpochFrom()`                                  | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                            |
 | `$__unixEpochTo()`                                    | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                              |
 | `$__unixEpochNanoFilter(dateColumn)`                  | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_ |
@@ -342,7 +344,7 @@ You can also create nested variables. For example, if you have a variable named 
 SELECT hostname FROM my_host  WHERE region IN($region)
 ```
 
-#### Use `__searchFilter` to filter results in query variable
+#### Use `__searchFilter` to filter results in a query variable
 
 Using `__searchFilter` in the query field allows the query results to be filtered based on the user’s input in the drop-down selection box. If you do not enter anything, the default value for `__searchFilter` is %
 

@@ -68,7 +68,7 @@ Example:
  GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
 ```
 
-You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
+You can use wildcards (`*`) in place of a database or table if you want to grant access to more databases and tables.
 
 ## Add the MySQL data source
 
@@ -101,7 +101,7 @@ Following is a list of MySQL configuration options:
 - **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**. 
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TLS/SSL mode requires it.
 - **Skip TLS Verification** - Toggle to skip verification of the MySQL server's TLS certificate chain and host name.
-- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
+- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client-side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
 
 ## Additional settings
 
@@ -149,7 +149,7 @@ You can override this setting in a dashboard panel under its data source options
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
+For more information about provisioning, and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
 ### MySQL provisioning examples
 
