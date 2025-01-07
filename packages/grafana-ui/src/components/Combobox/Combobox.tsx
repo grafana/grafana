@@ -111,6 +111,8 @@ function itemFilter<T extends string | number>(inputValue: string) {
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
 
+export const VIRTUAL_OVERSCAN_ITEMS = 4;
+
 /**
  * A performant Select replacement.
  *
@@ -214,7 +216,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     count: items.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => MENU_OPTION_HEIGHT,
-    overscan: 4,
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);

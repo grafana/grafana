@@ -76,7 +76,7 @@ type Story = StoryObj<typeof Combobox>;
 
 export const Basic: Story = {};
 
-async function generateOptions(amount: number): Promise<ComboboxOption[]> {
+export async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),
