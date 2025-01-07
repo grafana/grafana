@@ -73,7 +73,11 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 
 # this file only exists if enterprise is enabled
 .PHONY: swagger-enterprise-gen
-ifeq ($(findstring enterprise,$(WIRE_TAGS)),"enterprise") ## if enterprise is not enabled
+ENTERPRISE_EXT_FILE = pkg/setting/setting_enterprise.go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: not enabled"
+else
 swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
@@ -84,9 +88,6 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--include-tag=enterprise
-else
-swagger-enterprise-gen:
-	@echo "skipping re-generating swagger for enterprise: not enabled"
 endif
 
 .PHONY: swagger-gen
@@ -121,14 +122,15 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
-ifeq ($(findstring enterprise,$(WIRE_TAGS)),"enterprise") ## if enterprise is not enabled
+ENTERPRISE_FE_EXT_FILE = public/app/extensions/index.ts
+ifeq ("$(wildcard $(ENTERPRISE_FE_EXT_FILE))","") ## if enterprise is not enabled
+i18n-extract-enterprise:
+	@echo "Skipping i18n extract for Enterprise: not enabled"
+else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
 	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
 	node ./public/locales/pseudo.mjs --mode enterprise
-else
-i18n-extract-enterprise:
-	@echo "Skipping i18n extract for Enterprise: not enabled"
 endif
 
 .PHONY: i18n-extract
