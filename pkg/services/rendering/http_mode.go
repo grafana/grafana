@@ -186,7 +186,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 
 	// check for timeout first
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		logger.Info("Rendering timed out")
+		logger.Error("Rendering timed out")
 		return ErrTimeout
 	}
 
@@ -207,7 +207,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 	if err != nil {
 		// check that we didn't timeout while receiving the response.
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			logger.Info("Rendering timed out")
+			logger.Error("Rendering timed out")
 			return ErrTimeout
 		}
 
