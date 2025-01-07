@@ -1781,6 +1781,22 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Cőŉƒįřm",
+        "message": "Ÿőū äřę äþőūŧ ŧő đįşäþľę ŧĥę ľőģş ƒįľŧęř męŉū. Ŧő řę-ęŉäþľę įŧ, şęľęčŧ ŧęχŧ įŉ ä ľőģ ľįŉę ŵĥįľę ĥőľđįŉģ ŧĥę äľŧ ĸęy.",
+        "title": "Đįşäþľę męŉū"
+      },
+      "disable-popover-message": {
+        "shortcut": "äľŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
+      }
+    },
+    "popover-menu": {
+      "copy": "Cőpy şęľęčŧįőŉ",
+      "disable-menu": "Đįşäþľę męŉū",
+      "line-contains": "Åđđ äş ľįŉę čőŉŧäįŉş ƒįľŧęř",
+      "line-contains-not": "Åđđ äş ľįŉę đőęş ŉőŧ čőŉŧäįŉ ƒįľŧęř"
     }
   },
   "migrate-to-cloud": {
