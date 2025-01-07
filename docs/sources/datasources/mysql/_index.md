@@ -27,10 +27,10 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure-mysql-data-source/
   mysql-query-editor:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -65,4 +65,3 @@ Once you have configured the data source you can:
 View a MySQL overview on Grafana Play:
 
 {{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview" >}}
-

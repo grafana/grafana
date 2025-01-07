@@ -75,7 +75,7 @@ Use wildcards (`*`) in place of a database or table if you want to grant access 
 To add the MySQL data source complete the following steps:
 
 1. Click **Connections** in the left-side menu.
-1. Click **Add new connection** and type `MySQL` in the search bar. 
+1. Click **Add new connection** and type `MySQL` in the search bar.
 1. Select the **MySQL data source** option.
 1. Click **Add new data source** in the upper right.
 
@@ -85,8 +85,8 @@ You are taken to the **Settings** tab where you will configure the data source.
 
 Following is a list of MySQL configuration options:
 
-- **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: 
-`mysql-assets-1`, `mysqldb1`.
+- **Name** - Sets the name you use to refer to the data source in panels and queries. Examples:
+  `mysql-assets-1`, `mysqldb1`.
 - **Default** - Toggle to make this specific MySQL data source the default pre-selected data source in panels and visualizations.
 
 **Connection:**
@@ -98,14 +98,14 @@ Following is a list of MySQL configuration options:
 
 - **Username**- Enter the username used to connect to your MySQL database.
 - **Password** - Enter the password used to connect to the MySQL database.
-- **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**. 
+- **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**.
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TLS/SSL mode requires it.
 - **Skip TLS Verification** - Toggle to skip verification of the MySQL server's TLS certificate chain and host name.
-- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client-side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS/SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
+- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client-side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include [TLS/SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
 
 ## Additional settings
 
-The following are additional MySQL settings. 
+The following are additional MySQL settings.
 
 **MySQL options:**
 
