@@ -32,7 +32,7 @@ func transformExemplarToFrame(name string, series *tempopb.TimeSeries) *data.Fra
 		Name:   "exemplar",
 		Fields: fields,
 		Meta: &data.FrameMeta{
-			DataTopic: "annotations",
+			DataTopic: data.DataTopicAnnotations,
 		},
 	}
 
