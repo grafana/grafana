@@ -208,8 +208,8 @@ To group alert rule notifications:
 1. **Configure Notification policies**:
    - Group alerts by the **query label** "region".
    - Example:
-     - Alerts for `region: us-west` go to the West Coast team.
-     - Alerts for `region: us-east` go to the East Coast team.
+     - Alert notifications for `region: us-west` go to the West Coast team.
+     - Alert notifications for `region: us-east` go to the East Coast team.
 1. Specify the **timing options** for sending notifications to control their frequency. 
    - Example:
       - **Group interval**: setting determines how often updates for the same alert group are sent. By default, this interval is set to 5 minutes, but you can customize it to be shorter or longer based on your needs.
@@ -459,8 +459,8 @@ Grouped notifications example:
       },
 
 ...}
-
 ```
+
 
 _Detail of CPU and memory alert instances grouped into a single notification for us-west contact point._
 Webhook - US West
@@ -481,6 +481,7 @@ Webhook - US West
 ...}}}
 ```
 
+
 _Detail of CPU alert instances grouped into a separate notification for us-east contact point.
 
 ``` json
@@ -498,6 +499,7 @@ _Detail of CPU alert instances grouped into a separate notification for us-east 
 ...}}}
 ```
 
+
 _Detail of memory alert instances grouped into a separate notification for us-east contact point._
 
 <!-- INTERACTIVE page step6.md END -->
@@ -506,6 +508,6 @@ _Detail of memory alert instances grouped into a separate notification for us-ea
 
 ## Conclusion
 
-By configuring **notification policies** and using **labels** (such as _region_), you can group alerts based on specific criteria and route them to the appropriate teams. Fine-tuning **timing options**—including group wait, group interval, and repeat interval—further can reduce noise and ensures notifications remain actionable without overwhelming on-call engineers.
+By configuring **notification policies** and using **labels** (such as _region_), you can group alert notifications based on specific criteria and route them to the appropriate teams. Fine-tuning **timing options**—including group wait, group interval, and repeat interval—further can reduce noise and ensures notifications remain actionable without overwhelming on-call engineers.
 
 <!-- INTERACTIVE page finish.md END -->
