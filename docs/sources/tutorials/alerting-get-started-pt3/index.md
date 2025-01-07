@@ -462,7 +462,7 @@ Grouped notifications example:
 ```
 
 _Detail of CPU and memory alert instances grouped into a single notification for us-west contact point._
-Webhook - US West
+
 
 ```json
 {
