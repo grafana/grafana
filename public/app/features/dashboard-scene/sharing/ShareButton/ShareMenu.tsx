@@ -101,7 +101,6 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
         // Open the modified URL
         window.open(url.toString(), '_blank');
-        // window.open(config.externalUserMngLinkUrl, '_blank');
       },
       renderDividerAbove: true,
       component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
