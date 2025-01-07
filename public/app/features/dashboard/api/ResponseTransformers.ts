@@ -228,6 +228,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
   for (const p of panels) {
     let elementName;
 
+    // LibraryPanelKind
     if (p.libraryPanel) {
       elementName = p.libraryPanel.uid;
 
@@ -238,6 +239,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
           name: p.libraryPanel.name,
         },
       };
+      // PanelKind
     } else {
       elementName = p.id!.toString();
       const queries = getPanelQueries(
@@ -286,6 +288,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
         },
       };
     }
+
     layout.spec.items.push({
       kind: 'GridLayoutItem',
       spec: {

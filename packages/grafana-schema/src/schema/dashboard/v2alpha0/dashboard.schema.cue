@@ -43,7 +43,7 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: PanelKind | LibraryPanelKind // |* more element types in the future
+  elements: [ElementReference.name]: Element 
 
   annotations: [...AnnotationQueryKind]
 
@@ -57,6 +57,9 @@ DashboardV2Spec: {
   // This is used to determine if the dashboard should be updated when the plugin is updated.
   revision?: uint16
 }
+
+// Supported dashboard elements
+Element: PanelKind | LibraryPanelKind // |* more element types in the future
 
 LibraryPanelKind: {
   kind: "LibraryPanel"
