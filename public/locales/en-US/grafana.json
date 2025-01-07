@@ -1781,6 +1781,22 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Confirm",
+        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the alt key.",
+        "title": "Disable menu"
+      },
+      "disable-popover-message": {
+        "shortcut": "alt+select to enable again"
+      }
+    },
+    "popover-menu": {
+      "copy": "Copy selection",
+      "disable-menu": "Disable menu",
+      "line-contains": "Add as line contains filter",
+      "line-contains-not": "Add as line does not contain filter"
     }
   },
   "migrate-to-cloud": {
