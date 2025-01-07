@@ -56,6 +56,15 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
+	if s.opts.RequireDeprecatedInternalID {
+		// nolint:staticcheck
+		id := obj.GetDeprecatedInternalID()
+		if id < 1 {
+			// nolint:staticcheck
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+		}
+	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -115,6 +124,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+
+	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
+	// avoid setting it back to 0
+	previousInternalID := previous.GetDeprecatedInternalID() // nolint:staticcheck
+	if previousInternalID != 0 {
+		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
+	}
 
 	// Read+write will verify that origin format is accurate
 	repo, err := obj.GetRepositoryInfo()
