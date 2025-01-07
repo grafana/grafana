@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -32,7 +33,7 @@ type Client interface {
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider,
-	tracer tracing.Tracer, db legacysql.LegacyDatabaseProvider,
+	tracer tracing.Tracer, db db.DB,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -46,7 +47,8 @@ func ProvideAuthZClient(
 	var client Client
 
 	// Register the server
-	server := rbac.NewService(db, legacy.NewLegacySQLStores(db), log.New("authz-grpc-server"), tracer)
+	sql := legacysql.NewDatabaseProvider(db)
+	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer)
 
 	switch authCfg.mode {
 	case ModeInProc:
