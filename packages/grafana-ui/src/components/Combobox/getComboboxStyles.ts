@@ -11,6 +11,7 @@ export const MENU_ITEM_LINE_HEIGHT = 1.5;
 
 // Used with Downshift to get the height of each item
 export const MENU_OPTION_HEIGHT = MENU_ITEM_PADDING * 2 + MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;
+export const MENU_OPTION_HEIGHT_DESCRIPTION = MENU_OPTION_HEIGHT + MENU_ITEM_LINE_HEIGHT * MENU_ITEM_FONT_SIZE;
 export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
@@ -67,7 +68,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     optionDescription: css({
       label: 'combobox-option-description',
-      fontWeight: 'normal',
+      fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       lineHeight: MENU_ITEM_LINE_HEIGHT,
@@ -89,7 +90,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',
-        height: MENU_OPTION_HEIGHT,
+        height: '100%',
         position: 'absolute',
         width: theme.spacing(0.5),
         left: 0,
