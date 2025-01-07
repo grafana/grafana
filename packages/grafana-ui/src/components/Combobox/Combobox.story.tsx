@@ -30,8 +30,17 @@ const meta: Meta<PropsAndCustomArgs> = {
     isClearable: false,
     placeholder: 'Select an option...',
     options: [
-      { label: 'Apple', value: 'apple' },
-      { label: 'Banana', value: 'banana' },
+      {
+        label: 'Apple',
+        value: 'apple',
+        description: 'Apples are a great source of fiber and vitamin C.',
+      },
+      {
+        label: 'Banana',
+        value: 'banana',
+        description:
+          'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
+      },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
       {
@@ -44,7 +53,12 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Fennel', value: 'fennel' },
       { label: 'Grape', value: 'grape' },
       { label: 'Honeydew', value: 'honeydew' },
-      { label: 'Iceberg Lettuce', value: 'iceberg-lettuce' },
+      {
+        label: 'Iceberg Lettuce',
+        value: 'iceberg-lettuce',
+        description:
+          'this is a very long description that should be longer than the longest option label which should make it clip to only one line. It is a bit tough to estimate the width of the descriptions because the font size is smaller, but this should be enough.',
+      },
       { label: 'Jackfruit', value: 'jackfruit' },
     ],
     value: 'banana',
