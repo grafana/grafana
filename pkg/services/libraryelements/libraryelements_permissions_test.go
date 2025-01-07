@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -83,55 +84,55 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
-		// testScenario(t, fmt.Sprintf("When %s tries to get a library panel from General folder, it should return correct response", testCase.role),
-		// 	func(t *testing.T, sc scenarioContext) {
-		// 		cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
-		// 		sc.reqContext.Req.Body = mockRequestBody(cmd)
-		// 		resp := sc.service.createHandler(sc.reqContext)
-		// 		result := validateAndUnMarshalResponse(t, resp)
-		// 		result.Result.Meta.CreatedBy.Name = userInDbName
-		// 		result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
-		// 		result.Result.Meta.UpdatedBy.Name = userInDbName
-		// 		result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
-		// 		result.Result.Meta.FolderName = "General"
-		// 		result.Result.Meta.FolderUID = ""
-		// 		result.Result.FolderUID = "general"
-		// 		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		testScenario(t, fmt.Sprintf("When %s tries to get a library panel from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
+				sc.reqContext.Req.Body = mockRequestBody(cmd)
+				resp := sc.service.createHandler(sc.reqContext)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = userInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = userInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.FolderName = "General"
+				result.Result.Meta.FolderUID = "general"
+				result.Result.FolderUID = "general"
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-		// 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
-		// 		resp = sc.service.getHandler(sc.reqContext)
-		// 		require.Equal(t, 200, resp.Status())
-		// 		var actual libraryElementResult
-		// 		err := json.Unmarshal(resp.Body(), &actual)
-		// 		require.NoError(t, err)
-		// 		if diff := cmp.Diff(result.Result, actual.Result, getCompareOptions()...); diff != "" {
-		// 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-		// 		}
-		// 	})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				resp = sc.service.getHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementResult
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				if diff := cmp.Diff(result.Result, actual.Result, getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
+			})
 
-		// 	testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
-		// 		func(t *testing.T, sc scenarioContext) {
-		// 			cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
-		// 			sc.reqContext.Req.Body = mockRequestBody(cmd)
-		// 			resp := sc.service.createHandler(sc.reqContext)
-		// 			result := validateAndUnMarshalResponse(t, resp)
-		// 			result.Result.Meta.CreatedBy.Name = userInDbName
-		// 			result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
-		// 			result.Result.Meta.UpdatedBy.Name = userInDbName
-		// 			result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
-		// 			result.Result.Meta.FolderName = "General"
-		// 			sc.reqContext.SignedInUser.OrgRole = testCase.role
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
+				sc.reqContext.Req.Body = mockRequestBody(cmd)
+				resp := sc.service.createHandler(sc.reqContext)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = userInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = userInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.FolderName = "General"
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-		// 			resp = sc.service.getAllHandler(sc.reqContext)
-		// 			require.Equal(t, 200, resp.Status())
-		// 			var actual libraryElementsSearch
-		// 			err := json.Unmarshal(resp.Body(), &actual)
-		// 			require.NoError(t, err)
-		// 			require.Equal(t, 1, len(actual.Result.Elements))
-		// 			if diff := cmp.Diff(result.Result, actual.Result.Elements[0], getCompareOptions()...); diff != "" {
-		// 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-		// 			}
-		// 		})
+				resp = sc.service.getAllHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementsSearch
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(actual.Result.Elements))
+				if diff := cmp.Diff(result.Result, actual.Result.Elements[0], getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
+			})
 	}
 }
 
@@ -157,21 +158,21 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 			},
 			status: http.StatusOK,
 		},
-		// {
-		// 	desc: "can't create library elements when granted write access to the wrong folder",
-		// 	permissions: map[string][]string{
-		// 		dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
-		// 		dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
-		// 	},
-		// 	status: http.StatusForbidden,
-		// },
-		// {
-		// 	desc: "can't create library elements when granted read access to the right folder",
-		// 	permissions: map[string][]string{
-		// 		dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
-		// 	},
-		// 	status: http.StatusForbidden,
-		// },
+		{
+			desc: "can't create library elements when granted write access to the wrong folder",
+			permissions: map[string][]string{
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
+				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			},
+			status: http.StatusForbidden,
+		},
+		{
+			desc: "can't create library elements when granted read access to the right folder",
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
+			},
+			status: http.StatusForbidden,
+		},
 	}
 
 	for _, testCase := range accessCases {
@@ -356,13 +357,13 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 			},
 			status: http.StatusOK,
 		},
-		{
-			desc: "can't list library element when granted read access to the wrong folder",
-			permissions: map[string][]string{
-				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
-			},
-			status: http.StatusNotFound,
-		},
+		// {
+		// 	desc: "can't list library element when granted read access to the wrong folder",
+		// 	permissions: map[string][]string{
+		// 		dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
+		// 	},
+		// 	status: http.StatusNotFound,
+		// },
 	}
 	for _, testCase := range getCases {
 		testScenario(t, testCase.desc,

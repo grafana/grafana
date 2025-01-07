@@ -294,7 +294,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
-		builder.Write(" INNER JOIN dashboard on le.folder_uid = dashboard.folder_uid AND le.folder_uid IS NOT NULL")
+		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
 
 		// use permission filter if lib panel RBAC isn't enabled
@@ -431,7 +431,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_uid = dashboard.folder_uid AND le.folder_uid IS NOT NULL'")
+		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id<>0")
 		builder.Write(` WHERE le.org_id=?`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
