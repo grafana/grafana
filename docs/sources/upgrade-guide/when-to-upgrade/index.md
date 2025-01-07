@@ -61,7 +61,7 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 - The schedule above outlines how we plan release dates. However, unforeseen events and circumstances may cause dates to change.
 - High severity security and feature degradation incidents will result in ad-hoc releases that are not scheduled ahead of time.
 - Patching releases are for the current (last released) minor version of Grafana. Additional older versions of Grafana may be included if there is a critical bug or security vulnerability that needs to be patched.
-- Release Freezes: Each year Grafana implements two release freezes to accommodate for the holiday season, these dates will be announced as the holiday season approaches. During these times, no scheduled releases will be executed. However, this does not apply to changes that may be required during the course of an operational or security incident.
+- Release freezes: Each year Grafana implements two release freezes to accommodate for the holiday season, these dates will be announced as the holiday season approaches. During these times, no scheduled releases will be executed. However, this does not apply to changes that may be required during the course of an operational or security incident.
 
 ## Grafana security releases: improved version naming convention
 
