@@ -2031,7 +2031,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations",
+      "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
     },
     "alerting-am-routes": {
