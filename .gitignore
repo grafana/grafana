@@ -110,6 +110,7 @@ profile.cov
 /pkg/build/cmd/enterprise.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
+!/pkg/extensions/main.go
 /public/app/extensions
 !/public/app/extensions/.keep
 
@@ -230,4 +231,3 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e/test-plugins/*/dist
-pkg/setting/setting_enterprise.go
