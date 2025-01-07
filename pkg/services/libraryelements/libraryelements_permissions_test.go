@@ -121,6 +121,8 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.UpdatedBy.Name = userInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
+				result.Result.Meta.FolderUID = ""
+				result.Result.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				resp = sc.service.getAllHandler(sc.reqContext)
