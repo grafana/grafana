@@ -73,7 +73,7 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 
 # this file only exists if enterprise is enabled
 .PHONY: swagger-enterprise-gen
-ENTERPRISE_EXT_FILE = pkg/setting/setting_enterprise.go
+ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
 swagger-enterprise-gen:
 	@echo "skipping re-generating swagger for enterprise: not enabled"

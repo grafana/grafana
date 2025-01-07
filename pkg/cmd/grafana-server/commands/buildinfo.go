@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,5 +23,6 @@ func SetBuildInfo(opts standalone.BuildInfo) {
 	setting.EnterpriseBuildCommit = opts.EnterpriseCommit
 	setting.BuildStamp = getBuildstamp(opts)
 	setting.BuildBranch = opts.BuildBranch
+	setting.IsEnterprise = extensions.IsEnterprise
 	setting.Packaging = validPackaging(Packaging)
 }
