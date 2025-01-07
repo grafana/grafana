@@ -61,7 +61,18 @@ refs:
 # Configure the PostgreSQL data source
 
 
-To configure basic settings for the data source, complete the following steps:
+
+
+## Before you begin
+
+You must have the `Organization administrator` role to configure the Postgres data source.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+
+Grafana comes with a built-in MySQL data source, eliminating the need to install a plugin.
+
+{{< admonition type="note" >}}
+When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+{{< /admonition >}}
 
 
 ## Add the PostgreSQL data source
@@ -78,14 +89,18 @@ You are taken to the **Settings** tab where you will configure the data source.
 
 ## PostgreSQL configuration options
 
-Add same admonition from MYSQL 
-
-The database user should only be granted SELECT permissions on the specified database & tables you want to query.
-
-
+Following is a list of PostgreSQL configuration options:
 
 - **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: `PostgreSQL-DB-1`.
 - **Default** - Toggle to set as the default data source.
+
+**Connection section:**
+
+- **Host URL** - The IP address/hostname and optional port of your PostgreSQL instance. This does not include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.
+- **Database name** - 
+
+
+**Authentication section88:
 
 1.  Set the data source's basic configuration options:
 
