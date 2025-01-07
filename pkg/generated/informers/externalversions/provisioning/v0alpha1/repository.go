@@ -5,13 +5,13 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	provisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	apisprovisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/grafana/grafana/pkg/generated/informers/externalversions/internalinterfaces"
-	v0alpha1 "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -22,7 +22,7 @@ import (
 // Repositories.
 type RepositoryInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v0alpha1.RepositoryLister
+	Lister() provisioningv0alpha1.RepositoryLister
 }
 
 type repositoryInformer struct {
@@ -57,7 +57,7 @@ func NewFilteredRepositoryInformer(client versioned.Interface, namespace string,
 				return client.ProvisioningV0alpha1().Repositories(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&provisioningv0alpha1.Repository{},
+		&apisprovisioningv0alpha1.Repository{},
 		resyncPeriod,
 		indexers,
 	)
@@ -68,9 +68,9 @@ func (f *repositoryInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *repositoryInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&provisioningv0alpha1.Repository{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisprovisioningv0alpha1.Repository{}, f.defaultInformer)
 }
 
-func (f *repositoryInformer) Lister() v0alpha1.RepositoryLister {
-	return v0alpha1.NewRepositoryLister(f.Informer().GetIndexer())
+func (f *repositoryInformer) Lister() provisioningv0alpha1.RepositoryLister {
+	return provisioningv0alpha1.NewRepositoryLister(f.Informer().GetIndexer())
 }
