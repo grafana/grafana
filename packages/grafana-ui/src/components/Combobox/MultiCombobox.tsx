@@ -12,7 +12,13 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
-import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
+import {
+  ComboboxOption,
+  ComboboxBaseProps,
+  AutoSizeConditionals,
+  itemToString,
+  VIRTUAL_OVERSCAN_ITEMS,
+} from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
@@ -140,7 +146,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     count: items.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => MENU_OPTION_HEIGHT,
-    overscan: 4,
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
@@ -209,8 +215,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
               <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const item = items[virtualRow.index];
                   const index = virtualRow.index;
+                  const item = items[index];
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
@@ -219,7 +225,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       key={`${item.value}-${index}`}
                       data-index={index}
                       {...itemProps}
-                      className={cx(styles.option, highlightedIndex === index && styles.optionFocused)}
+                      className={cx(styles.option, { [styles.optionFocused]: highlightedIndex === index })}
                       style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
                     >
                       <Stack direction="row" alignItems="center">
