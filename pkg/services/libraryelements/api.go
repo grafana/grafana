@@ -85,11 +85,9 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-	// nolint:staticcheck
-	if element.FolderID != 0 {
+	if element.FolderUID != "" {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
+		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: &element.FolderUID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "failed to get folder", err)
 		}

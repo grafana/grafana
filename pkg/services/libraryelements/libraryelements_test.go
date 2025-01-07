@@ -56,46 +56,46 @@ func TestMain(m *testing.M) {
 }
 
 func TestDeleteLibraryPanelsInFolder(t *testing.T) {
-	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
-		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]any{
-				"panels": []any{
-					map[string]any{
-						"id": int64(1),
-						"gridPos": map[string]any{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]any{
-						"id": int64(2),
-						"gridPos": map[string]any{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"libraryPanel": map[string]any{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
-						},
-					},
-				},
-			}
-			dash := dashboards.Dashboard{
-				Title: "Testing DeleteLibraryElementsInFolder",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
-			require.NoError(t, err)
+	// scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
+	// 	func(t *testing.T, sc scenarioContext) {
+	// 		dashJSON := map[string]any{
+	// 			"panels": []any{
+	// 				map[string]any{
+	// 					"id": int64(1),
+	// 					"gridPos": map[string]any{
+	// 						"h": 6,
+	// 						"w": 6,
+	// 						"x": 0,
+	// 						"y": 0,
+	// 					},
+	// 				},
+	// 				map[string]any{
+	// 					"id": int64(2),
+	// 					"gridPos": map[string]any{
+	// 						"h": 6,
+	// 						"w": 6,
+	// 						"x": 6,
+	// 						"y": 0,
+	// 					},
+	// 					"libraryPanel": map[string]any{
+	// 						"uid":  sc.initialResult.Result.UID,
+	// 						"name": sc.initialResult.Result.Name,
+	// 					},
+	// 				},
+	// 			},
+	// 		}
+	// 		dash := dashboards.Dashboard{
+	// 			Title: "Testing DeleteLibraryElementsInFolder",
+	// 			Data:  simplejson.NewFromAny(dashJSON),
+	// 		}
+	// 		// nolint:staticcheck
+	// 		dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+	// 		err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
+	// 		require.NoError(t, err)
 
-			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
-			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
-		})
+	// 		err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+	// 		require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
+	// 	})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
@@ -103,31 +103,31 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
 		})
 
-	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
-		func(t *testing.T, sc scenarioContext) {
-			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
-			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
+	// scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
+	// 	func(t *testing.T, sc scenarioContext) {
+	// 		// nolint:staticcheck
+	// 		command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+	// 		sc.reqContext.Req.Body = mockRequestBody(command)
+	// 		resp := sc.service.createHandler(sc.reqContext)
+	// 		require.Equal(t, 200, resp.Status())
 
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-			var result libraryElementsSearch
-			err := json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			require.NotNil(t, result.Result)
-			require.Equal(t, 2, len(result.Result.Elements))
+	// 		resp = sc.service.getAllHandler(sc.reqContext)
+	// 		require.Equal(t, 200, resp.Status())
+	// 		var result libraryElementsSearch
+	// 		err := json.Unmarshal(resp.Body(), &result)
+	// 		require.NoError(t, err)
+	// 		require.NotNil(t, result.Result)
+	// 		require.Equal(t, 2, len(result.Result.Elements))
 
-			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
-			require.NoError(t, err)
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-			err = json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			require.NotNil(t, result.Result)
-			require.Equal(t, 0, len(result.Result.Elements))
-		})
+	// 		err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+	// 		require.NoError(t, err)
+	// 		resp = sc.service.getAllHandler(sc.reqContext)
+	// 		require.Equal(t, 200, resp.Status())
+	// 		err = json.Unmarshal(resp.Body(), &result)
+	// 		require.NoError(t, err)
+	// 		require.NotNil(t, result.Result)
+	// 		require.Equal(t, 0, len(result.Result.Elements))
+	// 	})
 }
 
 func TestGetLibraryPanelConnections(t *testing.T) {

@@ -145,7 +145,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// folderUID *string will be changed to string
-	var folderUID = ""
+	var folderUID string
 	if cmd.FolderUID != nil {
 		folderUID = *cmd.FolderUID
 	}
@@ -290,14 +290,11 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderUID})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
-		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
-		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
+		builder.Write(" INNER JOIN dashboard on le.folder_uid = dashboard.folder_uid AND le.folder_uid IS NOT NULL")
 		writeParamSelectorSQL(&builder, params...)
 
 		// use permission filter if lib panel RBAC isn't enabled
@@ -322,7 +319,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
 		var updatedModel json.RawMessage
-		if libraryElement.FolderUID != cmd.FolderUID {
+		if libraryElement.FolderUID == "" {
+			libraryElement.FolderUID = ac.GeneralFolderUID
+		}
+		if (libraryElement.FolderUID != cmd.FolderUID) && (libraryElement.FolderUID != string(ac.GeneralFolderUID)) {
 			continue
 		}
 		if libraryElement.Kind == int64(model.PanelElement) {
@@ -385,7 +385,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser identity.Requester, name string) ([]model.LibraryElementDTO, error) {
 	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
 		model.GetLibraryElementCommand{
-			FolderName: dashboards.RootFolderName,
+			FolderUID: ac.GeneralFolderUID,
 		})
 }
 
@@ -420,7 +420,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(", 'General' as folder_name ")
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
+			builder.Write(` WHERE le.org_id=?  AND le.folder_uid in ('', 'general') OR le.folder_uid is NULL`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
 			writeSearchStringSQL(query, l.SQLStore, &builder)
 			writeExcludeSQL(query, &builder)
@@ -431,7 +431,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id<>0")
+		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_uid = dashboard.folder_uid AND le.folder_uid IS NOT NULL'")
 		builder.Write(` WHERE le.org_id=?`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
