@@ -416,7 +416,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 				break
 			}
 			for _, field := range frame.Fields {
-				if field.Labels != nil {
+				if len(field.Labels) > 0 {
 					convertForSQL = true
 					break
 				}
