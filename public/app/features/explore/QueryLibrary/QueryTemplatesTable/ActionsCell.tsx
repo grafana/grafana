@@ -2,9 +2,9 @@ import { useState } from 'react';
 
 import { getAppEvents } from '@grafana/runtime';
 import { IconButton, Modal } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDeleteQueryTemplateMutation } from 'app/features/query-library';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
