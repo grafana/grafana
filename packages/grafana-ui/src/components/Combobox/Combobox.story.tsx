@@ -30,8 +30,17 @@ const meta: Meta<PropsAndCustomArgs> = {
     isClearable: false,
     placeholder: 'Select an option...',
     options: [
-      { label: 'Apple', value: 'apple' },
-      { label: 'Banana', value: 'banana' },
+      {
+        label: 'Apple',
+        value: 'apple',
+        description: 'Apples are a great source of fiber and vitamin C.',
+      },
+      {
+        label: 'Banana',
+        value: 'banana',
+        description:
+          'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
+      },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
       {
