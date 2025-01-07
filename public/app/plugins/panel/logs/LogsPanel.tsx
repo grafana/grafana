@@ -130,7 +130,6 @@ export const LogsPanel = ({
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
-  const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
@@ -141,11 +140,9 @@ export const LogsPanel = ({
   // Loading ref to prevent firing multiple requests
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
+  // Prevents the scroll position to change when new data from infinite scrolling is received
+  const keepScrollPositionRef = useRef(false);
   let closeCallback = useRef<() => void>();
-
-  useEffect(() => {
-    scrollElement?.scrollTo(0, scrollTop);
-  }, [scrollElement, scrollTop]);
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -278,12 +275,18 @@ export const LogsPanel = ({
   }, [data]);
 
   useLayoutEffect(() => {
-    if (isAscending && logsContainerRef.current) {
-      setScrollTop(logsContainerRef.current.offsetHeight);
-    } else {
-      setScrollTop(0);
+    if (!logsContainerRef.current || !scrollElement || keepScrollPositionRef.current) {
+      keepScrollPositionRef.current = false;
+      return;
     }
-  }, [isAscending, logRows]);
+    /**
+     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
+     * when new data is received. See https://github.com/grafana/grafana/pull/37634
+     */
+    if (isAscending && data.request?.app === CoreApp.Dashboard) {
+      scrollElement.scrollTo(0, logsContainerRef.current.offsetHeight);
+    }
+  }, [data.request?.app, isAscending, scrollElement, logRows]);
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
@@ -374,6 +377,7 @@ export const LogsPanel = ({
         loadingRef.current = false;
       }
 
+      keepScrollPositionRef.current = true;
       setPanelData({
         ...panelData,
         series: newSeries,
@@ -566,7 +570,7 @@ async function requestMoreLogs(
   for (const uid in targetGroups) {
     const dataSource = dataSourcesMap.get(panelData.request.targets[0].refId);
     if (!dataSource) {
-      console.log('no ds');
+      console.warn(`Could not resolve data source for target ${panelData.request.targets[0].refId}`);
       continue;
     }
     dataRequests.push(
