@@ -37,10 +37,10 @@ export interface DashboardV2Spec {
 	layout: GridLayoutKind;
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
-	// version: will rely on k8s resource versioning, via metadata.resorceVersion
-	// revision?: int // for plugins only
-	// gnetId?: string // ??? Wat is this used for?
 	schemaVersion: number;
+	// Plugins only. The version of the dashboard installed together with the plugin.
+	// This is used to determine if the dashboard should be updated when the plugin is updated.
+	revision?: number;
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
@@ -476,22 +476,21 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 
 export interface AnnotationQuerySpec {
 	datasource?: DataSourceRef;
-	query: DataQueryKind;
-	builtIn?: boolean;
+	query?: DataQueryKind;
 	enable: boolean;
-	filter: AnnotationPanelFilter;
 	hide: boolean;
 	iconColor: string;
 	name: string;
+	builtIn?: boolean;
+	filter?: AnnotationPanelFilter;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	query: defaultDataQueryKind(),
 	enable: false,
-	filter: defaultAnnotationPanelFilter(),
 	hide: false,
 	iconColor: "",
 	name: "",
+	builtIn: false,
 });
 
 export interface AnnotationQueryKind {
@@ -976,7 +975,6 @@ export interface DatasourceVariableSpec {
 	refresh: VariableRefresh;
 	regex: string;
 	current: VariableOption;
-	defaultOptionEnabled: boolean;
 	options: VariableOption[];
 	multi: boolean;
 	includeAll: boolean;
@@ -993,7 +991,6 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	refresh: "never",
 	regex: "",
 	current: { text: "", value: "", },
-	defaultOptionEnabled: false,
 	options: [],
 	multi: false,
 	includeAll: false,

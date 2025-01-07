@@ -1000,6 +1000,30 @@ func TestUpdateAlertRule(t *testing.T) {
 			})
 			require.Empty(t, updates)
 		})
+
+		t.Run("when there are no changes it should be successful", func(t *testing.T) {
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// permissions. The response of the service should still be successful.
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			rule := models.CopyRule(rules[0])
+
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{*rule})
+			require.NoError(t, err)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			_, err = service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.NoError(t, err)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
 	})
 }
 
@@ -1577,11 +1601,11 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
 

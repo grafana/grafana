@@ -383,6 +383,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		)
 	}
 
+	if UID == "" {
+		// If there is no UID, return 404 as the UID is part of the URL.
+		return response.Empty(http.StatusNotFound)
+	}
+
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
@@ -609,6 +614,10 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 
 		for idx, cp := range body.Policies {
 			policy := cp.RouteExport
+			if policy.GroupByStr == nil {
+				// required field, must be set to empty array
+				policy.GroupByStr = &[]string{}
+			}
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_notification_policy",
 				Name: fmt.Sprintf("notification_policy_%d", idx+1),
