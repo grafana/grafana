@@ -51,11 +51,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 	return s.openfga.ListObjects(ctx, req)
 }
 
-<<<<<<< HEAD
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.ListResponse, error) {
-=======
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
->>>>>>> 649428c0e97 (Rename)
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.ListResponse, error) {
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.ListResponse{}, nil
 	}
@@ -77,11 +73,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-<<<<<<< HEAD
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.Resource, store *storeInfo) (*authzv1.ListResponse, error) {
-=======
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
->>>>>>> 649428c0e97 (Rename)
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.ListResponse, error) {
 	var (
 		folderRelation = common.FolderResourceRelation(relation)
 		resourceCtx    = resource.Context()
