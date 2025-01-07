@@ -8,8 +8,7 @@
     "transpileOnly": true,
     "swc": true,
     "compilerOptions": {
-      "module": "commonjs",
-      "esModuleInterop": true
+      "module": "commonjs"
     }
   }
 }
