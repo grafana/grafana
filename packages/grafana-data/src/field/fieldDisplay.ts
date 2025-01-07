@@ -245,7 +245,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     values.push(createNoValuesFieldDisplay(options));
   }
 
-  if (reduceOptions.sort !== SortWithReducer.None) {
+  if ((reduceOptions.sort ?? SortWithReducer.None) !== SortWithReducer.None) {
     const isAscSort = reduceOptions.sort === SortWithReducer.Az;
     values.sort((va, vb) => {
       const aTitle = va.display.title ?? '';
