@@ -432,9 +432,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       2,
-		uid:      "2",
-		folderID: 1,
+		id:        2,
+		uid:       "2",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
@@ -444,9 +445,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       3,
-		uid:      "3",
-		folderID: 1,
+		id:        3,
+		uid:       "3",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{

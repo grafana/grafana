@@ -47,13 +47,14 @@ type eventStore interface {
 type folderUIDLookup = func(ctx context.Context, folderId int64) (string, error)
 
 type dashboard struct {
-	id       int64
-	uid      string
-	isFolder bool
-	folderID int64
-	slug     string
-	created  time.Time
-	updated  time.Time
+	id        int64
+	uid       string
+	isFolder  bool
+	folderID  int64
+	folderUID string
+	slug      string
+	created   time.Time
+	updated   time.Time
 
 	// Use generic structure
 	summary *entity.EntitySummary
@@ -763,11 +764,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 	if dash.folderID == 0 {
 		folderUID = folder.GeneralFolderUID
 	} else {
-		var err error
-		folderUID, err = i.folderIdLookup(ctx, dash.folderID)
-		if err != nil {
-			return err
-		}
+		folderUID = dash.folderUID
 	}
 
 	location := folderUID
@@ -950,14 +947,15 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				// But append info anyway for now, since we possibly extracted useful information.
 			}
 			dashboards = append(dashboards, dashboard{
-				id:       row.Id,
-				uid:      row.Uid,
-				isFolder: row.IsFolder,
-				folderID: row.FolderID,
-				slug:     row.Slug,
-				created:  row.Created,
-				updated:  row.Updated,
-				summary:  summary,
+				id:        row.Id,
+				uid:       row.Uid,
+				isFolder:  row.IsFolder,
+				folderID:  row.FolderID,
+				folderUID: row.FolderUID,
+				slug:      row.Slug,
+				created:   row.Created,
+				updated:   row.Updated,
+				summary:   summary,
 			})
 		}
 		readDashboardSpan.End()
@@ -984,12 +982,13 @@ func newFolderIDLookup(sql db.DB) folderUIDLookup {
 }
 
 type dashboardQueryResult struct {
-	Id       int64
-	Uid      string
-	IsFolder bool   `xorm:"is_folder"`
-	FolderID int64  `xorm:"folder_id"`
-	Slug     string `xorm:"slug"`
-	Data     []byte
-	Created  time.Time
-	Updated  time.Time
+	Id        int64
+	Uid       string
+	IsFolder  bool   `xorm:"is_folder"`
+	FolderID  int64  `xorm:"folder_id"`
+	FolderUID string `xorm:"folder_uid"`
+	Slug      string `xorm:"slug"`
+	Data      []byte
+	Created   time.Time
+	Updated   time.Time
 }
