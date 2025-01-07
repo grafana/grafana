@@ -232,7 +232,22 @@ func SetupConfig(
 		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 	}
 
-	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
+	v := utilversion.DefaultKubeEffectiveVersion()
+	patchver := 0 // required for semver
+
+	info := v.BinaryVersion().Info()
+	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
+	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
+	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
+	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
+
+	info2 := v.EmulationVersion().Info()
+	info2.BuildDate = info.BuildDate
+	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
+	info2.GitCommit = info.GitCommit
+	info2.GitTreeState = info.GitTreeState
+
+	serverConfig.EffectiveVersion = v
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
