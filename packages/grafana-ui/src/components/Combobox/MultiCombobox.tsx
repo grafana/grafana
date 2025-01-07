@@ -28,7 +28,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const __ALL: any = 'all';
+const ALL_OPTION_VALUE: string = '__all__';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
