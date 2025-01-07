@@ -2,21 +2,24 @@ package libraryelements
 
 import (
 	"testing"
+
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetLibraryElement(t *testing.T) {
-	// scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
-	// 	func(t *testing.T, sc scenarioContext) {
-	// 		// by uid
-	// 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
-	// 		resp := sc.service.getHandler(sc.reqContext)
-	// 		require.Equal(t, 404, resp.Status())
+	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			// by uid
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
+			resp := sc.service.getHandler(sc.reqContext)
+			require.Equal(t, 404, resp.Status())
 
-	// 		// by name
-	// 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": "unknown"})
-	// 		resp = sc.service.getByNameHandler(sc.reqContext)
-	// 		require.Equal(t, 404, resp.Status())
-	// 	})
+			// by name
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": "unknown"})
+			resp = sc.service.getByNameHandler(sc.reqContext)
+			require.Equal(t, 404, resp.Status())
+		})
 
 	// scenarioWithPanel(t, "When an admin tries to get a library panel that exists, it should succeed and return correct result",
 	// 	func(t *testing.T, sc scenarioContext) {
@@ -73,13 +76,13 @@ func TestGetLibraryElement(t *testing.T) {
 	// 		}
 
 	// 		// by name
-	// 		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
-	// 		resp = sc.service.getByNameHandler(sc.reqContext)
-	// 		arrayResult := validateAndUnMarshalArrayResponse(t, resp)
+	// 		// sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
+	// 		// resp = sc.service.getByNameHandler(sc.reqContext)
+	// 		// arrayResult := validateAndUnMarshalArrayResponse(t, resp)
 
-	// 		if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
-	// 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-	// 		}
+	// 		// if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
+	// 		// 	t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+	// 		// }
 	// 	})
 
 	// scenarioWithPanel(t, "When an admin tries to get a connected library panel, it should succeed and return correct connected dashboards",
