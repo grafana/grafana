@@ -533,7 +533,7 @@
       "save-query": "Save current search"
     },
     "silences": {
-      "affected-instances": "Affected alert rule instances",
+      "affected-instances": "Affected alert instances",
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },

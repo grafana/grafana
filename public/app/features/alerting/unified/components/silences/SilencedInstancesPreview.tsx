@@ -80,7 +80,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   return (
     <div>
       <h4 className={styles.title}>
-        <Trans i18nKey="alerting.silences.affected-instances">Affected alert rule instances</Trans>
+        <Trans i18nKey="alerting.silences.affected-instances">Affected alert instances</Trans>
         <Tooltip
           content={
             <div>
