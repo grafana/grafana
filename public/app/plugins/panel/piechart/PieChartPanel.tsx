@@ -77,6 +77,7 @@ export function PieChartPanel(props: Props) {
 
 function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
+  const sortOrder = props.options.reduceOptions.sort ?? SortWithReducer.None;
 
   if (legendOptions.showLegend === false) {
     return undefined;
@@ -84,9 +85,9 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
   const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
+    // Since the pie chart is always sorted, let's sort the legend as well if not sorted previously
     .sort((a, b) => {
-      if (props.options.reduceOptions.sort !== SortWithReducer.None || isNaN(a.display.numeric)) {
+      if (sortOrder !== SortWithReducer.None || isNaN(a.display.numeric)) {
         return 1;
       } else if (isNaN(b.display.numeric)) {
         return -1;
