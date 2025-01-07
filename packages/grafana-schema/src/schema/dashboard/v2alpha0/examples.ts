@@ -37,7 +37,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'prometheus',
           uid: 'uid',
         },
-        filter: { ids: [] },
+        filter: { ids: [1] },
         enable: true,
         hide: false,
         iconColor: 'rgba(0, 211, 255, 1)',
@@ -63,7 +63,6 @@ export const handyTestingSchema: DashboardV2Spec = {
             scenarioId: 'annotations',
           },
         },
-        filter: { ids: [] },
         hide: true,
       },
     },
@@ -75,7 +74,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
@@ -94,7 +92,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
@@ -282,7 +279,6 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'DatasourceVariable',
       spec: {
-        allValue: undefined,
         current: {
           text: 'text1',
           value: 'value1',
