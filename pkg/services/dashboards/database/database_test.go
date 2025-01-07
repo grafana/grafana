@@ -266,6 +266,32 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		assert.Equal(t, len(queryResult), 1)
 	})
 
+	t.Run("Should be able to get all dashboards for an org", func(t *testing.T) {
+		setup()
+		dash1 := insertTestDashboard(t, dashboardStore, "org3test1", 3, 0, "", false, "org 1 test 1")
+		dash2 := insertTestDashboard(t, dashboardStore, "org3test2", 3, 0, "", false, "org 1 test 2")
+		dash3 := insertTestDashboard(t, dashboardStore, "org4test1", 4, 0, "", false, "org 2 test 1")
+
+		dashs, err := dashboardStore.GetAllDashboardsByOrgId(context.Background(), 3)
+		require.NoError(t, err)
+		require.Equal(t, len(dashs), 2)
+		uids := []string{}
+		for _, d := range dashs {
+			uids = append(uids, d.UID)
+		}
+		require.Contains(t, uids, dash1.UID)
+		require.Contains(t, uids, dash2.UID)
+
+		dashs, err = dashboardStore.GetAllDashboardsByOrgId(context.Background(), 4)
+		require.NoError(t, err)
+		require.Equal(t, len(dashs), 1)
+		require.Equal(t, dash3.UID, dashs[0].UID)
+
+		dashs, err = dashboardStore.GetAllDashboardsByOrgId(context.Background(), 5)
+		require.NoError(t, err)
+		require.Equal(t, len(dashs), 0)
+	})
+
 	t.Run("Should be able to create dashboard", func(t *testing.T) {
 		setup()
 		cmd := dashboards.SaveDashboardCommand{

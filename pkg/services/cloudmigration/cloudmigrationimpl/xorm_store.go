@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -464,20 +463,4 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 	cm.AuthToken = string(t)
 
 	return nil
-}
-
-// TODO move this function dashboards/databases/databases.go
-func (ss *sqlStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
-	//ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
-	//defer span.End()
-
-	var dashs = make([]*dashboards.Dashboard, 0)
-	err := ss.db.WithDbSession(ctx, func(session *db.Session) error {
-		// "deleted IS NULL" is to avoid deleted dashboards
-		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashs, nil
 }

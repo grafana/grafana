@@ -903,6 +903,14 @@ func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashbo
 	return dr.dashboardStore.GetAllDashboards(ctx)
 }
 
+func (dr *DashboardServiceImpl) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		return dr.listDashboardsThroughK8s(ctx, orgID)
+	}
+
+	return dr.dashboardStore.GetAllDashboardsByOrgId(ctx, orgID)
+}
+
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 	var hitType model.HitType
 	if item.IsFolder {

@@ -399,18 +399,15 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 
-	/** NOTE: this is not used at the moment since we changed the service
-
 	// modify what the mock returns for just this test case
 	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
-	dashMock.On("GetAllDashboards", mock.Anything).Return(
+	dashMock.On("GetAllDashboardsByOrgId", mock.Anything).Return(
 		[]*dashboards.Dashboard{
 			{UID: "1", OrgID: 1, Data: simplejson.New()},
 			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
 		},
 		nil,
 	)
-	*/
 
 	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
 	assert.NoError(t, err)
