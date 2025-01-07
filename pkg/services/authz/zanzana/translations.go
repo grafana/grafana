@@ -49,8 +49,6 @@ var (
 
 	dashboardGroup    = dashboardalpha1.DashboardResourceInfo.GroupResource().Group
 	dashboardResource = dashboardalpha1.DashboardResourceInfo.GroupResource().Resource
-
-	permissionSubresource = "permissions"
 )
 
 var resourceTranslations = map[string]resourceTranslation{
