@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,18 +42,18 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	}
 
 	// This should come from the keeper. From this point on, we should not have a need to read value/ref.
-	externalID := "TODO"
+	externalID := secret.ExternalID("TODO")
 	sv.Spec.Value = ""
 	sv.Spec.Ref = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
+	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Validate before inserting that the chosen `keeper` exists.
-		keeperRow := &Keeper{Name: row.Keeper, Namespace: row.Namespace}
+		keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
 
 		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 		if err != nil {
@@ -112,18 +113,18 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	}
 
 	// This should come from the keeper.
-	externalID := "TODO2"
+	externalID := secret.ExternalID("TODO2")
 	newSecureValue.Spec.Value = ""
 	newSecureValue.Spec.Ref = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Validate before updating that the new `keeper` exists.
-		keeperRow := &Keeper{Name: newRow.Keeper, Namespace: newRow.Namespace}
+		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
 
 		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 		if err != nil {

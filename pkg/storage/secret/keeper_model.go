@@ -23,7 +23,7 @@ const (
 	HashiCorpKeeperType KeeperType = "hashicorp"
 )
 
-type Keeper struct {
+type keeperDB struct {
 	// Kubernetes Metadata
 	GUID        string `xorm:"pk 'guid'"`
 	Name        string `xorm:"name"`
@@ -41,12 +41,12 @@ type Keeper struct {
 	Payload string     `xorm:"payload"`
 }
 
-func (*Keeper) TableName() string {
+func (*keeperDB) TableName() string {
 	return TableNameKeeper
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
+func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	annotations := make(map[string]string, 0)
 	if kp.Annotations != "" {
 		if err := json.Unmarshal([]byte(kp.Annotations), &annotations); err != nil {
@@ -105,7 +105,7 @@ func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
 }
 
 // toKeeperCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(kp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -123,7 +123,7 @@ func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, err
 }
 
 // toKeeperUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(newKeeper)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -141,7 +141,7 @@ func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, act
 }
 
 // toKeeperRow maps a Kubernetes Keeper resource into a Keeper DB row.
-func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
+func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 	var annotations string
 	if len(kp.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(kp.Annotations)
@@ -186,7 +186,7 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
 		return nil, fmt.Errorf("failed to obtain type and payload: %w", err)
 	}
 
-	return &Keeper{
+	return &keeperDB{
 		// Kubernetes Metadata
 		GUID:        string(kp.UID),
 		Name:        kp.Name,
