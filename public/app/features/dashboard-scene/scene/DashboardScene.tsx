@@ -173,7 +173,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  // TODO: use feature toggle to allow v2 serializer
   private _serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
     DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
