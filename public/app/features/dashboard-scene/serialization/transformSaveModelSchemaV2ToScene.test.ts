@@ -218,8 +218,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(2);
-    const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, dash);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
@@ -236,6 +234,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+    const vizPanel = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    validateVizPanel(vizPanel, dash);
 
     // Library Panel
     const libraryPanel = getLibraryPanelElement('library-panel-1')!;
@@ -245,9 +245,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'library-panel-1')!;
+    validateVizPanel(vizLibraryPanel, dash);
 
     // Transformations
-    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+    const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
       getPanelElement('panel-1')!.spec.data.spec.transformations[0].spec
     );
   });

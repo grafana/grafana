@@ -291,7 +291,7 @@ function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
     titleItems,
     $behaviors: [new LibraryPanelBehavior({ uid: panel.spec.uid, name: panel.spec.name })],
     extendPanelContext: setDashboardPanelContext,
-    pluginId: '',
+    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: '',
     options: {},
     fieldConfig: {

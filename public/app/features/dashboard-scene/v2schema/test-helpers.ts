@@ -16,6 +16,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>
@@ -60,7 +61,7 @@ export function validateVariable<
 }
 
 export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
-  const panel = dash.elements['panel-1'];
+  const panel = dash.elements[vizPanel.state.key!];
 
   if (panel.kind === 'Panel') {
     expect(vizPanel.state.title).toBe(panel.spec.title);
@@ -95,6 +96,8 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   } else if (panel.kind === 'LibraryPanel') {
     expect(getLibraryPanelBehavior(vizPanel)?.state.name).toBe(panel.spec.name);
     expect(getLibraryPanelBehavior(vizPanel)?.state.uid).toBe(panel.spec.uid);
+
+    expect(vizPanel.state.pluginId).toBe(LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID);
   } else {
     throw new Error('vizPanel is not a valid element kind');
   }
