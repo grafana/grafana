@@ -413,20 +413,13 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_resource (snapshot_uid, uid, resource_type, resource_uid, status, error_string)
+			cloud_migration_resource (uid, snapshot_uid, resource_type, resource_uid, status, error_string)
 		VALUES
-<<<<<<< HEAD
-			('poiuy', '38fh38f', 'DATASOURCE', 'jf38gh', 'OK', ''),
-			('poiuy', 'cnued28', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
-			('poiuy', 'ogfij9f', 'FOLDER', 'fi39fj', 'PENDING', ''),
-			('39fi39', '1249jfdf', 'FOLDER', 'fi39fj', 'OK', '');
-=======
 			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
 			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
 			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
 			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', ''),
 			('4fi9ee', 'mnbvvc_org2', 'DATASOURCE', 'fi39asd', 'OK', '');
->>>>>>> main
 		`,
 	)
 	require.NoError(t, err)
