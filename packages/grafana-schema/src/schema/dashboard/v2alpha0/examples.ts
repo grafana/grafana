@@ -26,7 +26,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
-        builtIn: true,
+        builtIn: false,
         query: {
           kind: 'prometheus',
           spec: {
@@ -47,6 +47,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
@@ -69,6 +70,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
@@ -87,6 +89,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
@@ -108,7 +111,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     },
   ],
   elements: {
-    'test-panel-uid': {
+    'panel-1': {
       kind: 'Panel',
       spec: {
         data: {
@@ -168,7 +171,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           { title: 'Test Link 2', url: 'http://test2.com' },
         ],
         title: 'Test Panel',
-        uid: 'test-panel-uid',
+        id: 1,
         vizConfig: {
           kind: 'timeseries',
           spec: {
@@ -192,7 +195,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           spec: {
             element: {
               kind: 'ElementReference',
-              name: 'test-panel-uid',
+              name: 'panel-1',
             },
             height: 100,
             width: 200,
@@ -284,7 +287,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           text: 'text1',
           value: 'value1',
         },
-        defaultOptionEnabled: true,
         description: 'A datasource variable',
         hide: 'dontHide',
         includeAll: false,
@@ -345,7 +347,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         ],
         query: '1m,5m,10m',
-        refresh: 'onDashboardLoad',
+        refresh: 'onTimeRangeChanged',
         skipUrlSync: false,
       },
     },

@@ -53,7 +53,6 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
@@ -89,7 +88,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
-  prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
@@ -113,6 +111,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
+  kubernetesRestore?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -220,6 +219,7 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  unifiedStorageSearchSprinkles?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -227,10 +227,10 @@ export interface FeatureToggles {
   userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
-  dashboardSchemaV2?: boolean;
-  playlistsWatcher?: boolean;
+  playlistsReconciler?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
+  prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
@@ -240,8 +240,13 @@ export interface FeatureToggles {
   alertingUIOptimizeReducer?: boolean;
   azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
+  useV2DashboardsAPI?: boolean;
   feedbackButton?: boolean;
+  unifiedStorageSearchUI?: boolean;
   elasticsearchCrossClusterSearch?: boolean;
   unifiedHistory?: boolean;
   lokiLabelNamesQueryApi?: boolean;
+  investigationsBackend?: boolean;
+  k8SFolderCounts?: boolean;
+  k8SFolderMove?: boolean;
 }
