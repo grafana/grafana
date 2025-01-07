@@ -1,10 +1,11 @@
 //go:build enterprise || pro
 // +build enterprise pro
 
-package server
+package setting
 
 // HACK: this is a hack to keep the go modules in sync with the enterprise dependencies as it cannot be used as a module
 // itself.
+// This file is present in this package as it's where you enable / disable the enterprise features.
 import (
 	_ "cloud.google.com/go/kms/apiv1"
 	_ "cloud.google.com/go/kms/apiv1/kmspb"
