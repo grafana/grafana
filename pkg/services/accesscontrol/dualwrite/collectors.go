@@ -359,6 +359,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE (r.org_id = 0 OR r.org_id = ?)
 			AND r.name NOT LIKE 'managed:%'
+			AND r.name NOT LIKE 'fixed:%'
 		`
 
 		type Permission struct {
@@ -371,6 +372,56 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		var permissions []Permission
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query, orgID).Find(&permissions)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, p := range permissions {
+			tuple, ok := zanzana.TranslateToResourceTuple(
+				zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee),
+				p.Action,
+				p.Kind,
+				p.Identifier,
+			)
+			if !ok {
+				continue
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+func fixedRolePermissionsCollector(store db.DB) globalTupleCollector {
+	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
+		var query = `
+			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.org_id = 0
+			AND r.name LIKE 'fixed:%'
+		`
+
+		type Permission struct {
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleUID    string `xorm:"role_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
 		})
 		if err != nil {
 			return nil, err
