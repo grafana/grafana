@@ -51,6 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardNotFound,
@@ -170,7 +171,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     version: parseInt(metadata.resourceVersion, 10),
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: dashboard.preload ? false : true,
+        isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard),
         $behaviors: [trackIfEmpty],
       }),

@@ -21,6 +21,7 @@ import {
   UserActionEvent,
   SceneObjectState,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -256,7 +257,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     version: oldModel.version,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: dto.preload ? false : true,
+        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneObjectsForPanels(oldModel.panels),
         $behaviors: [trackIfEmpty],
       }),
