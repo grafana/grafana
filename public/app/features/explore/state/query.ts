@@ -529,7 +529,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     // Running cancel queries when Explore is scanning will cancel the scanning state
-    if (!getState().explore.panes[exploreId]?.scanning) {
+    if (!getState().explore?.panes[exploreId]?.scanning) {
       dispatch(cancelQueries(exploreId));
     }
 
