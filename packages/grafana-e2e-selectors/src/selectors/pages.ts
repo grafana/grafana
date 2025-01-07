@@ -546,6 +546,9 @@ export const versionedPages = {
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
             },
+            collapseFiltersToggle: {
+              '11.5.0': 'data-testid ad-hoc filters variable collapse toggle',
+            },
           },
         },
       },
