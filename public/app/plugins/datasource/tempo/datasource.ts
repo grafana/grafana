@@ -16,6 +16,7 @@ import {
   dateTime,
   FieldType,
   LoadingState,
+  NodeGraphDataFrameFieldNames,
   rangeUtil,
   ScopedVars,
   SelectableValue,
@@ -31,7 +32,6 @@ import {
   getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
-  locationService,
   reportInteraction,
   TemplateSrv,
 } from '@grafana/runtime';
@@ -1135,14 +1135,16 @@ function makeTempoLinkServiceMap(title: string, datasourceUid: string, includeNa
   return {
     url: '',
     title,
-    onClick: (evt) => {
+    onBuildUrl: ({ replaceVariables }) => {
+      const serviceName = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`, {});
+      const serviceNamespace = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`, {});
+      const isInstrumented =
+        replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`, {}) !== 'false';
       const query: TempoQuery = { refId: 'A', queryType: 'traceqlSearch', filters: [] };
-      const serviceName = evt.e?.title;
-      const serviceNamespace = evt.e?.subTitle;
 
       // Only do the peer query if service is actively set as not instrumented
-      if (evt?.e?.isInstrumented === false) {
-        const filters = ['db.name', 'peer.service', 'messaging.system']
+      if (isInstrumented === false) {
+        const filters = ['db.name', 'db.system', 'peer.service', 'messaging.system', 'net.peer.name']
           .map((peerAttribute) => `span.${peerAttribute}="${serviceName}"`)
           .join(' || ');
         query.queryType = 'traceql';
@@ -1170,7 +1172,8 @@ function makeTempoLinkServiceMap(title: string, datasourceUid: string, includeNa
         }
       }
 
-      locationService.push(generateInternalHref(datasourceUid, query));
+      const url = generateInternalHref(datasourceUid, query);
+      return url;
     },
   };
 }
