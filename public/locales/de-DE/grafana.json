@@ -532,6 +532,11 @@
       },
       "save-query": ""
     },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
+    },
     "simpleCondition": {
       "alertCondition": ""
     },
@@ -1715,7 +1720,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -1865,7 +1873,8 @@
       "library_elements": "",
       "mute_timings": "",
       "notification_policies": "",
-      "notification_templates": ""
+      "notification_templates": "",
+      "plugins": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1916,7 +1925,9 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "title": ""
+      "message-plugins": "",
+      "title": "",
+      "title-plugins": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1929,7 +1940,6 @@
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
-        "only-core-data-sources": "",
         "resource-conflict": "",
         "unexpected-error": "",
         "unsupported-data-type": ""
@@ -1968,6 +1978,7 @@
       "mute_timing": "",
       "notification_policy": "",
       "notification_template": "",
+      "plugin": "",
       "unknown": "Unbekannt"
     },
     "summary": {
@@ -2173,6 +2184,16 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "Home"
     },
@@ -2763,6 +2784,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -3031,6 +3058,27 @@
     "new-library-panel": {
       "cancel-button": "",
       "create-button": ""
+    }
+  },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
     }
   },
   "share-playlist": {
