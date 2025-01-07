@@ -355,8 +355,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 }
 
 let dashboardLoaderSrv = new DashboardLoaderSrv();
-let dashboardLoaderSrvV2 = new DashboardLoaderSrvV2();
-export { dashboardLoaderSrv, dashboardLoaderSrvV2 };
+export { dashboardLoaderSrv };
 
 /** @internal
  * Used for tests only

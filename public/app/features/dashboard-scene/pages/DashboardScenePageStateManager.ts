@@ -9,7 +9,7 @@ import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { dashboardLoaderSrv, dashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
@@ -370,8 +370,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateManagerBase<
   DashboardWithAccessInfo<DashboardV2Spec>
 > {
+  private dashboardLoader = new DashboardLoaderSrvV2();
+
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
-    const rsp = await dashboardLoaderSrvV2.loadSnapshot(slug);
+    const rsp = await this.dashboardLoader.loadSnapshot(slug);
 
     if (rsp?.spec) {
       const scene = transformSaveModelSchemaV2ToScene(rsp);
@@ -455,7 +457,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
           break;
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrvV2.loadDashboard('public', '', uid);
+          return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
         default:
           const queryParams = params
@@ -467,7 +469,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
                 ...params.variables,
               }
             : undefined;
-          rsp = await dashboardLoaderSrvV2.loadDashboard('db', '', uid, queryParams);
+          rsp = await this.dashboardLoader.loadDashboard('db', '', uid, queryParams);
           if (route === DashboardRoutes.Embedded) {
             throw new Error('Method not implemented.');
             // rsp.meta.isEmbedded = true;
