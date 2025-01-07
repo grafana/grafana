@@ -76,6 +76,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			cmd.FolderID = folder.ID
+			cmd.FolderUID = &folder.UID
 		}
 	}
 

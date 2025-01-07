@@ -200,6 +200,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		ID:          element.ID,
 		OrgID:       element.OrgID,
 		FolderID:    element.FolderID, // nolint:staticcheck
+		FolderUID:   element.FolderUID,
 		UID:         element.UID,
 		Name:        element.Name,
 		Kind:        element.Kind,
