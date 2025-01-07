@@ -396,7 +396,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
-			q, err := requirementQuery(v, "labels.")
+			q, err := requirementQuery(v, "labels.", req.Options)
 			if err != nil {
 				return nil, err
 			}
@@ -406,7 +406,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
-			q, err := requirementQuery(v, "")
+			q, err := requirementQuery(v, "", req.Options)
 			if err != nil {
 				return nil, err
 			}
@@ -481,12 +481,22 @@ var textSortFields = map[string]string{
 }
 
 // Convert a "requirement" into a bleve query
-func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
+func requirementQuery(req *resource.Requirement, prefix string, opts *resource.ListOptions) (query.Query, *resource.ErrorResult) {
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
+
+		if req.Key == resource.SEARCH_FIELD_ID {
+			values := make([]string, 0, len(req.Values))
+			for _, v := range req.Values {
+				id := fmt.Sprintf("%s/%s/%s/%s", opts.Key.Namespace, opts.Key.Group, opts.Key.Resource, v)
+				values = append(values, id)
+			}
+			return query.NewDocIDQuery(values), nil
+		}
+
 		if len(req.Values[0]) == 1 {
 			q := query.NewMatchQuery(req.Values[0])
 			q.FieldVal = prefix + req.Key

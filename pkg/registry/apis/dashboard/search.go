@@ -303,6 +303,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	// The ids filter
+	ids, ok := queryParams["uid"]
+	if ok {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      "_id",
+			Operator: "=",
+			Values:   ids,
+		}}
+	}
+
 	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {

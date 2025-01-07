@@ -25,10 +25,6 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleSearchMapping)
 
-	// for filtering by kind/resource ( federated search )
-	kindMapping := bleve.NewTextFieldMapping()
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_KIND, kindMapping)
-
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,
 		Type:               "text",

@@ -223,6 +223,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
     }
+
+    if (query.uid?.length) {
+      uri += '&' + query.uid.map((id) => `uid=${encodeURIComponent(id)}`).join('&');
+    }
     return uri;
   }
 

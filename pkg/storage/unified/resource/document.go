@@ -53,9 +53,6 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
-	// The resource type ( for federated indexes )
-	Kind string `json:"kind,omitempty"`
-
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
 
@@ -164,7 +161,6 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	}
 	doc := &IndexableDocument{
 		Key:       key,
-		Kind:      key.Resource,
 		RV:        rv,
 		Title:     title,                  // We always want *something* to display
 		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
