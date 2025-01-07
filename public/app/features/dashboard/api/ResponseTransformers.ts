@@ -302,26 +302,20 @@ function getDefaultDatasourceType() {
   const dsList = Object.values(datasources);
   let dsType = dsList.find((ds) => ds.isDefault)?.type;
   if (!dsType) {
-    const dsRefFromBoot = getDefaultDataSourceRef();
-    dsType = dsRefFromBoot?.type ?? 'grafana'; // TODO: is there any other type of datasource type?
+    dsType = getDefaultDataSourceRef()?.type ?? 'grafana';
   }
 
   return dsType;
 }
 
 function getDefaultDatasource(): DataSourceRef {
-  const datasources = config.datasources;
+  const dsList = Object.values(config.datasources);
+  const defaultDsSettings = dsList.find((ds) => ds.isDefault);
 
-  // find default datasource in datasources from config using the isDefault flag
-  let defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  const defaultDs = defaultDsSettings
+    ? { type: defaultDsSettings.type, uid: defaultDsSettings.uid, apiVersion: defaultDsSettings.apiVersion }
+    : (getDefaultDataSourceRef() ?? { type: 'grafana', uid: 'grafana' });
 
-  if (!defaultDs) {
-    // we also can get default datasource from config.bootData.settings.defaultDatasource;
-    const dsRefFromBoot = getDefaultDataSourceRef();
-    if (dsRefFromBoot) {
-      defaultDs = Object.values(datasources).find((ds) => ds.name === dsRefFromBoot.uid)!;
-    }
-  }
   return {
     apiVersion: defaultDs.apiVersion,
     type: defaultDs.type,
