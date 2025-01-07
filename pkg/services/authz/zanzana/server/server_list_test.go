@@ -91,8 +91,8 @@ func testList(t *testing.T, server *Server) {
 		assert.Contains(t, res.GetFolders(), "6")
 	})
 
-	t.Run("user:10 should be able to get resoruce:dashboard.grafana.app/dashboard/permissions for 10 and 11", func(t *testing.T) {
-		res, err := server.List(context.Background(), newList("user:10", dashboardGroup, dashboardResource, permissionsSubresource))
+	t.Run("user:10 should be able to get resoruce:dashboard.grafana.app/dashboard/status for 10 and 11", func(t *testing.T) {
+		res, err := server.List(context.Background(), newList("user:10", dashboardGroup, dashboardResource, statusSubresource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetFolders(), 0)
 		assert.Len(t, res.GetItems(), 2)
@@ -101,16 +101,16 @@ func testList(t *testing.T, server *Server) {
 		assert.Contains(t, res.GetItems(), "11")
 	})
 
-	t.Run("user:11 should be able to list all resoruce:dashboard.grafana.app/dashboard/permissions", func(t *testing.T) {
-		res, err := server.List(context.Background(), newList("user:11", dashboardGroup, dashboardResource, permissionsSubresource))
+	t.Run("user:11 should be able to list all resoruce:dashboard.grafana.app/dashboard/status ", func(t *testing.T) {
+		res, err := server.List(context.Background(), newList("user:11", dashboardGroup, dashboardResource, statusSubresource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)
 		assert.Len(t, res.GetFolders(), 0)
 		assert.True(t, res.GetAll())
 	})
 
-	t.Run("user:12 should be able to list all resoruce:dashboard.grafana.app/dashboard/permissions in folder 5 and 6", func(t *testing.T) {
-		res, err := server.List(context.Background(), newList("user:12", dashboardGroup, dashboardResource, permissionsSubresource))
+	t.Run("user:12 should be able to list all resoruce:dashboard.grafana.app/dashboard/status in folder 5 and 6", func(t *testing.T) {
+		res, err := server.List(context.Background(), newList("user:12", dashboardGroup, dashboardResource, statusSubresource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)
 		assert.Len(t, res.GetFolders(), 2)

@@ -36,7 +36,7 @@ func testCheck(t *testing.T, server *Server) {
 		assert.False(t, res.GetAllowed())
 
 		// sanity check no access to subresource
-		res, err = server.Check(context.Background(), newReq("user:1", utils.VerbGet, dashboardGroup, dashboardResource, "permissions", "1", "1"))
+		res, err = server.Check(context.Background(), newReq("user:1", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "1", "1"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})
@@ -119,37 +119,37 @@ func testCheck(t *testing.T, server *Server) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:10 should be able to read dashboard permissions for dashboard 10", func(t *testing.T) {
-		res, err := server.Check(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "", "10"))
+	t.Run("user:10 should be able to read dashboard status for dashboard 10", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "10"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
-		res, err = server.Check(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "", "1"))
+		res, err = server.Check(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user:11 should be able to read dashboard permissions for dashboard 10 through group_resource", func(t *testing.T) {
-		res, err := server.Check(context.Background(), newReq("user:11", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "", "10"))
+	t.Run("user:11 should be able to read dashboard status for dashboard 10 through group_resource", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newReq("user:11", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "10"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:12 should be able to read dashboard permissions for all dashboards in folder 5", func(t *testing.T) {
-		res, err := server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "5", "10"))
+	t.Run("user:12 should be able to read dashboard status for all dashboards in folder 5", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "5", "10"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
-		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "5", "11"))
+		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "5", "11"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
 		// inherited from folder 5
-		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "6", "12"))
+		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "6", "12"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 
-		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, "1", "13"))
+		res, err = server.Check(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "1", "13"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})

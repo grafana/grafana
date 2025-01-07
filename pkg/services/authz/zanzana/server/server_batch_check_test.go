@@ -146,9 +146,9 @@ func testBatchCheck(t *testing.T, server *Server) {
 		require.True(t, res.Groups[groupResource].Items["20"])
 	})
 
-	t.Run("user:10 should be able to get dashboard permissions for 10 and 11", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, permissionsSubresource)
-		res, err := server.BatchCheck(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, []*authzextv1.BatchCheckItem{
+	t.Run("user:10 should be able to get dashboard status for 10 and 11", func(t *testing.T) {
+		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
+		res, err := server.BatchCheck(context.Background(), newReq("user:10", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
 			{Name: "10", Folder: "6"},
 			{Name: "11", Folder: "6"},
 			{Name: "12", Folder: "6"},
@@ -161,9 +161,9 @@ func testBatchCheck(t *testing.T, server *Server) {
 		require.False(t, res.Groups[groupResource].Items["12"])
 	})
 
-	t.Run("user:11 should be able to get dashboard permissions for 10, 11 and 12 through group_resource", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, permissionsSubresource)
-		res, err := server.BatchCheck(context.Background(), newReq("user:11", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, []*authzextv1.BatchCheckItem{
+	t.Run("user:11 should be able to get dashboard status for 10, 11 and 12 through group_resource", func(t *testing.T) {
+		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
+		res, err := server.BatchCheck(context.Background(), newReq("user:11", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
 			{Name: "10", Folder: "6"},
 			{Name: "11", Folder: "6"},
 			{Name: "12", Folder: "6"},
@@ -176,9 +176,9 @@ func testBatchCheck(t *testing.T, server *Server) {
 		require.True(t, res.Groups[groupResource].Items["12"])
 	})
 
-	t.Run("user:12 should be able to get dashboard permissions in folder 5 and 6", func(t *testing.T) {
-		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, permissionsSubresource)
-		res, err := server.BatchCheck(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, permissionsSubresource, []*authzextv1.BatchCheckItem{
+	t.Run("user:12 should be able to get dashboard status in folder 5 and 6", func(t *testing.T) {
+		groupResource := common.FormatGroupResource(dashboardGroup, dashboardResource, statusSubresource)
+		res, err := server.BatchCheck(context.Background(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, []*authzextv1.BatchCheckItem{
 			{Name: "10", Folder: "5"},
 			{Name: "11", Folder: "6"},
 			{Name: "12", Folder: "6"},
