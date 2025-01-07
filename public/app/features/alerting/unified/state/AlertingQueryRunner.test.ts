@@ -16,9 +16,17 @@ import {
 import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
+import {
+  EXTERNAL_VANILLA_ALERTMANAGER_UID,
+  mockDataSources,
+} from 'app/features/alerting/unified/components/settings/__mocks__/server';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
+
+setupMswServer();
 
 describe('AlertingQueryRunner', () => {
   it('should successfully map response and return panel data by refId', async () => {
@@ -28,12 +36,12 @@ describe('AlertingQueryRunner', () => {
         B: { frames: [createDataFrameJSON([5, 6])] },
       },
     });
+    setupDataSources(...Object.values(mockDataSources));
 
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response),
-      }),
-      mockDataSourceSrv()
+      })
     );
 
     const data = runner.get();
@@ -121,8 +129,7 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response).pipe(delay(210)),
-      }),
-      mockDataSourceSrv()
+      })
     );
 
     const data = runner.get();
@@ -176,8 +183,7 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(error),
-      }),
-      mockDataSourceSrv()
+      })
     );
 
     const data = runner.get();
@@ -332,7 +338,7 @@ const createQuery = (refId: string, options?: Partial<AlertQuery>): AlertQuery =
   return defaultsDeep(options, {
     refId,
     queryType: '',
-    datasourceUid: '',
+    datasourceUid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
     model: { refId },
     relativeTimeRange: getDefaultRelativeTimeRange(),
   });

@@ -156,7 +156,7 @@ export const LogRowMessage = memo((props: Props) => {
     () => restructureLog(raw, prettifyLogMessage, wrapLogMessage, Boolean(expanded)),
     [raw, prettifyLogMessage, wrapLogMessage, expanded]
   );
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const shouldShowMenu = mouseIsOver || pinned;
   return (
     <>
       {

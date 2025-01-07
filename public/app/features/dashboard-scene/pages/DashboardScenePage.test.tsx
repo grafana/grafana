@@ -243,7 +243,7 @@ describe('DashboardScenePage', () => {
       expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
-      const dashboardScenesCache = getDashboardScenePageStateManager()['cache'];
+      const dashboardScenesCache = getDashboardScenePageStateManager().getCache();
       const dashboard = dashboardScenesCache['my-dash-uid'];
       const panels = dashboardSceneGraph.getVizPanels(dashboard);
 

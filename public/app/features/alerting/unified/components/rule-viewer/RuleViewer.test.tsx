@@ -14,6 +14,7 @@ import {
   getGrafanaRule,
   getVanillaPromRule,
   grantUserPermissions,
+  mockCombinedCloudRuleNamespace,
   mockDataSource,
   mockPluginLinkExtension,
   mockPromAlertingRule,
@@ -62,7 +63,7 @@ const ELEMENTS = {
 };
 
 setupMswServer();
-setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
+
 setPluginLinksHook(() => ({
   links: [
     mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
@@ -102,6 +103,19 @@ beforeAll(() => {
   ]);
 });
 
+const dataSources = {
+  am: mockDataSource<AlertManagerDataSourceJsonData>(
+    {
+      name: 'Alertmanager',
+      type: DataSourceType.Alertmanager,
+      jsonData: { handleGrafanaManagedAlerts: true },
+    },
+    { module: 'core:plugin/alertmanager' }
+  ),
+  mimir: mockDataSource({ uid: 'mimir', name: 'Mimir' }, { module: 'core:plugin/prometheus' }),
+  prometheus: mockDataSource({ uid: 'prometheus', name: 'Prometheus' }, { module: 'core:plugin/prometheus' }),
+};
+
 describe('RuleViewer', () => {
   describe('Grafana managed alert rule', () => {
     const mockRule = getGrafanaRule(
@@ -140,17 +154,6 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingInstancesExternalRead,
         AccessControlAction.AlertingInstancesExternalWrite,
       ]);
-
-      const dataSources = {
-        am: mockDataSource<AlertManagerDataSourceJsonData>({
-          name: 'Alertmanager',
-          type: DataSourceType.Alertmanager,
-          jsonData: {
-            handleGrafanaManagedAlerts: true,
-          },
-        }),
-      };
-      setupDataSources(dataSources.am);
     });
 
     it('should render a Grafana managed alert rule', async () => {
@@ -199,18 +202,27 @@ describe('RuleViewer', () => {
   });
 
   describe('Data source managed alert rule', () => {
-    const mockRule = getCloudRule({
-      name: 'cloud test alert',
-      annotations: { [Annotation.summary]: 'cloud summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
-      group: { name: 'Cloud group', interval: '15m', rules: [], totals: { alerting: 1 } },
-    });
-    const mockRuleIdentifier = ruleId.fromCombinedRule('mimir-1', mockRule);
+    const { mimir } = dataSources;
+
+    const mockRule = getCloudRule(
+      {
+        name: 'cloud test alert',
+        annotations: { [Annotation.summary]: 'cloud summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+        group: { name: 'Cloud group', interval: '15m', rules: [], totals: { alerting: 1 } },
+      },
+      { rulesSource: mimir }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule(mimir.name, mockRule);
 
     beforeAll(() => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleExternalRead,
         AccessControlAction.AlertingRuleExternalWrite,
       ]);
+    });
+
+    beforeEach(() => {
+      setupDataSources(...Object.values(dataSources));
     });
 
     it('should render a data source managed alert rule', () => {
@@ -226,11 +238,11 @@ describe('RuleViewer', () => {
     });
 
     it('should render custom plugin actions for a plugin-provided rule', async () => {
-      const sloRule = getCloudRule({
-        name: 'slo test alert',
-        labels: { __grafana_origin: 'plugin/grafana-slo-app' },
-      });
-      const sloRuleIdentifier = ruleId.fromCombinedRule('mimir-1', sloRule);
+      const sloRule = getCloudRule(
+        { name: 'slo test alert', labels: { __grafana_origin: 'plugin/grafana-slo-app' } },
+        { rulesSource: mimir }
+      );
+      const sloRuleIdentifier = ruleId.fromCombinedRule(mimir.name, sloRule);
 
       const user = userEvent.setup();
 
@@ -247,11 +259,11 @@ describe('RuleViewer', () => {
     });
 
     it('should render different custom plugin actions for a different plugin-provided rule', async () => {
-      const assertsRule = getCloudRule({
-        name: 'asserts test alert',
-        labels: { __grafana_origin: 'plugin/grafana-asserts-app' },
-      });
-      const assertsRuleIdentifier = ruleId.fromCombinedRule('mimir-1', assertsRule);
+      const assertsRule = getCloudRule(
+        { name: 'asserts test alert', labels: { __grafana_origin: 'plugin/grafana-asserts-app' } },
+        { rulesSource: mimir }
+      );
+      const assertsRuleIdentifier = ruleId.fromCombinedRule(mimir.name, assertsRule);
 
       renderRuleViewer(assertsRule, assertsRuleIdentifier);
 
@@ -267,8 +279,11 @@ describe('RuleViewer', () => {
   });
 
   describe('Vanilla Prometheus rule', () => {
+    const { prometheus } = dataSources;
+
     const mockRule = getVanillaPromRule({
       name: 'prom test alert',
+      namespace: mockCombinedCloudRuleNamespace({ name: 'prometheus' }, prometheus.name),
       annotations: { [Annotation.summary]: 'prom summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
       promRule: {
         ...mockPromAlertingRule(),
@@ -276,7 +291,7 @@ describe('RuleViewer', () => {
       },
     });
 
-    const mockRuleIdentifier = ruleId.fromCombinedRule('prometheus', mockRule);
+    const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
     it('should render pending period for vanilla Prometheus alert rule', async () => {
       renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);

@@ -16,6 +16,7 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   Alert,
   CombinedRule,
+  DataSourceRuleGroupIdentifier,
   FilterState,
   RuleIdentifier,
   RulesSource,
@@ -24,6 +25,7 @@ import {
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
+  PromRuleDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
@@ -39,6 +41,19 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+export function createViewLinkV2(
+  groupIdentifier: DataSourceRuleGroupIdentifier,
+  rule: PromRuleDTO,
+  returnTo?: string
+): string {
+  const ruleSourceName = groupIdentifier.rulesSource.name;
+  const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(ruleSourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }

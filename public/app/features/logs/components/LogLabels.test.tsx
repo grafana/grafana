@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogLabels, LogLabelsList } from './LogLabels';
 
 describe('<LogLabels />', () => {
@@ -38,8 +39,9 @@ describe('<LogLabels />', () => {
 
 describe('<LogLabelsList />', () => {
   it('renders labels', () => {
-    render(<LogLabelsList labels={['bar', '42']} />);
+    render(<LogLabelsList labels={['bar', '42', LOG_LINE_BODY_FIELD_NAME]} />);
     expect(screen.queryByText('bar')).toBeInTheDocument();
     expect(screen.queryByText('42')).toBeInTheDocument();
+    expect(screen.queryByText('log line')).toBeInTheDocument();
   });
 });

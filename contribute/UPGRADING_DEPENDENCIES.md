@@ -23,20 +23,15 @@ The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__mo
 
 To add or update a new dependency, use the `go get` command:
 
-```bash
-go get example.com/some/module/pkg
+- To update to the latest version of a package: `go get example.com/some/module/pkg`
+- To update to a specific version of a package: `go get example.com/some/module/pkg@vX.Y.Z`
 
-# Pick a specific version.
-go get example.com/some/module/pkg@vX.Y.Z
-```
+Unless you're backporting, tidy up the dependency files with `go mod tidy`.
+If you are backporting, be careful about this; it may be fine, but you should avoid it if it would entail changing the `go` version directive (which defines the minimum Go version).
+If you are touching the workspace, you may also want to run `make update-workspace`.
 
-Tidy up the `go.mod` and `go.sum` files:
-
-```bash
-go mod tidy
-```
-
-You have to commit the changes to `go.mod` and `go.sum` before you submit the pull request.
+You have to commit the changes to `go.mod`, `go.sum`, and `go.work.sum` before you submit the pull request, otherwise CI jobs may fail.
+Submodules have similar files, and may also need to be committed.
 
 To understand what the actual dependencies of `grafana-server` are, you can run it with the `-vv` flag. Note that this command might produce an output different from `go.mod` contents, and `-vv` option is the source of truth here. The output lists the modules _compiled_ into the executable, whereas `go.mod` lists also test and weak transitive dependencies (that is, modules, used in some packages, which aren't in use by itself). If you're interested in reporting a vulnerability in a dependency module, consult the `-vv` output, maybe the "dependency" isn't actually a dependency as such.
 

@@ -1,7 +1,7 @@
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
@@ -10,7 +10,7 @@ import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
   rule: RulerRuleDTO;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
   /**
    * Method invoked after the request to change the paused state has completed
    */

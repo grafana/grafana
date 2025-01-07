@@ -25,7 +25,7 @@ import { DataSourceModal } from 'app/features/datasources/components/picker/Data
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
