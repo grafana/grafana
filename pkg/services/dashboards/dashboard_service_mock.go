@@ -200,7 +200,7 @@ func (_m *FakeDashboardService) GetAllDashboards(ctx context.Context) ([]*Dashbo
 
 
 func (_m *FakeDashboardService) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error) {
-	ret := _m.Called(ctx)
+	ret := _m.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllDashboardsByOrgId")

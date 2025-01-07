@@ -401,7 +401,7 @@ func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 
 	// modify what the mock returns for just this test case
 	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
-	dashMock.On("GetAllDashboardsByOrgId", mock.Anything).Return(
+	dashMock.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return(
 		[]*dashboards.Dashboard{
 			{UID: "1", OrgID: 1, Data: simplejson.New()},
 			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},

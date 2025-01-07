@@ -525,7 +525,7 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
+		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{}, nil).Once()
 		dashboard, err := service.GetAllDashboardsByOrgId(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
