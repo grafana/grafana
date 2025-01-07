@@ -122,8 +122,6 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   {healthy && <SyncRepository repository={item} />}
                 </Card.Actions>
                 <Card.SecondaryActions>
-                  {/* <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />
-                  <IconButton key="copy" name="copy" tooltip="Tooltip content" /> */}
                   <DeleteRepositoryButton name={name} />
                 </Card.SecondaryActions>
               </Card>
