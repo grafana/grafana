@@ -118,9 +118,19 @@ func createOAuthConfig(info *social.OAuthInfo, cfg *setting.Cfg, defaultName str
 		authStyle = oauth2.AuthStyleAutoDetect
 	}
 
+	var clientSecret string
+	switch info.ClientAuthentication {
+	case "client_secret_post":
+		clientSecret = info.ClientSecret
+	case "managed_identity":
+		clientSecret = ""
+	default:
+		clientSecret = info.ClientSecret
+	}
+
 	config := oauth2.Config{
 		ClientID:     info.ClientId,
-		ClientSecret: info.ClientSecret,
+		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   info.AuthUrl,
 			TokenURL:  info.TokenUrl,
