@@ -110,6 +110,14 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 				return &copy, nil
 			}
 		}
+
+		// Remove the growing list of kinds
+		for k, v := range s.Components.Schemas {
+			if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
+				delete(v.Extensions, "x-kubernetes-group-version-kind") // a growing list of everything
+			}
+		}
+
 		return s, nil
 	}
 }
