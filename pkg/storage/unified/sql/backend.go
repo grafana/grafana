@@ -178,7 +178,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	case resource.WatchEvent_DELETED:
 		err = b.delete(ctx, event, rv)
 	default:
-		b.unlockKey(event.Key)
+		_ = b.unlockKey(event.Key)
 		return 0, fmt.Errorf("unsupported event type")
 	}
 	if err != nil {
@@ -192,7 +192,10 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	}
 
 	// Wait for head to catch'up to ensure read-after-write consistency.
-	b.waitForRevision(ctx, event.Key.Group, event.Key.Resource, rv)
+	err = b.waitForRevision(ctx, event.Key.Group, event.Key.Resource, rv)
+	if err != nil {
+		return 0, fmt.Errorf("wait for revision: %w", err)
+	}
 	return rv, err
 }
 
