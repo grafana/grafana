@@ -1,6 +1,5 @@
-//go:build enterprise || pro
-// +build enterprise pro
-
+// FIXME: this file should be include `enterprise` and `pro` tags
+// but adding them to the CI is not trivial, so for now we skip them
 package setting
 
 // HACK: this is a hack to keep the go modules in sync with the enterprise dependencies as it cannot be used as a module
