@@ -78,7 +78,7 @@ To add a silence, complete the following steps.
 
    {{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-   Any matching alerts (in the firing state only) will show under **Affected alert rule instances**.
+   Any matching alerts (in the firing state only) display under **Affected alert instances**.
 
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
