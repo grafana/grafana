@@ -12,7 +12,7 @@ const namespace = config.namespace ?? 'default';
 const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_node_children`;
 const dashboardsEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_dashboard_bindings`;
 
-const scopesClient = new ScopedResourceClient<ScopeSpec, 'Scope'>({
+const scopesClient = new ScopedResourceClient<ScopeSpec, unknown, 'Scope'>({
   group,
   version,
   resource: 'scopes',
