@@ -43,6 +43,29 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
         label: t('plugins.details.labels.latestVersion', 'Latest Version'),
         value: latestVersion,
       });
+    } else if (plugin.isInstalled && !plugin.isManaged) {
+      info.push({
+        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
+        value: installedVersion,
+      });
+      info.push({
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: latestVersion,
+      });
+    } else if (plugin.isInstalled && !plugin.isManaged) {
+      info.push({
+        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
+        value: installedVersion,
+      });
+      info.push({
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: latestVersion,
+      });
+    } else if (plugin.isManaged) {
+      info.push({
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: 'Managed by Grafana',
+      });
     } else {
       info.push({
         label: t('plugins.details.labels.latestVersion', 'Latest Version'),
