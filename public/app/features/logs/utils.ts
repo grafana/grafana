@@ -373,3 +373,16 @@ function getDataSourceLabelType(labelType: string, datasourceType: string) {
       return null;
   }
 }
+
+const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
+export function disablePopoverMenu() {
+  localStorage.setItem(POPOVER_STORAGE_KEY, 'true');
+}
+
+export function enablePopoverMenu() {
+  localStorage.removeItem(POPOVER_STORAGE_KEY);
+}
+
+export function isPopoverMenuDisabled() {
+  return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
+}
