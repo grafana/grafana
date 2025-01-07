@@ -280,6 +280,9 @@ export const TooltipPlugin2 = ({
 
       setState(state);
 
+      // TODO: set u.over.style.cursor = 'pointer' if we hovered a oneClick point
+      // else revert to default...but only when the new pointer is different from prev
+
       selectedRange = null;
     };
 
