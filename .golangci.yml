@@ -118,7 +118,6 @@ linters-settings:
         allow:
           - github.com/grafana/grafana/pkg/apimachinery
           - github.com/grafana/grafana/pkg/apiserver
-          - github.com/grafana/grafana/pkg/storage/unified/resource
         deny:
           - pkg: github.com/grafana/grafana/pkg
             desc: apiserver is not allowed to import grafana core
@@ -171,7 +170,7 @@ linters-settings:
         allow:
           - github.com/grafana/grafana/pkg/apimachinery
           - github.com/grafana/grafana/pkg/apiserver
-          - github.com/grafana/grafana/pkg/unified/resource
+          - github.com/grafana/grafana/pkg/storage/unified/resource
         deny:
           - pkg: github.com/grafana/grafana/pkg
             desc: pkg/storage/unified/apistore is not allowed to import grafana core
