@@ -16,7 +16,6 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   if (!plugin) {
     return info;
   }
-  console.log('plugin POPOPOPO', plugin);
 
   // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
