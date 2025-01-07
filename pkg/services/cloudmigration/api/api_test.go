@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl/fake"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -548,7 +549,13 @@ func TestCloudMigrationAPI_CancelSnapshot(t *testing.T) {
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server
-		api := RegisterApi(routing.NewRouteRegister(), fake.FakeServiceImpl{ReturnError: tt.serviceReturnError}, tracing.InitializeTracerForTest())
+		api := RegisterApi(
+			routing.NewRouteRegister(),
+			fake.FakeServiceImpl{ReturnError: tt.serviceReturnError},
+			tracing.InitializeTracerForTest(),
+			actest.FakeAccessControl{ExpectedEvaluate: true},
+		)
+
 		server := webtest.NewServer(t, api.routeRegister)
 
 		var body io.Reader = nil
