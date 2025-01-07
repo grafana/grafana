@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,24 +66,26 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 }
 
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
-func folderTreeCollector(store db.DB) legacyTupleCollector {
+func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
-		const query = `
-			SELECT uid, parent_uid, org_id FROM folder WHERE org_id = ?
-		`
-		type folder struct {
-			FolderUID string `xorm:"uid"`
-			ParentUID string `xorm:"parent_uid"`
+		user := &user.SignedInUser{
+			Login:            "folder-tree-collector",
+			OrgRole:          "Admin",
+			IsGrafanaAdmin:   true,
+			IsServiceAccount: true,
+			Permissions:      map[int64]map[string][]string{orgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
+			OrgID:            orgID,
 		}
 
-		var folders []folder
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query, orgID).Find(&folders)
-		})
+		q := folder.GetFoldersQuery{
+			OrgID:        orgID,
+			SignedInUser: user,
+		}
 
+		folders, err := folderService.GetFolders(ctx, q)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +99,7 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 			}
 
 			tuple = &openfgav1.TupleKey{
-				Object:   zanzana.NewTupleEntry(zanzana.TypeFolder, f.FolderUID, ""),
+				Object:   zanzana.NewTupleEntry(zanzana.TypeFolder, f.UID, ""),
 				Relation: zanzana.RelationParent,
 				User:     zanzana.NewTupleEntry(zanzana.TypeFolder, f.ParentUID, ""),
 			}
