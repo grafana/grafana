@@ -73,6 +73,7 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
@@ -287,6 +288,7 @@ export type DeleteRepositoryArg = {
   pretty?: string;
   dryRun?: string;
   gracePeriodSeconds?: number;
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
   orphanDependents?: boolean;
   propagationPolicy?: string;
   body: DeleteOptions;
@@ -582,6 +584,7 @@ export type DeleteOptions = {
   apiVersion?: string;
   dryRun?: string[];
   gracePeriodSeconds?: number;
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
   kind?: string;
   orphanDependents?: boolean;
   preconditions?: Preconditions;
