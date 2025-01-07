@@ -58,6 +58,8 @@ const (
 	KindFolders    string = "folders"
 )
 
+var ClusterNamespace = common.ClusterNamespace
+
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
 	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys

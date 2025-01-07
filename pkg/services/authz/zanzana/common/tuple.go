@@ -82,6 +82,8 @@ var RelationsFolder = append(
 	RelationDelete,
 )
 
+const ClusterNamespace = "cluster"
+
 func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
@@ -257,6 +259,14 @@ func ToOpenFGATupleKey(t *authzextv1.TupleKey) *openfgav1.TupleKey {
 	}
 
 	return tupleKey
+}
+
+func ToOpenFGATupleKeys(tuples []*authzextv1.TupleKey) []*openfgav1.TupleKey {
+	result := make([]*openfgav1.TupleKey, 0, len(tuples))
+	for _, t := range tuples {
+		result = append(result, ToOpenFGATupleKey(t))
+	}
+	return result
 }
 
 func ToOpenFGATupleKeyWithoutCondition(t *authzextv1.TupleKeyWithoutCondition) *openfgav1.TupleKeyWithoutCondition {

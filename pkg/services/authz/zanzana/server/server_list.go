@@ -39,6 +39,11 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 }
 
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	err := s.addListAuthorizationContext(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to add authorization context", "error", err)
+	}
+
 	if s.cfg.UseStreamedListObjects {
 		return s.streamedListObjects(ctx, req)
 	}
