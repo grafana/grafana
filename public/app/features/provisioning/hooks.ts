@@ -1,3 +1,4 @@
+import { SubscriptionOptions } from '@reduxjs/toolkit/query';
 import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -31,8 +32,8 @@ export function useCreateOrUpdateRepository(name?: string) {
 }
 
 // Sort repositories by resourceVersion to show the last modified
-export function useRepositoryList(): [Repository[] | undefined, boolean] {
-  const query = useListRepositoryQuery();
+export function useRepositoryList(params: SubscriptionOptions = {}): [Repository[] | undefined, boolean] {
+  const query = useListRepositoryQuery(undefined, params);
 
   const sortedItems = query.data?.items?.slice().sort((a, b) => {
     return Number(b.metadata?.resourceVersion) - Number(a.metadata?.resourceVersion);

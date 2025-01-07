@@ -18,12 +18,13 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository, useGetRepositoryStatusQuery } from './api';
+import { Repository, SyncStatus } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
 export default function RepositoryListPage() {
-  const [items, isLoading] = useRepositoryList();
+  const [items, isLoading] = useRepositoryList({ pollingInterval: 5000 });
+
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
@@ -106,7 +107,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} {name && <StatusBadge name={name} />}
+                    {item.spec?.title} {name && <StatusBadge name={name} state={item.status?.sync.state} />}
                   </Stack>
                 </Card.Heading>
                 <Card.Description>{item.spec?.description}</Card.Description>
@@ -136,11 +137,11 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   );
 }
 
-function StatusBadge({ name }: { name: string }) {
-  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
-
-  const state = statusQuery.data?.status?.sync?.state;
-
+interface StatusBadgeProps {
+  state?: SyncStatus['state'];
+  name: string;
+}
+function StatusBadge({ name, state }: StatusBadgeProps) {
   if (!state) {
     return null;
   }
