@@ -19,6 +19,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
+import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -123,7 +124,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
-        return !buttonRef.current?.contains(element);
+        const portalContainer = getPortalContainer();
+        return !buttonRef.current?.contains(element) && !portalContainer.contains(element);
       },
     },
     overlayRef
