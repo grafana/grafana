@@ -51,6 +51,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { contextSrv } from 'app/core/core';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -127,7 +128,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     version: dashboard.schemaVersion,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: dashboard.preload ? false : true,
+        isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard),
         $behaviors: [trackIfEmpty],
       }),
