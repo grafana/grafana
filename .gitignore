@@ -105,8 +105,10 @@ profile.cov
 /pkg/cmd/grafana-server/debug
 
 # Extensions
+/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
+!/pkg/extensions/*.go
 /pkg/build/cmd/extensions/*
 !/pkg/build/cmd/extensions/.keep
 /public/app/extensions
