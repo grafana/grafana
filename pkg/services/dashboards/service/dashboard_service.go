@@ -1503,23 +1503,17 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	createdBy := obj.GetCreatedBy()
-	if createdBy != "" && toUID(createdBy) != "" {
-		creator, err := dr.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: toUID(createdBy)})
-		if err != nil {
-			return nil, err
-		}
-		out.CreatedBy = creator.ID
+	creator, err := dr.getUser(ctx, obj.GetCreatedBy())
+	if err != nil {
+		return nil, err
 	}
+	out.CreatedBy = creator.ID
 
-	updatedBy := obj.GetUpdatedBy()
-	if updatedBy != "" && toUID(updatedBy) != "" {
-		updator, err := dr.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: toUID(updatedBy)})
-		if err != nil {
-			return nil, err
-		}
-		out.UpdatedBy = updator.ID
+	updater, err := dr.getUser(ctx, obj.GetUpdatedBy())
+	if err != nil {
+		return nil, err
 	}
+	out.UpdatedBy = updater.ID
 
 	// any dashboards that have already been synced to unified storage will have the id in the spec
 	// and not as a label. We will need to support this conversion until they have all been updated
@@ -1554,6 +1548,19 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	}
 
 	return &out, nil
+}
+
+func (dr *DashboardServiceImpl) getUser(ctx context.Context, userMeta string) (*user.User, error) {
+	if userMeta == "" || toUID(userMeta) == "" {
+		// TODO: will there always be a creator?  ( should we error when creator is missing? )
+		return &user.User{}, nil
+	}
+	uid := toUID(userMeta)
+	userId, err := strconv.ParseInt(uid, 10, 64)
+	if err == nil {
+		return dr.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
+	}
+	return dr.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {
