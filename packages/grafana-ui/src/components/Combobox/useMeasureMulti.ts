@@ -7,26 +7,31 @@ import { ComboboxOption } from './Combobox';
 
 const FONT_SIZE = 12;
 const EXTRA_PILL_SIZE = 50;
+const EXTRA_PILL_DISABLED_SIZE = 10;
 
 /**
  * Updates the number of shown items in the multi combobox based on the available width.
  */
 export function useMeasureMulti<T extends string | number>(
   selectedItems: Array<ComboboxOption<T>>,
-  width?: number | 'auto'
+  width?: number | 'auto',
+  disabled?: boolean
 ) {
   const [shownItems, setShownItems] = useState<number>(selectedItems.length);
   const [measureRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [counterMeasureRef, { width: counterWidth }] = useMeasure<HTMLDivElement>();
   const [suffixMeasureRef, { width: suffixWidth }] = useMeasure<HTMLDivElement>();
 
   const finalWidth = width && width !== 'auto' ? width : containerWidth;
 
   useEffect(() => {
-    const maxWidth = finalWidth - suffixWidth;
+    const maxWidth = finalWidth - counterWidth - suffixWidth;
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
       // Measure text width and add size of padding, separator and close button
-      currWidth += measureText(selectedItems[i].label || '', FONT_SIZE).width + EXTRA_PILL_SIZE;
+      currWidth +=
+        measureText(selectedItems[i].label || '', FONT_SIZE).width +
+        (disabled ? EXTRA_PILL_DISABLED_SIZE : EXTRA_PILL_SIZE);
       if (currWidth > maxWidth) {
         // If there is no space for that item, show the current number of items,
         // but always show at least 1 item
@@ -38,7 +43,7 @@ export function useMeasureMulti<T extends string | number>(
         setShownItems(selectedItems.length);
       }
     }
-  }, [finalWidth, suffixWidth, selectedItems, setShownItems]);
+  }, [finalWidth, counterWidth, suffixWidth, selectedItems, setShownItems, disabled]);
 
-  return { measureRef, suffixMeasureRef, shownItems };
+  return { measureRef, counterMeasureRef, suffixMeasureRef, shownItems };
 }
