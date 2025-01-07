@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -17,7 +16,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -46,9 +44,9 @@ var (
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService             dashboards.DashboardService
-	provisioningDashboardService dashboards.DashboardProvisioningService
-	features                     featuremgmt.FeatureToggles
+	dashboard.DashboardsAPIBuilder
+	dashboardService dashboards.DashboardService
+	features         featuremgmt.FeatureToggles
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
@@ -76,13 +74,14 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
-
-		dashboardService:             dashboardService,
-		provisioningDashboardService: provisioningDashboardService,
-		features:                     features,
-		accessControl:                accessControl,
-		unified:                      unified,
-		search:                       dashboard.NewSearchHandler(unified, tracing),
+		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
+			ProvisioningDashboardService: provisioningDashboardService,
+		},
+		dashboardService: dashboardService,
+		features:         features,
+		accessControl:    accessControl,
+		unified:          unified,
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -238,40 +237,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
-}
-
-// Validate will prevent deletion of provisioned dashboards, unless the grace period is set to 0, indicating a force deletion
-func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	op := a.GetOperation()
-	if op == admission.Delete {
-		obj := a.GetOperationOptions()
-		deleteOptions, ok := obj.(*v1.DeleteOptions)
-		if !ok {
-			return fmt.Errorf("expected v1.DeleteOptions")
-		}
-
-		if deleteOptions.GracePeriodSeconds == nil || *deleteOptions.GracePeriodSeconds != 0 {
-			nsInfo, err := claims.ParseNamespace(a.GetNamespace())
-			if err != nil {
-				return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-			}
-
-			provisioningData, err := b.provisioningDashboardService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, a.GetName())
-			if err != nil {
-				if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) {
-					return nil
-				}
-
-				return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
-			}
-
-			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-			}
-		}
-	}
-
-	return nil
 }
 
 // Mutate removes any internal ID set in the spec & adds it as a label
