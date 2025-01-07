@@ -81,6 +81,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 		},
 	})
 
+	// TODO -- document how the seemingly arbitrary column lengths were chosen
+	// The answer for now is that they come from the legacy secrets service, but it would be good to know that they will still work in the new service
 	tables = append(tables, migrator.Table{
 		Name: TableNameDataKey,
 		Columns: []*migrator.Column{

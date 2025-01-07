@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -178,65 +179,82 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 		return err
 	}
 
-	for _, k := range keys {
-		err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-			provider, ok := providers[k.Provider]
-			if !ok {
-				ss.log.Warn(
-					"Could not find provider to re-encrypt data encryption key",
-					"id", k.UID,
-					"label", k.Label,
-					"provider", k.Provider,
-				)
-				return nil
-			}
+	selectStatements := make([]string, len(keys))
 
-			decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
-			if err != nil {
-				ss.log.Warn(
-					"Error while decrypting data encryption key to re-encrypt it",
-					"id", k.UID,
-					"label", k.Label,
-					"provider", k.Provider,
-					"err", err,
-				)
-				return nil
-			}
-
-			// Updating current data key by re-encrypting it with current provider.
-			// Accessing the current provider within providers map should be safe.
-			k.Provider = currProvider
-			k.Label = encryption.KeyLabel(k.Scope, currProvider)
-			k.Updated = time.Now()
-			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
-			if err != nil {
-				ss.log.Warn(
-					"Error while re-encrypting data encryption key",
-					"id", k.UID,
-					"label", k.Label,
-					"provider", k.Provider,
-					"err", err,
-				)
-				return nil
-			}
-
-			if _, err := sess.Update(k); err != nil {
-				ss.log.Warn(
-					"Error while re-encrypting data encryption key",
-					"id", k.UID,
-					"label", k.Label,
-					"provider", k.Provider,
-					"err", err,
-				)
-				return nil
-			}
-
+	for i, k := range keys {
+		provider, ok := providers[k.Provider]
+		if !ok {
+			ss.log.Warn(
+				"Could not find provider to re-encrypt data encryption key",
+				"id", k.UID,
+				"label", k.Label,
+				"provider", k.Provider,
+			)
 			return nil
-		})
-
-		if err != nil {
-			return err
 		}
+
+		decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
+		if err != nil {
+			ss.log.Warn(
+				"Error while decrypting data encryption key to re-encrypt it",
+				"id", k.UID,
+				"label", k.Label,
+				"provider", k.Provider,
+				"err", err,
+			)
+			return nil
+		}
+
+		// Updating current data key by re-encrypting it with current provider.
+		// Accessing the current provider within providers map should be safe.
+		encryptedData, err := providers[currProvider].Encrypt(ctx, decrypted)
+		if err != nil {
+			ss.log.Warn(
+				"Error while re-encrypting data encryption key",
+				"id", k.UID,
+				"label", k.Label,
+				"provider", k.Provider,
+				"err", err,
+			)
+			return nil
+		}
+
+		var statement string
+		// Only need to name the columns once, omit them after that for efficiency's sake
+		if i == 0 {
+			statement = fmt.Sprintf("SELECT '%s' AS %s, '%s' AS %s, x'%s' AS %s",
+				k.UID, "uid",
+				encryption.KeyLabel(k.Scope, currProvider), "label",
+				encryptedData, "encrypted_data",
+			)
+		} else {
+			statement = fmt.Sprintf("SELECT '%s', '%s', x'%s'",
+				k.UID,
+				encryption.KeyLabel(k.Scope, currProvider),
+				encryptedData,
+			)
+		}
+
+		selectStatements = append(selectStatements, statement)
+	}
+
+	rawSql := fmt.Sprintf(`
+		"WITH updates AS ( 
+			%s 
+		) 
+		UPDATE %s 
+		JOIN updates ON %s.uid = updates.uid 
+		SET %s.label = updates.label, 
+			%s.encrypted_data = updates.encrypted_data, 
+			%s.provider = %s, 
+			%s.updated = %s"
+	`, strings.Join(selectStatements, " UNION ALL "), TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, currProvider, TableNameDataKey, time.Now().UTC().String())
+
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.SQL(rawSql).Exec()
+		return err
+	}); err != nil {
+		return err
 	}
 
 	return nil
