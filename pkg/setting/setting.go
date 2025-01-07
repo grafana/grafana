@@ -330,8 +330,8 @@ type Cfg struct {
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
-	// Default behaviour for the "Manage alerts via Alerting UI" toggle when configuring a Datasource.
-	// Only works in case there's no configured value beforehand controlled by the DS's `jsonData.manageAlerts` prop.
+	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
 
 	// IP range access control

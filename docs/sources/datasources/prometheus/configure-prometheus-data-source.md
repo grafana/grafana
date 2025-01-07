@@ -119,13 +119,13 @@ Following are additional configuration options.
 
 {{% admonition type="note" %}}
 
-The `Manage alerts via Alerting UI` toggle will be enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle]({{< relref "../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle" >}}) option in the Grafana configuration file.
+The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle]({{< relref "../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle" >}}) option in the Grafana configuration file.
 
 {{% /admonition %}}
 
 ### Interval behavior
 
-- **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
+- **Scrape interval** - Set to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
 
 - **Query timeout** - The default is `60s`.
 
