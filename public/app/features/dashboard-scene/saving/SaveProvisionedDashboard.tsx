@@ -96,9 +96,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [title, ref, workflow, path] = watch(['title', 'ref', 'workflow', 'path']);
+  const [title, ref, workflow, path, comment] = watch(['title', 'ref', 'workflow', 'path', 'comment']);
   const isGitHub = repositoryConfig?.type === 'github';
-  const href = createPRLink(repositoryConfig, title, ref);
+  const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
   const navigate = useNavigate();
 
