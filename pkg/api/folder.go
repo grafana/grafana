@@ -14,10 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -32,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -63,8 +66,17 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderUidRoute.Put("/", handler.updateFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Get("/", handler.getFolder)
-				folderUidRoute.Get("/counts", handler.countFolderContent)
-				folderUidRoute.Post("/move", handler.moveFolder)
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
+					folderUidRoute.Get("/counts", handler.countFolderContent)
+				} else {
+					folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+				}
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagK8SFolderMove) {
+					folderUidRoute.Post("/move", handler.moveFolder)
+				} else {
+					folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+				}
+				folderUidRoute.Get("parents", handler.getFolderParents)
 			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
@@ -223,6 +235,10 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
+		hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
+	}
+
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
 	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
@@ -234,6 +250,36 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, folderDTO)
+}
+
+func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
+
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
+
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+
+	isNested := folder.ParentUID != ""
+	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
@@ -666,8 +712,8 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	if !ok {
 		return // error is already sent
 	}
-	cmd := folder.CreateFolderCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	cmd := &folder.CreateFolderCommand{}
+	if err := web.Bind(c.Req, cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
@@ -676,7 +722,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
-	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
+	out, err := client.Create(c.Req.Context(), obj, v1.CreateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -771,6 +817,23 @@ func (fk8s *folderK8sHandler) countFolderContent(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, out)
 }
 
+func (fk8s *folderK8sHandler) getFolderParents(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	uid := web.Params(c.Req)[":uid"]
+
+	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{}, "parents")
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, out)
+}
+
 func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 	client, ok := fk8s.getClient(c)
 	if !ok {
@@ -829,23 +892,27 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 
-	cmd := folder.UpdateFolderCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	var ctx = c.Req.Context()
+
+	cmd := &folder.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]
-	cmd.SignedInUser = c.SignedInUser
-	// #TODO add version?
 
-	obj, err := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
 
-	out, err := client.Update(c.Req.Context(), obj, v1.UpdateOptions{})
+	updated, err := internalfolders.LegacyUpdateCommandToUnstructured(obj, cmd)
+	if err != nil {
+		return
+	}
+
+	out, err := client.Update(ctx, updated, v1.UpdateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -873,9 +940,7 @@ func (fk8s *folderK8sHandler) moveFolder(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UID = web.Params(c.Req)[":uid"]
-	cmd.SignedInUser = c.SignedInUser
 
 	obj, err := client.Get(ctx, cmd.UID, v1.GetOptions{})
 	if err != nil {
