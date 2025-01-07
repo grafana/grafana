@@ -65,7 +65,7 @@ func (s *keeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secr
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &Keeper{Name: nn.Name, Namespace: nn.Namespace.String()}
+	row := &keeperDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
 		if err != nil {
@@ -96,7 +96,7 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	currentRow := &Keeper{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
+	currentRow := &keeperDB{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(currentRow)
 		if err != nil {
@@ -141,7 +141,7 @@ func (s *keeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) erro
 		return fmt.Errorf("missing auth info in context")
 	}
 
-	row := &Keeper{Name: nn.Name, Namespace: nn.Namespace.String()}
+	row := &keeperDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("failed to delete row: %w", err)
@@ -167,10 +167,10 @@ func (s *keeperStorage) List(ctx context.Context, namespace xkube.Namespace, opt
 		labelSelector = labels.Everything()
 	}
 
-	keeperRows := make([]*Keeper, 0)
+	keeperRows := make([]*keeperDB, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &Keeper{Namespace: namespace.String()}
+		cond := &keeperDB{Namespace: namespace.String()}
 
 		if err := sess.Find(&keeperRows, cond); err != nil {
 			return fmt.Errorf("failed to find rows: %w", err)
