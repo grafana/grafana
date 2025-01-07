@@ -308,7 +308,7 @@ function getDefaultDatasourceType() {
   return dsType;
 }
 
-function getDefaultDatasource(): DataSourceRef {
+export function getDefaultDatasource(): DataSourceRef {
   const dsList = Object.values(config.datasources);
   const defaultDsSettings = dsList.find((ds) => ds.isDefault);
 
