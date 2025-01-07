@@ -21,6 +21,7 @@ interface GrafanaCrashReport extends BaseStateReport {
     email: string;
     login: string;
     name: string;
+    lastInteraction: number;
   };
   memory?: {
     heapUtilization: number;
@@ -35,6 +36,11 @@ export function initializeCrashDetection() {
   if (!sharedWorkersSupported()) {
     return;
   }
+
+  let lastInteraction = Date.now();
+  // Add last interaction listeners to capture phase to reduce skipped events when stopPropagation() is called
+  document.body.addEventListener('click', () => (lastInteraction = Date.now()), true);
+  document.body.addEventListener('keypress', () => (lastInteraction = Date.now()), true);
 
   initCrashDetection<GrafanaCrashReport>({
     id: nanoid(5),
@@ -81,6 +87,7 @@ export function initializeCrashDetection() {
         email: contextSrv.user.email,
         login: contextSrv.user.login,
         name: contextSrv.user.name,
+        lastInteraction,
       };
 
       if (isChromePerformance(performance)) {

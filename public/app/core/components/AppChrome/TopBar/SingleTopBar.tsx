@@ -14,6 +14,7 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -49,6 +50,7 @@ export const SingleTopBar = memo(function SingleTopBar({
   const profileNode = navIndex['profile'];
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   return (
     <div className={styles.layout}>
@@ -71,6 +73,7 @@ export const SingleTopBar = memo(function SingleTopBar({
 
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
+        {unifiedHistoryEnabled && <HistoryContainer />}
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
@@ -112,9 +115,8 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(440px, 1fr)',
+      gridTemplateColumns: '2fr minmax(550px, 1fr)',
       display: 'grid',
-
       justifyContent: 'flex-start',
     },
   }),
