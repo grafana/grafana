@@ -72,7 +72,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
