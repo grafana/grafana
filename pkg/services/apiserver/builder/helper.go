@@ -138,7 +138,19 @@ func SetupConfig(
 		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 	}
 
-	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
+	v := utilversion.DefaultKubeEffectiveVersion()
+
+	info := v.BinaryVersion().Info()
+	info.BuildDate = "xxx"
+	info.GitVersion = "xxxx.yyyy"
+	info.GitTreeState = buildVersion
+
+	info = v.EmulationVersion().Info()
+	info.BuildDate = "xxx"
+	info.GitVersion = "xxxx.yyyy"
+	info.GitTreeState = buildVersion
+
+	serverConfig.EffectiveVersion = v
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
