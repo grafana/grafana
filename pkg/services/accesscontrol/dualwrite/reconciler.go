@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +35,7 @@ type ZanzanaReconciler struct {
 	reconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
+func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:    cfg,
 		log:    log.New("zanzana.reconciler"),
@@ -50,7 +51,7 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 			),
 			newResourceReconciler(
 				"folder tree",
-				folderTreeCollector(store),
+				folderTreeCollector(folderService),
 				zanzanaCollector([]string{zanzana.RelationParent}),
 				client,
 			),
