@@ -51,9 +51,14 @@ const renderActions = (actions: ActionModel[]) => {
   );
 };
 
-export const VizTooltipFooter = ({ dataLinks, actions, annotate, oneClickMode }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({
+  dataLinks,
+  actions,
+  annotate,
+  oneClickMode = OneClickMode.Off,
+}: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
-  const oneClickEnabled = oneClickMode && oneClickMode !== OneClickMode.Off;
+  const oneClickEnabled = oneClickMode !== OneClickMode.Off;
 
   return (
     <div className={styles.wrapper}>

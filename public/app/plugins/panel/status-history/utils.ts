@@ -24,14 +24,6 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   return links;
 };
 
-export const isOneClickLinkEnabledForField = (field: Field) => {
-  if (field.config.oneClickMode === OneClickMode.Off || !config.featureToggles.vizActions) {
-    return false;
-  }
-
-  return field.config.oneClickMode === OneClickMode.Link;
-};
-
 export const getFieldActions = (
   dataFrame: DataFrame,
   field: Field,

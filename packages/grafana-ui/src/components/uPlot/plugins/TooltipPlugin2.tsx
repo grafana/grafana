@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
@@ -28,7 +28,7 @@ export const enum TooltipHoverMode {
 }
 
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
-type OneClickEnabledCallback = (seriesIdx: number, dataIdx: number) => boolean;
+type GetOneClickModeCallback = (seriesIdx: number) => OneClickMode;
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -44,7 +44,7 @@ interface TooltipPlugin2Props {
 
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
-  oneClickEnabled?: OneClickEnabledCallback;
+  getOneClickMode?: GetOneClickModeCallback;
 
   render: (
     u: uPlot,
@@ -124,7 +124,7 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
-  oneClickEnabled = () => false,
+  getOneClickMode = () => OneClickMode.Off,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -144,8 +144,8 @@ export const TooltipPlugin2 = ({
   const getLinksRef = useRef(getDataLinks);
   getLinksRef.current = getDataLinks;
 
-  const oneClickEnabledRef = useRef(oneClickEnabled);
-  oneClickEnabledRef.current = oneClickEnabled;
+  const getOneClickRef = useRef(getOneClickMode);
+  getOneClickRef.current = getOneClickMode;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -200,10 +200,15 @@ export const TooltipPlugin2 = ({
     let offsetY = 0;
 
     let selectedRange: TimeRange2 | null = null;
-    let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
+    let seriesIdxs: Array<number | null> = [];
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
     let dataLinks: LinkModel[] = [];
+
+    // for onceClick link rendering during mousemoves we use these pre-generated first links or actions
+    // these will be wrong if the titles have interpolation using the hovered *value*
+    // but this should be quite rare. we'll fix it if someone actually encounters this
+    let persistentLinks: LinkModel[][] = [];
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -267,7 +272,7 @@ export const TooltipPlugin2 = ({
                 dismiss,
                 selectedRange,
                 viaSync,
-                dataLinks
+                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : []
               )
             : null,
         dismiss,
@@ -322,7 +327,6 @@ export const TooltipPlugin2 = ({
       // this handles pinning
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
-          const isOneClickEnabled = oneClickEnabledRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
           if (e.ctrlKey || e.metaKey) {
             let xVal;
 
@@ -339,18 +343,24 @@ export const TooltipPlugin2 = ({
             };
 
             scheduleRender(false);
-          } else if (isOneClickEnabled) {
-            _isPinned = false;
-            window.open(dataLinks[0].href, dataLinks[0].target ?? '_self');
           }
-          // only pinnable tooltip is visible *and* is within proximity to series/point
-          else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
-            dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
+          // when within proximity to a series/point
+          else if (closestSeriesIdx != null) {
+            const oneClickMode = getOneClickRef.current(closestSeriesIdx);
+            dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
 
-            setTimeout(() => {
-              _isPinned = true;
-              scheduleRender(true);
-            }, 0);
+            if (oneClickMode === OneClickMode.Link) {
+              window.open(dataLinks[0].href, dataLinks[0].target ?? '_self');
+            } else if (oneClickMode === OneClickMode.Action) {
+              // TODO
+            }
+            // only pinnable tooltip is visible
+            else if (_isHovering && !_isPinned) {
+              setTimeout(() => {
+                _isPinned = true;
+                scheduleRender(true);
+              }, 0);
+            }
           }
         }
       });
@@ -521,6 +531,22 @@ export const TooltipPlugin2 = ({
       seriesIdxs = _plot?.cursor!.idxs!.slice()!;
       _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
 
+      if (persistentLinks.length === 0) {
+        persistentLinks = seriesIdxs.map((v, seriesIdx) => {
+          if (seriesIdx > 0) {
+            const oneClickMode = getOneClickMode(seriesIdx);
+
+            if (oneClickMode === OneClickMode.Link) {
+              return getDataLinks(seriesIdx, 0).slice(0, 1);
+            } else if (oneClickMode === OneClickMode.Action) {
+              // TODO
+            }
+          }
+
+          return [];
+        });
+      }
+
       viaSync = u.cursor.event == null;
       let prevIsHovering = _isHovering;
       updateHovering();
@@ -604,15 +630,6 @@ export const TooltipPlugin2 = ({
         // transition: transform 100ms;
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
-
-        const oneClickEnabled = oneClickEnabledRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
-        if (oneClickEnabled) {
-          u.over.style.cursor = 'pointer';
-          // TODO !!!
-          dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs?.[closestSeriesIdx!]!);
-        } else {
-          u.over.style.cursor = 'default';
-        }
 
         if (domRef.current != null) {
           domRef.current.style.transform = transform;

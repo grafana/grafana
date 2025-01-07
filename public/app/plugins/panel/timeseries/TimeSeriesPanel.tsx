@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync, OneClickMode } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
-
-import { isOneClickLinkEnabledForField } from '../status-history/utils';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -111,14 +109,9 @@ export const TimeSeriesPanel = ({
                 getDataLinks={(seriesIdx: number, dataIdx: number) =>
                   alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
-                oneClickEnabled={(seriesIdx) => {
-                  const field = alignedFrame.fields[seriesIdx!];
-                  if (field) {
-                    return isOneClickLinkEnabledForField(field);
-                  }
-
-                  return false;
-                }}
+                getOneClickMode={(seriesIdx: number) =>
+                  alignedFrame.fields[seriesIdx].config.oneClickMode ?? OneClickMode.Off
+                }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
