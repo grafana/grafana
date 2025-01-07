@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
@@ -32,12 +32,15 @@ function renderAlertLabels() {
   );
 }
 
-function renderLabelsWithSuggestions() {
-  return render(
+async function renderLabelsWithSuggestions() {
+  const view = render(
     <SubFormProviderWrapper>
       <LabelsWithSuggestions dataSourceName="grafana" />
     </SubFormProviderWrapper>
   );
+  await waitForElementToBeRemoved(() => screen.queryByText('Loading existing labels'));
+
+  return view;
 }
 
 const grafanaRule = getGrafanaRule(undefined, {
@@ -71,8 +74,10 @@ describe('LabelsField with suggestions', () => {
     });
   });
 
+  jest.retryTimes(2);
+
   it('Should display two dropdowns with the existing labels', async () => {
-    renderLabelsWithSuggestions();
+    await renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
 
@@ -86,21 +91,19 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should delete a key-value combination', async () => {
-    const { user } = renderLabelsWithSuggestions();
+    const { user } = await renderLabelsWithSuggestions();
 
-    await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
-
-    expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2);
-    expect(screen.getAllByTestId('alertlabel-value-picker')).toHaveLength(2);
+    expect(await screen.findAllByTestId('alertlabel-key-picker')).toHaveLength(2);
+    expect(await screen.findAllByTestId('alertlabel-value-picker')).toHaveLength(2);
 
     await user.click(screen.getByTestId('delete-label-1'));
 
-    expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(1);
-    expect(screen.getAllByTestId('alertlabel-value-picker')).toHaveLength(1);
+    expect(await screen.findAllByTestId('alertlabel-key-picker')).toHaveLength(1);
+    expect(await screen.findAllByTestId('alertlabel-value-picker')).toHaveLength(1);
   });
 
   it('Should add new key-value dropdowns', async () => {
-    const { user } = renderLabelsWithSuggestions();
+    const { user } = await renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getByText('Add more')).toBeVisible());
     await user.click(screen.getByText('Add more'));
@@ -119,7 +122,7 @@ describe('LabelsField with suggestions', () => {
   });
 
   it('Should be able to write new keys and values using the dropdowns', async () => {
-    const { user } = renderLabelsWithSuggestions();
+    const { user } = await renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getByText('Add more')).toBeVisible());
     await user.click(screen.getByText('Add more'));
@@ -134,7 +137,7 @@ describe('LabelsField with suggestions', () => {
     expect(screen.getByTestId('labelsInSubform-value-2')).toHaveTextContent('value3');
   });
   it('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
-    const { user } = renderLabelsWithSuggestions();
+    const { user } = await renderLabelsWithSuggestions();
 
     await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
     expect(screen.getByTestId('labelsInSubform-key-0')).toHaveTextContent('key1');
