@@ -76,6 +76,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 11
 
+- [What's new in 11.5](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-5/)
 - [What's new in 11.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-4/)
 - [What's new in 11.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-3/)
 - [What's new in 11.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-2/)
