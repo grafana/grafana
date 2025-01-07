@@ -58,6 +58,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  */
 export function ToolbarActions({ dashboard }: Props) {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -69,6 +70,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
+  const isNotFound = Boolean(meta.dashboardNotFound);
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
@@ -77,6 +79,10 @@ export function ToolbarActions({ dashboard }: Props) {
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
   const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName] || folderRepo);
+
+  if (isNotFound) {
+    return null;
+  }
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise

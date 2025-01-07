@@ -5,19 +5,19 @@
 package v0alpha1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 // SyncStatusApplyConfiguration represents a declarative configuration of the SyncStatus type for use
 // with apply.
 type SyncStatusApplyConfiguration struct {
-	State     *v0alpha1.JobState `json:"state,omitempty"`
-	JobID     *string            `json:"job,omitempty"`
-	Started   *int64             `json:"started,omitempty"`
-	Finished  *int64             `json:"finished,omitempty"`
-	Scheduled *int64             `json:"scheduled,omitempty"`
-	Message   []string           `json:"message,omitempty"`
-	Hash      *string            `json:"hash,omitempty"`
+	State     *provisioningv0alpha1.JobState `json:"state,omitempty"`
+	JobID     *string                        `json:"job,omitempty"`
+	Started   *int64                         `json:"started,omitempty"`
+	Finished  *int64                         `json:"finished,omitempty"`
+	Scheduled *int64                         `json:"scheduled,omitempty"`
+	Message   []string                       `json:"message,omitempty"`
+	Hash      *string                        `json:"hash,omitempty"`
 }
 
 // SyncStatusApplyConfiguration constructs a declarative configuration of the SyncStatus type for use with
@@ -29,7 +29,7 @@ func SyncStatus() *SyncStatusApplyConfiguration {
 // WithState sets the State field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the State field is set to the value of the last call.
-func (b *SyncStatusApplyConfiguration) WithState(value v0alpha1.JobState) *SyncStatusApplyConfiguration {
+func (b *SyncStatusApplyConfiguration) WithState(value provisioningv0alpha1.JobState) *SyncStatusApplyConfiguration {
 	b.State = &value
 	return b
 }
