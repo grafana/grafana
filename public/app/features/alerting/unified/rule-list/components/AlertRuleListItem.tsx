@@ -1,13 +1,18 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { CombinedRule, CombinedRuleNamespace, RuleHealth } from 'app/types/unified-alerting';
-import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaRulesSourceSymbol,
+  Rule,
+  RuleGroupIdentifierV2,
+  RuleHealth,
+  RulesSourceIdentifier,
+} from 'app/types/unified-alerting';
+import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
@@ -15,10 +20,11 @@ import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
-import { createContactPointLink } from '../../utils/misc';
+import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
+import { DataSourceIcon } from './Namespace';
 import { RuleListIcon } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
@@ -35,8 +41,10 @@ interface AlertRuleListItemProps {
   evaluationInterval?: string;
   labels?: Labels;
   instancesCount?: number;
-  namespace?: CombinedRuleNamespace;
+  namespace?: string;
   group?: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
   // used for alert rules that use simplified routing
   contactPoint?: string;
   actions?: ReactNode;
@@ -58,6 +66,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     instancesCount = 0,
     namespace,
     group,
+    rulesSource,
+    application,
     contactPoint,
     labels,
     origin,
@@ -68,7 +78,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   if (namespace && group) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} />
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
       </Text>
     );
   }
@@ -91,7 +101,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (!isEmpty(labels)) {
+  if (labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
         <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
@@ -106,7 +116,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       <MetaText icon="at">
         <Trans i18nKey="alerting.contact-points.delivered-to">Delivered to</Trans>{' '}
         <TextLink
-          href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
+          href={createContactPointSearchLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
           variant="bodySmall"
           color="primary"
           inline={false}
@@ -138,6 +148,53 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     />
   );
 };
+
+type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'state' | 'instancesCount' | 'contactPoint'>;
+
+export function RecordingRuleListItem({
+  name,
+  namespace,
+  group,
+  rulesSource,
+  application,
+  href,
+  health,
+  isProvisioned,
+  error,
+  isPaused,
+  origin,
+  actions,
+}: RecordingRuleListItemProps) {
+  const metadata: ReactNode[] = [];
+  if (namespace && group) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+      </Text>
+    );
+  }
+
+  return (
+    <ListItem
+      title={
+        <Stack direction="row" alignItems="center">
+          <TextLink href={href} inline={false}>
+            {name}
+          </TextLink>
+          {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
+          {/* show provisioned badge only when it also doesn't have plugin origin */}
+          {isProvisioned && !origin && <ProvisioningBadge />}
+          {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
+          {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
+        </Stack>
+      }
+      description={<Summary error={error} />}
+      icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
+      actions={actions}
+      meta={metadata}
+    />
+  );
+}
 
 interface SummaryProps {
   content?: string;
@@ -203,13 +260,20 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 }
 
 interface UnknownRuleListItemProps {
-  rule: CombinedRule;
+  rule: Rule;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
-export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
+export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
+  const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  const ruleContext = { namespace: rule.namespace.name, group: rule.group.name, name: rule.name };
+  const ruleContext = {
+    name: rule.name,
+    groupName,
+    namespace: JSON.stringify(namespace),
+    rulesSource: rulesSource.uid === GrafanaRulesSourceSymbol ? GRAFANA_RULES_SOURCE_NAME : rulesSource.uid,
+  };
   logError(new Error('unknown rule type'), ruleContext);
 
   return (
@@ -219,7 +283,7 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
           <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>
         </summary>
         <pre>
-          <code>{JSON.stringify(rule.rulerRule, null, 2)}</code>
+          <code>{JSON.stringify(rule, null, 2)}</code>
         </pre>
       </details>
     </Alert>
@@ -227,20 +291,36 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
 };
 
 interface RuleLocationProps {
-  namespace: CombinedRuleNamespace;
+  namespace: string;
   group: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
 }
 
-export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
-  <Stack direction="row" alignItems="center" gap={0.5}>
-    <Icon size="xs" name="folder" />
-    <Stack direction="row" alignItems="center" gap={0}>
-      {namespace.name}
-      <Icon size="sm" name="angle-right" />
-      {group}
+// @TODO make the datasource / namespace / group click-able to allow further filtering of the list
+export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => {
+  const isGrafanaApp = application === 'grafana';
+  const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      {isGrafanaApp && <Icon size="xs" name="folder" />}
+      {isDataSourceApp && (
+        <Tooltip content={rulesSource.name}>
+          <span>
+            <DataSourceIcon application={application} size={14} />
+          </span>
+        </Tooltip>
+      )}
+
+      <Stack direction="row" alignItems="center" gap={0}>
+        {namespace}
+        <Icon size="sm" name="angle-right" />
+        {group}
+      </Stack>
     </Stack>
-  </Stack>
-);
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({

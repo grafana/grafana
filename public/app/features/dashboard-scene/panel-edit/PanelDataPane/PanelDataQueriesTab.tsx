@@ -21,7 +21,7 @@ import { GroupActionComponents } from 'app/features/query/components/QueryAction
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
@@ -201,8 +201,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
     }
 
-    if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
-      dataObjStateUpdate.minInterval = options.minInterval;
+    if (options.minInterval !== dataObj.state.minInterval) {
+      dataObjStateUpdate.minInterval = options.minInterval ?? undefined;
     }
 
     const timeFrom = options.timeRange?.from ?? undefined;

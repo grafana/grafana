@@ -1,6 +1,6 @@
 import { Cell } from 'react-table';
 
-import { TimeRange, DataFrame } from '@grafana/data';
+import { TimeRange, DataFrame, InterpolateFunction } from '@grafana/data';
 
 import { TableStyles } from './styles';
 import { GetActionsFunction, GrafanaTableColumn, TableFilterActionCallback } from './types';
@@ -19,6 +19,7 @@ export interface Props {
   textWrapped?: boolean;
   height?: number;
   getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export const TableCell = ({
@@ -33,6 +34,7 @@ export const TableCell = ({
   textWrapped,
   height,
   getActions,
+  replaceVariables,
 }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
@@ -58,7 +60,7 @@ export const TableCell = ({
 
   let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
 
-  const actions = getActions ? getActions(frame, field) : [];
+  const actions = getActions ? getActions(frame, field, cell.row.index, replaceVariables) : [];
 
   return (
     <>

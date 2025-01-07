@@ -9,7 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { DataTrail } from './DataTrail';
 import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
-import { getDataSource, getDataSourceName, getMetricName } from './utils';
+import { getMetricName } from './utils';
 
 export type Props = {
   trail?: DataTrail;
@@ -46,7 +46,6 @@ export function DataTrailCard(props: Props) {
     const createdAt = bookmark?.createdAt || trail.state.createdAt;
 
     return {
-      dsValue: getDataSource(trail),
       filters: filtersVariable.state.filters,
       metric: trail.state.metric,
       createdAt,
@@ -57,16 +56,13 @@ export function DataTrailCard(props: Props) {
     return null;
   }
 
-  const { dsValue, filters, metric, createdAt } = values;
+  const { filters, metric, createdAt } = values;
 
   return (
-    <div>
+    <article>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
-          <div className={styles.metricLabel}>
-            <Trans i18nKey="trails.card.metric">Metric:</Trans>
-          </div>
-          <div className={styles.metricValue}>{getMetricName(metric)}</div>
+          <div className={styles.metricValue}>{truncateValue('', getMetricName(metric), 39)}</div>
         </Card.Heading>
         <Card.Meta className={styles.meta}>
           {filters.map((f) => (
@@ -76,12 +72,6 @@ export function DataTrailCard(props: Props) {
             </span>
           ))}
         </Card.Meta>
-        <div className={styles.datasource}>
-          <div className={styles.secondaryFont}>
-            <Trans i18nKey="trails.card.data-source">Data source: </Trans>
-          </div>
-          <div className={styles.primaryFont}>{dsValue && getDataSourceName(dsValue)}</div>
-        </div>
         <div className={styles.deleteButton}>
           {onDelete && (
             <Card.SecondaryActions>
@@ -91,6 +81,7 @@ export function DataTrailCard(props: Props) {
                 className={styles.secondary}
                 tooltip="Remove bookmark"
                 onClick={onDelete}
+                data-testid="deleteButton"
               />
             </Card.SecondaryActions>
           )}
@@ -102,40 +93,23 @@ export function DataTrailCard(props: Props) {
         </div>
         <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
       </div>
-    </div>
+    </article>
   );
 }
 
 export function getStyles(theme: GrafanaTheme2) {
   return {
-    metricLabel: css({
-      display: 'inline',
-      color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
-      fontWeight: 400,
-    }),
     metricValue: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
       fontWeight: 500,
-      marginLeft: '8px', // Add space between the label and the value
       wordBreak: 'break-all',
-    }),
-    tag: css({
-      maxWidth: '260px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
     }),
     card: css({
       position: 'relative',
       width: '318px',
       padding: `12px ${theme.spacing(2)} ${theme.spacing(1)} ${theme.spacing(2)}`,
-      height: '152px',
+      height: '110px',
       alignItems: 'start',
       marginBottom: 0,
       borderTop: `1px solid ${theme.colors.border.weak}`,
@@ -149,9 +123,6 @@ export function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
       fontSize: '12px',
     }),
-    datasource: css({
-      gridArea: 'Description',
-    }),
     date: css({
       border: `1px solid ${theme.colors.border.weak}`,
       // eslint-disable-next-line @grafana/no-border-radius-literal
@@ -163,8 +134,7 @@ export function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxHeight: '54px',
-      width: '100%',
+      maxHeight: '36px', // 2 lines * 18px line-height
       margin: 0,
       gridArea: 'Meta',
       color: theme.colors.text.secondary,
@@ -173,19 +143,14 @@ export function getStyles(theme: GrafanaTheme2) {
     primaryFont: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
       fontSize: '12px',
-      fontStyle: 'normal',
       fontWeight: '500',
-      lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
     }),
     secondaryFont: css({
       display: 'inline',
       color: theme.colors.text.secondary,
-      fontFamily: 'Inter',
       fontSize: '12px',
-      fontStyle: 'normal',
       fontWeight: '400',
       lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
@@ -194,10 +159,6 @@ export function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       bottom: theme.spacing(1),
       right: theme.spacing(1),
-    }),
-    wordwrap: css({
-      overflow: 'hidden',
-      overflowWrap: 'anywhere',
     }),
   };
 }

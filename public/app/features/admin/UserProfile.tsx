@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, UserDTO } from 'app/types';
 
 interface Props {
@@ -82,7 +83,9 @@ export function UserProfile({
 
   return (
     <div>
-      <h3 className="page-heading">User information</h3>
+      <h3 className="page-heading">
+        <Trans i18nKey="admin.user-profile.title">User information</Trans>
+      </h3>
       <Stack direction="column" gap={1.5}>
         <div>
           <table className="filter-table form-inline">
@@ -124,7 +127,7 @@ export function UserProfile({
           {canDelete && (
             <>
               <Button variant="destructive" onClick={showDeleteUserModal(true)} ref={deleteUserRef}>
-                Delete user
+                <Trans i18nKey="admin.user-profile.delete-button">Delete user</Trans>
               </Button>
               <ConfirmModal
                 isOpen={showDeleteModal}
@@ -138,13 +141,13 @@ export function UserProfile({
           )}
           {user.isDisabled && canEnable && (
             <Button variant="secondary" onClick={handleUserEnable}>
-              Enable user
+              <Trans i18nKey="admin.user-profile.enable-button">Enable user</Trans>
             </Button>
           )}
           {!user.isDisabled && canDisable && (
             <>
               <Button variant="secondary" onClick={showDisableUserModal(true)} ref={disableUserRef}>
-                Disable user
+                <Trans i18nKey="admin.user-profile.disable-button">Disable user</Trans>
               </Button>
               <ConfirmModal
                 isOpen={showDisableModal}
@@ -282,7 +285,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
             onConfirm={this.onSave}
             onCancel={this.onCancelClick}
           >
-            Edit
+            {t('admin.user-profile.edit-button', 'Edit')}
           </ConfirmButton>
         </td>
       </tr>

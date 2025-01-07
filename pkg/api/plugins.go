@@ -216,6 +216,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	if plugin.IsApp() {
 		dto.Enabled = plugin.AutoEnabled
 		dto.Pinned = plugin.AutoEnabled
+		dto.AutoEnabled = plugin.AutoEnabled
 	}
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
@@ -254,8 +255,12 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if _, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID); !exists {
+	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
+	}
+	if p.AutoEnabled && !cmd.Enabled {
+		return response.Error(http.StatusBadRequest, "Cannot disable auto-enabled plugin", nil)
 	}
 
 	cmd.OrgId = c.SignedInUser.GetOrgID()
@@ -467,7 +472,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		}
 	}
 
-	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	compatOpts := plugins.NewAddOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
 	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
 	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {

@@ -133,6 +133,11 @@ export type Route = {
   active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
+  _metadata?: {
+    provisioned?: boolean;
+    resourceVersion?: string;
+    name?: string;
+  };
 };
 
 export interface RouteWithID extends Route {

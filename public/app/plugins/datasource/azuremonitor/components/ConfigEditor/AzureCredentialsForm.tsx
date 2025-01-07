@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 
-import { getAzureClouds } from '@grafana/azure-sdk';
+import { AzureAuthType, AzureCredentials, getAzureClouds } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { Select, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureAuthType, AzureCredentials } from '../../types';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';
@@ -74,17 +73,27 @@ export const AzureCredentialsForm = (props: Props) => {
   }, [managedIdentityEnabled, workloadIdentityEnabled, userIdentityEnabled]);
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
-    const defaultAuthType = managedIdentityEnabled
-      ? 'msi'
-      : workloadIdentityEnabled
-        ? 'workloadidentity'
-        : userIdentityEnabled
-          ? 'currentuser'
-          : 'clientsecret';
+    const defaultAuthType = (() => {
+      if (managedIdentityEnabled) {
+        return 'msi';
+      }
+
+      if (workloadIdentityEnabled) {
+        return 'workloadidentity';
+      }
+
+      if (userIdentityEnabled) {
+        return 'currentuser';
+      }
+
+      return 'clientsecret';
+    })();
+
     const updated: AzureCredentials = {
       ...credentials,
       authType: selected.value || defaultAuthType,
     };
+
     onCredentialsChange(updated);
   };
 
@@ -123,7 +132,6 @@ export const AzureCredentialsForm = (props: Props) => {
           disabled={disabled}
           managedIdentityEnabled={managedIdentityEnabled}
           workloadIdentityEnabled={workloadIdentityEnabled}
-          userIdentityEnabled={userIdentityEnabled}
         />
       )}
     </ConfigSection>

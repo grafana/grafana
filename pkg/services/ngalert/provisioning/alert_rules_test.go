@@ -867,6 +867,37 @@ func TestCreateAlertRule(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+	t.Run("when dashboard is specified", func(t *testing.T) {
+		t.Run("return no error when both specified", func(t *testing.T) {
+			rule := dummyRule("test#4", orgID)
+			dashboardUid := "oinwerfgiuac"
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+				models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.NoError(t, err)
+		})
+		t.Run("return 4xx error when missing dashboard uid", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			panelId := int64(42)
+			rule.Annotations = map[string]string{
+				models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+		t.Run("return 4xx error when missing panel id", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			dashboardUid := "oinwerfgiuac"
+			rule.Annotations = map[string]string{
+				models.DashboardUIDAnnotation: dashboardUid,
+			}
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+	})
 }
 
 func TestUpdateAlertRule(t *testing.T) {
@@ -962,6 +993,30 @@ func TestUpdateAlertRule(t *testing.T) {
 			require.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
 			assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
+
+		t.Run("when there are no changes it should be successful", func(t *testing.T) {
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// permissions. The response of the service should still be successful.
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			rule := models.CopyRule(rules[0])
+
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{*rule})
+			require.NoError(t, err)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			_, err = service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.NoError(t, err)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 				a, ok := cmd.([]models.UpdateRule)
@@ -1546,11 +1601,11 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
 

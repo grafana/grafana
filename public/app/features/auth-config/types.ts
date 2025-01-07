@@ -1,6 +1,5 @@
 import { ReactElement } from 'react';
-import { Validate } from 'react-hook-form';
-import { UseFormSetValue } from 'react-hook-form/dist/types/form';
+import { Validate, UseFormSetValue } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
@@ -22,8 +21,11 @@ export type SSOProviderSettingsBase = {
   authStyle?: string;
   authUrl?: string;
   autoLogin?: boolean;
+  clientAuthentication?: string;
   clientId: string;
   clientSecret: string;
+  managedIdentityClientId?: string;
+  federatedCredentialAudience?: string;
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;

@@ -2,7 +2,8 @@ import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'related-logs' | 'related';
+export type ActionViewType = 'overview' | 'breakdown' | 'related_logs' | 'related';
+
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
@@ -14,7 +15,7 @@ export const TRAILS_ROUTE = '/explore/metrics/trail';
 export const HOME_ROUTE = '/explore/metrics';
 
 export const VAR_FILTERS = 'filters';
-export const VAR_FILTERS_EXPR = '{${filters}}';
+export const VAR_FILTERS_EXPR = '${filters}';
 export const VAR_METRIC = 'metric';
 export const VAR_METRIC_EXPR = '${metric}';
 export const VAR_GROUP_BY = 'groupby';
@@ -33,6 +34,8 @@ export const VAR_OTEL_GROUP_BY = 'otel_groupby';
 export const VAR_OTEL_GROUP_BY_EXPR = '${otel_groupby}';
 export const VAR_OTEL_GROUP_LEFT = 'otel_group_left';
 export const VAR_OTEL_GROUP_LEFT_EXPR = '${otel_group_left}';
+export const VAR_MISSING_OTEL_TARGETS = 'missing_otel_targets';
+export const VAR_MISSING_OTEL_TARGETS_EXPR = '${missing_otel_targets}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
@@ -44,6 +47,7 @@ export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
 export const TRAIL_BREAKDOWN_SORT_KEY = 'grafana.trails.breakdown.sort';
+export const OTEL_EXPERIENCE_ENABLED_KEY = 'grafana.trails.otel.experience.enabled';
 
 export const MDP_METRIC_PREVIEW = 250;
 export const MDP_METRIC_OVERVIEW = 500;

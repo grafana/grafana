@@ -445,9 +445,12 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 
 {
-	"name": "grafana"
+	"name": "grafana",
+	"secondsToLive": 604800
 }
 ```
+
+Default value for the `secondsToLive` is 0, which means that the service account token will never expire.
 
 **Example Response**:
 

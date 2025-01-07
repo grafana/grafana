@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -30,10 +31,10 @@ const (
 	GetSnapshotListSortingLatest = "latest"
 )
 
-func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	var cm cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", uid).Get(&cm)
+		exist, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&cm)
 		if err != nil {
 			return err
 		}
@@ -75,11 +76,10 @@ func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudm
 	return &migration, nil
 }
 
-func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context, orgID int64) ([]*cloudmigration.CloudMigrationSession, error) {
 	var migrations = make([]*cloudmigration.CloudMigrationSession, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.OrderBy("created DESC")
-		return sess.Find(&migrations)
+		return sess.Where("org_id=?", orgID).OrderBy("created DESC").Find(&migrations)
 	})
 	if err != nil {
 		return nil, err
@@ -96,10 +96,11 @@ func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudm
 	return migrations, nil
 }
 
-func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error) {
+// DeleteMigrationSessionByUID deletes the migration session, and all the related snapshot and resources the work is done in a transaction.
+func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error) {
 	var c cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", uid).Get(&c)
+		exist, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&c)
 		if err != nil {
 			return err
 		}
@@ -125,11 +126,11 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 
 	err = ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		for _, snapshot := range snapshots {
-			err := ss.DeleteSnapshotResources(ctx, snapshot.UID)
+			err := ss.deleteSnapshotResources(ctx, snapshot.UID)
 			if err != nil {
 				return fmt.Errorf("deleting snapshot resource from db: %w", err)
 			}
-			err = ss.DeleteSnapshot(ctx, snapshot.UID)
+			err = ss.deleteSnapshot(ctx, orgID, snapshot.UID)
 			if err != nil {
 				return fmt.Errorf("deleting snapshot from db: %w", err)
 			}
@@ -236,7 +237,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
-func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) error {
+func (ss *sqlStore) deleteSnapshot(ctx context.Context, orgID int64, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
 			UID: snapshotUid,
@@ -245,9 +246,16 @@ func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) erro
 	})
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+	// first we check if the session exists, using orgId and sessionUid
+	session, err := ss.GetMigrationSessionByUID(ctx, orgID, sessionUid)
+	if err != nil || session == nil {
+		return nil, err
+	}
+
+	// now we get the snapshot
 	var snapshot cloudmigration.CloudMigrationSnapshot
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("session_uid=? AND uid=?", sessionUid, uid).Get(&snapshot)
 		if err != nil {
 			return err
@@ -269,11 +277,11 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 		snapshot.EncryptionKey = []byte(secret)
 	}
 
-	resources, err := ss.GetSnapshotResources(ctx, uid, resultPage, resultLimit)
+	resources, err := ss.getSnapshotResources(ctx, uid, resultPage, resultLimit)
 	if err == nil {
 		snapshot.Resources = resources
 	}
-	stats, err := ss.GetSnapshotResourceStats(ctx, uid)
+	stats, err := ss.getSnapshotResourceStats(ctx, uid)
 	if err == nil {
 		snapshot.StatsRollup = *stats
 	}
@@ -286,7 +294,9 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Join("INNER", "cloud_migration_session", "cloud_migration_session.uid = cloud_migration_snapshot.session_uid")
+		sess.Join("INNER", "cloud_migration_session",
+			"cloud_migration_session.uid = cloud_migration_snapshot.session_uid AND cloud_migration_session.org_id = ?", query.OrgID,
+		)
 		if query.Limit != GetAllSnapshots {
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
@@ -310,7 +320,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			snapshot.EncryptionKey = []byte(secret)
 		}
 
-		if stats, err := ss.GetSnapshotResourceStats(ctx, snapshot.UID); err != nil {
+		if stats, err := ss.getSnapshotResourceStats(ctx, snapshot.UID); err != nil {
 			return nil, err
 		} else {
 			snapshot.StatsRollup = *stats
@@ -414,7 +424,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	})
 }
 
-func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
+func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -436,7 +446,7 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 	return resources, nil
 }
 
-func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error) {
+func (ss *sqlStore) getSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error) {
 	typeCounts := make([]struct {
 		Count int    `json:"count"`
 		Type  string `json:"type"`
@@ -483,7 +493,7 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 	return stats, nil
 }
 
-func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {
+func (ss *sqlStore) deleteSnapshotResources(ctx context.Context, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
@@ -525,4 +535,20 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 	cm.AuthToken = string(t)
 
 	return nil
+}
+
+// TODO move this function dashboards/databases/databases.go
+func (ss *sqlStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
+	//ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
+	//defer span.End()
+
+	var dashs = make([]*dashboards.Dashboard, 0)
+	err := ss.db.WithDbSession(ctx, func(session *db.Session) error {
+		// "deleted IS NULL" is to avoid deleted dashboards
+		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashs, nil
 }

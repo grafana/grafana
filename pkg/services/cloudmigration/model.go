@@ -21,6 +21,7 @@ var (
 // CloudMigrationSession represents a configured migration token
 type CloudMigrationSession struct {
 	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`
 	AuthToken   string
 	Slug        string
@@ -91,6 +92,7 @@ const (
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 type ItemStatus string
@@ -118,7 +120,6 @@ const (
 	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
@@ -147,6 +148,8 @@ type CloudMigrationRunList struct {
 
 type CloudMigrationSessionRequest struct {
 	AuthToken string
+	// OrgId in the on prem instance
+	OrgID int64
 }
 
 type CloudMigrationSessionResponse struct {
@@ -162,6 +165,7 @@ type CloudMigrationSessionListResponse struct {
 
 type GetSnapshotsQuery struct {
 	SnapshotUID string
+	OrgID       int64
 	SessionUID  string
 	ResultPage  int
 	ResultLimit int
@@ -169,6 +173,7 @@ type GetSnapshotsQuery struct {
 
 type ListSnapshotsQuery struct {
 	SessionUID string
+	OrgID      int64
 	Page       int
 	Limit      int
 	Sort       string
@@ -196,13 +201,14 @@ type Base64EncodedTokenPayload struct {
 	Instance Base64HGInstance
 }
 
-func (p Base64EncodedTokenPayload) ToMigration() CloudMigrationSession {
+func (p Base64EncodedTokenPayload) ToMigration(orgID int64) CloudMigrationSession {
 	return CloudMigrationSession{
 		AuthToken:   p.Token,
 		Slug:        p.Instance.Slug,
 		StackID:     p.Instance.StackID,
 		RegionSlug:  p.Instance.RegionSlug,
 		ClusterSlug: p.Instance.ClusterSlug,
+		OrgID:       orgID,
 	}
 }
 

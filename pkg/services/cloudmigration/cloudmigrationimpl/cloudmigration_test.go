@@ -2,10 +2,12 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -47,7 +48,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
 func Test_NoopServiceDoesNothing(t *testing.T) {
@@ -80,38 +80,39 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
-	s := setUpServiceTest(t, false).(*Service)
+	setupTest := func(ctx context.Context) (service *Service, snapshotUID string, sessionUID string) {
+		s := setUpServiceTest(t, false).(*Service)
 
-	gmsClientMock := &gmsClientMock{}
-	s.gmsClient = gmsClientMock
+		gmsClientFake := &gmsClientMock{}
+		s.gmsClient = gmsClientFake
 
-	// Insert a session and snapshot into the database before we start
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
+		// Insert a session and snapshot into the database before we start
+		createTokenResp, err := s.CreateToken(ctx)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, createTokenResp.Token)
 
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
-		AuthToken: createTokenResp.Token,
-	})
-	require.NoError(t, err)
+		sess, err := s.store.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
+			AuthToken: createTokenResp.Token,
+		})
+		require.NoError(t, err)
 
-	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-		UID:            "test uid",
-		SessionUID:     sess.UID,
-		Status:         cloudmigration.SnapshotStatusCreating,
-		GMSSnapshotUID: "gms uid",
-	})
-	require.NoError(t, err)
-	assert.Equal(t, "test uid", uid)
+		uid, err := s.store.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			UID:            "test uid",
+			SessionUID:     sess.UID,
+			Status:         cloudmigration.SnapshotStatusCreating,
+			GMSSnapshotUID: "gms uid",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "test uid", uid)
 
-	// Make sure status is coming from the db only
-	snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-		SnapshotUID: uid,
-		SessionUID:  sess.UID,
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
-	assert.Equal(t, 0, gmsClientMock.getStatusCalled)
+		// Make sure status is coming from the db only
+		snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: uid,
+			SessionUID:  sess.UID,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
+		assert.Never(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
 
 	// Make the status pending processing and ensure GMS gets called
 	err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
@@ -137,127 +138,209 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			Status:    cloudmigration.SnapshotStatusPendingProcessing,
 		})
 		assert.NoError(t, err)
+
+		return s, uid, sess.UID
+	}
+
+	checkStatusSync := func(ctx context.Context, s *Service, snapshotUID, sessionUID string, status cloudmigration.SnapshotStatus) func() bool {
+		return func() bool {
+			snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+				SnapshotUID: snapshotUID,
+				SessionUID:  sessionUID,
+			})
+			if err != nil {
+				return false
+			}
+
+			return snapshot.Status == status
+		}
 	}
 
 	t.Run("test case: gms snapshot initialized", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateInitialized,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusPendingProcessing, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateInitialized,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusPendingProcessing), time.Second, 10*time.Millisecond)
+		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
 	})
 
 	t.Run("test case: gms snapshot processing", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateProcessing,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusProcessing, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateProcessing,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
+		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
 	})
 
 	t.Run("test case: gms snapshot finished", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateFinished,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateFinished,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		_, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
+		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
 	})
 
 	t.Run("test case: gms snapshot canceled", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateCanceled,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusCanceled, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateCanceled,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
+		require.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
 	})
 
 	t.Run("test case: gms snapshot error", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateError,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusError, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateError,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.Eventually(t, checkStatusSync(ctx, s, snapshotUID, sessionUID, cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
+		assert.Equal(t, 1, gmsClientFake.GetSnapshotStatusCallCount())
 	})
 
 	t.Run("test case: gms snapshot unknown", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateUnknown,
-		}
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		// snapshot status should remain unchanged
-		assert.Equal(t, cloudmigration.SnapshotStatusPendingProcessing, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
 
-		t.Cleanup(cleanupFunc)
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateUnknown,
+			},
+		}
+		s.gmsClient = gmsClientFake
+
+		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, snapshot)
+
+		// snapshot status should remain unchanged
+		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
+
+		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, snapshot)
+		require.Equal(t, cloudmigration.SnapshotStatusPendingProcessing, snapshot.Status)
 	})
 
 	t.Run("GMS results applied to local snapshot", func(t *testing.T) {
-		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateFinished,
-			Results: []cloudmigration.CloudMigrationResource{
-				{
-					RefID:  "A",
-					Status: cloudmigration.ItemStatusError,
-					Error:  "fake",
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		s, snapshotUID, sessionUID := setupTest(ctx)
+
+		gmsClientFake := &gmsClientMock{
+			getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+				State: cloudmigration.SnapshotStateFinished,
+				Results: []cloudmigration.CloudMigrationResource{
+					{
+						Name:   "A name",
+						Type:   cloudmigration.DatasourceDataType,
+						RefID:  "A",
+						Status: cloudmigration.ItemStatusError,
+						Error:  "fake",
+					},
 				},
 			},
 		}
+		s.gmsClient = gmsClientFake
 
 		// ensure it is persisted
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
+		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
 		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled) // shouldn't have queried GMS again now that it is finished
-		assert.Len(t, snapshot.Resources, 1)
-		assert.Equal(t, cloudmigration.ItemStatusError, snapshot.Resources[0].Status)
-		assert.Equal(t, "A", snapshot.Resources[0].RefID)
-		assert.Equal(t, "fake", snapshot.Resources[0].Error)
+		require.NoError(t, err)
+		require.NotNil(t, snapshot)
+		require.Eventually(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 
-		t.Cleanup(cleanupFunc)
+		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+			SnapshotUID: snapshotUID,
+			SessionUID:  sessionUID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, snapshot)
+		require.Len(t, snapshot.Resources, 1)
+		require.Equal(t, "A", snapshot.Resources[0].RefID)
+		require.Equal(t, "fake", snapshot.Resources[0].Error)
+		require.Equal(t, cloudmigration.ItemStatusError, snapshot.Resources[0].Status)
 	})
-}
+})
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
@@ -307,7 +390,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, 0, gmsClientMock.getStatusCalled)
+		assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
 	}
 
 	// make sure GMS is called when snapshot is pending processing or processing
@@ -326,28 +409,26 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, i+1, gmsClientMock.getStatusCalled)
+		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
 	}
+	assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 }, time.Second, 10*time.Millisecond)
 }
 
 func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
+
+	/** NOTE: this is not used at the moment since we changed the service
+
 	// modify what the mock returns for just this test case
 	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
 	dashMock.On("GetAllDashboards", mock.Anything).Return(
 		[]*dashboards.Dashboard{
-			{
-				UID:  "1",
-				Data: simplejson.New(),
-			},
-			{
-				UID:     "2",
-				Data:    simplejson.New(),
-				Deleted: time.Now(),
-			},
+			{UID: "1", OrgID: 1, Data: simplejson.New()},
+			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
 		},
 		nil,
 	)
+	*/
 
 	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
 	assert.NoError(t, err)
@@ -383,173 +464,15 @@ func Test_SortFolders(t *testing.T) {
 	require.Equal(t, expected, sortedFolders)
 }
 
-func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
-	s := setUpServiceTest(t, false).(*Service)
-
-	// Insert a processing snapshot into the database before we start so we query GMS
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
-		AuthToken: createTokenResp.Token,
-	})
-	require.NoError(t, err)
-	snapshotUid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
-		UID:            uuid.NewString(),
-		SessionUID:     sess.UID,
-		Status:         cloudmigration.SnapshotStatusProcessing,
-		GMSSnapshotUID: "gms uid",
-	})
-	require.NoError(t, err)
-
-	err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-		UID:       snapshotUid,
-		SessionID: sess.UID,
-		LocalResources: []cloudmigration.CloudMigrationResource{
-			{
-				Name:        "1 name",
-				ParentName:  "1 parent name",
-				Type:        cloudmigration.DatasourceDataType,
-				RefID:       "1", // this will be core
-				Status:      cloudmigration.ItemStatusPending,
-				SnapshotUID: snapshotUid,
-			},
-			{
-				Name:        "2 name",
-				ParentName:  "",
-				Type:        cloudmigration.DatasourceDataType,
-				RefID:       "2", // this will be non-core
-				Status:      cloudmigration.ItemStatusPending,
-				SnapshotUID: snapshotUid,
-			},
-			{
-				Name:        "3 name",
-				ParentName:  "3 parent name",
-				Type:        cloudmigration.DatasourceDataType,
-				RefID:       "3", // this will be non-core with an error
-				Status:      cloudmigration.ItemStatusPending,
-				Error:       "please don't overwrite me",
-				SnapshotUID: snapshotUid,
-			},
-			{
-				Name:        "4 name",
-				ParentName:  "4 folder name",
-				Type:        cloudmigration.DatasourceDataType,
-				RefID:       "4", // this will be deleted
-				Status:      cloudmigration.ItemStatusPending,
-				SnapshotUID: snapshotUid,
-			},
-		},
-	})
-	require.NoError(t, err)
-
-	// GMS should return: a core ds, a non-core ds, a non-core ds with an error, and a ds that has been uninstalled
-	gmsClientMock := &gmsClientMock{
-		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
-			State: cloudmigration.SnapshotStateFinished,
-			Results: []cloudmigration.CloudMigrationResource{
-				{
-					Type:   cloudmigration.DatasourceDataType,
-					RefID:  "1",
-					Status: cloudmigration.ItemStatusOK,
-				},
-				{
-					Type:   cloudmigration.DatasourceDataType,
-					RefID:  "2",
-					Status: cloudmigration.ItemStatusOK,
-				},
-				{
-					Type:   cloudmigration.DatasourceDataType,
-					RefID:  "3",
-					Status: cloudmigration.ItemStatusError,
-					Error:  "please don't overwrite me",
-				},
-				{
-					Type:   cloudmigration.DatasourceDataType,
-					RefID:  "4", // this will be deleted
-					Status: cloudmigration.ItemStatusOK,
-				},
-			},
-		},
-	}
-	s.gmsClient = gmsClientMock
-
-	// Update the internal plugin store and ds store with seed data matching the descriptions above
-	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
-		{
-			JSONData: plugins.JSONData{
-				ID: "1",
-			},
-			Class: plugins.ClassCore,
-		},
-		{
-			JSONData: plugins.JSONData{
-				ID: "2",
-			},
-			Class: plugins.ClassExternal,
-		},
-		{
-			JSONData: plugins.JSONData{
-				ID: "3",
-			},
-			Class: plugins.ClassExternal,
-		},
-	}...)
-
-	s.dsService = &datafakes.FakeDataSourceService{
-		DataSources: []*datasources.DataSource{
-			{UID: "1", Type: "1"},
-			{UID: "2", Type: "2"},
-			{UID: "3", Type: "3"},
-			{UID: "4", Type: "4"},
-		},
-	}
-
-	// Retrieve the snapshot with results
-	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
-		SnapshotUID: snapshotUid,
-		SessionUID:  sess.UID,
-		ResultPage:  1,
-		ResultLimit: 10,
-	})
-	assert.NoError(t, err)
-	assert.Len(t, snapshot.Resources, 4)
-
-	findRef := func(id string) *cloudmigration.CloudMigrationResource {
-		for _, r := range snapshot.Resources {
-			if r.RefID == id {
-				return &r
-			}
-		}
-		return nil
-	}
-
-	shouldBeUnaltered := findRef("1")
-	assert.Equal(t, cloudmigration.ItemStatusOK, shouldBeUnaltered.Status)
-	assert.Empty(t, shouldBeUnaltered.Error)
-
-	shouldBeAltered := findRef("2")
-	assert.Equal(t, cloudmigration.ItemStatusWarning, shouldBeAltered.Status)
-	assert.Equal(t, shouldBeAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
-
-	shouldHaveOriginalError := findRef("3")
-	assert.Equal(t, cloudmigration.ItemStatusError, shouldHaveOriginalError.Status)
-	assert.Equal(t, shouldHaveOriginalError.Error, "please don't overwrite me")
-
-	uninstalledAltered := findRef("4")
-	assert.Equal(t, cloudmigration.ItemStatusWarning, uninstalledAltered.Status)
-	assert.Equal(t, uninstalledAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
-}
-
 func TestDeleteSession(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
+	user := &user.SignedInUser{UserUID: "user123"}
 
 	t.Run("when deleting a session that does not exist in the database, it returns an error", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		session, err := s.DeleteSession(ctx, "invalid-session-uid")
+		session, err := s.DeleteSession(ctx, 2, user, "invalid-session-uid")
 		require.Nil(t, session)
 		require.Error(t, err)
 	})
@@ -564,19 +487,20 @@ func TestDeleteSession(t *testing.T) {
 
 		cmd := cloudmigration.CloudMigrationSessionRequest{
 			AuthToken: createTokenResp.Token,
+			OrgID:     3,
 		}
 
-		createResp, err := s.CreateSession(ctx, cmd)
+		createResp, err := s.CreateSession(ctx, user, cmd)
 		require.NoError(t, err)
 		require.NotEmpty(t, createResp.UID)
 		require.NotEmpty(t, createResp.Slug)
 
-		deletedSession, err := s.DeleteSession(ctx, createResp.UID)
+		deletedSession, err := s.DeleteSession(ctx, cmd.OrgID, user, createResp.UID)
 		require.NoError(t, err)
 		require.NotNil(t, deletedSession)
 		require.Equal(t, deletedSession.UID, createResp.UID)
 
-		notFoundSession, err := s.GetSession(ctx, deletedSession.UID)
+		notFoundSession, err := s.GetSession(ctx, cmd.OrgID, deletedSession.UID)
 		require.ErrorIs(t, err, cloudmigration.ErrMigrationNotFound)
 		require.Nil(t, notFoundSession)
 	})
@@ -593,7 +517,7 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil)
+			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil, "user123")
 		})
 
 		require.Zero(t, gmsMock.reportEventCalled)
@@ -609,12 +533,13 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil)
+			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil, "user123")
 		})
 
 		require.Equal(t, 1, gmsMock.reportEventCalled)
 	})
 }
+
 func TestGetFolderNamesForFolderUIDs(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -691,6 +616,7 @@ func TestGetParentNames(t *testing.T) {
 		folders             []folder.CreateFolderCommand
 		dashboards          []dashboards.Dashboard
 		libraryElements     []libraryElement
+		alertRules          []alertRule
 		expectedParentNames map[cloudmigration.MigrateDataType][]string
 	}{
 		{
@@ -711,10 +637,15 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
 				{UID: "libraryElementUID-1"},
 			},
+			alertRules: []alertRule{
+				{UID: "alertRuleUID-0", FolderUID: ""},
+				{UID: "alertRuleUID-1", FolderUID: "folderUID-B"},
+			},
 			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
 				cloudmigration.DashboardDataType:      {"", "Folder A", "Folder B"},
 				cloudmigration.FolderDataType:         {"Folder A"},
 				cloudmigration.LibraryElementDataType: {"Folder A"},
+				cloudmigration.AlertRuleType:          {"Folder B"},
 			},
 		},
 	}
@@ -722,7 +653,7 @@ func TestGetParentNames(t *testing.T) {
 	for _, tc := range testcases {
 		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
 
-		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements)
+		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements, tc.alertRules)
 		require.NoError(t, err)
 
 		for dataType, expectedParentNames := range tc.expectedParentNames {
@@ -763,21 +694,144 @@ func TestGetLibraryElementsCommands(t *testing.T) {
 	require.Equal(t, createLibraryElementCmd.UID, cmds[0].UID)
 }
 
-func ctxWithSignedInUser() context.Context {
-	c := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{OrgID: 1},
+// NOTE: this should be on the plugin object
+func TestIsPublicSignatureType(t *testing.T) {
+	testcases := []struct {
+		signature      plugins.SignatureType
+		expectedPublic bool
+	}{
+		{
+			signature:      plugins.SignatureTypeCommunity,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeCommercial,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeGrafana,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypePrivate,
+			expectedPublic: false,
+		},
+		{
+			signature:      plugins.SignatureTypePrivateGlob,
+			expectedPublic: false,
+		},
 	}
-	k := ctxkey.Key{}
-	ctx := context.WithValue(context.Background(), k, c)
-	return ctx
+
+	for _, testcase := range testcases {
+		resPublic := IsPublicSignatureType(testcase.signature)
+		require.Equal(t, resPublic, testcase.expectedPublic)
+	}
 }
 
-func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Service {
+func TestGetPlugins(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-core",
+				Type: plugins.TypeDataSource,
+			},
+			Class:         plugins.ClassCore,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:          "plugin-external-valid-grafana",
+				Type:        plugins.TypeDataSource,
+				AutoEnabled: false,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-commercial",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommercial,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-community",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommunity,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-invalid",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusInvalid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-unsigned",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-private",
+				Type: plugins.TypeApp,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypePrivate,
+		},
+	}...)
+
+	s.pluginSettingsService = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		"plugin-external-valid-grafana": {ID: 0, OrgID: user.OrgID, PluginID: "plugin-external-valid-grafana", PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	plugins, err := s.getPlugins(ctx, user)
+	require.NoError(t, err)
+	require.NotNil(t, plugins)
+	require.Len(t, plugins, 3)
+
+	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
+	pluginsIDs := make([]string, 0)
+	for _, plugin := range plugins {
+		// Special case of using the settings from the settings store
+		if plugin.ID == "plugin-external-valid-grafana" {
+			require.True(t, plugin.SettingCmd.Enabled)
+		}
+
+		pluginsIDs = append(pluginsIDs, plugin.ID)
+	}
+	require.ElementsMatch(t, pluginsIDs, expectedPluginIDs)
+}
+
+type configOverrides func(c *setting.Cfg)
+
+func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...configOverrides) cloudmigration.Service {
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
-	spanRecorder := tracetest.NewSpanRecorder()
-	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
+	tracer := tracing.InitializeTracerForTest()
 	mockFolder := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
 	}
@@ -813,7 +867,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
-		featuremgmt.FlagOnPremToCloudMigrationsAlerts,
 		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 	)
 
@@ -826,6 +879,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
+	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
 	require.NoError(t, err)
 
@@ -837,7 +891,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	)
 	require.NoError(t, err)
 
-	var validConfig = `{
+	validConfig := `{
 		"alertmanager_config": {
 			"route": {
 				"receiver": "grafana-default-email"
@@ -861,6 +915,25 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		LastApplied:               time.Now().Unix(),
 	}))
 
+	// Insert test data for dashboard test, should be removed later when we move GetAllDashboardsByOrgId() to the dashboard service
+	_, err = sqlStore.GetSqlxSession().Exec(context.Background(), `
+		INSERT INTO
+			dashboard (id, org_id, data, deleted, slug, title, created, version, updated )
+		VALUES
+			(1, 1, '{}', null, 'asdf', 'ghjk', '2024-03-27 15:30:43.000' , '1','2024-03-27 15:30:43.000' ),
+			(2, 1, '{}', '2024-03-27 15:30:43.000','qwert', 'yuio', '2024-03-27 15:30:43.000' , '2','2024-03-27 15:30:43.000'),
+			(3, 2, '{}', null, 'asdf', 'ghjk', '2024-03-27 15:30:43.000' , '1','2024-03-27 15:30:43.000' ),
+			(4, 2, '{}', '2024-03-27 15:30:43.000','qwert', 'yuio', '2024-03-27 15:30:43.000' , '2','2024-03-27 15:30:43.000');
+		`,
+	)
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	for _, cfgOverride := range cfgOverrides {
+		cfgOverride(cfg)
+	}
+
 	s, err := ProvideService(
 		cfg,
 		httpclient.NewProvider(),
@@ -875,6 +948,8 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		dashboardService,
 		mockFolder,
 		&pluginstore.FakePluginStore{},
+		&pluginsettings.FakePluginSettings{},
+		actest.FakeAccessControl{ExpectedEvaluate: true},
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,
@@ -885,6 +960,8 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 }
 
 type gmsClientMock struct {
+	mu sync.RWMutex
+
 	validateKeyCalled     int
 	startSnapshotCalled   int
 	getStatusCalled       int
@@ -909,7 +986,13 @@ func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudM
 }
 
 func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.CloudMigrationSnapshot, _ int) (*cloudmigration.GetSnapshotStatusResponse, error) {
+	m.mu.Lock()
 	m.getStatusCalled++
+	m.mu.Unlock()
+	if m.getSnapshotResponse == nil {
+		return nil, errors.New("no response set")
+	}
+
 	return m.getSnapshotResponse, nil
 }
 
@@ -920,4 +1003,11 @@ func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cl
 
 func (m *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
 	m.reportEventCalled++
+}
+
+func (m *gmsClientMock) GetSnapshotStatusCallCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.getStatusCalled
 }

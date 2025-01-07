@@ -178,7 +178,7 @@ export interface ModalProps {
   hideFolder?: boolean;
 }
 
-export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
+export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);

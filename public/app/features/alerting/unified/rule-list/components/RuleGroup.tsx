@@ -10,7 +10,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { isAlertingRule } from '../../utils/rules';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
-import EvaluationGroup from './EvaluationGroup';
+import { EvaluationGroup } from './EvaluationGroup';
 import { SkeletonListItem } from './ListItem';
 
 interface EvaluationGroupLoaderProps {
@@ -72,6 +72,16 @@ export const EvaluationGroupLoader = ({
         {numberOfPages > 1 && <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />}
       </>
     </EvaluationGroup>
+  );
+};
+
+export const LoadingIndicator = ({ datasourceUid }: { datasourceUid: string }) => {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
+
+  return (
+    <div ref={ref} data-testid={`ds-loading-indicator-${datasourceUid}`}>
+      <LoadingBar width={width} />
+    </div>
   );
 };
 

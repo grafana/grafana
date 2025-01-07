@@ -8,7 +8,7 @@ const themeTokenUsage = createRule({
     return {
       Identifier: function (node) {
         if (node.name === 'theme') {
-          const ancestors = context.getAncestors().reverse();
+          const ancestors = context.sourceCode.getAncestors(node).reverse();
           const paths = [];
           let lastAncestor = null;
           for (const ancestor of ancestors) {

@@ -8,16 +8,19 @@ import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
   AzureAPIResponse,
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
-  AzureDataSourceSettings,
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData,
+  AzureMonitorDataSourceSettings,
   Subscription,
 } from '../../types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
-export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
+export type Props = DataSourcePluginOptionsEditorProps<
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData
+>;
 
 interface ErrorMessage {
   title: string;
@@ -43,7 +46,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
-  private updateOptions = (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings): void => {
+  private updateOptions = (
+    optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings
+  ): void => {
     const updated = optionsFunc(this.props.options);
     this.props.onOptionsChange(updated);
 
@@ -54,7 +59,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (this.state.unsaved) {
       await getBackendSrv()
         .put(`/api/datasources/${this.props.options.id}`, this.props.options)
-        .then((result: { datasource: AzureDataSourceSettings }) => {
+        .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
           updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
         });
 

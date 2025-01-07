@@ -150,12 +150,12 @@ describe('Logs', () => {
       },
     });
 
-    const { rerender } = render(
+    const rendered = render(
       <Provider store={fakeStore}>
         {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
       </Provider>
     );
-    return { rerender, store: fakeStore };
+    return { ...rendered, store: fakeStore };
   };
 
   describe('scrolling behavior', () => {
@@ -428,12 +428,14 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
-      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
       const rows = [
-        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
-        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
-        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
-        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: '1' } }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1, labels: { field: '2' } }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2, labels: { field: '3' } }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2, labels: { field: '4' } }),
       ];
       setup({ loading: false, panelState, logRows: rows });
 
@@ -449,6 +451,7 @@ describe('Logs', () => {
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('displayedFields%22:%5B%22field'));
     });
 
     it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
@@ -477,6 +480,19 @@ describe('Logs', () => {
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
       config.featureToggles.logsInfiniteScrolling = featureToggleValue;
+    });
+  });
+
+  describe('displayed fields', () => {
+    it('should sync displayed fields from the URL', async () => {
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
+      const rows = [makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: 'field value' } })];
+      setup({ loading: false, panelState, logRows: rows });
+
+      expect(await screen.findByText('field=field value')).toBeInTheDocument();
+      expect(screen.queryByText(/log message/)).not.toBeInTheDocument();
     });
   });
 

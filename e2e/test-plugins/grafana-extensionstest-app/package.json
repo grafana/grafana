@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/extensions-test-app",
-  "version": "11.4.0-pre",
+  "version": "11.5.0-pre",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -11,10 +11,9 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/eslint-config": "7.0.0",
-    "@grafana/plugin-configs": "11.4.0-pre",
+    "@grafana/plugin-configs": "workspace:*",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.14.14",
+    "@types/node": "22.10.2",
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",

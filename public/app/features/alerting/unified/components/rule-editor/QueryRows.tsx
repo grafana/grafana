@@ -1,21 +1,23 @@
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
   DataQuery,
   DataSourceInstanceSettings,
-  getDataSourceRef,
   LoadingState,
   PanelData,
-  rangeUtil,
   RelativeTimeRange,
+  getDataSourceRef,
+  rangeUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { getInstantFromDataQuery } from '../../utils/rule-form';
 
 import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
@@ -234,6 +236,7 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+  const isInstant = getInstantFromDataQuery(item.model, settings.type);
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
@@ -243,6 +246,7 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
       refId: item.refId,
       hide: false,
       datasource: getDataSourceRef(settings),
+      instant: isInstant,
     },
   };
 }

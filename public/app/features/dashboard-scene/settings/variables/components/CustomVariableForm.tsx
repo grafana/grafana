@@ -12,12 +12,14 @@ interface CustomVariableFormProps {
   multi: boolean;
   allValue?: string | null;
   includeAll: boolean;
+  allowCustomValue?: boolean;
   onQueryChange: (event: FormEvent<HTMLTextAreaElement>) => void;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
   onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
   onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function CustomVariableForm({
@@ -25,10 +27,12 @@ export function CustomVariableForm({
   multi,
   allValue,
   includeAll,
+  allowCustomValue,
   onQueryChange,
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
+  onAllowCustomValueChange,
 }: CustomVariableFormProps) {
   return (
     <>
@@ -48,9 +52,11 @@ export function CustomVariableForm({
         multi={multi}
         includeAll={includeAll}
         allValue={allValue}
+        allowCustomValue={allowCustomValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
   );

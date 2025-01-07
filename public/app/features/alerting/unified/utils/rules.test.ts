@@ -7,6 +7,7 @@ import {
   mockCombinedRule,
   mockCombinedRuleGroup,
   mockGrafanaRulerRule,
+  mockPromAlertingRule,
   mockRuleWithLocation,
   mockRulerAlertingRule,
 } from '../mocks';
@@ -20,21 +21,21 @@ import {
 
 describe('getRuleOrigin', () => {
   it('returns undefined when no origin label is present', () => {
-    const rule = mockCombinedRule({
+    const rule = mockPromAlertingRule({
       labels: {},
     });
     expect(getRulePluginOrigin(rule)).toBeUndefined();
   });
 
   it('returns undefined when origin label does not match expected format', () => {
-    const rule = mockCombinedRule({
+    const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'invalid_format' },
     });
     expect(getRulePluginOrigin(rule)).toBeUndefined();
   });
 
   it('returns undefined when plugin is not installed', () => {
-    const rule = mockCombinedRule({
+    const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/uninstalled_plugin' },
     });
     expect(getRulePluginOrigin(rule)).toBeUndefined();
@@ -64,7 +65,7 @@ describe('getRuleOrigin', () => {
         },
       },
     };
-    const rule = mockCombinedRule({
+    const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/installed_plugin' },
     });
     expect(getRulePluginOrigin(rule)).toEqual({ pluginId: 'installed_plugin' });

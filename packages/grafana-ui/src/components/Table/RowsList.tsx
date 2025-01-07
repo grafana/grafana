@@ -13,6 +13,7 @@ import {
   FieldType,
   TimeRange,
   hasTimeField,
+  InterpolateFunction,
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
@@ -55,6 +56,7 @@ interface RowsListProps {
   longestField?: Field;
   textWrapField?: Field;
   getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -82,6 +84,7 @@ export const RowsList = (props: RowsListProps) => {
     longestField,
     textWrapField,
     getActions,
+    replaceVariables,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -121,11 +124,15 @@ export const RowsList = (props: RowsListProps) => {
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
-      if (!panelContext || !enableSharedCrosshair || !hasTimeField(frame)) {
+      if (!panelContext || !enableSharedCrosshair) {
         return;
       }
 
       const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      if (!timeField) {
+        return;
+      }
 
       panelContext.eventBus.publish(
         new DataHoverEvent({
@@ -283,6 +290,7 @@ export const RowsList = (props: RowsListProps) => {
         const { bgColor, textColor } = rowBg(row.index);
         style.background = bgColor;
         style.color = textColor;
+        style.borderLeft = `2px solid ${bgColor}`;
       }
 
       // If there's a text wrapping field we set the height of it here
@@ -307,7 +315,7 @@ export const RowsList = (props: RowsListProps) => {
           key={key}
           {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => onRowHover(index, data)}
+          onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
@@ -337,6 +345,7 @@ export const RowsList = (props: RowsListProps) => {
               textWrapped={textWrapFinal !== undefined}
               height={Number(style.height)}
               getActions={getActions}
+              replaceVariables={replaceVariables}
             />
           ))}
         </div>
@@ -364,6 +373,7 @@ export const RowsList = (props: RowsListProps) => {
       onCellFilterAdded,
       timeRange,
       getActions,
+      replaceVariables,
     ]
   );
 

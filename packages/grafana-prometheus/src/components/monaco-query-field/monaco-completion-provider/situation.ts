@@ -15,6 +15,7 @@ import {
   MatrixSelector,
   Neq,
   NeqRegex,
+  NumberDurationLiteralInDurationContext,
   parser,
   PromQL,
   StringLiteral,
@@ -190,7 +191,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelMatcher,
   },
   {
-    path: [ERROR_NODE_NAME, MatrixSelector],
+    path: [ERROR_NODE_NAME, NumberDurationLiteralInDurationContext, MatrixSelector],
     fun: resolveDurations,
   },
   {
@@ -460,10 +461,10 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   /**
-   PromQL
-   Expr
-   VectorSelector
-   LabelMatchers
+     PromQL
+     Expr
+     VectorSelector
+     LabelMatchers
    */
   const tree = parser.parse(text);
 

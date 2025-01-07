@@ -37,10 +37,9 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
+                  id={`advanced-switch-${stepNo}`}
                   data-testid={
-                    switchMode.isAdvancedMode
-                      ? 'query-and-expressions-advanced-options'
-                      : 'query-and-expressions-simple-options'
+                    switchMode.isAdvancedMode ? `advanced-switch-${stepNo}-advanced` : `advanced-switch-${stepNo}-basic`
                   }
                   value={switchMode.isAdvancedMode}
                   onChange={(event) => {

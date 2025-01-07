@@ -278,6 +278,7 @@ type AlertRuleMetadata struct {
 
 type EditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -435,13 +436,13 @@ func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
 	panelID := alertRule.Annotations[PanelIDAnnotation]
 	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
-		return fmt.Errorf("both annotations %s and %s must be specified",
+		return fmt.Errorf("%w: both annotations %s and %s must be specified", ErrAlertRuleFailedValidation,
 			DashboardUIDAnnotation, PanelIDAnnotation)
 	}
 	if dashUID != "" {
 		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
 		if err != nil {
-			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+			return fmt.Errorf("%w: annotation %s must be a valid integer Panel ID", ErrAlertRuleFailedValidation,
 				PanelIDAnnotation)
 		}
 		alertRule.DashboardUID = &dashUID

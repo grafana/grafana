@@ -1,9 +1,9 @@
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -14,6 +14,7 @@ import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
+  mockDataSources,
   setupVanillaAlertmanagerServer,
 } from './__mocks__/server';
 
@@ -37,8 +38,6 @@ const ui = {
   resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   cancelButton: byRole('button', { name: /Cancel/ }),
-  configInput: byTestId(selectors.components.CodeEditor.container),
-  readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Alerting Settings', () => {
@@ -78,6 +77,7 @@ describe('vanilla Alertmanager', () => {
 
   beforeEach(() => {
     setupVanillaAlertmanagerServer(server);
+    setupDataSources(...Object.values(mockDataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
