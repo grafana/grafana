@@ -1552,7 +1552,6 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 
 func (dr *DashboardServiceImpl) getUser(ctx context.Context, userMeta string) (*user.User, error) {
 	if userMeta == "" || toUID(userMeta) == "" {
-		// TODO: will there always be a creator?  ( should we error when creator is missing? )
 		return &user.User{}, nil
 	}
 	uid := toUID(userMeta)
