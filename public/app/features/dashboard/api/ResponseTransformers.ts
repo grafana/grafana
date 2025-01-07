@@ -22,6 +22,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
@@ -226,6 +227,11 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
+    // FIXME: for now we should skip row panels
+    if (p.type === 'row') {
+      continue;
+    }
+
     const queries = getPanelQueries(
       (p.targets as unknown as DataQuery[]) || [],
       p.datasource || getDefaultDatasource()
@@ -293,14 +299,29 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 function getDefaultDatasourceType() {
   const datasources = config.datasources;
   // find default datasource in datasources
-  return Object.values(datasources).find((ds) => ds.isDefault)!.type;
+  const dsList = Object.values(datasources);
+  let dsType = dsList.find((ds) => ds.isDefault)?.type;
+  if (!dsType) {
+    const dsRefFromBoot = getDefaultDataSourceRef();
+    dsType = dsRefFromBoot?.type ?? 'grafana'; // TODO: is there any other type of datasource type?
+  }
+
+  return dsType;
 }
 
 function getDefaultDatasource(): DataSourceRef {
   const datasources = config.datasources;
 
-  // find default datasource in datasources
-  const defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  // find default datasource in datasources from config using the isDefault flag
+  let defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+
+  if (!defaultDs) {
+    // we also can get default datasource from config.bootData.settings.defaultDatasource;
+    const dsRefFromBoot = getDefaultDataSourceRef();
+    if (dsRefFromBoot) {
+      defaultDs = Object.values(datasources).find((ds) => ds.name === dsRefFromBoot.uid)!;
+    }
+  }
   return {
     apiVersion: defaultDs.apiVersion,
     type: defaultDs.type,
@@ -407,7 +428,8 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         variables.push(dv);
         break;
       default:
-        throw new Error(`Variable transformation not implemented: ${v.type}`);
+        // do not throw error, just log it
+        console.error(`Variable transformation not implemented: ${v.type}`);
     }
   }
   return variables;
