@@ -1,7 +1,6 @@
-import { Observable, Subscriber, map, switchMap, of } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+import { Observable, Subscriber, map, switchMap, from } from 'rxjs';
 
-import { config, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import {
@@ -39,74 +38,41 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public watch(name?: string): Observable<ResourceEvent<T, S, K>> {
-    if (true) {
-      const url = name ? `${this.url}/${name}` : this.url;
-      console.log( "WATCH", url);
-
-      return fromFetch(url + '?watch=true', {
-        // selector: response => {
-        //   response.
-        //   console.log("PAGE", response);
-        //   return response.json().then(v => {
-        //     console.log("JJJSON", v);
-        //     return v
-        //   })
-        // }
-      }).pipe( switchMap(v => {
-        console.log( "GOT", v);
-
-        if (v.body) {
-          return fromReadableStream(v.body).pipe(map(b => {
-            const buff = new TextDecoder().decode(b);
-            const parts = buff.split('\n'); // NOT RIGHT... need streaming parser???
-
-            for(let x of parts ) {
-              console.log(">", x)
-            }
-
-            const out = JSON.parse(parts[0]);
-            return out;
-          }))
-        }
-
-      //  v.body?.getReader()
-
-
-        return of({
-          type: 'ADDED',
-          object: {
-            apiVersion: 'XXX',
-          }
-        } as any)
-      }))
-    }
-
-
     return getBackendSrv()
-      .fetch({
+      .fetch<ReadableStream<Uint8Array>>({
         url: name ? `${this.url}/${name}` : this.url,
         params: {
           watch: true,
+          // resource version??
         },
+        responseType: 'stream',
       })
       .pipe(
-        map((result: FetchResponse<any>) => {
-          console.log('GOT', result);
-          return {
-            type: 'ADDED',
-            object: {
-              apiVersion: 'xxx',
-            } as any,
-          };
-        })
-        // catchError((err) => {
-        //   if (err.cancelled) {
-        //     return of(err);
-        //   }
+        switchMap((result) => {
+          console.log('result', result);
+          return fromReadableStream(result.data).pipe(
+            switchMap((b) => {
+              const buff = new TextDecoder().decode(b);
+              const parts = buff.split('\n'); // NOT RIGHT... need streaming parser???
 
-        //   return of();
-        // })
-      );
+              const events: any[] = [];
+              for (let p of parts) {
+                if (p.startsWith('{') && p.endsWith('}')) {
+                  events.push(JSON.parse(p));
+                } else {
+                  console.log('SKIP', p);
+                }
+              }
+
+              console.log('READ', parts.length, { buff, events });
+              return from(events);
+            })
+          );
+        })
+      ).pipe(map(v => {
+        console.log("SENT", v.object.metadata.name, v.object.metadata.resourceVersion, v);
+        return v
+      }));
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
@@ -214,25 +180,18 @@ export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | Li
     .join(',');
 };
 
-
-
 /**
  * Creates an Observable source from a ReadableStream source that will emit any
  * values emitted by the stream.
- * 
+ *
  * https://github.com/rxjs-ninja/rxjs-ninja/blob/main/libs/rxjs/utility/src/lib/from-readable-stream.ts
  */
 function fromReadableStream<T extends unknown>(
   stream: ReadableStream<T>,
   signal?: AbortSignal,
   queueStrategy?: QueuingStrategy,
-  throwEndAsError = false,
+  throwEndAsError = false
 ): Observable<T> {
-  /**
-   * @private
-   * @internal
-   * @param subscriber
-   */
   function createStream(subscriber: Subscriber<T>) {
     return new WritableStream<T>(
       {
@@ -240,19 +199,17 @@ function fromReadableStream<T extends unknown>(
         abort: (error) => {
           if (throwEndAsError) {
             subscriber.error(error);
-            /* istanbul ignore next-line */
           } else if (!subscriber.closed) {
             subscriber.complete();
           }
         },
         close: () => {
-          /* istanbul ignore next-line */
           if (!subscriber.closed) {
             subscriber.complete();
           }
         },
       },
-      queueStrategy,
+      queueStrategy
     );
   }
 
@@ -260,7 +217,6 @@ function fromReadableStream<T extends unknown>(
     stream
       .pipeTo(createStream(subscriber), { signal })
       .then(() => {
-        /* istanbul ignore next-line */
         return !subscriber.closed && subscriber.complete();
       })
       .catch((error) => subscriber.error(error));

@@ -26,16 +26,23 @@ import { RepositoryStatus } from './api/types';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
-const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
-  group: 'provisioning.grafana.app',
-  version: 'v0alpha1',
-  resource: 'repositories',
-});
 
 export default function RepositoryListPage() {
-  const obs = useMemo(() => client.watch(), [])
-  const xxx = useObservable(obs)
-  console.log( 'event', {xxx})
+  const obs = useMemo(() => {
+    const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
+      group: 'provisioning.grafana.app',
+      version: 'v0alpha1',
+      resource: 'repositories',
+    });
+    return client.watch();
+  }, []);
+  const xxx = useObservable(obs);
+  console.log('event', {
+    type: xxx?.type,
+    name: xxx?.object.metadata.name,
+    resourceVersion: xxx?.object.metadata.resourceVersion,
+    obj: xxx,
+  });
 
   const [items, isLoading] = useRepositoryList();
   return (

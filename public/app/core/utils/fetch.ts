@@ -114,7 +114,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
 
 export async function parseResponseBody<T>(
   response: Response,
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'stream'
 ): Promise<T> {
   if (responseType) {
     switch (responseType) {
@@ -135,8 +135,10 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
-
         return await response.json();
+
+      case 'stream':
+        return Promise.resolve(response.body) as Promise<T>
 
       case 'text':
         // this specifically returns a Promise<string>
