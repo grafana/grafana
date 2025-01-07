@@ -1,4 +1,4 @@
-FROM debian:testing-20210111-slim
+FROM debian:testing-20241223-slim
 
 # Use ARG so as not to persist environment variable in image
 ARG GOVERSION=1.17.8 \
@@ -19,7 +19,7 @@ RUN cd $GOPATH/src/github.com/aptly-dev/aptly && \
     git reset --hard a64807efdaf5e380bfa878c71bc88eae10d62be1 && \
     make install
 
-FROM debian:testing-20210111-slim
+FROM debian:testing-20241223-slim
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive \
