@@ -153,6 +153,9 @@ ReduceDataOptions: {
 	calcs: [...string]
 	// Which fields to show.  By default this is only numeric fields
 	fields?: string
+	// what sort order, if any, to give to the final display of the values
+	sort?: SortWithReducer
+  	
 } @cuetsy(kind="interface")
 
 // TODO docs

@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, LegendDisplayMode, SortWithReducer } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -86,7 +86,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const legendItems: VizLegendItem[] = displayValues
     // Since the pie chart is always sorted, let's sort the legend as well.
     .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
+      if (props.options.reduceOptions.sort !== SortWithReducer.None || isNaN(a.display.numeric)) {
         return 1;
       } else if (isNaN(b.display.numeric)) {
         return -1;
