@@ -232,3 +232,5 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e/test-plugins/*/dist
+pkg/build/cmd/enterprise.go
+pkg/server/wireexts_enterprise.go
