@@ -36,7 +36,6 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
   protected _variableDependency: VariableDependencyConfig<PanelTimeRangeState> = new VariableDependencyConfig(this, {
     statePaths: ['timeFrom', 'timeShift'],
-    onAnyVariableChanged: () => {},
   });
 
   private _onActivate() {
