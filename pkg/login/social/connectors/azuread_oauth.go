@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/google/uuid"
@@ -36,6 +38,14 @@ var (
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
+
+// List of supported audiences in Azure
+var supportedFederatedCredentialAudiences = []string{
+	"api://AzureADTokenExchange",      // Public
+	"api://AzureADTokenExchangeUSGov", // US Gov
+	"api://AzureADTokenExchangeChina", // Mooncake
+	"api://AzureADTokenExchangeUSNat", // USNat
+	"api://AzureADTokenExchangeUSSec"} // USSec
 
 var _ social.SocialConnector = (*SocialAzureAD)(nil)
 var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
@@ -168,6 +178,64 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	return userInfo, nil
 }
 
+func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	switch s.info.ClientAuthentication {
+	case social.ManagedIdentity:
+		// Generate client assertion
+		clientAssertion, err := s.managedIdentityCallback(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set client assertion parameters
+		authOptions = append(authOptions,
+			oauth2.SetAuthURLParam("client_assertion", clientAssertion),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+
+	case social.ClientSecretPost:
+		// Default behavior for ClientSecretPost, no additional setup needed
+
+	default:
+		return nil, fmt.Errorf("invalid client authentication method: %s", s.info.ClientAuthentication)
+	}
+
+	// Default token exchange
+	return s.Config.Exchange(ctx, code, authOptions...)
+}
+
+// ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
+func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
+	// Validate required fields for Managed Identity authentication
+	if s.info.ManagedIdentityClientID == "" {
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
+	}
+	if s.info.FederatedCredentialAudience == "" {
+		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity authentication")
+	}
+
+	// Prepare Managed Identity Credential
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(s.info.ManagedIdentityClientID),
+	})
+	if err != nil {
+		return "", fmt.Errorf("error constructing managed identity credential: %w", err)
+	}
+
+	// Request token and return
+	tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", s.info.FederatedCredentialAudience)},
+	})
+	if err != nil {
+		return "", fmt.Errorf("error getting managed identity token: %w", err)
+	}
+
+	return tk.Token, nil
+}
+
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
@@ -206,6 +274,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 	}
 
 	return validation.Validate(info, requester,
+		validateClientAuthentication,
+		validateFederatedCredentialAudience,
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
@@ -279,6 +349,40 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
 
 	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
+}
+
+func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.ClientAuthentication != social.ManagedIdentity {
+		return nil
+	}
+	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
+		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
+			return nil
+		}
+	}
+	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
+}
+
+func validateClientAuthentication(info *social.OAuthInfo, requester identity.Requester) error {
+	switch info.ClientAuthentication {
+	case social.ManagedIdentity:
+		if info.ManagedIdentityClientID == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC managed identity client Id is required for Managed identity authentication.")
+		}
+		if info.FederatedCredentialAudience == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.ClientSecretPost:
+		if info.ClientSecret == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
+		}
+		return nil
+
+	default:
+		return ssosettings.ErrInvalidOAuthConfig("Invalid client authentication method.")
+	}
 }
 
 func (claims *azureClaims) extractEmail() string {
