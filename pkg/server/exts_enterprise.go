@@ -1,7 +1,7 @@
 //go:build enterprise || pro
 // +build enterprise pro
 
-package extensions
+package server
 
 // HACK: this is a hack to keep the go modules in sync with the enterprise dependencies as it cannot be used as a module
 // itself.
