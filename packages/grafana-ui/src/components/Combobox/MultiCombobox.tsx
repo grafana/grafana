@@ -20,6 +20,7 @@ import {
   itemToString,
   VIRTUAL_OVERSCAN_ITEMS,
 } from './Combobox';
+import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
@@ -255,6 +256,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   );
                 })}
               </ul>
+              <div aria-live="polite">{items.length === 0 && <NotFoundError />}</div>
             </ScrollContainer>
           )}
         </div>
