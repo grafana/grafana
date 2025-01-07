@@ -43,7 +43,6 @@ func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
 func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
 	if info, ok := getTypeInfo(r.GetGroup(), r.GetResource()); ok {
 		return newResource(info.Type, r.GetGroup(), r.GetResource(), "", "", r.GetSubresource(), info.Relations)
-
 	}
 	return newResource(TypeResource, r.GetGroup(), r.GetResource(), "", "", r.GetSubresource(), RelationsResource)
 }
