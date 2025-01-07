@@ -10,7 +10,7 @@ import { TracesSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin(TracesPanel)
   .setPanelOptions((builder, context) => {
     const category = ['Span filters'];
-    const trace = transformDataFrames(context.data[0]);
+    const trace = transformDataFrames(context?.data?.[0]);
 
     // Find
     builder
@@ -41,6 +41,7 @@ export const plugin = new PanelPlugin(TracesPanel)
         settings: {
           options: trace ? getTraceServiceNames(trace).map(toOption) : [],
           allowCustomValue: true,
+          isClearable: true,
         },
       })
       .addRadio({
@@ -65,6 +66,7 @@ export const plugin = new PanelPlugin(TracesPanel)
         settings: {
           options: trace ? getTraceSpanNames(trace).map(toOption) : [],
           allowCustomValue: true,
+          isClearable: true,
         },
       })
       .addRadio({
@@ -96,7 +98,7 @@ export const plugin = new PanelPlugin(TracesPanel)
     builder.addCustomEditor({
       id: 'tags',
       name: 'Tags',
-      path: 'spanFilters.tags',
+      path: 'spanFilters',
       category,
       editor: TagsEditor,
       defaultValue: undefined,

@@ -16,26 +16,17 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
-import {
-  Collapse,
-  HorizontalGroup,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Select,
-  Tooltip,
-  useStyles2,
-  Input,
-} from '@grafana/ui';
+import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
-import { getTraceServiceNames, getTraceSpanNames, getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
+import { defaultFilters, SearchProps } from '../../../useSearch';
+import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
 import { Trace } from '../../types';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
+
+import { SpanFiltersTags } from './Tags';
 
 export type SpanFilterProps = {
   trace: Trace;
@@ -62,9 +53,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const styles = { ...useStyles2(getStyles) };
   const [serviceNames, setServiceNames] = useState<Array<SelectableValue<string>>>();
   const [spanNames, setSpanNames] = useState<Array<SelectableValue<string>>>();
+  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
-  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
 
   const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 
@@ -114,65 +105,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     if (!spanNames) {
       setSpanNames(getTraceSpanNames(trace).map(toOption));
     }
-  };
-
-  const getTagKeys = () => {
-    if (!tagKeys) {
-      setTagKeys(getTraceTagKeys(trace).map(toOption));
-    }
-  };
-
-  const getTagValues = (key: string) => {
-    return getTraceTagValues(trace, key).map(toOption);
-  };
-
-  const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
-    setSearch({
-      ...search,
-      tags: search.tags?.map((x) => {
-        return x.id === tag.id ? { ...x, key: v?.value || '', value: undefined } : x;
-      }),
-    });
-
-    const loadTagValues = async () => {
-      if (v?.value) {
-        setTagValues({
-          ...tagValues,
-          [tag.id]: getTagValues(v.value),
-        });
-      } else {
-        // removed value
-        const updatedValues = { ...tagValues };
-        if (updatedValues[tag.id]) {
-          delete updatedValues[tag.id];
-        }
-        setTagValues(updatedValues);
-      }
-    };
-    loadTagValues();
-  };
-
-  const addTag = () => {
-    const tag = {
-      id: randomId(),
-      operator: '=',
-    };
-    setSearch({ ...search, tags: [...search.tags, tag] });
-  };
-
-  const removeTag = (id: string) => {
-    let tags = search.tags.filter((tag) => {
-      return tag.id !== id;
-    });
-    if (tags.length === 0) {
-      tags = [
-        {
-          id: randomId(),
-          operator: '=',
-        },
-      ];
-    }
-    setSearch({ ...search, tags: tags });
   };
 
   const collapseLabel = (
@@ -302,93 +234,15 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow className={styles.tagsRow}>
           <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log fields in your spans.">
-            <div>
-              {search.tags.map((tag, i) => (
-                <div key={i}>
-                  <HorizontalGroup spacing={'xs'} width={'auto'}>
-                    <Select
-                      aria-label="Select tag key"
-                      isClearable
-                      key={tag.key}
-                      onChange={(v) => onTagChange(tag, v)}
-                      onOpenMenu={getTagKeys}
-                      options={tagKeys || (tag.key ? [tag.key].map(toOption) : [])}
-                      placeholder="Select tag"
-                      value={tag.key || null}
-                    />
-                    <Select
-                      aria-label="Select tag operator"
-                      onChange={(v) => {
-                        setSpanFiltersSearch({
-                          ...search,
-                          tags: search.tags?.map((x) => {
-                            return x.id === tag.id ? { ...x, operator: v.value! } : x;
-                          }),
-                        });
-                      }}
-                      options={[toOption('='), toOption('!='), toOption('=~'), toOption('!~')]}
-                      value={tag.operator}
-                    />
-                    <span className={styles.tagValues}>
-                      {(tag.operator === '=' || tag.operator === '!=') && (
-                        <Select
-                          aria-label="Select tag value"
-                          isClearable
-                          key={tag.value}
-                          onChange={(v) => {
-                            setSpanFiltersSearch({
-                              ...search,
-                              tags: search.tags?.map((x) => {
-                                return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
-                              }),
-                            });
-                          }}
-                          options={tagValues[tag.id] ? tagValues[tag.id] : tag.value ? [tag.value].map(toOption) : []}
-                          placeholder="Select value"
-                          value={tag.value}
-                        />
-                      )}
-                      {(tag.operator === '=~' || tag.operator === '!~') && (
-                        <Input
-                          aria-label="Input tag value"
-                          onChange={(v) => {
-                            setSpanFiltersSearch({
-                              ...search,
-                              tags: search.tags?.map((x) => {
-                                return x.id === tag.id ? { ...x, value: v?.currentTarget?.value || '' } : x;
-                              }),
-                            });
-                          }}
-                          placeholder="Tag value"
-                          width={18}
-                          value={tag.value || ''}
-                        />
-                      )}
-                    </span>
-                    {(tag.key || tag.value || search.tags.length > 1) && (
-                      <AccessoryButton
-                        aria-label="Remove tag"
-                        variant="secondary"
-                        icon="times"
-                        onClick={() => removeTag(tag.id)}
-                        tooltip="Remove tag"
-                      />
-                    )}
-                    {(tag.key || tag.value) && i === search.tags.length - 1 && (
-                      <span className={styles.addTag}>
-                        <AccessoryButton
-                          aria-label="Add tag"
-                          variant="secondary"
-                          icon="plus"
-                          onClick={addTag}
-                          tooltip="Add tag"
-                        />
-                      </span>
-                    )}
-                  </HorizontalGroup>
-                </div>
-              ))}
-            </div>
+            <SpanFiltersTags
+              search={search}
+              setSearch={setSpanFiltersSearch}
+              trace={trace}
+              tagKeys={tagKeys}
+              setTagKeys={setTagKeys}
+              tagValues={tagValues}
+              setTagValues={setTagValues}
+            />
           </InlineField>
         </InlineFieldRow>
 
@@ -433,17 +287,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'space-between',
   }),
-  addTag: css({
-    marginLeft: theme.spacing(1),
-  }),
   intervalInput: css({
     margin: '0 -4px 0 0',
   }),
   tagsRow: css({
     margin: '-4px 0 0 0',
-  }),
-  tagValues: css({
-    maxWidth: '200px',
   }),
   nextPrevResult: css({
     flex: 1,
