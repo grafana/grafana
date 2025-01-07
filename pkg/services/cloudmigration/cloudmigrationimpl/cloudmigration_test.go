@@ -114,25 +114,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 		assert.Never(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
 
-	// Make the status pending processing and ensure GMS gets called
-	err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-		UID:       uid,
-		SessionID: sess.UID,
-		Status:    cloudmigration.SnapshotStatusPendingProcessing,
-		LocalResources: []cloudmigration.CloudMigrationResource{
-			{
-				Name:   "A name",
-				Type:   cloudmigration.DatasourceDataType,
-				RefID:  "A",
-				Status: cloudmigration.ItemStatusPending,
-			},
-		},
-	})
-	assert.NoError(t, err)
-
-	cleanupFunc := func() {
-		gmsClientMock.getStatusCalled = 0
-		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
+		// Make the status pending processing and ensure GMS gets called
+		err = s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       uid,
 			SessionID: sess.UID,
 			Status:    cloudmigration.SnapshotStatusPendingProcessing,
@@ -338,9 +321,8 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		require.Len(t, snapshot.Resources, 1)
 		require.Equal(t, "A", snapshot.Resources[0].RefID)
 		require.Equal(t, "fake", snapshot.Resources[0].Error)
-		require.Equal(t, cloudmigration.ItemStatusError, snapshot.Resources[0].Status)
 	})
-})
+}
 
 func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)

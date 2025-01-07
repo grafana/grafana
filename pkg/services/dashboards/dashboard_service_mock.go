@@ -121,7 +121,7 @@ func (_m *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId
 }
 
 // DeleteAllDashboards provides a mock function with given fields: ctx, orgID
-func (_m *FakeDashboardService) DeleteAllDashboards(ctx context.Context,  orgID int64) error {
+func (_m *FakeDashboardService) DeleteAllDashboards(ctx context.Context, orgID int64) error {
 	ret := _m.Called(ctx, orgID)
 
 	if len(ret) == 0 {
