@@ -48,13 +48,13 @@ We provide release documentation in multiple places to address different needs:
 
 Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for the first half of 2025:
 
-| **Anticipated release date** | **Grafana versions** | **Release type**   |
-| ---------------------------- | -------------------- | ------------------ |
-| Jan. 28, 2025                | 11.5 & Supported versions | Minor & patching |
-| Feb. 18, 2025                | Supported versions   | Patching           |
-| March 25, 2025               | 11.6 & Supported versions   | Minor & patching|
-| April 15, 2025               | Supported versions   | Patching |
-| May 2025                     | Grafana 12.0 & Supported versions | Major & patching           |
+| **Anticipated release date** | **Grafana versions**              | **Release type** |
+| ---------------------------- | --------------------------------- | ---------------- |
+| Jan. 28, 2025                | 11.5 & Supported versions         | Minor & patching |
+| Feb. 18, 2025                | Supported versions                | Patching         |
+| March 25, 2025               | 11.6 & Supported versions         | Minor & patching |
+| April 15, 2025               | Supported versions                | Patching         |
+| May 2025                     | Grafana 12.0 & Supported versions | Major & patching |
 
 ### A few important notes
 
