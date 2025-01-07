@@ -16,6 +16,7 @@ import (
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
+	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	// GetDashboard fetches a dashboard.
 	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
@@ -60,6 +61,7 @@ type DashboardProvisioningService interface {
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
+	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
