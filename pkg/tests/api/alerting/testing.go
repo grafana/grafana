@@ -337,6 +337,19 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 	a.ReloadCachedPermissions(t)
 }
 
+func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/admin/provisioning/alerting/reload", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", nil)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func (a apiClient) GetOrgQuotaLimits(t *testing.T, orgID int64) (int64, int64) {
 	t.Helper()
 
