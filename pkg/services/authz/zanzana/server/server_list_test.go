@@ -82,7 +82,7 @@ func testList(t *testing.T, server *Server) {
 		assert.True(t, res.GetAll())
 	})
 
-	t.Run("user:8 should be able to list resoruce:dashboard.grafana.app/dashboar in folder 6 and folder 5", func(t *testing.T) {
+	t.Run("user:8 should be able to list resoruce:dashboard.grafana.app/dashboard in folder 6 and folder 5", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:8", dashboardGroup, dashboardResource, ""))
 		require.NoError(t, err)
 		assert.Len(t, res.GetFolders(), 2)
