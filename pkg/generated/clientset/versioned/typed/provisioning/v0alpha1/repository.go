@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	applyconfigurationprovisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	scheme "github.com/grafana/grafana/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -24,36 +24,37 @@ type RepositoriesGetter interface {
 
 // RepositoryInterface has methods to work with Repository resources.
 type RepositoryInterface interface {
-	Create(ctx context.Context, repository *v0alpha1.Repository, opts v1.CreateOptions) (*v0alpha1.Repository, error)
-	Update(ctx context.Context, repository *v0alpha1.Repository, opts v1.UpdateOptions) (*v0alpha1.Repository, error)
+	Create(ctx context.Context, repository *provisioningv0alpha1.Repository, opts v1.CreateOptions) (*provisioningv0alpha1.Repository, error)
+	Update(ctx context.Context, repository *provisioningv0alpha1.Repository, opts v1.UpdateOptions) (*provisioningv0alpha1.Repository, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, repository *v0alpha1.Repository, opts v1.UpdateOptions) (*v0alpha1.Repository, error)
+	UpdateStatus(ctx context.Context, repository *provisioningv0alpha1.Repository, opts v1.UpdateOptions) (*provisioningv0alpha1.Repository, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v0alpha1.Repository, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v0alpha1.RepositoryList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*provisioningv0alpha1.Repository, error)
+	List(ctx context.Context, opts v1.ListOptions) (*provisioningv0alpha1.RepositoryList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.Repository, err error)
-	Apply(ctx context.Context, repository *provisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.Repository, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *provisioningv0alpha1.Repository, err error)
+	Apply(ctx context.Context, repository *applyconfigurationprovisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *provisioningv0alpha1.Repository, err error)
 	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-	ApplyStatus(ctx context.Context, repository *provisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.Repository, err error)
+	ApplyStatus(ctx context.Context, repository *applyconfigurationprovisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *provisioningv0alpha1.Repository, err error)
 	RepositoryExpansion
 }
 
 // repositories implements RepositoryInterface
 type repositories struct {
-	*gentype.ClientWithListAndApply[*v0alpha1.Repository, *v0alpha1.RepositoryList, *provisioningv0alpha1.RepositoryApplyConfiguration]
+	*gentype.ClientWithListAndApply[*provisioningv0alpha1.Repository, *provisioningv0alpha1.RepositoryList, *applyconfigurationprovisioningv0alpha1.RepositoryApplyConfiguration]
 }
 
 // newRepositories returns a Repositories
 func newRepositories(c *ProvisioningV0alpha1Client, namespace string) *repositories {
 	return &repositories{
-		gentype.NewClientWithListAndApply[*v0alpha1.Repository, *v0alpha1.RepositoryList, *provisioningv0alpha1.RepositoryApplyConfiguration](
+		gentype.NewClientWithListAndApply[*provisioningv0alpha1.Repository, *provisioningv0alpha1.RepositoryList, *applyconfigurationprovisioningv0alpha1.RepositoryApplyConfiguration](
 			"repositories",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v0alpha1.Repository { return &v0alpha1.Repository{} },
-			func() *v0alpha1.RepositoryList { return &v0alpha1.RepositoryList{} }),
+			func() *provisioningv0alpha1.Repository { return &provisioningv0alpha1.Repository{} },
+			func() *provisioningv0alpha1.RepositoryList { return &provisioningv0alpha1.RepositoryList{} },
+		),
 	}
 }

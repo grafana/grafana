@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	provisioningv0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // RepositoryLister helps list Repositories.
@@ -16,7 +16,7 @@ import (
 type RepositoryLister interface {
 	// List lists all Repositories in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v0alpha1.Repository, err error)
+	List(selector labels.Selector) (ret []*provisioningv0alpha1.Repository, err error)
 	// Repositories returns an object that can list and get Repositories.
 	Repositories(namespace string) RepositoryNamespaceLister
 	RepositoryListerExpansion
@@ -24,17 +24,17 @@ type RepositoryLister interface {
 
 // repositoryLister implements the RepositoryLister interface.
 type repositoryLister struct {
-	listers.ResourceIndexer[*v0alpha1.Repository]
+	listers.ResourceIndexer[*provisioningv0alpha1.Repository]
 }
 
 // NewRepositoryLister returns a new RepositoryLister.
 func NewRepositoryLister(indexer cache.Indexer) RepositoryLister {
-	return &repositoryLister{listers.New[*v0alpha1.Repository](indexer, v0alpha1.Resource("repository"))}
+	return &repositoryLister{listers.New[*provisioningv0alpha1.Repository](indexer, provisioningv0alpha1.Resource("repository"))}
 }
 
 // Repositories returns an object that can list and get Repositories.
 func (s *repositoryLister) Repositories(namespace string) RepositoryNamespaceLister {
-	return repositoryNamespaceLister{listers.NewNamespaced[*v0alpha1.Repository](s.ResourceIndexer, namespace)}
+	return repositoryNamespaceLister{listers.NewNamespaced[*provisioningv0alpha1.Repository](s.ResourceIndexer, namespace)}
 }
 
 // RepositoryNamespaceLister helps list and get Repositories.
@@ -42,15 +42,15 @@ func (s *repositoryLister) Repositories(namespace string) RepositoryNamespaceLis
 type RepositoryNamespaceLister interface {
 	// List lists all Repositories in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v0alpha1.Repository, err error)
+	List(selector labels.Selector) (ret []*provisioningv0alpha1.Repository, err error)
 	// Get retrieves the Repository from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v0alpha1.Repository, error)
+	Get(name string) (*provisioningv0alpha1.Repository, error)
 	RepositoryNamespaceListerExpansion
 }
 
 // repositoryNamespaceLister implements the RepositoryNamespaceLister
 // interface.
 type repositoryNamespaceLister struct {
-	listers.ResourceIndexer[*v0alpha1.Repository]
+	listers.ResourceIndexer[*provisioningv0alpha1.Repository]
 }

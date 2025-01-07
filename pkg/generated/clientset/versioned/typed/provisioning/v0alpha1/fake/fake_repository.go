@@ -5,179 +5,33 @@
 package fake
 
 import (
-	"context"
-	json "encoding/json"
-	"fmt"
-
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/provisioning/v0alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	typedprovisioningv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeRepositories implements RepositoryInterface
-type FakeRepositories struct {
+// fakeRepositories implements RepositoryInterface
+type fakeRepositories struct {
+	*gentype.FakeClientWithListAndApply[*v0alpha1.Repository, *v0alpha1.RepositoryList, *provisioningv0alpha1.RepositoryApplyConfiguration]
 	Fake *FakeProvisioningV0alpha1
-	ns   string
 }
 
-var repositoriesResource = v0alpha1.SchemeGroupVersion.WithResource("repositories")
-
-var repositoriesKind = v0alpha1.SchemeGroupVersion.WithKind("Repository")
-
-// Get takes name of the repository, and returns the corresponding repository object, and an error if there is any.
-func (c *FakeRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *v0alpha1.Repository, err error) {
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(repositoriesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeRepositories(fake *FakeProvisioningV0alpha1, namespace string) typedprovisioningv0alpha1.RepositoryInterface {
+	return &fakeRepositories{
+		gentype.NewFakeClientWithListAndApply[*v0alpha1.Repository, *v0alpha1.RepositoryList, *provisioningv0alpha1.RepositoryApplyConfiguration](
+			fake.Fake,
+			namespace,
+			v0alpha1.SchemeGroupVersion.WithResource("repositories"),
+			v0alpha1.SchemeGroupVersion.WithKind("Repository"),
+			func() *v0alpha1.Repository { return &v0alpha1.Repository{} },
+			func() *v0alpha1.RepositoryList { return &v0alpha1.RepositoryList{} },
+			func(dst, src *v0alpha1.RepositoryList) { dst.ListMeta = src.ListMeta },
+			func(list *v0alpha1.RepositoryList) []*v0alpha1.Repository { return gentype.ToPointerSlice(list.Items) },
+			func(list *v0alpha1.RepositoryList, items []*v0alpha1.Repository) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// List takes label and field selectors, and returns the list of Repositories that match those selectors.
-func (c *FakeRepositories) List(ctx context.Context, opts v1.ListOptions) (result *v0alpha1.RepositoryList, err error) {
-	emptyResult := &v0alpha1.RepositoryList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(repositoriesResource, repositoriesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v0alpha1.RepositoryList{ListMeta: obj.(*v0alpha1.RepositoryList).ListMeta}
-	for _, item := range obj.(*v0alpha1.RepositoryList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested repositories.
-func (c *FakeRepositories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(repositoriesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a repository and creates it.  Returns the server's representation of the repository, and an error, if there is any.
-func (c *FakeRepositories) Create(ctx context.Context, repository *v0alpha1.Repository, opts v1.CreateOptions) (result *v0alpha1.Repository, err error) {
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(repositoriesResource, c.ns, repository, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// Update takes the representation of a repository and updates it. Returns the server's representation of the repository, and an error, if there is any.
-func (c *FakeRepositories) Update(ctx context.Context, repository *v0alpha1.Repository, opts v1.UpdateOptions) (result *v0alpha1.Repository, err error) {
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(repositoriesResource, c.ns, repository, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeRepositories) UpdateStatus(ctx context.Context, repository *v0alpha1.Repository, opts v1.UpdateOptions) (result *v0alpha1.Repository, err error) {
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceActionWithOptions(repositoriesResource, "status", c.ns, repository, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// Delete takes name of the repository and deletes it. Returns an error if one occurs.
-func (c *FakeRepositories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(repositoriesResource, c.ns, name, opts), &v0alpha1.Repository{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeRepositories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(repositoriesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v0alpha1.RepositoryList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched repository.
-func (c *FakeRepositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.Repository, err error) {
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(repositoriesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied repository.
-func (c *FakeRepositories) Apply(ctx context.Context, repository *provisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.Repository, err error) {
-	if repository == nil {
-		return nil, fmt.Errorf("repository provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(repository)
-	if err != nil {
-		return nil, err
-	}
-	name := repository.Name
-	if name == nil {
-		return nil, fmt.Errorf("repository.Name must be provided to Apply")
-	}
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(repositoriesResource, c.ns, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakeRepositories) ApplyStatus(ctx context.Context, repository *provisioningv0alpha1.RepositoryApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.Repository, err error) {
-	if repository == nil {
-		return nil, fmt.Errorf("repository provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(repository)
-	if err != nil {
-		return nil, err
-	}
-	name := repository.Name
-	if name == nil {
-		return nil, fmt.Errorf("repository.Name must be provided to Apply")
-	}
-	emptyResult := &v0alpha1.Repository{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(repositoriesResource, c.ns, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v0alpha1.Repository), err
 }
