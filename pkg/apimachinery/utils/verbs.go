@@ -19,4 +19,8 @@ const (
 	VerbDelete = "delete"
 	// VerbDelete is mapped from HTTP DELETE for collections
 	VerbDeleteCollection = "deletecollection"
+	// TODO: write description
+	VerbGetPermissions = "get_permissions"
+	// TODO: write description
+	VerbUpdatePermissions = "update_permissions"
 )
