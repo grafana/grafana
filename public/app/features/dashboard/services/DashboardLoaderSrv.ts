@@ -338,8 +338,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     const promise = getDashboardSnapshotSrv()
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r))
-      .catch(() => {
-        return this._dashboardLoadFailed('Snapshot not found', true);
+      .catch((e) => {
+        throw new Error('Failed to load snapshot: ' + e.message);
       });
 
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
