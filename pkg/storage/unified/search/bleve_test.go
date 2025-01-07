@@ -77,6 +77,9 @@ func TestBleveBackend(t *testing.T) {
 					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY: 25,
 				},
+				Labels: map[string]string{
+					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
+				},
 				Tags: []string{"aa", "bb"},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -97,7 +100,8 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Tags: []string{"aa"},
 				Labels: map[string]string{
-					"region": "east",
+					"region":                           "east",
+					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -176,6 +180,24 @@ func TestBleveBackend(t *testing.T) {
 
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
+
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+				Labels: []*resource.Requirement{{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: "in",
+					Values:   []string{"10", "11"},
+				}},
+			},
+			Limit: 100000,
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rsp.TotalHits)
+		require.Equal(t, []string{"aaa", "bbb"}, []string{
+			rsp.Results.Rows[0].Key.Name,
+			rsp.Results.Rows[1].Key.Name,
+		})
 	})
 
 	t.Run("build folders", func(t *testing.T) {

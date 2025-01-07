@@ -213,15 +213,57 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		assert.Equal(t, len(queryResult), 2)
 	})
 
-	t.Run("Should be able to delete dashboard", func(t *testing.T) {
+	t.Run("Should be able to delete dashboard and associated tags", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
 
-		err := dashboardStore.DeleteDashboard(context.Background(), &dashboards.DeleteDashboardCommand{
+		tags, err := dashboardStore.GetDashboardTags(context.Background(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		terms := make([]string, len(tags))
+		for i, tag := range tags {
+			terms[i] = tag.Term
+		}
+		require.Contains(t, terms, "delete this")
+
+		err = dashboardStore.DeleteDashboard(context.Background(), &dashboards.DeleteDashboardCommand{
 			ID:    dash.ID,
 			OrgID: 1,
 		})
 		require.NoError(t, err)
+
+		tags, err = dashboardStore.GetDashboardTags(context.Background(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		terms = make([]string, len(tags))
+		for i, tag := range tags {
+			terms[i] = tag.Term
+		}
+		require.NotContains(t, terms, "delete this")
+	})
+
+	t.Run("Should be able to delete all dashboards for an org", func(t *testing.T) {
+		setup()
+		dash1 := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
+		dash2 := insertTestDashboard(t, dashboardStore, "delete me2", 1, 0, "", false, "delete this2")
+		dash3 := insertTestDashboard(t, dashboardStore, "dont delete me", 2, 0, "", false, "dont delete me")
+
+		err := dashboardStore.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+
+		// no dashboards should exist for org 1
+		queryResult, err := dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
+			OrgID:         1,
+			DashboardUIDs: []string{dash1.UID, dash2.UID},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, len(queryResult), 0)
+
+		// but we should still have one for org 2
+		queryResult, err = dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
+			OrgID:         2,
+			DashboardUIDs: []string{dash3.UID},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, len(queryResult), 1)
 	})
 
 	t.Run("Should be able to create dashboard", func(t *testing.T) {

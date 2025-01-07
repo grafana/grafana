@@ -631,7 +631,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
-.betterer.results.json @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
@@ -746,6 +745,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
+/.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad

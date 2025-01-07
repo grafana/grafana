@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,18 +11,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"golang.org/x/exp/slices"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8sUser "k8s.io/apiserver/pkg/authentication/user"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 
-	"golang.org/x/exp/slices"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -46,8 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
-	k8sUser "k8s.io/apiserver/pkg/authentication/user"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 var (
@@ -510,6 +509,15 @@ func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID i
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
 	return dr.deleteDashboard(ctx, dashboardId, dashboardUID, orgId, true)
+}
+
+// DeleteAllDashboards will delete all dashboards within a given org.
+func (dr *DashboardServiceImpl) DeleteAllDashboards(ctx context.Context, orgId int64) error {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		return dr.deleteAllDashboardThroughK8s(ctx, orgId)
+	}
+
+	return dr.dashboardStore.DeleteAllDashboards(ctx, orgId)
 }
 
 func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
@@ -1179,6 +1187,29 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	return finalDash, nil
 }
 
+func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
+	// create a new context - prevents issues when the request stems from the k8s api itself
+	// otherwise the context goes through the handlers twice and causes issues
+	newCtx, cancel, err := dr.getK8sContext(ctx)
+	if err != nil {
+		return err
+	} else if cancel != nil {
+		defer cancel()
+	}
+
+	client, ok := dr.k8sclient.getClient(newCtx, orgID)
+	if !ok {
+		return fmt.Errorf("could not get k8s client")
+	}
+
+	err = client.DeleteCollection(newCtx, v1.DeleteOptions{}, v1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
@@ -1329,7 +1360,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		return nil, err
 	}
 
-	return ParseResults(res, 0), nil
+	return ParseResults(res, 0)
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
@@ -1351,9 +1382,34 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	return result, nil
 }
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alpha1.SearchResults {
+func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alpha1.SearchResults, error) {
 	if result == nil {
-		return nil
+		return nil, nil
+	} else if result.Error != nil {
+		return nil, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+	} else if result.Results == nil {
+		return nil, nil
+	}
+
+	titleIDX := 0
+	folderIDX := 1
+	tagsIDX := -1
+	scoreIDX := 0
+	explainIDX := 0
+
+	for i, v := range result.Results.Columns {
+		switch v.Name {
+		case resource.SEARCH_FIELD_EXPLAIN:
+			explainIDX = i
+		case resource.SEARCH_FIELD_SCORE:
+			scoreIDX = i
+		case "title":
+			titleIDX = i
+		case "folder":
+			folderIDX = i
+		case "tags":
+			tagsIDX = i
+		}
 	}
 
 	sr := &v0alpha1.SearchResults{
@@ -1364,28 +1420,21 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alph
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
-	titleRow := 0
-	folderRow := 1
-	tagsRow := -1
-	for i, row := range result.Results.GetColumns() {
-		if row.Name == "title" {
-			titleRow = i
-		} else if row.Name == "folder" {
-			folderRow = i
-		} else if row.Name == "tags" {
-			tagsRow = i
-		}
-	}
-
 	for i, row := range result.Results.Rows {
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[titleRow]),
-			Folder:   string(row.Cells[folderRow]),
+			Title:    string(row.Cells[titleIDX]),
+			Folder:   string(row.Cells[folderIDX]),
 		}
-		if tagsRow != -1 && row.Cells[tagsRow] != nil {
-			_ = json.Unmarshal(row.Cells[tagsRow], &hit.Tags)
+		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
+			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
+		}
+		if explainIDX > 0 && row.Cells[explainIDX] != nil {
+			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
+		}
+		if scoreIDX > 0 && row.Cells[scoreIDX] != nil {
+			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
 		}
 
 		sr.Hits[i] = *hit
@@ -1410,7 +1459,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) *v0alph
 		}
 	}
 
-	return sr
+	return sr, nil
 }
 
 func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashboards.Dashboard, error) {

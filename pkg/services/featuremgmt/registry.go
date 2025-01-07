@@ -1093,8 +1093,9 @@ var (
 		{
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default,
 		},
 		{
 			Name:           "tlsMemcached",
@@ -1486,12 +1487,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "improvedExternalSessionHandling",
-			Description:       "Enable improved support for external sessions in Grafana",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:        "improvedExternalSessionHandling",
+			Description: "Enable improved support for OAuth and SAML external sessions in Grafana",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
@@ -1633,9 +1632,9 @@ var (
 		{
 			Name:        "reportingUseRawTimeRange",
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Expression:  "false", // disabled by default
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingUIOptimizeReducer",
