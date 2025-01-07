@@ -1,4 +1,7 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { Observable, Subscriber, map, switchMap, of } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+
+import { config, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import {
@@ -13,6 +16,7 @@ import {
   ObjectMeta,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
+  ResourceEvent,
 } from './types';
 
 export interface GroupVersionResource {
@@ -32,6 +36,77 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
   public async get(name: string): Promise<Resource<T, S, K>> {
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
+  }
+
+  public watch(name?: string): Observable<ResourceEvent<T, S, K>> {
+    if (true) {
+      const url = name ? `${this.url}/${name}` : this.url;
+      console.log( "WATCH", url);
+
+      return fromFetch(url + '?watch=true', {
+        // selector: response => {
+        //   response.
+        //   console.log("PAGE", response);
+        //   return response.json().then(v => {
+        //     console.log("JJJSON", v);
+        //     return v
+        //   })
+        // }
+      }).pipe( switchMap(v => {
+        console.log( "GOT", v);
+
+        if (v.body) {
+          return fromReadableStream(v.body).pipe(map(b => {
+            const buff = new TextDecoder().decode(b);
+            const parts = buff.split('\n'); // NOT RIGHT... need streaming parser???
+
+            for(let x of parts ) {
+              console.log(">", x)
+            }
+
+            const out = JSON.parse(parts[0]);
+            return out;
+          }))
+        }
+
+      //  v.body?.getReader()
+
+
+        return of({
+          type: 'ADDED',
+          object: {
+            apiVersion: 'XXX',
+          }
+        } as any)
+      }))
+    }
+
+
+    return getBackendSrv()
+      .fetch({
+        url: name ? `${this.url}/${name}` : this.url,
+        params: {
+          watch: true,
+        },
+      })
+      .pipe(
+        map((result: FetchResponse<any>) => {
+          console.log('GOT', result);
+          return {
+            type: 'ADDED',
+            object: {
+              apiVersion: 'xxx',
+            } as any,
+          };
+        })
+        // catchError((err) => {
+        //   if (err.cancelled) {
+        //     return of(err);
+        //   }
+
+        //   return of();
+        // })
+      );
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
@@ -138,3 +213,58 @@ export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | Li
     .filter(Boolean)
     .join(',');
 };
+
+
+
+/**
+ * Creates an Observable source from a ReadableStream source that will emit any
+ * values emitted by the stream.
+ * 
+ * https://github.com/rxjs-ninja/rxjs-ninja/blob/main/libs/rxjs/utility/src/lib/from-readable-stream.ts
+ */
+function fromReadableStream<T extends unknown>(
+  stream: ReadableStream<T>,
+  signal?: AbortSignal,
+  queueStrategy?: QueuingStrategy,
+  throwEndAsError = false,
+): Observable<T> {
+  /**
+   * @private
+   * @internal
+   * @param subscriber
+   */
+  function createStream(subscriber: Subscriber<T>) {
+    return new WritableStream<T>(
+      {
+        write: (value) => subscriber.next(value),
+        abort: (error) => {
+          if (throwEndAsError) {
+            subscriber.error(error);
+            /* istanbul ignore next-line */
+          } else if (!subscriber.closed) {
+            subscriber.complete();
+          }
+        },
+        close: () => {
+          /* istanbul ignore next-line */
+          if (!subscriber.closed) {
+            subscriber.complete();
+          }
+        },
+      },
+      queueStrategy,
+    );
+  }
+
+  return new Observable<T>((subscriber) => {
+    stream
+      .pipeTo(createStream(subscriber), { signal })
+      .then(() => {
+        /* istanbul ignore next-line */
+        return !subscriber.closed && subscriber.complete();
+      })
+      .catch((error) => subscriber.error(error));
+
+    return () => !stream.locked && stream.cancel();
+  });
+}

@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
+import { useObservable } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
 import {
@@ -16,13 +17,26 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { ScopedResourceClient } from '../apiserver/client';
+
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository, useGetRepositoryStatusQuery } from './api';
+import { Repository, RepositorySpec } from './api';
+import { RepositoryStatus } from './api/types';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
+const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
+  group: 'provisioning.grafana.app',
+  version: 'v0alpha1',
+  resource: 'repositories',
+});
+
 export default function RepositoryListPage() {
+  const obs = useMemo(() => client.watch(), [])
+  const xxx = useObservable(obs)
+  console.log( 'event', {xxx})
+
   const [items, isLoading] = useRepositoryList();
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
@@ -106,7 +120,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} {name && <StatusBadge name={name} />}
+                    {item.spec?.title} <StatusBadge repo={item} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>{item.spec?.description}</Card.Description>
@@ -136,10 +150,8 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   );
 }
 
-function StatusBadge({ name }: { name: string }) {
-  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
-
-  const state = statusQuery.data?.status?.sync?.state;
+function StatusBadge({ repo }: { repo: Repository }) {
+  const state = repo.status?.sync?.state;
 
   if (!state) {
     return null;
