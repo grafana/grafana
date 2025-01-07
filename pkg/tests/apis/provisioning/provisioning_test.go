@@ -13,10 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
@@ -47,18 +45,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
 	})
-	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
-		client := github.NewMockClient(ttc)
-		client.On("IsAuthenticated", mock.Anything).Maybe().Return(nil)
-		client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
-		client.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-		client.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-		client.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
-		client.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
-		// Don't need DeleteWebhook or EditWebhook, because they require that ListWebhooks returns a slice with elements.
-		return client
-	}
 
 	// Scope create+get
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -98,7 +84,41 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 	})
 
+	cleanSlate := func(t *testing.T) {
+		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+			client := github.NewMockClient(ttc)
+			client.On("IsAuthenticated", mock.Anything).Maybe().Return(nil)
+			client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
+			client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
+			client.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			client.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			client.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
+			client.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
+			client.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+			return client
+		}
+
+		deleteAll := func(client *apis.K8sResourceClient) error {
+			list, err := client.Resource.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return err
+			}
+			for _, resource := range list.Items {
+				if err := client.Resource.Delete(ctx, resource.GetName(), metav1.DeleteOptions{}); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+
+		require.NoError(t, deleteAll(dashboardClient), "deleting all dashboards")
+		require.NoError(t, deleteAll(folderClient), "deleting all folders")
+		require.NoError(t, deleteAll(client), "deleting all repositories")
+	}
+
 	t.Run("Check discovery client", func(t *testing.T) {
+		cleanSlate(t)
+
 		disco := helper.NewDiscoveryClient()
 		resources, err := disco.ServerResourcesForGroupVersion("provisioning.grafana.app/v0alpha1")
 		require.NoError(t, err)
@@ -217,6 +237,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("Check basic create and get", func(t *testing.T) {
+		cleanSlate(t)
+
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 
 		// Load the samples
@@ -318,13 +340,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
+		cleanSlate(t)
 
-		_, err = client.Resource.Update(ctx,
+		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			metav1.UpdateOptions{},
 		)
@@ -337,14 +355,38 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}, time.Second*2, time.Millisecond*20)
 	})
 
-	t.Run("safe path usages", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+	t.Run("creating GitHub repository syncs from branch selected", func(t *testing.T) {
+		cleanSlate(t)
+
+		var githubClient *github.MockClient
+		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+			githubClient = github.NewMockClient(ttc)
+			// Setup for the repo.
+			githubClient.On("IsAuthenticated", mock.Anything).Return(nil)
+
+			githubClient.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
+			githubClient.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
+			githubClient.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			githubClient.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			githubClient.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
+			githubClient.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
+			githubClient.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+			return githubClient
 		}
 
-		_, err = client.Resource.Update(ctx,
+		_, err := client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+
+		time.Sleep(time.Second * 5) // just to give the controller time to run
+	})
+
+	t.Run("safe path usages", func(t *testing.T) {
+		cleanSlate(t)
+
+		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
 			metav1.UpdateOptions{},
 		)
@@ -377,21 +419,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("import all-panels from local-repository", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
+		cleanSlate(t)
 
 		const repo = "local-tmp"
-		err = client.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
-
 		// Create the repository.
 		repoPath := path.Join(provisioningPath, repo, randomAsciiStr(10))
-		err = os.MkdirAll(repoPath, 0700)
+		err := os.MkdirAll(repoPath, 0700)
 		require.NoError(t, err, "should be able to create repo path")
 		localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.yaml")
 		require.NoError(t, unstructured.SetNestedField(localTmp.Object, repoPath, "spec", "local", "path"))
@@ -466,17 +499,4 @@ func randomAsciiStr(n int) string {
 		b.WriteByte(char)
 	}
 	return b.String()
-}
-
-func objectToUnstructured(t *testing.T, obj runtime.Object) *unstructured.Unstructured {
-	t.Helper()
-
-	encoded, err := json.Marshal(obj)
-	require.NoError(t, err)
-
-	out := new(unstructured.Unstructured)
-	_, _, err = unstructured.UnstructuredJSONScheme.Decode(encoded, nil, out)
-	require.NoError(t, err)
-
-	return out
 }
