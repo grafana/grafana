@@ -97,10 +97,6 @@ jobs:
           types_file: ${{ github.workspace }}/.github/auto-triager/types.txt
           prompt_file: ${{ github.workspace }}/.github/auto-triager/prompt.txt
 
-      - name: Labels from auto triage
-        run: |
-          echo ${{ steps.auto_triage.outputs.triage_labels }}
-
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
         uses: slackapi/slack-github-action@v1.27.0
