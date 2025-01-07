@@ -32,9 +32,9 @@ describe('findRoutesByMatchers', () => {
     ];
 
     const matchers: ObjectMatcher[] = [
+      ['foo', MatcherOperator.equal, 'bar baz'],
       ['foo', MatcherOperator.equal, '"bar baz"'],
-      ['foo', MatcherOperator.equal, 'bar baz'],
-      ['foo', MatcherOperator.equal, 'bar baz'],
+      ['"foo"', MatcherOperator.equal, 'bar baz'],
       ['"foo"', MatcherOperator.equal, '"bar baz"'],
     ];
 
