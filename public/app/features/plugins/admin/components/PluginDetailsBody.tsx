@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, PluginType, UrlQueryMap } from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
@@ -197,3 +197,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+function shouldDisableInstallation(plugin: CatalogPlugin) {
+  if (
+    plugin.type === PluginType.renderer ||
+    plugin.type === PluginType.secretsmanager ||
+    plugin.isEnterprise && !featureEnabled('enterprise.plugins') ||
+    plugin.isDev ||
+    !plugin.isPublished
+  ) {
+    return true;
+  }
+
+  return false;
+}
