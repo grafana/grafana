@@ -25,53 +25,35 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   const latestVersion = plugin.latestVersion;
 
   if (installedVersion || latestVersion) {
-    if (plugin.isManaged && plugin.isInstalled) {
-      info.push({
-        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
-        value: 'Managed by Grafana',
-      });
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: 'Managed by Grafana',
-      });
-    } else if (plugin.isInstalled && !plugin.isManaged) {
-      info.push({
-        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
-        value: installedVersion,
-      });
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: latestVersion,
-      });
-    } else if (plugin.isInstalled && !plugin.isManaged) {
-      info.push({
-        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
-        value: installedVersion,
-      });
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: latestVersion,
-      });
-    } else if (plugin.isInstalled && !plugin.isManaged) {
-      info.push({
-        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
-        value: installedVersion,
-      });
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: latestVersion,
-      });
-    } else if (plugin.isManaged) {
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: 'Managed by Grafana',
-      });
-    } else {
-      info.push({
-        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
-        value: `${latestVersion}${plugin.isPreinstalled.withVersion ? ' (preinstalled)' : ''}`,
-      });
+    const managedVersionText = 'Managed by Grafana';
+
+    const addInfo = (label: string, value: string | undefined) => {
+      if (value) {
+        info.push({
+          label:
+            label === 'installedVersion'
+              ? t('plugins.details.labels.installedVersion', 'Installed Version')
+              : t('plugins.details.labels.latestVersion', 'Latest Version'),
+          value,
+        });
+      }
+    };
+
+    if (plugin.isInstalled) {
+      const installedVersionValue = plugin.isManaged ? managedVersionText : installedVersion;
+      addInfo('installedVersion', installedVersionValue);
     }
+
+    let latestVersionValue;
+    if (plugin.isManaged) {
+      latestVersionValue = managedVersionText;
+    } else if (plugin.isPreinstalled?.withVersion) {
+      latestVersionValue = `${latestVersion} (preinstalled)`;
+    } else {
+      latestVersionValue = latestVersion;
+    }
+
+    addInfo('latestVersion', latestVersionValue);
   }
 
   if (Boolean(plugin.orgName)) {
