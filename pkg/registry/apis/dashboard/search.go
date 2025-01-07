@@ -223,6 +223,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			"title",
 			"folder",
@@ -309,7 +310,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.write(w, dashboardsvc.ParseResults(result, searchRequest.Offset))
+	parsedResults, err := dashboardsvc.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	s.write(w, parsedResults)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
