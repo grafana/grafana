@@ -19,9 +19,10 @@ import { Stack, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { MetricsLogsConnector } from '../Integrations/logs/base';
+import { createLabelsCrossReferenceConnector } from '../Integrations/logs/labelsCrossReference';
 import { lokiRecordingRulesConnector } from '../Integrations/logs/lokiRecordingRules';
 import { reportExploreMetrics } from '../interactions';
-import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
+import { VAR_FILTERS, VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
 
@@ -48,7 +49,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
           }),
         ],
       }),
-      connectors: [lokiRecordingRulesConnector],
+      connectors: [],
       ...state,
     });
 
@@ -56,6 +57,13 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   }
 
   private onActivate() {
+    this.setState({
+      connectors: [lokiRecordingRulesConnector, createLabelsCrossReferenceConnector(this)],
+    });
+    this.setLogsDataSourceVar();
+  }
+
+  private setLogsDataSourceVar() {
     const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
     Promise.all(this.state.connectors.map((connector) => connector.getDataSources(selectedMetric))).then((results) => {
       const lokiDataSources = results.flat();
@@ -94,30 +102,48 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     });
   }
 
+  private updateLokiQuery() {
+    const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
+    const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
+    // Merge the loki query expressions from all connectors
+    const lokiQuery = this.state.connectors
+      .reduce<string[]>((acc, connector) => {
+        const lokiExpr = connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid);
+
+        if (lokiExpr) {
+          acc.push(`(${lokiExpr})`);
+        }
+
+        return acc;
+      }, [])
+      .join(' and ');
+
+    if (lokiQuery) {
+      const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
+      relatedLogsQuery.setState({
+        queries: [
+          {
+            refId: 'A',
+            expr: lokiQuery,
+            maxLines: 100,
+          },
+        ],
+      });
+    }
+  }
+
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_LOGS_DATASOURCE],
+    variableNames: [VAR_LOGS_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
       const { name } = variable.state;
 
       if (name === VAR_LOGS_DATASOURCE) {
-        const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-        const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-        const lokiQuery = this.state.connectors
-          .map((connector) => `(${connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid)})`)
-          .join(' and ');
+        this.updateLokiQuery();
+      }
 
-        if (lokiQuery) {
-          const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
-          relatedLogsQuery.setState({
-            queries: [
-              {
-                refId: 'A',
-                expr: lokiQuery,
-                maxLines: 100,
-              },
-            ],
-          });
-        }
+      if (name === VAR_FILTERS) {
+        this.setLogsDataSourceVar();
+        this.updateLokiQuery();
       }
     },
   });
