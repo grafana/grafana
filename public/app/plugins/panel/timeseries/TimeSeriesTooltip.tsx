@@ -1,6 +1,14 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  InterpolateFunction,
+  LinkModel,
+  OneClickMode,
+} from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -50,7 +58,7 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
   maxHeight,
-  replaceVariables,
+  replaceVariables = (str) => str,
   dataLinks,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
@@ -77,24 +85,23 @@ export const TimeSeriesTooltip = ({
 
   let footer: ReactNode;
 
-  // TODO:
-  let field = null;
   if (seriesIdx != null) {
-    field = series.fields[seriesIdx];
-  }
+    const field = series.fields[seriesIdx];
+    const oneClickMode = field.config.oneClickMode ?? OneClickMode.Off;
 
-  if ((isPinned || field) && seriesIdx != null) {
-    const dataIdx = dataIdxs[seriesIdx!]!;
-    const actions = getFieldActions(series, field!, replaceVariables!, dataIdx);
+    if (isPinned || oneClickMode) {
+      const dataIdx = dataIdxs[seriesIdx]!;
+      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
-    footer = (
-      <VizTooltipFooter
-        dataLinks={dataLinks}
-        actions={actions}
-        annotate={annotate}
-        oneClickMode={field!.config.oneClickMode}
-      />
-    );
+      footer = (
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          oneClickMode={field.config.oneClickMode}
+        />
+      );
+    }
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
