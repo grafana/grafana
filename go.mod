@@ -129,7 +129,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
 	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
-	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
+	github.com/microsoft/go-mssqldb v1.8.0 // @grafana/grafana-bi-squad
 	github.com/mitchellh/mapstructure v1.5.0 //@grafana/identity-access-team
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-backend
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
