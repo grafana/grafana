@@ -15,11 +15,14 @@ export enum TextMode {
 }
 
 export enum CodeLanguage {
+  Css = 'css',
   Go = 'go',
   Html = 'html',
   Json = 'json',
+  Less = 'less',
   Markdown = 'markdown',
   Plaintext = 'plaintext',
+  Sass = 'sass',
   Sql = 'sql',
   Typescript = 'typescript',
   Xml = 'xml',

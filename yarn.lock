@@ -1688,7 +1688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lang-css@npm:^6.0.0":
+"@codemirror/lang-css@npm:^6.0.0, @codemirror/lang-css@npm:^6.2.0, @codemirror/lang-css@npm:^6.3.1":
   version: 6.3.1
   resolution: "@codemirror/lang-css@npm:6.3.1"
   dependencies:
@@ -1756,6 +1756,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-less@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@codemirror/lang-less@npm:6.0.2"
+  dependencies:
+    "@codemirror/lang-css": "npm:^6.2.0"
+    "@codemirror/language": "npm:^6.0.0"
+    "@lezer/common": "npm:^1.2.0"
+    "@lezer/highlight": "npm:^1.0.0"
+    "@lezer/lr": "npm:^1.0.0"
+  checksum: 10/233aa03e0bfb57e4f23fdb2a8d52ad3143a52553895b97cb2901f66d59fc40246b525a21b7be72d873efa98783f6da5f4e8e042da442b092fab9eb63c69524c8
+  languageName: node
+  linkType: hard
+
 "@codemirror/lang-markdown@npm:^6.3.1":
   version: 6.3.1
   resolution: "@codemirror/lang-markdown@npm:6.3.1"
@@ -1768,6 +1781,19 @@ __metadata:
     "@lezer/common": "npm:^1.2.1"
     "@lezer/markdown": "npm:^1.0.0"
   checksum: 10/e13de98d651b2f95521aa742c4da9d6a0b9160968dcd618776ad7a088ba7cfb927f935aa1c0d76fc8cc313d3a811e215322978714d59a4de3e33e06fa6fa2067
+  languageName: node
+  linkType: hard
+
+"@codemirror/lang-sass@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@codemirror/lang-sass@npm:6.0.2"
+  dependencies:
+    "@codemirror/lang-css": "npm:^6.2.0"
+    "@codemirror/language": "npm:^6.0.0"
+    "@codemirror/state": "npm:^6.0.0"
+    "@lezer/common": "npm:^1.0.2"
+    "@lezer/sass": "npm:^1.0.0"
+  checksum: 10/de5c72f62714960961b616c8fe25b4f127906b0c05ec2e8e633d0b896fb2da979732cad0f51b1c0bc058494db5447664234b7910a3345fb5080d8222d4011818
   languageName: node
   linkType: hard
 
@@ -5061,6 +5087,17 @@ __metadata:
     "@lezer/common": "npm:^1.0.0"
     "@lezer/highlight": "npm:^1.0.0"
   checksum: 10/f234f3d9eb2217a89828a7299b0e1b00c3d3ee3f4ab6251735895ad065080a7f59711a4a116a022f2b03ca0a2a72e7e2709f211e0729b5a800753dec9b3ae2d8
+  languageName: node
+  linkType: hard
+
+"@lezer/sass@npm:^1.0.0":
+  version: 1.0.7
+  resolution: "@lezer/sass@npm:1.0.7"
+  dependencies:
+    "@lezer/common": "npm:^1.2.0"
+    "@lezer/highlight": "npm:^1.0.0"
+    "@lezer/lr": "npm:^1.0.0"
+  checksum: 10/a7531cbf0766d3875480c24ae8929dd56053d71f9eaef8815e6f468e2252e66e38236a3f89395463e4cee43230dc35351386bedc6138cf1a19a44a64ce58a372
   languageName: node
   linkType: hard
 
@@ -17924,11 +17961,14 @@ __metadata:
     "@bsull/augurs": "npm:^0.7.0"
     "@codemirror/autocomplete": "npm:^6.18.4"
     "@codemirror/commands": "npm:^6.7.1"
+    "@codemirror/lang-css": "npm:^6.3.1"
     "@codemirror/lang-go": "npm:^6.0.1"
     "@codemirror/lang-html": "npm:^6.4.9"
     "@codemirror/lang-javascript": "npm:^6.2.2"
     "@codemirror/lang-json": "npm:^6.0.1"
+    "@codemirror/lang-less": "npm:^6.0.2"
     "@codemirror/lang-markdown": "npm:^6.3.1"
+    "@codemirror/lang-sass": "npm:^6.0.2"
     "@codemirror/lang-sql": "npm:^6.8.0"
     "@codemirror/lang-xml": "npm:^6.1.0"
     "@codemirror/lang-yaml": "npm:^6.1.2"

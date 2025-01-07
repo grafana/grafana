@@ -1,10 +1,13 @@
 import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { css } from '@codemirror/lang-css';
 import { go } from '@codemirror/lang-go';
 import { html } from '@codemirror/lang-html';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
+import { less } from '@codemirror/lang-less';
 import { markdown } from '@codemirror/lang-markdown';
+import { sass } from '@codemirror/lang-sass';
 import { sql } from '@codemirror/lang-sql';
 import { xml } from '@codemirror/lang-xml';
 import { yaml } from '@codemirror/lang-yaml';
@@ -78,7 +81,13 @@ export const CodeEditor2 = ({
                     ? xml()
                     : language === CodeLanguage.Html
                       ? html()
-                      : null;
+                      : language === CodeLanguage.Css
+                        ? css()
+                        : language === CodeLanguage.Sass
+                          ? sass()
+                          : language === CodeLanguage.Less
+                            ? less()
+                            : null;
 
     const extensions: Extension[] = [
       highlightActiveLineGutter(),
