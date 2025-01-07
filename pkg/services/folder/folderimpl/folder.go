@@ -735,7 +735,6 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
 	var f *folder.Folder
-
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
 			return toFolderError(err)
