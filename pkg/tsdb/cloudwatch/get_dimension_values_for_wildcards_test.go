@@ -196,5 +196,4 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 			assert.Equal(t, map[string][]string{}, queries[0].Dimensions)
 		})
 	})
-
 }
