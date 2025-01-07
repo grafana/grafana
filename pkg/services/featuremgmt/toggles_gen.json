@@ -1799,15 +1799,16 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1726560214520",
-        "creationTimestamp": "2024-09-17T10:54:39Z"
+        "resourceVersion": "1736255708514",
+        "creationTimestamp": "2024-09-17T10:54:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-07 13:15:08.514525 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable improved support for external sessions in Grafana",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "description": "Enable improved support for OAuth and SAML external sessions in Grafana",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {

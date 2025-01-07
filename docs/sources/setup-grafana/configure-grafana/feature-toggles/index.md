@@ -118,6 +118,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsSAML`                 | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `azureMonitorPrometheusExemplars` | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
+| `improvedExternalSessionHandling` | Enable improved support for OAuth and SAML external sessions in Grafana                                                                                                                      |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
 
 ## Experimental feature toggles
