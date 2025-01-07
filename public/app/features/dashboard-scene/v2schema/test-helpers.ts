@@ -13,10 +13,10 @@ import {
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>
