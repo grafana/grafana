@@ -679,11 +679,11 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  hideZeros?: boolean;
   maxHeight?: number;
   maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
-  hideZeros?: boolean;
 }
 
 export interface Labels {}
