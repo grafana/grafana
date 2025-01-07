@@ -24,6 +24,8 @@ const (
 
 	folderGroup    = "folder.grafana.app"
 	folderResource = "folders"
+
+	statusSubresource = "status"
 )
 
 func TestMain(m *testing.M) {
@@ -76,20 +78,24 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 		AuthorizationModelId: storeInf.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
-				common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "1"),
-				common.NewResourceTuple("user:1", common.RelationUpdate, dashboardGroup, dashboardResource, "1"),
-				common.NewGroupResourceTuple("user:2", common.RelationGet, dashboardGroup, dashboardResource),
-				common.NewGroupResourceTuple("user:2", common.RelationUpdate, dashboardGroup, dashboardResource),
-				common.NewResourceTuple("user:3", common.RelationSetView, dashboardGroup, dashboardResource, "1"),
-				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "1"),
-				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "3"),
-				common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "1"),
+				common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
+				common.NewResourceTuple("user:1", common.RelationUpdate, dashboardGroup, dashboardResource, "", "1"),
+				common.NewGroupResourceTuple("user:2", common.RelationGet, dashboardGroup, dashboardResource, ""),
+				common.NewGroupResourceTuple("user:2", common.RelationUpdate, dashboardGroup, dashboardResource, ""),
+				common.NewResourceTuple("user:3", common.RelationSetView, dashboardGroup, dashboardResource, "", "1"),
+				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
+				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "", "3"),
+				common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "1"),
 				common.NewFolderTuple("user:6", common.RelationGet, "1"),
-				common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource),
+				common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource, ""),
 				common.NewFolderParentTuple("5", "4"),
 				common.NewFolderParentTuple("6", "5"),
-				common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "5"),
-				common.NewFolderResourceTuple("user:9", "create", dashboardGroup, dashboardResource, "5"),
+				common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
+				common.NewFolderResourceTuple("user:9", common.RelationCreate, dashboardGroup, dashboardResource, "", "5"),
+				common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "10"),
+				common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "11"),
+				common.NewGroupResourceTuple("user:11", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource),
+				common.NewFolderResourceTuple("user:12", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "5"),
 			},
 		},
 	})
