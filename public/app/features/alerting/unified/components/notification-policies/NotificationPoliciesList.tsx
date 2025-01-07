@@ -11,18 +11,16 @@ import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/
 import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/utils/k8s/errors';
 import { isErrorMatchingCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
-import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { useGetContactPointsState } from './../../api/receiversApi';
-import { isLoading as isPending, useAsync } from './../../hooks/useAsync';
 import { useRouteGroupsMatcher } from './../../useRouteGroupsMatcher';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
-  cleanRouteIDs,
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from './../../utils/routeTree';
@@ -62,7 +60,9 @@ export const NotificationPoliciesList = () => {
   // TODO in the future: Generalise the component to support any number of "root" policies
   const [defaultPolicy] = currentData ?? [];
 
-  const updateNotificationPolicyRoute = useUpdateNotificationPolicyRoute(selectedAlertmanager ?? '');
+  const [updateNotificationPolicyRoute, updateNotificationPolicyRouteState] = useUpdateNotificationPolicyRoute({
+    alertmanager: selectedAlertmanager ?? '',
+  });
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
@@ -112,27 +112,46 @@ export const NotificationPoliciesList = () => {
 
   const refetchPolicies = () => {
     refetchNotificationPolicyRoute();
-    updateRouteTree.reset();
+    updateNotificationPolicyRoute.reset();
   };
 
-  function handleSave(partialRoute: Partial<FormAmRoute>) {
+  async function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
       return;
     }
 
     const newRouteTree = mergePartialAmRouteWithRouteTree(selectedAlertmanager ?? '', partialRoute, rootRoute);
-    updateRouteTree.execute(newRouteTree);
+    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
+    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
   }
 
-  function handleDelete(route: RouteWithID) {
+  function handleActionResult({ error, selectedAlertmanager }: { error?: Error; selectedAlertmanager?: string }) {
+    if (!error) {
+      appNotification.success('Updated notification policies');
+    }
+    if (selectedAlertmanager) {
+      refetchAlertGroups();
+    }
+    // close all modals
+    closeEditModal();
+    closeAddModal();
+    closeDeleteModal();
+  }
+
+  async function handleDelete(route: RouteWithID) {
     if (!rootRoute) {
       return;
     }
     const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
-    updateRouteTree.execute(newRouteTree);
+    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
+    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
   }
 
-  function handleAdd(partialRoute: Partial<FormAmRoute>, referenceRoute: RouteWithID, insertPosition: InsertPosition) {
+  async function handleAdd(
+    partialRoute: Partial<FormAmRoute>,
+    referenceRoute: RouteWithID,
+    insertPosition: InsertPosition
+  ) {
     if (!rootRoute) {
       return;
     }
@@ -144,38 +163,12 @@ export const NotificationPoliciesList = () => {
       rootRoute,
       insertPosition
     );
-    updateRouteTree.execute(newRouteTree);
+    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
+    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
   }
 
-  // this function will make the HTTP request and tracks the state of the request
-  const [updateRouteTree, updateRouteTreeState] = useAsync(async (routeTree: Route | RouteWithID) => {
-    if (!rootRoute) {
-      return;
-    }
-
-    // make sure we omit all IDs from our routes
-    const newRouteTree = cleanRouteIDs(routeTree);
-
-    const newTree = await updateNotificationPolicyRoute({
-      newRoute: newRouteTree,
-      oldRoute: defaultPolicy,
-    });
-
-    appNotification.success('Updated notification policies');
-    if (selectedAlertmanager) {
-      refetchAlertGroups();
-    }
-
-    // close all modals
-    closeEditModal();
-    closeAddModal();
-    closeDeleteModal();
-
-    return newTree;
-  });
-
-  const updatingTree = isPending(updateRouteTreeState);
-  const updateError = updateRouteTreeState.error;
+  const updatingTree = updateNotificationPolicyRouteState.status === 'loading';
+  const updateError = updateNotificationPolicyRouteState.error;
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);

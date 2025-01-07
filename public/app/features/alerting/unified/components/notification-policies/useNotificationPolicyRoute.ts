@@ -5,23 +5,21 @@ import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/t
 import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useAsync } from '../../hooks/useAsync';
+import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
 } from '../../openapi/routesApi.gen';
+import { updateRouteAction } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
 const { useListNamespacedRoutingTreeQuery, useReplaceNamespacedRoutingTreeMutation } = routingTreeApi;
 
-const {
-  useUpdateAlertmanagerConfigurationMutation,
-  useLazyGetAlertmanagerConfigurationQuery,
-  useGetAlertmanagerConfigurationQuery,
-} = alertmanagerApi;
+const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
 export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArgs, { skip }: Skippable = {}) => {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
@@ -65,15 +63,17 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
   };
 });
 
-export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
-  const [getAlertmanagerConfiguration] = useLazyGetAlertmanagerConfigurationQuery();
-  const [updateAlertmanagerConfiguration] = useUpdateAlertmanagerConfigurationMutation();
+type CreateUpdateRouteArgs = { newRoute: Route };
 
+export function useUpdateNotificationPolicyRoute({ alertmanager }: BaseAlertmanagerArgs) {
+  // for alertmanager config api
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  // for k8s api
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
-  const k8sApiSupported = shouldUseK8sApi(selectedAlertmanager);
+  const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  async function updateUsingK8sApi({ newRoute }: { newRoute: Route }) {
+  const updateUsingK8sApi = useAsync(({ newRoute }: { newRoute: Route }) => {
     const namespace = getK8sNamespace();
     const { routes, _metadata, ...defaults } = newRoute;
     // Remove provenance so we don't send it to API
@@ -98,36 +98,16 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
       namespace,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
     }).unwrap();
-  }
+  });
 
-  async function updateUsingConfigFileApi({ newRoute, oldRoute }: { newRoute: Route; oldRoute: Route }) {
-    const { _metadata, ...oldRouteStripped } = oldRoute;
-    const { _metadata: newMetadata, ...newRouteStripped } = newRoute;
-    const lastConfig = await getAlertmanagerConfiguration(selectedAlertmanager).unwrap();
-    const latestRouteFromConfig = lastConfig.alertmanager_config.route;
-
-    const configChangedInMeantime = JSON.stringify(oldRouteStripped) !== JSON.stringify(latestRouteFromConfig);
-
-    if (configChangedInMeantime) {
-      throw new Error('configuration modification conflict', { cause: ERROR_NEWER_CONFIGURATION });
+  const updateRouteUsingConfigFileApi = useAsync(
+    async ({ newRoute, oldRoute }: CreateUpdateRouteArgs & { oldRoute: Route }) => {
+      const action = updateRouteAction({ newRoute, oldRoute });
+      return produceNewAlertmanagerConfiguration(action);
     }
+  );
 
-    const newConfig = {
-      ...lastConfig,
-      alertmanager_config: {
-        ...lastConfig.alertmanager_config,
-        route: newRouteStripped,
-      },
-    };
-
-    // TODO This needs to properly handle lazy AM initialization
-    return updateAlertmanagerConfiguration({
-      selectedAlertmanager,
-      config: newConfig,
-    }).unwrap();
-  }
-
-  return k8sApiSupported ? updateUsingK8sApi : updateUsingConfigFileApi;
+  return k8sApiSupported ? updateUsingK8sApi : updateRouteUsingConfigFileApi;
 }
 
 function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[]): Route[] {
