@@ -22,7 +22,7 @@ import {
 } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
@@ -150,7 +150,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => MENU_OPTION_HEIGHT,
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 

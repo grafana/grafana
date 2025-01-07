@@ -15,7 +15,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -215,7 +215,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => MENU_OPTION_HEIGHT,
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
