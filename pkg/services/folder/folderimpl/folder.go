@@ -68,7 +68,7 @@ func ProvideService(
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
-) folder.Service {
+) *Service {
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
