@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,11 +48,11 @@ func TestDirectSQLStats(t *testing.T) {
 		CanViewUIDs:  []string{},
 	}
 	guardian.MockDashboardGuardian(fakeGuardian)
-	folderPermissions, err := testutil.ProvideFolderPermissions(featuremgmt.WithFeatures(), cfg, db)
 	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
 
@@ -133,6 +132,10 @@ func TestDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "folders",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "library_elements"
 			}
 		]`, string(jj))
 	})
@@ -161,6 +164,10 @@ func TestDirectSQLStats(t *testing.T) {
 			{
 				"group": "sql-fallback",
 				"resource": "folders"
+			},
+						{
+				"group": "sql-fallback",
+				"resource": "library_elements"
 			}
 		]`, string(jj))
 	})

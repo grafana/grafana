@@ -57,7 +57,7 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation, grou
 		common.AddRenderContext(req)
 	}
 
-	res, err := s.openfga.Check(ctx, req)
+	res, err := s.check(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 	}
 
 	// Check if subject has direct access to resource
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	res, err := s.check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
@@ -103,7 +103,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 
 	if folder != "" && common.IsFolderResourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
-		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+		res, err := s.check(ctx, &openfgav1.CheckRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			TupleKey: &openfgav1.CheckRequestTupleKey{
@@ -128,7 +128,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 	}
 
 	// Check if subject has direct access to resource
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	res, err := s.check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
@@ -144,4 +144,13 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 	}
 
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
+func (s *Server) check(ctx context.Context, req *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	err := s.addCheckAuthorizationContext(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to add authorization context", "error", err)
+	}
+
+	return s.openfga.Check(ctx, req)
 }

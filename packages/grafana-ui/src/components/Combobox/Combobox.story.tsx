@@ -26,7 +26,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
-    width: undefined,
+    width: 20,
     isClearable: false,
     placeholder: 'Select an option...',
     options: [
@@ -76,7 +76,7 @@ type Story = StoryObj<typeof Combobox>;
 
 export const Basic: Story = {};
 
-async function generateOptions(amount: number): Promise<ComboboxOption[]> {
+export async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),

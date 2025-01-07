@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -569,7 +570,16 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
+		require.NoError(t, err)
+	})
 	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
@@ -724,6 +734,270 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
+					}),
+				}})
+
+				res, err := server.Send(req)
+				require.NoError(t, err)
+
+				require.Equal(t, tc.expectedCode, res.StatusCode)
+				defer func() { require.NoError(t, res.Body.Close()) }()
+
+				if tc.expectedCode == http.StatusOK {
+					body := dtos.Folder{}
+					require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+					//nolint:staticcheck
+					body.ID = 0
+					body.Version = 0
+					tc.expectedFolder.Version = 0
+					require.Equal(t, tc.expectedFolder, body)
+				}
+			})
+		}
+	})
+}
+
+func TestToFolderCounts(t *testing.T) {
+	var tests = []struct {
+		name        string
+		input       *unstructured.Unstructured
+		expected    *folder.DescendantCounts
+		expectError bool
+	}{
+		{
+			name: "with only counts from unified storage",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"count":    int64(1),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "alertRules",
+							"count":    int64(0),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    1,
+				"dashboards": 3,
+				"alertRules": 0,
+			},
+		},
+		{
+			name: "with counts from both storages",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "folders",
+							"count":    int64(1),
+						},
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
+							"resource": "folders",
+							"count":    int64(0),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    1,
+				"dashboards": 3,
+			},
+		},
+		{
+			name: "it uses the values from sql-fallaback if not found in unified storage",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts": []interface{}{
+						map[string]interface{}{
+							"group":    "alpha",
+							"resource": "dashboards",
+							"count":    int64(3),
+						},
+						map[string]interface{}{
+							"group":    "sql-fallback",
+							"resource": "folders",
+							"count":    int64(2),
+						},
+					},
+				},
+			},
+			expected: &folder.DescendantCounts{
+				"folders":    2,
+				"dashboards": 3,
+			},
+		},
+		{
+			name: "malformed input",
+			input: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v0alpha1",
+					"counts":     map[string]interface{}{},
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := toFolderLegacyCounts(tc.input)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+// for now, test only the general folder
+func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
+	testuser := &user.User{ID: 99, UID: "fdxsqt7t5ryf4a", Login: "testuser"}
+
+	legacyFolder := *folder.RootFolder
+
+	expectedFolder := dtos.Folder{
+		UID:       legacyFolder.UID,
+		OrgID:     0,
+		Title:     legacyFolder.Title,
+		URL:       legacyFolder.URL,
+		HasACL:    false,
+		CanSave:   false,
+		CanEdit:   true,
+		CanAdmin:  false,
+		CanDelete: false,
+		CreatedBy: "Anonymous",
+		UpdatedBy: "Anonymous",
+	}
+
+	mux := http.NewServeMux()
+	folderApiServerMock := httptest.NewServer(mux)
+	defer folderApiServerMock.Close()
+
+	t.Run("happy path", func(t *testing.T) {
+		type testCase struct {
+			description                string
+			folderUID                  string
+			legacyFolder               folder.Folder
+			expectedFolder             dtos.Folder
+			expectedFolderServiceError error
+			unifiedStorageEnabled      bool
+			unifiedStorageMode         grafanarest.DualWriterMode
+			expectedCode               int
+		}
+
+		tcs := []testCase{
+			{
+				description:           "General folder - Legacy",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: false,
+			},
+			{
+				description:           "General folder - Unified storage, mode 1",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode1,
+			},
+			{
+				description:           "General folder - Unified storage, mode 2",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode2,
+			},
+			{
+				description:           "General folder - Unified storage, mode 3",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode3,
+			},
+			{
+				description:           "General folder - Unified storage, mode 4",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode4,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.description, func(t *testing.T) {
+				setUpRBACGuardian(t)
+
+				cfg := setting.NewCfg()
+				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: tc.unifiedStorageMode,
+					},
+				}
+
+				featuresArr := []any{featuremgmt.FlagNestedFolders}
+				if tc.unifiedStorageEnabled {
+					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesFolders)
+				}
+
+				server := SetupAPITestServer(t, func(hs *HTTPServer) {
+					hs.Cfg = cfg
+					hs.folderService = &foldertest.FakeService{
+						ExpectedFolder: &tc.legacyFolder,
+						ExpectedError:  tc.expectedFolderServiceError,
+					}
+					hs.QuotaService = quotatest.New(false, nil)
+					hs.SearchService = &mockSearchService{
+						ExpectedResult: model.HitList{},
+					}
+					hs.userService = &usertest.FakeUserService{
+						ExpectedUser: testuser,
+					}
+					hs.Features = featuremgmt.WithFeatures(
+						featuresArr...,
+					)
+					hs.clientConfigProvider = mockClientConfigProvider{
+						host: folderApiServerMock.URL,
+					}
+				})
+
+				req := server.NewRequest(http.MethodGet, fmt.Sprintf("/api/folders/%s", tc.folderUID), nil)
+				req.Header.Set("Content-Type", "application/json")
+				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+						{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 					}),
 				}})
 

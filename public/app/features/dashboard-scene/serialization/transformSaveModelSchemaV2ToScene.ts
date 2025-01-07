@@ -52,8 +52,17 @@ import {
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { contextSrv } from 'app/core/core';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyDashboardNotFound,
+  AnnoKeyFolder,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+  AnnoKeyDashboardIsNew,
+} from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -73,7 +82,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { getDashboardSceneFor, getIntervalsFromQueryString } from '../utils/utils';
+import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -113,6 +122,41 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     });
   });
 
+  const isDashboardEditable = Boolean(dashboard.editable);
+  const canSave = dto.access.canSave !== false;
+
+  const meta: DashboardMeta = {
+    canShare: dto.access.canShare !== false,
+    canSave,
+    canStar: dto.access.canStar !== false,
+    canEdit: dto.access.canEdit !== false,
+    canDelete: dto.access.canDelete !== false,
+    canAdmin: dto.access.canAdmin !== false,
+    url: dto.access.url,
+    slug: dto.access.slug,
+    annotationsPermissions: dto.access.annotationsPermissions,
+    created: metadata.creationTimestamp,
+    createdBy: metadata.annotations?.[AnnoKeyCreatedBy],
+    updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+    updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
+    folderUid: metadata.annotations?.[AnnoKeyFolder],
+
+    // UI-only metadata, ref: DashboardModel.initMeta
+    showSettings: Boolean(dto.access.canEdit),
+    canMakeEditable: canSave && !isDashboardEditable,
+    hasUnsavedFolderChange: false,
+    dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
+    version: parseInt(metadata.resourceVersion, 10),
+    isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
+  };
+
+  // Ref: DashboardModel.initMeta
+  if (!isDashboardEditable) {
+    meta.canEdit = false;
+    meta.canDelete = false;
+    meta.canSave = false;
+  }
+
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
     editable: dashboard.editable,
@@ -120,12 +164,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     id: dashboard.id,
     isDirty: false,
     links: dashboard.links,
-    // TODO: Combine access and metadata to compose the V1 meta object
-    meta: {},
+    meta,
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
-    version: dashboard.schemaVersion,
+    version: parseInt(metadata.resourceVersion, 10),
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
@@ -177,6 +220,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
   });
 
+  dashboardScene.setInitialSaveModel(dto.spec);
+
   return dashboardScene;
 }
 
@@ -195,7 +240,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         const vizPanel = buildVizPanel(panel);
 
         return new DashboardGridItem({
-          key: `grid-item-${panel.spec.uid}`,
+          key: `grid-item-${panel.spec.id}`,
           x: element.spec.x,
           y: element.spec.y,
           width: element.spec.width,
@@ -232,15 +277,14 @@ function buildVizPanel(panel: PanelKind): VizPanel {
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
-    key: panel.spec.uid,
+    key: getVizPanelKeyForPanelId(panel.spec.id),
     title: panel.spec.title,
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    // FIXME: Transparent is not added to the schema yet
-    // displayMode: panel.spec.transparent ? 'transparent' : undefined,
+    displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
@@ -343,8 +387,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,
     dataLayerFilter: {
-      // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-      panelId: Number.isNaN(parseInt(panel.uid, 10)) ? 0 : parseInt(panel.uid, 10),
+      panelId: panel.id,
     },
     $behaviors: [new DashboardDatasourceBehaviour({})],
   });
@@ -515,6 +558,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,
