@@ -38,7 +38,14 @@ export type ApiMachineryError = {
 };
 
 export function isApiMachineryError(error: unknown): error is FetchError<ApiMachineryError> {
-  return isFetchError(error) && get(error.data, 'kind') === 'Status' && get(error.data, 'status') === 'Failure';
+  return (
+    isFetchError(error) &&
+    get(error.data, 'kind') === 'Status' &&
+    get(error.data, 'status') === 'Failure' &&
+    'details' in error.data &&
+    typeof error.data.details === 'object' &&
+    'uid' in error.data.details
+  );
 }
 
 export function matchesApiMachineryError(error: unknown, uid: string) {
