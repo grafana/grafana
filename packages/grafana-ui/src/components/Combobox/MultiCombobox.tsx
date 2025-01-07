@@ -27,6 +27,9 @@ import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const __ALL: any = 'all';
+
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (items?: T[]) => void;
@@ -54,7 +57,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return {
       label: t('multicombobox.all.title', 'All'),
       // Type casting needed to make this work when T is a number
-      value: 'all' as unknown as T,
+      value: __ALL,
     };
   }, []);
 
