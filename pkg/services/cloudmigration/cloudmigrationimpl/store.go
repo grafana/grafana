@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type store interface {
@@ -26,7 +25,4 @@ type store interface {
 	// - GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error)
 	// - GetSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error)
 	// - DeleteSnapshotResources(ctx context.Context, snapshotUid string) error
-
-	// TODO move this function dashboards/databases/databases.go
-	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error)
 }
