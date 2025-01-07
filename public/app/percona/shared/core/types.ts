@@ -105,8 +105,8 @@ export enum AlertRuleParamType {
 }
 
 export enum AlertRuleFilterType {
-  MATCH = 'MATCH',
-  MISMATCH = 'MISMATCH',
+  MATCH = 'FILTER_TYPE_MATCH',
+  MISMATCH = 'FILTER_TYPE_MISMATCH',
 }
 
 export type AlertRulesParsedParam = TemplateParam & { value: string | boolean | number };

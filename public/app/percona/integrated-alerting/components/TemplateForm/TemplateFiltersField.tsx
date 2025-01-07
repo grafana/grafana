@@ -18,9 +18,9 @@ const TemplateFiltersField: FC = () => {
   } = useFormContext();
   const filterOptions: Array<SelectableValue<AlertRuleFilterType>> = useMemo(
     () =>
-      Object.entries(AlertRuleFilterType).map(([, value]) => ({
-        label: value,
-        value: value,
+      Object.entries(AlertRuleFilterType).map(([label, value]) => ({
+        label,
+        value,
       })),
     []
   );
