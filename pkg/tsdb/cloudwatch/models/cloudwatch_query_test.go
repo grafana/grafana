@@ -272,6 +272,10 @@ func TestRequestParser(t *testing.T) {
 				QueryType:     "timeSeriesQuery",
 				Interval:      0,
 				RefID:         "A",
+				TimeRange: backend.TimeRange{
+					From: time.Now(),
+					To:   time.Now(),
+				},
 				JSON: json.RawMessage(`{
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -303,6 +307,10 @@ func TestRequestParser(t *testing.T) {
 				QueryType:     "timeSeriesQuery",
 				Interval:      0,
 				RefID:         "A",
+				TimeRange: backend.TimeRange{
+					From: time.Now(),
+					To:   time.Now(),
+				},
 				JSON: json.RawMessage(`{
 				   "region":"us-east-1",
 				   "namespace":"ec2",
