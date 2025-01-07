@@ -103,8 +103,6 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 	// Used by default while awaiting GMS results
 	ItemStatusPending ItemStatus = "PENDING"
-	// Not persisted, will go away once non-core data sources are supported
-	ItemStatusWarning ItemStatus = "WARNING"
 )
 
 type ResourceErrorCode string
@@ -184,10 +182,10 @@ type UpdateSnapshotCmd struct {
 	SessionID string
 	Status    SnapshotStatus
 
-	// LocalResources represents the local state of a resource before it has been uploaded to GMS
-	LocalResources []CloudMigrationResource
-	// CloudResources represents resource state from GMS, to be merged with the local state
-	CloudResources []CloudMigrationResource
+	// LocalResourcesToCreate represents the local state of a resource before it has been uploaded to GMS
+	LocalResourcesToCreate []CloudMigrationResource
+	// CloudResourcesToUpdate represents resource state from GMS, to be merged with the local state
+	CloudResourcesToUpdate []CloudMigrationResource
 }
 
 // access token

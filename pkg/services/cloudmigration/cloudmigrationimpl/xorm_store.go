@@ -130,7 +130,7 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 			if err != nil {
 				return fmt.Errorf("deleting snapshot resource from db: %w", err)
 			}
-			err = ss.deleteSnapshot(ctx, orgID, snapshot.UID)
+			err = ss.deleteSnapshot(ctx, snapshot.UID)
 			if err != nil {
 				return fmt.Errorf("deleting snapshot from db: %w", err)
 			}
@@ -215,20 +215,20 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 		}
 
 		// If local resources are set, it means we have to create them for the first time
-		if len(update.LocalResources) > 0 {
+		if len(update.LocalResourcesToCreate) > 0 {
 			start := time.Now()
-			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResources); err != nil {
+			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResourcesToCreate); err != nil {
 				return err
 			}
-			fmt.Printf("time to create %d local resources: %s\n", len(update.LocalResources), time.Since(start).String())
+			fmt.Printf("time to create %d local resources: %s\n", len(update.LocalResourcesToCreate), time.Since(start).String())
 		}
 		// If cloud resources are set, it means we have to update our resource local state
-		if len(update.CloudResources) > 0 {
+		if len(update.CloudResourcesToUpdate) > 0 {
 			start := time.Now()
-			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResources); err != nil {
+			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResourcesToUpdate); err != nil {
 				return err
 			}
-			fmt.Printf("time to update %d local resources: %s\n", len(update.CloudResources), time.Since(start).String())
+			fmt.Printf("time to update %d local resources: %s\n", len(update.CloudResourcesToUpdate), time.Since(start).String())
 		}
 
 		return nil
@@ -237,7 +237,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
-func (ss *sqlStore) deleteSnapshot(ctx context.Context, orgID int64, snapshotUid string) error {
+func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
 			UID: snapshotUid,
@@ -330,8 +330,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return snapshots, nil
 }
 
-// CreateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
-// If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
+// CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	for i := 0; i < len(resources); i++ {
 		resources[i].UID = util.GenerateShortUID()
@@ -355,17 +354,12 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 	})
 }
 
-// UpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
-// If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
+// UpdateSnapshotResources updates a migration resource for a snapshot, using snapshot_uid + resource_uid as a lookup
+// It does preprocessing on the results in order to minimize the sql queries executed.
 func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	// refIds of resources that migrated successfully in order to update in bulk
 	okIds := make([]any, 0, len(resources))
-	// Attempt to do the same thing with errors, but they are more complicated.
-	// I'm treating errCode+errStr as a key in order to group errors.
-	// However, I'm not sure how common it is to actually have error strings be equal.
-	// Perhaps Dana can recommend a better path forward given her work with error handling.
-	//
-	// UPDATE - after some testing, this seems like a decent strategy. A lot of the errors are "check the logs" so we end up with some groupings.
+	// group any failed resources by errCode+errStr
 	errorIds := make(map[string][]any)
 
 	const delim string = "@@@"
@@ -373,7 +367,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 		if r.Status == cloudmigration.ItemStatusOK {
 			okIds = append(okIds, r.RefID)
 		} else if r.Status == cloudmigration.ItemStatusError {
-			// keys will look something like "DATASOURCE_NAME_CONFLICT@@@some error from GMS"
+			// keys look like: "DATASOURCE_NAME_CONFLICT@@@some error from GMS"
 			key := fmt.Sprintf("%s%s%s", r.ErrorCode, delim, r.Error)
 			if ids, ok := errorIds[key]; ok {
 				errorIds[key] = append(ids, r.RefID)
@@ -388,7 +382,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 		args []any
 	}
 
-	// The first thing we do is prepare a sql statement for all of the OK statuses
+	// Prepare a sql statement for all of the OK statuses
 	var okUpdateStatement statement
 	if len(okIds) > 0 {
 		okUpdateStatement = statement{
@@ -396,7 +390,8 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 			args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds...),
 		}
 	}
-	// Then however many sql statements are necessary for the next piece
+
+	// Prepare however many sql statements are necessary for the error statuses
 	errorStatements := []statement{}
 	for k, ids := range errorIds {
 		err := strings.Split(k, delim)
@@ -406,9 +401,9 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 		})
 	}
 
+	// Execute the minimum number of required statements!
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			// now we just execute the minimum number of required statements!
 			for _, q := range append(errorStatements, okUpdateStatement) {
 				if _, err := sess.Exec(append([]any{q.sql}, q.args...)...); err != nil {
 					return err

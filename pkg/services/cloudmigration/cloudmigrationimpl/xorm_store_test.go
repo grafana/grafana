@@ -155,7 +155,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, *snapshot, snapshots[0])
 
 		// delete snapshot
-		err = s.deleteSnapshot(ctx, 1, snapshotUid)
+		err = s.deleteSnapshot(ctx, snapshotUid)
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
