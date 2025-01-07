@@ -52,13 +52,13 @@ This document provides instructions for configuring the MySQL data source and ex
 
 ## Before you begin
 
-You must have the `Organization administrator` role in order to configure the My SQL data source.
+You must have the `Organization administrator` role in order to configure the MySQL data source.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Grafana ships with the MySQL data source so there is no need to add a plugin.
+Grafana ships with the MySQL plugin, so no additional installation is required.
 
 {{< admonition type="note" >}}
-When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed. To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
 {{< /admonition >}}
 
 Example:
@@ -68,14 +68,14 @@ Example:
  GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
 ```
 
-You can use wildcards (`*`) in place of a database or table if you want to grant access to more databases and tables.
+Use wildcards (`*`) in place of a database or table if you want to grant access to more databases and tables.
 
 ## Add the MySQL data source
 
 To add the MySQL data source complete the following steps:
 
 1. Click **Connections** in the left-side menu.
-1. Under **Add new connection** type `MySQL` in the search bar. 
+1. Click **Add new connection** and type `MySQL` in the search bar. 
 1. Select the **MySQL data source** option.
 1. Click **Add new data source** in the upper right.
 
@@ -101,7 +101,7 @@ Following is a list of MySQL configuration options:
 - **Use TLS Client Auth** - Toggle to enable TLS authentication using the client certificate specified in the secure JSON configuration. Refer to [Using TLS Connections](https://dev.mysql.com/doc/refman/8.4/en/mysql-cluster-tls-using.html) and [Configuring MySQL to Use Encrypted Connections](https://dev.mysql.com/doc/refman/8.4/en/using-encrypted-connections.html) for more information regarding TLS and configuring encrypted connections in MySQL. Provide the client certificate under **TLS/SSL Client Certificate**. Provide the key under **TLS/SSL Client Key**. 
 - **With CA Cert** - Toggle to authenticate using a CA certificate. Required for verifying self-signed TLS Certs. Follow the instructions of your CA (Certificate Authority) to download the certificate file. Provide the root certificate under **TLS/SSL Root Certificate** if TLS/SSL mode requires it.
 - **Skip TLS Verification** - Toggle to skip verification of the MySQL server's TLS certificate chain and host name.
-- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client-side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
+- **Allow Cleartext Passwords** - Toggle to allow the use of the [cleartext client-side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) when required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/refman/8.4/en/pam-pluggable-authentication.html). Note that transmitting passwords in plain text can pose a security risk in certain configurations. To prevent password-related issues, it is recommended that clients connect to a MySQL server using a secure method that protects the password. Options include  [TLS/SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network.
 
 ## Additional settings
 
@@ -117,7 +117,7 @@ The following are additional MySQL settings.
 - **Max open** - The maximum number of open connections to the database, default `100`.
 - **Max idle** - The maximum number of connections in the idle connection pool, default `100`.
 - **Auto (max idle)** - Toggle to set the maximum number of idle connections to the number of maximum open connections. The default is `true`.
-- **Max lifetime** - The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL. The default is `14400` or 4 hours.
+- **Max lifetime** - The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL. The default is `14400`, or 4 hours.
 
 **Private data source connect:**
 
@@ -125,7 +125,7 @@ The following are additional MySQL settings.
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have added your MySQL connection settings, click Save & test to test the data source connection.
+Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
 ### Min time interval
 
