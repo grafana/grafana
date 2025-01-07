@@ -1503,13 +1503,13 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	creator, err := dr.getUser(ctx, obj.GetCreatedBy())
+	creator, err := dr.getUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
 		return nil, err
 	}
 	out.CreatedBy = creator.ID
 
-	updater, err := dr.getUser(ctx, obj.GetUpdatedBy())
+	updater, err := dr.getUserFromMeta(ctx, obj.GetUpdatedBy())
 	if err != nil {
 		return nil, err
 	}
@@ -1550,11 +1550,18 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	return &out, nil
 }
 
-func (dr *DashboardServiceImpl) getUser(ctx context.Context, userMeta string) (*user.User, error) {
+func (dr *DashboardServiceImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
 	if userMeta == "" || toUID(userMeta) == "" {
 		return &user.User{}, nil
 	}
-	uid := toUID(userMeta)
+	usr, err := dr.getUser(ctx, toUID(userMeta))
+	if err != nil && errors.Is(err, user.ErrUserNotFound) {
+		return &user.User{}, nil
+	}
+	return usr, err
+}
+
+func (dr *DashboardServiceImpl) getUser(ctx context.Context, uid string) (*user.User, error) {
 	userId, err := strconv.ParseInt(uid, 10, 64)
 	if err == nil {
 		return dr.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
