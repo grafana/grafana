@@ -16,25 +16,38 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   if (!plugin) {
     return info;
   }
+  console.log('plugin POPOPOPO', plugin);
 
   // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const useLatestCompatibleInfo = !plugin.isInstalled;
-  let version = plugin.installedVersion;
-  if (!version && useLatestCompatibleInfo && latestCompatibleVersion?.version) {
-    version = latestCompatibleVersion?.version;
-  }
 
-  if (version) {
-    if (plugin.isManaged) {
+  const installedVersion = plugin.installedVersion;
+  const latestVersion = plugin.latestVersion;
+
+  if (installedVersion || latestVersion) {
+    if (plugin.isManaged && plugin.isInstalled) {
       info.push({
-        label: t('plugins.details.labels.version', 'Version'),
+        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
         value: 'Managed by Grafana',
+      });
+      info.push({
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: 'Managed by Grafana',
+      });
+    } else if (plugin.isInstalled && !plugin.isManaged) {
+      info.push({
+        label: t('plugins.details.labels.installedVersion', 'Installed Version'),
+        value: installedVersion,
+      });
+      info.push({
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: latestVersion,
       });
     } else {
       info.push({
-        label: t('plugins.details.labels.version', 'Version'),
-        value: `${version}${plugin.isPreinstalled.withVersion ? ' (preinstalled)' : ''}`,
+        label: t('plugins.details.labels.latestVersion', 'Latest Version'),
+        value: `${latestVersion}${plugin.isPreinstalled.withVersion ? ' (preinstalled)' : ''}`,
       });
     }
   }
