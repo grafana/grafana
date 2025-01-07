@@ -1048,6 +1048,21 @@ func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Da
 	return dashboards, nil
 }
 
+func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
+	defer span.End()
+
+	var dashs = make([]*dashboards.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
+		// "deleted IS NULL" is to avoid deleted dashboards
+		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashs, nil
+}
+
 func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetSoftDeletedExpiredDashboards")
 	defer span.End()
