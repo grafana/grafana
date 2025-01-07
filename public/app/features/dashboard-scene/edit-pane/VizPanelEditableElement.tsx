@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -108,14 +109,10 @@ export class VizPanelEditableElement implements EditableDashboardElement {
     return (
       <>
         <Button size="sm" variant="secondary">
-          Edit
+          <Trans i18nKey="panel.header-menu.edit">Edit</Trans>
         </Button>
-        <Button size="sm" variant="secondary">
-          Copy
-        </Button>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
+        <Button size="sm" variant="secondary" icon="copy" />
+        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
       </>
     );
   }

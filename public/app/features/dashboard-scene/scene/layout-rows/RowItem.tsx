@@ -72,15 +72,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   public renderActions(): React.ReactNode {
     return (
       <>
-        <Button size="sm" variant="secondary">
-          Copy
-        </Button>
-        <Button size="sm" variant="primary" onClick={() => this.onAddPanel()} fill="outline">
-          Add panel
-        </Button>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
+        <Button size="sm" variant="secondary" icon="copy" />
+        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
       </>
     );
   }
