@@ -17,85 +17,10 @@ import { DashboardWithAccessInfo } from './types';
 describe('ResponseTransformers', () => {
   describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
-      const dashboardV1: DashboardDataDTO = {
-        uid: 'dashboard-uid',
-        id: 123,
-        title: 'Dashboard Title',
-        description: 'Dashboard Description',
-        tags: ['tag1', 'tag2'],
-        schemaVersion: 1,
-        graphTooltip: 0,
-        preload: true,
-        liveNow: false,
-        editable: true,
-        time: { from: 'now-6h', to: 'now' },
-        timezone: 'browser',
-        refresh: '5m',
-        timepicker: {
-          refresh_intervals: ['5s', '10s', '30s'],
-          hidden: false,
-          time_options: ['5m', '15m', '1h'],
-          nowDelay: '1m',
-        },
-        fiscalYearStartMonth: 1,
-        weekStart: 'monday',
-        version: 1,
-        gnetId: 'something-like-a-uid',
-        revision: 225,
-        links: [
-          {
-            title: 'Link 1',
-            url: 'https://grafana.com',
-            asDropdown: false,
-            targetBlank: true,
-            includeVars: true,
-            keepTime: true,
-            tags: ['tag1', 'tag2'],
-            icon: 'external link',
-            type: 'link',
-            tooltip: 'Link 1 Tooltip',
-          },
-        ],
-        annotations: {
-          list: [],
-        },
-      };
+      const dashV2 = setupDashboardV1Resource();
+      const transformed = ResponseTransformers.ensureV2Response(dashV2);
 
-      const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
-        spec: dashboardV1,
-        access: {
-          slug: 'dashboard-slug',
-          url: '/d/dashboard-slug',
-          canAdmin: true,
-          canDelete: true,
-          canEdit: true,
-          canSave: true,
-          canShare: true,
-          canStar: true,
-          annotationsPermissions: {
-            dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
-          },
-        },
-        apiVersion: 'v1',
-        kind: 'DashboardWithAccessInfo',
-        metadata: {
-          name: 'dashboard-uid',
-          resourceVersion: '1',
-
-          creationTimestamp: '2023-01-01T00:00:00Z',
-          annotations: {
-            [AnnoKeyCreatedBy]: 'user1',
-            [AnnoKeyUpdatedBy]: 'user2',
-            [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
-            [AnnoKeyFolder]: 'folder1',
-            [AnnoKeySlug]: 'dashboard-slug',
-          },
-        },
-      };
-
-      const transformed = ResponseTransformers.ensureV2Response(dto);
-
+      // Metadata
       expect(transformed.apiVersion).toBe('v2alpha1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
@@ -106,28 +31,111 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardId]).toBe(123);
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
 
+      // Spec
       const spec = transformed.spec;
-      expect(spec.title).toBe(dashboardV1.title);
-      expect(spec.description).toBe(dashboardV1.description);
-      expect(spec.tags).toEqual(dashboardV1.tags);
-      expect(spec.schemaVersion).toBe(dashboardV1.schemaVersion);
+      expect(spec.title).toBe(dashV2.spec.title);
+      expect(spec.description).toBe(dashV2.spec.description);
+      expect(spec.tags).toEqual(dashV2.spec.tags);
+      expect(spec.schemaVersion).toBe(dashV2.spec.schemaVersion);
       expect(spec.cursorSync).toBe('Off'); // Assuming transformCursorSynctoEnum(0) returns 'Off'
-      expect(spec.preload).toBe(dashboardV1.preload);
-      expect(spec.liveNow).toBe(dashboardV1.liveNow);
-      expect(spec.editable).toBe(dashboardV1.editable);
-      expect(spec.revision).toBe(dashboardV1.revision);
-      expect(spec.timeSettings.from).toBe(dashboardV1.time?.from);
-      expect(spec.timeSettings.to).toBe(dashboardV1.time?.to);
-      expect(spec.timeSettings.timezone).toBe(dashboardV1.timezone);
-      expect(spec.timeSettings.autoRefresh).toBe(dashboardV1.refresh);
-      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardV1.timepicker?.refresh_intervals);
-      expect(spec.timeSettings.hideTimepicker).toBe(dashboardV1.timepicker?.hidden);
-      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.time_options);
-      expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
-      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
-      expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
-      expect(spec.links).toEqual(dashboardV1.links);
+      expect(spec.preload).toBe(dashV2.spec.preload);
+      expect(spec.liveNow).toBe(dashV2.spec.liveNow);
+      expect(spec.editable).toBe(dashV2.spec.editable);
+      expect(spec.revision).toBe(dashV2.spec.revision);
+      expect(spec.timeSettings.from).toBe(dashV2.spec.time?.from);
+      expect(spec.timeSettings.to).toBe(dashV2.spec.time?.to);
+      expect(spec.timeSettings.timezone).toBe(dashV2.spec.timezone);
+      expect(spec.timeSettings.autoRefresh).toBe(dashV2.spec.refresh);
+      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashV2.spec.timepicker?.refresh_intervals);
+      expect(spec.timeSettings.hideTimepicker).toBe(dashV2.spec.timepicker?.hidden);
+      expect(spec.timeSettings.quickRanges).toEqual(dashV2.spec.timepicker?.time_options);
+      expect(spec.timeSettings.nowDelay).toBe(dashV2.spec.timepicker?.nowDelay);
+      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashV2.spec.fiscalYearStartMonth);
+      expect(spec.timeSettings.weekStart).toBe(dashV2.spec.weekStart);
+      expect(spec.links).toEqual(dashV2.spec.links);
       expect(spec.annotations).toEqual([]);
+
+      // Panel
+      expect(spec.layout.spec.items).toHaveLength(2);
+      expect(spec.layout.spec.items[0].spec).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '1',
+        },
+        x: 0,
+        y: 0,
+        width: 12,
+        height: 8,
+      });
+      expect(spec.elements['1']).toEqual({
+        kind: 'Panel',
+        spec: {
+          title: 'Panel Title',
+          description: '',
+          id: 1,
+          links: [],
+          vizConfig: {
+            kind: 'timeseries',
+            spec: {
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+              options: {},
+              pluginVersion: undefined,
+            },
+          },
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    datasource: 'datasource1',
+                    hidden: false,
+                    query: {
+                      kind: 'prometheus',
+                      spec: {
+                        expr: 'test-query',
+                      },
+                    },
+                    refId: 'A',
+                  },
+                },
+              ],
+              queryOptions: {
+                cacheTimeout: undefined,
+                hideTimeOverride: undefined,
+                interval: undefined,
+                maxDataPoints: undefined,
+                queryCachingTTL: undefined,
+                timeFrom: undefined,
+                timeShift: undefined,
+              },
+              transformations: [],
+            },
+          },
+        },
+      });
+      // Library Panel
+      expect(spec.layout.spec.items[1].spec).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: 'library-panel-table',
+        },
+        x: 0,
+        y: 8,
+        width: 12,
+        height: 8,
+      });
+      expect(spec.elements['library-panel-table']).toEqual({
+        kind: 'LibraryPanel',
+        spec: {
+          uid: 'library-panel-table',
+          name: 'Table Panel as Library Panel',
+        },
+      });
     });
   });
 
@@ -339,3 +347,118 @@ describe('ResponseTransformers', () => {
     });
   });
 });
+
+function setupDashboardV1Resource(): DashboardWithAccessInfo<DashboardDataDTO> {
+  const dashboardV1: DashboardDataDTO = {
+    uid: 'dashboard-uid',
+    id: 123,
+    title: 'Dashboard Title',
+    description: 'Dashboard Description',
+    tags: ['tag1', 'tag2'],
+    schemaVersion: 1,
+    graphTooltip: 0,
+    preload: true,
+    liveNow: false,
+    editable: true,
+    time: { from: 'now-6h', to: 'now' },
+    timezone: 'browser',
+    refresh: '5m',
+    timepicker: {
+      refresh_intervals: ['5s', '10s', '30s'],
+      hidden: false,
+      time_options: ['5m', '15m', '1h'],
+      nowDelay: '1m',
+    },
+    fiscalYearStartMonth: 1,
+    weekStart: 'monday',
+    version: 1,
+    gnetId: 'something-like-a-uid',
+    revision: 225,
+    links: [
+      {
+        title: 'Link 1',
+        url: 'https://grafana.com',
+        asDropdown: false,
+        targetBlank: true,
+        includeVars: true,
+        keepTime: true,
+        tags: ['tag1', 'tag2'],
+        icon: 'external link',
+        type: 'link',
+        tooltip: 'Link 1 Tooltip',
+      },
+    ],
+    annotations: {
+      list: [],
+    },
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        title: 'Panel Title',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        targets: [
+          {
+            refId: 'A',
+            datasource: 'datasource1',
+            expr: 'test-query',
+            hide: false,
+          },
+        ],
+        datasource: {
+          type: 'prometheus',
+          uid: 'datasource1',
+        },
+        fieldConfig: { defaults: {}, overrides: [] },
+        options: {},
+        transparent: false,
+        links: [],
+        transformations: [],
+      },
+      {
+        id: 2,
+        type: 'table',
+        libraryPanel: {
+          uid: 'library-panel-table',
+          name: 'Table Panel as Library Panel',
+        },
+        gridPos: { x: 0, y: 8, w: 12, h: 8 },
+      },
+    ],
+  };
+
+  const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
+    spec: dashboardV1,
+    access: {
+      slug: 'dashboard-slug',
+      url: '/d/dashboard-slug',
+      canAdmin: true,
+      canDelete: true,
+      canEdit: true,
+      canSave: true,
+      canShare: true,
+      canStar: true,
+      annotationsPermissions: {
+        dashboard: { canAdd: true, canEdit: true, canDelete: true },
+        organization: { canAdd: true, canEdit: true, canDelete: true },
+      },
+    },
+    apiVersion: 'v1',
+    kind: 'DashboardWithAccessInfo',
+    metadata: {
+      name: 'dashboard-uid',
+      resourceVersion: '1',
+
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: {
+        [AnnoKeyCreatedBy]: 'user1',
+        [AnnoKeyUpdatedBy]: 'user2',
+        [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
+        [AnnoKeyFolder]: 'folder1',
+        [AnnoKeySlug]: 'dashboard-slug',
+      },
+    },
+  };
+
+  return dto;
+}
