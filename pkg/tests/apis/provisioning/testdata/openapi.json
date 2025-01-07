@@ -706,6 +706,15 @@
             }
           },
           {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "labelSelector",
             "in": "query",
             "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
@@ -990,6 +999,15 @@
             "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
             "schema": {
               "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
               "uniqueItems": true
             }
           },
@@ -3487,14 +3505,6 @@
           "token": {
             "description": "Token for accessing the repository.",
             "type": "string"
-          },
-          "webhookSecret": {
-            "description": "WebhookSecret is the secret used to validate incoming webhooks.",
-            "type": "string"
-          },
-          "webhookURL": {
-            "description": "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",
-            "type": "string"
           }
         }
       },
@@ -3505,12 +3515,7 @@
         ],
         "properties": {
           "checked": {
-            "description": "When the sync job started",
-            "type": "integer",
-            "format": "int64"
-          },
-          "generation": {
-            "description": "The generation (spec changed) that triggered this health check",
+            "description": "When the health was checked last time",
             "type": "integer",
             "format": "int64"
           },
@@ -3901,8 +3906,10 @@
         "description": "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
         "type": "object",
         "required": [
+          "observedGeneration",
           "health",
-          "sync"
+          "sync",
+          "webhook"
         ],
         "properties": {
           "health": {
@@ -3914,12 +3921,26 @@
               }
             ]
           },
+          "observedGeneration": {
+            "description": "The generation of the spec last time reconciliation ran",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
           "sync": {
-            "description": "Sync information",
+            "description": "Sync information with the last sync information",
             "default": {},
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus"
+              }
+            ]
+          },
+          "webhook": {
+            "description": "Webhook Information (if applicable)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus"
               }
             ]
           }
@@ -4240,6 +4261,28 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "subscribedEvents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
@@ -4376,6 +4419,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "ignoreStoreReadErrorWithClusterBreakingPotential": {
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "type": "boolean"
+          },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
@@ -4511,7 +4558,7 @@
           {
             "group": "coordination.k8s.io",
             "kind": "DeleteOptions",
-            "version": "v1alpha1"
+            "version": "v1alpha2"
           },
           {
             "group": "coordination.k8s.io",
@@ -4662,6 +4709,11 @@
             "group": "resource.k8s.io",
             "kind": "DeleteOptions",
             "version": "v1alpha3"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
           },
           {
             "group": "scheduling.k8s.io",
@@ -5195,7 +5247,7 @@
           {
             "group": "coordination.k8s.io",
             "kind": "WatchEvent",
-            "version": "v1alpha1"
+            "version": "v1alpha2"
           },
           {
             "group": "coordination.k8s.io",
@@ -5346,6 +5398,11 @@
             "group": "resource.k8s.io",
             "kind": "WatchEvent",
             "version": "v1alpha3"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
           },
           {
             "group": "scheduling.k8s.io",
