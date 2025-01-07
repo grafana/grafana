@@ -15,7 +15,7 @@ import {
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -268,7 +268,7 @@ export const LogRows = memo(
         {showDisablePopoverOptions && (
           <ConfirmModal
             isOpen
-            title="Disable menu"
+            title={t('logs.log-rows.disable-popover.title', 'Disable menu')}
             body={
               <>
                 <Trans i18nKey="logs.log-rows.disable-popover.message">
@@ -276,12 +276,12 @@ export const LogRows = memo(
                   holding the alt key.
                 </Trans>
                 <div className={styles.shortcut}>
-                  <Icon name="keyboard" title="keyboard shortcut" />
+                  <Icon name="keyboard" />
                   <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">alt+select to enable again</Trans>
                 </div>
               </>
             }
-            confirmText="Confirm"
+            confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
             icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}

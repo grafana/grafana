@@ -1784,7 +1784,9 @@
     },
     "log-rows": {
       "disable-popover": {
-        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the alt key."
+        "confirm": "Confirm",
+        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the alt key.",
+        "title": "Disable menu"
       },
       "disable-popover-message": {
         "shortcut": "alt+select to enable again"
