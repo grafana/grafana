@@ -20,6 +20,7 @@ it('assigns correct field type even if values are numbers', async () => {
     { name: 'secondarystat', values: [10, 20], type: FieldType.number },
     { name: 'arc__success', values: [1, 1], type: FieldType.number },
     { name: 'arc__failed', values: [0, 0], type: FieldType.number },
+    { name: 'isinstrumented', values: [true, true], type: FieldType.boolean },
   ]);
 });
 
@@ -41,6 +42,7 @@ it('do not fail on response with empty list', async () => {
     { name: 'secondarystat', values: [], type: FieldType.number },
     { name: 'arc__success', values: [], type: FieldType.number },
     { name: 'arc__failed', values: [], type: FieldType.number },
+    { name: 'isinstrumented', values: [], type: FieldType.boolean },
   ]);
 });
 
@@ -66,6 +68,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0.8, 0.25, 1] },
       { name: 'arc__failed', values: [0.2, 0.75, 0] },
+      { name: 'isinstrumented', values: [true, true, true] },
     ]);
     expect(edges.fields).toMatchObject([
       { name: 'id', values: ['app_db', 'lb_app'] },
@@ -101,6 +104,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0.8, 0.25, 1] },
       { name: 'arc__failed', values: [0.2, 0.75, 0] },
+      { name: 'isinstrumented', values: [true, true, true] },
     ]);
     expect(edges.fields).toMatchObject([
       { name: 'id', values: ['ns1/app_ns3/db', 'ns2/lb_ns1/app'] },
@@ -138,6 +142,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0, 0, 1] },
       { name: 'arc__failed', values: [1, 1, 0] },
+      { name: 'isinstrumented', values: [true, true, true] },
     ]);
   });
 });

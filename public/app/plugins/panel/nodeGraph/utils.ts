@@ -387,16 +387,19 @@ export function statToString(config: FieldConfig, value: number | string): strin
  * Utilities mainly for testing
  */
 
-export function makeNodesDataFrame(count: number) {
+export function makeNodesDataFrame(
+  count: number,
+  partialNodes: Array<Partial<Record<NodeGraphDataFrameFieldNames, unknown>>> = []
+) {
   const frame = nodesFrame();
   for (let i = 0; i < count; i++) {
-    frame.add(makeNode(i));
+    frame.add(makeNode(i, partialNodes[i]));
   }
 
   return frame;
 }
 
-function makeNode(index: number) {
+function makeNode(index: number, partialNode: Partial<Record<NodeGraphDataFrameFieldNames, unknown>> = {}) {
   return {
     id: index.toString(),
     title: `service:${index}`,
@@ -408,6 +411,8 @@ function makeNode(index: number) {
     color: 0.5,
     icon: 'database',
     noderadius: 40,
+    isinstrumented: true,
+    ...partialNode,
   };
 }
 
@@ -455,6 +460,10 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.nodeRadius]: {
       values: [],
       type: FieldType.number,
+    },
+    [NodeGraphDataFrameFieldNames.isInstrumented]: {
+      values: [],
+      type: FieldType.boolean,
     },
   };
 
