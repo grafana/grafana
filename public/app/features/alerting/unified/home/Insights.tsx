@@ -14,6 +14,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
 import { config } from '../../../../core/config';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -94,9 +95,9 @@ export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
-const namespace = config.bootData.settings.namespace;
+const namespace = config.namespace;
 
-export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
+export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
 const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
@@ -173,7 +174,28 @@ export function getInsightsScenes() {
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
-        props: { children: <div>Monitor the status of your system.</div> },
+        props: {
+          children: (
+            <>
+              <Text>
+                Monitor the status of your system{' '}
+                <Tooltip
+                  content={
+                    <div>
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                      <br />
+                      <br />
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </div>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Text>
+            </>
+          ),
+        },
       }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),

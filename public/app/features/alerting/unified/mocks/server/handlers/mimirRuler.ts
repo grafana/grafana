@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 
 import {
   PromRulesResponse,

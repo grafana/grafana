@@ -11,7 +11,8 @@ import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 interface Props {
   panel: PanelModel;

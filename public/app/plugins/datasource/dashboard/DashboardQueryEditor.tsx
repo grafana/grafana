@@ -9,13 +9,14 @@ import { OperationsEditorRow } from '@grafana/experimental';
 import { Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
+import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
-import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
+import { DashboardQuery, ResultInfo } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);

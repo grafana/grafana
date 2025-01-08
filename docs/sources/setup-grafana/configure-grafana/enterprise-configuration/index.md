@@ -140,7 +140,7 @@ Age for recent active users.
 
 ### rendering_timeout
 
-Timeout for each panel rendering request.
+Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files.
 
 ### concurrent_render_limit
 
@@ -152,7 +152,7 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 ### max_attachment_size_mb
 
-Set the maximum file size in megabytes for the CSV attachments.
+Set the maximum file size in megabytes for the report email attachments.
 
 ### fonts_path
 
@@ -172,7 +172,7 @@ Name of the TrueType font file with italic style.
 
 ### max_retries_per_panel
 
-Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
 
 ### allowed_domains
 

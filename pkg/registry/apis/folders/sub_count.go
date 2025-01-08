@@ -7,14 +7,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type subCountREST struct {
-	service folder.Service
+	searcher resource.ResourceIndexClient
 }
 
 var (
@@ -46,11 +45,6 @@ func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {
@@ -58,18 +52,24 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		counts, err := r.service.GetDescendantCounts(ctx, &folder.GetDescendantCountsQuery{
-			UID:          &name,
-			OrgID:        ns.OrgID,
-			SignedInUser: user,
+		stats, err := r.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
+			Namespace: ns.Value,
+			Folder:    name,
 		})
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-
-		responder.Object(http.StatusOK, &v0alpha1.DescendantCounts{
-			Counts: counts,
-		})
+		rsp := &v0alpha1.DescendantCounts{
+			Counts: make([]v0alpha1.ResourceStats, len(stats.Stats)),
+		}
+		for i, v := range stats.Stats {
+			rsp.Counts[i] = v0alpha1.ResourceStats{
+				Group:    v.Group,
+				Resource: v.Resource,
+				Count:    v.Count,
+			}
+		}
+		responder.Object(200, rsp)
 	}), nil
 }

@@ -8,7 +8,7 @@ import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {

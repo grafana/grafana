@@ -1,8 +1,6 @@
-import path, { dirname, join } from 'path';
+import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
-// avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
-import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
-import { getIconSubDir } from '../src/components/Icon/utils';
+import { copyAssetsSync } from './copyAssets';
 
 // Internal stories should only be visible during development
 const storyGlob =
@@ -12,17 +10,8 @@ const storyGlob =
 
 const stories = ['../src/Intro.mdx', storyGlob];
 
-// We limit icon paths to only the available icons so publishing
-// doesn't require uploading 1000s of unused assets.
-const iconPaths = Object.keys(availableIconsIndex)
-  .filter((iconName) => !iconName.startsWith('fa '))
-  .map((iconName) => {
-    const subDir = getIconSubDir(iconName as IconName, 'default');
-    return {
-      from: `../../../public/img/icons/${subDir}/${iconName}.svg`,
-      to: `/public/img/icons/${subDir}/${iconName}.svg`,
-    };
-  });
+// Copy the assets required by storybook before starting the storybook server.
+copyAssetsSync();
 
 const mainConfig: StorybookConfig = {
   stories,
@@ -45,17 +34,18 @@ const mainConfig: StorybookConfig = {
           url: false,
           importLoaders: 2,
         },
+        sassLoaderOptions: {
+          sassOptions: {
+            // silencing these warnings since we're planning to remove sass when angular is gone
+            silenceDeprecations: ['import', 'global-builtin'],
+          },
+        },
       },
     },
     getAbsolutePath('@storybook/addon-storysource'),
     getAbsolutePath('storybook-dark-mode'),
-    getAbsolutePath('@storybook/addon-mdx-gfm'),
     getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
-  core: {},
-  docs: {
-    autodocs: true,
-  },
   framework: {
     name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
@@ -66,29 +56,7 @@ const mainConfig: StorybookConfig = {
     },
   },
   logLevel: 'debug',
-  staticDirs: [
-    {
-      from: '../../../public/fonts',
-      to: '/public/fonts',
-    },
-    {
-      from: '../../../public/img/grafana_text_logo-dark.svg',
-      to: '/public/img/grafana_text_logo-dark.svg',
-    },
-    {
-      from: '../../../public/img/grafana_text_logo-light.svg',
-      to: '/public/img/grafana_text_logo-light.svg',
-    },
-    {
-      from: '../../../public/img/fav32.png',
-      to: '/public/img/fav32.png',
-    },
-    {
-      from: '../../../public/lib',
-      to: '/public/lib',
-    },
-    ...iconPaths,
-  ],
+  staticDirs: ['static'],
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
@@ -117,12 +85,6 @@ const mainConfig: StorybookConfig = {
       options: {
         exposes: ['$', 'jQuery'],
       },
-    });
-
-    // use the asset module for SVGS for compatibility with grafana/ui Icon component.
-    config.module?.rules?.push({
-      test: /(unicons|mono|custom)[\\/].*\.svg$/,
-      type: 'asset/source',
     });
 
     return config;

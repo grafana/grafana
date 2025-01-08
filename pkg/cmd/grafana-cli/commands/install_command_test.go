@@ -124,7 +124,7 @@ func TestValidatePluginRepoConfig(t *testing.T) {
 		}
 
 		// GrafanaComApiUrl is set to the default path https://grafana.com/api
-		grafDir, cfgPath := testinfra.CreateGrafDir(t)
+		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 		// overriding the GrafanaComApiUrl to https://grafana-dev.com
 		c, err := commandstest.NewCliContext(map[string]string{

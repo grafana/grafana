@@ -241,10 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -326,8 +329,18 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
@@ -340,6 +353,7 @@
         "warning-1": "",
         "warning-2": ""
       },
+      "filter-description": "",
       "generated-policies": "",
       "matchers": "",
       "metadata": {
@@ -470,6 +484,10 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "filter-view": {
+        "no-more-results": "",
+        "no-rules-found": ""
+      },
       "new-alert-rule": ""
     },
     "rule-state": {
@@ -513,6 +531,11 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
     },
     "simpleCondition": {
       "alertCondition": ""
@@ -1252,6 +1275,8 @@
       "title-with-name": "Tabela — {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "",
+      "add-to-queryless-extensions": "",
       "aria-label": "Explorar barra de ferramentas",
       "copy-link": "Copiar URL",
       "copy-link-abs-time": "",
@@ -1275,6 +1300,7 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
+      "missing-otel-labels": "",
       "noMatchingValue": "",
       "sortBy": ""
     },
@@ -1694,7 +1720,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -1742,6 +1771,12 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": ""
+    },
+    "log-details": {
+      "fields": "",
+      "links": "",
+      "log-line": "",
+      "no-details": ""
     },
     "log-row-message": {
       "ellipsis": "",
@@ -1838,7 +1873,8 @@
       "library_elements": "",
       "mute_timings": "",
       "notification_policies": "",
-      "notification_templates": ""
+      "notification_templates": "",
+      "plugins": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1889,7 +1925,9 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "title": ""
+      "message-plugins": "",
+      "title": "",
+      "title-plugins": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1902,7 +1940,6 @@
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
-        "only-core-data-sources": "",
         "resource-conflict": "",
         "unexpected-error": "",
         "unsupported-data-type": ""
@@ -1941,6 +1978,7 @@
       "mute_timing": "",
       "notification_policy": "",
       "notification_template": "",
+      "plugin": "",
       "unknown": "Desconhecido"
     },
     "summary": {
@@ -2146,6 +2184,16 @@
     "help/documentation": "Documentação",
     "help/keyboard-shortcuts": "Atalhos do teclado",
     "help/support": "Suporte",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "Página inicial"
     },
@@ -2191,9 +2239,6 @@
     },
     "new-folder": {
       "title": "Nova pasta"
-    },
-    "observability": {
-      "title": "Observação"
     },
     "oncall": {
       "title": "OnCall"
@@ -2323,12 +2368,6 @@
       "list-label": "Navegação",
       "open": "",
       "undock": "Desacoplar menu"
-    },
-    "toolbar": {
-      "close-menu": "Fechar menu",
-      "enable-kiosk": "Ativar modo de quiosque",
-      "open-menu": "Abrir menu",
-      "toggle-search-bar": "Alternar barra de busca superior"
     }
   },
   "news": {
@@ -2745,6 +2784,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Atualização automática desativada. Escolha o intervalo de tempo de atualização",
@@ -2906,6 +2951,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -2937,8 +2983,7 @@
       "loading": "",
       "save-button": "Salvar no arquivo",
       "share-externally-label": "Exportar para compartilhamento externo",
-      "view-button": "Visualizar JSON",
-      "view-button-schemav2": ""
+      "view-button": "Visualizar JSON"
     },
     "library": {
       "info": "Criar painel de biblioteca."
@@ -3015,6 +3060,27 @@
       "create-button": ""
     }
   },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "As alturas do painel serão ajustadas para caber no tamanho da tela",
     "checkbox-label": "Ajuste automático",
@@ -3023,7 +3089,6 @@
     "mode": "Modo",
     "mode-kiosk": "Quiosque",
     "mode-normal": "Normal",
-    "mode-tv": "TV",
     "title": "Compartilhar lista de reprodução"
   },
   "shared": {
@@ -3221,9 +3286,7 @@
       "or-view-bookmarks": ""
     },
     "card": {
-      "data-source": "",
-      "date-created": "",
-      "metric": ""
+      "date-created": ""
     },
     "home": {
       "learn-more": "",
@@ -3330,6 +3393,12 @@
       "info-box-content": "",
       "info-box-content-2": "",
       "title": ""
+    },
+    "unknown-table": {
+      "loading": "",
+      "no-unknowns": "",
+      "renamed-or-missing-variables": "",
+      "variable": ""
     }
   }
 }
