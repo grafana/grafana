@@ -193,7 +193,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {
 		time.AfterFunc(time.Second*time.Duration(ttl), func() {
-			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
+			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj, storage.DeleteOptions{}); err != nil {
 				panic(err)
 			}
 		})
@@ -214,6 +214,7 @@ func (s *Storage) Delete(
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
 	_ runtime.Object,
+	opts storage.DeleteOptions,
 ) error {
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
