@@ -342,7 +342,7 @@ describe('util functions that rely on trail and variable setup', () => {
   });
   describe('updateOtelData', () => {
     it('should automatically add the deployment environment on loading a data trail from start', () => {
-      trail.setState({ fromStart: true });
+      trail.setState({ startButtonClicked: true });
       const autoSelectedDepEnvValue = 'production';
       const deploymentEnvironments = [autoSelectedDepEnvValue];
       updateOtelData(
@@ -472,7 +472,7 @@ describe('util functions that rely on trail and variable setup', () => {
     });
 
     it('should add the deployment environment to var filters if it has been promoted from start', () => {
-      trail.setState({ fromStart: true });
+      trail.setState({ startButtonClicked: true });
       // the deployment environment has been promoted to a metric label
       const deploymentEnvironments = ['production'];
       updateOtelData(

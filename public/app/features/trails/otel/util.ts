@@ -339,6 +339,15 @@ export async function updateOtelData(
   hasOtelResources?: boolean,
   nonPromotedOtelResources?: string[]
 ) {
+  // currently need isUpdatingOtel check for variable race conditions and state changes
+  // future refactor project
+  //  - checkDataSourceForOTelResources for state changes
+  //  - otel resources var for variable dependency listeners
+  if (trail.state.isUpdatingOtel){
+    return;
+  }
+  trail.setState({isUpdatingOtel: true});
+
   const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
   const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
   const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
@@ -491,6 +500,7 @@ export async function updateOtelData(
       initialOtelCheckComplete: true,
       resettingOtel: false,
       afterFirstDSChange: true,
+      isUpdatingOtel:false,
     });
   } else {
     // we are updating on variable changes
@@ -499,6 +509,7 @@ export async function updateOtelData(
       otelJoinQuery,
       resettingOtel: false,
       afterFirstDSChange: true,
+      isUpdatingOtel:false,
     });
   }
 }

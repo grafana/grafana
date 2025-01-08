@@ -29,7 +29,7 @@ describe('migrate old dep env var to otel and metrics var', () => {
 
     it('should not be called if starting a new trail', () => {
       // new trails do not need to be migrated
-      trail.setState({ fromStart: true });
+      trail.setState({ startButtonClicked: true });
 
       const urlParams: UrlQueryMap = {
         'var-otel_and_metric_filters': [''],

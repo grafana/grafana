@@ -486,16 +486,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   public onToggleOtelExperience = () => {
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
-    let initialOtelCheckComplete = false;
+    // 
+    let startButtonClicked = false;
     let resettingOtel = true;
     if (useOtelExperience) {
       // if turning off OTel
-      initialOtelCheckComplete = true;
       resettingOtel = false;
       trail.resetOtelExperience();
     }
     setOtelExperienceToggleState(!useOtelExperience);
-    trail.setState({ useOtelExperience: !useOtelExperience, initialOtelCheckComplete, resettingOtel });
+    trail.setState({ useOtelExperience: !useOtelExperience, resettingOtel, startButtonClicked });
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {

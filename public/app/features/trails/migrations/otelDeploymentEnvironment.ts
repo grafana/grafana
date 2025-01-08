@@ -28,7 +28,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
     otelMetricsVar &&
     Array.isArray(otelMetricsVar) &&
     otelMetricsVar.length > 0 &&
-    (trail.state.fromStart || otelMetricsVar[0] !== '')
+    (trail.state.startButtonClicked || otelMetricsVar[0] !== '')
   ) {
     return;
   }

@@ -81,10 +81,10 @@ export interface DataTrailState extends SceneObjectState {
   isStandardOtel?: boolean;
   nonPromotedOtelResources?: string[];
   initialOtelCheckComplete?: boolean; // updated after the first otel check
-  fromStart?: boolean; // from original landing page
+  startButtonClicked?: boolean; // from original landing page
   afterFirstDSChange?: boolean; // when starting there is always a DS var change from variable dependency
   resettingOtel?: boolean; // when switching OTel off from the switch
-
+  isUpdatingOtel?: boolean
   // moved into settings
   showPreviews?: boolean;
 
@@ -363,7 +363,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // HERE WE START THE OTEL EXPERIENCE ENGINE
       // 1. Set deployment variable values
       // 2. update all other variables and state
-      if (hasOtelResources && nonPromotedOtelResources) {
+      // 3. the first check 'startButtonClicked' button should turn it off but pass later if the toggle is turned on
+      if (hasOtelResources && nonPromotedOtelResources && !(this.state.startButtonClicked)) {
         updateOtelData(
           this,
           datasourceUid,
@@ -374,12 +375,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         );
       } else {
         // reset filters to apply auto, anywhere there are {} characters
-        this.resetOtelExperience(hasOtelResources, deploymentEnvironments);
+        this.resetOtelExperience(hasOtelResources, nonPromotedOtelResources);
       }
     }
   }
 
-  resetOtelExperience(hasOtelResources?: boolean, deploymentEnvironments?: string[]) {
+  resetOtelExperience(hasOtelResources?: boolean, nonPromotedResources?: string[]) {
     const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
     const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
     const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
@@ -419,15 +420,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     otelJoinQueryVariable.setState({ value: '' });
 
-    // full reset when a data source fails the check
-    if (hasOtelResources && deploymentEnvironments) {
+    // potential full reset when a data source fails the check or is the initial check with turning off
+    if (hasOtelResources && nonPromotedResources) {
       this.setState({
         hasOtelResources,
-        isStandardOtel: deploymentEnvironments.length > 0,
+        isStandardOtel: nonPromotedResources.length > 0,
         useOtelExperience: false,
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
         afterFirstDSChange: true,
+        initialOtelCheckComplete: true,
+        isUpdatingOtel:false,
       });
     } else {
       // partial reset when a user turns off the otel experience
@@ -436,6 +439,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         otelJoinQuery: '',
         useOtelExperience: false,
         afterFirstDSChange: true,
+        initialOtelCheckComplete: true,
+        isUpdatingOtel:false,
       });
     }
   }
@@ -545,10 +550,8 @@ function getVariableSet(
         name: VAR_FILTERS,
         addFilterButtonText: 'Add label',
         datasource: trailDS,
-        // hide the variable on start because the otel check can make it look flickering,
-        // switching from "labels" to "attributes"
-        // show it only after passing or failing the otel check
-        hide: VariableHide.hideVariable,
+        // default to use var filters and have otel off
+        hide: VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),

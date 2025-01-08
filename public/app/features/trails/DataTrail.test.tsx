@@ -529,7 +529,7 @@ describe('DataTrail', () => {
     beforeEach(() => {
       trail = new DataTrail({
         useOtelExperience: true,
-        nonPromotedOtelResources,
+        nonPromotedOtelResources,        
         // before checking, things should be hidden
         initialOtelCheckComplete: false,
       });
@@ -538,11 +538,12 @@ describe('DataTrail', () => {
       getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
     });
 
-    it('should start with hidden otel resources and var filters variables', () => {
+    it('clicking start button should start with OTel off and showing var filters', () => {
+      trail.setState({startButtonClicked: true});
       const otelResourcesHide = getOtelResourcesVar(trail).state.hide;
       const varFiltersHide = getFilterVar().state.hide;
       expect(otelResourcesHide).toBe(VariableHide.hideVariable);
-      expect(varFiltersHide).toBe(VariableHide.hideVariable);
+      expect(varFiltersHide).toBe(VariableHide.hideLabel);
     });
 
     it('should start with hidden otel join query variable', () => {
