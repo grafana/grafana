@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
 
+import { ListOptions } from '../apiserver/types';
+
 import {
   Repository,
   useCreateRepositoryFilesWithPathMutation,
@@ -31,8 +33,8 @@ export function useCreateOrUpdateRepository(name?: string) {
 }
 
 // Sort repositories by resourceVersion to show the last modified
-export function useRepositoryList(): [Repository[] | undefined, boolean] {
-  const query = useListRepositoryQuery();
+export function useRepositoryList(options: ListOptions = {}): [Repository[] | undefined, boolean] {
+  const query = useListRepositoryQuery(options);
 
   const sortedItems = query.data?.items?.slice().sort((a, b) => {
     return Number(b.metadata?.resourceVersion) - Number(a.metadata?.resourceVersion);
