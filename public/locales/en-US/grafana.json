@@ -546,7 +546,7 @@
       "save-query": "Save current search"
     },
     "silences": {
-      "affected-instances": "Affected alert rule instances",
+      "affected-instances": "Affected alert instances",
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
@@ -1794,6 +1794,22 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Confirm",
+        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the alt key.",
+        "title": "Disable menu"
+      },
+      "disable-popover-message": {
+        "shortcut": "alt+select to enable again"
+      }
+    },
+    "popover-menu": {
+      "copy": "Copy selection",
+      "disable-menu": "Disable menu",
+      "line-contains": "Add as line contains filter",
+      "line-contains-not": "Add as line does not contain filter"
     }
   },
   "migrate-to-cloud": {
@@ -1886,7 +1902,8 @@
       "library_elements": "library elements",
       "mute_timings": "mute timings",
       "notification_policies": "notification policies",
-      "notification_templates": "notification templates"
+      "notification_templates": "notification templates",
+      "plugins": "plugins"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1937,7 +1954,9 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
-      "title": "Migrate to Grafana Cloud is in public preview"
+      "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
+      "title": "Migrate to Grafana Cloud is in public preview",
+      "title-plugins": "Migration of plugins"
     },
     "resource-details": {
       "dismiss-button": "OK",
@@ -1950,7 +1969,6 @@
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
-        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
         "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
         "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "unsupported-data-type": "Migration of this data type is not currently supported."
@@ -1989,6 +2007,7 @@
       "mute_timing": "Mute Timing",
       "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
+      "plugin": "Plugin",
       "unknown": "Unknown"
     },
     "summary": {
@@ -2041,7 +2060,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations",
+      "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
     },
     "alerting-am-routes": {

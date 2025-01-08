@@ -379,6 +379,10 @@ const (
 	// Use the k8s client to retrieve dashboards internally
 	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
 
+	// FlagKubernetesRestore
+	// Allow restoring objects in k8s
+	FlagKubernetesRestore = "kubernetesRestore"
+
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
@@ -792,7 +796,7 @@ const (
 	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
 
 	// FlagImprovedExternalSessionHandling
-	// Enable improved support for external sessions in Grafana
+	// Enable improved support for OAuth and SAML external sessions in Grafana
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 
 	// FlagUseSessionStorageForRedirection
