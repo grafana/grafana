@@ -85,6 +85,7 @@ module.exports = [
     },
 
     rules: {
+      'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       'react/prop-types': 'off',
@@ -251,6 +252,7 @@ module.exports = [
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
+      'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',

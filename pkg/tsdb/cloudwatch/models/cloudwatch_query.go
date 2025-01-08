@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
@@ -63,6 +62,8 @@ type sqlExpression struct {
 
 type CloudWatchQuery struct {
 	logger            log.Logger
+	StartTime         time.Time
+	EndTime           time.Time
 	RefId             string
 	Region            string
 	Id                string
@@ -252,6 +253,8 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
+			StartTime:         startTime,
+			EndTime:           endTime,
 			RefId:             refId,
 			Id:                utils.Depointerizer(mdq.Id),
 			Region:            utils.Depointerizer(mdq.Region),
@@ -311,7 +314,7 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
 	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
-		return errorsource.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"), false)
+		return backend.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"))
 	}
 
 	var err error

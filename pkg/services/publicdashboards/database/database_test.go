@@ -79,7 +79,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 		cPublicDash = insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
 	}
 
-	t.Run("FindAllWithPagination will return dashboard list based on orgId with pagination", func(t *testing.T) {
+	t.Run("FindAll will return dashboard list based on orgId with pagination", func(t *testing.T) {
 		setup()
 
 		// should not be included in response
@@ -102,68 +102,18 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			Limit:  50,
 			Offset: 0,
 		}
-		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
+		resp, err := publicdashboardStore.FindAll(context.Background(), query)
 		require.NoError(t, err)
 
 		assert.Len(t, resp.PublicDashboards, 3)
-		assert.Equal(t, resp.PublicDashboards[0].Uid, aPublicDash.Uid)
-		assert.Equal(t, resp.PublicDashboards[1].Uid, bPublicDash.Uid)
-		assert.Equal(t, resp.PublicDashboards[2].Uid, cPublicDash.Uid)
+		uids := make([]string, len(resp.PublicDashboards))
+		for i, pubdash := range resp.PublicDashboards {
+			uids[i] = pubdash.Uid
+		}
+		assert.Contains(t, uids, aPublicDash.Uid)
+		assert.Contains(t, uids, bPublicDash.Uid)
+		assert.Contains(t, uids, cPublicDash.Uid)
 		assert.Equal(t, resp.TotalCount, int64(3))
-	})
-
-	t.Run("FindAllWithPagination will return dashboard list based on read permissions with pagination", func(t *testing.T) {
-		setup()
-
-		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
-			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
-		}
-
-		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
-
-		actest.AddUserPermissionToDB(t, sqlStore, usr)
-
-		query := &PublicDashboardListQuery{
-			User:   usr,
-			OrgID:  orgId,
-			Page:   1,
-			Limit:  50,
-			Offset: 0,
-		}
-		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
-		require.NoError(t, err)
-
-		assert.Len(t, resp.PublicDashboards, 2)
-		assert.Equal(t, resp.PublicDashboards[0].Uid, aPublicDash.Uid)
-		assert.Equal(t, resp.PublicDashboards[1].Uid, cPublicDash.Uid)
-		assert.Equal(t, resp.TotalCount, int64(2))
-	})
-
-	t.Run("FindAllWithPagination will return empty dashboard list based on read permissions with pagination", func(t *testing.T) {
-		setup()
-
-		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-uid"},
-			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-2-uid"},
-		}
-
-		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
-
-		actest.AddUserPermissionToDB(t, sqlStore, usr)
-
-		query := &PublicDashboardListQuery{
-			User:   usr,
-			OrgID:  orgId,
-			Page:   1,
-			Limit:  50,
-			Offset: 0,
-		}
-		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
-		require.NoError(t, err)
-
-		assert.Len(t, resp.PublicDashboards, 0)
-		assert.Equal(t, resp.TotalCount, int64(0))
 	})
 }
 

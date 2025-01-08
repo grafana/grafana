@@ -9,12 +9,12 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import {
   Alert,
   Button,
-  clearButtonStyles,
   FilterInput,
   Icon,
   LoadingPlaceholder,
   Modal,
   Tooltip,
+  clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
 

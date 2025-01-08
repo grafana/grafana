@@ -5,9 +5,12 @@ SELECT
   COUNT(*),
   MAX({{ .Ident "resource_version" }})
 FROM {{ .Ident "resource" }}
-{{ if .Namespace }}
 WHERE 1 = 1
+{{ if .Namespace }}
   AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+{{ end}}
+{{ if .Folder }}
+  AND {{ .Ident "folder" }} = {{ .Arg .Folder }}
 {{ end}}
 GROUP BY 
   {{ .Ident "namespace" }},
