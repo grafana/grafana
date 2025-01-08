@@ -22,7 +22,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -225,7 +225,6 @@ export function GrafanaEvaluationBehaviorStep({
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
     groups: [],
   };
-  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -347,7 +346,11 @@ export function GrafanaEvaluationBehaviorStep({
         {folderName && isEditingGroup && (
           <EditRuleGroupModal
             namespace={existingNamespace ?? emptyNamespace}
-            group={existingGroup ?? emptyGroup}
+            group={{
+              name: existingGroup?.name ?? '',
+              interval: existingGroup?.interval ?? '',
+              rules: existingGroup?.rules.map((r) => r.rulerRule).filter((r) => r !== undefined) ?? [],
+            }}
             folderUid={folderUid}
             onClose={() => closeEditGroupModal()}
             intervalEditOnly

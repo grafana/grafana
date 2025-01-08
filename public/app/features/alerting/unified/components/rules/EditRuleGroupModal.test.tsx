@@ -2,13 +2,13 @@ import { render } from 'test/test-utils';
 import { byLabelText, byTestId, byText, byTitle } from 'testing-library-selector';
 
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import {
   mockCombinedRule,
   mockCombinedRuleNamespace,
   mockDataSource,
   mockPromAlertingRule,
-  mockPromRecordingRule,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
 } from '../../mocks';
@@ -32,13 +32,13 @@ const noop = () => jest.fn();
 
 describe('EditGroupModal', () => {
   it('Should disable all inputs but interval when intervalEditOnly is set', async () => {
+    const group: RulerRuleGroupDTO = { name: 'default-group', interval: '90s', rules: [] };
+
     const namespace = mockCombinedRuleNamespace({
       name: 'my-alerts',
       rulesSource: mockDataSource(),
-      groups: [{ name: 'default-group', interval: '90s', rules: [], totals: {} }],
+      groups: [{ ...group, rules: [], totals: {} }],
     });
-
-    const group = namespace.groups[0];
 
     render(<EditRuleGroupModal namespace={namespace} group={group} intervalEditOnly onClose={noop} />);
 
@@ -51,34 +51,24 @@ describe('EditGroupModal', () => {
 describe('EditGroupModal component on cloud alert rules', () => {
   const promDsSettings = mockDataSource({ name: 'Prometheus-1', uid: 'Prometheus-1' });
 
-  const alertingRule = mockCombinedRule({
-    namespace: undefined,
-    promRule: mockPromAlertingRule({ name: 'alerting-rule-cpu' }),
-    rulerRule: mockRulerAlertingRule({ alert: 'alerting-rule-cpu' }),
-  });
+  const alertingRule = mockRulerAlertingRule({ alert: 'alerting-rule-cpu' });
 
-  const recordingRule1 = mockCombinedRule({
-    namespace: undefined,
-    promRule: mockPromRecordingRule({ name: 'recording-rule-memory' }),
-    rulerRule: mockRulerRecordingRule({ record: 'recording-rule-memory' }),
-  });
+  const recordingRule1 = mockRulerRecordingRule({ record: 'recording-rule-memory' });
 
-  const recordingRule2 = mockCombinedRule({
-    namespace: undefined,
-    promRule: mockPromRecordingRule({ name: 'recording-rule-cpu' }),
-    rulerRule: mockRulerRecordingRule({ record: 'recording-rule-cpu' }),
-  });
+  const recordingRule2 = mockRulerRecordingRule({ record: 'recording-rule-cpu' });
 
   it('Should show alert table in case of having some non-recording rules in the group', async () => {
+    const group: RulerRuleGroupDTO = {
+      name: 'default-group',
+      interval: '90s',
+      rules: [alertingRule, recordingRule1, recordingRule2],
+    };
+
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
-      groups: [
-        { name: 'default-group', interval: '90s', rules: [alertingRule, recordingRule1, recordingRule2], totals: {} },
-      ],
+      groups: [],
     });
-
-    const group = promNs.groups[0];
 
     render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
 
@@ -91,13 +81,17 @@ describe('EditGroupModal component on cloud alert rules', () => {
   });
 
   it('Should not show alert table in case of having exclusively recording rules in the group', async () => {
+    const group: RulerRuleGroupDTO = {
+      name: 'default-group',
+      interval: '90s',
+      rules: [recordingRule1, recordingRule2],
+    };
+
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
-      groups: [{ name: 'default-group', interval: '90s', rules: [recordingRule1, recordingRule2], totals: {} }],
+      groups: [],
     });
-
-    const group = promNs.groups[0];
 
     render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
     expect(ui.table.query()).not.toBeInTheDocument();
@@ -130,10 +124,15 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
     ],
   };
 
-  const grafanaGroup1 = grafanaNamespace.groups[0];
+  const combinedGroup = grafanaNamespace.groups[0];
+  const group: RulerRuleGroupDTO = {
+    name: combinedGroup.name,
+    interval: combinedGroup.interval,
+    rules: combinedGroup.rules.map((r) => r.rulerRule).filter((r) => r !== undefined),
+  };
 
   const renderWithGrafanaGroup = () =>
-    render(<EditRuleGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={noop} />);
+    render(<EditRuleGroupModal namespace={grafanaNamespace} group={group} onClose={noop} />);
 
   it('Should show alert table', async () => {
     renderWithGrafanaGroup();
