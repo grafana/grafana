@@ -307,12 +307,12 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
   // here we start to add the attributes to the group left
   if (attributes.length > 0) {
     // loop through attributes to check for utf8
-    const utf8Attributes = attributes.map((a)=>{
-      if(!isValidLegacyName(a)){
+    const utf8Attributes = attributes.map((a) => {
+      if (!isValidLegacyName(a)) {
         return `'${a}'`;
       }
       return a;
-    })
+    });
     // update the group left variable that contains all the filtered resource attributes
     otelGroupLeft.setState({ value: utf8Attributes.join(',') });
     // get the new otel join query that includes the group left attributes

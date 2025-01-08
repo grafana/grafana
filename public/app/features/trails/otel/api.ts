@@ -70,7 +70,7 @@ export async function totalOtelResources(
   const end = getPrometheusTime(timeRange.to, true);
   // check that the metric is utf8 before doing a resource query
   if (metric && !isValidLegacyName(metric)) {
-    metric = `{"${metric}"}`
+    metric = `{"${metric}"}`;
   }
   const query = metric ? metricOtelJobInstanceQuery(metric) : otelTargetInfoQuery(filters);
 
@@ -255,13 +255,13 @@ export async function getFilteredResourceAttributes(
   // The match param for the metric to get all possible labels for this metric
   const metricMatchTerms = limitOtelMatchTerms([], metricResources.jobs, metricResources.instances);
 
-  let metricMatchParam = ''
+  let metricMatchParam = '';
   // check metric is utf8 to give corrrect syntax
-  if(!isValidLegacyName(metric)) {
-    metricMatchParam = `{'${metric}',${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`
+  if (!isValidLegacyName(metric)) {
+    metricMatchParam = `{'${metric}',${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
   } else {
     metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
-  } 
+  }
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);

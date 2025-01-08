@@ -314,7 +314,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       return [];
     }
 
-    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => { 
+    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => {
       let label = el;
       if (!isValidLegacyName(el)) {
         // remove '' from label
