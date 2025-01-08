@@ -1,5 +1,5 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
-import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError, of } from 'rxjs';
+import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
   catchError,
@@ -143,43 +143,51 @@ export class BackendSrv implements BackendService {
   }
 
   // Look for each line
-  watch(options: BackendSrvRequest): Observable<FetchResponse<Observable<string>>> {
-    return this.fetch<ReadableStream<Uint8Array>>({
-      ...options,
-      responseType: 'body',
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      hideFromInspector: true,
-    }).pipe(
-      map((result) => {
-        let data: Observable<string> = of();
-        if (result.ok && result.data) {
-          const lines = new Subject<string>();
-          const reader = result.data.getReader();
-          async function process() {
-            while (true) {
-              const chunk = await reader.read();
-              if (chunk.value) {
-                const buff = new TextDecoder().decode(chunk.value);
-                buff.split('\n').forEach((v) => {
-                  lines.next(v);
-                });
-              }
-              if (chunk.done) {
-                break;
-              }
-            }
-            lines.complete();
-          }
-          data = lines;
-          process(); // runs in background
+  lines(options: BackendSrvRequest): Observable<string> {
+    return new Observable((observer) => {
+      let done = false;
+      const sub = this.fetch<ReadableStream<Uint8Array>>({
+        ...options,
+        responseType: 'body',
+        showErrorAlert: false,
+        showSuccessAlert: false,
+        hideFromInspector: true,
+      }).subscribe((result) => {
+        if (!result.ok) {
+          observer.error(result);
+          return;
         }
-        return {
-          ...result,
-          data, // each line
-        };
-      })
-    );
+
+        const reader = result.data.getReader();
+        async function process() {
+          while (!done) {
+            const chunk = await reader.read();
+            if (chunk.value) {
+              const buff = new TextDecoder().decode(chunk.value);
+              buff.split('\n').forEach((v) => {
+                if (v.length) {
+                  observer.next(v);
+                }
+              });
+            }
+            if (chunk.done) {
+              break;
+            }
+          }
+          if (!done) {
+            reader.cancel('disconnected');
+          }
+          observer.complete();
+        }
+        process(); // runs in background
+      });
+
+      // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
+      return function unsubscribe() {
+        sub.unsubscribe();
+        done = true;
+      };
+    });
   }
 
   private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {

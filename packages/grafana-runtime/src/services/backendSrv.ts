@@ -175,9 +175,9 @@ export interface BackendSrv {
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
 
   /**
-   * Return a new event for each line
+   * Iterate each line in a response -- throws an error for non 200 response
    */
-  watch(options: BackendSrvRequest): Observable<FetchResponse<Observable<string>>>;
+  lines(options: BackendSrvRequest): Observable<string>;
 }
 
 let singletonInstance: BackendSrv;

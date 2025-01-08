@@ -35,7 +35,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   const fields =
     streamType === 'signal'
       ? streamingClientFields
-      : ['logs', 'traces'].includes(streamType)
+      : ['logs', 'traces', 'watch'].includes(streamType)
         ? [streamingClientFields[0]] // speed
         : [];
 

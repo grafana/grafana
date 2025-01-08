@@ -83,8 +83,6 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         );
       }
 
-      console.log('render', changeInfo);
-
       if (saveAsCopy || changeInfo.isNew) {
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }

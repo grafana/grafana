@@ -179,6 +179,12 @@ export function runLogsStream(
   });
 }
 
+interface StreamMessage {
+  message: number; // incrementing number
+  time: number;
+  value: number;
+}
+
 export function runWatchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
@@ -197,24 +203,26 @@ export function runWatchStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Logs ' + target.refId;
-    data.addField({ name: 'line', type: FieldType.string });
     data.addField({ name: 'time', type: FieldType.time });
+    data.addField({ name: 'message', type: FieldType.number });
+    data.addField({ name: 'value', type: FieldType.number });
 
     const sub = getBackendSrv()
-      .watch({
+      .lines({
         url: `api/datasources/uid/${uid}/resources/stream`,
         params: {
           count: 10000000, // big number
           format: 'json',
-          sleep: '100ms',
-          flush: 90, // 90% (eg, sometimes send two at once)
+          sleep: `${query.speed ?? 250}ms`,
+          flush: 85, // 85% (eg, sometimes send two at once)
         },
       })
       .subscribe((line) => {
-        console.log('LINE', line);
+        const msg: StreamMessage = JSON.parse(line);
 
-        data.fields[0].values.push(getRandomLine());
-        data.fields[1].values.push(Date.now());
+        data.fields[0].values.push(msg.time);
+        data.fields[1].values.push(msg.message);
+        data.fields[2].values.push(msg.value);
 
         subscriber.next({
           data: [data],
@@ -224,7 +232,7 @@ export function runWatchStream(
       });
 
     return () => {
-      console.log('unsubscribing to stream ' + streamId);
+      console.log('unsubscribing to stream', streamId);
       sub.unsubscribe();
     };
   });
