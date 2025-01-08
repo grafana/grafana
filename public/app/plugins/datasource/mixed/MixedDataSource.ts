@@ -15,6 +15,8 @@ import {
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
 
+import { SHARED_DASHBOARD_QUERY } from '../dashboard';
+
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 export const MIXED_REQUEST_PREFIX = 'mixed-';
 
@@ -47,7 +49,15 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     const batches: BatchedQueries[] = [];
 
     for (const key in sets) {
-      batches.push(...this.getBatchesForQueries(sets[key], request));
+      // dashboard ds expects to have only 1 query with const query = options.targets[0]; therefore
+      //   we should not batch them together
+      if (key === SHARED_DASHBOARD_QUERY) {
+        sets[key].forEach((a) => {
+          batches.push(...this.getBatchesForQueries([a], request));
+        });
+      } else {
+        batches.push(...this.getBatchesForQueries(sets[key], request));
+      }
     }
 
     // Missing UIDs?
