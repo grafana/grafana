@@ -80,7 +80,7 @@ export const getContentItems = (
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true,
-  valueFilter = (value: string) => true
+  hideZeros = false
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -123,6 +123,10 @@ export const getContentItems = (
 
     const display = field.display!(v); // super expensive :(
 
+    if (hideZeros && !Number.isNaN(display.numeric) && display.numeric === 0) {
+      continue;
+    }
+
     // sort NaN and non-numeric to bottom (regardless of sort order)
     const numeric = !Number.isNaN(display.numeric)
       ? display.numeric
@@ -140,20 +144,16 @@ export const getContentItems = (
       colorPlacement = ColorPlacement.trailing;
     }
 
-    const value = formattedValueToString(display);
-
-    if (valueFilter(value)) {
-      rows.push({
-        label: field.state?.displayName ?? field.name,
-        value: formattedValueToString(display),
-        color: display.color ?? FALLBACK_COLOR,
-        colorIndicator,
-        colorPlacement,
-        isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
-        numeric,
-        lineStyle: field.config.custom?.lineStyle,
-      });
-    }
+    rows.push({
+      label: field.state?.displayName ?? field.name,
+      value: formattedValueToString(display),
+      color: display.color ?? FALLBACK_COLOR,
+      colorIndicator,
+      colorPlacement,
+      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+      numeric,
+      lineStyle: field.config.custom?.lineStyle,
+    });
   }
 
   if (sortOrder !== SortOrder.None && rows.length > 1) {

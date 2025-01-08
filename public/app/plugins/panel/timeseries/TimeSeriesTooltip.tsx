@@ -66,7 +66,7 @@ export const TimeSeriesTooltip = ({
     mode,
     sortOrder,
     (field) => field.type === FieldType.number || field.type === FieldType.enum,
-    (value) => (hideZeros ? value !== '0' : true)
+    hideZeros
   );
 
   _rest?.forEach((field) => {
