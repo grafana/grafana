@@ -10,6 +10,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { AnnoKeyDashboardIsSnapshot, AnnoKeyDashboardNotFound } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -339,7 +340,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r))
       .catch((e) => {
-        throw new Error('Failed to load snapshot: ' + e.message);
+        const msg = getMessageFromError(e);
+        throw new Error(`Failed to load snapshot: ${msg}`);
       });
 
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
