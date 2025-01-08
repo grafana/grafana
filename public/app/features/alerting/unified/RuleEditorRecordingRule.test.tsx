@@ -67,7 +67,7 @@ describe('RuleEditor recording rules', () => {
   });
 
   it('can create a new cloud recording rule', async () => {
-    renderRuleEditor(undefined, true);
+    renderRuleEditor(undefined, 'recording');
 
     await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
