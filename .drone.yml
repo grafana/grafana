@@ -2296,6 +2296,7 @@ steps:
     - grafana/grafana
 - commands:
   - apk add --update make bash go
+  - docker network connect host setup-prometheus-devenv
   - make devenv sources=prometheus
   depends_on:
   - clone
