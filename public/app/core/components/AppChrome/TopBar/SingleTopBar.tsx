@@ -118,17 +118,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
       gridTemplateColumns: '2fr minmax(550px, 1fr)',
       display: 'grid',
       justifyContent: 'flex-start',
-      ...(menuDockedAndOpen && {
-        gridTemplateColumns: '2fr minmax(55%, 1fr)',
-      }),
     },
-    [theme.breakpoints.up('xl')]: {
-      gridTemplateColumns: '2fr minmax(40%, 1fr)',
-      ...(menuDockedAndOpen && {
-        gridTemplateColumns: '2fr minmax(55%, 1fr)',
-      }),
-    },
-    [theme.breakpoints.up('xxl')]: menuDockedAndOpen && { gridTemplateColumns: '2fr minmax(40%, 1fr)' },
   }),
   breadcrumbsWrapper: css({
     display: 'flex',
