@@ -67,8 +67,7 @@ func (c *exportConnector) Connect(
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = slogctx.To(ctx, logger)
+		ctx := slogctx.To(r.Context(), logger)
 
 		job, err := c.queue.Add(ctx, &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
