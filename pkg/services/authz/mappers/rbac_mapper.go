@@ -8,7 +8,7 @@ import (
 
 const defaultAttribute = "uid"
 
-type VerbMapping map[string]string                           // e.g.
+type VerbMapping map[string]string                           // e.g. "get" -> "read"
 type ResourceVerbMapping map[string]VerbMapping              // e.g. "dashboards" -> VerbToAction
 type GroupResourceVerbMapping map[string]ResourceVerbMapping // e.g. "dashboard.grafana.app" -> ResourceVerbToAction
 
