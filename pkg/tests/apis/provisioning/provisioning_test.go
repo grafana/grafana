@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"math/rand"
 	"os"
@@ -360,17 +362,37 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		var githubClient *github.MockClient
 		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+			if githubClient != nil {
+				return githubClient
+			}
 			githubClient = github.NewMockClient(ttc)
-			// Setup for the repo.
-			githubClient.On("IsAuthenticated", mock.Anything).Return(nil)
 
-			githubClient.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-			githubClient.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
-			githubClient.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-			githubClient.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
-			githubClient.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
-			githubClient.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
-			githubClient.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+			isCtx := mock.Anything // mock.IsType(context.Background())
+			owner := "grafana"
+			repo := "git-ui-sync-demo"
+			branch := "dummy-branch"
+			sha := "24a55f601e33048d2267943279fc7f1b39b35e58"
+
+			// Ensuring we pass Test
+			githubClient.On("IsAuthenticated", isCtx).Return(nil)
+			githubClient.On("RepoExists", isCtx, owner, repo).Return(true, nil)
+			githubClient.On("BranchExists", isCtx, owner, repo, branch).Return(true, nil)
+
+			// Ensuring we can set up the webhook (even if it doesn't really... do anything here)
+			githubClient.On("CreateWebhook", isCtx, owner, repo, mock.Anything /* cfg */).Return(github.WebhookConfig{ID: 123}, nil)
+
+			// Ensuring we can successfully sync two files
+			githubClient.On("GetBranch", isCtx, owner, repo, branch).Return(github.Branch{Name: branch, Sha: sha}, nil)
+			githubClient.On("GetTree", isCtx, owner, repo, sha /* ref */, mock.IsType(false) /* recursive */).
+				Return([]github.RepositoryContent{
+					mockRepositoryContent("README.md", "# Hello, World!"),
+					mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))),
+					mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))),
+				}, /* truncated */ false /* err */, nil)
+			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "dashboard.json" /* filePath */, sha /* ref */).
+				Return(mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))) /* content */, nil /* dirContent */, nil /* err */)
+			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "subdir/dashboard2.yaml" /* filePath */, sha /* ref */).
+				Return(mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))) /* content */, nil /* dirContent */, nil /* err */)
 			return githubClient
 		}
 
@@ -380,7 +402,40 @@ func TestIntegrationProvisioning(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		time.Sleep(time.Second * 5) // just to give the controller time to run
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list, err := jobClient.Resource.List(ctx, metav1.ListOptions{})
+			if assert.NoError(collect, err) {
+				for _, elem := range list.Items {
+					state := mustNestedString(elem.Object, "status", "state")
+					if elem.GetLabels()["repository"] == "github-example" {
+						if state == string(provisioning.JobStateFinished) {
+							continue // doesn't matter
+						}
+						require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
+						collect.Errorf("there are still remaining github-example jobs: %v", elem)
+						return
+					}
+				}
+			}
+
+			repo, err := client.Resource.Get(ctx, "github-example", metav1.GetOptions{})
+			if assert.NoError(collect, err) {
+				assert.Equal(collect, true, mustNested(repo.Object, "status", "health", "healthy"))
+				assert.Equal(collect, "success", mustNestedString(repo.Object, "status", "sync", "state"))
+			}
+		}, time.Second*5, time.Millisecond*20)
+
+		// By now, we should have synced, meaning we have data to read in the local Grafana instance!
+
+		found, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "can list values")
+
+		names := []string{}
+		for _, v := range found.Items {
+			names = append(names, v.GetName())
+		}
+		require.Contains(t, names, "dashboard-R-GC4gTF44qh", "should contain dashboard.json's contents")
+		require.Contains(t, names, "dashboard2-1jw3H-Mqm75v", "should contain dashboard2.yaml's contents")
 	})
 
 	t.Run("safe path usages", func(t *testing.T) {
@@ -440,7 +495,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, err, "valid path should be fine")
 
 		// But the dashboard shouldn't exist yet
-		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
+		const allPanels = "all-panels-5Y4ReX6LwL7d"
+		_, err = dashboardClient.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 		require.Error(t, err, "no all-panels dashboard should exist")
 
 		// Now, we import it, such that it may exist
@@ -481,13 +537,25 @@ func TestIntegrationProvisioning(t *testing.T) {
 		for _, v := range found.Items {
 			names = append(names, v.GetName())
 		}
-		require.Contains(t, names, "all-panels-5Y4ReX6LwL7d", "all-panels dashboard should now exist")
+		require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
 	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, _ := unstructured.NestedString(obj, fields...)
 	return v
+}
+
+func mustNested(obj map[string]interface{}, fields ...string) interface{} {
+	v, _, _ := unstructured.NestedFieldNoCopy(obj, fields...)
+	return v
+}
+
+func mustJSON(t *testing.T, obj any) string {
+	t.Helper()
+	body, err := json.Marshal(obj)
+	require.NoError(t, err)
+	return string(body)
 }
 
 func randomAsciiStr(n int) string {
@@ -500,3 +568,52 @@ func randomAsciiStr(n int) string {
 	}
 	return b.String()
 }
+
+func mockRepositoryContent(path string, content string) github.RepositoryContent {
+	hash := sha256.Sum256([]byte(content))
+
+	return mockContent{
+		isDir:       strings.HasSuffix(path, "/"),
+		fileContent: content,
+		isSymlink:   false,
+		path:        path,
+		sha:         hex.EncodeToString(hash[:]),
+		size:        int64(len(content)),
+	}
+}
+
+type mockContent struct {
+	isDir          bool
+	fileContent    string
+	fileContentErr error
+	isSymlink      bool
+	path           string
+	sha            string
+	size           int64
+}
+
+func (c mockContent) IsDirectory() bool {
+	return c.isDir
+}
+
+func (c mockContent) GetFileContent() (string, error) {
+	return c.fileContent, c.fileContentErr
+}
+
+func (c mockContent) IsSymlink() bool {
+	return c.isSymlink
+}
+
+func (c mockContent) GetPath() string {
+	return c.path
+}
+
+func (c mockContent) GetSHA() string {
+	return c.path
+}
+
+func (c mockContent) GetSize() int64 {
+	return c.size
+}
+
+var _ github.RepositoryContent = mockContent{}

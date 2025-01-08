@@ -169,6 +169,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	}
 
 	return &provisioning.JobStatus{
-		State: "finished", // success
+		State: provisioning.JobStateFinished,
 	}, nil
 }
