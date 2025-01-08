@@ -118,14 +118,18 @@
     {
       "metadata": {
         "name": "alertingApiServer",
-        "resourceVersion": "1718908755156",
-        "creationTimestamp": "2024-06-20T20:52:03Z"
+        "resourceVersion": "1734627512749",
+        "creationTimestamp": "2024-06-20T20:52:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-12-19 16:58:32.7498017 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Register Alerting APIs with the K8s API server",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
