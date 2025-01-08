@@ -92,6 +92,7 @@ type Client interface {
 	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
 	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
 
+	PullRequestsForBranch(ctx context.Context, owner, repository, branch string) ([]PullRequest, error)
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
 	CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error
@@ -123,7 +124,7 @@ type Branch struct {
 	Sha  string
 }
 
-type CommitAuthor struct {
+type User struct {
 	Name      string
 	Username  string
 	AvatarURL string
@@ -132,8 +133,8 @@ type CommitAuthor struct {
 type Commit struct {
 	Ref       string
 	Message   string
-	Author    *CommitAuthor
-	Committer *CommitAuthor
+	Author    *User
+	Committer *User
 	CreatedAt time.Time
 }
 
@@ -149,6 +150,18 @@ type FileComment struct {
 	Path     string
 	Position int
 	Ref      string
+}
+
+type PullRequest struct {
+	Number    int
+	Title     string
+	URL       string
+	Assignees []User
+	Author    User
+	BaseRef   string
+	HeadRef   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type CreateFileOptions struct {
