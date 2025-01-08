@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type BackgroundIdentityService interface {
@@ -43,7 +43,6 @@ func ProvideProvisioningIdentityService(
 		role:                     org.RoleAdmin,
 		clientConfigProvider:     clientConfigProvider,
 
-		log:             slog.Default().With("logger", "background-identities", "prefix", prefix),
 		accounts:        make(map[int64]string),
 		serviceAccounts: serviceAccounts,
 		authn:           authn,
@@ -53,8 +52,6 @@ func ProvideProvisioningIdentityService(
 }
 
 type backgroundIdentities struct {
-	log *slog.Logger
-
 	serviceAccountNamePrefix string
 	role                     org.RoleType
 	clientConfigProvider     apiserver.DirectRestConfigProvider
@@ -158,6 +155,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
 	serviceAccountName := fmt.Sprintf("%s-org-%d", o.serviceAccountNamePrefix, orgId)
+	logger := slogctx.From(ctx).With("account_name", serviceAccountName)
 	saForm := serviceaccounts.CreateServiceAccountForm{
 		Name: serviceAccountName,
 		Role: &o.role,
@@ -169,7 +167,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		if accountAlreadyExists {
 			accountId, err := o.serviceAccounts.RetrieveServiceAccountIdByName(ctx, orgId, serviceAccountName)
 			if err != nil {
-				o.log.Error("Failed to retrieve service account", "err", err, "accountName", serviceAccountName)
+				logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
 				return "", err
 			}
 			// update org_role to make sure everything works properly if someone has changed the role since SA's original creation
@@ -178,7 +176,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 				Role: &o.role,
 			})
 			if err != nil {
-				o.log.Error("Failed to update service account", "err", err, "accountName", serviceAccountName)
+				logger.ErrorContext(ctx, "Failed to update service account", "err", err)
 				return "", err
 			}
 
@@ -189,7 +187,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		}
 	}
 	if serviceAccount == nil {
-		o.log.Error("Failed to retrieve service account", "err", err, "accountName", serviceAccountName)
+		logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
 		return "", err
 	}
 
