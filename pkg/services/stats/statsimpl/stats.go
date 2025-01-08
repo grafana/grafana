@@ -45,7 +45,7 @@ type dashboardStats struct {
 	bytesMax   int
 }
 
-func (s *sqlStatsService) collectDashboardStats(ctx context.Context, orgs []*org.OrgDTO, calculateByteSize bool) (dashboardStats, error) {
+func (ss *sqlStatsService) collectDashboardStats(ctx context.Context, orgs []*org.OrgDTO, calculateByteSize bool) (dashboardStats, error) {
 	stats := dashboardStats{
 		count:      0,
 		bytesTotal: 0,
@@ -54,7 +54,7 @@ func (s *sqlStatsService) collectDashboardStats(ctx context.Context, orgs []*org
 
 	for _, org := range orgs {
 		ctx = identity.WithRequester(ctx, getStatsRequester(org.ID))
-		dashs, err := s.dashSvc.GetAllDashboardsByOrgId(ctx, org.ID)
+		dashs, err := ss.dashSvc.GetAllDashboardsByOrgId(ctx, org.ID)
 		if err != nil {
 			return stats, err
 		}
@@ -74,17 +74,16 @@ func (s *sqlStatsService) collectDashboardStats(ctx context.Context, orgs []*org
 				}
 			}
 		}
-
 	}
 
 	return stats, nil
 }
 
-func (s *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	total := 0
 	for _, org := range orgs {
 		ctx = identity.WithRequester(ctx, getStatsRequester(org.ID))
-		tags, err := s.dashSvc.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
+		tags, err := ss.dashSvc.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
 			OrgID: org.ID,
 		})
 		if err != nil {
@@ -96,12 +95,12 @@ func (s *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (
 	return int64(total), nil
 }
 
-func (s *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	total := 0
 	for _, org := range orgs {
 		backgroundUser := getStatsRequester(org.ID)
 		ctx = identity.WithRequester(ctx, backgroundUser)
-		folders, err := s.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
+		folders, err := ss.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
 			OrgID:        org.ID,
 			SignedInUser: backgroundUser,
 		})
@@ -206,6 +205,9 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		return nil
 	})
+	if err != nil {
+		return result, err
+	}
 
 	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
@@ -316,6 +318,9 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		result = &stats
 		return nil
 	})
+	if err != nil {
+		return result, err
+	}
 
 	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
