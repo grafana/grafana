@@ -92,3 +92,7 @@ Query results include lines that match any of the rules.
 Only users with data source `Admin` permissions can edit LBAC for data sources rules in the **Data source permissions** tab because changing LBAC rules requires the same access level as editing data source permissions.
 
 To set up LBAC for data sources for a data source, refer to [Configure LBAC for data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+
+## Provisioning of LBAC rules
+
+We recommend using our terraform provider for setting up provision for [Resource data source config lbac rules](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source_config_lbac_rules). See our provider documentation for referencing how the rules would be configured for a data source. 
