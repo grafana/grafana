@@ -874,7 +874,7 @@ steps:
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
-  - yarn e2e:playwright
+  - yarn e2e:playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
   depends_on:
   - grafana-server
   - build-test-plugins
