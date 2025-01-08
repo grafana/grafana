@@ -3,9 +3,7 @@ package cloudmigration
 import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
-	ScopeRoot = "migrationassistant"
-
-	ActionMigrate = ScopeRoot + ":migrate"
+	ActionMigrate = "migrationassistant:migrate"
 )
 
 var (
@@ -16,7 +14,7 @@ var (
 func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	migrator := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:" + ScopeRoot + ":migrator",
+			Name:        "fixed:migrationassistant:migrator",
 			DisplayName: "Organization resource migrator",
 			Description: "Migrate organization resources.",
 			Group:       "Migration Assistant",
