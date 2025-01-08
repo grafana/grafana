@@ -117,11 +117,9 @@ We've updated the **Extract fields** transformation with an additional **RegExp*
 
 <!-- #grafana-sharing -->
 
-Grafana docs URL: https://grafana.com/docs/grafana/next/dashboards/create-reports/#caveats
-
 _Generally available in Grafana Enterprise and Grafana Cloud_
 
-In May 2024, we announced a [new way of generating PDFs](https://grafana.com/docs/grafana-cloud/whats-new/2024-05-13-pdf-export-improvements/) that introduced a major performance improvement for the PDF export feature. It also fixed all [caveats](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#caveats) related to rendering a report with panels or rows set to repeat by a variable, like rendering repeating panels inside collapsed rows.
+In May 2024, we announced a [new way of generating PDFs](https://grafana.com/docs/grafana-cloud/whats-new/2024-05-13-pdf-export-improvements/) that introduced a major performance improvement for the PDF export feature. It also fixed all [caveats](https://grafana.com/docs/grafana/v11.4/dashboards/create-reports/#caveats) related to rendering a report with panels or rows set to repeat by a variable, like rendering repeating panels inside collapsed rows.
 
 This new PDF generation method now replaces the old one and is generally available for everyone.
 
@@ -145,17 +143,11 @@ You can customize the image by updating the width, height, and scale of it:
 
 We've also updated the panel image sharing process. Previously, you clicked a button to render the image and then had to send that image URL to share it. Now, you click a button to generate the image and then simply download it and send that to other organization users.
 
-<!-- Maybe delete this? Refer to Isabell since this link is shared earlier in the What's New entry -->
-
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#share-an-internal-link-1)
-
 ## Data sources
 
 ### OpenSearch data source supports Private Data Source Connect (PDC)
 
 <!-- #grafana-aws-datasources -->
-
-documentation_url: https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
 
 _Generally available in all editions of Grafana_
 
